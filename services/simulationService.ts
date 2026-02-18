@@ -652,50 +652,101 @@ function getLvefCategory(lvef: number): number {
 }
 
 /**
- * Domain 4: Structure (LVEF + Remodeling)
- * LVEF ceiling 55% (ACC/AHA 2022: normal >= 55%). Range 20-55 = 35pts base.
- * LVEDD: 5-tier ASE/EACVI severity grading.
- * LAVI: 3-tier (unchanged, already evidence-aligned).
- * Reverse remodeling bonus: +5 to +15 based on LVEF improvement (Aimo 2021, Kan 2023).
+ * Domain 4: Structure (Cardiac Remodeling & Recovery)
+ * Blended: 40% absolute state + 40% improvement trajectory + 20% chamber geometry.
+ * A score of 0 = severe untreated cardiomyopathy with no treatment response.
+ *
+ * Absolute (40%): Piecewise-linear LVEF (ACC/AHA 2022, ceiling 55%).
+ *   15→0, 25→15, 35→40, 45→70, 55→100. Gives more resolution in HFrEF range.
+ *
+ * Improvement (40%): Sqrt-scaled LVEF delta / achievable gap (Aimo 2021, Kan 2023).
+ *   Near-normal baselines get a normality floor so HFpEF isn't penalized for
+ *   having little room to improve. Category crossing adds +10.
+ *
+ * Chamber (20%): Projected LVEDD/LAVI severity (ASE/EACVI) + direction-of-change.
+ *   Improving >5% → +20, worsening >5% → −20. Neutral 50 when echo data unavailable.
  */
-function calculateStructureScore(lvef: number, lvedd?: number, lavi?: number, baselineLvef?: number): number {
-    // Base: LVEF (35 points across 20-55 range, mapped to 0-100)
-    let score = 0;
-    if (lvef >= 55) score = 100;
-    else if (lvef <= 20) score = 0;
-    else score = ((lvef - 20) / 35) * 100;
+function calculateStructureScore(
+    lvef: number, lvedd: number | undefined, lavi: number | undefined,
+    baselineLvef: number, baselineLvedd?: number, baselineLavi?: number
+): number {
+    // --- Component 1: Absolute State (0-100) ---
+    // Piecewise-linear: gives clinical resolution at each severity tier
+    let absoluteScore: number;
+    if (lvef >= 55) absoluteScore = 100;
+    else if (lvef >= 45) absoluteScore = 70 + ((lvef - 45) / 10) * 30;  // Near-normal
+    else if (lvef >= 35) absoluteScore = 40 + ((lvef - 35) / 10) * 30;  // HFmrEF / mild
+    else if (lvef >= 25) absoluteScore = 15 + ((lvef - 25) / 10) * 25;  // Moderate HFrEF
+    else if (lvef >= 15) absoluteScore = ((lvef - 15) / 10) * 15;       // Severe HFrEF
+    else absoluteScore = 0;                                               // Incompatible w/ life
 
-    // Penalty 1: LV Dilation (ASE/EACVI severity grades)
+    // --- Component 2: Improvement Trajectory (0-100) ---
+    const achievableGap = Math.max(5, 55 - baselineLvef); // floor avoids /0
+    const lvefDelta = Math.max(0, lvef - baselineLvef);
+    const ratio = Math.min(1, lvefDelta / achievableGap);
+    let improvementScore = Math.sqrt(ratio) * 100; // concave: partial gains rewarded
+
+    // Category crossing bonus (Aimo 2021) — crossing severe→moderate→mild→normal is prognostic
+    if (getLvefCategory(lvef) > getLvefCategory(baselineLvef)) {
+        improvementScore = Math.min(100, improvementScore + 10);
+    }
+
+    // Normality floor: near-normal baselines shouldn't be penalized for limited room to improve
+    // LVEF 55 → floor 80; LVEF 20 → floor 0; linear ramp
+    const gapToNormal = Math.max(0, 55 - baselineLvef);
+    const normalityFloor = Math.max(0, (1 - gapToNormal / 35) * 80);
+    improvementScore = Math.max(normalityFloor, improvementScore);
+
+    // --- Component 3: Chamber Geometry (0-100) ---
+    const chamberScores: number[] = [];
+
     if (lvedd && lvedd > 0) {
-        if (lvedd > 68) score -= 25;       // Severe dilation
-        else if (lvedd > 62) score -= 18;  // Moderate dilation
-        else if (lvedd > 56) score -= 10;  // Mild dilation
-        else if (lvedd > 52) score -= 4;   // Borderline
+        // LVEDD severity base (ASE/EACVI grading)
+        let lveddScore: number;
+        if (lvedd <= 52) lveddScore = 100;       // Normal
+        else if (lvedd <= 56) lveddScore = 75;   // Borderline
+        else if (lvedd <= 62) lveddScore = 50;   // Mild dilation
+        else if (lvedd <= 68) lveddScore = 25;   // Moderate dilation
+        else lveddScore = 0;                      // Severe dilation
+
+        // Direction modifier: reward shrinkage, penalize growth
+        if (baselineLvedd && baselineLvedd > 0) {
+            const pctReduction = (baselineLvedd - lvedd) / baselineLvedd;
+            if (pctReduction > 0.05) lveddScore += 20;
+            else if (pctReduction > 0.01) lveddScore += 10;
+            else if (pctReduction < -0.05) lveddScore -= 20;
+            else if (pctReduction < -0.01) lveddScore -= 10;
+        }
+        chamberScores.push(Math.max(0, Math.min(100, lveddScore)));
     }
 
-    // Penalty 2: LA Dilation (Diastolic Burden / Chronicity) - Unchanged
     if (lavi && lavi > 0) {
-        if (lavi > 48) score -= 20; // Severe
-        else if (lavi > 40) score -= 10; // Moderate
-        else if (lavi > 34) score -= 5; // Mild
+        // LAVI severity base
+        let laviScore: number;
+        if (lavi <= 28) laviScore = 100;         // Normal
+        else if (lavi <= 34) laviScore = 75;     // Mild
+        else if (lavi <= 40) laviScore = 50;     // Moderate
+        else if (lavi <= 48) laviScore = 25;     // Moderate-severe
+        else laviScore = 0;                       // Severe
+
+        // Direction modifier
+        if (baselineLavi && baselineLavi > 0) {
+            const pctReduction = (baselineLavi - lavi) / baselineLavi;
+            if (pctReduction > 0.05) laviScore += 20;
+            else if (pctReduction > 0.01) laviScore += 10;
+            else if (pctReduction < -0.05) laviScore -= 20;
+            else if (pctReduction < -0.01) laviScore -= 10;
+        }
+        chamberScores.push(Math.max(0, Math.min(100, laviScore)));
     }
 
-    // Bonus: Reverse Remodeling (Aimo 2021, Kan 2023)
-    if (baselineLvef !== undefined && lvef > baselineLvef) {
-        const delta = lvef - baselineLvef;
-        let bonus = 0;
+    const chamberScore = chamberScores.length > 0
+        ? chamberScores.reduce((a, b) => a + b, 0) / chamberScores.length
+        : 50; // Neutral when no echo data available
 
-        // LVEF delta thresholds
-        if (delta >= 10) bonus += 10;       // Meets LVRR threshold (Kan 2023)
-        else if (delta >= 5) bonus += 5;    // Meaningful improvement
-
-        // Category crossing bonus (Aimo 2021)
-        if (getLvefCategory(lvef) > getLvefCategory(baselineLvef)) bonus += 5;
-
-        score += Math.min(15, bonus);
-    }
-
-    return Math.max(0, Math.min(100, score));
+    // --- Blend: 40% absolute + 40% improvement + 20% chamber ---
+    const blended = absoluteScore * 0.40 + improvementScore * 0.40 + chamberScore * 0.20;
+    return Math.max(0, Math.min(100, blended));
 }
 
 /**
@@ -1425,7 +1476,7 @@ export function generateAndScoreModifications(
         const s_neuro = calculateNeurohormonalScore(p.nt_pro_bnp);
         const s_func = calculateFunctionalScore(p.nyha_class, p.kccq_score, p.daily_step_count);
         const s_vol = calculateVolumeScore(p.volume_status.dry_weight_kg, p.volume_status.current_weight_kg, p.volume_status.exam_findings, p.oxygen_saturation);
-        const s_struc = calculateStructureScore(p.lvef, p.lvedd, p.lavi, patient.lvef);
+        const s_struc = calculateStructureScore(p.lvef, p.lvedd, p.lavi, patient.lvef, patient.lvedd, patient.lavi);
         const s_cost = calculateCostScore(sim.cost, patient.max_affordable_cost, patient.cost_sensitivity);
         const s_adhere = calculateAdherenceScore(sim.complexity, patient.complexity_tolerance);
         const s_guide = calculateGuidelineConcordanceScore(activeModSet.resulting_regimen, patient);
