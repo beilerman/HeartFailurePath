@@ -1,0 +1,169 @@
+
+export interface ExcludedMedication {
+    name: string;
+    drug_class: string;
+    reason: string;
+}
+
+export interface ExamFinding {
+    name: string;
+    severity_points: number; // Penalty points
+}
+
+export interface VolumeStatus {
+    dry_weight_kg: number;
+    current_weight_kg: number;
+    exam_findings: Set<string>; // e.g. 'Edema', 'JVP', 'Orthopnea'
+}
+
+export interface Patient {
+    // Demographics
+    age: number;
+    sex: 'Male' | 'Female';
+    race: string;
+    height_cm: number;
+    bmi: number;
+
+    // Hemodynamics & Remote Vitals
+    sbp: number;
+    dbp: number;
+    pulse: number;
+    oxygen_saturation?: number; // SpO2 %
+    rhythm: 'Sinus' | 'AFib' | 'Paced';
+
+    // CHF Domains & Remote Functional
+    nt_pro_bnp: number; // pg/mL
+    nyha_class: 'I' | 'II' | 'III' | 'IV';
+    kccq_score: number; // 0-100
+    daily_step_count?: number; // Activity Level
+    peak_flow_lpm?: number; // Strength of exhalation
+
+    lvef: number; // %
+    lvedd?: number; // mm (Left Ventricular End Diastolic Diameter) - Optional
+    lavi?: number; // mL/m2 (Left Atrial Volume Index) - Optional
+    volume_status: VolumeStatus;
+
+    // Labs & Comorbidities
+    bun: number; // Blood Urea Nitrogen
+    creatinine: number;
+    egfr: number; // Calculated
+    potassium: number;
+
+    ferritin?: number;
+    tsat?: number;
+
+    comorbidities: Set<string>;
+    allergies: Set<string>;
+    discontinued_meds: ExcludedMedication[];
+
+    // Reproductive safety
+    is_pregnant?: boolean;
+
+    // HFimpEF detection: LVEF that was ≤40% and has since improved
+    previous_lvef?: number;
+
+    // Constraints
+    current_regimen: RegimenMed[];
+    max_affordable_cost: number;
+    cost_sensitivity: number; // 0 (Spend freely) to 10 (Every dollar counts)
+    complexity_tolerance: number; // 0-10
+    max_new_classes_per_visit: number; // Default 2. Class substitutions/dose changes do not count as new classes.
+}
+
+export interface TestScenario {
+    title: string;
+    patient: Patient;
+}
+
+export interface MedicationDose {
+    strength: number | string;
+    unit: string;
+    formulation: string;
+    frequency_options: string[];
+    scored: boolean;
+    is_target_dose?: boolean;
+}
+
+export interface ChfEffects {
+    lvef_improvement_absolute: number; // e.g., +5%
+    bnp_reduction_percent: number; // e.g., 0.20 (20% reduction)
+    weight_reduction_kg: number; // e.g., 2.0 kg
+    kccq_improvement: number; // points
+    structure_benefit_points: number; // Bonus for reverse remodeling evidence
+    lavi_reduction_percent: number; // e.g., 0.10 (10% reduction in LA volume)
+    lvedd_reduction_percent?: number; // e.g., 0.08 = 8% reduction in LV end-diastolic diameter
+}
+
+export interface Medication {
+    name: string;
+    drug_class: string; // e.g., 'ARNI', 'BB', 'MRA', 'SGLT2i', 'Loop'
+    subclass?: string;
+    available_doses: MedicationDose[];
+
+    // Pharmacodynamics
+    chf_effects: (dose: number | string) => ChfEffects;
+    hemodynamic_effects: (dose: number | string) => { sbp_drop: number; hr_drop: number; potassium_change: number };
+
+    side_effects: (dose: number | string) => { [key: string]: number }; // Risk probability 0-1
+    renal_adjustment?: (egfr: number, patient?: Patient) => { start_dose_modifier?: number; max_dose?: number; caution?: boolean, contraindicated?: boolean };
+    contraindications?: (patient: Patient) => boolean;
+    special_features?: { feature: string; points: number; criteria: (p: Patient) => boolean }[];
+    is_best_in_class?: boolean;
+}
+
+export interface RegimenMed {
+    med: Medication;
+    dose: MedicationDose;
+    selected_frequency: string;
+}
+
+export interface DomainScores {
+    neurohormonal: number;
+    functional: number;
+    volume: number;
+    structure: number;
+    cost: number;
+    adherence: number;
+    guideline: number;
+}
+
+export interface ScoredRegimen {
+    regimen: RegimenMed[];
+
+    // Projected Clinical State
+    projected_patient: Patient;
+    baseline_lvef?: number; // Pre-treatment LVEF for reverse remodeling calculations
+
+    // Scores
+    overall_score: number;
+    domain_scores: DomainScores;
+    special_feature_bonus?: number; // Bonus from guideline-specific special features
+
+    cost: number;
+    complexity: number;
+
+    rationale: string[];
+    risks: string[];
+
+    warnings: string[];
+
+    modification_set?: ModificationSet;
+}
+
+// --- Delta-from-Current Modification Types ---
+
+export type ModificationAction = 'add' | 'titrate_up' | 'titrate_down' | 'swap' | 'remove' | 'keep';
+
+export interface RegimenModification {
+    action: ModificationAction;
+    target?: RegimenMed;   // New med+dose (for add, titrate, swap)
+    source?: RegimenMed;   // Existing med+dose being changed (for titrate, swap, remove, keep)
+    summary: string;       // "Add Dapagliflozin 10mg", "Titrate Carvedilol 12.5→25mg BID"
+}
+
+export interface ModificationSet {
+    modifications: RegimenModification[];
+    resulting_regimen: RegimenMed[];  // Full regimen after all modifications applied
+}
+
+// ExcludedMedication moved to top for broader reuse

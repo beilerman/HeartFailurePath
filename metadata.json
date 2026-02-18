@@ -1,0 +1,5 @@
+{
+  "name": "HeartFailurePATH",
+  "description": "Advanced clinical decision support for Chronic Heart Failure (HFrEF) optimization, simulating effects on Neurohormonal, Functional, Volume, and Structural domains.",
+  "requestFramePermissions": []
+}
