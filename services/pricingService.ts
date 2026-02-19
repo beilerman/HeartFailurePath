@@ -20,6 +20,27 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
         cash: 4, commercial_copay: 3, medicare_copay: 3,
         generic_available: true, has_copay_card: false, tier: 'generic'
     },
+    'Enalapril': {
+        cash: 4, commercial_copay: 3, medicare_copay: 3,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Ramipril': {
+        cash: 5, commercial_copay: 3, medicare_copay: 3,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Captopril': {
+        cash: 8, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic',
+        notes: 'TID dosing; rarely initiated de novo'
+    },
+    'Valsartan': {
+        cash: 8, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Candesartan': {
+        cash: 10, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
     'Losartan': {
         cash: 5, commercial_copay: 3, medicare_copay: 3,
         generic_available: true, has_copay_card: false, tier: 'generic'
@@ -45,12 +66,21 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
         generic_available: true, has_copay_card: false, tier: 'generic',
         notes: 'Generic available since 2015'
     },
+    'Finerenone (Kerendia)': {
+        cash: 550, commercial_copay: 10, medicare_copay: 125,
+        generic_available: false, has_copay_card: true, tier: 'preferred_brand',
+        notes: 'Bayer copay card; FDA approved for HF with LVEF≥40 (July 2025)'
+    },
     'Furosemide': {
         cash: 3, commercial_copay: 3, medicare_copay: 3,
         generic_available: true, has_copay_card: false, tier: 'generic'
     },
     'Torsemide': {
         cash: 5, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Bumetanide': {
+        cash: 6, commercial_copay: 3, medicare_copay: 3,
         generic_available: true, has_copay_card: false, tier: 'generic'
     },
     'Hydralazine/Isosorbide Dinitrate': {
@@ -64,6 +94,14 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
     },
     'Metolazone': {
         cash: 12, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Chlorthalidone': {
+        cash: 5, commercial_copay: 3, medicare_copay: 3,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Hydrochlorothiazide': {
+        cash: 4, commercial_copay: 3, medicare_copay: 3,
         generic_available: true, has_copay_card: false, tier: 'generic'
     },
 
@@ -97,6 +135,11 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
         cash: 985, commercial_copay: 0, medicare_copay: 175,
         generic_available: false, has_copay_card: true, tier: 'specialty',
         notes: 'Vifor free drug program for commercial; specialty tier Medicare'
+    },
+    'Sodium Zirconium Cyclosilicate (Lokelma)': {
+        cash: 750, commercial_copay: 35, medicare_copay: 150,
+        generic_available: false, has_copay_card: true, tier: 'specialty',
+        notes: 'AZ copay card; faster onset than Patiromer (1hr vs 7hr)'
     },
     'Semaglutide (Wegovy)': {
         cash: 349, commercial_copay: 25, medicare_copay: 350,

@@ -31,7 +31,9 @@ export const RELEVANT_COMORBIDITIES = [
     "History of Angioedema",
     "Hypotension (Chronic)",
     "Liver Disease (Child-Pugh B/C)",
-    "Obesity (BMI > 30)"
+    "Obesity (BMI > 30)",
+    "Pulmonary Hypertension",
+    "Chronic NSAID Use"
 ];
 
 export const MEDICATION_FORMULARY: Medication[] = [
@@ -103,6 +105,159 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
     },
     {
+        name: 'Enalapril',
+        drug_class: 'ACEi',
+        available_doses: [
+            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false }, // Starting dose
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true },
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true, is_target_dose: true }, // SOLVD target
+            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false, is_target_dose: true }, // CONSENSUS max
+        ],
+        chf_effects: (dose) => {
+            // CONSENSUS/SOLVD: First ACEi with HF mortality benefit
+            const d = Number(dose);
+            return {
+                lvef_improvement_absolute: 2 + (logBase(2, d / 2.5) * 0.5), // Max ~4-5%
+                bnp_reduction_percent: 0.15 + (logBase(2, d / 2.5) * 0.02),
+                weight_reduction_kg: 0,
+                kccq_improvement: 3 + (d / 20 * 2),
+                structure_benefit_points: 15,
+                lavi_reduction_percent: 0.05,
+                lvedd_reduction_percent: 0.03 + (d / 20 * 0.02) // 3-5% (SOLVD)
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 5, hr_drop: 0, potassium_change: 0.20 }),
+        side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
+        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true),
+        renal_adjustment: (egfr) => {
+            if (egfr < 30) return { max_dose: 5, caution: true }; // More conservative than Lisinopril (BID dosing)
+            if (egfr < 45) return { max_dose: 10, caution: true };
+            return {};
+        },
+    },
+    {
+        name: 'Ramipril',
+        drug_class: 'ACEi',
+        available_doses: [
+            { strength: 1.25, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], scored: false }, // Starting dose
+            { strength: 2.5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], scored: true },
+            { strength: 5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], scored: true },
+            { strength: 10, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], scored: true, is_target_dose: true }, // AIRE/HOPE target
+        ],
+        chf_effects: (dose) => {
+            // AIRE: Post-MI LV dysfunction; HOPE: High-risk CV patients
+            const d = Number(dose);
+            return {
+                lvef_improvement_absolute: 2 + (logBase(2, d / 1.25) * 0.5),
+                bnp_reduction_percent: 0.15 + (logBase(2, d / 1.25) * 0.02),
+                weight_reduction_kg: 0,
+                kccq_improvement: 3 + (d / 10 * 2),
+                structure_benefit_points: 15,
+                lavi_reduction_percent: 0.05,
+                lvedd_reduction_percent: 0.03 + (d / 10 * 0.02) // 3-5% (AIRE)
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 2, hr_drop: 0, potassium_change: 0.20 }),
+        side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
+        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true),
+        renal_adjustment: (egfr) => {
+            if (egfr < 30) return { max_dose: 2.5, caution: true };
+            if (egfr < 45) return { max_dose: 5, caution: true };
+            return {};
+        },
+    },
+    {
+        name: 'Captopril',
+        drug_class: 'ACEi',
+        available_doses: [
+            { strength: 6.25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], scored: false }, // Starting dose
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], scored: false },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], scored: false, is_target_dose: true }, // ACC/AHA target
+        ],
+        chf_effects: (dose) => {
+            // SAVE: Post-MI LV dysfunction. Historical significance; TID dosing is practical disadvantage
+            const d = Number(dose);
+            return {
+                lvef_improvement_absolute: 2 + (d / 50 * 2),
+                bnp_reduction_percent: 0.15 + (d / 50 * 0.05),
+                weight_reduction_kg: 0,
+                kccq_improvement: 3 + (d / 50 * 2),
+                structure_benefit_points: 15,
+                lavi_reduction_percent: 0.05,
+                lvedd_reduction_percent: 0.03 + (d / 50 * 0.02) // 3-5% (SAVE)
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 10, hr_drop: 0, potassium_change: 0.20 }),
+        side_effects: () => ({ cough: 0.12, hypotension: 0.10, hyperkalemia: 0.06, angioedema: 0.01, taste_disturbance: 0.05 }),
+        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true),
+        renal_adjustment: (egfr) => {
+            if (egfr < 30) return { max_dose: 6.25, caution: true };
+            if (egfr < 45) return { max_dose: 25, caution: true };
+            return {};
+        },
+    },
+    {
+        name: 'Valsartan',
+        drug_class: 'ARB',
+        available_doses: [
+            { strength: 40, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'], scored: false }, // Starting dose
+            { strength: 80, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'], scored: true },
+            { strength: 160, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'], scored: true, is_target_dose: true }, // Val-HeFT/ACC target
+        ],
+        chf_effects: (dose) => {
+            // Val-HeFT: Mortality/morbidity reduction in HFrEF
+            const d = Number(dose);
+            const ratio = d / 160;
+            return {
+                lvef_improvement_absolute: 2 + (ratio * 2.5),
+                bnp_reduction_percent: 0.10 + (ratio * 0.12),
+                weight_reduction_kg: 0,
+                kccq_improvement: 3 + (ratio * 3),
+                structure_benefit_points: 12,
+                lavi_reduction_percent: 0.05,
+                lvedd_reduction_percent: 0.03 + (ratio * 0.03) // 3-6% (Val-HeFT)
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 30, hr_drop: 0, potassium_change: 0.15 }),
+        side_effects: () => ({ hypotension: 0.06, hyperkalemia: 0.04, dizziness: 0.05 }),
+        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true),
+        renal_adjustment: (egfr) => {
+            if (egfr < 30) return { max_dose: 80, caution: true };
+            return {};
+        },
+    },
+    {
+        name: 'Candesartan',
+        drug_class: 'ARB',
+        available_doses: [
+            { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // Starting dose
+            { strength: 8, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+            { strength: 16, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+            { strength: 32, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true }, // CHARM target
+        ],
+        chf_effects: (dose) => {
+            // CHARM-Alternative/Added: CV death/HF hospitalization reduction
+            const d = Number(dose);
+            const ratio = d / 32;
+            return {
+                lvef_improvement_absolute: 2 + (ratio * 2.5),
+                bnp_reduction_percent: 0.10 + (ratio * 0.12),
+                weight_reduction_kg: 0,
+                kccq_improvement: 3 + (ratio * 3),
+                structure_benefit_points: 12,
+                lavi_reduction_percent: 0.05,
+                lvedd_reduction_percent: 0.03 + (ratio * 0.03) // 3-6% (CHARM)
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 6, hr_drop: 0, potassium_change: 0.15 }),
+        side_effects: () => ({ hypotension: 0.05, hyperkalemia: 0.04 }),
+        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true),
+        renal_adjustment: (egfr) => {
+            if (egfr < 30) return { max_dose: 8, caution: true };
+            return {};
+        },
+    },
+    {
         name: 'Losartan',
         drug_class: 'ARB',
         available_doses: [
@@ -165,7 +320,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose)/5, hr_drop: 8 + Number(dose)/3, potassium_change: 0.05 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.15, hypotension: 0.10, fluid_retention_transient: 0.05 }),
-        contraindications: (p) => p.pulse < 55 || p.comorbidities.has("Severe Asthma / Bronchospasm") || p.comorbidities.has("COPD") || p.comorbidities.has("Liver Disease (Child-Pugh B/C)"),
+        contraindications: (p) => p.pulse < 55 || p.comorbidities.has("Severe Asthma / Bronchospasm") || p.comorbidities.has("Liver Disease (Child-Pugh B/C)"),
         // COPERNICUS: 50mg BID target only for patients > 85kg; standard target is 25mg BID
         renal_adjustment: (_egfr, patient) => {
             const dryWeight = patient?.volume_status?.dry_weight_kg ?? 85;
@@ -178,6 +333,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'Beta Blocker',
         is_best_in_class: true,
         available_doses: [
+            { strength: 12.5, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], scored: false }, // Starting dose for NYHA III-IV (MERIT-HF)
             { strength: 25, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], scored: true },
             { strength: 50, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], scored: true },
             { strength: 100, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], scored: true },
@@ -292,6 +448,56 @@ export const MEDICATION_FORMULARY: Medication[] = [
     },
 
     // ========================================
+    // NONSTEROIDAL MRA (LVEF ≥ 40 only)
+    // Evidence: FINEARTS-HF (2024), FDA approved July 2025
+    // NOT a GDMT pillar for HFrEF — no evidence below LVEF 40
+    // ========================================
+    {
+        name: 'Finerenone (Kerendia)',
+        drug_class: 'nsMRA', // Distinct from 'MRA' to prevent HFrEF pillar credit
+        available_doses: [
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // Starting dose; eGFR-dependent
+            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false },
+            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false, is_target_dose: true }, // HF target dose (new 40mg tablet with HF approval)
+        ],
+        chf_effects: (dose) => {
+            // FINEARTS-HF: 16% RRR in CV death/HF events in LVEF ≥ 40
+            const d = Number(dose);
+            const ratio = d / 40;
+            return {
+                lvef_improvement_absolute: 1.5 + (ratio * 1.0), // Modest anti-fibrotic remodeling
+                bnp_reduction_percent: 0.10 + (ratio * 0.08),
+                weight_reduction_kg: 0.2 * ratio, // Minimal diuretic effect
+                kccq_improvement: 3 + (ratio * 3),
+                structure_benefit_points: 25, // Strong anti-fibrotic (novel MoA)
+                lavi_reduction_percent: 0.04,
+                lvedd_reduction_percent: 0.03 + (ratio * 0.02) // 3-5% (FINEARTS-HF)
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 2 + Number(dose) / 20, hr_drop: 0, potassium_change: 0.25 + (Number(dose) / 40 * 0.15) }), // Lower K+ risk than steroidal MRA
+        side_effects: () => ({ hyperkalemia: 0.08, hypotension: 0.04 }), // Lower hyperkalemia vs spironolactone/eplerenone
+        special_features: [
+            {
+                feature: 'nsMRA: 16% RRR CV death/HF events in LVEF≥40 (FINEARTS-HF); lower hyperkalemia vs steroidal MRA',
+                points: 45,
+                criteria: (p) => p.lvef >= 40
+            }
+        ],
+        contraindications: (p) => {
+            // FINEARTS-HF enrolled LVEF ≥ 40 only; no evidence for HFrEF
+            // HFimpEF (previous LVEF ≤ 40) is managed as HFrEF — use steroidal MRA instead
+            const isHFimpEF = p.previous_lvef !== undefined && p.previous_lvef <= 40 && p.lvef > 40;
+            return p.lvef < 40 || isHFimpEF || p.potassium > 5.5 || p.egfr < 25 || (p.is_pregnant === true);
+        },
+        renal_adjustment: (egfr) => {
+            // Per Kerendia PI: start 10mg if eGFR 25-59, start 20mg if eGFR ≥ 60
+            if (egfr < 25) return { contraindicated: true };
+            if (egfr < 60) return { max_dose: 20, caution: true };
+            return {};
+        },
+    },
+
+    // ========================================
     // PILLAR 4: SGLT2 Inhibitors
     // Evidence: DAPA-HF, EMPEROR-Reduced
     // Impact: High Functional (KCCQ), Moderate Volume (Osmotic), Low Structure (Direct).
@@ -317,7 +523,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
             { feature: 'Preferred in Diabetics', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
         ],
-        contraindications: (p) => p.egfr < 25 || (p.is_pregnant === true), // Do not initiate if eGFR < 25; pregnancy Category C (insufficient human data)
+        contraindications: (p) => {
+            // eGFR threshold applies to INITIATION only — continuation allowed (DAPA-CKD)
+            const alreadyOnSGLT2i = p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i');
+            if (alreadyOnSGLT2i) return p.is_pregnant === true;
+            return p.egfr < 25 || (p.is_pregnant === true);
+        },
     },
     {
         name: 'Empagliflozin',
@@ -340,7 +551,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
             { feature: 'Preferred in Diabetics', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
         ],
-        contraindications: (p) => p.egfr < 20 || (p.is_pregnant === true), // eGFR per EMPEROR; pregnancy Category C (insufficient human data)
+        contraindications: (p) => {
+            // eGFR threshold applies to INITIATION only — continuation allowed (EMPA-KIDNEY)
+            const alreadyOnSGLT2i = p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i');
+            if (alreadyOnSGLT2i) return p.is_pregnant === true;
+            return p.egfr < 20 || (p.is_pregnant === true);
+        },
     },
 
     // ========================================
@@ -411,10 +627,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
+            // Sqrt-based ceiling effect: loop diuretics have diminishing returns at high doses
+            // Furosemide: ~1.5kg at 20mg, ~2.5kg at 40mg, ~3.5kg at 80mg, ~4.2kg at 160mg
+            const weightLoss = 1.0 + 2.5 * Math.sqrt(d / 40);
             return {
                 lvef_improvement_absolute: 0, // No evidence of remodeling
                 bnp_reduction_percent: 0.10 + (d/160 * 0.20), // Reduces wall stress via volume unload
-                weight_reduction_kg: 1.0 + (d/40 * 1.5), // Potent
+                weight_reduction_kg: weightLoss,
                 kccq_improvement: 4 + (d/40 * 2), // Symptom relief only
                 structure_benefit_points: 0, // No points for structure
                 lavi_reduction_percent: 0.08, // Acute volume unload
@@ -439,10 +658,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
+            // Sqrt-based ceiling: better bioavailability than furosemide but same ceiling pharmacology
+            // Torsemide: ~1.8kg at 10mg, ~2.9kg at 20mg, ~4.2kg at 50mg, ~5.0kg at 100mg
+            const weightLoss = 1.2 + 2.5 * Math.sqrt(d / 20);
             return {
                 lvef_improvement_absolute: 0,
                 bnp_reduction_percent: 0.10 + (d/100 * 0.20),
-                weight_reduction_kg: 1.2 + (d/20 * 1.5), // Better bioavailability
+                weight_reduction_kg: weightLoss,
                 kccq_improvement: 5 + (d/20 * 2),
                 structure_benefit_points: 0,
                 lavi_reduction_percent: 0.08,
@@ -454,6 +676,36 @@ export const MEDICATION_FORMULARY: Medication[] = [
             { feature: 'Caution in Gout', points: -5, criteria: (p) => p.comorbidities.has("Gout") }
         ],
         side_effects: () => ({ hypokalemia: 0.15, hypotension: 0.05 }),
+    },
+    {
+        name: 'Bumetanide',
+        drug_class: 'Loop Diuretic',
+        available_doses: [
+            { strength: 0.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
+            { strength: 1, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
+            { strength: 2, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
+            { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false }, // Max dose for diuretic resistance
+        ],
+        chf_effects: (dose) => {
+            const d = Number(dose);
+            // 1mg bumetanide ≈ 40mg furosemide; sqrt ceiling effect like furosemide
+            const furoEquiv = d * 40; // Convert to furosemide equivalents
+            const weightLoss = 1.0 + 2.5 * Math.sqrt(furoEquiv / 40);
+            return {
+                lvef_improvement_absolute: 0,
+                bnp_reduction_percent: 0.10 + (d / 4 * 0.20),
+                weight_reduction_kg: weightLoss,
+                kccq_improvement: 4 + (d * 2),
+                structure_benefit_points: 0,
+                lavi_reduction_percent: 0.08,
+                lvedd_reduction_percent: 0
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 2 + Number(dose) * 2, hr_drop: 0, potassium_change: -0.3 - (Number(dose) / 2 * 0.3) }),
+        special_features: [
+            { feature: 'Caution in Gout (Uric Acid retention)', points: -5, criteria: (p) => p.comorbidities.has("Gout") }
+        ],
+        side_effects: () => ({ hypokalemia: 0.20, renal_worsening: 0.10, hypotension: 0.05 }),
     },
 
     // ========================================
@@ -558,6 +810,28 @@ export const MEDICATION_FORMULARY: Medication[] = [
         ]
     },
     {
+        name: 'Sodium Zirconium Cyclosilicate (Lokelma)',
+        drug_class: 'K+ Binder',
+        available_doses: [
+            { strength: 5, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'], scored: false },
+            { strength: 10, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'], scored: false }, // Acute correction phase
+        ],
+        chf_effects: () => ({
+            lvef_improvement_absolute: 0,
+            bnp_reduction_percent: 0,
+            weight_reduction_kg: 0,
+            kccq_improvement: 0,
+            structure_benefit_points: 0, // Enabler only
+            lavi_reduction_percent: 0,
+            lvedd_reduction_percent: 0
+        }),
+        hemodynamic_effects: (dose) => ({ sbp_drop: 0, hr_drop: 0, potassium_change: Number(dose) >= 10 ? -1.1 : -0.7 }), // Faster onset than Patiromer (1hr vs 7hr)
+        side_effects: () => ({ edema: 0.06 }), // Sodium content can cause mild edema
+        special_features: [
+            { feature: 'Enables RAAS/MRA Optimization in Hyperkalemia (HARMONIZE)', points: 50, criteria: (p) => p.potassium > 5.0 }
+        ]
+    },
+    {
         name: 'Ferric Carboxymaltose',
         drug_class: 'IV Iron',
         available_doses: [
@@ -622,5 +896,51 @@ export const MEDICATION_FORMULARY: Medication[] = [
         }),
         hemodynamic_effects: () => ({ sbp_drop: 5, hr_drop: 0, potassium_change: -0.5 }),
         side_effects: () => ({ severe_hypokalemia: 0.30, dehydration: 0.20 }),
+    },
+    {
+        name: 'Chlorthalidone',
+        drug_class: 'Thiazide-like Diuretic',
+        available_doses: [
+            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+        ],
+        chf_effects: (dose) => {
+            // CLOROTIC: Improved decongestion when added to loop diuretics
+            const d = Number(dose);
+            return {
+                lvef_improvement_absolute: 0,
+                bnp_reduction_percent: 0.08 + (d / 25 * 0.07),
+                weight_reduction_kg: 1.5 + (d / 25 * 0.5), // Sequential nephron blockade
+                kccq_improvement: 2 + (d / 25),
+                structure_benefit_points: 0,
+                lavi_reduction_percent: 0.04,
+                lvedd_reduction_percent: 0
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 10, hr_drop: 0, potassium_change: -0.4 - (Number(dose) / 25 * 0.1) }),
+        side_effects: () => ({ severe_hypokalemia: 0.25, dehydration: 0.15, hyponatremia: 0.10 }),
+    },
+    {
+        name: 'Hydrochlorothiazide',
+        drug_class: 'Thiazide-like Diuretic',
+        available_doses: [
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+        ],
+        chf_effects: (dose) => {
+            // Less potent than chlorthalidone/metolazone for sequential nephron blockade
+            const d = Number(dose);
+            return {
+                lvef_improvement_absolute: 0,
+                bnp_reduction_percent: 0.06 + (d / 50 * 0.06),
+                weight_reduction_kg: 1.0 + (d / 50 * 0.5), // Weaker than chlorthalidone
+                kccq_improvement: 2 + (d / 50),
+                structure_benefit_points: 0,
+                lavi_reduction_percent: 0.03,
+                lvedd_reduction_percent: 0
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose) / 15, hr_drop: 0, potassium_change: -0.3 - (Number(dose) / 50 * 0.1) }),
+        side_effects: () => ({ hypokalemia: 0.20, dehydration: 0.10, hyponatremia: 0.08 }),
     }
 ];

@@ -39,6 +39,7 @@ function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
 function getMedicationClassGroup(drugClass: string): string {
     if (['ARNI', 'ACEi', 'ARB'].includes(drugClass)) return 'RAAS Inhibitor';
     if (['GLP-1 RA', 'GLP-1/GIP RA'].includes(drugClass)) return 'GLP-1 Therapy';
+    if (drugClass === 'nsMRA') return 'MRA'; // Group with steroidal MRA — prevents dual MRA therapy
     return drugClass;
 }
 
@@ -78,11 +79,12 @@ interface RegimenAnalysis {
     removable: RegimenMed[];
     addableAdjuncts: RegimenMed[];
     addablePillars: Map<string, RegimenMed[]>;  // missing pillar class group → candidate meds+doses
+    contraindicatedCurrentMeds: Set<string>;     // names of current meds now contraindicated
 }
 
 const RAAS_CLASSES = new Set(['ARNI', 'ACEi', 'ARB']);
 const DIURETIC_CLASSES = new Set(['Loop Diuretic', 'Thiazide-like Diuretic']);
-const VOLUME_SENSITIVE_INTENSIFICATION_CLASSES = new Set(['ARNI', 'ACEi', 'ARB', 'MRA', 'SGLT2i']);
+const VOLUME_SENSITIVE_INTENSIFICATION_CLASSES = new Set(['ARNI', 'ACEi', 'ARB', 'MRA', 'nsMRA', 'SGLT2i']);
 
 function isDiureticClass(drugClass: string): boolean {
     return DIURETIC_CLASSES.has(drugClass);
@@ -115,7 +117,7 @@ function buildMonitoringPlan(
     const plan: MonitoringPlanItem[] = [];
     const hasRaasOrMraIntensification = hasRelevantIntensification(
         modificationSet,
-        new Set([...RAAS_CLASSES, 'MRA'])
+        new Set([...RAAS_CLASSES, 'MRA', 'nsMRA'])
     );
     const hasDiureticIntensification = hasRelevantIntensification(modificationSet, DIURETIC_CLASSES);
     const higherRiskElectrolytes = currentPatient.egfr < 45 || currentPatient.potassium >= 5.0 || projectedPatient.potassium > 5.0;
@@ -198,32 +200,48 @@ function analyzeCurrentRegimen(
         tiersByGroup.get(group)!.push(r);
     });
 
+    // Safety check: identify current meds that are now contraindicated
+    // These must NOT be titrated up or kept — only down-titration or removal
+    const contraindicatedCurrentMeds = new Set<string>();
+    currentRegimen.forEach(r => {
+        if (r.med.contraindications && r.med.contraindications(patient)) {
+            contraindicatedCurrentMeds.add(r.med.name);
+        }
+    });
+
     // Titration analysis: for each current med, find higher/lower dose tiers
     const titratableUp: RegimenAnalysis['titratableUp'] = [];
     const titratableDown: RegimenAnalysis['titratableDown'] = [];
 
     currentRegimen.forEach(current => {
+        // Block titration UP and swaps for contraindicated meds — only allow down-titration/removal
+        const isContraindicated = contraindicatedCurrentMeds.has(current.med.name);
+
         const allTiers = getDoseTiers(current.med, patient);
         const currentStrength = Number(current.dose.strength);
 
-        const higherDoses = allTiers.filter(t =>
-            Number(t.dose.strength) > currentStrength
-        );
+        if (!isContraindicated) {
+            const higherDoses = allTiers.filter(t =>
+                Number(t.dose.strength) > currentStrength
+            );
+            if (higherDoses.length > 0) {
+                titratableUp.push({ current, options: higherDoses });
+            }
+        }
+
         const lowerDoses = allTiers.filter(t =>
             Number(t.dose.strength) < currentStrength
         );
-
-        if (higherDoses.length > 0) {
-            titratableUp.push({ current, options: higherDoses });
-        }
         if (lowerDoses.length > 0) {
             titratableDown.push({ current, options: lowerDoses });
         }
     });
 
     // Swap analysis: for each current med, find other meds in same class group
+    // Block swaps FROM contraindicated meds (they should be removed, not swapped)
     const swappable: RegimenAnalysis['swappable'] = [];
     currentRegimen.forEach(current => {
+        if (contraindicatedCurrentMeds.has(current.med.name)) return;
         const group = getMedicationClassGroup(current.med.drug_class);
         const groupTiers = tiersByGroup.get(group) || [];
         const candidates = groupTiers.filter(t => t.med.name !== current.med.name);
@@ -232,15 +250,18 @@ function analyzeCurrentRegimen(
         }
     });
 
-    // Removable: diuretics when euvolemic
+    // Removable: diuretics when euvolemic, OR any contraindicated current med
     const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
-    // Removable: diuretics when euvolemic or volume-depleted
     const removable: RegimenMed[] = [];
     currentRegimen.forEach(r => {
+        // Contraindicated current meds MUST be flagged for removal
+        if (contraindicatedCurrentMeds.has(r.med.name)) {
+            removable.push(r);
+            return;
+        }
         if (r.med.drug_class === 'Loop Diuretic' && fluidExcess < 0.5) {
             removable.push(r);
         }
-        // Also flag thiazide-like diuretics for removal in euvolemia/depletion
         if (r.med.drug_class === 'Thiazide-like Diuretic' && fluidExcess < 0.5) {
             removable.push(r);
         }
@@ -282,8 +303,9 @@ function analyzeCurrentRegimen(
         }
     }
 
-    // Vericiguat: NYHA II-IV + NT-proBNP >= 1600 + LVEF < 45 (VICTORIA trial enrollment criteria)
-    if (isNyhaIIIorIV && patient.nt_pro_bnp >= 1600 && patient.lvef < 45) {
+    // Vericiguat: NYHA II-IV + NT-proBNP >= 1600 + LVEF < 45 (VICTORIA trial enrolled NYHA II-IV)
+    const isNyhaIIorHigher = patient.nyha_class === 'II' || patient.nyha_class === 'III' || patient.nyha_class === 'IV';
+    if (isNyhaIIorHigher && patient.nt_pro_bnp >= 1600 && patient.lvef < 45) {
         const verTiers = medTiers.filter(r => r.med.drug_class === 'sGC Stimulator');
         if (verTiers.length > 0 && !currentClasses.has('sGC Stimulator')) {
             addableAdjuncts.push(verTiers[0]);
@@ -326,6 +348,16 @@ function analyzeCurrentRegimen(
         }
     }
 
+    // nsMRA (Finerenone) for HFpEF as adjunct — FINEARTS-HF, LVEF ≥ 40, FDA approved
+    // In HFmrEF, nsMRA is already offered as a pillar option (grouped with MRA)
+    // In HFpEF, MRA is NOT a pillar, so nsMRA must be added as adjunct
+    if (isHFpEF && patient.lvef >= 40 && !currentClasses.has('MRA') && !currentClasses.has('nsMRA')) {
+        const nsmraTiers = medTiers.filter(r => r.med.drug_class === 'nsMRA');
+        if (nsmraTiers.length > 0) {
+            addableAdjuncts.push(nsmraTiers[0]);
+        }
+    }
+
     // GLP-1 if obese + HFpEF/HFmrEF (STEP-HFpEF, SUMMIT trials — no evidence for HFrEF)
     if (patient.bmi >= 30 && patient.lvef >= 40 && !currentClasses.has('GLP-1 RA') && !currentClasses.has('GLP-1/GIP RA')) {
         const glpTiers = medTiers.filter(r => r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA');
@@ -344,7 +376,8 @@ function analyzeCurrentRegimen(
         swappable,
         removable,
         addableAdjuncts,
-        addablePillars
+        addablePillars,
+        contraindicatedCurrentMeds
     };
 }
 
@@ -648,6 +681,40 @@ function generateCandidateModifications(
     // --- d) Binder rescue: for candidates projecting K+ > 5.3 ---
     // This will be handled during simulation, not at generation time
 
+    // --- e) Force-remove contraindicated current meds from ALL candidates ---
+    // A patient currently on ACEi who becomes pregnant must not retain ACEi in any recommendation
+    const contraindicated = analysis.contraindicatedCurrentMeds;
+    if (contraindicated.size > 0) {
+        const forcedRemovals: RegimenModification[] = [];
+        currentRegimen.forEach(r => {
+            if (contraindicated.has(r.med.name)) {
+                forcedRemovals.push({
+                    action: 'remove',
+                    source: r,
+                    summary: `Remove ${r.med.name} (contraindicated)`
+                });
+            }
+        });
+
+        candidates.forEach(c => {
+            // Check if this candidate already removes the contraindicated med
+            forcedRemovals.forEach(forced => {
+                const alreadyRemoved = c.modifications.some(m =>
+                    m.action === 'remove' && m.source?.med.name === forced.source!.med.name
+                );
+                const alreadySwapped = c.modifications.some(m =>
+                    m.action === 'swap' && m.source?.med.name === forced.source!.med.name
+                );
+                if (!alreadyRemoved && !alreadySwapped) {
+                    c.modifications.push(forced);
+                    c.resulting_regimen = c.resulting_regimen.filter(
+                        r => r.med.name !== forced.source!.med.name
+                    );
+                }
+            });
+        });
+    }
+
     // Filter by max_new_classes_per_visit
     return candidates.filter(c => {
         const newClassCount = countNewClassGroups(c.resulting_regimen, currentRegimen);
@@ -904,7 +971,7 @@ function calculateGuidelineConcordanceScore(
         const cls = r.med.drug_class;
         if (['ARNI', 'ACEi', 'ARB'].includes(cls)) pillarClasses.add('RAAS');
         else if (cls === 'Beta Blocker') pillarClasses.add('BB');
-        else if (cls === 'MRA') pillarClasses.add('MRA');
+        else if (cls === 'MRA' || cls === 'nsMRA') pillarClasses.add('MRA');
         else if (cls === 'SGLT2i') pillarClasses.add('SGLT2i');
     });
 
@@ -989,6 +1056,7 @@ function getDbpRatio(drugClass: string): number {
     if (drugClass === 'SGLT2i') return 0.40;                         // Osmotic/preload
     if (drugClass === 'Vasodilator') return 0.50;                    // H/ISDN
     if (drugClass === 'sGC Stimulator') return 0.55;                 // Vericiguat
+    if (drugClass === 'nsMRA') return 0.50;                            // Finerenone (anti-fibrotic, mild preload)
     return 0.60;                                                      // Default
 }
 
@@ -1039,10 +1107,20 @@ function simulateModificationEffect(
     let diureticEffectStrength = 0;
 
     // Renal risk factor for K+ retention
+    // When initiating/up-titrating RAAS or MRA, expect ~15% acute eGFR decline (hemodynamically mediated)
+    // Use projected eGFR for risk stratification rather than baseline
+    const isAddingRAASorMRA = modificationSet.modifications.some(mod =>
+        (mod.action === 'add' || mod.action === 'titrate_up' || mod.action === 'swap') &&
+        mod.target && (['ARNI', 'ACEi', 'ARB', 'MRA', 'nsMRA'].includes(mod.target.med.drug_class))
+    );
+    const effectiveEgfr = isAddingRAASorMRA
+        ? currentPatient.egfr * 0.85  // Expected 15% decline post-RAAS/MRA initiation
+        : currentPatient.egfr;
+
     let renalRiskFactor = 1.0;
-    if (currentPatient.egfr < 60) renalRiskFactor = 1.2;
-    if (currentPatient.egfr < 45) renalRiskFactor = 1.5;
-    if (currentPatient.egfr < 30) renalRiskFactor = 2.0;
+    if (effectiveEgfr < 60) renalRiskFactor = 1.2;
+    if (effectiveEgfr < 45) renalRiskFactor = 1.5;
+    if (effectiveEgfr < 30) renalRiskFactor = 2.0;
 
     // Track drug types from resulting regimen (for synergy/safety checks)
     resultingRegimen.forEach(r => {
@@ -1050,7 +1128,7 @@ function simulateModificationEffect(
         const dose = r.dose.strength;
         if (cls === 'Loop Diuretic') { hasDiuretic = true; diureticEffectStrength += r.med.chf_effects(dose).weight_reduction_kg; }
         if (cls === 'SGLT2i') hasSGLT2 = true;
-        if (cls === 'MRA') hasMRA = true;
+        if (cls === 'MRA' || cls === 'nsMRA') hasMRA = true;
         if (cls === 'Beta Blocker') hasBeta = true;
         if (cls === 'GLP-1 RA' || cls === 'GLP-1/GIP RA') hasGLP1 = true;
         if (['ARNI', 'ACEi', 'ARB'].includes(cls)) { hasRAAS = true; raasCount++; }
@@ -1078,6 +1156,16 @@ function simulateModificationEffect(
             const chf = mod.target.med.chf_effects(dose);
             const hemo = mod.target.med.hemodynamic_effects(dose);
 
+            // Starting dose hemodynamic attenuation for RAAS/BB:
+            // Clinical trials (PIONEER-HF, COPERNICUS, SOLVD) show acute SBP drops at
+            // initiating doses are ~30-40% of the chronic steady-state effect due to
+            // neurohormonal counter-regulation and incomplete drug accumulation.
+            // Applied only to titrated drug classes (RAAS, BB) at their lowest dose —
+            // fixed-dose drugs (SGLT2i, GLP-1) use full hemodynamic projections.
+            const isStartingDose = String(dose) === String(mod.target.med.available_doses[0].strength);
+            const isAttenuatedClass = ['ARNI', 'ACEi', 'ARB', 'Beta Blocker'].includes(mod.target.med.drug_class);
+            const hemoFactor = (isStartingDose && isAttenuatedClass) ? 0.35 : 1.0;
+
             lvefDelta += chf.lvef_improvement_absolute;
             bnpFactor *= (1 - chf.bnp_reduction_percent);
             weightDelta += chf.weight_reduction_kg;
@@ -1085,8 +1173,8 @@ function simulateModificationEffect(
             if (chf.lavi_reduction_percent > 0) laviFactorTotal *= (1 - chf.lavi_reduction_percent);
             if (chf.lvedd_reduction_percent && chf.lvedd_reduction_percent > 0) lveddFactorTotal *= (1 - chf.lvedd_reduction_percent);
 
-            sbpDelta += hemo.sbp_drop;
-            dbpDelta += hemo.sbp_drop * getDbpRatio(mod.target.med.drug_class);
+            sbpDelta += hemo.sbp_drop * hemoFactor;
+            dbpDelta += hemo.sbp_drop * hemoFactor * getDbpRatio(mod.target.med.drug_class);
             hrDelta += hemo.hr_drop;
             if (hemo.potassium_change > 0) {
                 kDelta += (hemo.potassium_change * renalRiskFactor);
@@ -1214,7 +1302,7 @@ function simulateModificationEffect(
     // Check if current regimen already had these synergies
     const currentClasses = new Set((currentPatient.current_regimen || []).map(r => r.med.drug_class));
     const currentHasQuad = (currentClasses.has('ARNI') || currentClasses.has('ACEi') || currentClasses.has('ARB'))
-        && currentClasses.has('Beta Blocker') && currentClasses.has('MRA') && currentClasses.has('SGLT2i');
+        && currentClasses.has('Beta Blocker') && (currentClasses.has('MRA') || currentClasses.has('nsMRA')) && currentClasses.has('SGLT2i');
     const currentHasDiureticSGLT2 = (currentClasses.has('Loop Diuretic') || currentClasses.has('Thiazide-like Diuretic')) && currentClasses.has('SGLT2i');
 
     if (hasSGLT2 && hasDiuretic && !currentHasDiureticSGLT2) {
@@ -1264,6 +1352,18 @@ function simulateModificationEffect(
         ? maxLvefRecovery * (1 - Math.exp(-lvefDelta / (maxLvefRecovery * 0.7)))
         : lvefDelta; // Negative deltas (removal) pass through unattenuated
     proj.lvef = Math.min(55, currentPatient.lvef + attenuatedLvefDelta);
+
+    // Cardiac output compensation for HFrEF:
+    // In severely reduced LVEF, afterload reduction from GDMT improves forward flow
+    // (Frank-Starling mechanism), partially offsetting the vasodilatory BP drop.
+    // This is why GDMT can be safely initiated at SBP 90-100 in HFrEF
+    // (COPERNICUS enrolled SBP >= 85; PIONEER-HF enrolled SBP >= 100 in-hospital).
+    if (currentPatient.lvef < 40 && attenuatedLvefDelta > 0 && sbpDelta > 0) {
+        const coCompensation = Math.min(sbpDelta * 0.35, attenuatedLvefDelta * 0.4);
+        sbpDelta -= coCompensation;
+        dbpDelta -= coCompensation * 0.5;
+    }
+
     if (currentPatient.lavi) {
         proj.lavi = Math.max(15, currentPatient.lavi * laviFactorTotal);
     }
@@ -1373,9 +1473,9 @@ function simulateModificationEffect(
 
     // Liver disease safety warnings
     if (currentPatient.comorbidities.has('Liver Disease (Child-Pugh B/C)')) {
-        const hasMRAInRegimen = resultingRegimen.some(r => r.med.drug_class === 'MRA');
+        const hasMRAInRegimen = resultingRegimen.some(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA');
         if (hasMRAInRegimen) {
-            const mraName = resultingRegimen.find(r => r.med.drug_class === 'MRA')?.med.name;
+            const mraName = resultingRegimen.find(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA')?.med.name;
             warnings.push(`Hepatic Impairment: ${mraName} accumulates in cirrhosis. Monitor K+ and renal function closely. Consider dose reduction.`);
         }
     }
@@ -1403,6 +1503,26 @@ function simulateModificationEffect(
         }
     }
 
+    // --- Drug-Drug Interaction (DDI) Warnings ---
+    const hasNitrate = resultingRegimen.some(r => r.med.drug_class === 'Vasodilator'); // H/ISDN
+    const hasRAASDrug = resultingRegimen.some(r => ['ARNI', 'ACEi', 'ARB'].includes(r.med.drug_class));
+
+    // DDI-1: Nitrate (H/ISDN) + PDE5 inhibitor → fatal hypotension
+    if (hasNitrate && currentPatient.comorbidities.has('Pulmonary Hypertension')) {
+        warnings.push('DDI WARNING: Nitrate (Isosorbide Dinitrate) is CONTRAINDICATED with PDE5 inhibitors (sildenafil/tadalafil) commonly used in pulmonary hypertension. Risk of fatal hypotension.');
+    }
+
+    // DDI-2: RAAS + chronic NSAID use → AKI risk (extremely common outpatient DDI)
+    if (hasRAASDrug && currentPatient.comorbidities.has('Chronic NSAID Use')) {
+        warnings.push('DDI WARNING: RAAS inhibitor + chronic NSAID use significantly increases AKI risk. Discontinue NSAIDs if possible. If unavoidable, monitor creatinine and potassium weekly.');
+    }
+
+    // DDI-3: Digoxin + loop diuretic without K+ protection → toxicity
+    // (Already partially covered by kNote above, but reinforce with formal DDI language)
+    if (hasDigoxin && hasDiuretic && !hasMRA && proj.potassium < 4.0) {
+        warnings.push('DDI WARNING: Digoxin + loop diuretic without potassium-sparing agent. Hypokalemia (projected K+ ' + proj.potassium.toFixed(1) + ') potentiates digoxin toxicity (arrhythmia, Torsade de Pointes). Add MRA or supplement potassium.');
+    }
+
     return { projectedPatient: proj, cost: totalCost, complexity: complexityScore, warnings, rationale: uniqueRationale, specialFeatureBonus };
 }
 
@@ -1418,13 +1538,14 @@ export function generateAndScoreModifications(
 
     // --- S4: Pregnancy safety alert ---
     if (patient.is_pregnant === true) {
-        clinicalAlerts.push('PREGNANCY ALERT: ACEi, ARB, ARNI, and MRA are contraindicated (Category X). SGLT2i excluded (Category C — insufficient human safety data). These agents have been excluded from all recommendations.');
+        clinicalAlerts.push('PREGNANCY ALERT: ACEi, ARB, ARNI, MRA, and nsMRA (Finerenone) are contraindicated (Category X). SGLT2i excluded (Category C — insufficient human safety data). These agents have been excluded from all recommendations.');
     }
 
     // --- S2: Hemodynamic instability — block pharmacologic optimization ---
-    if (patient.sbp < 85) {
+    // Threshold raised to SBP < 90 (MAP ~65 mmHg): oral GDMT initiation requires adequate perfusion
+    if (patient.sbp < 90) {
         clinicalAlerts.push(
-            'HEMODYNAMIC INSTABILITY: SBP < 85 mmHg. Oral GDMT optimization is unsafe at current blood pressure. ' +
+            'HEMODYNAMIC INSTABILITY: SBP < 90 mmHg. Oral GDMT optimization is unsafe at current blood pressure. ' +
             'Stabilize hemodynamics first. Consider: IV inotropes (dobutamine/milrinone), hemodynamic monitoring (PA catheter), ' +
             'vasopressor support if needed, and Advanced Heart Failure consultation.'
         );
@@ -1475,6 +1596,11 @@ export function generateAndScoreModifications(
         }
         if (m.drug_class === 'MRA' && excludeMRA) {
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Cross-reactivity with prior MRA intolerance" });
+            return false;
+        }
+        // nsMRA: exclude only for hyperkalemia intolerance (no antiandrogen effects → gynecomastia doesn't apply)
+        if (m.drug_class === 'nsMRA' && exclusionReasons.has("Hyperkalemia")) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Hyperkalemia intolerance (applies to all MRA types)" });
             return false;
         }
 
@@ -1583,9 +1709,12 @@ export function generateAndScoreModifications(
             if (hasDiureticRemoval) overall += 20;
         }
 
-        // Safety penalties
-        if (p.sbp < 85) overall = 0;
-        else if (p.sbp < 90) overall -= 50;
+        // Graduated hemodynamic safety penalties for PROJECTED SBP
+        // The input SBP < 90 gate is a separate hard block for truly hypotensive patients.
+        // These penalties apply to the projected state after adding medications.
+        if (p.sbp < 85) overall = 0;         // Projected severe hypotension — disqualify
+        else if (p.sbp < 90) overall -= 60;  // Projected moderate hypotension — heavy penalty
+        else if (p.sbp < 95) overall -= 30;  // Projected borderline — moderate penalty
         if (p.pulse < 50) overall -= 50;
         if (p.potassium > 5.5) overall -= 50;
 
@@ -1600,7 +1729,7 @@ export function generateAndScoreModifications(
             regimen: activeModSet.resulting_regimen,
             projected_patient: p,
             baseline_lvef: patient.lvef,
-            overall_score: Math.round(Math.max(0, overall)),
+            overall_score: Math.round(Math.min(100, Math.max(0, overall))),
             domain_scores: {
                 neurohormonal: Math.round(s_neuro),
                 functional: Math.round(s_func),
@@ -1642,7 +1771,7 @@ export function generateAndScoreModifications(
     if (!topPick) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
 
     // S2: When hemodynamically unstable, return only the clinical alerts — no drug recommendations
-    if (patient.sbp < 85) {
+    if (patient.sbp < 90) {
         return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
     }
 
