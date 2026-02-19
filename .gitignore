@@ -27,3 +27,5 @@ tsc_errors_final.txt
 tsc_output.txt
 verification_debug.txt
 verification_results.txt
+
+.vercel

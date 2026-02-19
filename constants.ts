@@ -486,8 +486,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         contraindications: (p) => {
             // FINEARTS-HF enrolled LVEF ≥ 40 only; no evidence for HFrEF
             // HFimpEF (previous LVEF ≤ 40) is managed as HFrEF — use steroidal MRA instead
+            // Liver Disease (Child-Pugh B/C): CYP3A4 substrate, reduced clearance in cirrhosis
             const isHFimpEF = p.previous_lvef !== undefined && p.previous_lvef <= 40 && p.lvef > 40;
-            return p.lvef < 40 || isHFimpEF || p.potassium > 5.5 || p.egfr < 25 || (p.is_pregnant === true);
+            return p.lvef < 40 || isHFimpEF || p.potassium > 5.5 || p.egfr < 25 || (p.is_pregnant === true)
+                || p.comorbidities.has('Liver Disease (Child-Pugh B/C)');
         },
         renal_adjustment: (egfr) => {
             // Per Kerendia PI: start 10mg if eGFR 25-59, start 20mg if eGFR ≥ 60
@@ -870,7 +872,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
         }),
         hemodynamic_effects: (dose) => ({ sbp_drop: 0, hr_drop: Number(dose) >= 125 ? 8 : 4, potassium_change: 0 }),
         side_effects: () => ({ nausea: 0.10, visual_disturbances: 0.05, arrhythmia: 0.05 }),
-        // Removed hard eGFR<30 contraindication — renal_adjustment caps dose instead (DIG trial included CKD patients)
+        contraindications: (p) => {
+            // K+ > 5.5: Hyperkalemia potentiates digitalis toxicity (shifts binding, arrhythmia risk)
+            // eGFR < 15: End-stage renal without dialysis monitoring — accumulation risk too high
+            // (eGFR 15-30 handled by renal_adjustment dose cap to 62.5mcg)
+            return p.potassium > 5.5 || p.egfr < 15;
+        },
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 62.5, caution: true }; // Half-dose; target level 0.5-0.9 ng/mL
             return {};

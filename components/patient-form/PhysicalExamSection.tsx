@@ -8,13 +8,17 @@ interface PhysicalExamSectionProps {
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
     onVolumeChange: (field: 'current_weight_kg' | 'dry_weight_kg', val: number) => void;
     onToggleFinding: (finding: string) => void;
+    validationErrors?: Record<string, string>;
+    clinicalWarnings?: Record<string, string>;
 }
 
 export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
     patientData,
     onChange,
     onVolumeChange,
-    onToggleFinding
+    onToggleFinding,
+    validationErrors = {},
+    clinicalWarnings = {}
 }) => {
     // Volume Status Calculations
     const weightDiff = patientData.volume_status.current_weight_kg - patientData.volume_status.dry_weight_kg;
@@ -45,24 +49,35 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
                 <div>
                     <Label>SBP / DBP (mmHg)</Label>
                     <div className="flex gap-2">
-                        <Input type="number" name="sbp" value={patientData.sbp} onChange={onChange} placeholder="Sys" aria-label="Systolic blood pressure" />
-                        <Input type="number" name="dbp" value={patientData.dbp} onChange={onChange} placeholder="Dia" aria-label="Diastolic blood pressure" />
+                        <Input type="number" name="sbp" value={patientData.sbp} onChange={onChange} placeholder="Sys" aria-label="Systolic blood pressure" error={validationErrors.sbp} />
+                        <Input type="number" name="dbp" value={patientData.dbp} onChange={onChange} placeholder="Dia" aria-label="Diastolic blood pressure" error={validationErrors.dbp} />
                     </div>
                 </div>
                 <div>
                     <Label>Pulse / SpO2</Label>
                     <div className="flex gap-2">
                         <div className="relative w-full">
-                            <Input type="number" name="pulse" value={patientData.pulse} onChange={onChange} placeholder="BPM" aria-label="Pulse rate" />
+                            <Input type="number" name="pulse" value={patientData.pulse} onChange={onChange} placeholder="BPM" aria-label="Pulse rate" error={validationErrors.pulse} />
                             <span className="absolute right-2 top-2 text-xs text-slate-400">bpm</span>
                         </div>
                         <div className="relative w-full">
-                            <Input type="number" name="oxygen_saturation" value={patientData.oxygen_saturation ?? ''} onChange={onChange} placeholder="%" aria-label="Oxygen saturation" />
+                            <Input type="number" name="oxygen_saturation" value={patientData.oxygen_saturation ?? ''} onChange={onChange} placeholder="%" aria-label="Oxygen saturation" error={validationErrors.oxygen_saturation} />
                             <span className="absolute right-2 top-2 text-xs text-slate-400">%</span>
                         </div>
                     </div>
                 </div>
             </div>
+
+            {clinicalWarnings.sbp && (
+                <div className="mb-4 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">
+                    ⚠ {clinicalWarnings.sbp}
+                </div>
+            )}
+            {clinicalWarnings.pulse && (
+                <div className="mb-4 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">
+                    ⚠ {clinicalWarnings.pulse}
+                </div>
+            )}
 
             {/* Volume Status */}
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-2">
@@ -73,11 +88,11 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
                 <div className="grid grid-cols-2 gap-4 mb-2">
                     <div>
                         <Label htmlFor="dry_weight_kg">Dry Wt (kg)</Label>
-                        <Input type="number" name="dry_weight_kg" value={patientData.volume_status.dry_weight_kg} onChange={(e) => onVolumeChange('dry_weight_kg', Number(e.target.value))} />
+                        <Input type="number" name="dry_weight_kg" value={patientData.volume_status.dry_weight_kg} onChange={(e) => onVolumeChange('dry_weight_kg', Number(e.target.value))} error={validationErrors.dry_weight_kg} />
                     </div>
                     <div>
                         <Label htmlFor="current_weight_kg">Current (kg)</Label>
-                        <Input type="number" name="current_weight_kg" value={patientData.volume_status.current_weight_kg} onChange={(e) => onVolumeChange('current_weight_kg', Number(e.target.value))} />
+                        <Input type="number" name="current_weight_kg" value={patientData.volume_status.current_weight_kg} onChange={(e) => onVolumeChange('current_weight_kg', Number(e.target.value))} error={validationErrors.current_weight_kg} />
                     </div>
                 </div>
             </div>

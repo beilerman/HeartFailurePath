@@ -6,9 +6,11 @@ import type { Patient } from '../../types';
 interface DiagnosticsSectionProps {
     patientData: Patient;
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    validationErrors?: Record<string, string>;
+    clinicalWarnings?: Record<string, string>;
 }
 
-export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientData, onChange }) => {
+export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientData, onChange, validationErrors = {}, clinicalWarnings = {} }) => {
     return (
         <section>
             <h3 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
@@ -19,22 +21,22 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <Label htmlFor="lvef">LVEF (%)</Label>
-                    <Input type="number" name="lvef" value={patientData.lvef} onChange={onChange} />
+                    <Input type="number" name="lvef" value={patientData.lvef} onChange={onChange} error={validationErrors.lvef} />
                 </div>
                 <div>
                     <Label htmlFor="nt_pro_bnp">NT-proBNP</Label>
-                    <Input type="number" name="nt_pro_bnp" value={patientData.nt_pro_bnp} onChange={onChange} />
+                    <Input type="number" name="nt_pro_bnp" value={patientData.nt_pro_bnp} onChange={onChange} error={validationErrors.nt_pro_bnp} />
                 </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <Label htmlFor="lvedd">LVEDD (mm)</Label>
-                    <Input type="number" name="lvedd" value={patientData.lvedd ?? ''} onChange={onChange} placeholder="Normal < 55" />
+                    <Input type="number" name="lvedd" value={patientData.lvedd ?? ''} onChange={onChange} placeholder="Normal < 55" error={validationErrors.lvedd} />
                 </div>
                 <div>
                     <Label htmlFor="lavi">LAVI (mL/m²)</Label>
-                    <Input type="number" name="lavi" value={patientData.lavi ?? ''} onChange={onChange} placeholder="Normal < 34" />
+                    <Input type="number" name="lavi" value={patientData.lavi ?? ''} onChange={onChange} placeholder="Normal < 34" error={validationErrors.lavi} />
                 </div>
             </div>
 
@@ -42,7 +44,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <Label htmlFor="creatinine">Creatinine</Label>
-                    <Input type="number" step="0.1" name="creatinine" value={patientData.creatinine} onChange={onChange} />
+                    <Input type="number" step="0.1" name="creatinine" value={patientData.creatinine} onChange={onChange} error={validationErrors.creatinine} />
                 </div>
                 <div className="relative">
                     <Label htmlFor="egfr">eGFR (Calc)</Label>
@@ -56,23 +58,29 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 </div>
                 <div>
                     <Label htmlFor="bun">BUN</Label>
-                    <Input type="number" name="bun" value={patientData.bun} onChange={onChange} />
+                    <Input type="number" name="bun" value={patientData.bun} onChange={onChange} error={validationErrors.bun} />
                 </div>
                 <div>
                     <Label htmlFor="potassium">Potassium</Label>
-                    <Input type="number" step="0.1" name="potassium" value={patientData.potassium} onChange={onChange} />
+                    <Input type="number" step="0.1" name="potassium" value={patientData.potassium} onChange={onChange} error={validationErrors.potassium} warning={clinicalWarnings.potassium} />
                 </div>
             </div>
+
+            {clinicalWarnings.egfr && (
+                <div className="mb-4 px-3 py-2 rounded-md bg-amber-50 border border-amber-300 text-amber-800 text-xs font-medium">
+                    ⚠ {clinicalWarnings.egfr}
+                </div>
+            )}
 
             {/* Iron & Pulmonary */}
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label htmlFor="ferritin">Ferritin</Label>
-                    <Input type="number" name="ferritin" value={patientData.ferritin ?? ''} onChange={onChange} />
+                    <Input type="number" name="ferritin" value={patientData.ferritin ?? ''} onChange={onChange} error={validationErrors.ferritin} />
                 </div>
                 <div>
                     <Label htmlFor="tsat">TSAT (%)</Label>
-                    <Input type="number" name="tsat" value={patientData.tsat ?? ''} onChange={onChange} />
+                    <Input type="number" name="tsat" value={patientData.tsat ?? ''} onChange={onChange} error={validationErrors.tsat} />
                 </div>
                 <div>
                     <Label htmlFor="peak_flow_lpm">Peak Flow (L/min)</Label>

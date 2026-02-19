@@ -6,9 +6,10 @@ import type { Patient } from '../../types';
 interface DemographicsSectionProps {
     patientData: Patient;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    validationErrors?: Record<string, string>;
 }
 
-export const DemographicsSection: React.FC<DemographicsSectionProps> = ({ patientData, onChange }) => {
+export const DemographicsSection: React.FC<DemographicsSectionProps> = ({ patientData, onChange, validationErrors = {} }) => {
     return (
         <section>
             <h3 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
@@ -18,7 +19,7 @@ export const DemographicsSection: React.FC<DemographicsSectionProps> = ({ patien
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <Label htmlFor="age">Age</Label>
-                    <Input type="number" name="age" value={patientData.age} onChange={onChange} />
+                    <Input type="number" name="age" value={patientData.age} onChange={onChange} error={validationErrors.age} />
                 </div>
                 <div>
                     <Label htmlFor="sex">Sex</Label>
@@ -40,7 +41,7 @@ export const DemographicsSection: React.FC<DemographicsSectionProps> = ({ patien
                 <div className="grid grid-cols-2 gap-2">
                     <div>
                         <Label htmlFor="height_cm">Height (cm)</Label>
-                        <Input type="number" name="height_cm" value={patientData.height_cm} onChange={onChange} />
+                        <Input type="number" name="height_cm" value={patientData.height_cm} onChange={onChange} error={validationErrors.height_cm} />
                     </div>
                     <div>
                         <Label htmlFor="bmi">BMI</Label>

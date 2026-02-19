@@ -396,6 +396,135 @@ async function runVerification() {
                 }
             }
 
+            // 37. Projected SBP Safety -> Top regimen must not project SBP < 85
+            if (scenario.title.includes('Projected SBP Safety')) {
+                if (topRegimen) {
+                    const projSbp = topRegimen.projected_patient.sbp;
+                    if (projSbp < 85) {
+                        failures.push(`Top regimen projects dangerous SBP ${projSbp.toFixed(0)} (must stay > 85)`);
+                        scenarioPassed = false;
+                    }
+                }
+            }
+
+            // 38. K+ Trajectory -> If MRA added, projected K+ < 5.5 OR Patiromer included
+            if (scenario.title.includes('K+ Trajectory')) {
+                if (topRegimen && classes.has('MRA')) {
+                    const projK = topRegimen.projected_patient.potassium;
+                    const hasBinder = meds.includes('Patiromer') || meds.includes('Lokelma (SZC)');
+                    if (projK >= 5.5 && !hasBinder) {
+                        failures.push(`K+ trajectory unsafe: projected K+ ${projK.toFixed(1)} with MRA but no binder rescue`);
+                        scenarioPassed = false;
+                    }
+                }
+            }
+
+            // 39. eGFR 25 SGLT2i Boundary -> Dapagliflozin should still be offered at exactly eGFR 25
+            if (scenario.title.includes('eGFR 25 SGLT2i Boundary')) {
+                const anySGLT2 = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'SGLT2i')
+                );
+                if (!anySGLT2) {
+                    failures.push('SGLT2i not offered at eGFR 25 (should be allowed at boundary)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 40. Pregnant + CKD4 -> No RAAS/MRA/SGLT2i, pregnancy alert present
+            if (scenario.title.includes('Pregnant + CKD4')) {
+                if (classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB')) {
+                    failures.push('RAAS agent prescribed in pregnant + CKD4 patient');
+                    scenarioPassed = false;
+                }
+                if (classes.has('MRA') || classes.has('nsMRA')) {
+                    failures.push('MRA/nsMRA prescribed in pregnant patient');
+                    scenarioPassed = false;
+                }
+                if (classes.has('SGLT2i')) {
+                    failures.push('SGLT2i prescribed in pregnant patient');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.includes('PREGNANCY'))) {
+                    failures.push('Missing pregnancy clinical alert');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 41. LVEF Recovery Cap -> Projected LVEF must not exceed 55
+            if (scenario.title.includes('LVEF Recovery Cap')) {
+                if (topRegimen) {
+                    const projLvef = topRegimen.projected_patient.lvef;
+                    if (projLvef > 55) {
+                        failures.push(`Projected LVEF ${projLvef.toFixed(0)}% exceeds physiological cap of 55%`);
+                        scenarioPassed = false;
+                    }
+                }
+            }
+
+            // 42. Finerenone in HFpEF -> nsMRA should be eligible, steroidal MRA should NOT be in top regimen
+            if (scenario.title.includes('Finerenone in HFpEF')) {
+                // Verify steroidal MRA is NOT inappropriately offered for HFpEF
+                if (topRegimen && classes.has('MRA')) {
+                    failures.push('Steroidal MRA in top regimen for HFpEF (should prefer nsMRA or SGLT2i)');
+                    scenarioPassed = false;
+                }
+                // Also verify SGLT2i is present (the primary HFpEF pillar)
+                if (topRegimen && !classes.has('SGLT2i')) {
+                    failures.push('SGLT2i missing in top regimen for HFpEF');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 43. Hepatic BB Selection -> Carvedilol should be excluded, hepatic warning present
+            if (scenario.title.includes('Hepatic BB Selection')) {
+                if (topRegimen && meds.includes('Carvedilol')) {
+                    failures.push('Carvedilol prescribed despite Liver Disease (hepatically metabolized)');
+                    scenarioPassed = false;
+                }
+                if (topRegimen) {
+                    const allWarnings = scoredRegimens.flatMap(r => r.warnings);
+                    const hasHepaticWarning = allWarnings.some(w => w.includes('Hepatic Impairment'));
+                    if (!hasHepaticWarning) {
+                        failures.push('Missing hepatic impairment warning for liver disease patient');
+                        scenarioPassed = false;
+                    }
+                }
+            }
+
+            // 44. Vericiguat LVEF Boundary (LVEF 46) -> Vericiguat NOT offered (gate < 45)
+            if (scenario.title.includes('Vericiguat LVEF Boundary')) {
+                const anyVericiguat = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'sGC Stimulator')
+                );
+                if (anyVericiguat) {
+                    failures.push('Vericiguat offered at LVEF 46 (gate requires LVEF < 45)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 45. GLP-1 Not Offered in HFrEF -> No GLP-1 despite BMI 35 (LVEF 30 = HFrEF)
+            if (scenario.title.includes('GLP-1 Not Offered in HFrEF')) {
+                const anyGLP1 = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class.includes('GLP'))
+                );
+                if (anyGLP1) {
+                    failures.push('GLP-1 offered in HFrEF (LVEF 30) — requires LVEF >= 40');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 46. Digoxin Renal Dosing (eGFR 25, AFib) -> Digoxin max 62.5mcg
+            if (scenario.title.includes('Digoxin Renal Dosing')) {
+                const digoxinInAny = scoredRegimens.flatMap(r => r.regimen).filter(m => m.med.name === 'Digoxin');
+                if (digoxinInAny.length > 0) {
+                    const maxDigoxinDose = Math.max(...digoxinInAny.map(d => Number(d.dose.strength)));
+                    if (maxDigoxinDose > 62.5) {
+                        failures.push(`Digoxin dose ${maxDigoxinDose}mcg exceeds renal-adjusted max 62.5mcg at eGFR 25`);
+                        scenarioPassed = false;
+                    }
+                }
+            }
+
             // 18. Structured monitoring plan should appear when RAAS/MRA/diuretic intensification is recommended
             if (topRegimen?.modification_set) {
                 const needsStructuredMonitoring = topRegimen.modification_set.modifications.some(m => {

@@ -6,9 +6,11 @@ import type { Patient } from '../../types';
 interface SocialSectionProps {
     patientData: Patient;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    setPatientData: React.Dispatch<React.SetStateAction<Patient>>;
+    clinicalWarnings?: Record<string, string>;
 }
 
-export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onChange }) => {
+export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onChange, setPatientData, clinicalWarnings = {} }) => {
     return (
         <section>
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-3">
@@ -96,6 +98,25 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                         Current: {patientData.max_new_classes_per_visit} (default 2)
                     </p>
                 </div>
+
+                {patientData.sex === 'Female' && (
+                    <div>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={patientData.is_pregnant === true}
+                                onChange={(e) => setPatientData(prev => ({ ...prev, is_pregnant: e.target.checked || undefined }))}
+                                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span className="text-sm font-semibold text-slate-700">Pregnant</span>
+                        </label>
+                        {clinicalWarnings.pregnancy && (
+                            <div className="mt-2 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">
+                                ⚠ {clinicalWarnings.pregnancy}
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </section>
     );

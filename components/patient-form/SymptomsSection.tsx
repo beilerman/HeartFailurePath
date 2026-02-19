@@ -5,9 +5,11 @@ import type { Patient } from '../../types';
 interface SymptomsSectionProps {
     patientData: Patient;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+    validationErrors?: Record<string, string>;
+    clinicalWarnings?: Record<string, string>;
 }
 
-export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ patientData, onChange }) => {
+export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ patientData, onChange, validationErrors = {}, clinicalWarnings = {} }) => {
     return (
         <section className="mt-4">
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -22,9 +24,15 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ patientData, o
                 </div>
                 <div>
                     <Label htmlFor="kccq_score">KCCQ (0-100)</Label>
-                    <Input type="number" name="kccq_score" value={patientData.kccq_score} onChange={onChange} />
+                    <Input type="number" name="kccq_score" value={patientData.kccq_score} onChange={onChange} error={validationErrors.kccq_score} />
                 </div>
             </div>
+
+            {clinicalWarnings.nyha && (
+                <div className="mb-4 px-3 py-2 rounded-md bg-amber-50 border border-amber-300 text-amber-800 text-xs font-medium">
+                    ⚠ {clinicalWarnings.nyha}
+                </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
