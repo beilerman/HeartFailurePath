@@ -1,11 +1,11 @@
 import React from 'react';
 import { ActivityIcon } from '../icons';
-import { Label, Input } from './Common';
+import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
 
 interface PhysicalExamSectionProps {
     patientData: Patient;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     onVolumeChange: (field: 'current_weight_kg' | 'dry_weight_kg', val: number) => void;
     onToggleFinding: (finding: string) => void;
     validationErrors?: Record<string, string>;
@@ -66,6 +66,16 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
                         </div>
                     </div>
                 </div>
+                <div className="col-span-2">
+                    <Label htmlFor="rhythm">Rhythm</Label>
+                    <Select name="rhythm" value={patientData.rhythm} onChange={onChange}>
+                        <option value="Sinus">Sinus</option>
+                        <option value="AFib">AFib</option>
+                        <option value="Paced">Paced</option>
+                        <option value="2nd Degree AV Block">2nd Degree AV Block</option>
+                        <option value="3rd Degree AV Block">3rd Degree AV Block</option>
+                    </Select>
+                </div>
             </div>
 
             {clinicalWarnings.sbp && (
@@ -76,6 +86,11 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
             {clinicalWarnings.pulse && (
                 <div className="mb-4 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">
                     ⚠ {clinicalWarnings.pulse}
+                </div>
+            )}
+            {clinicalWarnings.av_block && (
+                <div className="mb-4 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">
+                    ⚠ {clinicalWarnings.av_block}
                 </div>
             )}
             {clinicalWarnings.low_output && (

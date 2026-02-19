@@ -122,6 +122,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         check('lavi', patientData.lavi);
         check('dry_weight_kg', patientData.volume_status.dry_weight_kg);
         check('current_weight_kg', patientData.volume_status.current_weight_kg);
+        if (patientData.sbp <= patientData.dbp) {
+            errors.sbp = 'SBP must be greater than DBP';
+            errors.dbp = 'DBP must be lower than SBP';
+        }
         return errors;
     }, [patientData]);
 
@@ -130,9 +134,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         const warnings: Record<string, string> = {};
         const bunCrRatio = patientData.creatinine > 0 ? patientData.bun / patientData.creatinine : 0;
         const pulsePressure = patientData.sbp - patientData.dbp;
-        const hasLowOutputMarker = patientData.volume_status.exam_findings.has('Cool Extremities') || pulsePressure <= 25 || bunCrRatio > 20;
+        const hasInvalidBP = patientData.sbp <= patientData.dbp;
+        const hasLowOutputMarker = !hasInvalidBP && (patientData.volume_status.exam_findings.has('Cool Extremities') || pulsePressure <= 25 || bunCrRatio > 20);
 
-        if (patientData.sbp < 90) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
+        if (hasInvalidBP) warnings.sbp = 'Invalid BP entry: SBP must exceed DBP';
+        else if (patientData.sbp < 90) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
         if (patientData.potassium > 5.5) warnings.potassium = 'MRA contraindicated at K+ > 5.5';
         else if (patientData.potassium < 3.5) warnings.potassium = 'K+ < 3.5 increases digoxin/arrhythmia risk';
         else if (patientData.potassium < 4.0) warnings.potassium = 'K+ 3.5-4.0: monitor closely with loop diuretics/digoxin';
@@ -140,6 +146,9 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         if (patientData.is_pregnant) warnings.pregnancy = 'RAAS/MRA/nsMRA/SGLT2i excluded';
         if (patientData.nyha_class === 'IV') warnings.nyha = 'BB initiation blocked';
         if (patientData.pulse < 55) warnings.pulse = 'Severe bradycardia - BB contraindicated';
+        if (patientData.rhythm === '2nd Degree AV Block' || patientData.rhythm === '3rd Degree AV Block') {
+            warnings.av_block = 'AV block present: beta blockers and digoxin are contraindicated unless paced/specialist-directed.';
+        }
         if (patientData.egfr < 30) warnings.egfr = 'Severe CKD - MRA CI, RAAS limited, SGLT2i initiation blocked';
         if (patientData.egfr < 20) warnings.egfr = 'eGFR < 20: loop response may be poor; consider BID/TID strategy';
         if (patientData.lvef < 20 && hasLowOutputMarker) warnings.low_output = 'Low-output profile detected (LVEF < 20 with hypoperfusion markers)';

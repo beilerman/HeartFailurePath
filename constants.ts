@@ -24,13 +24,18 @@ export const COMMON_SIDE_EFFECTS = [
 export const RELEVANT_COMORBIDITIES = [
     "Atrial Fibrillation",
     "Coronary Artery Disease",
+    "Type 1 Diabetes Mellitus",
     "Diabetes Mellitus Type 2",
+    "Prior DKA / Euglycemic DKA",
     "Chronic Kidney Disease",
     "Severe Asthma / Bronchospasm",
     "Gout",
     "History of Angioedema",
     "Hypotension (Chronic)",
     "Liver Disease (Child-Pugh B/C)",
+    "On Amiodarone",
+    "On Verapamil/Diltiazem",
+    "On Lithium",
     "Obesity (BMI > 30)",
     "Pulmonary Hypertension",
     "Chronic NSAID Use"
@@ -263,8 +268,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         available_doses: [
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 150, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false, is_target_dose: true }, // HEAAL Trial dose
+            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true }, // ACC/AHA 2022 target
+            { strength: 150, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // HEAAL Trial dose (off-label)
         ],
         chf_effects: (dose) => {
              // ELITE II / HEAAL: Comparable to ACEi at high doses
@@ -320,7 +325,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose)/5, hr_drop: 8 + Number(dose)/3, potassium_change: 0.05 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.15, hypotension: 0.10, fluid_retention_transient: 0.05 }),
-        contraindications: (p) => p.pulse < 55 || p.comorbidities.has("Severe Asthma / Bronchospasm") || p.comorbidities.has("Liver Disease (Child-Pugh B/C)"),
+        contraindications: (p) =>
+            p.pulse < 55 ||
+            p.rhythm === '2nd Degree AV Block' ||
+            p.rhythm === '3rd Degree AV Block' ||
+            p.comorbidities.has("Severe Asthma / Bronchospasm") ||
+            p.comorbidities.has("Liver Disease (Child-Pugh B/C)"),
         // COPERNICUS: 50mg BID target only for patients > 85kg; standard target is 25mg BID
         renal_adjustment: (_egfr, patient) => {
             const dryWeight = patient?.volume_status?.dry_weight_kg ?? 85;
@@ -355,7 +365,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/50, hr_drop: 8 + Number(dose)/20, potassium_change: 0 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.10 }),
-        contraindications: (p) => p.pulse < 55,
+        contraindications: (p) =>
+            p.pulse < 55 ||
+            p.rhythm === '2nd Degree AV Block' ||
+            p.rhythm === '3rd Degree AV Block' ||
+            p.comorbidities.has("Severe Asthma / Bronchospasm") ||
+            p.comorbidities.has("Liver Disease (Child-Pugh B/C)"), // CYP2D6 metabolized; increased exposure in cirrhosis
     },
 
     {
@@ -383,10 +398,14 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/5, hr_drop: 8 + Number(dose)/1.5, potassium_change: 0 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.08 }),
-        contraindications: (p) => p.pulse < 55,
-        // Most beta-1 selective — safest BB option in reactive airway disease
+        contraindications: (p) =>
+            p.pulse < 55 ||
+            p.rhythm === '2nd Degree AV Block' ||
+            p.rhythm === '3rd Degree AV Block' ||
+            p.comorbidities.has("Severe Asthma / Bronchospasm"), // All BBs CI in severe asthma (ACC/AHA); cardioselectivity lost at higher doses
+        // Most beta-1 selective — preferred BB in COPD (NOT asthma, which remains an absolute CI)
         special_features: [
-            { feature: 'Preferred in Reactive Airway Disease (most beta-1 selective)', points: 10, criteria: (p) => p.comorbidities.has("COPD") || p.comorbidities.has("Severe Asthma / Bronchospasm") }
+            { feature: 'Preferred in COPD (most beta-1 selective)', points: 10, criteria: (p) => p.comorbidities.has("COPD") }
         ],
     },
 
@@ -419,6 +438,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/10, hr_drop: 0, potassium_change: 0.4 + (Number(dose)/50 * 0.4) }),
         side_effects: () => ({ hyperkalemia: 0.15, gynecomastia: 0.10, renal_worsening: 0.05 }),
         contraindications: (p) => p.potassium > 5.5 || p.egfr < 30 || (p.is_pregnant === true), // Relaxed from 5.2 → 5.5 to allow Patiromer rescue (DIAMOND); pregnancy Category X
+        renal_adjustment: (egfr) => {
+            if (egfr < 30) return { contraindicated: true };
+            if (egfr <= 45) return { max_dose: 25, caution: true };
+            return {};
+        },
     },
     {
         name: 'Eplerenone',
@@ -442,9 +466,14 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => ({ sbp_drop: 3, hr_drop: 0, potassium_change: 0.4 }),
         side_effects: () => ({ hyperkalemia: 0.15 }),
         special_features: [
-            { feature: 'Fewer endocrine side effects (Gynecomastia)', points: 10, criteria: (p) => true }
+            { feature: 'Fewer endocrine side effects (No gynecomastia risk)', points: 10, criteria: (p) => p.sex === 'Male' } // Only relevant advantage over spironolactone in males
         ],
         contraindications: (p) => p.potassium > 5.5 || p.egfr < 30 || (p.is_pregnant === true), // Relaxed from 5.2 → 5.5; pregnancy Category X
+        renal_adjustment: (egfr) => {
+            if (egfr < 30) return { contraindicated: true };
+            if (egfr <= 45) return { max_dose: 25, caution: true };
+            return {};
+        },
     },
 
     // ========================================
@@ -528,8 +557,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         contraindications: (p) => {
             // eGFR threshold applies to INITIATION only — continuation allowed (DAPA-CKD)
             const alreadyOnSGLT2i = p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i');
-            if (alreadyOnSGLT2i) return p.is_pregnant === true;
-            return p.egfr < 25 || (p.is_pregnant === true);
+            const hasT1orDkaRisk = p.comorbidities.has("Type 1 Diabetes Mellitus") || p.comorbidities.has("Prior DKA / Euglycemic DKA");
+            if (alreadyOnSGLT2i) return p.is_pregnant === true || hasT1orDkaRisk;
+            return p.egfr < 25 || p.is_pregnant === true || hasT1orDkaRisk;
         },
     },
     {
@@ -556,8 +586,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         contraindications: (p) => {
             // eGFR threshold applies to INITIATION only — continuation allowed (EMPA-KIDNEY)
             const alreadyOnSGLT2i = p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i');
-            if (alreadyOnSGLT2i) return p.is_pregnant === true;
-            return p.egfr < 20 || (p.is_pregnant === true);
+            const hasT1orDkaRisk = p.comorbidities.has("Type 1 Diabetes Mellitus") || p.comorbidities.has("Prior DKA / Euglycemic DKA");
+            if (alreadyOnSGLT2i) return p.is_pregnant === true || hasT1orDkaRisk;
+            return p.egfr < 25 || p.is_pregnant === true || hasT1orDkaRisk; // Harmonized with Dapagliflozin (ACC/AHA uniform eGFR >= 25 initiation)
         },
     },
 
@@ -570,6 +601,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Semaglutide (Wegovy)',
         drug_class: 'GLP-1 RA',
         available_doses: [
+             { strength: 0.25, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false }, // Mandatory starting dose (16-week escalation)
+             { strength: 1.0, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false }, // Mid-titration
              { strength: 2.4, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false, is_target_dose: true }
         ],
         chf_effects: (dose) => ({
@@ -586,13 +619,15 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              { feature: 'Indicated for Obesity Phenotype (BMI > 30)', points: 50, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) => p.bmi < 30
+        contraindications: (p) => p.bmi < 30 || p.is_pregnant === true // Teratogenic; discontinue ≥2 months before conception (FDA PI)
     },
     {
         name: 'Tirzepatide (Zepbound)',
         drug_class: 'GLP-1/GIP RA',
         is_best_in_class: true,
         available_doses: [
+             { strength: 2.5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false }, // Mandatory starting dose (4-week escalation schedule)
+             { strength: 5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false }, // Week 4
              { strength: 10, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false },
              { strength: 15, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false, is_target_dose: true }
         ],
@@ -610,7 +645,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              { feature: 'Superior Weight Loss & KCCQ Benefit (SUMMIT)', points: 60, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) => p.bmi < 30
+        contraindications: (p) => p.bmi < 30 || p.is_pregnant === true // Teratogenic; discontinue ≥2 months before conception (FDA PI)
     },
 
     // ========================================
@@ -772,8 +807,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // Initiation gate: HR >= 70 required (SHIFT trial enrollment)
             // Continuation: only discontinue if HR < 50 (actual safety threshold)
             const alreadyOnIvabradine = p.current_regimen?.some(r => r.med.drug_class === 'If Inhibitor');
-            if (alreadyOnIvabradine) return p.pulse < 50 || p.rhythm === 'AFib';
-            return p.pulse < 70 || p.rhythm === 'AFib';
+            const hasAvBlock = p.rhythm === '2nd Degree AV Block' || p.rhythm === '3rd Degree AV Block';
+            if (alreadyOnIvabradine) return p.pulse < 50 || p.rhythm === 'AFib' || hasAvBlock;
+            return p.pulse < 70 || p.rhythm === 'AFib' || hasAvBlock;
         },
         special_features: [
             {
@@ -788,18 +824,24 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Vericiguat',
         drug_class: 'sGC Stimulator',
         available_doses: [
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false, is_target_dose: true },
+            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // Mandatory starting dose (VICTORIA protocol)
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // Week 2 titration
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false, is_target_dose: true }, // Target dose (Week 4+)
         ],
-        chf_effects: () => ({
-            lvef_improvement_absolute: 1.0,
-            bnp_reduction_percent: 0.15,
-            weight_reduction_kg: 0,
-            kccq_improvement: 4,
-            structure_benefit_points: 5,
-            lavi_reduction_percent: 0.02,
-            lvedd_reduction_percent: 0.01 // VICTORIA
-        }),
-        hemodynamic_effects: () => ({ sbp_drop: 4, hr_drop: 0, potassium_change: 0 }),
+        chf_effects: (dose) => {
+            const d = Number(dose);
+            const ratio = d / 10;
+            return {
+                lvef_improvement_absolute: 0.5 + ratio * 0.5,
+                bnp_reduction_percent: 0.05 + ratio * 0.10,
+                weight_reduction_kg: 0,
+                kccq_improvement: 1.5 + ratio * 2.5,
+                structure_benefit_points: Math.round(2 + ratio * 3),
+                lavi_reduction_percent: 0.01 + ratio * 0.01,
+                lvedd_reduction_percent: ratio * 0.01 // VICTORIA
+            };
+        },
+        hemodynamic_effects: (dose) => ({ sbp_drop: 1.5 + Number(dose) / 10 * 2.5, hr_drop: 0, potassium_change: 0 }),
         side_effects: () => ({ hypotension: 0.10, anemia: 0.05 }),
         contraindications: (p) => {
             const nyhaEligible = p.nyha_class === 'II' || p.nyha_class === 'III' || p.nyha_class === 'IV';
@@ -845,9 +887,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
             lvedd_reduction_percent: 0
         }),
         hemodynamic_effects: (dose) => ({ sbp_drop: 0, hr_drop: 0, potassium_change: Number(dose) >= 10 ? -1.1 : -0.7 }), // Faster onset than Patiromer (1hr vs 7hr)
-        side_effects: () => ({ edema: 0.06 }), // Sodium content can cause mild edema
+        side_effects: () => ({ edema: 0.06 }), // ~400mg sodium per 10g dose can worsen HF congestion
         special_features: [
-            { feature: 'Enables RAAS/MRA Optimization in Hyperkalemia (HARMONIZE)', points: 50, criteria: (p) => p.potassium > 5.0 }
+            { feature: 'Enables RAAS/MRA Optimization in Hyperkalemia (HARMONIZE)', points: 50, criteria: (p) => p.potassium > 5.0 },
+            { feature: 'Sodium load risk in congested HF (400mg Na/dose)', points: -10, criteria: (p) => (p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg) > 2.0 }
         ]
     },
     {
@@ -893,7 +936,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // K+ > 5.5: Hyperkalemia potentiates digitalis toxicity (shifts binding, arrhythmia risk)
             // eGFR < 15: End-stage renal without dialysis monitoring — accumulation risk too high
             // (eGFR 15-30 handled by renal_adjustment dose cap to 62.5mcg)
-            return p.potassium > 5.5 || p.potassium < 3.5 || p.egfr < 15;
+            const hasAvBlock = p.rhythm === '2nd Degree AV Block' || p.rhythm === '3rd Degree AV Block';
+            return p.potassium > 5.5 || p.potassium < 3.5 || p.egfr < 15 || hasAvBlock;
         },
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 62.5, caution: true }; // Half-dose; target level 0.5-0.9 ng/mL
@@ -920,6 +964,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         }),
         hemodynamic_effects: () => ({ sbp_drop: 5, hr_drop: 0, potassium_change: -0.5 }),
         side_effects: () => ({ severe_hypokalemia: 0.30, dehydration: 0.20 }),
+        contraindications: (p) => p.egfr < 15, // Anuria/ESRD — no tubular function for thiazide mechanism
     },
     {
         name: 'Chlorthalidone',
@@ -943,6 +988,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 10, hr_drop: 0, potassium_change: -0.4 - (Number(dose) / 25 * 0.1) }),
         side_effects: () => ({ severe_hypokalemia: 0.25, dehydration: 0.15, hyponatremia: 0.10 }),
+        contraindications: (p) => p.egfr < 15, // Anuria/ESRD
     },
     {
         name: 'Hydrochlorothiazide',
@@ -966,5 +1012,6 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose) / 15, hr_drop: 0, potassium_change: -0.3 - (Number(dose) / 50 * 0.1) }),
         side_effects: () => ({ hypokalemia: 0.20, dehydration: 0.10, hyponatremia: 0.08 }),
+        contraindications: (p) => p.egfr < 30, // Ineffective at eGFR < 30 (unlike metolazone/chlorthalidone)
     }
 ];

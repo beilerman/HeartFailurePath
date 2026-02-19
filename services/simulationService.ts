@@ -64,7 +64,12 @@ function hasRecentWorseningHF(patient: Patient): boolean {
     return patient.recent_hf_worsening_within_6mo === 'yes';
 }
 
+// H2 fix: Require ≥2 of 3 hypoperfusion markers to avoid false positives from a single
+// nonspecific finding (e.g., BUN/Cr > 20 alone from dehydration, not true low output).
+// Markers: (1) cool extremities, (2) narrow pulse pressure ≤ 25, (3) prerenal azotemia BUN/Cr > 20.
 function isLowOutputState(patient: Patient): boolean {
+    // Invalid BP input can create false pulse-pressure triggers. Treat as not-assessable here.
+    if (patient.sbp <= patient.dbp) return false;
     if (patient.lvef >= 20) return false;
 
     const hasCoolExtremities = patient.volume_status.exam_findings.has('Cool Extremities');
@@ -73,7 +78,26 @@ function isLowOutputState(patient: Patient): boolean {
     const bunCrRatio = patient.creatinine > 0 ? patient.bun / patient.creatinine : 0;
     const hasPrerenalAzotemia = bunCrRatio > 20;
 
-    return hasCoolExtremities || hasNarrowPulsePressure || hasPrerenalAzotemia;
+    const markerCount = [hasCoolExtremities, hasNarrowPulsePressure, hasPrerenalAzotemia].filter(Boolean).length;
+    return markerCount >= 2;
+}
+
+function dedupeCurrentRegimen(regimen: RegimenMed[]): { regimen: RegimenMed[]; duplicateNames: string[] } {
+    const seen = new Set<string>();
+    const duplicateNames = new Set<string>();
+    const deduped: RegimenMed[] = [];
+
+    regimen.forEach(item => {
+        const key = item.med.name;
+        if (seen.has(key)) {
+            duplicateNames.add(item.med.name);
+            return;
+        }
+        seen.add(key);
+        deduped.push(item);
+    });
+
+    return { regimen: deduped, duplicateNames: Array.from(duplicateNames) };
 }
 
 function countNewClassGroups(candidate: RegimenMed[], current: RegimenMed[]): number {
@@ -225,6 +249,10 @@ function analyzeCurrentRegimen(
         missingPillars = missingPillars.filter(p => p !== 'Beta Blocker');
     }
 
+    // H5: Acute decompensation with existing BB — force dose reduction (do NOT abruptly discontinue = Class III harm)
+    // ACC/AHA 2022: Reduce BB dose in acute decompensation; abrupt withdrawal worsens outcomes
+    const forceDownBB = isAcutelyDecompensated && currentClassMap.has('Beta Blocker');
+
     // Build a map of all available meds by class group for lookup
     const tiersByGroup = new Map<string, RegimenMed[]>();
     medTiers.forEach(r => {
@@ -249,11 +277,13 @@ function analyzeCurrentRegimen(
     currentRegimen.forEach(current => {
         // Block titration UP and swaps for contraindicated meds — only allow down-titration/removal
         const isContraindicated = contraindicatedCurrentMeds.has(current.med.name);
+        // Block BB titration UP when acutely decompensated (reduce dose instead)
+        const isBBBlockedUp = forceDownBB && current.med.drug_class === 'Beta Blocker';
 
         const allTiers = getDoseTiers(current.med, patient);
         const currentStrength = Number(current.dose.strength);
 
-        if (!isContraindicated) {
+        if (!isContraindicated && !isBBBlockedUp) {
             const higherDoses = allTiers.filter(t =>
                 Number(t.dose.strength) > currentStrength
             );
@@ -396,8 +426,9 @@ function analyzeCurrentRegimen(
         }
     }
 
-    // GLP-1 if obese + HFpEF/HFmrEF (STEP-HFpEF, SUMMIT trials — no evidence for HFrEF)
-    if (patient.bmi >= 30 && patient.lvef >= 40 && !currentClasses.has('GLP-1 RA') && !currentClasses.has('GLP-1/GIP RA')) {
+    // GLP-1 if obese + HFpEF/HFmrEF (STEP-HFpEF, SUMMIT trials — no evidence for HFrEF or HFimpEF)
+    // HFimpEF is managed as HFrEF — GLP-1 not appropriate despite LVEF >= 40
+    if (patient.bmi >= 30 && patient.lvef >= 40 && !isHFimpEF && !currentClasses.has('GLP-1 RA') && !currentClasses.has('GLP-1/GIP RA')) {
         const glpTiers = medTiers.filter(r => r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA');
         if (glpTiers.length > 0) {
             // Pick best GLP-1 by KCCQ improvement
@@ -766,7 +797,10 @@ function generateCandidateModifications(
         const hasSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'MRA');
         const hasNonSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'nsMRA');
         const hasDualMRA = hasSteroidalMRA && hasNonSteroidalMRA;
-        return newClassCount <= maxNewPerVisit && !hasDualMRA;
+        // M4: Structural block for dual RAAS (ACEi+ARB, ACEi+ARNI, etc.) — not just warning
+        const raasInRegimen = c.resulting_regimen.filter(r => RAAS_CLASSES.has(r.med.drug_class));
+        const hasDualRAAS = raasInRegimen.length > 1;
+        return newClassCount <= maxNewPerVisit && !hasDualMRA && !hasDualRAAS;
     });
 }
 
@@ -1162,6 +1196,7 @@ function simulateModificationEffect(
     let hasRAAS = false;
     let hasMRA = false;
     let hasBeta = false;
+    let hasIvabradine = false;
     let hasGLP1 = false;
     let raasCount = 0;
     let diureticEffectStrength = 0;
@@ -1190,6 +1225,7 @@ function simulateModificationEffect(
         if (cls === 'SGLT2i') hasSGLT2 = true;
         if (cls === 'MRA' || cls === 'nsMRA') hasMRA = true;
         if (cls === 'Beta Blocker') hasBeta = true;
+        if (cls === 'If Inhibitor') hasIvabradine = true;
         if (cls === 'GLP-1 RA' || cls === 'GLP-1/GIP RA') hasGLP1 = true;
         if (['ARNI', 'ACEi', 'ARB'].includes(cls)) { hasRAAS = true; raasCount++; }
 
@@ -1454,8 +1490,14 @@ function simulateModificationEffect(
     //     despite very low baseline LVEF, demonstrating CO compensation in practice.
     //   - PIONEER-HF: Enrolled SBP ≥ 100 in-hospital; sacubitril/valsartan showed less
     //     hypotension than expected from its vasodilatory potency, consistent with CO offset.
-    if (currentPatient.lvef < 40 && attenuatedLvefDelta > 0 && sbpDelta > 0) {
-        const coCompensation = Math.min(sbpDelta * 0.35, attenuatedLvefDelta * 0.4);
+    // M7: Extended to LVEF < 50 (HFmrEF) with attenuated factor — Frank-Starling applies across
+    // the reduced EF spectrum, but effect diminishes as LVEF approaches normal
+    if (currentPatient.lvef < 50 && attenuatedLvefDelta > 0 && sbpDelta > 0) {
+        // Full 0.35 offset for LVEF < 40; linearly attenuated to 0.15 at LVEF 50
+        const coFactor = currentPatient.lvef < 40
+            ? 0.35
+            : 0.35 - (currentPatient.lvef - 40) / 10 * 0.20; // 40→0.35, 45→0.25, 50→0.15
+        const coCompensation = Math.min(sbpDelta * coFactor, attenuatedLvefDelta * 0.4);
         sbpDelta -= coCompensation;
         dbpDelta -= coCompensation * 0.5;
     }
@@ -1521,9 +1563,10 @@ function simulateModificationEffect(
         proj.volume_status.exam_findings.clear();
     }
 
-    proj.sbp = finalSbp;
-    proj.dbp = finalDbp;
-    proj.pulse = currentPatient.pulse - hrDelta;
+    // M6: Physiologic floor — prevent model artifacts (negative/zero) from misleading NPs
+    proj.sbp = Math.max(60, finalSbp);
+    proj.dbp = Math.max(30, finalDbp);
+    proj.pulse = Math.max(30, currentPatient.pulse - hrDelta);
     proj.potassium = currentPatient.potassium + kDelta;
 
     // --- Titration Timeline Warning ---
@@ -1561,6 +1604,21 @@ function simulateModificationEffect(
 
     if (raasCount > 1) {
         warnings.push("CONTRAINDICATION: Dual RAAS blockade (ACEi + ARB/ARNI) increases renal risk without benefit.");
+    }
+
+    // H1: ARB + angioedema history → mandatory monitoring warning (ACC/AHA: "use with caution")
+    const hasARBinRegimen = resultingRegimen.some(r => r.med.drug_class === 'ARB');
+    const angioedemaRiskPresent = currentPatient.comorbidities.has("History of Angioedema") ||
+        currentPatient.discontinued_meds.some(dm => {
+            const text = `${dm.reason} ${dm.reason_detail ?? ''}`.toLowerCase();
+            return text.includes('angioedema') && RAAS_CLASSES.has(dm.drug_class);
+        });
+    if (hasARBinRegimen && angioedemaRiskPresent) {
+        warnings.push(
+            'ANGIOEDEMA CAUTION: ARB prescribed with prior angioedema history. Cross-reactivity risk is low (~2-8%) but not zero. ' +
+            'Initiate in a monitored setting. Ensure patient has epinephrine auto-injector. Educate on angioedema signs (lip/tongue swelling). ' +
+            'If angioedema recurs on ARB, discontinue and use H/ISDN as RAAS alternative.'
+        );
     }
 
     const hasSteroidalMRA = resultingRegimen.some(r => r.med.drug_class === 'MRA');
@@ -1649,6 +1707,26 @@ function simulateModificationEffect(
         warnings.push('DDI WARNING: Digoxin + loop diuretic without potassium-sparing agent. Hypokalemia (projected K+ ' + proj.potassium.toFixed(1) + ') potentiates digoxin toxicity (arrhythmia, Torsade de Pointes). Add MRA or supplement potassium.');
     }
 
+    // DDI-4: Digoxin + amiodarone markedly raises digoxin exposure.
+    if (hasDigoxin && currentPatient.comorbidities.has('On Amiodarone')) {
+        warnings.push('DDI WARNING: Amiodarone can raise digoxin levels ~70-100%. Reduce digoxin dose and recheck serum level within 3-5 days.');
+    }
+
+    // DDI-5: Non-DHP CCB + beta blocker/digoxin increases bradycardia and AV block risk.
+    if (currentPatient.comorbidities.has('On Verapamil/Diltiazem') && (hasBeta || hasDigoxin)) {
+        warnings.push('DDI WARNING: Verapamil/Diltiazem with beta blocker and/or digoxin increases severe bradycardia/AV block risk. Use close ECG and heart-rate monitoring.');
+    }
+
+    // DDI-6: Lithium + diuretics can precipitate lithium toxicity.
+    if (hasDiuretic && currentPatient.comorbidities.has('On Lithium')) {
+        warnings.push('DDI WARNING: Loop/thiazide diuretics increase lithium levels and toxicity risk. Check lithium level and renal function after diuretic changes.');
+    }
+
+    // DDI-7: Explicit chronotropic risk for BB + Ivabradine co-titration.
+    if (hasBeta && hasIvabradine) {
+        warnings.push('DDI WARNING: Beta blocker + Ivabradine has additive chronotropic suppression. Monitor heart rate/ECG every 2 weeks during co-titration.');
+    }
+
     return { projectedPatient: proj, cost: totalCost, complexity: complexityScore, warnings, rationale: uniqueRationale, specialFeatureBonus };
 }
 
@@ -1661,6 +1739,24 @@ export function generateAndScoreModifications(
 ): SimulationOutput {
 
     const clinicalAlerts: string[] = [];
+    patient = clonePatient(patient);
+
+    const dedupedCurrent = dedupeCurrentRegimen(patient.current_regimen || []);
+    if (dedupedCurrent.duplicateNames.length > 0) {
+        patient.current_regimen = dedupedCurrent.regimen;
+        clinicalAlerts.push(
+            `INPUT SAFETY: Duplicate current medications removed (${dedupedCurrent.duplicateNames.join(', ')}). ` +
+            'Duplicate entries can double-count hemodynamic effects.'
+        );
+    }
+
+    if (patient.sbp <= patient.dbp) {
+        clinicalAlerts.push(
+            'INPUT ERROR: Systolic BP must be greater than diastolic BP (SBP > DBP). ' +
+            'Correct blood pressure values before running recommendations.'
+        );
+        return { scoredRegimens: [], excludedMedications: [...patient.discontinued_meds], clinicalAlerts, monitoringPlan: [] };
+    }
 
     // --- S4: Pregnancy safety alert ---
     if (patient.is_pregnant === true) {
@@ -1726,25 +1822,36 @@ export function generateAndScoreModifications(
     const vericiguatCoreEligible = (patient.nyha_class === 'II' || patient.nyha_class === 'III' || patient.nyha_class === 'IV') &&
         patient.nt_pro_bnp >= 1600 &&
         patient.lvef < 45;
-    if (vericiguatCoreEligible && patient.recent_hf_worsening_within_6mo !== 'yes') {
+    // M5: Only alert when worsening status is unknown — suppress when explicitly 'no' (patient definitively ineligible)
+    if (vericiguatCoreEligible && patient.recent_hf_worsening_within_6mo === 'unknown') {
         clinicalAlerts.push(
-            'VERICIGUAT ELIGIBILITY WARNING: Recent HF worsening (hospitalization or IV diuretics within 6 months) is required before Vericiguat use.'
+            'VERICIGUAT ELIGIBILITY WARNING: Recent HF worsening status unknown. Document if hospitalization or IV diuretics occurred within 6 months — required before Vericiguat use.'
         );
     }
 
     // 1. Filter Formulary & Check Exclusions (same logic as before)
     const excludedMeds: ExcludedMedication[] = [...patient.discontinued_meds];
     const excludedNames = new Set(excludedMeds.map(m => m.name));
-    const exclusionText = excludedMeds
-        .map(m => `${m.reason} ${m.reason_detail ?? ''}`.toLowerCase())
-        .join(' | ');
-    const hasAngioedemaHistory = exclusionText.includes('angioedema');
-    const hasAngioedemaRisk = hasAngioedemaHistory || patient.comorbidities.has("History of Angioedema");
-    const hasAceiCoughHistory = exclusionText.includes('cough');
-    const hasHyperkalemiaHistory = exclusionText.includes('hyperkalemia');
-    const hasGynecomastiaHistory = exclusionText.includes('gynecomastia');
+    // H3 fix: Drug-class-aware exclusion matching. Only attribute side effects to the
+    // drug class that caused them — prevents cross-contamination (e.g., cough from a BB
+    // incorrectly excluding ACEi, or angioedema from an NSAID excluding all RAAS).
+    const raasDiscontinued = excludedMeds.filter(m => RAAS_CLASSES.has(m.drug_class) || m.drug_class === 'RAAS');
+    const mraDiscontinued = excludedMeds.filter(m => m.drug_class === 'MRA' || m.drug_class === 'nsMRA');
+
+    const matchesReason = (dm: ExcludedMedication, keyword: string) =>
+        `${dm.reason} ${dm.reason_detail ?? ''}`.toLowerCase().includes(keyword);
+
+    const hasAngioedemaFromRaas = raasDiscontinued.some(dm => matchesReason(dm, 'angioedema'));
+    const hasAngioedemaRisk = hasAngioedemaFromRaas || patient.comorbidities.has("History of Angioedema");
+    const hasAceiCoughHistory = raasDiscontinued.some(dm => matchesReason(dm, 'cough'));
+    const hasHyperkalemiaHistory = mraDiscontinued.some(dm => matchesReason(dm, 'hyperkalemia'));
+    const hasGynecomastiaHistory = mraDiscontinued.some(dm => matchesReason(dm, 'gynecomastia'));
     const excludeACEi = hasAngioedemaRisk || hasAceiCoughHistory;
-    const excludeAllRaas = hasAngioedemaRisk;
+    // H1 fix: ACEi angioedema cross-reactivity with ARBs is only ~2-8% (different mechanism).
+    // ACC/AHA 2022: ARBs "can be used with caution" after ACEi angioedema.
+    // ARNI excluded (neprilysin inhibition raises bradykinin → worsens angioedema risk).
+    // ARBs allowed with mandatory monitoring warning (see below).
+    const excludeARNI = hasAngioedemaRisk;
     const excludeMRA = hasHyperkalemiaHistory || hasGynecomastiaHistory;
     const currentHasSteroidalMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'MRA');
     const currentHasNsMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'nsMRA');
@@ -1760,8 +1867,8 @@ export function generateAndScoreModifications(
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Cross-reactivity with prior ACEi intolerance" });
             return false;
         }
-        if (excludeAllRaas && (m.drug_class === 'ARNI' || m.drug_class === 'ARB')) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Avoided due to prior angioedema history" });
+        if (excludeARNI && m.drug_class === 'ARNI') {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "ARNI excluded: neprilysin inhibition worsens bradykinin-mediated angioedema risk" });
             return false;
         }
         if (m.drug_class === 'MRA' && excludeMRA) {
@@ -1804,7 +1911,8 @@ export function generateAndScoreModifications(
     const candidateSets = generateCandidateModifications(analysis, patient, binders);
 
     // 5. Score each candidate
-    const patiromer = binders.find(b => b.med.name === 'Patiromer');
+    // H7: Binder rescue — prefer Patiromer, fallback to any available K+ binder (Lokelma)
+    const rescueBinder = binders.find(b => b.med.name === 'Patiromer') || binders[0];
     const ivIron = medTiers.find(r => r.med.drug_class === 'IV Iron');
     const ironDeficient = (patient.ferritin !== undefined && patient.ferritin < 100)
         || (patient.tsat !== undefined && patient.tsat < 20);
@@ -1838,22 +1946,23 @@ export function generateAndScoreModifications(
             activeModSet = ironModSet;
         }
 
-        // Binder rescue: if K+ > 5.3, try adding Patiromer
-        if (sim.projectedPatient.potassium > 5.3 && patiromer) {
+        // H7+H8: Binder rescue: if K+ > 5.3, try adding K+ binder (Patiromer preferred, Lokelma fallback)
+        // H8 fix: Use activeModSet (which includes iron if appended) not original modSet
+        if (sim.projectedPatient.potassium > 5.3 && rescueBinder) {
             const rescueMod: RegimenModification = {
                 action: 'add',
-                target: patiromer,
-                summary: `Add ${patiromer.med.name} ${formatDose(patiromer)}`
+                target: rescueBinder,
+                summary: `Add ${rescueBinder.med.name} ${formatDose(rescueBinder)}`
             };
             const rescuedModSet: ModificationSet = {
-                modifications: [...modSet.modifications, rescueMod],
-                resulting_regimen: [...modSet.resulting_regimen, patiromer]
+                modifications: [...activeModSet.modifications, rescueMod],
+                resulting_regimen: [...activeModSet.resulting_regimen, rescueBinder]
             };
             const rescuedSim = simulateModificationEffect(patient, rescuedModSet, prices);
 
             if (rescuedSim.projectedPatient.potassium < 5.3 && rescuedSim.projectedPatient.potassium > 3.5) {
                 sim = rescuedSim;
-                sim.warnings.push("Binder Required: Patiromer added to manage Hyperkalemia.");
+                sim.warnings.push(`Binder Required: ${rescueBinder.med.name} added to manage Hyperkalemia.`);
                 activeModSet = rescuedModSet;
             }
         }
@@ -1944,11 +2053,22 @@ export function generateAndScoreModifications(
         }));
     }
 
+    const displaySafeRegimens = outputRegimens.filter(r =>
+        r.projected_patient.sbp >= 85 && r.projected_patient.potassium <= 6.0
+    );
+    if (outputRegimens.length > 0 && displaySafeRegimens.length === 0) {
+        clinicalAlerts.push(
+            'NO DISPLAY-SAFE REGIMEN: Candidate regimens projected severe hypotension (SBP < 85) or severe hyperkalemia (K+ > 6.0). ' +
+            'Stabilize and reassess before oral intensification.'
+        );
+    }
+    outputRegimens = displaySafeRegimens;
+
     const topPick = outputRegimens[0];
     if (!topPick) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
 
-    // S2/S2b: When hemodynamically unstable or low-output, return alerts only.
-    if (patient.sbp < 90 || lowOutput) {
+    // S2: When hemodynamically unstable (SBP < 90), return alerts only — no oral GDMT.
+    if (patient.sbp < 90) {
         return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
     }
 
@@ -1985,8 +2105,24 @@ export function generateAndScoreModifications(
         }
     }
 
+    // H2: Low-output state — still show recommendations but with mandatory warnings and capped scores.
+    // NPs need guidance on current medication management, not a blank screen.
+    let finalPicks = distinctPicks;
+    if (lowOutput) {
+        const lowOutputWarning =
+            'LOW OUTPUT STATE: These recommendations require hemodynamic stabilization first. ' +
+            'Do NOT initiate new agents until perfusion is restored. ' +
+            'If patient is currently on beta-blocker, do NOT abruptly discontinue (Class III harm) — reduce dose if needed. ' +
+            'Prioritize: IV inotropes → hemodynamic monitoring → Advanced HF consultation → then cautious oral GDMT.';
+        finalPicks = distinctPicks.map(r => ({
+            ...r,
+            overall_score: Math.min(r.overall_score, 35), // Cap score to signal caution
+            warnings: [lowOutputWarning, ...r.warnings]
+        }));
+    }
+
     return {
-        scoredRegimens: distinctPicks,
+        scoredRegimens: finalPicks,
         excludedMedications: excludedMeds,
         clinicalAlerts,
         monitoringPlan: topPick.monitoring_plan || []

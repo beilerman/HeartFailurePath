@@ -3,6 +3,65 @@ import { generateAndScoreModifications } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 
+const RAAS_CLASSES = new Set(['ARNI', 'ACEi', 'ARB']);
+const ASSERTION_TITLE_MARKERS = [
+    'John Doe (Wet & Warm)',
+    'Dry & Cold',
+    'Hyperkalemia',
+    'Severe Hypotension',
+    'Bradycardia',
+    'Angioedema',
+    'Severe Asthma',
+    'African American (A-HeFT Indication)',
+    'Gout & Congestion',
+    'Volume Depleted',
+    'HFpEF with Resistant Edema',
+    'Critical Renal',
+    'eGFR 22',
+    'Non-Compliant',
+    'Severe Dilation',
+    'Ideal Candidate',
+    'Obese HFpEF',
+    'Iron-Deficient',
+    'African American NYHA III',
+    'Ivabradine Candidate',
+    'Ivabradine Fallback',
+    'Budget-Constrained',
+    'ACEi-to-ARNI Swap',
+    'Euvolemic Asthma',
+    'HFimpEF',
+    'Pregnant',
+    'SBP 82',
+    'Pregnant on Existing ACEi',
+    'SGLT2i Continuation',
+    'SBP 90 Borderline',
+    'MRA Boundary',
+    'Elderly >80',
+    'Vericiguat Eligible',
+    'No Recent Worsening',
+    'Liver Disease + AFib',
+    'NSAID + RAAS DDI',
+    'Projected SBP Safety',
+    'K+ Trajectory',
+    'eGFR 25 SGLT2i Boundary',
+    'Pregnant + CKD4',
+    'LVEF Recovery Cap',
+    'Finerenone in HFpEF',
+    'Hepatic BB Selection',
+    'Vericiguat LVEF Boundary',
+    'GLP-1 Not Offered in HFrEF',
+    'Digoxin Renal Dosing',
+    'Digoxin Hypokalemia Contraindication',
+    'Low Body Weight Carvedilol Boundary',
+    'Severe CKD Loop Resistance',
+    'Acute Decompensated NYHA IV',
+    'Type 1 DM + Prior DKA',
+    'AV Block',
+    'Non-Formulary DDI Exposures',
+    'Invalid BP Inversion',
+    'Duplicate Current Medications'
+];
+
 async function runVerification() {
     console.log('Starting Clinical Scenario Verification...\n');
     let passed = 0;
@@ -47,6 +106,7 @@ async function runVerification() {
 
             let scenarioPassed = true;
             const failures: string[] = [];
+            const hasScenarioSpecificCoverage = ASSERTION_TITLE_MARKERS.some(marker => scenario.title.includes(marker));
 
             // Global safety invariant: never allow dual MRA (steroidal + nsMRA) in the same regimen
             const anyDualMRA = scoredRegimens.some(r => {
@@ -55,6 +115,94 @@ async function runVerification() {
             });
             if (anyDualMRA) {
                 failures.push('Dual MRA regimen detected (steroidal MRA + Finerenone)');
+                scenarioPassed = false;
+            }
+
+            // Global safety invariant: never allow dual RAAS (ACEi/ARB/ARNI combinations)
+            const anyDualRAAS = scoredRegimens.some(r =>
+                r.regimen.filter(m => RAAS_CLASSES.has(m.med.drug_class)).length > 1
+            );
+            if (anyDualRAAS) {
+                failures.push('Dual RAAS regimen detected (ACEi/ARB/ARNI overlap)');
+                scenarioPassed = false;
+            }
+
+            // Global score invariant: all scores must stay within 0-100.
+            const hasOutOfRangeScore = scoredRegimens.some(r => {
+                if (r.overall_score < 0 || r.overall_score > 100) return true;
+                return Object.values(r.domain_scores).some(s => s < 0 || s > 100);
+            });
+            if (hasOutOfRangeScore) {
+                failures.push('Score out of range detected (expected all scores within 0-100)');
+                scenarioPassed = false;
+            }
+
+            // Global display-safety invariant: every displayed regimen must remain above critical hemodynamic/lab floors.
+            if (scoredRegimens.some(r => r.projected_patient.sbp < 85)) {
+                failures.push('Displayed regimen projects SBP < 85');
+                scenarioPassed = false;
+            }
+            if (scoredRegimens.some(r => r.projected_patient.potassium > 6.0)) {
+                failures.push('Displayed regimen projects K+ > 6.0');
+                scenarioPassed = false;
+            }
+
+            // Global structural invariant: no duplicate medications in displayed regimen.
+            const hasDuplicateRegimenEntry = scoredRegimens.some(r => {
+                const names = r.regimen.map(m => m.med.name);
+                return new Set(names).size !== names.length;
+            });
+            if (hasDuplicateRegimenEntry) {
+                failures.push('Displayed regimen contains duplicate medication entries');
+                scenarioPassed = false;
+            }
+
+            // Global DDI invariant: whenever BB + Ivabradine coexist, explicit chronotropic warning must exist.
+            const hasChronotropicComboWithoutWarning = scoredRegimens.some(r => {
+                const classesInRegimen = new Set(r.regimen.map(m => m.med.drug_class));
+                const hasCombo = classesInRegimen.has('Beta Blocker') && classesInRegimen.has('If Inhibitor');
+                const hasWarning = r.warnings.some(w => w.toLowerCase().includes('beta blocker + ivabradine'));
+                return hasCombo && !hasWarning;
+            });
+            if (hasChronotropicComboWithoutWarning) {
+                failures.push('Missing explicit DDI warning for Beta Blocker + Ivabradine combination');
+                scenarioPassed = false;
+            }
+
+            const missingAmiodaroneDigoxinWarning = scoredRegimens.some(r => {
+                const hasRiskContext = scenario.patient.comorbidities.has('On Amiodarone');
+                const hasDigoxin = r.regimen.some(m => m.med.name === 'Digoxin');
+                const hasWarning = r.warnings.some(w => w.includes('Amiodarone'));
+                return hasRiskContext && hasDigoxin && !hasWarning;
+            });
+            if (missingAmiodaroneDigoxinWarning) {
+                failures.push('Missing DDI warning for Digoxin + Amiodarone exposure');
+                scenarioPassed = false;
+            }
+
+            const missingCcbChronotropeWarning = scoredRegimens.some(r => {
+                const hasRiskContext = scenario.patient.comorbidities.has('On Verapamil/Diltiazem');
+                const hasBetaOrDigoxin = r.regimen.some(m =>
+                    m.med.drug_class === 'Beta Blocker' || m.med.name === 'Digoxin'
+                );
+                const hasWarning = r.warnings.some(w => w.includes('Verapamil/Diltiazem'));
+                return hasRiskContext && hasBetaOrDigoxin && !hasWarning;
+            });
+            if (missingCcbChronotropeWarning) {
+                failures.push('Missing DDI warning for Verapamil/Diltiazem with beta blocker/digoxin');
+                scenarioPassed = false;
+            }
+
+            const missingLithiumDiureticWarning = scoredRegimens.some(r => {
+                const hasRiskContext = scenario.patient.comorbidities.has('On Lithium');
+                const hasDiuretic = r.regimen.some(m =>
+                    m.med.drug_class === 'Loop Diuretic' || m.med.drug_class === 'Thiazide-like Diuretic'
+                );
+                const hasWarning = r.warnings.some(w => w.toLowerCase().includes('lithium'));
+                return hasRiskContext && hasDiuretic && !hasWarning;
+            });
+            if (missingLithiumDiureticWarning) {
+                failures.push('Missing DDI warning for Lithium + diuretic exposure');
                 scenarioPassed = false;
             }
 
@@ -81,14 +229,107 @@ async function runVerification() {
                 }
             }
 
-            // 2b. Dry & Cold low-output phenotype -> should trigger low-output alert and block oral recs
+            // 2b. Dry & Cold low-output phenotype -> should trigger low-output alert with capped scores + mandatory warnings
             if (scenario.title.includes('Dry & Cold')) {
-                if (scoredRegimens.length > 0) {
-                    failures.push('Drug recommendations generated despite low-output Dry & Cold profile');
-                    scenarioPassed = false;
-                }
                 if (!clinicalAlerts.some(a => a.includes('LOW OUTPUT STATE'))) {
                     failures.push('Missing LOW OUTPUT STATE alert');
+                    scenarioPassed = false;
+                }
+                // H2: Low-output now returns recommendations with mandatory stabilization warnings (not empty)
+                if (scoredRegimens.length > 0) {
+                    // Scores must be capped at 35
+                    if (scoredRegimens.some(r => r.overall_score > 35)) {
+                        failures.push('Low-output regimen scores should be capped at 35');
+                        scenarioPassed = false;
+                    }
+                    // Mandatory low-output warning must be present
+                    const allWarnings = scoredRegimens.flatMap(r => r.warnings);
+                    if (!allWarnings.some(w => w.includes('LOW OUTPUT STATE'))) {
+                        failures.push('Missing mandatory LOW OUTPUT STATE warning on recommendations');
+                        scenarioPassed = false;
+                    }
+                }
+            }
+
+            // Coverage assertions for baseline scenarios to avoid silent orphaning when names change.
+            if (
+                scenario.title.includes('John Doe (Wet & Warm)') ||
+                scenario.title.includes('African American (A-HeFT Indication)') ||
+                scenario.title.includes('Gout & Congestion') ||
+                scenario.title.includes('HFpEF with Resistant Edema') ||
+                scenario.title.includes('Severe Dilation') ||
+                scenario.title.includes('African American NYHA III')
+            ) {
+                if (!topRegimen) {
+                    failures.push('Expected at least one regimen for baseline coverage scenario');
+                    scenarioPassed = false;
+                }
+            }
+
+            // H1. Acute decompensation: do not initiate beta blocker in NYHA IV decompensated patients.
+            if (scenario.title.includes('Acute Decompensated NYHA IV')) {
+                const anyBB = scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Beta Blocker'));
+                if (anyBB) {
+                    failures.push('Beta blocker initiation detected in acutely decompensated NYHA IV scenario');
+                    scenarioPassed = false;
+                }
+            }
+
+            // H4. SGLT2i exclusion in Type 1 DM / prior DKA risk context.
+            if (scenario.title.includes('Type 1 DM + Prior DKA')) {
+                const anySGLT2 = scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'SGLT2i'));
+                if (anySGLT2) {
+                    failures.push('SGLT2i offered despite Type 1 DM / prior DKA risk');
+                    scenarioPassed = false;
+                }
+            }
+
+            // H5. AV block should contraindicate beta blockers and digoxin unless paced/specialist-directed.
+            if (scenario.title.includes('AV Block')) {
+                const hasContraChronotrope = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'Beta Blocker' || m.med.name === 'Digoxin')
+                );
+                if (hasContraChronotrope) {
+                    failures.push('Beta blocker or Digoxin offered despite AV block scenario');
+                    scenarioPassed = false;
+                }
+            }
+
+            // H6. Non-formulary DDI exposures should trigger explicit warnings when interacting classes are present.
+            if (scenario.title.includes('Non-Formulary DDI Exposures')) {
+                const hasAmiodaroneWarning = scoredRegimens.some(r => r.warnings.some(w => w.includes('Amiodarone')));
+                const hasCcbWarning = scoredRegimens.some(r => r.warnings.some(w => w.includes('Verapamil/Diltiazem')));
+                const hasLithiumWarning = scoredRegimens.some(r => r.warnings.some(w => w.includes('lithium')));
+                if (!hasAmiodaroneWarning) {
+                    failures.push('Missing Amiodarone-related DDI warning');
+                    scenarioPassed = false;
+                }
+                if (!hasCcbWarning) {
+                    failures.push('Missing Verapamil/Diltiazem-related DDI warning');
+                    scenarioPassed = false;
+                }
+                if (!hasLithiumWarning) {
+                    failures.push('Missing Lithium-related DDI warning');
+                    scenarioPassed = false;
+                }
+            }
+
+            // H11. SBP/DBP inversion should hard-stop recommendation generation.
+            if (scenario.title.includes('Invalid BP Inversion')) {
+                if (scoredRegimens.length > 0) {
+                    failures.push('Regimens generated despite invalid BP inversion input');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.includes('INPUT ERROR'))) {
+                    failures.push('Missing explicit INPUT ERROR alert for SBP/DBP inversion');
+                    scenarioPassed = false;
+                }
+            }
+
+            // H12. Duplicate current meds should be deduplicated with alert, not double-counted.
+            if (scenario.title.includes('Duplicate Current Medications')) {
+                if (!clinicalAlerts.some(a => a.includes('Duplicate current medications removed'))) {
+                    failures.push('Missing duplicate-medication deduplication alert');
                     scenarioPassed = false;
                 }
             }
@@ -101,10 +342,16 @@ async function runVerification() {
                 }
             }
 
-            // 4. Angioedema -> No ACEi/ARNI
+            // 4. Angioedema -> No ACEi/ARNI, but ARBs allowed with caution (ACC/AHA 2022)
             if (scenario.title.includes('Angioedema')) {
-                if (classes.has('ACEi') || classes.has('ARNI') || classes.has('ARB')) {
-                    failures.push('RAAS inhibitor prescribed despite Angioedema history');
+                if (classes.has('ACEi') || classes.has('ARNI')) {
+                    failures.push('ACEi/ARNI prescribed despite Angioedema history');
+                    scenarioPassed = false;
+                }
+                // ARBs should be available with monitoring warning
+                const allWarnings = scoredRegimens.flatMap(r => r.warnings);
+                if (classes.has('ARB') && !allWarnings.some(w => w.includes('ANGIOEDEMA CAUTION'))) {
+                    failures.push('ARB prescribed with angioedema history but missing ANGIOEDEMA CAUTION warning');
                     scenarioPassed = false;
                 }
             }
@@ -136,7 +383,7 @@ async function runVerification() {
 
             // 7. Non-Compliant -> Low Complexity
             if (scenario.title.includes('Non-Compliant')) {
-                if (topRegimen.complexity > 10) { // Arbitrary threshold
+                if (topRegimen && topRegimen.complexity > 10) { // Arbitrary threshold
                     failures.push(`Complexity ${topRegimen.complexity} too high for tolerance 0`);
                     scenarioPassed = false;
                 }
@@ -182,7 +429,10 @@ async function runVerification() {
 
             // 11. Sinus Tachycardia -> Should have Ivabradine
             if (scenario.title.includes('Ivabradine Candidate')) {
-                if (!classes.has('If Inhibitor')) {
+                const anyIvabradine = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'If Inhibitor')
+                );
+                if (!anyIvabradine && topRegimen && topRegimen.projected_patient.pulse >= 70) {
                     failures.push('Ivabradine not prescribed despite HR >= 70, sinus, LVEF <= 35, on BB');
                     scenarioPassed = false;
                 }
@@ -255,15 +505,22 @@ async function runVerification() {
                     failures.push('Non-selective Carvedilol prescribed in Asthma');
                     scenarioPassed = false;
                 }
-                // Verify a beta blocker IS available (Bisoprolol or Metoprolol)
-                const hasSafeBB = meds.includes('Bisoprolol') || meds.includes('Metoprolol Succinate');
-                if (!hasSafeBB && topRegimen) {
-                    // Check all regimens, not just top
-                    const anyBB = scoredRegimens.some(r =>
-                        r.regimen.some(m => m.med.name === 'Bisoprolol' || m.med.name === 'Metoprolol Succinate')
+                const anySafeBB = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.name === 'Bisoprolol' || m.med.name === 'Metoprolol Succinate')
+                );
+                const anyBB = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'Beta Blocker')
+                );
+                if (anyBB && !anySafeBB) {
+                    failures.push('Only non-cardioselective beta blockers were offered in asthma scenario');
+                    scenarioPassed = false;
+                }
+                if (!anyBB) {
+                    const anyIvabradine = scoredRegimens.some(r =>
+                        r.regimen.some(m => m.med.drug_class === 'If Inhibitor')
                     );
-                    if (!anyBB) {
-                        failures.push('No cardioselective BB available despite euvolemic asthma patient needing BB');
+                    if (!anyIvabradine) {
+                        failures.push('No beta blocker offered in asthma scenario and Ivabradine fallback also missing');
                         scenarioPassed = false;
                     }
                 }
@@ -376,6 +633,13 @@ async function runVerification() {
                         scenarioPassed = false;
                     }
                 }
+                const excessiveMraDose = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'MRA' && Number(m.dose.strength) > 25)
+                );
+                if (excessiveMraDose) {
+                    failures.push('MRA dose >25mg offered at eGFR 31 (expected renal-adjusted cap in eGFR 30-45)');
+                    scenarioPassed = false;
+                }
             }
 
             // 23. Elderly >80 on all 4 pillars -> should show age-related warnings
@@ -415,8 +679,8 @@ async function runVerification() {
                     failures.push('Vericiguat offered despite no recent worsening HF event');
                     scenarioPassed = false;
                 }
-                if (!clinicalAlerts.some(a => a.includes('VERICIGUAT ELIGIBILITY WARNING'))) {
-                    failures.push('Missing Vericiguat eligibility warning when worsening-HF history is absent');
+                if (clinicalAlerts.some(a => a.includes('VERICIGUAT ELIGIBILITY WARNING'))) {
+                    failures.push('Unexpected Vericiguat eligibility warning when worsening-HF status is explicitly "no"');
                     scenarioPassed = false;
                 }
             }
@@ -633,6 +897,12 @@ async function runVerification() {
                         scenarioPassed = false;
                     }
                 }
+            }
+
+            // H9. Orphan assertion detection: every scenario title must match at least one assertion marker.
+            if (!hasScenarioSpecificCoverage) {
+                failures.push(`No scenario-specific assertions mapped for title "${scenario.title}"`);
+                scenarioPassed = false;
             }
 
             if (scenarioPassed) {

@@ -19,11 +19,16 @@ export const MedicationManager: React.FC<MedicationManagerProps> = ({ patientDat
     const selectedMedInfo = useMemo(() =>
         MEDICATION_FORMULARY.find(m => m.name === selectedMedName),
         [selectedMedName]);
+    const isDuplicateSelection = useMemo(() => {
+        if (!selectedMedInfo) return false;
+        return patientData.current_regimen.some(item => item.med.name === selectedMedInfo.name);
+    }, [patientData.current_regimen, selectedMedInfo]);
 
     const availableDoses = selectedMedInfo?.available_doses || [];
 
     const handleAddMedication = () => {
         if (!selectedMedInfo || !selectedDoseStrength || !selectedFreq) return;
+        if (isDuplicateSelection) return;
 
         // Find the full dose object
         const doseObj = availableDoses.find(d => String(d.strength) === selectedDoseStrength);
@@ -37,7 +42,9 @@ export const MedicationManager: React.FC<MedicationManagerProps> = ({ patientDat
 
         setPatientData(prev => ({
             ...prev,
-            current_regimen: [...(prev.current_regimen || []), newRegimenItem]
+            current_regimen: prev.current_regimen.some(item => item.med.name === newRegimenItem.med.name)
+                ? prev.current_regimen
+                : [...(prev.current_regimen || []), newRegimenItem]
         }));
 
         // Reset fields
@@ -145,11 +152,14 @@ export const MedicationManager: React.FC<MedicationManagerProps> = ({ patientDat
 
                 <button
                     onClick={handleAddMedication}
-                    disabled={!selectedMedName || !selectedDoseStrength || !selectedFreq}
+                    disabled={!selectedMedName || !selectedDoseStrength || !selectedFreq || isDuplicateSelection}
                     className="w-full py-2 bg-white border border-indigo-200 text-indigo-600 text-sm font-bold rounded hover:bg-indigo-50 hover:border-indigo-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 >
                     + ADD MEDICATION
                 </button>
+                {isDuplicateSelection && (
+                    <p className="text-xs text-amber-700 font-medium">This medication is already in the current regimen.</p>
+                )}
             </div>
         </section>
     );

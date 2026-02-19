@@ -35,7 +35,7 @@ export interface Patient {
     dbp: number;
     pulse: number;
     oxygen_saturation?: number; // SpO2 %
-    rhythm: 'Sinus' | 'AFib' | 'Paced';
+    rhythm: 'Sinus' | 'AFib' | 'Paced' | '2nd Degree AV Block' | '3rd Degree AV Block';
 
     // CHF Domains & Remote Functional
     nt_pro_bnp: number; // pg/mL

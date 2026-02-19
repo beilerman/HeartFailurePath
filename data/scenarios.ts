@@ -1391,6 +1391,149 @@ export const SCENARIOS: TestScenario[] = [
             max_new_classes_per_visit: 2
         }
     },
+    {
+        title: 'Acute Decompensated NYHA IV (No BB Initiation)',
+        patient: {
+            ...INITIAL_PATIENT,
+            sbp: 108,
+            dbp: 70,
+            pulse: 92,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'IV' as const,
+            kccq_score: 30,
+            nt_pro_bnp: 5200,
+            lvef: 28,
+            volume_status: { dry_weight_kg: 72, current_weight_kg: 77, exam_findings: new Set(['Edema (3+)', 'JVP Elevated', 'Orthopnea']) },
+            egfr: 48,
+            potassium: 4.3,
+            creatinine: 1.6,
+            bun: 34,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 220,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 6,
+            max_new_classes_per_visit: 3
+        }
+    },
+    {
+        title: 'Type 1 DM + Prior DKA (Avoid SGLT2i)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 40,
+            sbp: 118,
+            dbp: 72,
+            pulse: 80,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 58,
+            nt_pro_bnp: 1600,
+            lvef: 32,
+            volume_status: { dry_weight_kg: 70, current_weight_kg: 71, exam_findings: new Set<string>() },
+            egfr: 72,
+            potassium: 4.2,
+            creatinine: 0.9,
+            bun: 16,
+            comorbidities: new Set(['HFrEF', 'Type 1 Diabetes Mellitus', 'Prior DKA / Euglycemic DKA']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 220,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 3
+        }
+    },
+    {
+        title: 'AV Block (No BB/Digoxin)',
+        patient: {
+            ...INITIAL_PATIENT,
+            sbp: 120,
+            dbp: 74,
+            pulse: 62,
+            rhythm: '3rd Degree AV Block' as const,
+            nyha_class: 'III' as const,
+            kccq_score: 40,
+            nt_pro_bnp: 2600,
+            lvef: 30,
+            volume_status: { dry_weight_kg: 74, current_weight_kg: 76, exam_findings: new Set(['Edema (1+)']) },
+            egfr: 58,
+            potassium: 4.3,
+            creatinine: 1.2,
+            bun: 20,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 220,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 3
+        }
+    },
+    {
+        title: 'Non-Formulary DDI Exposures (Amio/CCB/Lithium)',
+        patient: {
+            ...INITIAL_PATIENT,
+            sbp: 116,
+            dbp: 72,
+            pulse: 88,
+            rhythm: 'AFib' as const,
+            nyha_class: 'III' as const,
+            kccq_score: 38,
+            nt_pro_bnp: 2400,
+            lvef: 30,
+            volume_status: { dry_weight_kg: 74, current_weight_kg: 77, exam_findings: new Set(['Edema (1+)', 'JVP Elevated']) },
+            egfr: 46,
+            potassium: 4.1,
+            creatinine: 1.6,
+            bun: 32,
+            comorbidities: new Set(['HFrEF', 'Atrial Fibrillation', 'On Amiodarone', 'On Verapamil/Diltiazem', 'On Lithium']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' },
+                { name: 'Digoxin', strength: 125, freq: 'qd' },
+                { name: 'Furosemide', strength: 40, freq: 'qd' }
+            ]),
+            max_affordable_cost: 220,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 6,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'Invalid BP Inversion (SBP 80 / DBP 120)',
+        patient: {
+            ...INITIAL_PATIENT,
+            sbp: 80,
+            dbp: 120,
+            pulse: 90,
+            rhythm: 'Sinus' as const,
+            current_regimen: []
+        }
+    },
+    {
+        title: 'Duplicate Current Medications (Safety Dedup)',
+        patient: {
+            ...INITIAL_PATIENT,
+            sbp: 112,
+            dbp: 70,
+            pulse: 76,
+            rhythm: 'Sinus' as const,
+            current_regimen: buildCurrentRegimen([
+                { name: 'Furosemide', strength: 40, freq: 'qd' },
+                { name: 'Furosemide', strength: 40, freq: 'qd' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' }
+            ])
+        }
+    },
 ];
 
 // Helper to deep clone patient (useful for resetting state in tests/app)
