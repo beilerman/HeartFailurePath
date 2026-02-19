@@ -62,7 +62,13 @@ const ASSERTION_TITLE_MARKERS = [
     'Duplicate Current Medications',
     'GLP-1 Contraindication (MEN2)',
     'Nitrate + PDE5 Exposure',
-    'HFimpEF Unknown on Existing Quad'
+    'HFimpEF Unknown on Existing Quad',
+    'HFmrEF Standalone',
+    'HFmrEF Obese',
+    'Severe Congestion + Loop',
+    'Hypoxia Alert',
+    'NYHA III Acute Decompensation',
+    'Low Peak Flow Screening'
 ];
 
 async function runVerification() {
@@ -83,7 +89,7 @@ async function runVerification() {
             const scenarioAvailableMedNames = scenario.title.includes('No BB Available')
                 ? new Set([...availableMedNames].filter(name => !betaBlockerMeds.has(name)))
                 : availableMedNames;
-            const { scoredRegimens, clinicalAlerts, monitoringPlan } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
+            const { scoredRegimens, excludedMedications, clinicalAlerts, monitoringPlan } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
             const topRegimen = scoredRegimens[0];
 
             if (clinicalAlerts.length > 0) {
@@ -984,6 +990,118 @@ async function runVerification() {
                         failures.push('Monitoring plan missing BMP guidance for renal/electrolyte safety');
                         scenarioPassed = false;
                     }
+                }
+            }
+
+            // 59. HFmrEF Standalone -> all 4 GDMT pillars available, BB/MRA scored lower (Class IIb)
+            if (scenario.title.includes('HFmrEF Standalone')) {
+                if (!topRegimen) {
+                    failures.push('HFmrEF: no regimen generated');
+                    scenarioPassed = false;
+                } else {
+                    // HFmrEF gets full quad therapy (RAAS, BB, MRA, SGLT2i) but BB/MRA are Class IIb
+                    const hasRaas = topClasses.has('ARNI') || topClasses.has('ACEi') || topClasses.has('ARB');
+                    const hasSglt2 = topClasses.has('SGLT2i');
+                    if (!hasRaas) { failures.push('HFmrEF: missing RAAS (Class I pillar)'); scenarioPassed = false; }
+                    if (!hasSglt2) { failures.push('HFmrEF: missing SGLT2i (Class I pillar)'); scenarioPassed = false; }
+                }
+                // Device therapy screening: LVEF 45 > 35 → should NOT trigger ICD/CRT alert
+                if (clinicalAlerts.some(a => a.includes('DEVICE THERAPY SCREENING'))) {
+                    failures.push('HFmrEF LVEF 45: unexpected ICD/CRT screening (requires LVEF ≤ 35)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 60. HFmrEF + Obese -> GLP-1 eligible (BMI ≥ 30 + LVEF ≥ 40), may not rank top-3
+            if (scenario.title.includes('HFmrEF Obese')) {
+                if (!topRegimen) {
+                    failures.push('HFmrEF Obese: no regimen generated');
+                    scenarioPassed = false;
+                }
+                // GLP-1 should be eligible (not excluded) — BMI 33 + LVEF 42 + not HFimpEF
+                // distinctPicks limits to 3 regimens so GLP-1 may not appear in output
+                const glp1Excluded = excludedMedications.some(e =>
+                    e.name.includes('Semaglutide') || e.name.includes('Tirzepatide')
+                );
+                if (glp1Excluded) {
+                    failures.push('GLP-1 excluded in HFmrEF with BMI 33 (should be eligible: BMI ≥ 30 + LVEF ≥ 40)');
+                    scenarioPassed = false;
+                }
+                // SGLT2i should be present in displayed regimens
+                if (!anyRegimenHasClass('SGLT2i')) {
+                    failures.push('HFmrEF Obese: missing SGLT2i');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 61. Severe Congestion + Loop -> Thiazide eligible (fluid excess > 4kg + on loop), may not rank top-3
+            if (scenario.title.includes('Severe Congestion + Loop')) {
+                // Thiazide should NOT be excluded — it's a valid adjunct for resistant congestion
+                const thiazideExcluded = excludedMedications.some(e =>
+                    e.name.includes('Metolazone') || e.name.includes('Chlorthalidone') || e.name.includes('HCTZ')
+                );
+                if (thiazideExcluded) {
+                    failures.push('Thiazide excluded despite fluid excess > 4kg with existing loop diuretic');
+                    scenarioPassed = false;
+                }
+                // Should still have loop diuretic in output (not replaced)
+                const anyLoop = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'Loop Diuretic')
+                );
+                if (!anyLoop) {
+                    failures.push('Loop diuretic removed in severe congestion (should be maintained)');
+                    scenarioPassed = false;
+                }
+                // Should generate recommendations
+                if (!topRegimen) {
+                    failures.push('No regimen generated for severe congestion scenario');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 62. Hypoxia Alert (SpO2 < 90) -> Hypoxia warning must fire
+            if (scenario.title.includes('Hypoxia Alert')) {
+                const allWarnings = scoredRegimens.flatMap(r => r.warnings);
+                const hasHypoxiaWarning = allWarnings.some(w => w.includes('Hypoxia') || w.includes('SpO2'));
+                if (!hasHypoxiaWarning) {
+                    failures.push('Missing Hypoxia Alert warning despite SpO2 85%');
+                    scenarioPassed = false;
+                }
+                // Should still generate recommendations (SpO2 < 90 is a warning, not a hard block)
+                if (!topRegimen) {
+                    failures.push('No regimen generated for hypoxia patient (should warn but still recommend)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 63. NYHA III Acute Decompensation -> BB initiation blocked (fluid > 2kg + ≥2 exam findings)
+            if (scenario.title.includes('NYHA III Acute Decompensation')) {
+                const anyBB = scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Beta Blocker'));
+                if (anyBB) {
+                    failures.push('Beta blocker initiation in NYHA III acute decompensation (fluid +5kg, ≥2 exam findings)');
+                    scenarioPassed = false;
+                }
+                // Should still have RAAS and/or SGLT2i recommendations
+                if (!topRegimen) {
+                    failures.push('No regimen generated for NYHA III acute decompensation (should still offer non-BB therapy)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 64. Low Peak Flow Screening -> screening rationale for COPD/Asthma overlap
+            if (scenario.title.includes('Low Peak Flow Screening')) {
+                if (!topRegimen) {
+                    failures.push('No regimen generated for low peak flow patient');
+                    scenarioPassed = false;
+                }
+                // Peak flow < 350 without COPD/Asthma should trigger screening note
+                const allRationale = scoredRegimens.flatMap(r => r.rationale || []);
+                const hasScreeningNote = allRationale.some(r =>
+                    r.includes('Peak Flow') || r.includes('COPD/Asthma overlap')
+                );
+                if (!hasScreeningNote) {
+                    failures.push('Missing peak flow screening note for PF 280 without COPD/Asthma comorbidity');
+                    scenarioPassed = false;
                 }
             }
 
