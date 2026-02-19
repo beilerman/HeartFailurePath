@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ScoredRegimen, ExcludedMedication } from '../types';
+import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem } from '../types';
 import { RecommendationCard } from './RecommendationCard';
 
 interface Props {
@@ -9,9 +9,10 @@ interface Props {
     error: string | null;
     excludedMedications: ExcludedMedication[];
     clinicalAlerts?: string[];
+    monitoringPlan?: MonitoringPlanItem[];
 }
 
-export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, excludedMedications, clinicalAlerts = [] }) => {
+export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, excludedMedications, clinicalAlerts = [], monitoringPlan = [] }) => {
     if (isLoading) return (
         <div className="flex flex-col items-center justify-center h-96 text-slate-400" role="status" aria-live="polite">
             <svg className="animate-spin h-10 w-10 mb-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
@@ -46,6 +47,21 @@ export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, exc
                             </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {monitoringPlan.length > 0 && (
+                <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-5 shadow-sm">
+                    <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wide mb-3">Recommended Monitoring Plan</h3>
+                    <ul className="space-y-2">
+                        {monitoringPlan.map((item, i) => (
+                            <li key={`${item.test}-${i}`} className="text-sm text-blue-900 leading-relaxed">
+                                <span className="font-semibold">{item.test}</span>
+                                <span className="text-blue-700"> ({item.timing})</span>
+                                <span className="text-blue-800">: {item.details}</span>
+                            </li>
+                        ))}
+                    </ul>
                 </div>
             )}
 

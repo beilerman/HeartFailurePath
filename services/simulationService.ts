@@ -1,5 +1,5 @@
 
-import { Patient, Medication, ScoredRegimen, RegimenMed, ExcludedMedication, ModificationAction, RegimenModification, ModificationSet } from '../types';
+import { Patient, Medication, ScoredRegimen, RegimenMed, ExcludedMedication, ModificationAction, RegimenModification, ModificationSet, MonitoringPlanItem, SimulationOutput } from '../types';
 import { MEDICATION_FORMULARY } from '../constants';
 
 // --- Helper Functions ---
@@ -78,6 +78,82 @@ interface RegimenAnalysis {
     removable: RegimenMed[];
     addableAdjuncts: RegimenMed[];
     addablePillars: Map<string, RegimenMed[]>;  // missing pillar class group → candidate meds+doses
+}
+
+const RAAS_CLASSES = new Set(['ARNI', 'ACEi', 'ARB']);
+const DIURETIC_CLASSES = new Set(['Loop Diuretic', 'Thiazide-like Diuretic']);
+const VOLUME_SENSITIVE_INTENSIFICATION_CLASSES = new Set(['ARNI', 'ACEi', 'ARB', 'MRA', 'SGLT2i']);
+
+function isDiureticClass(drugClass: string): boolean {
+    return DIURETIC_CLASSES.has(drugClass);
+}
+
+function hasRelevantIntensification(
+    modificationSet: ModificationSet,
+    targetClasses: Set<string>
+): boolean {
+    return modificationSet.modifications.some(mod => {
+        if (!mod.target) return false;
+        if (!(mod.action === 'add' || mod.action === 'titrate_up' || mod.action === 'swap')) return false;
+        return targetClasses.has(mod.target.med.drug_class);
+    });
+}
+
+function hasDiureticDeEscalation(modificationSet: ModificationSet): boolean {
+    return modificationSet.modifications.some(mod => {
+        if (!mod.source) return false;
+        if (!(mod.action === 'remove' || mod.action === 'titrate_down')) return false;
+        return isDiureticClass(mod.source.med.drug_class);
+    });
+}
+
+function buildMonitoringPlan(
+    currentPatient: Patient,
+    projectedPatient: Patient,
+    modificationSet: ModificationSet
+): MonitoringPlanItem[] {
+    const plan: MonitoringPlanItem[] = [];
+    const hasRaasOrMraIntensification = hasRelevantIntensification(
+        modificationSet,
+        new Set([...RAAS_CLASSES, 'MRA'])
+    );
+    const hasDiureticIntensification = hasRelevantIntensification(modificationSet, DIURETIC_CLASSES);
+    const higherRiskElectrolytes = currentPatient.egfr < 45 || currentPatient.potassium >= 5.0 || projectedPatient.potassium > 5.0;
+
+    if (hasRaasOrMraIntensification) {
+        plan.push({
+            test: 'BMP (potassium, creatinine, eGFR)',
+            timing: '3-7 days after RAAS/MRA change',
+            details: 'Assess for early hyperkalemia or renal decline after initiation, swap, or up-titration.'
+        });
+        plan.push({
+            test: 'BMP repeat before next titration',
+            timing: '10-14 days after change',
+            details: 'Hold/reduce and reassess if potassium >= 5.5 or creatinine rises >30% from baseline.'
+        });
+        if (higherRiskElectrolytes) {
+            plan.push({
+                test: 'Early potassium check',
+                timing: '48-72 hours',
+                details: 'Required due to CKD and/or borderline potassium at baseline.'
+            });
+        }
+    }
+
+    if (hasDiureticIntensification) {
+        plan.push({
+            test: 'Daily weight, BP, orthostasis, dizziness',
+            timing: 'Daily for 7 days',
+            details: 'Flag over-diuresis if weight loss >1 kg/day, symptomatic hypotension, or presyncope.'
+        });
+        plan.push({
+            test: 'BMP (electrolytes, creatinine)',
+            timing: '3-7 days after diuretic increase',
+            details: 'Screen for pre-renal AKI, hypokalemia, and hyponatremia after dose escalation.'
+        });
+    }
+
+    return plan;
 }
 
 function analyzeCurrentRegimen(
@@ -1307,7 +1383,6 @@ function simulateModificationEffect(
     // Digoxin narrow therapeutic index monitoring (DIG trial: target 0.5-0.9 ng/mL)
     const hasDigoxin = resultingRegimen.some(r => r.med.drug_class === 'Inotrope');
     if (hasDigoxin) {
-        const digoxinDose = resultingRegimen.find(r => r.med.drug_class === 'Inotrope');
         const renalNote = currentPatient.egfr < 45 ? ' Renal impairment increases toxicity risk — recheck level after any eGFR change.' : '';
         const kNote = (hasDiuretic && !hasMRA) ? ' Concurrent diuretic without MRA increases hypokalemia-mediated toxicity risk.' : '';
         warnings.push(`Digoxin Monitoring: Check serum digoxin level in 5-7 days (target 0.5-0.9 ng/mL). Monitor for toxicity (nausea, visual changes, arrhythmia).${renalNote}${kNote}`);
@@ -1337,7 +1412,7 @@ export function generateAndScoreModifications(
     patient: Patient,
     availableMedNames: Set<string>,
     prices: Record<string, number>
-): { scoredRegimens: ScoredRegimen[], excludedMedications: ExcludedMedication[], clinicalAlerts: string[] } {
+): SimulationOutput {
 
     const clinicalAlerts: string[] = [];
 
@@ -1419,7 +1494,7 @@ export function generateAndScoreModifications(
     const medTiers = formulary.flatMap(m => getDoseTiers(m, patient));
 
     // 3. Analyze current regimen
-    const analysis = analyzeCurrentRegimen(patient, formulary, medTiers);
+    const analysis = analyzeCurrentRegimen(patient, formulary, medTiers, allBBExcluded);
 
     // 4. Generate candidate modifications
     const binders = medTiers.filter(r => r.med.drug_class === 'K+ Binder');
@@ -1433,6 +1508,15 @@ export function generateAndScoreModifications(
     const results: ScoredRegimen[] = [];
 
     candidateSets.forEach(modSet => {
+        const requiresDiureticFirst = isVolumeDepleted && hasDiureticInCurrent;
+        if (requiresDiureticFirst) {
+            const hasUnsafeIntensification = hasRelevantIntensification(modSet, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES);
+            const hasPriorityDeEscalation = hasDiureticDeEscalation(modSet);
+            if (hasUnsafeIntensification && !hasPriorityDeEscalation) {
+                return;
+            }
+        }
+
         let sim = simulateModificationEffect(patient, modSet, prices);
         let activeModSet = modSet;
 
@@ -1495,10 +1579,7 @@ export function generateAndScoreModifications(
 
         // P5: Volume depletion — boost diuretic removal candidates
         if (isVolumeDepleted) {
-            const hasDiureticRemoval = activeModSet.modifications.some(m =>
-                m.action === 'remove' && m.source &&
-                (m.source.med.drug_class === 'Loop Diuretic' || m.source.med.drug_class === 'Thiazide-like Diuretic')
-            );
+            const hasDiureticRemoval = hasDiureticDeEscalation(activeModSet);
             if (hasDiureticRemoval) overall += 20;
         }
 
@@ -1535,6 +1616,7 @@ export function generateAndScoreModifications(
             rationale: sim.rationale,
             risks: [],
             warnings: sim.warnings,
+            monitoring_plan: buildMonitoringPlan(patient, p, activeModSet),
             modification_set: activeModSet
         });
     });
@@ -1557,11 +1639,11 @@ export function generateAndScoreModifications(
     }
 
     const topPick = outputRegimens[0];
-    if (!topPick) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts };
+    if (!topPick) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
 
     // S2: When hemodynamically unstable, return only the clinical alerts — no drug recommendations
     if (patient.sbp < 85) {
-        return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts };
+        return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
     }
 
     const distinctPicks: ScoredRegimen[] = [topPick];
@@ -1600,6 +1682,7 @@ export function generateAndScoreModifications(
     return {
         scoredRegimens: distinctPicks,
         excludedMedications: excludedMeds,
-        clinicalAlerts
+        clinicalAlerts,
+        monitoringPlan: topPick.monitoring_plan || []
     };
 }

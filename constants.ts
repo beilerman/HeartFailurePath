@@ -317,7 +317,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
             { feature: 'Preferred in Diabetics', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
         ],
-        contraindications: (p) => p.egfr < 20 || (p.is_pregnant === true), // eGFR per DAPA-HF; pregnancy Category C (insufficient human data)
+        contraindications: (p) => p.egfr < 25 || (p.is_pregnant === true), // Do not initiate if eGFR < 25; pregnancy Category C (insufficient human data)
     },
     {
         name: 'Empagliflozin',

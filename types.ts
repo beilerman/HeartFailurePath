@@ -127,6 +127,12 @@ export interface DomainScores {
     guideline: number;
 }
 
+export interface MonitoringPlanItem {
+    test: string;
+    timing: string;
+    details: string;
+}
+
 export interface ScoredRegimen {
     regimen: RegimenMed[];
 
@@ -146,8 +152,16 @@ export interface ScoredRegimen {
     risks: string[];
 
     warnings: string[];
+    monitoring_plan?: MonitoringPlanItem[];
 
     modification_set?: ModificationSet;
+}
+
+export interface SimulationOutput {
+    scoredRegimens: ScoredRegimen[];
+    excludedMedications: ExcludedMedication[];
+    clinicalAlerts: string[];
+    monitoringPlan: MonitoringPlanItem[];
 }
 
 // --- Delta-from-Current Modification Types ---

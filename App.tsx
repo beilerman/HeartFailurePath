@@ -4,7 +4,7 @@ import { ClinicalSummary } from './components/ClinicalSummary';
 import { ResultsDisplay } from './components/ResultsDisplay';
 import { MedicationLibrary } from './components/MedicationLibrary';
 import { FAQ } from './components/FAQ';
-import { Patient, ScoredRegimen, ExcludedMedication } from './types';
+import { Patient, ScoredRegimen, ExcludedMedication, MonitoringPlanItem } from './types';
 import { generateAndScoreModifications } from './services/simulationService';
 import { getDrugPrices } from './services/pricingService';
 import { MEDICATION_FORMULARY } from './constants';
@@ -19,6 +19,7 @@ function App() {
     const [results, setResults] = useState<ScoredRegimen[]>([]);
     const [excludedMeds, setExcludedMeds] = useState<ExcludedMedication[]>([]);
     const [clinicalAlerts, setClinicalAlerts] = useState<string[]>([]);
+    const [monitoringPlan, setMonitoringPlan] = useState<MonitoringPlanItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [simError, setSimError] = useState<string | null>(null);
     const [drugPrices, setDrugPrices] = useState<Record<string, number>>({});
@@ -45,16 +46,18 @@ function App() {
         setSimError(null);
         setTimeout(() => {
             try {
-                const { scoredRegimens, excludedMedications, clinicalAlerts: alerts } = generateAndScoreModifications(patient, simMeds, drugPrices);
+                const { scoredRegimens, excludedMedications, clinicalAlerts: alerts, monitoringPlan: plan } = generateAndScoreModifications(patient, simMeds, drugPrices);
                 setResults(scoredRegimens);
                 setExcludedMeds(excludedMedications);
                 setClinicalAlerts(alerts);
+                setMonitoringPlan(plan);
             } catch (err) {
                 const message = err instanceof Error ? err.message : 'An unexpected error occurred during simulation.';
                 setSimError(message);
                 setResults([]);
                 setExcludedMeds([]);
                 setClinicalAlerts([]);
+                setMonitoringPlan([]);
             } finally {
                 setLoading(false);
             }
@@ -151,6 +154,7 @@ function App() {
                                     error={simError}
                                     excludedMedications={excludedMeds}
                                     clinicalAlerts={clinicalAlerts}
+                                    monitoringPlan={monitoringPlan}
                                 />
                             </div>
                         </section>

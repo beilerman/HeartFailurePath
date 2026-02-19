@@ -233,6 +233,18 @@ export const SCENARIOS: TestScenario[] = [
         }
     },
     {
+        title: 'Borderline Renal (eGFR 22) - Avoid Dapagliflozin Initiation',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 72,
+            egfr: 22,
+            creatinine: 3.0,
+            potassium: 4.9,
+            comorbidities: new Set(['HFrEF', 'CKD Stage 4']),
+            current_regimen: []
+        }
+    },
+    {
         title: 'Severe Hypotension (BP 80/50)',
         patient: {
             ...INITIAL_PATIENT,
@@ -432,6 +444,39 @@ export const SCENARIOS: TestScenario[] = [
             current_regimen: buildCurrentRegimen([
                 { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
                 { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 200,
+            cost_sensitivity: 4,
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'Sinus Tachycardia (No BB Available) - Ivabradine Fallback',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 57,
+            sbp: 122,
+            dbp: 76,
+            pulse: 84,
+            rhythm: 'Sinus',
+            nyha_class: 'II',
+            kccq_score: 52,
+            nt_pro_bnp: 1700,
+            lvef: 30,
+            volume_status: { dry_weight_kg: 78, current_weight_kg: 79, exam_findings: new Set() },
+            egfr: 58,
+            potassium: 4.4,
+            creatinine: 1.3,
+            bun: 21,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set(),
+            discontinued_meds: [],
+            // No baseline beta blocker so ivabradine should rely on all-BB-excluded fallback path.
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
                 { name: 'Spironolactone', strength: 25, freq: 'qd' },
                 { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
             ]),

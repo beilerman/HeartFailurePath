@@ -11,12 +11,16 @@ async function runVerification() {
     const prices = await getDrugPrices();
     // Gather all medication names from pricing to create the "available" set (mocking full formulary availability)
     const availableMedNames = new Set(Object.keys(prices));
+    const betaBlockerMeds = new Set(['Carvedilol', 'Metoprolol Succinate', 'Bisoprolol']);
 
     for (const scenario of SCENARIOS) {
         console.log(`Analyzing Scenario: "${scenario.title}"`);
 
         try {
-            const { scoredRegimens, clinicalAlerts } = generateAndScoreModifications(scenario.patient, availableMedNames, prices);
+            const scenarioAvailableMedNames = scenario.title.includes('No BB Available')
+                ? new Set([...availableMedNames].filter(name => !betaBlockerMeds.has(name)))
+                : availableMedNames;
+            const { scoredRegimens, clinicalAlerts, monitoringPlan } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, prices);
             const topRegimen = scoredRegimens[0];
 
             if (clinicalAlerts.length > 0) {
@@ -85,7 +89,7 @@ async function runVerification() {
 
             // 4. Angioedema -> No ACEi/ARNI
             if (scenario.title.includes('Angioedema')) {
-                if (classes.has('ACE Inhibitor') || classes.has('ARNI')) {
+                if (classes.has('ACEi') || classes.has('ARNI')) {
                     failures.push('ACEi/ARNI prescribed despite Angioedema history');
                     scenarioPassed = false;
                 }
@@ -104,6 +108,14 @@ async function runVerification() {
             if (scenario.title.includes('Critical Renal')) {
                 if (classes.has('MRA')) {
                     failures.push('MRA prescribed despite eGFR 25');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 6b. Dapagliflozin should not be initiated if eGFR < 25
+            if (scenario.title.includes('eGFR 22')) {
+                if (meds.includes('Dapagliflozin')) {
+                    failures.push('Dapagliflozin prescribed despite eGFR 22');
                     scenarioPassed = false;
                 }
             }
@@ -158,6 +170,38 @@ async function runVerification() {
             if (scenario.title.includes('Ivabradine Candidate')) {
                 if (!classes.has('If Inhibitor')) {
                     failures.push('Ivabradine not prescribed despite HR >= 70, sinus, LVEF <= 35, on BB');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 9b. Volume depletion -> prioritize diuretic de-escalation before RAAS/MRA/SGLT2 intensification
+            if (scenario.title.includes('Volume Depleted') && topRegimen?.modification_set) {
+                const volumeSensitiveIntensification = topRegimen.modification_set.modifications.some(m => {
+                    const targetClass = m.target?.med.drug_class;
+                    if (!targetClass) return false;
+                    if (!(m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap')) return false;
+                    return targetClass === 'ARNI' || targetClass === 'ACEi' || targetClass === 'ARB' || targetClass === 'MRA' || targetClass === 'SGLT2i';
+                });
+                const diureticDeEscalation = topRegimen.modification_set.modifications.some(m => {
+                    const sourceClass = m.source?.med.drug_class;
+                    if (!sourceClass) return false;
+                    if (!(m.action === 'remove' || m.action === 'titrate_down')) return false;
+                    return sourceClass === 'Loop Diuretic' || sourceClass === 'Thiazide-like Diuretic';
+                });
+                if (volumeSensitiveIntensification && !diureticDeEscalation) {
+                    failures.push('Volume-depleted scenario intensified RAAS/MRA/SGLT2 without diuretic de-escalation');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 11b. Ivabradine fallback when all BB agents are unavailable
+            if (scenario.title.includes('Ivabradine Fallback')) {
+                if (!classes.has('If Inhibitor')) {
+                    failures.push('Ivabradine fallback missing when beta blockers are unavailable');
+                    scenarioPassed = false;
+                }
+                if (classes.has('Beta Blocker')) {
+                    failures.push('Beta blocker present despite scenario-level formulary exclusion');
                     scenarioPassed = false;
                 }
             }
@@ -246,6 +290,27 @@ async function runVerification() {
                 if (!clinicalAlerts.some(a => a.includes('ADVANCED HEART FAILURE'))) {
                     failures.push('Missing advanced HF referral alert for LVEF 18 + NYHA IV + BNP 8000');
                     scenarioPassed = false;
+                }
+            }
+
+            // 18. Structured monitoring plan should appear when RAAS/MRA/diuretic intensification is recommended
+            if (topRegimen?.modification_set) {
+                const needsStructuredMonitoring = topRegimen.modification_set.modifications.some(m => {
+                    const targetClass = m.target?.med.drug_class;
+                    if (!targetClass) return false;
+                    if (!(m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap')) return false;
+                    return targetClass === 'ARNI' || targetClass === 'ACEi' || targetClass === 'ARB' || targetClass === 'MRA'
+                        || targetClass === 'Loop Diuretic' || targetClass === 'Thiazide-like Diuretic';
+                });
+
+                if (needsStructuredMonitoring) {
+                    if (monitoringPlan.length === 0) {
+                        failures.push('Missing structured monitoring plan despite high-risk medication intensification');
+                        scenarioPassed = false;
+                    } else if (!monitoringPlan.some(item => item.test.includes('BMP'))) {
+                        failures.push('Monitoring plan missing BMP guidance for renal/electrolyte safety');
+                        scenarioPassed = false;
+                    }
                 }
             }
 
