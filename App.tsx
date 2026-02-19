@@ -29,8 +29,8 @@ function App() {
     const [activeTab, setActiveTab] = useState<'simulation' | 'library' | 'faq'>('simulation');
 
     useEffect(() => {
-        getDrugPrices(MEDICATION_FORMULARY.map(m => m.name)).then(setDrugPrices);
-    }, []);
+        getDrugPrices(MEDICATION_FORMULARY.map(m => m.name), patient.insurance_tier).then(setDrugPrices);
+    }, [patient.insurance_tier]);
 
     const handleScenarioChange = (title: string) => {
         setScenario(title);

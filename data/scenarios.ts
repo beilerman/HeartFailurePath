@@ -94,6 +94,7 @@ export const INITIAL_PATIENT: Patient = {
     current_regimen: getInitialRegimen(),
     max_affordable_cost: 100,
     cost_sensitivity: 5, // Default medium sensitivity
+    insurance_tier: 'commercial',
     complexity_tolerance: 5,
     max_new_classes_per_visit: 2
 };
@@ -102,7 +103,7 @@ export const SCENARIOS: TestScenario[] = [
     { title: 'John Doe (Wet & Warm)', patient: INITIAL_PATIENT },
     {
         title: 'Jane Smith (Dry & Cold)',
-        patient: { ...INITIAL_PATIENT, sex: 'Female', height_cm: 162, bmi: 22.8, sbp: 85, volume_status: { dry_weight_kg: 60, current_weight_kg: 60, exam_findings: new Set() }, nt_pro_bnp: 4500, lvef: 15, current_regimen: [] }
+        patient: { ...INITIAL_PATIENT, sex: 'Female', height_cm: 162, bmi: 22.8, sbp: 92, volume_status: { dry_weight_kg: 60, current_weight_kg: 60, exam_findings: new Set() }, nt_pro_bnp: 4500, lvef: 15, current_regimen: [] }
     },
     {
         title: 'Hyperkalemia (K+ 5.6) - Avoid MRA',
@@ -118,7 +119,7 @@ export const SCENARIOS: TestScenario[] = [
         }
     },
     {
-        title: 'Severe Hypotension (BP 85/55)',
+        title: 'Severe Hypotension (BP 85/55) - No Drug Recs',
         patient: {
             ...INITIAL_PATIENT,
             sbp: 85,
@@ -215,6 +216,7 @@ export const SCENARIOS: TestScenario[] = [
             current_regimen: [],
             max_affordable_cost: 75,
             cost_sensitivity: 6,
+            insurance_tier: 'medicare',
             complexity_tolerance: 5,
             max_new_classes_per_visit: 2
         }
@@ -313,6 +315,7 @@ export const SCENARIOS: TestScenario[] = [
             current_regimen: [],
             max_affordable_cost: 500,
             cost_sensitivity: 3,
+            insurance_tier: 'commercial',
             complexity_tolerance: 10,
             max_new_classes_per_visit: 4
         }
@@ -349,6 +352,7 @@ export const SCENARIOS: TestScenario[] = [
             current_regimen: [],
             max_affordable_cost: 200,
             cost_sensitivity: 5,
+            insurance_tier: 'commercial',
             complexity_tolerance: 7,
             max_new_classes_per_visit: 3
         }
@@ -550,6 +554,7 @@ export const SCENARIOS: TestScenario[] = [
             current_regimen: [],
             max_affordable_cost: 200,
             cost_sensitivity: 4,
+            insurance_tier: 'commercial',
             complexity_tolerance: 8,
             max_new_classes_per_visit: 4
         }
@@ -592,6 +597,7 @@ export const SCENARIOS: TestScenario[] = [
             ]),
             max_affordable_cost: 200,
             cost_sensitivity: 4,
+            insurance_tier: 'commercial',
             complexity_tolerance: 8,
             max_new_classes_per_visit: 2
         }
@@ -629,6 +635,7 @@ export const SCENARIOS: TestScenario[] = [
             current_regimen: [],
             max_affordable_cost: 200,
             cost_sensitivity: 4,
+            insurance_tier: 'commercial',
             complexity_tolerance: 8,
             max_new_classes_per_visit: 3
         }
@@ -671,7 +678,268 @@ export const SCENARIOS: TestScenario[] = [
             current_regimen: [],
             max_affordable_cost: 25,
             cost_sensitivity: 8,
+            insurance_tier: 'cash',
             complexity_tolerance: 6,
+            max_new_classes_per_visit: 3
+        }
+    },
+    // --- EDGE CASE SCENARIOS (Clinical Safety Review) ---
+    {
+        title: 'Pregnant on Existing ACEi (Contraindicated Med Removal)',
+        patient: {
+            age: 30,
+            sex: 'Female' as const,
+            race: 'White',
+            height_cm: 165,
+            bmi: 25.0,
+            sbp: 118,
+            dbp: 74,
+            pulse: 82,
+            oxygen_saturation: 97,
+            rhythm: 'Sinus' as const,
+            nt_pro_bnp: 1200,
+            nyha_class: 'II' as const,
+            kccq_score: 58,
+            daily_step_count: 4500,
+            lvef: 32,
+            lvedd: 55,
+            lavi: 33,
+            peak_flow_lpm: 420,
+            volume_status: { dry_weight_kg: 65, current_weight_kg: 66, exam_findings: new Set<string>() },
+            egfr: 95,
+            potassium: 4.0,
+            creatinine: 0.7,
+            bun: 10,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            is_pregnant: true,
+            // Currently on ACEi + BB — ACEi should be flagged for removal, NOT titrated
+            current_regimen: buildCurrentRegimen([
+                { name: 'Lisinopril', strength: 10, freq: 'qd' },
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' }
+            ]),
+            max_affordable_cost: 200,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'SGLT2i Continuation Below eGFR Threshold',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 70,
+            sbp: 115,
+            dbp: 72,
+            pulse: 68,
+            rhythm: 'Sinus' as const,
+            nt_pro_bnp: 2200,
+            nyha_class: 'II' as const,
+            kccq_score: 55,
+            lvef: 30,
+            egfr: 22, // Below Dapa initiation threshold (25) AND Empa threshold (20 only)
+            creatinine: 3.0,
+            potassium: 4.5,
+            bun: 35,
+            comorbidities: new Set(['HFrEF', 'Chronic Kidney Disease']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            // Already on Dapagliflozin — should be allowed to CONTINUE despite eGFR 22
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' },
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 200,
+            cost_sensitivity: 4,
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'SBP 90 Borderline (Should Block Recs)',
+        patient: {
+            ...INITIAL_PATIENT,
+            sbp: 90,
+            dbp: 58,
+            pulse: 92,
+            lvef: 22,
+            nt_pro_bnp: 5000,
+            nyha_class: 'III' as const,
+            volume_status: { dry_weight_kg: 70, current_weight_kg: 72, exam_findings: new Set(['Edema (1+)']) },
+            current_regimen: []
+        }
+    },
+    {
+        title: 'MRA Boundary (eGFR 31, K+ 5.4)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 68,
+            sbp: 120,
+            dbp: 76,
+            pulse: 72,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 55,
+            nt_pro_bnp: 2000,
+            lvef: 30,
+            egfr: 31, // Just above MRA cutoff of 30
+            creatinine: 2.2,
+            potassium: 5.4, // Just below MRA cutoff of 5.5
+            bun: 28,
+            comorbidities: new Set(['HFrEF', 'Chronic Kidney Disease']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' },
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 200,
+            cost_sensitivity: 4,
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'Elderly >80 on All 4 Pillars (Age Dosing)',
+        patient: {
+            age: 84,
+            sex: 'Male' as const,
+            race: 'White',
+            height_cm: 172,
+            bmi: 24.0,
+            sbp: 125,
+            dbp: 75,
+            pulse: 64,
+            oxygen_saturation: 96,
+            rhythm: 'Sinus' as const,
+            nt_pro_bnp: 900,
+            nyha_class: 'II' as const,
+            kccq_score: 60,
+            daily_step_count: 3000,
+            lvef: 35,
+            lvedd: 54,
+            lavi: 34,
+            peak_flow_lpm: 380,
+            volume_status: { dry_weight_kg: 72, current_weight_kg: 73, exam_findings: new Set<string>() },
+            egfr: 42,
+            potassium: 4.6,
+            creatinine: 1.6,
+            bun: 26,
+            comorbidities: new Set(['HFrEF', 'Chronic Kidney Disease']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' },
+                { name: 'Metoprolol Succinate', strength: 50, freq: 'qd' },
+                { name: 'Spironolactone', strength: 12.5, freq: 'qd' },
+                { name: 'Empagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 200,
+            cost_sensitivity: 4,
+            insurance_tier: 'medicare',
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 1
+        }
+    },
+    {
+        title: 'NYHA II + BNP 1800 (Vericiguat Eligible)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 58,
+            sbp: 115,
+            dbp: 72,
+            pulse: 68,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 55,
+            nt_pro_bnp: 1800, // >= 1600 threshold
+            lvef: 35, // < 45 threshold
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 81, exam_findings: new Set<string>() },
+            egfr: 55,
+            potassium: 4.3,
+            creatinine: 1.3,
+            bun: 20,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+                { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 300,
+            cost_sensitivity: 3,
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'Liver Disease + AFib (Carvedilol CI + Digoxin)',
+        patient: {
+            age: 65,
+            sex: 'Male' as const,
+            race: 'White',
+            height_cm: 175,
+            bmi: 28.0,
+            sbp: 118,
+            dbp: 74,
+            pulse: 88,
+            oxygen_saturation: 96,
+            rhythm: 'AFib' as const,
+            nt_pro_bnp: 2500,
+            nyha_class: 'III' as const,
+            kccq_score: 42,
+            daily_step_count: 2500,
+            lvef: 30,
+            lvedd: 60,
+            lavi: 40,
+            peak_flow_lpm: 400,
+            volume_status: { dry_weight_kg: 82, current_weight_kg: 85, exam_findings: new Set(['Edema (1+)', 'JVP Elevated']) },
+            egfr: 55,
+            potassium: 4.2,
+            creatinine: 1.3,
+            bun: 22,
+            comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)', 'Atrial Fibrillation']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 200,
+            cost_sensitivity: 5,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 3
+        }
+    },
+    {
+        title: 'NSAID + RAAS DDI Warning',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 60,
+            sbp: 125,
+            dbp: 78,
+            pulse: 72,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 55,
+            nt_pro_bnp: 1500,
+            lvef: 32,
+            volume_status: { dry_weight_kg: 78, current_weight_kg: 79, exam_findings: new Set<string>() },
+            egfr: 55,
+            potassium: 4.3,
+            creatinine: 1.2,
+            bun: 20,
+            comorbidities: new Set(['HFrEF', 'Chronic NSAID Use']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 200,
+            cost_sensitivity: 4,
+            complexity_tolerance: 8,
             max_new_classes_per_visit: 3
         }
     }

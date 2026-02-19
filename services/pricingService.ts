@@ -1,71 +1,151 @@
 
-// MOCK DRUG PRICING API
-// Standardized Logic:
-// Generics = $10 / month (Standard Copay / Cash tier)
-// Branded = $50 / month (Preferred Brand Copay)
+import type { InsuranceTier } from '../types';
 
-const MOCK_DRUG_PRICES_USD: { [key: string]: number } = {
-    // --- GENERICS ($10) ---
-    'Lisinopril': 10.00,
-    'Losartan': 10.00,
-    'Carvedilol': 10.00,
-    'Metoprolol Succinate': 10.00,
-    'Bisoprolol': 10.00,
-    'Spironolactone': 10.00,
-    'Eplerenone': 10.00,
-    'Furosemide': 10.00,
-    'Torsemide': 10.00,
-    'Hydralazine/Isosorbide Dinitrate': 10.00,
-    'Digoxin': 10.00,
-    'Metolazone': 10.00,
+interface DrugPriceEntry {
+    cash: number;           // GoodRx / NADAC cash price (monthly)
+    commercial_copay: number; // Typical commercial insurance copay
+    medicare_copay: number;   // Medicare Part D copay (post-IRA where applicable)
+    generic_available: boolean;
+    has_copay_card: boolean;  // Manufacturer copay assistance available
+    tier: 'generic' | 'preferred_brand' | 'specialty';
+    notes?: string;
+}
 
-    // --- BRANDED / SPECIALTY ($50) ---
-    // Core GDMT
-    'Sacubitril/Valsartan (Entresto)': 50.00,
-    'Dapagliflozin': 50.00,
-    'Empagliflozin': 50.00,
+// Curated monthly cost estimates (30-day supply unless noted).
+// Sources: CMS NADAC, GoodRx median cash, Medicare Part D formulary tiers,
+// and manufacturer copay-card programs (2024-2025 data).
+export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
+    // --- GENERICS ---
+    'Lisinopril': {
+        cash: 4, commercial_copay: 3, medicare_copay: 3,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Losartan': {
+        cash: 5, commercial_copay: 3, medicare_copay: 3,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Carvedilol': {
+        cash: 4, commercial_copay: 3, medicare_copay: 3,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Metoprolol Succinate': {
+        cash: 10, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Bisoprolol': {
+        cash: 11, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Spironolactone': {
+        cash: 4, commercial_copay: 3, medicare_copay: 3,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Eplerenone': {
+        cash: 17, commercial_copay: 10, medicare_copay: 10,
+        generic_available: true, has_copay_card: false, tier: 'generic',
+        notes: 'Generic available since 2015'
+    },
+    'Furosemide': {
+        cash: 3, commercial_copay: 3, medicare_copay: 3,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Torsemide': {
+        cash: 5, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Hydralazine/Isosorbide Dinitrate': {
+        cash: 20, commercial_copay: 15, medicare_copay: 15,
+        generic_available: true, has_copay_card: false, tier: 'generic',
+        notes: 'BiDil brand ~$500; generic combo available'
+    },
+    'Digoxin': {
+        cash: 12, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
+    'Metolazone': {
+        cash: 12, commercial_copay: 5, medicare_copay: 5,
+        generic_available: true, has_copay_card: false, tier: 'generic'
+    },
 
-    // Adjuncts
-    'Ivabradine': 50.00,
-    'Vericiguat': 50.00,
-    'Patiromer': 50.00,
-    'Ferric Carboxymaltose': 50.00, // One-time infusion amortized or copay
+    // --- PREFERRED BRAND / SPECIALTY ---
+    'Sacubitril/Valsartan (Entresto)': {
+        cash: 50, commercial_copay: 10, medicare_copay: 74,
+        generic_available: false, has_copay_card: true, tier: 'preferred_brand',
+        notes: 'Novartis copay card covers up to $200/mo for commercial; Medicare IRA negotiated 2026'
+    },
+    'Dapagliflozin': {
+        cash: 290, commercial_copay: 35, medicare_copay: 45,
+        generic_available: false, has_copay_card: true, tier: 'preferred_brand',
+        notes: 'AZ copay card; Medicare Part D preferred brand tier'
+    },
+    'Empagliflozin': {
+        cash: 310, commercial_copay: 35, medicare_copay: 50,
+        generic_available: false, has_copay_card: true, tier: 'preferred_brand',
+        notes: 'Lilly/BI copay card; Medicare Part D preferred brand tier'
+    },
+    'Ivabradine': {
+        cash: 58, commercial_copay: 30, medicare_copay: 45,
+        generic_available: false, has_copay_card: true, tier: 'preferred_brand',
+        notes: 'Amgen copay card; authorized generic available in some markets'
+    },
+    'Vericiguat': {
+        cash: 650, commercial_copay: 10, medicare_copay: 170,
+        generic_available: false, has_copay_card: true, tier: 'specialty',
+        notes: 'Merck copay card covers most commercial; specialty tier on Medicare Part D'
+    },
+    'Patiromer': {
+        cash: 985, commercial_copay: 0, medicare_copay: 175,
+        generic_available: false, has_copay_card: true, tier: 'specialty',
+        notes: 'Vifor free drug program for commercial; specialty tier Medicare'
+    },
+    'Semaglutide (Wegovy)': {
+        cash: 349, commercial_copay: 25, medicare_copay: 350,
+        generic_available: false, has_copay_card: true, tier: 'specialty',
+        notes: 'Novo Nordisk savings card; Medicare coverage limited (anti-obesity med exclusion)'
+    },
+    'Tirzepatide (Zepbound)': {
+        cash: 449, commercial_copay: 25, medicare_copay: 450,
+        generic_available: false, has_copay_card: true, tier: 'specialty',
+        notes: 'Lilly savings card; Medicare generally not covered for weight management'
+    },
+    'Ferric Carboxymaltose': {
+        cash: 315, commercial_copay: 50, medicare_copay: 60,
+        generic_available: false, has_copay_card: false, tier: 'specialty',
+        notes: 'IV infusion; often covered under medical benefit (Part B) not Part D'
+    }
+};
 
-    // Metabolic / GLP-1 (Assuming Insurance Coverage)
-    'Semaglutide (Wegovy)': 50.00,
-    'Tirzepatide (Zepbound)': 50.00,
-
-    // Default fallback for unknown / non-formulary medications
-    'default': 150.00
+const TIER_KEY_MAP: Record<InsuranceTier, keyof Pick<DrugPriceEntry, 'cash' | 'commercial_copay' | 'medicare_copay'>> = {
+    cash: 'cash',
+    commercial: 'commercial_copay',
+    medicare: 'medicare_copay'
 };
 
 /**
- * Simulates fetching drug prices from an external API.
- * @param medicationNames An array of medication names to fetch prices for.
- * @returns A promise that resolves to a record mapping medication names to their monthly cost.
+ * Returns monthly drug costs for the requested insurance tier.
+ * @param medicationNames Optional list of medication names (defaults to all formulary drugs).
+ * @param tier Insurance scenario: 'cash' | 'commercial' | 'medicare'. Defaults to 'commercial'.
+ * @returns Record mapping medication name → monthly cost in USD.
  */
-export const getDrugPrices = (medicationNames?: string[]): Promise<Record<string, number>> => {
+export const getDrugPrices = (
+    medicationNames?: string[],
+    tier: InsuranceTier = 'commercial'
+): Promise<Record<string, number>> => {
     return new Promise((resolve) => {
-        // Simulate network latency
-        setTimeout(() => {
-            const prices: Record<string, number> = {};
-            const namesToFetch = medicationNames || Object.keys(MOCK_DRUG_PRICES_USD);
-            namesToFetch.forEach(name => {
-                // Exact match or fallback
-                let price = MOCK_DRUG_PRICES_USD[name];
+        const priceKey = TIER_KEY_MAP[tier];
+        const prices: Record<string, number> = {};
+        const namesToFetch = medicationNames || Object.keys(DRUG_PRICES);
 
-                // Fallback logic if name doesn't match exactly but is known brand
-                if (price === undefined) {
-                    if (name.includes('Entresto') || name.includes('Wegovy') || name.includes('Zepbound') || name.includes('Farxiga') || name.includes('Jardiance')) {
-                        price = 50.00;
-                    } else {
-                        price = MOCK_DRUG_PRICES_USD['default'];
-                    }
-                }
+        namesToFetch.forEach(name => {
+            const entry = DRUG_PRICES[name];
+            if (entry) {
+                prices[name] = entry[priceKey];
+            } else {
+                // Fallback for unknown medications
+                prices[name] = tier === 'cash' ? 150 : 50;
+            }
+        });
 
-                prices[name] = price;
-            });
-            resolve(prices);
-        }, 500);
+        resolve(prices);
     });
 };

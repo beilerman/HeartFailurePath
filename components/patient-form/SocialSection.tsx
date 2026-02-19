@@ -1,11 +1,11 @@
 import React from 'react';
 import { BanknotesIcon } from '../icons';
-import { Label, Input } from './Common';
+import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
 
 interface SocialSectionProps {
     patientData: Patient;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
 }
 
 export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onChange }) => {
@@ -13,6 +13,18 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
         <section>
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-3">
                 <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1"><BanknotesIcon className="w-4 h-4" aria-hidden="true" /> Social Determinants</h4>
+                <div>
+                    <Label htmlFor="insurance_tier">Insurance Coverage</Label>
+                    <Select
+                        name="insurance_tier"
+                        value={patientData.insurance_tier}
+                        onChange={onChange}
+                    >
+                        <option value="cash">Uninsured / Cash Price</option>
+                        <option value="commercial">Commercial Insurance</option>
+                        <option value="medicare">Medicare Part D</option>
+                    </Select>
+                </div>
                 <div>
                     <Label htmlFor="max_affordable_cost">Monthly Med Budget ($)</Label>
                     <Input

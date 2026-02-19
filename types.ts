@@ -1,3 +1,4 @@
+export type InsuranceTier = 'cash' | 'commercial' | 'medicare';
 
 export interface ExcludedMedication {
     name: string;
@@ -66,6 +67,7 @@ export interface Patient {
     current_regimen: RegimenMed[];
     max_affordable_cost: number;
     cost_sensitivity: number; // 0 (Spend freely) to 10 (Every dollar counts)
+    insurance_tier: InsuranceTier; // 'cash' | 'commercial' | 'medicare'
     complexity_tolerance: number; // 0-10
     max_new_classes_per_visit: number; // Default 2. Class substitutions/dose changes do not count as new classes.
 }

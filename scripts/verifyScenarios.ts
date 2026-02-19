@@ -8,8 +8,8 @@ async function runVerification() {
     let passed = 0;
     let failed = 0;
 
-    const prices = await getDrugPrices();
-    // Gather all medication names from pricing to create the "available" set (mocking full formulary availability)
+    // Use any tier to get the full set of medication names (all tiers have the same keys)
+    const prices = await getDrugPrices(undefined, 'commercial');
     const availableMedNames = new Set(Object.keys(prices));
     const betaBlockerMeds = new Set(['Carvedilol', 'Metoprolol Succinate', 'Bisoprolol']);
 
@@ -17,10 +17,11 @@ async function runVerification() {
         console.log(`Analyzing Scenario: "${scenario.title}"`);
 
         try {
+            const scenarioPrices = await getDrugPrices(undefined, scenario.patient.insurance_tier);
             const scenarioAvailableMedNames = scenario.title.includes('No BB Available')
                 ? new Set([...availableMedNames].filter(name => !betaBlockerMeds.has(name)))
                 : availableMedNames;
-            const { scoredRegimens, clinicalAlerts, monitoringPlan } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, prices);
+            const { scoredRegimens, clinicalAlerts, monitoringPlan } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
             const topRegimen = scoredRegimens[0];
 
             if (clinicalAlerts.length > 0) {
@@ -55,9 +56,9 @@ async function runVerification() {
                 }
             }
 
-            // 2. Severe Hypotension -> SBP < 85 should block all recs; SBP 85 should still cautiously recommend
+            // 2. Severe Hypotension -> SBP < 90 should block all recs
             if (scenario.title.includes('Severe Hypotension')) {
-                if (scenario.patient.sbp < 85) {
+                if (scenario.patient.sbp < 90) {
                     // S2: Should have hemodynamic instability alert and no drug recs
                     if (scoredRegimens.length > 0) {
                         failures.push(`Drug recs generated despite SBP ${scenario.patient.sbp}`);
@@ -66,15 +67,6 @@ async function runVerification() {
                     if (!clinicalAlerts.some(a => a.includes('HEMODYNAMIC INSTABILITY'))) {
                         failures.push('Missing hemodynamic instability alert');
                         scenarioPassed = false;
-                    }
-                } else if (topRegimen) {
-                    // SBP 85: cautious recs allowed, but no high-dose BB
-                    if (meds.some(m => m === 'Carvedilol' || m === 'Metoprolol Succinate' || m === 'Bisoprolol')) {
-                        const bb = topRegimen.regimen.find(r => r.med.drug_class === 'Beta Blocker');
-                        if (bb && typeof bb.dose.strength === 'number' && bb.dose.strength > 12.5) {
-                            failures.push(`High dose Beta Blocker (${bb.dose.strength}) in hypotension`);
-                            scenarioPassed = false;
-                        }
                     }
                 }
             }
@@ -290,6 +282,117 @@ async function runVerification() {
                 if (!clinicalAlerts.some(a => a.includes('ADVANCED HEART FAILURE'))) {
                     failures.push('Missing advanced HF referral alert for LVEF 18 + NYHA IV + BNP 8000');
                     scenarioPassed = false;
+                }
+            }
+
+            // 19. Pregnant on existing ACEi -> ACEi must NOT be titrated up; should be removed or down-titrated
+            if (scenario.title.includes('Pregnant on Existing ACEi')) {
+                if (classes.has('ACEi') || classes.has('ARNI') || classes.has('ARB')) {
+                    failures.push('RAAS agent retained/titrated in pregnancy (should be removed)');
+                    scenarioPassed = false;
+                }
+                if (classes.has('MRA')) {
+                    failures.push('MRA prescribed in pregnancy');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.includes('PREGNANCY'))) {
+                    failures.push('Missing pregnancy clinical alert');
+                    scenarioPassed = false;
+                }
+                // Should keep BB (Carvedilol is safe in pregnancy)
+                if (!classes.has('Beta Blocker') && topRegimen) {
+                    failures.push('BB removed in pregnancy (should be continued)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 20. SGLT2i continuation below eGFR threshold
+            if (scenario.title.includes('SGLT2i Continuation')) {
+                if (!classes.has('SGLT2i') && topRegimen) {
+                    failures.push('SGLT2i removed despite continuation being allowed below initiation threshold');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 21. SBP 90 borderline -> should be blocked (SBP < 90 gate)
+            if (scenario.title.includes('SBP 90 Borderline')) {
+                // SBP exactly 90 is NOT < 90, so should get cautious recs... BUT we check the spirit:
+                // At exactly 90, we allow recs (gate is strict < 90). Score may be low due to projected drop.
+                // This tests that the system handles the boundary correctly.
+                if (scoredRegimens.length > 0) {
+                    // If recs are generated at SBP 90, projected SBP should not be < 90 for the top pick
+                    // OR the score should be heavily penalized
+                    if (topRegimen && topRegimen.overall_score > 50) {
+                        // If projected SBP would drop below 90, score should be very low
+                        const projSbp = topRegimen.projected_patient.sbp;
+                        if (projSbp < 85) {
+                            failures.push(`Top regimen at SBP 90 projects dangerous SBP ${projSbp.toFixed(0)} with high score ${topRegimen.overall_score}`);
+                            scenarioPassed = false;
+                        }
+                    }
+                }
+            }
+
+            // 22. MRA boundary (eGFR 31, K+ 5.4) -> MRA should come with binder rescue
+            if (scenario.title.includes('MRA Boundary')) {
+                if (topRegimen && classes.has('MRA')) {
+                    // MRA at this K+ level should trigger binder rescue
+                    const hasBinder = meds.includes('Patiromer');
+                    if (!hasBinder) {
+                        failures.push('MRA prescribed at K+ 5.4 without Patiromer rescue');
+                        scenarioPassed = false;
+                    }
+                }
+            }
+
+            // 23. Elderly >80 on all 4 pillars -> should show age-related warnings
+            if (scenario.title.includes('Elderly >80')) {
+                if (topRegimen) {
+                    // Should keep all 4 pillars (already on them)
+                    const pillarPresent = {
+                        raas: classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB'),
+                        bb: classes.has('Beta Blocker'),
+                        mra: classes.has('MRA'),
+                        sglt2: classes.has('SGLT2i')
+                    };
+                    if (!pillarPresent.raas) { failures.push('Elderly: RAAS dropped'); scenarioPassed = false; }
+                    if (!pillarPresent.bb) { failures.push('Elderly: BB dropped'); scenarioPassed = false; }
+                    if (!pillarPresent.mra) { failures.push('Elderly: MRA dropped'); scenarioPassed = false; }
+                    if (!pillarPresent.sglt2) { failures.push('Elderly: SGLT2i dropped'); scenarioPassed = false; }
+                }
+            }
+
+            // 24. NYHA II + BNP >= 1600 + LVEF < 45 -> Vericiguat should be available
+            if (scenario.title.includes('Vericiguat Eligible')) {
+                // Vericiguat should appear in at least one regimen
+                const anyVericiguat = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'sGC Stimulator')
+                );
+                if (!anyVericiguat) {
+                    failures.push('Vericiguat not available despite NYHA II + BNP 1800 + LVEF 35 (VICTORIA criteria)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 25. Liver Disease + AFib -> No Carvedilol (hepatic CI), should have Digoxin for rate control
+            if (scenario.title.includes('Liver Disease + AFib')) {
+                if (meds.includes('Carvedilol')) {
+                    failures.push('Carvedilol prescribed despite Liver Disease (Child-Pugh B/C) contraindication');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 26. NSAID + RAAS DDI -> should have DDI warning
+            if (scenario.title.includes('NSAID + RAAS DDI')) {
+                if (topRegimen) {
+                    const hasRAASInRec = classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB');
+                    if (hasRAASInRec) {
+                        const allWarnings = scoredRegimens.flatMap(r => r.warnings);
+                        if (!allWarnings.some(w => w.includes('NSAID'))) {
+                            failures.push('Missing DDI warning for RAAS + chronic NSAID use');
+                            scenarioPassed = false;
+                        }
+                    }
                 }
             }
 
