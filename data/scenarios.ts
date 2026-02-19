@@ -91,6 +91,8 @@ export const INITIAL_PATIENT: Patient = {
     comorbidities: new Set(['HFrEF', 'Atrial Fibrillation', 'Chronic Kidney Disease', 'Diabetes Mellitus Type 2']),
     allergies: new Set(),
     discontinued_meds: [],
+    ever_lvef_le_40: 'unknown',
+    recent_hf_worsening_within_6mo: 'unknown',
     current_regimen: getInitialRegimen(),
     max_affordable_cost: 100,
     cost_sensitivity: 5, // Default medium sensitivity
@@ -103,7 +105,7 @@ export const SCENARIOS: TestScenario[] = [
     { title: 'John Doe (Wet & Warm)', patient: INITIAL_PATIENT },
     {
         title: 'Jane Smith (Dry & Cold)',
-        patient: { ...INITIAL_PATIENT, sex: 'Female', height_cm: 162, bmi: 22.8, sbp: 92, volume_status: { dry_weight_kg: 60, current_weight_kg: 60, exam_findings: new Set() }, nt_pro_bnp: 4500, lvef: 15, current_regimen: [] }
+        patient: { ...INITIAL_PATIENT, sex: 'Female', height_cm: 162, bmi: 22.8, sbp: 92, dbp: 64, volume_status: { dry_weight_kg: 60, current_weight_kg: 60, exam_findings: new Set(['Cool Extremities']) }, nt_pro_bnp: 4500, lvef: 15, current_regimen: [] }
     },
     {
         title: 'Hyperkalemia (K+ 5.6) - Avoid MRA',
@@ -866,6 +868,7 @@ export const SCENARIOS: TestScenario[] = [
             comorbidities: new Set(['HFrEF']),
             allergies: new Set<string>(),
             discontinued_meds: [],
+            recent_hf_worsening_within_6mo: 'yes',
             current_regimen: buildCurrentRegimen([
                 { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
                 { name: 'Carvedilol', strength: 25, freq: 'bid' },
@@ -1176,6 +1179,7 @@ export const SCENARIOS: TestScenario[] = [
             comorbidities: new Set(['HFmrEF']),
             allergies: new Set<string>(),
             discontinued_meds: [],
+            recent_hf_worsening_within_6mo: 'yes',
             current_regimen: buildCurrentRegimen([
                 { name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' },
                 { name: 'Metoprolol Succinate', strength: 100, freq: 'qd' },
@@ -1245,6 +1249,142 @@ export const SCENARIOS: TestScenario[] = [
                 { name: 'Furosemide', strength: 40, freq: 'qd' }
             ]),
             max_affordable_cost: 150,
+            cost_sensitivity: 5,
+            insurance_tier: 'medicare',
+            complexity_tolerance: 6,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'Stable Outpatient BNP 1800 (No Recent Worsening)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 60,
+            sbp: 118,
+            dbp: 74,
+            pulse: 70,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 58,
+            nt_pro_bnp: 1800,
+            lvef: 35,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 81, exam_findings: new Set<string>() },
+            egfr: 55,
+            potassium: 4.3,
+            creatinine: 1.2,
+            bun: 18,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            recent_hf_worsening_within_6mo: 'no',
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+                { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 300,
+            cost_sensitivity: 3,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'Low Body Weight Carvedilol Boundary (55kg)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 63,
+            sex: 'Female' as const,
+            height_cm: 160,
+            bmi: 21.5,
+            sbp: 122,
+            dbp: 76,
+            pulse: 72,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 60,
+            nt_pro_bnp: 1800,
+            lvef: 30,
+            volume_status: { dry_weight_kg: 55, current_weight_kg: 56, exam_findings: new Set<string>() },
+            egfr: 62,
+            potassium: 4.1,
+            creatinine: 1.0,
+            bun: 16,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+                { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 250,
+            cost_sensitivity: 3,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'Severe CKD Loop Resistance (eGFR 18)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 72,
+            sbp: 114,
+            dbp: 70,
+            pulse: 84,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'III' as const,
+            kccq_score: 40,
+            nt_pro_bnp: 3200,
+            lvef: 30,
+            volume_status: { dry_weight_kg: 70, current_weight_kg: 74, exam_findings: new Set(['Edema (2+)', 'JVP Elevated']) },
+            egfr: 18,
+            potassium: 4.4,
+            creatinine: 3.1,
+            bun: 62,
+            comorbidities: new Set(['HFrEF', 'Chronic Kidney Disease']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' },
+                { name: 'Furosemide', strength: 80, freq: 'qd' }
+            ]),
+            max_affordable_cost: 220,
+            cost_sensitivity: 4,
+            insurance_tier: 'medicare',
+            complexity_tolerance: 6,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'Digoxin Hypokalemia Contraindication (K+ 3.2)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 74,
+            sbp: 112,
+            dbp: 68,
+            pulse: 92,
+            rhythm: 'AFib' as const,
+            nyha_class: 'III' as const,
+            kccq_score: 38,
+            nt_pro_bnp: 2200,
+            lvef: 32,
+            volume_status: { dry_weight_kg: 72, current_weight_kg: 75, exam_findings: new Set(['Edema (1+)', 'JVP Elevated']) },
+            egfr: 42,
+            potassium: 3.2,
+            creatinine: 1.8,
+            bun: 34,
+            comorbidities: new Set(['HFrEF', 'Atrial Fibrillation', 'Chronic Kidney Disease']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Metoprolol Succinate', strength: 50, freq: 'qd' },
+                { name: 'Furosemide', strength: 80, freq: 'qd' }
+            ]),
+            max_affordable_cost: 180,
             cost_sensitivity: 5,
             insurance_tier: 'medicare',
             complexity_tolerance: 6,

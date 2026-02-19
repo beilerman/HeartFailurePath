@@ -48,6 +48,16 @@ async function runVerification() {
             let scenarioPassed = true;
             const failures: string[] = [];
 
+            // Global safety invariant: never allow dual MRA (steroidal + nsMRA) in the same regimen
+            const anyDualMRA = scoredRegimens.some(r => {
+                const regimenClasses = new Set(r.regimen.map(m => m.med.drug_class));
+                return regimenClasses.has('MRA') && regimenClasses.has('nsMRA');
+            });
+            if (anyDualMRA) {
+                failures.push('Dual MRA regimen detected (steroidal MRA + Finerenone)');
+                scenarioPassed = false;
+            }
+
             // 1. Hyperkalemia (K+ 5.6) -> Should NOT have MRA
             if (scenario.title.includes('Hyperkalemia')) {
                 if (classes.has('MRA')) {
@@ -71,6 +81,18 @@ async function runVerification() {
                 }
             }
 
+            // 2b. Dry & Cold low-output phenotype -> should trigger low-output alert and block oral recs
+            if (scenario.title.includes('Dry & Cold')) {
+                if (scoredRegimens.length > 0) {
+                    failures.push('Drug recommendations generated despite low-output Dry & Cold profile');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.includes('LOW OUTPUT STATE'))) {
+                    failures.push('Missing LOW OUTPUT STATE alert');
+                    scenarioPassed = false;
+                }
+            }
+
             // 3. Bradycardia -> No BB
             if (scenario.title.includes('Bradycardia')) {
                 if (classes.has('Beta Blocker')) {
@@ -81,8 +103,8 @@ async function runVerification() {
 
             // 4. Angioedema -> No ACEi/ARNI
             if (scenario.title.includes('Angioedema')) {
-                if (classes.has('ACEi') || classes.has('ARNI')) {
-                    failures.push('ACEi/ARNI prescribed despite Angioedema history');
+                if (classes.has('ACEi') || classes.has('ARNI') || classes.has('ARB')) {
+                    failures.push('RAAS inhibitor prescribed despite Angioedema history');
                     scenarioPassed = false;
                 }
             }
@@ -211,7 +233,18 @@ async function runVerification() {
                 // Check across all returned regimens for any that contain the washout warning
                 const allWarnings = scoredRegimens.flatMap(r => r.warnings);
                 if (!allWarnings.some(w => w.includes('36-hour washout'))) {
-                    failures.push('Missing 36-hour washout warning for ACEi→ARNI swap');
+                    failures.push('Missing 36-hour washout warning for ACEi->ARNI swap');
+                    scenarioPassed = false;
+                }
+
+                const allSummaries = scoredRegimens
+                    .flatMap(r => r.modification_set?.modifications ?? [])
+                    .map(m => m.summary);
+                const hasStepwiseSummary = allSummaries.some(s =>
+                    s.includes('STOP') && s.includes('WAIT 36 hours') && s.includes('THEN start')
+                );
+                if (!hasStepwiseSummary) {
+                    failures.push('ACEi->ARNI change missing explicit STOP/WAIT/THEN summary');
                     scenarioPassed = false;
                 }
             }
@@ -374,6 +407,20 @@ async function runVerification() {
                 }
             }
 
+            if (scenario.title.includes('No Recent Worsening')) {
+                const anyVericiguat = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'sGC Stimulator')
+                );
+                if (anyVericiguat) {
+                    failures.push('Vericiguat offered despite no recent worsening HF event');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.includes('VERICIGUAT ELIGIBILITY WARNING'))) {
+                    failures.push('Missing Vericiguat eligibility warning when worsening-HF history is absent');
+                    scenarioPassed = false;
+                }
+            }
+
             // 25. Liver Disease + AFib -> No Carvedilol (hepatic CI), should have Digoxin for rate control
             if (scenario.title.includes('Liver Disease + AFib')) {
                 if (meds.includes('Carvedilol')) {
@@ -522,6 +569,48 @@ async function runVerification() {
                         failures.push(`Digoxin dose ${maxDigoxinDose}mcg exceeds renal-adjusted max 62.5mcg at eGFR 25`);
                         scenarioPassed = false;
                     }
+                }
+            }
+
+            if (scenario.title.includes('Digoxin Hypokalemia Contraindication')) {
+                const anyDigoxin = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.name === 'Digoxin')
+                );
+                if (anyDigoxin) {
+                    failures.push('Digoxin offered despite baseline K+ < 3.5');
+                    scenarioPassed = false;
+                }
+            }
+
+            if (scenario.title.includes('Low Body Weight Carvedilol Boundary')) {
+                const carvedilolDoses = scoredRegimens
+                    .flatMap(r => r.regimen)
+                    .filter(m => m.med.name === 'Carvedilol')
+                    .map(m => Number(m.dose.strength));
+                if (carvedilolDoses.some(d => d > 25)) {
+                    failures.push('Carvedilol >25mg BID offered despite dry weight <= 85kg');
+                    scenarioPassed = false;
+                }
+            }
+
+            if (scenario.title.includes('Severe CKD Loop Resistance')) {
+                if (!clinicalAlerts.some(a => a.includes('SEVERE CKD DIURETIC ALERT'))) {
+                    failures.push('Missing severe CKD loop-diuretic efficacy alert at eGFR 18');
+                    scenarioPassed = false;
+                }
+                const loopFrequencies = scoredRegimens
+                    .flatMap(r => r.regimen)
+                    .filter(m => m.med.drug_class === 'Loop Diuretic')
+                    .map(m => m.selected_frequency);
+                const allWarnings = scoredRegimens.flatMap(r => r.warnings);
+                const hasSplitFrequency = loopFrequencies.some(f => f === 'bid' || f === 'tid');
+                const hasLoopStrategyWarning = allWarnings.some(w => w.includes('Severe CKD Loop Strategy'));
+                if (loopFrequencies.length === 0) {
+                    failures.push('No loop diuretic offered in severe congestion/eGFR 18 scenario');
+                    scenarioPassed = false;
+                } else if (!hasSplitFrequency && !hasLoopStrategyWarning) {
+                    failures.push('Neither split loop dosing nor reduced-efficacy warning present at eGFR 18');
+                    scenarioPassed = false;
                 }
             }
 

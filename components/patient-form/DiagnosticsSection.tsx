@@ -1,11 +1,11 @@
 import React from 'react';
 import { CalculationIcon } from '../icons';
-import { Label, Input } from './Common';
+import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
 
 interface DiagnosticsSectionProps {
     patientData: Patient;
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     validationErrors?: Record<string, string>;
     clinicalWarnings?: Record<string, string>;
 }
@@ -26,6 +26,48 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 <div>
                     <Label htmlFor="nt_pro_bnp">NT-proBNP</Label>
                     <Input type="number" name="nt_pro_bnp" value={patientData.nt_pro_bnp} onChange={onChange} error={validationErrors.nt_pro_bnp} />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <Label htmlFor="ever_lvef_le_40">Has this patient ever had LVEF 40% or lower?</Label>
+                    <Select name="ever_lvef_le_40" value={patientData.ever_lvef_le_40 ?? 'unknown'} onChange={onChange}>
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="unknown">Unknown</option>
+                    </Select>
+                </div>
+                <div>
+                    <Label htmlFor="previous_lvef">Prior Lowest LVEF (%)</Label>
+                    <Input
+                        type="number"
+                        name="previous_lvef"
+                        value={patientData.previous_lvef ?? ''}
+                        onChange={onChange}
+                        placeholder="Optional (e.g. 25)"
+                    />
+                </div>
+            </div>
+
+            {(patientData.ever_lvef_le_40 ?? 'unknown') === 'unknown' && (
+                <div className="mb-4 px-3 py-2 rounded-md bg-amber-50 border border-amber-300 text-amber-800 text-xs font-medium">
+                    ! Cannot determine HFimpEF status - consider continuing current GDMT if previously on quad therapy.
+                </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="col-span-2">
+                    <Label htmlFor="recent_hf_worsening_within_6mo">Recent worsening HF (hospitalization or IV diuretics within 6 months)?</Label>
+                    <Select
+                        name="recent_hf_worsening_within_6mo"
+                        value={patientData.recent_hf_worsening_within_6mo ?? 'unknown'}
+                        onChange={onChange}
+                    >
+                        <option value="yes">Yes</option>
+                        <option value="no">No</option>
+                        <option value="unknown">Unknown</option>
+                    </Select>
                 </div>
             </div>
 

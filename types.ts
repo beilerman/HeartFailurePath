@@ -4,6 +4,8 @@ export interface ExcludedMedication {
     name: string;
     drug_class: string;
     reason: string;
+    reason_detail?: string;
+    occurred_at?: string;
 }
 
 export interface ExamFinding {
@@ -16,6 +18,9 @@ export interface VolumeStatus {
     current_weight_kg: number;
     exam_findings: Set<string>; // e.g. 'Edema', 'JVP', 'Orthopnea'
 }
+
+export type HistoricalHFrEFStatus = 'yes' | 'no' | 'unknown';
+export type RecentHFWorseningStatus = 'yes' | 'no' | 'unknown';
 
 export interface Patient {
     // Demographics
@@ -62,6 +67,10 @@ export interface Patient {
 
     // HFimpEF detection: LVEF that was ≤40% and has since improved
     previous_lvef?: number;
+    ever_lvef_le_40?: HistoricalHFrEFStatus;
+
+    // Vericiguat (VICTORIA) requires recent worsening HF event
+    recent_hf_worsening_within_6mo?: RecentHFWorseningStatus;
 
     // Constraints
     current_regimen: RegimenMed[];

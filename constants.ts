@@ -586,7 +586,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              { feature: 'Indicated for Obesity Phenotype (BMI > 30)', points: 50, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) => p.bmi < 27
+        contraindications: (p) => p.bmi < 30
     },
     {
         name: 'Tirzepatide (Zepbound)',
@@ -610,7 +610,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              { feature: 'Superior Weight Loss & KCCQ Benefit (SUMMIT)', points: 60, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) => p.bmi < 27
+        contraindications: (p) => p.bmi < 30
     },
 
     // ========================================
@@ -624,8 +624,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         available_doses: [
             { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
             { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 80, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 160, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false },
+            { strength: 80, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid', 'tid'], scored: true },
+            { strength: 160, unit: 'mg', formulation: 'tablet', frequency_options: ['bid', 'tid'], scored: false },
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
@@ -647,16 +647,20 @@ export const MEDICATION_FORMULARY: Medication[] = [
             { feature: 'Caution in Gout (Uric Acid retention)', points: -5, criteria: (p) => p.comorbidities.has("Gout") }
         ],
         side_effects: () => ({ hypokalemia: 0.20, renal_worsening: 0.10, hypotension: 0.05 }),
+        renal_adjustment: (egfr) => {
+            if (egfr < 20) return { caution: true };
+            return {};
+        },
     },
     {
         name: 'Torsemide',
         drug_class: 'Loop Diuretic',
         is_best_in_class: true,
         available_doses: [
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
+            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
+            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
@@ -678,6 +682,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
             { feature: 'Caution in Gout', points: -5, criteria: (p) => p.comorbidities.has("Gout") }
         ],
         side_effects: () => ({ hypokalemia: 0.15, hypotension: 0.05 }),
+        renal_adjustment: (egfr) => {
+            if (egfr < 20) return { caution: true };
+            return {};
+        },
     },
     {
         name: 'Bumetanide',
@@ -685,8 +693,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         available_doses: [
             { strength: 0.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
             { strength: 1, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 2, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false }, // Max dose for diuretic resistance
+            { strength: 2, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid', 'tid'], scored: true },
+            { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['bid', 'tid'], scored: false }, // Max dose for diuretic resistance
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
@@ -708,6 +716,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
             { feature: 'Caution in Gout (Uric Acid retention)', points: -5, criteria: (p) => p.comorbidities.has("Gout") }
         ],
         side_effects: () => ({ hypokalemia: 0.20, renal_worsening: 0.10, hypotension: 0.05 }),
+        renal_adjustment: (egfr) => {
+            if (egfr < 20) return { caution: true };
+            return {};
+        },
     },
 
     // ========================================
@@ -789,6 +801,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         }),
         hemodynamic_effects: () => ({ sbp_drop: 4, hr_drop: 0, potassium_change: 0 }),
         side_effects: () => ({ hypotension: 0.10, anemia: 0.05 }),
+        contraindications: (p) => {
+            const nyhaEligible = p.nyha_class === 'II' || p.nyha_class === 'III' || p.nyha_class === 'IV';
+            const hasRequiredWorseningEvent = p.recent_hf_worsening_within_6mo === 'yes';
+            return !nyhaEligible || p.lvef >= 45 || !p.nt_pro_bnp || p.nt_pro_bnp < 1600 || !hasRequiredWorseningEvent;
+        },
     },
     {
         name: 'Patiromer',
@@ -876,7 +893,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // K+ > 5.5: Hyperkalemia potentiates digitalis toxicity (shifts binding, arrhythmia risk)
             // eGFR < 15: End-stage renal without dialysis monitoring — accumulation risk too high
             // (eGFR 15-30 handled by renal_adjustment dose cap to 62.5mcg)
-            return p.potassium > 5.5 || p.egfr < 15;
+            return p.potassium > 5.5 || p.potassium < 3.5 || p.egfr < 15;
         },
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 62.5, caution: true }; // Half-dose; target level 0.5-0.9 ng/mL

@@ -3,6 +3,18 @@ import { Patient, Medication, ScoredRegimen, RegimenMed, ExcludedMedication, Mod
 import { MEDICATION_FORMULARY } from '../constants';
 
 // --- Helper Functions ---
+function pickPreferredFrequency(med: Medication, options: string[], patient: Patient): string {
+    if (options.length === 0) return 'qd';
+
+    // Severe CKD reduces loop delivery to the nephron. Prefer split dosing at low eGFR.
+    if (med.drug_class === 'Loop Diuretic' && patient.egfr < 20) {
+        if (options.includes('tid')) return 'tid';
+        if (options.includes('bid')) return 'bid';
+    }
+
+    return options[0];
+}
+
 function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
     const adjustment = med.renal_adjustment ? med.renal_adjustment(patient.egfr, patient) : {};
     const validDoses = med.available_doses.filter(dose => {
@@ -32,7 +44,7 @@ function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
     return tiers.map(dose => ({
         med,
         dose,
-        selected_frequency: dose.frequency_options[0]
+        selected_frequency: pickPreferredFrequency(med, dose.frequency_options, patient)
     }));
 }
 
@@ -41,6 +53,27 @@ function getMedicationClassGroup(drugClass: string): string {
     if (['GLP-1 RA', 'GLP-1/GIP RA'].includes(drugClass)) return 'GLP-1 Therapy';
     if (drugClass === 'nsMRA') return 'MRA'; // Group with steroidal MRA — prevents dual MRA therapy
     return drugClass;
+}
+
+function hasHistoricalHFrEF(patient: Patient): boolean {
+    if (patient.previous_lvef !== undefined) return patient.previous_lvef <= 40;
+    return patient.ever_lvef_le_40 === 'yes';
+}
+
+function hasRecentWorseningHF(patient: Patient): boolean {
+    return patient.recent_hf_worsening_within_6mo === 'yes';
+}
+
+function isLowOutputState(patient: Patient): boolean {
+    if (patient.lvef >= 20) return false;
+
+    const hasCoolExtremities = patient.volume_status.exam_findings.has('Cool Extremities');
+    const pulsePressure = patient.sbp - patient.dbp;
+    const hasNarrowPulsePressure = pulsePressure <= 25;
+    const bunCrRatio = patient.creatinine > 0 ? patient.bun / patient.creatinine : 0;
+    const hasPrerenalAzotemia = bunCrRatio > 20;
+
+    return hasCoolExtremities || hasNarrowPulsePressure || hasPrerenalAzotemia;
 }
 
 function countNewClassGroups(candidate: RegimenMed[], current: RegimenMed[]): number {
@@ -175,7 +208,7 @@ function analyzeCurrentRegimen(
 
     // Determine which GDMT pillars apply based on HF phenotype
     // HFimpEF (ACC/AHA 2022): If LVEF was ≤40% and has improved, continue all 4 pillars
-    const isHFimpEF = patient.previous_lvef !== undefined && patient.previous_lvef <= 40 && patient.lvef > 40;
+    const isHFimpEF = patient.lvef > 40 && hasHistoricalHFrEF(patient);
     const isHFpEF = patient.lvef >= 50 && !isHFimpEF;
     const applicablePillars = isHFpEF
         ? ['SGLT2i']                                    // HFpEF: only SGLT2i is Class I
@@ -309,7 +342,8 @@ function analyzeCurrentRegimen(
 
     // Vericiguat: NYHA II-IV + NT-proBNP >= 1600 + LVEF < 45 (VICTORIA trial enrolled NYHA II-IV)
     const isNyhaIIorHigher = patient.nyha_class === 'II' || patient.nyha_class === 'III' || patient.nyha_class === 'IV';
-    if (isNyhaIIorHigher && patient.nt_pro_bnp >= 1600 && patient.lvef < 45) {
+    const hasWorseningHf = hasRecentWorseningHF(patient);
+    if (isNyhaIIorHigher && patient.nt_pro_bnp >= 1600 && patient.lvef < 45 && hasWorseningHf) {
         const verTiers = medTiers.filter(r => r.med.drug_class === 'sGC Stimulator');
         if (verTiers.length > 0 && !currentClasses.has('sGC Stimulator')) {
             addableAdjuncts.push(verTiers[0]);
@@ -426,6 +460,13 @@ function formatDose(r: RegimenMed): string {
     return `${r.dose.strength}${r.dose.unit} ${r.selected_frequency}`;
 }
 
+function formatSwapSummary(from: RegimenMed, to: RegimenMed): string {
+    if (from.med.drug_class === 'ACEi' && to.med.drug_class === 'ARNI') {
+        return `STOP ${from.med.name}. WAIT 36 hours. THEN start ${to.med.name} ${formatDose(to)}`;
+    }
+    return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)}`;
+}
+
 function generateCandidateModifications(
     analysis: RegimenAnalysis,
     patient: Patient,
@@ -490,7 +531,7 @@ function generateCandidateModifications(
                 action: 'swap',
                 source: from,
                 target: to,
-                summary: `Swap ${from.med.name} → ${to.med.name} ${formatDose(to)}`
+                summary: formatSwapSummary(from, to)
             }];
             candidates.push({
                 modifications: mods,
@@ -622,7 +663,7 @@ function generateCandidateModifications(
                 const bestSwap = swapCandidates[0];
                 if (bestSwap) {
                     const mods: RegimenModification[] = [
-                        { action: 'swap', source: from, target: bestSwap, summary: `Swap ${from.med.name} → ${bestSwap.med.name} ${formatDose(bestSwap)}` },
+                        { action: 'swap', source: from, target: bestSwap, summary: formatSwapSummary(from, bestSwap) },
                         { action: 'add', target: topPillarMed, summary: `Add ${topPillarMed.med.name} ${formatDose(topPillarMed)}` }
                     ];
                     candidates.push({
@@ -658,7 +699,7 @@ function generateCandidateModifications(
                 const bestSwap = swapCandidates[0];
                 if (bestSwap) {
                     const mods: RegimenModification[] = [
-                        { action: 'swap', source: from, target: bestSwap, summary: `Swap ${from.med.name} → ${bestSwap.med.name} ${formatDose(bestSwap)}` },
+                        { action: 'swap', source: from, target: bestSwap, summary: formatSwapSummary(from, bestSwap) },
                         { action: 'add', target: adj, summary: `Add ${adj.med.name} ${formatDose(adj)}` }
                     ];
                     candidates.push({
@@ -722,7 +763,10 @@ function generateCandidateModifications(
     // Filter by max_new_classes_per_visit
     return candidates.filter(c => {
         const newClassCount = countNewClassGroups(c.resulting_regimen, currentRegimen);
-        return newClassCount <= maxNewPerVisit;
+        const hasSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'MRA');
+        const hasNonSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'nsMRA');
+        const hasDualMRA = hasSteroidalMRA && hasNonSteroidalMRA;
+        return newClassCount <= maxNewPerVisit && !hasDualMRA;
     });
 }
 
@@ -985,7 +1029,7 @@ function calculateGuidelineConcordanceScore(
     );
 
     // G4: HFimpEF — if LVEF was ≤40% and has improved, score as HFrEF (continue all pillars)
-    const isHFimpEF = patient.previous_lvef !== undefined && patient.previous_lvef <= 40 && patient.lvef > 40;
+    const isHFimpEF = patient.lvef > 40 && hasHistoricalHFrEF(patient);
 
     if (patient.lvef >= 50 && !isHFimpEF) {
         // HFpEF: SGLT2i is the only Class I pillar (EMPEROR-Preserved, DELIVER)
@@ -1519,6 +1563,12 @@ function simulateModificationEffect(
         warnings.push("CONTRAINDICATION: Dual RAAS blockade (ACEi + ARB/ARNI) increases renal risk without benefit.");
     }
 
+    const hasSteroidalMRA = resultingRegimen.some(r => r.med.drug_class === 'MRA');
+    const hasNonSteroidalMRA = resultingRegimen.some(r => r.med.drug_class === 'nsMRA');
+    if (hasSteroidalMRA && hasNonSteroidalMRA) {
+        warnings.push('CONTRAINDICATION: Dual MRA blockade (steroidal MRA + Finerenone) increases severe hyperkalemia risk and is not evidence-based.');
+    }
+
     if (currentPatient.oxygen_saturation && currentPatient.oxygen_saturation < 90) {
         warnings.push("Hypoxia Alert: SpO2 < 90%. Evaluate for Pulmonary Edema.");
     }
@@ -1555,6 +1605,9 @@ function simulateModificationEffect(
         const renalNote = currentPatient.egfr < 45 ? ' Renal impairment increases toxicity risk — recheck level after any eGFR change.' : '';
         const kNote = (hasDiuretic && !hasMRA) ? ' Concurrent diuretic without MRA increases hypokalemia-mediated toxicity risk.' : '';
         warnings.push(`Digoxin Monitoring: Check serum digoxin level in 5-7 days (target 0.5-0.9 ng/mL). Monitor for toxicity (nausea, visual changes, arrhythmia).${renalNote}${kNote}`);
+        if (proj.potassium >= 3.5 && proj.potassium < 4.0) {
+            warnings.push('Digoxin Safety: Potassium 3.5-4.0 increases toxicity risk. Monitor K+ closely with concurrent diuretic therapy and replete to >4.0 when feasible.');
+        }
     }
 
     if (currentPatient.peak_flow_lpm && currentPatient.peak_flow_lpm < 350) {
@@ -1570,6 +1623,10 @@ function simulateModificationEffect(
         } else {
             uniqueRationale.push("Monitoring: BUN/Cr elevated but MAP > 70 suggests tolerance");
         }
+    }
+
+    if (currentPatient.egfr < 20 && hasDiuretic) {
+        warnings.push('Severe CKD Loop Strategy: eGFR < 20 may blunt loop response. Consider split dosing (BID/TID), torsemide/bumetanide conversion, and close urine output + daily weight tracking.');
     }
 
     // --- Drug-Drug Interaction (DDI) Warnings ---
@@ -1612,6 +1669,14 @@ export function generateAndScoreModifications(
 
     // --- S2: Hemodynamic instability — block pharmacologic optimization ---
     // Threshold raised to SBP < 90 (MAP ~65 mmHg): oral GDMT initiation requires adequate perfusion
+    const lowOutput = isLowOutputState(patient);
+    if (lowOutput) {
+        clinicalAlerts.push(
+            'LOW OUTPUT STATE: LVEF < 20% with hypoperfusion markers (cool extremities, narrow pulse pressure, or pre-renal azotemia). ' +
+            'Consider inotropic support and Advanced HF consultation before oral GDMT initiation.'
+        );
+    }
+
     if (patient.sbp < 90) {
         clinicalAlerts.push(
             'HEMODYNAMIC INSTABILITY: SBP < 90 mmHg. Oral GDMT optimization is unsafe at current blood pressure. ' +
@@ -1621,7 +1686,8 @@ export function generateAndScoreModifications(
     }
 
     // --- S3: Advanced HF referral trigger ---
-    const advancedHFCriteria = (patient.lvef <= 20 && patient.sbp < 90) ||
+    const advancedHFCriteria = lowOutput ||
+        (patient.lvef <= 20 && patient.sbp < 90) ||
         (patient.nyha_class === 'IV' && patient.nt_pro_bnp > 4000);
     if (advancedHFCriteria) {
         clinicalAlerts.push(
@@ -1644,13 +1710,44 @@ export function generateAndScoreModifications(
         );
     }
 
+    if (patient.egfr < 20) {
+        clinicalAlerts.push(
+            'SEVERE CKD DIURETIC ALERT: eGFR < 20 may blunt oral loop diuretic response. Consider BID/TID loop dosing strategy, conversion to torsemide/bumetanide, and close daily weight/urine monitoring.'
+        );
+    }
+
+    const historicalStatusUnknown = patient.previous_lvef === undefined && patient.ever_lvef_le_40 !== 'yes' && patient.ever_lvef_le_40 !== 'no';
+    if (patient.lvef > 40 && historicalStatusUnknown) {
+        clinicalAlerts.push(
+            'HFimpEF STATUS UNKNOWN: Cannot determine if this patient previously had LVEF <= 40%. If previously on quad GDMT, consider continuing RAAS/BB/MRA/SGLT2i until prior records are clarified.'
+        );
+    }
+
+    const vericiguatCoreEligible = (patient.nyha_class === 'II' || patient.nyha_class === 'III' || patient.nyha_class === 'IV') &&
+        patient.nt_pro_bnp >= 1600 &&
+        patient.lvef < 45;
+    if (vericiguatCoreEligible && patient.recent_hf_worsening_within_6mo !== 'yes') {
+        clinicalAlerts.push(
+            'VERICIGUAT ELIGIBILITY WARNING: Recent HF worsening (hospitalization or IV diuretics within 6 months) is required before Vericiguat use.'
+        );
+    }
+
     // 1. Filter Formulary & Check Exclusions (same logic as before)
     const excludedMeds: ExcludedMedication[] = [...patient.discontinued_meds];
     const excludedNames = new Set(excludedMeds.map(m => m.name));
-    const exclusionReasons = new Set(excludedMeds.map(m => m.reason));
-
-    const excludeACEi = exclusionReasons.has("Angioedema") || exclusionReasons.has("Cough");
-    const excludeMRA = exclusionReasons.has("Hyperkalemia") || exclusionReasons.has("Gynecomastia");
+    const exclusionText = excludedMeds
+        .map(m => `${m.reason} ${m.reason_detail ?? ''}`.toLowerCase())
+        .join(' | ');
+    const hasAngioedemaHistory = exclusionText.includes('angioedema');
+    const hasAngioedemaRisk = hasAngioedemaHistory || patient.comorbidities.has("History of Angioedema");
+    const hasAceiCoughHistory = exclusionText.includes('cough');
+    const hasHyperkalemiaHistory = exclusionText.includes('hyperkalemia');
+    const hasGynecomastiaHistory = exclusionText.includes('gynecomastia');
+    const excludeACEi = hasAngioedemaRisk || hasAceiCoughHistory;
+    const excludeAllRaas = hasAngioedemaRisk;
+    const excludeMRA = hasHyperkalemiaHistory || hasGynecomastiaHistory;
+    const currentHasSteroidalMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'MRA');
+    const currentHasNsMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'nsMRA');
 
     // G2: Track which drug classes are fully excluded (for BB-contraindicated ivabradine path)
     const excludedClasses = new Set<string>();
@@ -1663,13 +1760,24 @@ export function generateAndScoreModifications(
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Cross-reactivity with prior ACEi intolerance" });
             return false;
         }
+        if (excludeAllRaas && (m.drug_class === 'ARNI' || m.drug_class === 'ARB')) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Avoided due to prior angioedema history" });
+            return false;
+        }
         if (m.drug_class === 'MRA' && excludeMRA) {
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Cross-reactivity with prior MRA intolerance" });
             return false;
         }
-        // nsMRA: exclude only for hyperkalemia intolerance (no antiandrogen effects → gynecomastia doesn't apply)
-        if (m.drug_class === 'nsMRA' && exclusionReasons.has("Hyperkalemia")) {
+        if (m.drug_class === 'nsMRA' && hasHyperkalemiaHistory) {
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Hyperkalemia intolerance (applies to all MRA types)" });
+            return false;
+        }
+        if (m.drug_class === 'nsMRA' && currentHasSteroidalMRA) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Dual MRA prevention: current steroidal MRA in regimen" });
+            return false;
+        }
+        if (m.drug_class === 'MRA' && currentHasNsMRA) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Dual MRA prevention: current nsMRA in regimen" });
             return false;
         }
 
@@ -1839,8 +1947,8 @@ export function generateAndScoreModifications(
     const topPick = outputRegimens[0];
     if (!topPick) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
 
-    // S2: When hemodynamically unstable, return only the clinical alerts — no drug recommendations
-    if (patient.sbp < 90) {
+    // S2/S2b: When hemodynamically unstable or low-output, return alerts only.
+    if (patient.sbp < 90 || lowOutput) {
         return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
     }
 

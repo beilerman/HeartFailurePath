@@ -14,6 +14,8 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
     const [allergyInput, setAllergyInput] = useState('');
     const [intoleranceDrug, setIntoleranceDrug] = useState('');
     const [intoleranceReason, setIntoleranceReason] = useState('');
+    const [intoleranceDetail, setIntoleranceDetail] = useState('');
+    const [intoleranceDate, setIntoleranceDate] = useState('');
     const [selectedComorbidity, setSelectedComorbidity] = useState('');
 
     const handleAddComorbidity = () => {
@@ -59,11 +61,19 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
             ...prev,
             discontinued_meds: [
                 ...(prev.discontinued_meds || []),
-                { name: intoleranceDrug, drug_class: med.drug_class, reason: intoleranceReason }
+                {
+                    name: intoleranceDrug,
+                    drug_class: med.drug_class,
+                    reason: intoleranceReason,
+                    reason_detail: intoleranceDetail || undefined,
+                    occurred_at: intoleranceDate || undefined
+                }
             ]
         }));
         setIntoleranceDrug('');
         setIntoleranceReason('');
+        setIntoleranceDetail('');
+        setIntoleranceDate('');
     };
 
     const handleRemoveIntolerance = (index: number) => {
@@ -131,15 +141,17 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                 <Label>Prior Intolerances</Label>
                 <div className="space-y-2.5 mb-3">
                     {patientData.discontinued_meds.map((dm, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-amber-50 p-2.5 rounded border border-amber-100">
-                            <div className="text-sm">
-                                <span className="font-bold text-amber-900">{dm.name}</span>
-                                <span className="mx-2 text-amber-400">|</span>
-                                <span className="text-amber-800 italic">{dm.reason}</span>
+                            <div key={idx} className="flex items-center justify-between bg-amber-50 p-2.5 rounded border border-amber-100">
+                                <div className="text-sm">
+                                    <span className="font-bold text-amber-900">{dm.name}</span>
+                                    <span className="mx-2 text-amber-400">|</span>
+                                    <span className="text-amber-800 italic">{dm.reason}</span>
+                                    {dm.reason_detail && <span className="block text-amber-700 text-xs mt-1">{dm.reason_detail}</span>}
+                                    {dm.occurred_at && <span className="block text-amber-700 text-xs">When: {dm.occurred_at}</span>}
+                                </div>
+                                <button onClick={() => handleRemoveIntolerance(idx)} className="text-amber-500 hover:text-amber-700 text-lg leading-none" aria-label={`Remove intolerance: ${dm.name}`}>&times;</button>
                             </div>
-                            <button onClick={() => handleRemoveIntolerance(idx)} className="text-amber-500 hover:text-amber-700 text-lg leading-none" aria-label={`Remove intolerance: ${dm.name}`}>&times;</button>
-                        </div>
-                    ))}
+                        ))}
                 </div>
                 <div className="grid grid-cols-2 gap-2 mb-2">
                     <Select value={intoleranceDrug} onChange={(e) => setIntoleranceDrug(e.target.value)} aria-label="Intolerance drug">
@@ -150,6 +162,20 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                         <option value="">Side Effect...</option>
                         {COMMON_SIDE_EFFECTS.map(se => <option key={se} value={se}>{se}</option>)}
                     </Select>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mb-2">
+                    <Input
+                        value={intoleranceDetail}
+                        onChange={(e) => setIntoleranceDetail(e.target.value)}
+                        placeholder="Details (e.g. ACEi cough after 2 weeks)"
+                        aria-label="Intolerance details"
+                    />
+                    <Input
+                        type="month"
+                        value={intoleranceDate}
+                        onChange={(e) => setIntoleranceDate(e.target.value)}
+                        aria-label="Intolerance date"
+                    />
                 </div>
                 <button
                     onClick={handleAddIntolerance}

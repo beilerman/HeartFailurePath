@@ -25,6 +25,12 @@ export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, exc
 
     return (
         <div className="space-y-8 pb-16">
+            <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4" role="note" aria-live="polite">
+                <p className="text-sm font-semibold text-amber-900">
+                    This tool provides evidence-based decision support. Recommendations must be integrated with clinical judgment, patient preferences, and specialist consultation when available.
+                </p>
+            </div>
+
             {error && (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-4" role="alert">
                     <p className="text-sm font-semibold text-red-700">Simulation error</p>

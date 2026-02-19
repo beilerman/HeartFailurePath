@@ -128,15 +128,23 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     // --- 2c. Clinical warnings ---
     const clinicalWarnings = useMemo(() => {
         const warnings: Record<string, string> = {};
-        if (patientData.sbp < 90) warnings.sbp = 'Hemodynamic instability — no drug recs will be generated';
+        const bunCrRatio = patientData.creatinine > 0 ? patientData.bun / patientData.creatinine : 0;
+        const pulsePressure = patientData.sbp - patientData.dbp;
+        const hasLowOutputMarker = patientData.volume_status.exam_findings.has('Cool Extremities') || pulsePressure <= 25 || bunCrRatio > 20;
+
+        if (patientData.sbp < 90) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
         if (patientData.potassium > 5.5) warnings.potassium = 'MRA contraindicated at K+ > 5.5';
-        else if (patientData.potassium > 5.0) warnings.potassium = 'Elevated K+ — MRA/RAAS risk';
+        else if (patientData.potassium < 3.5) warnings.potassium = 'K+ < 3.5 increases digoxin/arrhythmia risk';
+        else if (patientData.potassium < 4.0) warnings.potassium = 'K+ 3.5-4.0: monitor closely with loop diuretics/digoxin';
+        else if (patientData.potassium > 5.0) warnings.potassium = 'Elevated K+ - MRA/RAAS risk';
         if (patientData.is_pregnant) warnings.pregnancy = 'RAAS/MRA/nsMRA/SGLT2i excluded';
         if (patientData.nyha_class === 'IV') warnings.nyha = 'BB initiation blocked';
-        if (patientData.pulse < 55) warnings.pulse = 'Severe bradycardia — BB contraindicated';
-        if (patientData.egfr < 30) warnings.egfr = 'Severe CKD — MRA CI, RAAS limited, SGLT2i initiation blocked';
+        if (patientData.pulse < 55) warnings.pulse = 'Severe bradycardia - BB contraindicated';
+        if (patientData.egfr < 30) warnings.egfr = 'Severe CKD - MRA CI, RAAS limited, SGLT2i initiation blocked';
+        if (patientData.egfr < 20) warnings.egfr = 'eGFR < 20: loop response may be poor; consider BID/TID strategy';
+        if (patientData.lvef < 20 && hasLowOutputMarker) warnings.low_output = 'Low-output profile detected (LVEF < 20 with hypoperfusion markers)';
         return warnings;
-    }, [patientData.sbp, patientData.potassium, patientData.is_pregnant, patientData.nyha_class, patientData.pulse, patientData.egfr]);
+    }, [patientData.sbp, patientData.dbp, patientData.bun, patientData.creatinine, patientData.potassium, patientData.is_pregnant, patientData.nyha_class, patientData.pulse, patientData.egfr, patientData.lvef, patientData.volume_status.exam_findings]);
 
     // --- 2d. Disable simulation when validation errors exist ---
     const hasValidationErrors = Object.keys(validationErrors).length > 0;

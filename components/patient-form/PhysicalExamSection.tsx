@@ -36,7 +36,7 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
             ? 'text-amber-700 bg-amber-50 border-amber-200'
             : 'text-emerald-700 bg-emerald-50 border-emerald-200';
 
-    const findingsList = ['Edema (1+)', 'Edema (2+)', 'Edema (3+)', 'JVP Elevated', 'Orthopnea', 'Crackles', 'Ascites'];
+    const findingsList = ['Edema (1+)', 'Edema (2+)', 'Edema (3+)', 'JVP Elevated', 'Orthopnea', 'Crackles', 'Ascites', 'Cool Extremities'];
 
     return (
         <section>
@@ -76,6 +76,11 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
             {clinicalWarnings.pulse && (
                 <div className="mb-4 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">
                     ⚠ {clinicalWarnings.pulse}
+                </div>
+            )}
+            {clinicalWarnings.low_output && (
+                <div className="mb-4 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">
+                    ! {clinicalWarnings.low_output}
                 </div>
             )}
 
