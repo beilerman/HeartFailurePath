@@ -60,6 +60,19 @@ function hasHistoricalHFrEF(patient: Patient): boolean {
     return patient.ever_lvef_le_40 === 'yes';
 }
 
+function hasUnknownHistoricalHFrEF(patient: Patient): boolean {
+    return patient.previous_lvef === undefined && (patient.ever_lvef_le_40 ?? 'unknown') === 'unknown';
+}
+
+function shouldPreserveQuadForUnknownHistory(patient: Patient): boolean {
+    if (patient.lvef <= 40 || !hasUnknownHistoricalHFrEF(patient)) return false;
+    const current = patient.current_regimen || [];
+    return current.some(r => {
+        const group = getMedicationClassGroup(r.med.drug_class);
+        return group === 'RAAS Inhibitor' || group === 'Beta Blocker' || group === 'MRA';
+    });
+}
+
 function hasRecentWorseningHF(patient: Patient): boolean {
     return patient.recent_hf_worsening_within_6mo === 'yes';
 }
@@ -119,6 +132,7 @@ export function clonePatient(p: Patient): Patient {
             exam_findings: new Set(p.volume_status.exam_findings)
         },
         comorbidities: new Set(p.comorbidities),
+        external_medications: new Set(p.external_medications || []),
         allergies: new Set(p.allergies),
         discontinued_meds: p.discontinued_meds.map(m => ({ ...m })),
         current_regimen: p.current_regimen ? p.current_regimen.map(r => ({ ...r })) : []
@@ -137,6 +151,7 @@ interface RegimenAnalysis {
     addableAdjuncts: RegimenMed[];
     addablePillars: Map<string, RegimenMed[]>;  // missing pillar class group → candidate meds+doses
     contraindicatedCurrentMeds: Set<string>;     // names of current meds now contraindicated
+    forcedBbDownTitrateNames: Set<string>;       // existing BBs that must be down-titrated in acute decomp
 }
 
 const RAAS_CLASSES = new Set(['ARNI', 'ACEi', 'ARB']);
@@ -232,7 +247,8 @@ function analyzeCurrentRegimen(
 
     // Determine which GDMT pillars apply based on HF phenotype
     // HFimpEF (ACC/AHA 2022): If LVEF was ≤40% and has improved, continue all 4 pillars
-    const isHFimpEF = patient.lvef > 40 && hasHistoricalHFrEF(patient);
+    const preserveQuadForUnknownHistory = shouldPreserveQuadForUnknownHistory(patient);
+    const isHFimpEF = patient.lvef > 40 && (hasHistoricalHFrEF(patient) || preserveQuadForUnknownHistory);
     const isHFpEF = patient.lvef >= 50 && !isHFimpEF;
     const applicablePillars = isHFpEF
         ? ['SGLT2i']                                    // HFpEF: only SGLT2i is Class I
@@ -273,6 +289,7 @@ function analyzeCurrentRegimen(
     // Titration analysis: for each current med, find higher/lower dose tiers
     const titratableUp: RegimenAnalysis['titratableUp'] = [];
     const titratableDown: RegimenAnalysis['titratableDown'] = [];
+    const forcedBbDownTitrateNames = new Set<string>();
 
     currentRegimen.forEach(current => {
         // Block titration UP and swaps for contraindicated meds — only allow down-titration/removal
@@ -297,6 +314,9 @@ function analyzeCurrentRegimen(
         );
         if (lowerDoses.length > 0) {
             titratableDown.push({ current, options: lowerDoses });
+            if (isBBBlockedUp) {
+                forcedBbDownTitrateNames.add(current.med.name);
+            }
         }
     });
 
@@ -446,7 +466,8 @@ function analyzeCurrentRegimen(
         removable,
         addableAdjuncts,
         addablePillars,
-        contraindicatedCurrentMeds
+        contraindicatedCurrentMeds,
+        forcedBbDownTitrateNames
     };
 }
 
@@ -743,7 +764,7 @@ function generateCandidateModifications(
     }
 
     // --- c) "No change" baseline for comparison when current regimen exists ---
-    if (currentRegimen.length > 0) {
+    if (currentRegimen.length > 0 && analysis.forcedBbDownTitrateNames.size === 0) {
         candidates.push({
             modifications: currentRegimen.map(r => ({
                 action: 'keep' as ModificationAction,
@@ -793,6 +814,13 @@ function generateCandidateModifications(
 
     // Filter by max_new_classes_per_visit
     return candidates.filter(c => {
+        const satisfiesForcedBbDownTitration =
+            analysis.forcedBbDownTitrateNames.size === 0 ||
+            Array.from(analysis.forcedBbDownTitrateNames).every(bbName =>
+                c.modifications.some(m =>
+                    m.action === 'titrate_down' && m.source?.med.name === bbName
+                )
+            );
         const newClassCount = countNewClassGroups(c.resulting_regimen, currentRegimen);
         const hasSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'MRA');
         const hasNonSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'nsMRA');
@@ -800,7 +828,7 @@ function generateCandidateModifications(
         // M4: Structural block for dual RAAS (ACEi+ARB, ACEi+ARNI, etc.) — not just warning
         const raasInRegimen = c.resulting_regimen.filter(r => RAAS_CLASSES.has(r.med.drug_class));
         const hasDualRAAS = raasInRegimen.length > 1;
-        return newClassCount <= maxNewPerVisit && !hasDualMRA && !hasDualRAAS;
+        return satisfiesForcedBbDownTitration && newClassCount <= maxNewPerVisit && !hasDualMRA && !hasDualRAAS;
     });
 }
 
@@ -1063,7 +1091,8 @@ function calculateGuidelineConcordanceScore(
     );
 
     // G4: HFimpEF — if LVEF was ≤40% and has improved, score as HFrEF (continue all pillars)
-    const isHFimpEF = patient.lvef > 40 && hasHistoricalHFrEF(patient);
+    const preserveQuadForUnknownHistory = shouldPreserveQuadForUnknownHistory(patient);
+    const isHFimpEF = patient.lvef > 40 && (hasHistoricalHFrEF(patient) || preserveQuadForUnknownHistory);
 
     if (patient.lvef >= 50 && !isHFimpEF) {
         // HFpEF: SGLT2i is the only Class I pillar (EMPEROR-Preserved, DELIVER)
@@ -1690,10 +1719,21 @@ function simulateModificationEffect(
     // --- Drug-Drug Interaction (DDI) Warnings ---
     const hasNitrate = resultingRegimen.some(r => r.med.drug_class === 'Vasodilator'); // H/ISDN
     const hasRAASDrug = resultingRegimen.some(r => ['ARNI', 'ACEi', 'ARB'].includes(r.med.drug_class));
+    const externalMeds = currentPatient.external_medications || new Set<string>();
+    const hasExternalMedication = (...names: string[]) => names.some(name => externalMeds.has(name));
+    // Backward compatibility for older saved patients that used comorbidity flags for these meds.
+    const onAmiodarone = hasExternalMedication('Amiodarone') || currentPatient.comorbidities.has('On Amiodarone');
+    const onVerapamilOrDiltiazem =
+        hasExternalMedication('Verapamil', 'Diltiazem') ||
+        currentPatient.comorbidities.has('On Verapamil/Diltiazem');
+    const onLithium = hasExternalMedication('Lithium') || currentPatient.comorbidities.has('On Lithium');
+    const onPde5Inhibitor = hasExternalMedication('Sildenafil', 'Tadalafil');
 
     // DDI-1: Nitrate (H/ISDN) + PDE5 inhibitor → fatal hypotension
-    if (hasNitrate && currentPatient.comorbidities.has('Pulmonary Hypertension')) {
-        warnings.push('DDI WARNING: Nitrate (Isosorbide Dinitrate) is CONTRAINDICATED with PDE5 inhibitors (sildenafil/tadalafil) commonly used in pulmonary hypertension. Risk of fatal hypotension.');
+    if (hasNitrate && onPde5Inhibitor) {
+        warnings.push('DDI WARNING: Nitrate (Isosorbide Dinitrate) is CONTRAINDICATED with PDE5 inhibitors (sildenafil/tadalafil). Risk of profound or fatal hypotension. Avoid co-administration.');
+    } else if (hasNitrate && currentPatient.comorbidities.has('Pulmonary Hypertension')) {
+        warnings.push('DDI CAUTION: Pulmonary hypertension may imply PDE5 inhibitor use. Confirm sildenafil/tadalafil exposure before initiating nitrate therapy.');
     }
 
     // DDI-2: RAAS + chronic NSAID use → AKI risk (extremely common outpatient DDI)
@@ -1708,17 +1748,17 @@ function simulateModificationEffect(
     }
 
     // DDI-4: Digoxin + amiodarone markedly raises digoxin exposure.
-    if (hasDigoxin && currentPatient.comorbidities.has('On Amiodarone')) {
+    if (hasDigoxin && onAmiodarone) {
         warnings.push('DDI WARNING: Amiodarone can raise digoxin levels ~70-100%. Reduce digoxin dose and recheck serum level within 3-5 days.');
     }
 
     // DDI-5: Non-DHP CCB + beta blocker/digoxin increases bradycardia and AV block risk.
-    if (currentPatient.comorbidities.has('On Verapamil/Diltiazem') && (hasBeta || hasDigoxin)) {
+    if (onVerapamilOrDiltiazem && (hasBeta || hasDigoxin)) {
         warnings.push('DDI WARNING: Verapamil/Diltiazem with beta blocker and/or digoxin increases severe bradycardia/AV block risk. Use close ECG and heart-rate monitoring.');
     }
 
     // DDI-6: Lithium + diuretics can precipitate lithium toxicity.
-    if (hasDiuretic && currentPatient.comorbidities.has('On Lithium')) {
+    if (hasDiuretic && onLithium) {
         warnings.push('DDI WARNING: Loop/thiazide diuretics increase lithium levels and toxicity risk. Check lithium level and renal function after diuretic changes.');
     }
 
@@ -1812,11 +1852,18 @@ export function generateAndScoreModifications(
         );
     }
 
-    const historicalStatusUnknown = patient.previous_lvef === undefined && patient.ever_lvef_le_40 !== 'yes' && patient.ever_lvef_le_40 !== 'no';
+    const historicalStatusUnknown = hasUnknownHistoricalHFrEF(patient);
+    const preservingQuadForUnknownHistory = shouldPreserveQuadForUnknownHistory(patient);
     if (patient.lvef > 40 && historicalStatusUnknown) {
-        clinicalAlerts.push(
-            'HFimpEF STATUS UNKNOWN: Cannot determine if this patient previously had LVEF <= 40%. If previously on quad GDMT, consider continuing RAAS/BB/MRA/SGLT2i until prior records are clarified.'
-        );
+        if (preservingQuadForUnknownHistory) {
+            clinicalAlerts.push(
+                'HFimpEF STATUS UNKNOWN: Prior reduced EF is undocumented, but existing RAAS/BB/MRA therapy suggests possible HFimpEF. Recommendations preserve quad GDMT while prior records are clarified.'
+            );
+        } else {
+            clinicalAlerts.push(
+                'HFimpEF STATUS UNKNOWN: Cannot determine if this patient previously had LVEF <= 40%. If previously on quad GDMT, consider continuing RAAS/BB/MRA/SGLT2i until prior records are clarified.'
+            );
+        }
     }
 
     const vericiguatCoreEligible = (patient.nyha_class === 'II' || patient.nyha_class === 'III' || patient.nyha_class === 'IV') &&

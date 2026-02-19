@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { WarningIcon } from '../icons';
 import { Label, Input, Select } from './Common';
-import { MEDICATION_FORMULARY, COMMON_SIDE_EFFECTS, RELEVANT_COMORBIDITIES } from '../../constants';
+import { MEDICATION_FORMULARY, COMMON_SIDE_EFFECTS, RELEVANT_COMORBIDITIES, RELEVANT_EXTERNAL_MEDICATIONS } from '../../constants';
 import type { Patient } from '../../types';
 
 interface HistorySectionProps {
@@ -17,6 +17,7 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
     const [intoleranceDetail, setIntoleranceDetail] = useState('');
     const [intoleranceDate, setIntoleranceDate] = useState('');
     const [selectedComorbidity, setSelectedComorbidity] = useState('');
+    const [selectedExternalMedication, setSelectedExternalMedication] = useState('');
 
     const handleAddComorbidity = () => {
         if (!selectedComorbidity) return;
@@ -32,6 +33,23 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
             const next = new Set(prev.comorbidities);
             next.delete(c);
             return { ...prev, comorbidities: next };
+        });
+    };
+
+    const handleAddExternalMedication = () => {
+        if (!selectedExternalMedication) return;
+        setPatientData(prev => ({
+            ...prev,
+            external_medications: new Set(prev.external_medications || []).add(selectedExternalMedication)
+        }));
+        setSelectedExternalMedication('');
+    };
+
+    const handleRemoveExternalMedication = (med: string) => {
+        setPatientData(prev => {
+            const next = new Set(prev.external_medications || []);
+            next.delete(med);
+            return { ...prev, external_medications: next };
         });
     };
 
@@ -109,6 +127,31 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                         <span key={c} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded border border-blue-100">
                             {c}
                             <button onClick={() => handleRemoveComorbidity(c)} className="hover:text-blue-900 font-bold" aria-label={`Remove ${c}`}>&times;</button>
+                        </span>
+                    ))}
+                </div>
+            </div>
+
+            {/* Active Non-Formulary Medications (DDI Context) */}
+            <div className="mb-6">
+                <Label>Concurrent Non-Formulary Medications (for DDI checks)</Label>
+                <div className="flex gap-2 mb-2">
+                    <Select
+                        value={selectedExternalMedication}
+                        onChange={(e) => setSelectedExternalMedication(e.target.value)}
+                    >
+                        <option value="">Select Medication...</option>
+                        {RELEVANT_EXTERNAL_MEDICATIONS.map(m => (
+                            <option key={m} value={m} disabled={(patientData.external_medications || new Set()).has(m)}>{m}</option>
+                        ))}
+                    </Select>
+                    <button onClick={handleAddExternalMedication} disabled={!selectedExternalMedication} className="px-4 bg-indigo-50 text-indigo-700 rounded-md text-sm font-bold border border-indigo-100 hover:bg-indigo-100">ADD</button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                    {Array.from(patientData.external_medications || []).map((m: string) => (
+                        <span key={m} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-violet-50 text-violet-700 text-sm font-medium rounded border border-violet-100">
+                            {m}
+                            <button onClick={() => handleRemoveExternalMedication(m)} className="hover:text-violet-900 font-bold" aria-label={`Remove ${m}`}>&times;</button>
                         </span>
                     ))}
                 </div>

@@ -89,6 +89,7 @@ export const INITIAL_PATIENT: Patient = {
     creatinine: 1.5,
     bun: 32, // Suggests mild prerenal if Cr is 1.5 (Ratio ~21)
     comorbidities: new Set(['HFrEF', 'Atrial Fibrillation', 'Chronic Kidney Disease', 'Diabetes Mellitus Type 2']),
+    external_medications: new Set<string>(),
     allergies: new Set(),
     discontinued_meds: [],
     ever_lvef_le_40: 'unknown',
@@ -598,6 +599,40 @@ export const SCENARIOS: TestScenario[] = [
                 { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
             ]),
             max_affordable_cost: 200,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'HFimpEF Unknown on Existing Quad (Preserve Pillars)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 64,
+            sbp: 116,
+            dbp: 72,
+            pulse: 66,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 68,
+            nt_pro_bnp: 520,
+            lvef: 52,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 62,
+            potassium: 4.2,
+            creatinine: 1.1,
+            bun: 15,
+            comorbidities: new Set(['HFrEF']),
+            previous_lvef: undefined,
+            ever_lvef_le_40: 'unknown',
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+                { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 240,
             cost_sensitivity: 4,
             insurance_tier: 'commercial',
             complexity_tolerance: 8,
@@ -1420,6 +1455,69 @@ export const SCENARIOS: TestScenario[] = [
         }
     },
     {
+        title: 'GLP-1 Contraindication (MEN2)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 60,
+            height_cm: 168,
+            bmi: 36,
+            sbp: 124,
+            dbp: 78,
+            pulse: 74,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 62,
+            nt_pro_bnp: 900,
+            lvef: 58,
+            volume_status: { dry_weight_kg: 98, current_weight_kg: 99, exam_findings: new Set<string>() },
+            egfr: 68,
+            potassium: 4.2,
+            creatinine: 1.0,
+            bun: 18,
+            comorbidities: new Set(['HFpEF', 'Obesity (BMI > 30)', 'MEN2 Syndrome']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 300,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 3
+        }
+    },
+    {
+        title: 'Acute Decompensated NYHA IV (Existing BB Requires Down-Titration)',
+        patient: {
+            ...INITIAL_PATIENT,
+            sbp: 106,
+            dbp: 68,
+            pulse: 88,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'IV' as const,
+            kccq_score: 28,
+            nt_pro_bnp: 5600,
+            lvef: 26,
+            volume_status: { dry_weight_kg: 70, current_weight_kg: 75, exam_findings: new Set(['Edema (2+)', 'JVP Elevated', 'Orthopnea']) },
+            egfr: 44,
+            potassium: 4.2,
+            creatinine: 1.8,
+            bun: 36,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Furosemide', strength: 80, freq: 'qd' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 220,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 6,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
         title: 'Type 1 DM + Prior DKA (Avoid SGLT2i)',
         patient: {
             ...INITIAL_PATIENT,
@@ -1493,13 +1591,47 @@ export const SCENARIOS: TestScenario[] = [
             potassium: 4.1,
             creatinine: 1.6,
             bun: 32,
-            comorbidities: new Set(['HFrEF', 'Atrial Fibrillation', 'On Amiodarone', 'On Verapamil/Diltiazem', 'On Lithium']),
+            comorbidities: new Set(['HFrEF', 'Atrial Fibrillation']),
+            external_medications: new Set(['Amiodarone', 'Verapamil', 'Diltiazem', 'Lithium']),
             allergies: new Set<string>(),
             discontinued_meds: [],
             current_regimen: buildCurrentRegimen([
                 { name: 'Carvedilol', strength: 12.5, freq: 'bid' },
                 { name: 'Digoxin', strength: 125, freq: 'qd' },
                 { name: 'Furosemide', strength: 40, freq: 'qd' }
+            ]),
+            max_affordable_cost: 220,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 6,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        title: 'Nitrate + PDE5 Exposure (Fatal DDI Warning)',
+        patient: {
+            ...INITIAL_PATIENT,
+            race: 'Black',
+            sbp: 118,
+            dbp: 74,
+            pulse: 82,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'III' as const,
+            kccq_score: 42,
+            nt_pro_bnp: 2600,
+            lvef: 30,
+            volume_status: { dry_weight_kg: 76, current_weight_kg: 78, exam_findings: new Set(['Edema (1+)', 'JVP Elevated']) },
+            egfr: 54,
+            potassium: 4.1,
+            creatinine: 1.3,
+            bun: 24,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set(['Sildenafil']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Hydralazine/Isosorbide Dinitrate', strength: '37.5/20', freq: 'tid' },
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' }
             ]),
             max_affordable_cost: 220,
             cost_sensitivity: 4,
@@ -1545,6 +1677,7 @@ export const clonePatient = (p: Patient): Patient => {
             exam_findings: new Set(p.volume_status.exam_findings)
         },
         comorbidities: new Set(p.comorbidities),
+        external_medications: new Set(p.external_medications || []),
         allergies: new Set(p.allergies),
         discontinued_meds: p.discontinued_meds.map(m => ({ ...m })),
         current_regimen: p.current_regimen.map(r => ({

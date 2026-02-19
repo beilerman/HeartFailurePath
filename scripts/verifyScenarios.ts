@@ -59,7 +59,10 @@ const ASSERTION_TITLE_MARKERS = [
     'AV Block',
     'Non-Formulary DDI Exposures',
     'Invalid BP Inversion',
-    'Duplicate Current Medications'
+    'Duplicate Current Medications',
+    'GLP-1 Contraindication (MEN2)',
+    'Nitrate + PDE5 Exposure',
+    'HFimpEF Unknown on Existing Quad'
 ];
 
 async function runVerification() {
@@ -101,12 +104,30 @@ async function runVerification() {
             }
 
             // SCENARIO SPECIFIC ASSERTIONS
-            const meds = topRegimen ? topRegimen.regimen.map(r => r.med.name) : [];
-            const classes = new Set(topRegimen ? topRegimen.regimen.map(r => r.med.drug_class) : []);
+            const anyRegimenHasClass = (drugClass: string) =>
+                scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === drugClass));
+            const anyRegimenHasMed = (medName: string) =>
+                scoredRegimens.some(r => r.regimen.some(m => m.med.name === medName));
+            const topClasses = new Set(topRegimen ? topRegimen.regimen.map(r => r.med.drug_class) : []);
+            const anyRegimenHasRaas = () =>
+                scoredRegimens.some(r => r.regimen.some(m => RAAS_CLASSES.has(m.med.drug_class)));
+            const anyRegimenMissingCorePillars = () =>
+                scoredRegimens.some(r => {
+                    const classesInRegimen = new Set(r.regimen.map(m => m.med.drug_class));
+                    const hasRaas = classesInRegimen.has('ARNI') || classesInRegimen.has('ACEi') || classesInRegimen.has('ARB');
+                    return !hasRaas || !classesInRegimen.has('Beta Blocker') || !classesInRegimen.has('MRA') || !classesInRegimen.has('SGLT2i');
+                });
+            const anyRegimenContainsAnyClass = (...drugClasses: string[]) =>
+                scoredRegimens.some(r => r.regimen.some(m => drugClasses.includes(m.med.drug_class)));
+            const anyRegimenWithClassViolates = (drugClass: string, predicate: (regimen: typeof scoredRegimens[number]) => boolean) =>
+                scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === drugClass) && predicate(r)
+                );
 
             let scenarioPassed = true;
             const failures: string[] = [];
             const hasScenarioSpecificCoverage = ASSERTION_TITLE_MARKERS.some(marker => scenario.title.includes(marker));
+            const externalMeds = scenario.patient.external_medications || new Set<string>();
 
             // Global safety invariant: never allow dual MRA (steroidal + nsMRA) in the same regimen
             const anyDualMRA = scoredRegimens.some(r => {
@@ -170,7 +191,7 @@ async function runVerification() {
             }
 
             const missingAmiodaroneDigoxinWarning = scoredRegimens.some(r => {
-                const hasRiskContext = scenario.patient.comorbidities.has('On Amiodarone');
+                const hasRiskContext = externalMeds.has('Amiodarone') || scenario.patient.comorbidities.has('On Amiodarone');
                 const hasDigoxin = r.regimen.some(m => m.med.name === 'Digoxin');
                 const hasWarning = r.warnings.some(w => w.includes('Amiodarone'));
                 return hasRiskContext && hasDigoxin && !hasWarning;
@@ -181,7 +202,10 @@ async function runVerification() {
             }
 
             const missingCcbChronotropeWarning = scoredRegimens.some(r => {
-                const hasRiskContext = scenario.patient.comorbidities.has('On Verapamil/Diltiazem');
+                const hasRiskContext =
+                    externalMeds.has('Verapamil') ||
+                    externalMeds.has('Diltiazem') ||
+                    scenario.patient.comorbidities.has('On Verapamil/Diltiazem');
                 const hasBetaOrDigoxin = r.regimen.some(m =>
                     m.med.drug_class === 'Beta Blocker' || m.med.name === 'Digoxin'
                 );
@@ -194,7 +218,7 @@ async function runVerification() {
             }
 
             const missingLithiumDiureticWarning = scoredRegimens.some(r => {
-                const hasRiskContext = scenario.patient.comorbidities.has('On Lithium');
+                const hasRiskContext = externalMeds.has('Lithium') || scenario.patient.comorbidities.has('On Lithium');
                 const hasDiuretic = r.regimen.some(m =>
                     m.med.drug_class === 'Loop Diuretic' || m.med.drug_class === 'Thiazide-like Diuretic'
                 );
@@ -206,9 +230,22 @@ async function runVerification() {
                 scenarioPassed = false;
             }
 
+            const missingNitratePde5Warning = scoredRegimens.some(r => {
+                const hasRiskContext = externalMeds.has('Sildenafil') || externalMeds.has('Tadalafil');
+                const hasNitrate = r.regimen.some(m => m.med.drug_class === 'Vasodilator');
+                const hasWarning = r.warnings.some(w =>
+                    w.includes('PDE5') || w.toLowerCase().includes('sildenafil/tadalafil')
+                );
+                return hasRiskContext && hasNitrate && !hasWarning;
+            });
+            if (missingNitratePde5Warning) {
+                failures.push('Missing DDI warning for nitrate + PDE5 inhibitor exposure');
+                scenarioPassed = false;
+            }
+
             // 1. Hyperkalemia (K+ 5.6) -> Should NOT have MRA
             if (scenario.title.includes('Hyperkalemia')) {
-                if (classes.has('MRA')) {
+                if (anyRegimenHasClass('MRA')) {
                     failures.push('Contraindicated MRA prescribed despite K+ 5.6');
                     scenarioPassed = false;
                 }
@@ -266,11 +303,26 @@ async function runVerification() {
                 }
             }
 
-            // H1. Acute decompensation: do not initiate beta blocker in NYHA IV decompensated patients.
-            if (scenario.title.includes('Acute Decompensated NYHA IV')) {
+            // H1. Acute decompensation with no baseline BB: do not initiate beta blocker.
+            if (scenario.title.includes('Acute Decompensated NYHA IV (No BB Initiation)')) {
                 const anyBB = scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Beta Blocker'));
                 if (anyBB) {
                     failures.push('Beta blocker initiation detected in acutely decompensated NYHA IV scenario');
+                    scenarioPassed = false;
+                }
+            }
+
+            // H1/3. Acute decompensation with existing BB: enforce down-titration (not keep at same dose, not abrupt stop).
+            if (scenario.title.includes('Existing BB Requires Down-Titration')) {
+                const missingDownTitrate = scoredRegimens.some(r => {
+                    const mods = r.modification_set?.modifications || [];
+                    const hasBbDownTitrate = mods.some(m =>
+                        m.action === 'titrate_down' && m.source?.med.drug_class === 'Beta Blocker'
+                    );
+                    return !hasBbDownTitrate;
+                });
+                if (missingDownTitrate) {
+                    failures.push('Existing beta blocker was not down-titrated in acute decompensation scenario');
                     scenarioPassed = false;
                 }
             }
@@ -314,6 +366,24 @@ async function runVerification() {
                 }
             }
 
+            if (scenario.title.includes('Nitrate + PDE5 Exposure')) {
+                const nitrateRegimens = scoredRegimens.filter(r =>
+                    r.regimen.some(m => m.med.drug_class === 'Vasodilator')
+                );
+                if (nitrateRegimens.length === 0) {
+                    failures.push('Expected at least one nitrate-containing regimen in PDE5 exposure scenario');
+                    scenarioPassed = false;
+                } else {
+                    const missingWarning = nitrateRegimens.some(r =>
+                        !r.warnings.some(w => w.includes('PDE5') || w.toLowerCase().includes('sildenafil/tadalafil'))
+                    );
+                    if (missingWarning) {
+                        failures.push('Nitrate regimen missing explicit PDE5 interaction warning');
+                        scenarioPassed = false;
+                    }
+                }
+            }
+
             // H11. SBP/DBP inversion should hard-stop recommendation generation.
             if (scenario.title.includes('Invalid BP Inversion')) {
                 if (scoredRegimens.length > 0) {
@@ -336,7 +406,7 @@ async function runVerification() {
 
             // 3. Bradycardia -> No BB
             if (scenario.title.includes('Bradycardia')) {
-                if (classes.has('Beta Blocker')) {
+                if (anyRegimenHasClass('Beta Blocker')) {
                     failures.push('Beta Blocker prescribed in Bradycardia (HR 48)');
                     scenarioPassed = false;
                 }
@@ -344,13 +414,13 @@ async function runVerification() {
 
             // 4. Angioedema -> No ACEi/ARNI, but ARBs allowed with caution (ACC/AHA 2022)
             if (scenario.title.includes('Angioedema')) {
-                if (classes.has('ACEi') || classes.has('ARNI')) {
+                if (anyRegimenContainsAnyClass('ACEi', 'ARNI')) {
                     failures.push('ACEi/ARNI prescribed despite Angioedema history');
                     scenarioPassed = false;
                 }
                 // ARBs should be available with monitoring warning
                 const allWarnings = scoredRegimens.flatMap(r => r.warnings);
-                if (classes.has('ARB') && !allWarnings.some(w => w.includes('ANGIOEDEMA CAUTION'))) {
+                if (anyRegimenHasClass('ARB') && !allWarnings.some(w => w.includes('ANGIOEDEMA CAUTION'))) {
                     failures.push('ARB prescribed with angioedema history but missing ANGIOEDEMA CAUTION warning');
                     scenarioPassed = false;
                 }
@@ -358,7 +428,7 @@ async function runVerification() {
 
             // 5. Asthma -> Selective BB only (Metoprolol or Bisoprolol), No Carvedilol
             if (scenario.title.includes('Severe Asthma')) {
-                if (meds.includes('Carvedilol') || meds.includes('Propranolol')) { // Non-selective
+                if (anyRegimenHasMed('Carvedilol') || anyRegimenHasMed('Propranolol')) { // Non-selective
                     failures.push('Non-selective Beta Blocker (Carvedilol) prescribed in Asthma');
                     scenarioPassed = false;
                 }
@@ -367,7 +437,7 @@ async function runVerification() {
 
             // 6. Critical Renal (eGFR 25) -> No MRA (cutoff usually 30), Caution ACEi
             if (scenario.title.includes('Critical Renal')) {
-                if (classes.has('MRA')) {
+                if (anyRegimenHasClass('MRA')) {
                     failures.push('MRA prescribed despite eGFR 25');
                     scenarioPassed = false;
                 }
@@ -375,7 +445,7 @@ async function runVerification() {
 
             // 6b. Dapagliflozin should not be initiated if eGFR < 25
             if (scenario.title.includes('eGFR 22')) {
-                if (meds.includes('Dapagliflozin')) {
+                if (anyRegimenHasMed('Dapagliflozin')) {
                     failures.push('Dapagliflozin prescribed despite eGFR 22');
                     scenarioPassed = false;
                 }
@@ -383,8 +453,9 @@ async function runVerification() {
 
             // 7. Non-Compliant -> Low Complexity
             if (scenario.title.includes('Non-Compliant')) {
-                if (topRegimen && topRegimen.complexity > 10) { // Arbitrary threshold
-                    failures.push(`Complexity ${topRegimen.complexity} too high for tolerance 0`);
+                const excessiveComplexity = scoredRegimens.some(r => r.complexity > 10);
+                if (excessiveComplexity) { // Arbitrary threshold
+                    failures.push('Complexity too high for tolerance 0 in a displayed regimen');
                     scenarioPassed = false;
                 }
             }
@@ -392,10 +463,10 @@ async function runVerification() {
             // 8. Ideal Candidate -> Should have all 4 GDMT pillars
             if (scenario.title.includes('Ideal Candidate')) {
                 const pillarPresent = {
-                    raas: classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB'),
-                    bb: classes.has('Beta Blocker'),
-                    mra: classes.has('MRA'),
-                    sglt2: classes.has('SGLT2i')
+                    raas: topClasses.has('ARNI') || topClasses.has('ACEi') || topClasses.has('ARB'),
+                    bb: topClasses.has('Beta Blocker'),
+                    mra: topClasses.has('MRA'),
+                    sglt2: topClasses.has('SGLT2i')
                 };
                 if (!pillarPresent.raas) { failures.push('Missing RAAS pillar'); scenarioPassed = false; }
                 if (!pillarPresent.bb) { failures.push('Missing BB pillar'); scenarioPassed = false; }
@@ -405,15 +476,15 @@ async function runVerification() {
 
             // 9. Obese HFpEF -> No ARNI/BB/MRA; should have SGLT2i
             if (scenario.title.includes('Obese HFpEF')) {
-                if (classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB')) {
+                if (anyRegimenContainsAnyClass('ARNI', 'ACEi', 'ARB')) {
                     failures.push('RAAS prescribed for HFpEF (not indicated)');
                     scenarioPassed = false;
                 }
-                if (classes.has('Beta Blocker')) {
+                if (anyRegimenHasClass('Beta Blocker')) {
                     failures.push('BB prescribed for HFpEF (not indicated)');
                     scenarioPassed = false;
                 }
-                if (classes.has('MRA')) {
+                if (anyRegimenHasClass('MRA')) {
                     failures.push('MRA prescribed for HFpEF (not indicated)');
                     scenarioPassed = false;
                 }
@@ -421,7 +492,7 @@ async function runVerification() {
 
             // 10. Iron-Deficient -> Should have IV Iron
             if (scenario.title.includes('Iron-Deficient')) {
-                if (!classes.has('IV Iron')) {
+                if (!anyRegimenHasClass('IV Iron')) {
                     failures.push('IV Iron not prescribed despite ferritin < 100 and TSAT < 20');
                     scenarioPassed = false;
                 }
@@ -439,20 +510,24 @@ async function runVerification() {
             }
 
             // 9b. Volume depletion -> prioritize diuretic de-escalation before RAAS/MRA/SGLT2 intensification
-            if (scenario.title.includes('Volume Depleted') && topRegimen?.modification_set) {
-                const volumeSensitiveIntensification = topRegimen.modification_set.modifications.some(m => {
-                    const targetClass = m.target?.med.drug_class;
-                    if (!targetClass) return false;
-                    if (!(m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap')) return false;
-                    return targetClass === 'ARNI' || targetClass === 'ACEi' || targetClass === 'ARB' || targetClass === 'MRA' || targetClass === 'SGLT2i';
+            if (scenario.title.includes('Volume Depleted')) {
+                const unsafeVolumeRegimen = scoredRegimens.some(r => {
+                    const mods = r.modification_set?.modifications || [];
+                    const volumeSensitiveIntensification = mods.some(m => {
+                        const targetClass = m.target?.med.drug_class;
+                        if (!targetClass) return false;
+                        if (!(m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap')) return false;
+                        return targetClass === 'ARNI' || targetClass === 'ACEi' || targetClass === 'ARB' || targetClass === 'MRA' || targetClass === 'SGLT2i';
+                    });
+                    const diureticDeEscalation = mods.some(m => {
+                        const sourceClass = m.source?.med.drug_class;
+                        if (!sourceClass) return false;
+                        if (!(m.action === 'remove' || m.action === 'titrate_down')) return false;
+                        return sourceClass === 'Loop Diuretic' || sourceClass === 'Thiazide-like Diuretic';
+                    });
+                    return volumeSensitiveIntensification && !diureticDeEscalation;
                 });
-                const diureticDeEscalation = topRegimen.modification_set.modifications.some(m => {
-                    const sourceClass = m.source?.med.drug_class;
-                    if (!sourceClass) return false;
-                    if (!(m.action === 'remove' || m.action === 'titrate_down')) return false;
-                    return sourceClass === 'Loop Diuretic' || sourceClass === 'Thiazide-like Diuretic';
-                });
-                if (volumeSensitiveIntensification && !diureticDeEscalation) {
+                if (unsafeVolumeRegimen) {
                     failures.push('Volume-depleted scenario intensified RAAS/MRA/SGLT2 without diuretic de-escalation');
                     scenarioPassed = false;
                 }
@@ -460,11 +535,11 @@ async function runVerification() {
 
             // 11b. Ivabradine fallback when all BB agents are unavailable
             if (scenario.title.includes('Ivabradine Fallback')) {
-                if (!classes.has('If Inhibitor')) {
+                if (!anyRegimenHasClass('If Inhibitor')) {
                     failures.push('Ivabradine fallback missing when beta blockers are unavailable');
                     scenarioPassed = false;
                 }
-                if (classes.has('Beta Blocker')) {
+                if (anyRegimenHasClass('Beta Blocker')) {
                     failures.push('Beta blocker present despite scenario-level formulary exclusion');
                     scenarioPassed = false;
                 }
@@ -472,7 +547,7 @@ async function runVerification() {
 
             // 12. Budget-Constrained -> Should NOT have Entresto (too expensive)
             if (scenario.title.includes('Budget-Constrained')) {
-                if (meds.includes('Sacubitril/Valsartan (Entresto)')) {
+                if (anyRegimenHasMed('Sacubitril/Valsartan (Entresto)')) {
                     failures.push('Entresto prescribed despite $25 budget');
                     scenarioPassed = false;
                 }
@@ -501,7 +576,7 @@ async function runVerification() {
 
             // 14. Euvolemic Asthma -> No Carvedilol, should have Bisoprolol or Metoprolol
             if (scenario.title.includes('Euvolemic Asthma')) {
-                if (meds.includes('Carvedilol')) {
+                if (anyRegimenHasMed('Carvedilol')) {
                     failures.push('Non-selective Carvedilol prescribed in Asthma');
                     scenarioPassed = false;
                 }
@@ -528,27 +603,30 @@ async function runVerification() {
 
             // 15. HFimpEF -> Should keep all 4 GDMT pillars (not de-escalate)
             if (scenario.title.includes('HFimpEF')) {
-                if (topRegimen) {
-                    const pillarPresent = {
-                        raas: classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB'),
-                        bb: classes.has('Beta Blocker'),
-                        mra: classes.has('MRA'),
-                        sglt2: classes.has('SGLT2i')
-                    };
-                    if (!pillarPresent.raas) { failures.push('HFimpEF: Missing RAAS (should continue)'); scenarioPassed = false; }
-                    if (!pillarPresent.bb) { failures.push('HFimpEF: Missing BB (should continue)'); scenarioPassed = false; }
-                    if (!pillarPresent.mra) { failures.push('HFimpEF: Missing MRA (should continue)'); scenarioPassed = false; }
-                    if (!pillarPresent.sglt2) { failures.push('HFimpEF: Missing SGLT2i (should continue)'); scenarioPassed = false; }
+                if (scoredRegimens.length > 0 && anyRegimenMissingCorePillars()) {
+                    failures.push('HFimpEF: one or more displayed regimens de-escalated core GDMT pillars');
+                    scenarioPassed = false;
+                }
+            }
+
+            if (scenario.title.includes('HFimpEF Unknown on Existing Quad')) {
+                if (scoredRegimens.length > 0 && anyRegimenMissingCorePillars()) {
+                    failures.push('HFimpEF-unknown continuation scenario dropped core GDMT pillars in displayed regimens');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.includes('Recommendations preserve quad GDMT'))) {
+                    failures.push('Missing explicit HFimpEF-unknown preservation alert');
+                    scenarioPassed = false;
                 }
             }
 
             // 16. Pregnant -> No RAAS agents (ACEi/ARB/ARNI), no MRA
             if (scenario.title.includes('Pregnant')) {
-                if (classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB')) {
+                if (anyRegimenContainsAnyClass('ARNI', 'ACEi', 'ARB')) {
                     failures.push('RAAS agent prescribed in pregnancy (Category X)');
                     scenarioPassed = false;
                 }
-                if (classes.has('MRA')) {
+                if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) {
                     failures.push('MRA prescribed in pregnancy (Category X)');
                     scenarioPassed = false;
                 }
@@ -577,11 +655,11 @@ async function runVerification() {
 
             // 19. Pregnant on existing ACEi -> ACEi must NOT be titrated up; should be removed or down-titrated
             if (scenario.title.includes('Pregnant on Existing ACEi')) {
-                if (classes.has('ACEi') || classes.has('ARNI') || classes.has('ARB')) {
+                if (anyRegimenContainsAnyClass('ACEi', 'ARNI', 'ARB')) {
                     failures.push('RAAS agent retained/titrated in pregnancy (should be removed)');
                     scenarioPassed = false;
                 }
-                if (classes.has('MRA')) {
+                if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) {
                     failures.push('MRA prescribed in pregnancy');
                     scenarioPassed = false;
                 }
@@ -590,7 +668,7 @@ async function runVerification() {
                     scenarioPassed = false;
                 }
                 // Should keep BB (Carvedilol is safe in pregnancy)
-                if (!classes.has('Beta Blocker') && topRegimen) {
+                if (scoredRegimens.length > 0 && !anyRegimenHasClass('Beta Blocker')) {
                     failures.push('BB removed in pregnancy (should be continued)');
                     scenarioPassed = false;
                 }
@@ -598,7 +676,7 @@ async function runVerification() {
 
             // 20. SGLT2i continuation below eGFR threshold
             if (scenario.title.includes('SGLT2i Continuation')) {
-                if (!classes.has('SGLT2i') && topRegimen) {
+                if (scoredRegimens.length > 0 && !anyRegimenHasClass('SGLT2i')) {
                     failures.push('SGLT2i removed despite continuation being allowed below initiation threshold');
                     scenarioPassed = false;
                 }
@@ -625,13 +703,13 @@ async function runVerification() {
 
             // 22. MRA boundary (eGFR 31, K+ 5.4) -> MRA should come with binder rescue
             if (scenario.title.includes('MRA Boundary')) {
-                if (topRegimen && classes.has('MRA')) {
-                    // MRA at this K+ level should trigger binder rescue
-                    const hasBinder = meds.includes('Patiromer');
-                    if (!hasBinder) {
-                        failures.push('MRA prescribed at K+ 5.4 without Patiromer rescue');
-                        scenarioPassed = false;
-                    }
+                const missingBinderForMra = anyRegimenWithClassViolates('MRA', r => {
+                    const hasBinder = r.regimen.some(m => m.med.name === 'Patiromer');
+                    return !hasBinder;
+                });
+                if (missingBinderForMra) {
+                    failures.push('MRA prescribed at K+ 5.4 without Patiromer rescue');
+                    scenarioPassed = false;
                 }
                 const excessiveMraDose = scoredRegimens.some(r =>
                     r.regimen.some(m => m.med.drug_class === 'MRA' && Number(m.dose.strength) > 25)
@@ -647,10 +725,10 @@ async function runVerification() {
                 if (topRegimen) {
                     // Should keep all 4 pillars (already on them)
                     const pillarPresent = {
-                        raas: classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB'),
-                        bb: classes.has('Beta Blocker'),
-                        mra: classes.has('MRA'),
-                        sglt2: classes.has('SGLT2i')
+                        raas: topClasses.has('ARNI') || topClasses.has('ACEi') || topClasses.has('ARB'),
+                        bb: topClasses.has('Beta Blocker'),
+                        mra: topClasses.has('MRA'),
+                        sglt2: topClasses.has('SGLT2i')
                     };
                     if (!pillarPresent.raas) { failures.push('Elderly: RAAS dropped'); scenarioPassed = false; }
                     if (!pillarPresent.bb) { failures.push('Elderly: BB dropped'); scenarioPassed = false; }
@@ -687,7 +765,7 @@ async function runVerification() {
 
             // 25. Liver Disease + AFib -> No Carvedilol (hepatic CI), should have Digoxin for rate control
             if (scenario.title.includes('Liver Disease + AFib')) {
-                if (meds.includes('Carvedilol')) {
+                if (anyRegimenHasMed('Carvedilol')) {
                     failures.push('Carvedilol prescribed despite Liver Disease (Child-Pugh B/C) contraindication');
                     scenarioPassed = false;
                 }
@@ -695,14 +773,11 @@ async function runVerification() {
 
             // 26. NSAID + RAAS DDI -> should have DDI warning
             if (scenario.title.includes('NSAID + RAAS DDI')) {
-                if (topRegimen) {
-                    const hasRAASInRec = classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB');
-                    if (hasRAASInRec) {
-                        const allWarnings = scoredRegimens.flatMap(r => r.warnings);
-                        if (!allWarnings.some(w => w.includes('NSAID'))) {
-                            failures.push('Missing DDI warning for RAAS + chronic NSAID use');
-                            scenarioPassed = false;
-                        }
+                if (anyRegimenHasRaas()) {
+                    const allWarnings = scoredRegimens.flatMap(r => r.warnings);
+                    if (!allWarnings.some(w => w.includes('NSAID'))) {
+                        failures.push('Missing DDI warning for RAAS + chronic NSAID use');
+                        scenarioPassed = false;
                     }
                 }
             }
@@ -720,13 +795,15 @@ async function runVerification() {
 
             // 38. K+ Trajectory -> If MRA added, projected K+ < 5.5 OR Patiromer included
             if (scenario.title.includes('K+ Trajectory')) {
-                if (topRegimen && classes.has('MRA')) {
-                    const projK = topRegimen.projected_patient.potassium;
-                    const hasBinder = meds.includes('Patiromer') || meds.includes('Lokelma (SZC)');
-                    if (projK >= 5.5 && !hasBinder) {
-                        failures.push(`K+ trajectory unsafe: projected K+ ${projK.toFixed(1)} with MRA but no binder rescue`);
-                        scenarioPassed = false;
-                    }
+                const unsafeTrajectory = scoredRegimens.some(r => {
+                    const hasMra = r.regimen.some(m => m.med.drug_class === 'MRA');
+                    if (!hasMra) return false;
+                    const hasBinder = r.regimen.some(m => m.med.name === 'Patiromer' || m.med.name === 'Lokelma (SZC)');
+                    return r.projected_patient.potassium >= 5.5 && !hasBinder;
+                });
+                if (unsafeTrajectory) {
+                    failures.push('K+ trajectory unsafe in at least one displayed regimen with MRA and no binder rescue');
+                    scenarioPassed = false;
                 }
             }
 
@@ -743,15 +820,15 @@ async function runVerification() {
 
             // 40. Pregnant + CKD4 -> No RAAS/MRA/SGLT2i, pregnancy alert present
             if (scenario.title.includes('Pregnant + CKD4')) {
-                if (classes.has('ARNI') || classes.has('ACEi') || classes.has('ARB')) {
+                if (anyRegimenContainsAnyClass('ARNI', 'ACEi', 'ARB')) {
                     failures.push('RAAS agent prescribed in pregnant + CKD4 patient');
                     scenarioPassed = false;
                 }
-                if (classes.has('MRA') || classes.has('nsMRA')) {
+                if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) {
                     failures.push('MRA/nsMRA prescribed in pregnant patient');
                     scenarioPassed = false;
                 }
-                if (classes.has('SGLT2i')) {
+                if (anyRegimenHasClass('SGLT2i')) {
                     failures.push('SGLT2i prescribed in pregnant patient');
                     scenarioPassed = false;
                 }
@@ -763,32 +840,33 @@ async function runVerification() {
 
             // 41. LVEF Recovery Cap -> Projected LVEF must not exceed 55
             if (scenario.title.includes('LVEF Recovery Cap')) {
-                if (topRegimen) {
-                    const projLvef = topRegimen.projected_patient.lvef;
-                    if (projLvef > 55) {
-                        failures.push(`Projected LVEF ${projLvef.toFixed(0)}% exceeds physiological cap of 55%`);
-                        scenarioPassed = false;
-                    }
+                const hasLvefOverflow = scoredRegimens.some(r => r.projected_patient.lvef > 55);
+                if (hasLvefOverflow) {
+                    failures.push('Projected LVEF exceeds physiological cap of 55% in a displayed regimen');
+                    scenarioPassed = false;
                 }
             }
 
             // 42. Finerenone in HFpEF -> nsMRA should be eligible, steroidal MRA should NOT be in top regimen
             if (scenario.title.includes('Finerenone in HFpEF')) {
                 // Verify steroidal MRA is NOT inappropriately offered for HFpEF
-                if (topRegimen && classes.has('MRA')) {
+                if (anyRegimenHasClass('MRA')) {
                     failures.push('Steroidal MRA in top regimen for HFpEF (should prefer nsMRA or SGLT2i)');
                     scenarioPassed = false;
                 }
                 // Also verify SGLT2i is present (the primary HFpEF pillar)
-                if (topRegimen && !classes.has('SGLT2i')) {
-                    failures.push('SGLT2i missing in top regimen for HFpEF');
+                const anyRegimenMissingSglt2 = scoredRegimens.some(r =>
+                    !r.regimen.some(m => m.med.drug_class === 'SGLT2i')
+                );
+                if (scoredRegimens.length > 0 && anyRegimenMissingSglt2) {
+                    failures.push('SGLT2i missing in at least one displayed regimen for HFpEF');
                     scenarioPassed = false;
                 }
             }
 
             // 43. Hepatic BB Selection -> Carvedilol should be excluded, hepatic warning present
             if (scenario.title.includes('Hepatic BB Selection')) {
-                if (topRegimen && meds.includes('Carvedilol')) {
+                if (anyRegimenHasMed('Carvedilol')) {
                     failures.push('Carvedilol prescribed despite Liver Disease (hepatically metabolized)');
                     scenarioPassed = false;
                 }
@@ -820,6 +898,16 @@ async function runVerification() {
                 );
                 if (anyGLP1) {
                     failures.push('GLP-1 offered in HFrEF (LVEF 30) — requires LVEF >= 40');
+                    scenarioPassed = false;
+                }
+            }
+
+            if (scenario.title.includes('GLP-1 Contraindication (MEN2)')) {
+                const anyGLP1 = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class.includes('GLP'))
+                );
+                if (anyGLP1) {
+                    failures.push('GLP-1 therapy offered despite MEN2/MTC contraindication');
                     scenarioPassed = false;
                 }
             }

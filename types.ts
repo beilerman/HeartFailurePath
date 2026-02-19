@@ -59,6 +59,8 @@ export interface Patient {
     tsat?: number;
 
     comorbidities: Set<string>;
+    // Active non-formulary/concurrent medications relevant to DDI checks.
+    external_medications?: Set<string>;
     allergies: Set<string>;
     discontinued_meds: ExcludedMedication[];
 

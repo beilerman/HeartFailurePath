@@ -31,14 +31,22 @@ export const RELEVANT_COMORBIDITIES = [
     "Severe Asthma / Bronchospasm",
     "Gout",
     "History of Angioedema",
+    "Medullary Thyroid Carcinoma",
+    "MEN2 Syndrome",
     "Hypotension (Chronic)",
     "Liver Disease (Child-Pugh B/C)",
-    "On Amiodarone",
-    "On Verapamil/Diltiazem",
-    "On Lithium",
     "Obesity (BMI > 30)",
     "Pulmonary Hypertension",
     "Chronic NSAID Use"
+];
+
+export const RELEVANT_EXTERNAL_MEDICATIONS = [
+    'Amiodarone',
+    'Verapamil',
+    'Diltiazem',
+    'Lithium',
+    'Sildenafil',
+    'Tadalafil'
 ];
 
 export const MEDICATION_FORMULARY: Medication[] = [
@@ -619,7 +627,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              { feature: 'Indicated for Obesity Phenotype (BMI > 30)', points: 50, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) => p.bmi < 30 || p.is_pregnant === true // Teratogenic; discontinue ≥2 months before conception (FDA PI)
+        contraindications: (p) =>
+            p.bmi < 30 ||
+            p.is_pregnant === true ||
+            p.comorbidities.has('Medullary Thyroid Carcinoma') ||
+            p.comorbidities.has('MEN2 Syndrome') // FDA boxed warning: MTC/MEN2
     },
     {
         name: 'Tirzepatide (Zepbound)',
@@ -645,7 +657,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              { feature: 'Superior Weight Loss & KCCQ Benefit (SUMMIT)', points: 60, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) => p.bmi < 30 || p.is_pregnant === true // Teratogenic; discontinue ≥2 months before conception (FDA PI)
+        contraindications: (p) =>
+            p.bmi < 30 ||
+            p.is_pregnant === true ||
+            p.comorbidities.has('Medullary Thyroid Carcinoma') ||
+            p.comorbidities.has('MEN2 Syndrome') // FDA boxed warning: MTC/MEN2
     },
 
     // ========================================
@@ -1015,3 +1031,4 @@ export const MEDICATION_FORMULARY: Medication[] = [
         contraindications: (p) => p.egfr < 30, // Ineffective at eGFR < 30 (unlike metolazone/chlorthalidone)
     }
 ];
+
