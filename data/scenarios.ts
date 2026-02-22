@@ -1878,6 +1878,183 @@ export const SCENARIOS: TestScenario[] = [
             max_new_classes_per_visit: 2
         }
     },
+    // --- Furoscix eligibility: persistent congestion despite oral loop ---
+    {
+        title: 'Furoscix Candidate (Persistent Congestion on Oral Loop)',
+        patient: {
+            ...INITIAL_PATIENT,
+            sbp: 114,
+            dbp: 72,
+            pulse: 86,
+            rhythm: 'AFib' as const,
+            nyha_class: 'III' as const,
+            kccq_score: 34,
+            daily_step_count: 2200,
+            nt_pro_bnp: 3800,
+            lvef: 26,
+            lvedd: 68,
+            lavi: 46,
+            volume_status: { dry_weight_kg: 78, current_weight_kg: 83, exam_findings: new Set(['Edema (2+)', 'JVP Elevated', 'Orthopnea']) },
+            egfr: 42,
+            potassium: 4.1,
+            creatinine: 1.7,
+            bun: 34,
+            comorbidities: new Set(['HFrEF', 'Chronic Kidney Disease', 'Atrial Fibrillation']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Furosemide', strength: 80, freq: 'bid' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' },
+                { name: 'Carvedilol', strength: 6.25, freq: 'bid' }
+            ]),
+            max_affordable_cost: 350,
+            cost_sensitivity: 3,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 6,
+            max_new_classes_per_visit: 2
+        }
+    },
+    // --- Furoscix contraindication: furosemide hypersensitivity ---
+    {
+        title: 'Furoscix Allergy Guardrail (Furosemide Hypersensitivity)',
+        patient: {
+            ...INITIAL_PATIENT,
+            sbp: 120,
+            dbp: 74,
+            pulse: 82,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'III' as const,
+            kccq_score: 40,
+            nt_pro_bnp: 2400,
+            lvef: 32,
+            lvedd: 64,
+            lavi: 42,
+            volume_status: { dry_weight_kg: 74, current_weight_kg: 78, exam_findings: new Set(['Edema (2+)', 'JVP Elevated']) },
+            egfr: 48,
+            potassium: 4.2,
+            creatinine: 1.4,
+            bun: 26,
+            comorbidities: new Set(['HFrEF', 'Chronic Kidney Disease']),
+            external_medications: new Set<string>(),
+            allergies: new Set(['Furosemide']),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Torsemide', strength: 20, freq: 'bid' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' },
+                { name: 'Bisoprolol', strength: 5, freq: 'qd' }
+            ]),
+            max_affordable_cost: 300,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 6,
+            max_new_classes_per_visit: 2
+        }
+    },
+    // ===== Issue 2: ARNI Hepatic CI =====
+    {
+        title: 'ARNI Hepatic CI (Liver Disease)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 62,
+            sex: 'Male',
+            sbp: 118,
+            dbp: 72,
+            pulse: 74,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'III' as const,
+            kccq_score: 40,
+            nt_pro_bnp: 3200,
+            lvef: 28,
+            lvedd: 68,
+            lavi: 44,
+            volume_status: { dry_weight_kg: 82, current_weight_kg: 85, exam_findings: new Set(['Edema (2+)', 'JVP Elevated']) },
+            egfr: 50,
+            potassium: 4.3,
+            creatinine: 1.4,
+            bun: 24,
+            comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 250,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 3
+        }
+    },
+    // ===== Issue 1: MRA + DIAMOND Binder =====
+    {
+        title: 'MRA + DIAMOND Binder (K+ 5.1)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 58,
+            sex: 'Male',
+            sbp: 112,
+            dbp: 70,
+            pulse: 72,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 55,
+            nt_pro_bnp: 1800,
+            lvef: 30,
+            lvedd: 64,
+            lavi: 42,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 82, exam_findings: new Set(['Edema (1+)']) },
+            egfr: 55,
+            potassium: 5.1,
+            creatinine: 1.3,
+            bun: 22,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' },
+                { name: 'Bisoprolol', strength: 5, freq: 'qd' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+            ]),
+            max_affordable_cost: 250,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial',
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 2
+        }
+    },
+    // ===== Issue 3: HFpEF Steroidal MRA =====
+    {
+        title: 'HFpEF Steroidal MRA Eligible (LVEF 55)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 72,
+            sex: 'Female',
+            sbp: 142,
+            dbp: 78,
+            pulse: 70,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 58,
+            nt_pro_bnp: 900,
+            lvef: 55,
+            volume_status: { dry_weight_kg: 70, current_weight_kg: 72, exam_findings: new Set(['Edema (1+)']) },
+            egfr: 50,
+            potassium: 4.0,
+            creatinine: 1.1,
+            bun: 20,
+            comorbidities: new Set(['HFpEF', 'Hypertension']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 80,
+            cost_sensitivity: 8,
+            insurance_tier: 'medicare',
+            complexity_tolerance: 6,
+            max_new_classes_per_visit: 2
+        }
+    },
 ];
 
 // Helper to deep clone patient (useful for resetting state in tests/app)

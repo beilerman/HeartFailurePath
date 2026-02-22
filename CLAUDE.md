@@ -1,130 +1,202 @@
-# CLAUDE.md — HeartFailurePath
+# CLAUDE.md - HeartFailurePath
 
-Heart failure (CHF) clinical decision support tool. Vite + React + TypeScript.
+Heart failure clinical decision-support simulation tool. Vite + React + TypeScript.
 
-**GitHub:** `beilerman/HeartFailurePath` (public)
-**Deployment:** Vercel (auto-deploy from main)
+GitHub: `beilerman/HeartFailurePath` (public)  
+Deployment target: Vercel (main branch auto-deploy)
 
 ## Commands
 
 ```bash
-npm install          # Install dependencies
-npm run dev          # Start Vite dev server (port 3000)
-npm run build        # Production build (also validates TypeScript)
-npm run typecheck    # TypeScript check only (tsc --noEmit)
-npm run verify       # Run 26 clinical scenario assertions
-npm run test         # Alias for verify
-npm run ci           # Full pipeline: typecheck + build + verify
-npm run preview      # Preview production build
+npm install          # install dependencies
+npm run dev          # start Vite dev server (default 3000)
+npm run build        # production build
+npm run typecheck    # TypeScript check only
+npm run verify       # run scenario assertion harness (71 scenarios)
+npm run test         # alias for verify
+npm run ci           # typecheck + build + verify
+npm run preview      # preview production build
 ```
 
-**CI:** GitHub Actions (`ci.yml`) runs typecheck → build → verify on every push/PR.
+CI workflow: `.github/workflows/ci.yml` runs `npm ci -> typecheck -> build -> verify`.
 
-## Architecture
+## Repository Layout
 
-Source files live directly at root (no `src/` directory).
+All source files live at project root (no `src/` directory).
 
-```
+```text
 HeartFailurePath/
-├── App.tsx                    # Main component, 3 tabs (Simulation/Formulary/Logic), state
-├── index.tsx                  # React entry point, ErrorBoundary wrapper
-├── types.ts                   # All TypeScript interfaces (Patient, Medication, ScoredRegimen, etc.)
-├── constants.ts               # MEDICATION_FORMULARY (21 drugs, ~630 lines)
-├── components/
-│   ├── PatientForm.tsx        # Input form orchestrator
-│   ├── patient-form/          # Form sub-sections:
-│   │   ├── Common.tsx         #   Input/Select helpers (auto-generate id from name)
-│   │   ├── DemographicsSection.tsx
-│   │   ├── DiagnosticsSection.tsx   # LVEF, LVEDD, LAVI, BNP, labs
-│   │   ├── HistorySection.tsx       # Comorbidities, allergies, intolerances
-│   │   ├── MedicationManager.tsx    # Current regimen editor
-│   │   ├── PhysicalExamSection.tsx  # Exam findings (edema, JVP, orthopnea)
-│   │   ├── SocialSection.tsx        # Budget, cost/complexity tolerance, pregnancy
-│   │   └── SymptomsSection.tsx      # NYHA class
-│   ├── ResultsDisplay.tsx     # Results container with loading/error states
-│   ├── RecommendationCard.tsx # Regimen card: change banner, domain scores, med pills
-│   ├── ScoreDetailModal.tsx   # Domain score drill-down (focus trap, Escape, ARIA)
-│   ├── ClinicalSummary.tsx    # Side panel: 6-domain patient status
-│   ├── MedicationLibrary.tsx  # Formulary browser tab
-│   ├── FAQ.tsx                # Logic documentation tab
-│   ├── ErrorBoundary.tsx      # Class component (React requirement)
-│   └── icons.tsx              # SVG icon components with IconProps
-├── services/
-│   ├── simulationService.ts   # Core clinical engine (~1600 lines, deterministic, pure)
-│   └── pricingService.ts      # Drug pricing (mocked)
-├── data/
-│   └── scenarios.ts           # 26 test scenarios, INITIAL_PATIENT, clonePatient()
-└── scripts/
-    └── verifyScenarios.ts     # Automated scenario verification (assertions)
+  App.tsx                         # top-level app shell + tabs
+  index.tsx                       # React entry point
+  types.ts                        # data models and output contracts
+  constants.ts                    # formulary (32 medications)
+  components/
+    PatientForm.tsx               # patient input orchestration
+    ResultsDisplay.tsx            # result panes, alerts, cards
+    MedicationLibrary.tsx         # formulary browser
+    FAQ.tsx                       # in-app logic documentation
+    ScoreDetailModal.tsx          # domain-level score drilldown
+    RecommendationCard.tsx        # regimen card rendering
+    patient-form/                 # form subsections
+  services/
+    simulationService.ts          # core clinical engine
+    pricingService.ts             # mock pricing source
+  data/
+    scenarios.ts                  # scenario fixtures and clone helper
+  scripts/
+    verifyScenarios.ts            # scenario verification harness
 ```
 
-**Key separation:** UI in `components/`, domain logic in `services/`, data in `constants.ts` and `data/`.
+## Core Clinical Engine
 
-## Critical Patterns
+Primary entry point:
 
-### Patient Data Uses Sets, Not Arrays
-```typescript
-// CORRECT - comorbidities and exam_findings are Set<string>
-patient.comorbidities = new Set(['diabetes', 'ckd']);
-patient.volume_status.exam_findings = new Set(['elevated_jvp']);
-
-// Use clonePatient() to preserve Sets when copying
-import { clonePatient } from './data/scenarios';
-const newPatient = clonePatient(existingPatient);
+```ts
+generateAndScoreModifications(patient, availableMedNames, prices)
 ```
 
-### Simulation Engine (Delta-Based)
-`services/simulationService.ts` (~1600 lines) must remain deterministic with no side effects. The single entry point is `generateAndScoreModifications(patient, currentRegimen)` which returns `{ scoredRegimens, excludedMedications, clinicalAlerts }`.
+Output contract:
 
-**Delta engine:** Generates modification sets (add, titrate_up, titrate_down, swap, remove, keep) from the current regimen. `simulateModificationEffect()` applies only the marginal delta from changed meds — existing meds' effects are already baked into the patient's observed state.
+- `scoredRegimens` (up to 3 display candidates)
+- `excludedMedications`
+- `clinicalAlerts`
+- `monitoringPlan`
 
-**7-domain scoring** (weighted): Neuro 20% | Func 15% | Vol 15% | Struct 10% | Cost 15% | Adhere 10% | Guideline 15%
+Engine characteristics:
 
-**3-tier HF phenotype** affects all scoring: HFrEF (LVEF ≤ 40), HFmrEF (41-49), HFpEF (≥ 50). HFpEF only gets SGLT2i + adjuncts. HFimpEF (previous_lvef ≤ 40, current > 40) scores as HFrEF.
+- deterministic and side-effect free at scoring level
+- delta-based simulation (incremental changes from observed regimen)
+- candidate modifications include add/up/down/swap/remove/keep
+- affordability filter and display-safety filter applied before UI output
 
-**Key physiological models:**
-- BNP reduction: multiplicative (retention factor), not additive — each drug compounds independently
-- LVEF attenuation: exponential diminishing returns, cap 55%
-- DBP coupling: drug-class-specific ratios (vasodilators 0.5, BB 0.7, diuretics 0.5, SGLT2i 0.4)
+## Seven-Domain Scoring
 
-**Clinical gates (hard blocks):**
-- SBP < 85 → no drug recommendations, clinical alerts only
-- Pregnancy → RAAS + MRA contraindicated
-- Acute decompensation → BB initiation blocked (NYHA IV or NYHA III + fluid > 2kg + ≥ 2 exam findings)
-- Ivabradine: HR < 70 blocks initiation; HR < 50 blocks continuation
-- Vericiguat: requires NT-proBNP ≥ 1600 AND LVEF < 45
-- GLP-1: requires BMI ≥ 30 AND LVEF ≥ 40 (HFpEF/HFmrEF only)
+Weighted overall score:
 
-**Rescue mechanisms:** Patiromer auto-appended for K+ > 5.5; IV Iron auto-appended for ferritin < 100 or TSAT < 20.
+- Neurohormonal: 20%
+- Functional: 15%
+- Volume: 15%
+- Structure: 10%
+- Cost: 15%
+- Adherence: 10%
+- Guideline concordance: 15%
 
-### Medication Formulary (21 Drugs)
-`constants.ts` contains the formulary. Each entry implements `chf_effects()`, `hemodynamic_effects()`, optional `contraindications()`, `renal_adjustment()`, and `special_features`. Drug classes: ARNI, ACEi, ARB (unified RAAS pool), BB (3), MRA (2), SGLT2i (2), GLP-1 (2), Loop Diuretic (2), Vasodilator, If-channel inhibitor, sGC stimulator, K+ binder, IV Iron, Inotrope, Thiazide-like.
+Guideline domain behavior:
 
-## Making Changes
+- HFrEF (`LVEF <= 40`): quad pillars (RAAS, BB, MRA, SGLT2i)
+- HFmrEF (`41-49`): weighted hybrid scoring
+- HFpEF (`>= 50`): SGLT2i-first pathway with adjunct logic
+- HFimpEF preservation: continue full HFrEF logic when prior reduced EF is known or strongly suspected
 
-| Change Type | Where to Edit |
-|-------------|---------------|
-| Add medication | `constants.ts` (formulary), optionally `pricingService.ts` |
-| Change clinical logic / scoring | `services/simulationService.ts` |
-| Modify patient form | `components/PatientForm.tsx` and `components/patient-form/*` |
-| Change Patient model | `types.ts` (interface), `data/scenarios.ts` (defaults), form sections |
-| Add/modify result display | `components/RecommendationCard.tsx`, `components/ScoreDetailModal.tsx` |
-| Add test scenario | `data/scenarios.ts` (scenario) + `scripts/verifyScenarios.ts` (assertions) |
+## Safety Logic and Hard Blocks
 
-## Validation
+Implemented high-priority safeguards include:
 
-1. `npm run build` — catch TypeScript errors
-2. `npm run verify` — run 26 clinical scenario assertions (contraindications, phenotype gating, clinical alerts, medication selection). This is the primary regression check.
-3. `npm run ci` — full pipeline (typecheck + build + verify), same as GitHub Actions
-4. Manual UI testing: load a scenario (top-left selector), click "Run Analysis", inspect domain scores
-5. Add new scenarios to `data/scenarios.ts` + assertions in `scripts/verifyScenarios.ts`
+- Input validity:
+  - SBP must be greater than DBP
+  - duplicate current medications are removed with safety alert
+- Hemodynamic safety:
+  - `SBP < 90` returns alerts only (no regimen output)
+  - projected `SBP < 85` excluded from display
+- Electrolyte safety:
+  - projected `K+ > 6.0` excluded from display
+- Pregnancy safety:
+  - excludes RAAS classes, MRAs/nsMRA, and SGLT2i
+- Acute decompensation handling:
+  - blocks beta-blocker initiation
+  - forces down-titration behavior for existing beta-blockers
+- Structural regimen safety:
+  - blocks dual RAAS combinations
+  - blocks dual MRA combinations
 
-## Gotchas
+Additional safety support:
 
-- **Set preservation:** Don't use spread operator or JSON.parse/stringify on patient objects — use `clonePatient()`
-- **BNP is multiplicative:** Each drug's `bnp_reduction_percent` compounds as a retention factor `(1 - pct)`, not added. 0.8 cap in denominators prevents division-by-zero on removal.
-- **Synergy timing:** Synergy bonuses only apply when a modification *creates* the condition (e.g., adding BB to RAAS), not when the synergy already exists in the observed patient state.
-- **Medical thresholds:** Changes to clinical cutoffs require comment updates and new test scenarios in `verifyScenarios.ts`
-- **`renal_adjustment` signature:** `(egfr: number, patient?: Patient)` — the optional `patient` param enables body-weight gating (e.g., Carvedilol 50mg only for > 85kg dry weight)
-- **Path alias:** `@/` points to project root (not `src/`)
-- **Dev server ports:** Vite defaults to 3000 but auto-increments if occupied (3001, 3002, etc.)
+- DDI warnings (for example BB+Ivabradine, Digoxin interactions, lithium + diuretics)
+- CKD and volume-depletion alerts
+- mandatory monitoring-plan generation for high-risk intensification paths
+
+## Furoscix Implementation
+
+Furoscix is modeled as:
+
+- medication name: `Furoscix (SC Furosemide)`
+- class: `Loop Diuretic`
+- dose: `80 mg/10mL SQ on-body infusor (5h)` (single modeled tier)
+
+Behavioral integration:
+
+- prioritized in worsening-congestion loop escalation pathways
+- eligibility tied to active congestion/escalation context
+- contraindication checks include:
+  - insufficient congestion context
+  - `eGFR < 15`
+  - furosemide hypersensitivity
+  - adhesive/acrylate hypersensitivity
+- mandatory regimen warning when included:
+  - `FUROSCIX SAFETY: ... on-body SQ infusor ...`
+- hypoxemia triage warning when clinically relevant
+
+## Formulary Snapshot
+
+`constants.ts` currently defines:
+
+- 32 medications
+- 17 classes
+
+Major class groups include RAAS, beta blockers, MRAs/nsMRA, SGLT2i, loop/thiazide diuretics, vasodilator, If inhibitor, sGC stimulator, GLP-1 therapies, IV iron, K+ binders, and digoxin.
+
+## Verification Harness
+
+`scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
+
+Current regression scope:
+
+- 71 scenarios
+- safety invariants (dual-class prevention, score bounds, display floors)
+- contraindication logic
+- phenotype-specific recommendations
+- warning and alert expectations
+- Furoscix candidate + allergy guardrail checks
+
+This harness is the primary safety regression gate for logic edits.
+
+## Development Rules of Thumb
+
+### If you add or change medications
+
+Update:
+
+1. `constants.ts` (formulary object)
+2. optional pricing logic in `services/pricingService.ts`
+3. scenario coverage in `data/scenarios.ts`
+4. verification assertions in `scripts/verifyScenarios.ts`
+
+### If you change clinical logic or thresholds
+
+Update:
+
+1. `services/simulationService.ts`
+2. `components/FAQ.tsx` (in-app logic documentation)
+3. `README.md` and this file (`CLAUDE.md`)
+4. verification scenarios/assertions to prevent silent regressions
+
+### If you edit patient data structures
+
+Update:
+
+1. `types.ts`
+2. `data/scenarios.ts` defaults and builders
+3. relevant form components in `components/patient-form/*`
+4. any logic in `simulationService.ts` that reads new fields
+
+## Known Pitfalls
+
+- Preserve `Set` fields when cloning patient objects.
+- Medication name matching is exact-string sensitive in seeded scenarios.
+- `max_new_classes_per_visit` counts class-group additions, not dose changes.
+- Do not rely on top-3 regimen presence for adjunct assertions; some checks must use exclusion/eligibility logic.
+- Keep path alias assumptions consistent: `@/` resolves to repository root.
+
+## Clinical Use Guardrail
+
+This codebase is intended for CDS simulation/prototyping and requires prospective validation, governance, and regulatory/legal review before any real-world clinical deployment.

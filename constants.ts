@@ -37,7 +37,8 @@ export const RELEVANT_COMORBIDITIES = [
     "Liver Disease (Child-Pugh B/C)",
     "Obesity (BMI > 30)",
     "Pulmonary Hypertension",
-    "Chronic NSAID Use"
+    "Chronic NSAID Use",
+    "Bilateral Renal Artery Stenosis"
 ];
 
 export const RELEVANT_EXTERNAL_MEDICATIONS = [
@@ -82,7 +83,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             return { sbp_drop: 6 + (level * 2), hr_drop: 0, potassium_change: 0.15 };
         },
         side_effects: () => ({ hypotension: 0.15, angioedema: 0.005, hyperkalemia: 0.05 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || (p.potassium > 5.4) || (p.is_pregnant === true), // Higher cutoff due to binder logic; Category X in pregnancy
+        contraindications: (p) => p.comorbidities.has("History of Angioedema") || (p.potassium > 5.4) || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis") || p.comorbidities.has("Liver Disease (Child-Pugh B/C)"), // Higher cutoff due to binder logic; Category X; bilateral RAS = absolute CI; sacubitril AUC ~1.5-2x in Child-Pugh B/C (Entresto PI)
         renal_adjustment: (egfr) => egfr < 30 ? { start_dose_modifier: 0.5, caution: true } : {},
     },
     {
@@ -110,7 +111,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose)/5, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true),
+        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 10, caution: true };
             if (egfr < 45) return { max_dose: 20, caution: true };
@@ -141,7 +142,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 5, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true),
+        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 5, caution: true }; // More conservative than Lisinopril (BID dosing)
             if (egfr < 45) return { max_dose: 10, caution: true };
@@ -172,7 +173,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 2, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true),
+        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 2.5, caution: true };
             if (egfr < 45) return { max_dose: 5, caution: true };
@@ -202,7 +203,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 10, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.12, hypotension: 0.10, hyperkalemia: 0.06, angioedema: 0.01, taste_disturbance: 0.05 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true),
+        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 6.25, caution: true };
             if (egfr < 45) return { max_dose: 25, caution: true };
@@ -233,7 +234,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 30, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.06, hyperkalemia: 0.04, dizziness: 0.05 }),
-        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true),
+        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 80, caution: true };
             return {};
@@ -264,7 +265,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 6, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.05, hyperkalemia: 0.04 }),
-        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true),
+        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 8, caution: true };
             return {};
@@ -295,7 +296,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose)/25, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.05, hyperkalemia: 0.04 }),
-        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true),
+        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 50, caution: true };
             return {};
@@ -419,7 +420,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
 
     // ========================================
     // PILLAR 3: MRAs
-    // Evidence: RALES, EPHESUS
+    // Evidence: RALES, EMPHASIS-HF, EPHESUS
     // Impact: Moderate Structure (Anti-fibrotic), Mild Volume.
     // ========================================
     {
@@ -451,6 +452,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
             if (egfr <= 45) return { max_dose: 25, caution: true };
             return {};
         },
+        special_features: [
+            {
+                feature: 'HFpEF Class IIb: TOPCAT Americas subgroup — reduced HF hospitalization (LVEF ≥ 45)',
+                points: 18,
+                criteria: (p) => p.lvef >= 45
+            }
+        ],
     },
     {
         name: 'Eplerenone',
@@ -700,6 +708,67 @@ export const MEDICATION_FORMULARY: Medication[] = [
         side_effects: () => ({ hypokalemia: 0.20, renal_worsening: 0.10, hypotension: 0.05 }),
         renal_adjustment: (egfr) => {
             if (egfr < 20) return { caution: true };
+            return {};
+        },
+    },
+    {
+        name: 'Furoscix (SC Furosemide)',
+        drug_class: 'Loop Diuretic',
+        available_doses: [
+            { strength: 80, unit: 'mg/10mL', formulation: 'SQ on-body infusor (5h)', frequency_options: ['qd'], scored: false }, // FDA-labeled single dose delivered over 5 hours
+        ],
+        chf_effects: (dose) => {
+            const d = Number(dose);
+            // FUROSCIX provides more reliable exposure than oral furosemide (bioavailability ~99.6% vs IV).
+            const oralEquivalent = d * 1.15;
+            const weightLoss = 1.1 + 2.6 * Math.sqrt(oralEquivalent / 40);
+            return {
+                lvef_improvement_absolute: 0,
+                bnp_reduction_percent: 0.12 + (oralEquivalent / 160 * 0.22),
+                weight_reduction_kg: weightLoss,
+                kccq_improvement: 5 + (oralEquivalent / 80 * 2.2),
+                structure_benefit_points: 0,
+                lavi_reduction_percent: 0.08,
+                lvedd_reduction_percent: 0
+            };
+        },
+        hemodynamic_effects: (dose) => {
+            const oralEquivalent = Number(dose) * 1.15;
+            return {
+                sbp_drop: 2.5 + oralEquivalent / 35,
+                hr_drop: 0,
+                potassium_change: -0.35 - (oralEquivalent / 80 * 0.35)
+            };
+        },
+        special_features: [
+            {
+                feature: 'Outpatient worsening-HF decongestion option on background loop therapy',
+                points: 12,
+                criteria: (p) => {
+                    const fluidExcess = p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg;
+                    const hasBaselineLoop = (p.current_regimen || []).some(r => r.med.drug_class === 'Loop Diuretic');
+                    return fluidExcess >= 2.0 && hasBaselineLoop;
+                }
+            },
+            { feature: 'On-body infusor complexity burden', points: -8, criteria: (p) => p.complexity_tolerance <= 4 }
+        ],
+        side_effects: () => ({ hypokalemia: 0.22, renal_worsening: 0.12, hypotension: 0.06, infusion_site_reaction: 0.12 }),
+        contraindications: (p) => {
+            const fluidExcess = p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg;
+            const hasBaselineLoop = (p.current_regimen || []).some(r => r.med.drug_class === 'Loop Diuretic');
+            const hasEscalationContext = hasBaselineLoop || fluidExcess >= 3.0;
+            const allergyTerms = Array.from(p.allergies || []).map(a => a.toLowerCase());
+            const hasFurosemideHypersensitivity = allergyTerms.some(term =>
+                term.includes('furosemide') || term.includes('furoscix') || term.includes('loop diuretic')
+            );
+            const hasAdhesiveHypersensitivity = allergyTerms.some(term =>
+                term.includes('adhesive') || term.includes('acrylate')
+            );
+            // Reserve for active congestion episodes, reflecting outpatient worsening-HF evidence and label contraindications.
+            return fluidExcess < 1.0 || !hasEscalationContext || p.egfr < 15 || hasFurosemideHypersensitivity || hasAdhesiveHypersensitivity;
+        },
+        renal_adjustment: (egfr) => {
+            if (egfr < 30) return { caution: true };
             return {};
         },
     },

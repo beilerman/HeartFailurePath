@@ -1,0 +1,54 @@
+Agent,Class,Dose,Frequency,GuidelineRole,HFrEFClassPoints,HFmrEFClassPoints,HFpEFClassPoints,TargetBonus_HFrEF_HFmrEF_HFpEF,FormularyScoredFlag,TargetDoseFlag,Description,SpecialFeaturePointsAndDescriptions
+Sacubitril/Valsartan (Entresto),ARNI,24/26 mg,bid,RAAS,20,22,0,0/0/0,false,false,RAAS pillar,
+Sacubitril/Valsartan (Entresto),ARNI,49/51 mg,bid,RAAS,20,22,0,0/0/0,false,false,RAAS pillar,
+Sacubitril/Valsartan (Entresto),ARNI,97/103 mg,bid,RAAS,20,22,0,5/5/0,false,true,RAAS pillar,
+Lisinopril,ACEi,2.5 mg,qd,RAAS,20,22,0,0/0/0,true,false,RAAS pillar,
+Lisinopril,ACEi,5 mg,qd,RAAS,20,22,0,0/0/0,true,false,RAAS pillar,
+Lisinopril,ACEi,10 mg,qd,RAAS,20,22,0,0/0/0,true,false,RAAS pillar,
+Lisinopril,ACEi,20 mg,qd,RAAS,20,22,0,5/5/0,true,true,RAAS pillar,
+Lisinopril,ACEi,40 mg,qd,RAAS,20,22,0,5/5/0,true,true,RAAS pillar,
+Losartan,ARB,25 mg,qd,RAAS,20,22,0,0/0/0,true,false,RAAS pillar,
+Losartan,ARB,50 mg,qd,RAAS,20,22,0,0/0/0,true,false,RAAS pillar,
+Losartan,ARB,100 mg,qd,RAAS,20,22,0,0/0/0,true,false,RAAS pillar,
+Losartan,ARB,150 mg,qd,RAAS,20,22,0,5/5/0,false,true,RAAS pillar,
+Carvedilol,Beta Blocker,3.125 mg,bid,BB,20,13,0,0/0/0,false,false,Beta-blocker pillar,
+Carvedilol,Beta Blocker,6.25 mg,bid,BB,20,13,0,0/0/0,true,false,Beta-blocker pillar,
+Carvedilol,Beta Blocker,12.5 mg,bid,BB,20,13,0,0/0/0,true,false,Beta-blocker pillar,
+Carvedilol,Beta Blocker,25 mg,bid,BB,20,13,0,5/5/0,true,true,Beta-blocker pillar,
+Carvedilol,Beta Blocker,50 mg,bid,BB,20,13,0,5/5/0,true,true,Beta-blocker pillar,
+Metoprolol Succinate,Beta Blocker,25 mg,qd,BB,20,13,0,0/0/0,true,false,Beta-blocker pillar,
+Metoprolol Succinate,Beta Blocker,50 mg,qd,BB,20,13,0,0/0/0,true,false,Beta-blocker pillar,
+Metoprolol Succinate,Beta Blocker,100 mg,qd,BB,20,13,0,0/0/0,true,false,Beta-blocker pillar,
+Metoprolol Succinate,Beta Blocker,200 mg,qd,BB,20,13,0,5/5/0,true,true,Beta-blocker pillar,
+Bisoprolol,Beta Blocker,1.25 mg,qd,BB,20,13,0,0/0/0,true,false,Beta-blocker pillar,10: Preferred in Reactive Airway Disease (most beta-1 selective)
+Bisoprolol,Beta Blocker,2.5 mg,qd,BB,20,13,0,0/0/0,true,false,Beta-blocker pillar,10: Preferred in Reactive Airway Disease (most beta-1 selective)
+Bisoprolol,Beta Blocker,5 mg,qd,BB,20,13,0,0/0/0,true,false,Beta-blocker pillar,10: Preferred in Reactive Airway Disease (most beta-1 selective)
+Bisoprolol,Beta Blocker,10 mg,qd,BB,20,13,0,5/5/0,true,true,Beta-blocker pillar,10: Preferred in Reactive Airway Disease (most beta-1 selective)
+Spironolactone,MRA,12.5 mg,qd,MRA,20,13,0,0/0/0,true,false,MRA pillar,
+Spironolactone,MRA,25 mg,qd,MRA,20,13,0,5/5/0,true,true,MRA pillar,
+Spironolactone,MRA,50 mg,qd,MRA,20,13,0,5/5/0,true,true,MRA pillar,
+Eplerenone,MRA,25 mg,qd,MRA,20,13,0,0/0/0,true,false,MRA pillar,10: Fewer endocrine side effects (Gynecomastia)
+Eplerenone,MRA,50 mg,qd,MRA,20,13,0,5/5/0,true,true,MRA pillar,10: Fewer endocrine side effects (Gynecomastia)
+Dapagliflozin,SGLT2i,10 mg,qd,SGLT2i,20,22,70,5/5/15,false,true,SGLT2 pillar,10: Preferred in Diabetics
+Empagliflozin,SGLT2i,10 mg,qd,SGLT2i,20,22,70,5/5/15,false,true,SGLT2 pillar,10: Preferred in Diabetics
+Semaglutide (Wegovy),GLP-1 RA,2.4 mg,weekly,None,0,0,0,0/0/0,false,true,GLP-1 RA,50: Indicated for Obesity Phenotype (BMI > 30)
+Tirzepatide (Zepbound),GLP-1/GIP RA,10 mg,weekly,None,0,0,0,0/0/0,false,false,GLP-1/GIP RA,60: Superior Weight Loss & KCCQ Benefit (SUMMIT)
+Tirzepatide (Zepbound),GLP-1/GIP RA,15 mg,weekly,None,0,0,0,0/0/0,false,true,GLP-1/GIP RA,60: Superior Weight Loss & KCCQ Benefit (SUMMIT)
+Furosemide,Loop Diuretic,20 mg,qd/bid,None,0,0,0,0/0/0,true,false,Loop Diuretic,-5: Caution in Gout (Uric Acid retention)
+Furosemide,Loop Diuretic,40 mg,qd/bid,None,0,0,0,0/0/0,true,false,Loop Diuretic,-5: Caution in Gout (Uric Acid retention)
+Furosemide,Loop Diuretic,80 mg,qd/bid,None,0,0,0,0/0/0,true,false,Loop Diuretic,-5: Caution in Gout (Uric Acid retention)
+Furosemide,Loop Diuretic,160 mg,bid,None,0,0,0,0/0/0,false,false,Loop Diuretic,-5: Caution in Gout (Uric Acid retention)
+Torsemide,Loop Diuretic,10 mg,qd,None,0,0,0,0/0/0,true,false,Loop Diuretic,-5: Caution in Gout
+Torsemide,Loop Diuretic,20 mg,qd,None,0,0,0,0/0/0,true,false,Loop Diuretic,-5: Caution in Gout
+Torsemide,Loop Diuretic,50 mg,qd,None,0,0,0,0/0/0,true,false,Loop Diuretic,-5: Caution in Gout
+Torsemide,Loop Diuretic,100 mg,qd,None,0,0,0,0/0/0,true,false,Loop Diuretic,-5: Caution in Gout
+Hydralazine/Isosorbide Dinitrate,Vasodilator,37.5/20 mg,tid,None,0,0,0,0/0/0,false,false,Vasodilator,30: Significant benefit in African American patients (A-HeFT)
+Hydralazine/Isosorbide Dinitrate,Vasodilator,75/40 mg,tid,None,0,0,0,0/0/0,false,true,Vasodilator,30: Significant benefit in African American patients (A-HeFT)
+Ivabradine,If Inhibitor,5 mg,bid,None,0,0,0,0/0/0,true,false,If Inhibitor,"15: SHIFT: Reduces HF hospitalization (HR >= 70 on max BB, Class IIa)"
+Ivabradine,If Inhibitor,7.5 mg,bid,None,0,0,0,0/0/0,true,true,If Inhibitor,"15: SHIFT: Reduces HF hospitalization (HR >= 70 on max BB, Class IIa)"
+Vericiguat,sGC Stimulator,10 mg,qd,None,0,0,0,0/0/0,false,true,sGC Stimulator,
+Patiromer,K+ Binder,8.4 g,qd,None,0,0,0,0/0/0,false,false,K+ Binder,50: Enables RAAS Optimization in Hyperkalemia (DIAMOND trial)
+Ferric Carboxymaltose,IV Iron,1000 mg,once,None,0,0,0,0/0/0,false,false,IV Iron,40: Treats Iron Deficiency in HF
+Digoxin,Inotrope,62.5 mcg,qd,None,0,0,0,0/0/0,true,false,Inotrope,20: Rate Control in AFib
+Digoxin,Inotrope,125 mcg,qd,None,0,0,0,0/0/0,true,false,Inotrope,20: Rate Control in AFib
+Metolazone,Thiazide-like Diuretic,2.5 mg,qd,None,0,0,0,0/0/0,true,false,Thiazide-like Diuretic,

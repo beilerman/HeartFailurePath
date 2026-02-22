@@ -2,6 +2,7 @@
 import { generateAndScoreModifications } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
+import { MEDICATION_FORMULARY } from '../constants';
 
 const RAAS_CLASSES = new Set(['ARNI', 'ACEi', 'ARB']);
 const ASSERTION_TITLE_MARKERS = [
@@ -68,7 +69,12 @@ const ASSERTION_TITLE_MARKERS = [
     'Severe Congestion + Loop',
     'Hypoxia Alert',
     'NYHA III Acute Decompensation',
-    'Low Peak Flow Screening'
+    'Low Peak Flow Screening',
+    'Furoscix Candidate',
+    'Furoscix Allergy Guardrail',
+    'ARNI Hepatic CI',
+    'MRA + DIAMOND Binder',
+    'HFpEF Steroidal MRA Eligible'
 ];
 
 async function runVerification() {
@@ -76,16 +82,15 @@ async function runVerification() {
     let passed = 0;
     let failed = 0;
 
-    // Use any tier to get the full set of medication names (all tiers have the same keys)
-    const prices = await getDrugPrices(undefined, 'commercial');
-    const availableMedNames = new Set(Object.keys(prices));
+    const formularyNames = MEDICATION_FORMULARY.map(m => m.name);
+    const availableMedNames = new Set(formularyNames);
     const betaBlockerMeds = new Set(['Carvedilol', 'Metoprolol Succinate', 'Bisoprolol']);
 
     for (const scenario of SCENARIOS) {
         console.log(`Analyzing Scenario: "${scenario.title}"`);
 
         try {
-            const scenarioPrices = await getDrugPrices(undefined, scenario.patient.insurance_tier);
+            const scenarioPrices = await getDrugPrices(formularyNames, scenario.patient.insurance_tier);
             const scenarioAvailableMedNames = scenario.title.includes('No BB Available')
                 ? new Set([...availableMedNames].filter(name => !betaBlockerMeds.has(name)))
                 : availableMedNames;
@@ -490,10 +495,7 @@ async function runVerification() {
                     failures.push('BB prescribed for HFpEF (not indicated)');
                     scenarioPassed = false;
                 }
-                if (anyRegimenHasClass('MRA')) {
-                    failures.push('MRA prescribed for HFpEF (not indicated)');
-                    scenarioPassed = false;
-                }
+                // Note: Steroidal MRA is now a valid Class IIb adjunct for HFpEF (TOPCAT Americas, ACC/AHA 2022 §7.4)
             }
 
             // 10. Iron-Deficient -> Should have IV Iron
@@ -853,14 +855,18 @@ async function runVerification() {
                 }
             }
 
-            // 42. Finerenone in HFpEF -> nsMRA should be eligible, steroidal MRA should NOT be in top regimen
+            // 42. Finerenone in HFpEF -> nsMRA should be eligible; steroidal MRA now eligible (Class IIb)
+            //     but nsMRA should rank higher when not excluded
             if (scenario.title.includes('Finerenone in HFpEF')) {
-                // Verify steroidal MRA is NOT inappropriately offered for HFpEF
-                if (anyRegimenHasClass('MRA')) {
-                    failures.push('Steroidal MRA in top regimen for HFpEF (should prefer nsMRA or SGLT2i)');
-                    scenarioPassed = false;
+                // If top regimen has steroidal MRA, nsMRA should be excluded (otherwise nsMRA should rank higher)
+                if (topRegimen && topRegimen.regimen.some(m => m.med.drug_class === 'MRA')) {
+                    const nsmraExcluded = excludedMedications.some(e => e.drug_class === 'nsMRA');
+                    if (!nsmraExcluded) {
+                        failures.push('Top regimen prefers steroidal MRA over nsMRA in HFpEF (nsMRA not excluded)');
+                        scenarioPassed = false;
+                    }
                 }
-                // Also verify SGLT2i is present (the primary HFpEF pillar)
+                // SGLT2i is the primary HFpEF pillar — must be present
                 const anyRegimenMissingSglt2 = scoredRegimens.some(r =>
                     !r.regimen.some(m => m.med.drug_class === 'SGLT2i')
                 );
@@ -1101,6 +1107,114 @@ async function runVerification() {
                 );
                 if (!hasScreeningNote) {
                     failures.push('Missing peak flow screening note for PF 280 without COPD/Asthma comorbidity');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 65. Furoscix Candidate -> must be eligible and carry device safety warning when selected
+            if (scenario.title.includes('Furoscix Candidate')) {
+                const furoscixName = 'Furoscix (SC Furosemide)';
+                const furoscixExcluded = excludedMedications.some(e => e.name === furoscixName);
+                if (furoscixExcluded) {
+                    failures.push('Furoscix incorrectly excluded in persistent-congestion loop-escalation scenario');
+                    scenarioPassed = false;
+                }
+                const regimensWithFuroscix = scoredRegimens.filter(r =>
+                    r.regimen.some(m => m.med.name === furoscixName)
+                );
+                if (regimensWithFuroscix.length > 0) {
+                    const missingSafetyWarning = regimensWithFuroscix.some(r =>
+                        !r.warnings.some(w => w.includes('FUROSCIX SAFETY'))
+                    );
+                    if (missingSafetyWarning) {
+                        failures.push('Furoscix regimen missing mandatory FUROSCIX SAFETY warning');
+                        scenarioPassed = false;
+                    }
+                }
+                if (!anyRegimenHasClass('Loop Diuretic')) {
+                    failures.push('No loop strategy generated in persistent-congestion scenario');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 66. Furoscix Allergy Guardrail -> hypersensitivity must block Furoscix while preserving other loops
+            if (scenario.title.includes('Furoscix Allergy Guardrail')) {
+                const furoscixName = 'Furoscix (SC Furosemide)';
+                if (anyRegimenHasMed(furoscixName)) {
+                    failures.push('Furoscix offered despite furosemide hypersensitivity allergy');
+                    scenarioPassed = false;
+                }
+                const furoscixExcluded = excludedMedications.some(e => e.name === furoscixName);
+                if (!furoscixExcluded) {
+                    failures.push('Furoscix not explicitly excluded despite furosemide hypersensitivity allergy');
+                    scenarioPassed = false;
+                }
+                if (!anyRegimenHasClass('Loop Diuretic')) {
+                    failures.push('All loop options removed in Furoscix allergy scenario (Torsemide/Bumetanide should remain available)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 67. ARNI Hepatic CI -> ARNI must NOT appear, ACEi/ARB must be offered
+            if (scenario.title.includes('ARNI Hepatic CI')) {
+                const anyRegimenHasARNI = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'ARNI')
+                );
+                if (anyRegimenHasARNI) {
+                    failures.push('ARNI should be excluded with Liver Disease (Child-Pugh B/C)');
+                    scenarioPassed = false;
+                }
+                // ACEi or ARB should still be offered (RAAS present)
+                const anyRegimenHasRaas = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'ACEi' || m.med.drug_class === 'ARB')
+                );
+                if (!anyRegimenHasRaas) {
+                    failures.push('ACEi/ARB should be offered when ARNI is excluded for liver disease');
+                    scenarioPassed = false;
+                }
+                if (scoredRegimens.length === 0) {
+                    failures.push('No regimens generated for ARNI hepatic CI scenario');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 68. MRA + DIAMOND Binder -> Every regimen with MRA must also have K+ binder
+            if (scenario.title.includes('MRA + DIAMOND Binder')) {
+                const regimensWithMRA = scoredRegimens.filter(r =>
+                    r.regimen.some(m => m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA')
+                );
+                if (regimensWithMRA.length === 0) {
+                    failures.push('No regimens with MRA generated for DIAMOND binder scenario');
+                    scenarioPassed = false;
+                }
+                const mraWithoutBinder = regimensWithMRA.filter(r =>
+                    !r.regimen.some(m => m.med.drug_class === 'K+ Binder')
+                );
+                if (mraWithoutBinder.length > 0) {
+                    failures.push(`${mraWithoutBinder.length} regimen(s) with MRA missing K+ binder (DIAMOND protocol requires binder at K+ > 5.0)`);
+                    scenarioPassed = false;
+                }
+                // Check for DIAMOND/borderline K+ warning
+                const allWarnings = scoredRegimens.flatMap(r => r.warnings || []);
+                const hasDiamondWarning = allWarnings.some(w => w.includes('BORDERLINE K+') || w.includes('DIAMOND'));
+                if (!hasDiamondWarning) {
+                    failures.push('Missing DIAMOND/borderline K+ warning for MRA initiation at K+ 5.1');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 69. HFpEF Steroidal MRA Eligible -> Spironolactone not excluded
+            if (scenario.title.includes('HFpEF Steroidal MRA Eligible')) {
+                const spiroExcluded = excludedMedications.some(e =>
+                    e.name === 'Spironolactone'
+                );
+                if (spiroExcluded) {
+                    failures.push('Spironolactone should be eligible as HFpEF adjunct (TOPCAT Americas)');
+                    scenarioPassed = false;
+                }
+                // SGLT2i should still be in top regimen (primary HFpEF pillar)
+                if (topRegimen && !topRegimen.regimen.some(m => m.med.drug_class === 'SGLT2i')) {
+                    failures.push('SGLT2i missing in top regimen for HFpEF');
                     scenarioPassed = false;
                 }
             }

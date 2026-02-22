@@ -97,6 +97,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                         readOnly
                         className="!bg-slate-100 !text-slate-600 focus:outline-none"
                     />
+                    <p className="text-[10px] text-slate-400 mt-0.5">Use CKD-EPI 2021 (race-free) equation</p>
                 </div>
                 <div>
                     <Label htmlFor="bun">BUN</Label>

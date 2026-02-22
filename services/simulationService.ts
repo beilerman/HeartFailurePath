@@ -214,6 +214,22 @@ function buildMonitoringPlan(
         }
     }
 
+    const hasSglt2iIntensification = hasRelevantIntensification(modificationSet, new Set(['SGLT2i']));
+    if (hasSglt2iIntensification) {
+        plan.push({
+            test: 'BMP (creatinine, eGFR)',
+            timing: '2-4 weeks after SGLT2i initiation',
+            details: 'SGLT2i causes an expected hemodynamic eGFR dip of 5-10% (tubuloglomerular feedback). This is reversible and NOT a reason to discontinue. Recheck to confirm stabilization.'
+        });
+        if (currentPatient.egfr < 45) {
+            plan.push({
+                test: 'Urinalysis + volume status assessment',
+                timing: '1-2 weeks after SGLT2i initiation',
+                details: 'CKD patients: monitor for volume depletion from osmotic diuresis. Adjust concurrent loop diuretic dose if needed.'
+            });
+        }
+    }
+
     if (hasDiureticIntensification) {
         plan.push({
             test: 'Daily weight, BP, orthostasis, dizziness',
@@ -325,6 +341,7 @@ function analyzeCurrentRegimen(
     // (preserves drug class coverage vs outright removal). Swap candidates that are
     // themselves contraindicated are filtered out.
     const swappable: RegimenAnalysis['swappable'] = [];
+    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
     currentRegimen.forEach(current => {
         const group = getMedicationClassGroup(current.med.drug_class);
         const groupTiers = tiersByGroup.get(group) || [];
@@ -333,12 +350,19 @@ function analyzeCurrentRegimen(
             !contraindicatedCurrentMeds.has(t.med.name) // Don't swap TO a contraindicated med
         );
         if (candidates.length > 0) {
-            swappable.push({ from: current, candidates });
+            let prioritizedCandidates = candidates;
+            // Ensure FUROSCIX is considered in worsening-congestion loop swaps instead of being truncated by safeSlice.
+            if (current.med.drug_class === 'Loop Diuretic' && fluidExcess >= 2.0) {
+                const furoscix = candidates.find(t => t.med.name === 'Furoscix (SC Furosemide)');
+                if (furoscix) {
+                    prioritizedCandidates = [furoscix, ...candidates.filter(t => t !== furoscix)];
+                }
+            }
+            swappable.push({ from: current, candidates: prioritizedCandidates });
         }
     });
 
     // Removable: diuretics when euvolemic, OR any contraindicated current med
-    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
     const removable: RegimenMed[] = [];
     currentRegimen.forEach(r => {
         // Contraindicated current meds MUST be flagged for removal
@@ -415,7 +439,14 @@ function analyzeCurrentRegimen(
     if (fluidExcess > 1.0 && !currentClasses.has('Loop Diuretic')) {
         const loopTiers = medTiers.filter(r => r.med.drug_class === 'Loop Diuretic');
         if (loopTiers.length > 0) {
-            addableAdjuncts.push(...safeSlice(loopTiers, 2));
+            let prioritizedLoopTiers = loopTiers;
+            if (fluidExcess >= 3.0) {
+                const furoscix = loopTiers.find(r => r.med.name === 'Furoscix (SC Furosemide)');
+                if (furoscix) {
+                    prioritizedLoopTiers = [furoscix, ...loopTiers.filter(r => r !== furoscix)];
+                }
+            }
+            addableAdjuncts.push(...safeSlice(prioritizedLoopTiers, 2));
         }
     }
 
@@ -443,6 +474,16 @@ function analyzeCurrentRegimen(
         const nsmraTiers = medTiers.filter(r => r.med.drug_class === 'nsMRA');
         if (nsmraTiers.length > 0) {
             addableAdjuncts.push(nsmraTiers[0]);
+        }
+    }
+
+    // Steroidal MRA for HFpEF — TOPCAT Americas, Class IIb (ACC/AHA 2022 §7.4)
+    // Cost-effective alternative to Finerenone; offered alongside nsMRA as separate candidate
+    // getMedicationClassGroup groups nsMRA→MRA, preventing dual MRA in same regimen
+    if (isHFpEF && !currentClasses.has('MRA') && !currentClasses.has('nsMRA')) {
+        const steroidalMraTiers = medTiers.filter(r => r.med.drug_class === 'MRA');
+        if (steroidalMraTiers.length > 0) {
+            addableAdjuncts.push(steroidalMraTiers[0]);
         }
     }
 
@@ -1107,6 +1148,8 @@ function calculateGuidelineConcordanceScore(
                 if (isTarget) score += 15;
             }
         }
+        // MRA in HFpEF: Class IIb adjunct (TOPCAT Americas / FINEARTS-HF)
+        if (pillarClasses.has('MRA')) score += 8;
         if (fluidExcess <= 1.0 || hasDiuretic) score += 15;
         return Math.min(100, score);
     }
@@ -1600,11 +1643,16 @@ function simulateModificationEffect(
 
     // --- Titration Timeline Warning ---
     const newAdds = modificationSet.modifications.filter(m => m.action === 'add');
+    const titrations = modificationSet.modifications.filter(m => m.action === 'titrate_up');
     if (newAdds.length >= 2) {
         const targetAdds = newAdds.filter(m => m.target?.dose.is_target_dose);
         if (targetAdds.length >= 2) {
             warnings.push('Multiple new medications at target dose. In practice, initiate at low dose and titrate each q2-4 weeks.');
         }
+    }
+    // D9: Single-agent titration interval guidance
+    if (titrations.length > 0 && newAdds.length === 0) {
+        warnings.push('Titration Interval: Allow 2-4 weeks between dose increases. Recheck BP, HR, and labs (BMP) before each uptitration step.');
     }
 
     // --- P3: Age-adjusted warnings ---
@@ -1629,6 +1677,28 @@ function simulateModificationEffect(
         warnings.push('Monitor: K+ > 5.0 with MRA. Check potassium within 1 week; consider Patiromer if rising.');
     } else if (proj.potassium < 3.5) {
         warnings.push('Risk of Hypokalemia (K+ < 3.5)');
+    }
+
+    // D2: MRA initiation with borderline K+ — ACC/AHA recommends initiating MRA when K+ ≤ 5.0.
+    // K+ 5.0-5.5 is allowed here with binder rescue (DIAMOND), but requires explicit warning.
+    const isMraInitiation = modificationSet.modifications.some(m =>
+        m.action === 'add' && m.target && (m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
+    );
+    if (isMraInitiation && currentPatient.potassium >= 5.0 && currentPatient.potassium <= 5.5) {
+        const hasBinder = resultingRegimen.some(r => r.med.drug_class === 'K+ Binder');
+        if (hasBinder) {
+            warnings.push(
+                'MRA INITIATION AT BORDERLINE K+: Baseline potassium is ' + currentPatient.potassium.toFixed(1) +
+                ' mEq/L. Concurrent K+ binder included per DIAMOND trial protocol. ' +
+                'Check BMP in 48-72 hours. Discontinue MRA if K+ rises above 5.5 despite binder therapy.'
+            );
+        } else {
+            warnings.push(
+                'MRA INITIATION AT BORDERLINE K+: Baseline potassium is ' + currentPatient.potassium.toFixed(1) +
+                ' mEq/L. Consider concurrent K+ binder per DIAMOND protocol. ' +
+                'Check BMP in 48-72 hours. Discontinue MRA if K+ rises above 5.5.'
+            );
+        }
     }
 
     if (raasCount > 1) {
@@ -1679,6 +1749,11 @@ function simulateModificationEffect(
         if (hasFinerenone) {
             warnings.push('Hepatic Impairment: Finerenone is a CYP3A4 substrate with reduced clearance in cirrhosis. Avoid in Child-Pugh C; use with caution in Child-Pugh B.');
         }
+        // ARNI: sacubitril AUC increases in hepatic impairment (Entresto PI)
+        const hasARNI = resultingRegimen.some(r => r.med.drug_class === 'ARNI');
+        if (hasARNI) {
+            warnings.push('Hepatic Impairment: Sacubitril/Valsartan — sacubitril AUC increases ~1.5-2x in Child-Pugh B/C (Entresto PI). Avoid; switch to ACEi/ARB.');
+        }
         // Loop diuretics: cirrhosis with ascites may need higher doses
         const hasLoop = resultingRegimen.some(r => r.med.drug_class === 'Loop Diuretic');
         if (hasLoop) {
@@ -1714,6 +1789,17 @@ function simulateModificationEffect(
 
     if (currentPatient.egfr < 20 && hasDiuretic) {
         warnings.push('Severe CKD Loop Strategy: eGFR < 20 may blunt loop response. Consider split dosing (BID/TID), torsemide/bumetanide conversion, and close urine output + daily weight tracking.');
+    }
+
+    const hasFuroscix = resultingRegimen.some(r => r.med.name === 'Furoscix (SC Furosemide)');
+    if (hasFuroscix) {
+        warnings.push('FUROSCIX SAFETY: On-body SQ infusor delivers 80mg over ~5 hours. Keep device dry and minimize vigorous activity during infusion to reduce incomplete dosing risk.');
+        if (currentPatient.egfr < 30) {
+            warnings.push('FUROSCIX CKD CAUTION: eGFR < 30 may reduce natriuretic response. Track urine output and daily weight; escalate to IV diuresis if congestion persists.');
+        }
+        if (currentPatient.oxygen_saturation !== undefined && currentPatient.oxygen_saturation < 90) {
+            warnings.push('FUROSCIX TRIAGE: Hypoxemia (SpO2 < 90%) may indicate acute pulmonary edema. Prioritize urgent in-person evaluation and IV diuresis pathway.');
+        }
     }
 
     // --- Drug-Drug Interaction (DDI) Warnings ---
@@ -1833,6 +1919,30 @@ export function generateAndScoreModifications(
         );
     }
 
+    // --- D4: ICD/CRT device eligibility screening (ACC/AHA 2022 §7.3.5, Class I) ---
+    const icdCrtEligible = patient.lvef <= 35 &&
+        (patient.nyha_class === 'II' || patient.nyha_class === 'III') &&
+        !advancedHFCriteria; // Advanced HF already triggers its own referral
+    if (icdCrtEligible) {
+        clinicalAlerts.push(
+            'DEVICE THERAPY SCREENING: LVEF ≤ 35% with NYHA Class ' + patient.nyha_class + '. ' +
+            'Evaluate for ICD (primary prevention of sudden cardiac death) after ≥ 3 months of optimized GDMT. ' +
+            'If QRS ≥ 150ms with LBBB morphology, also evaluate for CRT (Class I, ACC/AHA 2022). ' +
+            'Refer to electrophysiology if not already assessed.'
+        );
+    }
+
+    // --- D5: Cardiac rehabilitation referral (ACC/AHA 2022 §7.3.4, Class I) ---
+    const cardiacRehabEligible = patient.lvef <= 40 &&
+        (patient.nyha_class === 'II' || patient.nyha_class === 'III') &&
+        patient.sbp >= 90 && !advancedHFCriteria;
+    if (cardiacRehabEligible) {
+        clinicalAlerts.push(
+            'CARDIAC REHABILITATION: HFrEF with NYHA Class ' + patient.nyha_class +
+            '. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients — improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.'
+        );
+    }
+
     // --- P5: Volume depletion alert ---
     const currentFluidBalance = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
     const isVolumeDepleted = currentFluidBalance < -1.0;
@@ -1909,6 +2019,13 @@ export function generateAndScoreModifications(
     const formulary = MEDICATION_FORMULARY.filter(m => {
         if (!availableMedNames.has(m.name)) return false;
         if (excludedNames.has(m.name)) return false;
+
+        // D8: Cross-reference patient allergies against formulary drug names
+        if (patient.allergies.has(m.name)) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Patient-reported allergy" });
+            excludedClasses.add(m.drug_class);
+            return false;
+        }
 
         if (m.drug_class === 'ACEi' && excludeACEi) {
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Cross-reactivity with prior ACEi intolerance" });
@@ -1993,9 +2110,31 @@ export function generateAndScoreModifications(
             activeModSet = ironModSet;
         }
 
+        // DIAMOND protocol: proactive binder co-prescription when initiating MRA at baseline K+ > 5.0
+        const isMraAdd = activeModSet.modifications.some(m =>
+            m.action === 'add' && m.target &&
+            (m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
+        );
+        const alreadyHasBinder = activeModSet.resulting_regimen.some(r =>
+            r.med.drug_class === 'K+ Binder'
+        );
+        if (isMraAdd && patient.potassium > 5.0 && rescueBinder && !alreadyHasBinder) {
+            const diamondMod: RegimenModification = {
+                action: 'add',
+                target: rescueBinder,
+                summary: `Add ${rescueBinder.med.name} ${formatDose(rescueBinder)} (DIAMOND protocol)`
+            };
+            const diamondModSet: ModificationSet = {
+                modifications: [...activeModSet.modifications, diamondMod],
+                resulting_regimen: [...activeModSet.resulting_regimen, rescueBinder]
+            };
+            sim = simulateModificationEffect(patient, diamondModSet, prices);
+            activeModSet = diamondModSet;
+        }
+
         // H7+H8: Binder rescue: if K+ > 5.3, try adding K+ binder (Patiromer preferred, Lokelma fallback)
         // H8 fix: Use activeModSet (which includes iron if appended) not original modSet
-        if (sim.projectedPatient.potassium > 5.3 && rescueBinder) {
+        if (sim.projectedPatient.potassium > 5.3 && rescueBinder && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder')) {
             const rescueMod: RegimenModification = {
                 action: 'add',
                 target: rescueBinder,
