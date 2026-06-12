@@ -1497,7 +1497,9 @@ export const SCENARIOS: TestScenario[] = [
             kccq_score: 28,
             nt_pro_bnp: 5600,
             lvef: 26,
-            volume_status: { dry_weight_kg: 70, current_weight_kg: 75, exam_findings: new Set(['Edema (2+)', 'JVP Elevated', 'Orthopnea']) },
+            // Cold-and-wet: hypoperfusion (cool extremities) is what justifies forcing the
+            // beta-blocker dose reduction. Warm-and-wet decompensation continues the BB.
+            volume_status: { dry_weight_kg: 70, current_weight_kg: 75, exam_findings: new Set(['Edema (2+)', 'JVP Elevated', 'Orthopnea', 'Cool Extremities']) },
             egfr: 44,
             potassium: 4.2,
             creatinine: 1.8,

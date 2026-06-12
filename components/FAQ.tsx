@@ -54,7 +54,7 @@ const safetyChecks = [
     'Nitrate + PDE5 inhibitor (sildenafil/tadalafil) is an absolute exclusion — H/ISDN is removed from the formulary and force-removed from a current regimen, not merely warned about.',
     'Potassium-binder rescue enables a regimen to be considered (DIAMOND) but carries a residual-risk score penalty — a regimen needing rescue ranks below an equal regimen that does not.',
     'Pregnancy exclusions: RAAS classes, MRA/nsMRA, and SGLT2i are excluded from recommendations.',
-    'Acute decompensation handling: beta-blocker initiation is blocked; existing beta-blockers are down-titrated rather than abruptly stopped.',
+    'Acute decompensation handling: beta-blocker initiation is blocked. An existing beta-blocker is dose-reduced only with hypoperfusion (cold-and-wet) — never abruptly stopped — while warm-and-wet decompensation continues the beta-blocker and diureses. Safe additions (especially SGLT2i, beneficial in acute HF) are still offered alongside any mandated reduction.',
     'Ivabradine initiation requires sinus rhythm, HR >= 70, and LVEF <= 35.',
     'Vericiguat requires NYHA II-IV, NT-proBNP >= 1600, LVEF < 45, and recent worsening HF context.',
     'GLP-1 therapy is restricted to obesity phenotype with LVEF >= 40 and is not used for HFrEF/HFimpEF pathways.',

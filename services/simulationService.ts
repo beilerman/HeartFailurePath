@@ -595,9 +595,20 @@ function analyzeCurrentRegimen(
         missingPillars = missingPillars.filter(p => p !== 'Beta Blocker');
     }
 
-    // H5: Acute decompensation with existing BB — force dose reduction (do NOT abruptly discontinue = Class III harm)
-    // ACC/AHA 2022: Reduce BB dose in acute decompensation; abrupt withdrawal worsens outcomes
-    const forceDownBB = isAcutelyDecompensated && currentClassMap.has('Beta Blocker');
+    // H5: Force dose reduction of an existing beta-blocker ONLY when decompensation is accompanied
+    // by hypoperfusion / low output ("cold-and-wet"). ACC/AHA 2022: in WARM-and-wet decompensation
+    // (adequate perfusion) the beta-blocker is CONTINUED and the patient is diuresed — reducing it
+    // is not indicated and worsens outcomes. Previously any NYHA III/IV congestion forced a BB cut,
+    // which both de-escalated warm patients inappropriately AND (via the candidate filter below)
+    // suppressed every safe guideline ADDITION (e.g. SGLT2i, which is beneficial in acute HF —
+    // EMPULSE / SOLOIST-WHF). Abrupt discontinuation remains Class III harm — this is a dose
+    // REDUCTION with taper guidance, never an abrupt stop.
+    const pulsePressure = patient.sbp - patient.dbp;
+    const hasHypoperfusion =
+        patient.volume_status.exam_findings.has('Cool Extremities') ||
+        patient.sbp < 90 ||
+        pulsePressure <= 25;
+    const forceDownBB = isAcutelyDecompensated && currentClassMap.has('Beta Blocker') && hasHypoperfusion;
 
     // Build a map of all available meds by class group for lookup
     const tiersByGroup = new Map<string, RegimenMed[]>();
@@ -1177,6 +1188,40 @@ function generateCandidateModifications(
                         r => r.med.name !== forced.source!.med.name
                     );
                 }
+            });
+        });
+    }
+
+    // --- f) Force-inject the acute-decompensation BB dose REDUCTION into every candidate that
+    // doesn't already reduce/remove/swap that beta-blocker. Without this, the only candidate that
+    // satisfied the forced-reduction filter (below) was the bare "reduce BB" set — every guideline
+    // ADDITION (add SGLT2i, add MRA) kept the BB at full dose and was filtered out, leaving a
+    // cold-and-wet HFrEF patient with "reduce your beta-blocker and add nothing." Injecting the
+    // reduction lets safe additions (esp. SGLT2i, beneficial in acute HF) survive alongside it.
+    if (analysis.forcedBbDownTitrateNames.size > 0) {
+        analysis.forcedBbDownTitrateNames.forEach(bbName => {
+            const td = analysis.titratableDown.find(t => t.current.med.name === bbName);
+            if (!td || td.options.length === 0) return;
+            const lower = td.options.reduce((a, b) =>
+                Number(b.dose.strength) < Number(a.dose.strength) ? b : a
+            );
+            candidates.forEach(c => {
+                const alreadyHandled = c.modifications.some(m =>
+                    (m.action === 'titrate_down' || m.action === 'remove' || m.action === 'swap')
+                    && m.source?.med.name === bbName
+                );
+                if (alreadyHandled) return;
+                // Drop any incoherent up-titration / keep of the same BB before injecting the cut.
+                c.modifications = c.modifications.filter(m =>
+                    !((m.action === 'titrate_up' || m.action === 'keep') && m.source?.med.name === bbName)
+                );
+                c.modifications.push({
+                    action: 'titrate_down',
+                    source: td.current,
+                    target: lower,
+                    summary: `Reduce ${bbName} ${td.current.dose.strength}→${lower.dose.strength}${lower.dose.unit} ${lower.selected_frequency} (acute decompensation with hypoperfusion)`
+                });
+                c.resulting_regimen = c.resulting_regimen.map(r => (r.med.name === bbName ? lower : r));
             });
         });
     }

@@ -345,7 +345,8 @@ async function runVerification() {
                 }
             }
 
-            // H1/3. Acute decompensation with existing BB: enforce down-titration (not keep at same dose, not abrupt stop).
+            // H1/3. Cold-and-wet decompensation with existing BB: enforce down-titration on EVERY
+            // candidate (not keep at same dose, not abrupt stop)...
             if (scenario.title.includes('Existing BB Requires Down-Titration')) {
                 const missingDownTitrate = scoredRegimens.some(r => {
                     const mods = r.modification_set?.modifications || [];
@@ -355,7 +356,20 @@ async function runVerification() {
                     return !hasBbDownTitrate;
                 });
                 if (missingDownTitrate) {
-                    failures.push('Existing beta blocker was not down-titrated in acute decompensation scenario');
+                    failures.push('Existing beta blocker was not down-titrated in cold decompensation scenario');
+                    scenarioPassed = false;
+                }
+                // ...AND the forced reduction must NOT suppress safe guideline additions. SGLT2i is
+                // beneficial in acute HF (EMPULSE / SOLOIST-WHF) and has near-zero hemodynamic cost —
+                // at least one option must add a missing pillar alongside the BB reduction.
+                const offersAddition = scoredRegimens.some(r =>
+                    (r.modification_set?.modifications || []).some(m =>
+                        m.action === 'add' && m.target &&
+                        (m.target.med.drug_class === 'SGLT2i' || m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
+                    )
+                );
+                if (!offersAddition) {
+                    failures.push('Cold decompensation: forced BB reduction suppressed all guideline additions (expected SGLT2i/MRA add alongside the cut)');
                     scenarioPassed = false;
                 }
             }

@@ -2,6 +2,30 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### Decompensation under-treatment fix — warm vs cold (2026-06-12) — still 81 scenarios
+A standard-of-care audit found the engine was NOT aggressive enough for the DEFAULT patient
+(John Doe, LVEF 25 NYHA III, on RAAS+BB+loop, missing MRA+SGLT2i): the sole recommendation was
+"reduce Carvedilol, add nothing." Root cause (proven, NOT affordability — confirmed at $5000
+budget): `isAcutelyDecompensated` (NYHA IV, or NYHA III + >2kg + ≥2 findings) forced BB
+down-titration; the candidate filter (`satisfiesForcedBbDownTitration`) then required EVERY
+surviving candidate to reduce/remove the BB, but pillar-ADD candidates kept the BB at full dose
+and were all filtered out → only the bare BB cut remained. Two fixes ("Both" option):
+1. **Gate narrowed to hypoperfusion** (`analyzeCurrentRegimen`): `forceDownBB` now also requires
+   `hasHypoperfusion` = cool extremities OR SBP<90 OR pulse pressure ≤25. Warm-and-wet (John Doe,
+   SBP 100) CONTINUES the BB and diureses (ACC/AHA 2022); cold-and-wet still forces the reduction.
+   BB *initiation* is still blocked for any decompensation (warm or cold).
+2. **Forced reduction injected into add-candidates** (`generateCandidateModifications`, block "f",
+   mirrors the contraindicated/redundant force-removal pattern): when `forcedBbDownTitrateNames`
+   is non-empty, the BB dose cut is injected into every candidate not already reducing/removing/
+   swapping it, so SGLT2i/MRA adds survive ALONGSIDE the cut. SGLT2i is beneficial in acute HF
+   (EMPULSE/SOLOIST-WHF) and must not be suppressed.
+Results: warm John Doe → #1 "Add Dapagliflozin" (BB continued at target). Cold NYHA IV → "Reduce
+Carvedilol + Add SGLT2i + Add MRA". Scenario 'Existing BB Requires Down-Titration' given
+'Cool Extremities' (now genuinely cold) + assertion strengthened to require a pillar add survives
+the forced cut. De-novo/HFimpEF/A-HeFT paths already reached 4-pillar SoC (audit confirmed).
+RESIDUAL: composite score still occasionally floats a degenerate single-drug option to #2 (e.g.
+Eplerenone alone) — cosmetic, gaps/adjuncts panels surface everything indicated.
+
 ### Tool reframed: checker, not predictor (2026-06-12)
 A literature + operationability review concluded the projection-and-ranking layer was the
 least defensible, most authoritative-looking part of the engine (false precision from

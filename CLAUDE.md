@@ -108,8 +108,9 @@ Implemented high-priority safeguards include:
 - Pregnancy safety:
   - excludes RAAS classes, MRAs/nsMRA, and SGLT2i
 - Acute decompensation handling:
-  - blocks beta-blocker initiation
-  - forces down-titration behavior for existing beta-blockers
+  - blocks beta-blocker initiation (warm OR cold)
+  - forces existing beta-blocker dose REDUCTION only with hypoperfusion ("cold-and-wet": cool extremities, SBP < 90, or pulse pressure ≤ 25); warm-and-wet continues the beta-blocker and diureses
+  - safe guideline ADDITIONS (esp. SGLT2i — beneficial in acute HF, EMPULSE/SOLOIST) are force-injected alongside any mandated BB reduction so decompensation never suppresses gap-closing therapy
 - Structural regimen safety:
   - blocks dual RAAS combinations
   - blocks dual MRA combinations
