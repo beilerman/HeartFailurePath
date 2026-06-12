@@ -2,6 +2,41 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### Mistake-audit pass — 9 real bugs found & fixed (2026-06-12)
+Built `scripts/mistakeAudit.ts` (51 scenarios, meds-on-board, common treatment errors;
+standalone QA like redTeam.ts — run `npx tsx scripts/mistakeAudit.ts`). Found and fixed:
+1. **Dual same-class therapy not deduped** beyond RAAS/MRA. `computeRedundantCurrentMeds` now
+   groups by class GROUP and dedupes ALL one-per-group classes (two BBs, two SGLT2i, two loops →
+   keep one, deprescribe rest; non-RAAS/MRA keep = higher dose). `detectInappropriateRegimen`
+   emits a generic duplicate-class alert. Redundant meds are excluded from swap SOURCES (a
+   duplicate must be removed, not swapped to another same-group agent).
+2. **Ivabradine offered before BB maximally tolerated** (SHIFT violation) — eligibility now
+   requires `bbAtTarget` (BB at its target dose) OR allBBExcluded, not merely "on a BB".
+3. **Lateral BB/MRA/SGLT2i swaps** offered as a dose-escalation mechanism — suppressed
+   (`TITRATE_NOT_SWAP_GROUPS`); escalate the existing agent via titrate_up unless it's
+   contraindicated. RAAS keeps swaps but **upgrade-only** (ACEi/ARB→ARNI); ARNI→ACEi downgrade
+   for "target dose" is blocked. Loop keeps swaps (resistance / Furoscix).
+4. **ARNI & H/ISDN never titratable** — `Number('24/26')` / `Number('37.5/20')` = NaN made every
+   `> currentStrength` comparison false. Titration now compares dose-ORDER INDEX
+   (available_doses are low→high), handling combination strengths.
+5. **Titrate-to-target scored BELOW keep** — the informational "Titration Interval" guidance was
+   counted in `dangerousWarnings` (−10), so titrating GDMT lost to leaving it sub-target. Added a
+   `NON_PENALIZED_WARNING_MARKERS` list (titration cadence, elderly, hepatic, routine monitoring).
+   "Binder Required" is deliberately STILL penalized (residual hyperkalemia risk).
+6. **getDoseTiers never sampled the target dose** for meds whose target ≠ lowest/middle/highest
+   (e.g. carvedilol target 25, sampled tiers were 3.125/12.5/50) — target dose now always included
+   as a tier so "titrate to target" is a candidate.
+7. **Completeness rewarded presence, not dose** — made dose-aware: a sub-target titratable pillar
+   earns partial credit (`SUBTARGET_CREDIT=0.6`); single-dose / at-target / at-max = full. So
+   up-titration raises completeness and a starting-dose quad no longer reads as "done".
+8. **Euvolemic on high-dose loop** (over-diuresis) not flagged — `detectInappropriateRegimen` now
+   emits a LOOP DIURETIC OVER-TREATMENT alert (euvolemic + Furosemide≥120 / Torsemide≥50 /
+   Bumetanide≥2), esp. relevant when adding SGLT2i.
+9. (audit harness) distinctPicks still dedupes by med-NAME so a pure titration looks identical to
+   keep — mitigated because dose-aware completeness now makes the titrate candidate out-SCORE keep
+   (becomes topPick); not a separate code change.
+All: 51/51 mistake audit + 81 scenarios + 17 red-team probes + typecheck + build green.
+
 ### Softness audit + aggressiveness fixes (2026-06-12) — still 81 scenarios
 User flagged the engine as too "soft" (e.g. obese patients not recommended GLP-1 even with
 unlimited budget). Ran an unconstrained audit (budget 999999, maxNew 4, tol 10, cost_sens 0)

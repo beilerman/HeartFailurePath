@@ -83,6 +83,13 @@ function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
     if (dosesForTiering.length > 1) tiers.push(dosesForTiering[dosesForTiering.length - 1]);
     if (dosesForTiering.length > 2) tiers.push(dosesForTiering[Math.floor(dosesForTiering.length / 2)]);
 
+    // Always include the guideline TARGET dose as a tier (when not age-restricted away). Without
+    // it, titration could only land on the sampled lowest/middle/highest — e.g. carvedilol would
+    // offer →12.5 or →50 but never its target 25 — so "titrate to target" was never a candidate
+    // and the engine defaulted to "keep" for a sub-target regimen.
+    const targetDose = dosesForTiering.find(d => d.is_target_dose);
+    if (targetDose) tiers.push(targetDose);
+
     // Unique only
     tiers = [...new Set(tiers)];
 
@@ -119,30 +126,45 @@ function hasRecentWorseningHF(patient: Patient): boolean {
     return patient.recent_hf_worsening_within_6mo === 'yes';
 }
 
-// When a patient arrives on duplicate same-class therapy (dual RAAS or dual MRA — never
-// appropriate), pick the agent to KEEP and return the names of the others to deprescribe.
-// RAAS preference: ARNI > ACEi > ARB (ARNI preferred for HFrEF; ARB reserved for ACEi-intolerant).
-// MRA: keep the steroidal MRA (established pillar across the EF spectrum) and drop the nsMRA —
-// dual steroidal + nsMRA blockade markedly raises hyperkalemia risk with no added benefit.
+// When a patient arrives on duplicate same-class-GROUP therapy (dual RAAS, dual MRA, two
+// beta-blockers, two SGLT2i, two loop diuretics — never appropriate), pick the agent to KEEP
+// and return the names of the others to deprescribe. Generalized across ALL class groups so any
+// same-group duplicate is corrected, not just RAAS/MRA. (Loop + thiazide is two DIFFERENT groups
+// — legitimate sequential nephron blockade — and is intentionally not flagged.)
+// Keep rules: RAAS → ARNI > ACEi > ARB; MRA → steroidal over nsMRA (dual steroidal + nsMRA
+// blockade markedly raises hyperkalemia risk); all other groups → keep the higher (more titrated)
+// dose, which is closest to an established target.
 const RAAS_KEEP_PREFERENCE: Record<string, number> = { ARNI: 3, ACEi: 2, ARB: 1 };
 
 function computeRedundantCurrentMeds(currentRegimen: RegimenMed[]): Set<string> {
     const redundant = new Set<string>();
 
-    const raas = currentRegimen.filter(r => ['ARNI', 'ACEi', 'ARB'].includes(r.med.drug_class));
-    if (raas.length > 1) {
-        const keeper = raas.reduce((best, cur) =>
-            (RAAS_KEEP_PREFERENCE[cur.med.drug_class] ?? 0) > (RAAS_KEEP_PREFERENCE[best.med.drug_class] ?? 0) ? cur : best
-        );
-        raas.forEach(r => { if (r.med.name !== keeper.med.name) redundant.add(r.med.name); });
-    }
+    const byGroup = new Map<string, RegimenMed[]>();
+    currentRegimen.forEach(r => {
+        const g = getMedicationClassGroup(r.med.drug_class);
+        if (!byGroup.has(g)) byGroup.set(g, []);
+        byGroup.get(g)!.push(r);
+    });
 
-    const steroidalMra = currentRegimen.filter(r => r.med.drug_class === 'MRA');
-    const nsMra = currentRegimen.filter(r => r.med.drug_class === 'nsMRA');
-    if (steroidalMra.length + nsMra.length > 1) {
-        const keeper = steroidalMra[0] ?? nsMra[0];
-        [...steroidalMra, ...nsMra].forEach(r => { if (r.med.name !== keeper.med.name) redundant.add(r.med.name); });
-    }
+    byGroup.forEach((meds, group) => {
+        if (meds.length <= 1) return;
+        let keeper: RegimenMed;
+        if (group === 'RAAS Inhibitor') {
+            keeper = meds.reduce((best, cur) =>
+                (RAAS_KEEP_PREFERENCE[cur.med.drug_class] ?? 0) > (RAAS_KEEP_PREFERENCE[best.med.drug_class] ?? 0) ? cur : best
+            );
+        } else if (group === 'MRA') {
+            keeper = meds.find(r => r.med.drug_class === 'MRA') ?? meds[0];
+        } else {
+            keeper = meds.reduce((best, cur) => {
+                const cs = Number(cur.dose.strength), bs = Number(best.dose.strength);
+                if (Number.isNaN(cs)) return best;
+                if (Number.isNaN(bs)) return cur;
+                return cs > bs ? cur : best;
+            });
+        }
+        meds.forEach(r => { if (r.med.name !== keeper.med.name) redundant.add(r.med.name); });
+    });
 
     return redundant;
 }
@@ -541,6 +563,19 @@ function detectInappropriateRegimen(patient: Patient): string[] {
         alerts.push(`INAPPROPRIATE REGIMEN: Patient is on more than one MRA (${allMra.map(r => r.med.name).join(' + ')}). Use a single MRA — combination markedly increases severe hyperkalemia risk with no added benefit.`);
     }
 
+    // Other duplicate same-class-group therapy (two beta-blockers, two SGLT2i, two loop diuretics,
+    // etc.) — never appropriate; deprescribe to a single agent. RAAS and MRA are reported above.
+    const groupCounts = new Map<string, RegimenMed[]>();
+    current.forEach(r => {
+        const g = getMedicationClassGroup(r.med.drug_class);
+        if (!groupCounts.has(g)) groupCounts.set(g, []);
+        groupCounts.get(g)!.push(r);
+    });
+    groupCounts.forEach((meds, group) => {
+        if (meds.length <= 1 || group === 'RAAS Inhibitor' || group === 'MRA') return;
+        alerts.push(`INAPPROPRIATE REGIMEN: Patient is on more than one ${group} (${meds.map(r => r.med.name).join(' + ')}). Use a single agent in this class — duplicate same-class therapy adds toxicity without added benefit.`);
+    });
+
     const ext = patient.external_medications || new Set<string>();
     const onNonDhpCcb = ext.has('Verapamil') || ext.has('Diltiazem') || patient.comorbidities.has('On Verapamil/Diltiazem');
     if (onNonDhpCcb && patient.lvef > 0 && patient.lvef <= 40) {
@@ -555,6 +590,21 @@ function detectInappropriateRegimen(patient: Patient): string[] {
     const onNitrate = current.some(r => r.med.drug_class === 'Vasodilator');
     if (onPde5i && onNitrate) {
         alerts.push('INAPPROPRIATE THERAPY: Nitrate (Isosorbide Dinitrate) with a PDE5 inhibitor (sildenafil/tadalafil) is an absolute contraindication — risk of profound or fatal hypotension (FDA label). The nitrate has been removed from all recommendations; deprescribe one agent immediately.');
+    }
+
+    // Over-diuresis: euvolemic patient maintained on a high-dose loop diuretic. The loop should be
+    // down-titrated to the lowest effective dose to avoid hypovolemia and prerenal AKI — especially
+    // when an SGLT2i is being added (additive diuresis). (Volume DEPLETION below dry weight is
+    // handled separately by the volume-depletion alert.)
+    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const euvolemic = Math.abs(fluidExcess) <= 1.0;
+    const highDoseLoopThreshold: Record<string, number> = { Furosemide: 120, 'Furoscix (SC Furosemide)': 80, Torsemide: 50, Bumetanide: 2 };
+    const highDoseLoop = current.find(r => {
+        const t = highDoseLoopThreshold[r.med.name];
+        return r.med.drug_class === 'Loop Diuretic' && t !== undefined && Number(r.dose.strength) >= t;
+    });
+    if (euvolemic && highDoseLoop) {
+        alerts.push(`LOOP DIURETIC OVER-TREATMENT: Patient appears euvolemic on a high-dose loop diuretic (${highDoseLoop.med.name} ${highDoseLoop.dose.strength}${highDoseLoop.dose.unit}). Down-titrate to the lowest effective dose to avoid over-diuresis, hypovolemia, and prerenal AKI — particularly when initiating an SGLT2i (additive natriuresis).`);
     }
 
     return alerts;
@@ -644,20 +694,22 @@ function analyzeCurrentRegimen(
         const isBBBlockedUp = forceDownBB && current.med.drug_class === 'Beta Blocker';
 
         const allTiers = getDoseTiers(current.med, patient);
-        const currentStrength = Number(current.dose.strength);
+        // Compare by dose-ORDER INDEX (available_doses are listed low→high), not Number(strength).
+        // Combination products use string strengths like "24/26" or "37.5/20" where Number() is NaN,
+        // which silently made every up/down comparison false — so ARNI and H/ISDN could never be
+        // titrated. Index comparison handles both numeric and combination strengths.
+        const doseOrder = current.med.available_doses;
+        const currentIdx = doseOrder.findIndex(d => d.strength === current.dose.strength);
+        const tierIdx = (t: RegimenMed) => doseOrder.findIndex(d => d.strength === t.dose.strength);
 
         if (!isContraindicated && !isBBBlockedUp) {
-            const higherDoses = allTiers.filter(t =>
-                Number(t.dose.strength) > currentStrength
-            );
+            const higherDoses = allTiers.filter(t => tierIdx(t) > currentIdx);
             if (higherDoses.length > 0) {
                 titratableUp.push({ current, options: higherDoses });
             }
         }
 
-        const lowerDoses = allTiers.filter(t =>
-            Number(t.dose.strength) < currentStrength
-        );
+        const lowerDoses = allTiers.filter(t => tierIdx(t) < currentIdx);
         if (lowerDoses.length > 0) {
             titratableDown.push({ current, options: lowerDoses });
             if (isBBBlockedUp) {
@@ -673,12 +725,33 @@ function analyzeCurrentRegimen(
     const swappable: RegimenAnalysis['swappable'] = [];
     const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
     currentRegimen.forEach(current => {
+        // A REDUNDANT duplicate (e.g. the second beta-blocker / loop diuretic) must be REMOVED, not
+        // swapped to another agent in the same group — swapping would preserve the duplication. The
+        // keeper covers the class; the duplicate is force-removed downstream.
+        if (redundantCurrentMeds.has(current.med.name)) return;
         const group = getMedicationClassGroup(current.med.drug_class);
+        // For beta-blockers, MRAs, and SGLT2i, a lateral swap to a DIFFERENT agent in the same
+        // class is not how therapy is escalated — you up-titrate the existing agent. Offer such a
+        // swap ONLY when the current agent is contraindicated (then it must be replaced). Otherwise
+        // skip the swap so dose escalation happens via titrate_up of the current agent. (RAAS keeps
+        // swaps for the ACEi/ARB→ARNI guideline upgrade; loop diuretics keep swaps for diuretic
+        // resistance / Furoscix.)
+        const TITRATE_NOT_SWAP_GROUPS = new Set(['Beta Blocker', 'MRA', 'SGLT2i']);
+        if (TITRATE_NOT_SWAP_GROUPS.has(group) && !contraindicatedCurrentMeds.has(current.med.name)) return;
+        const sourceContraindicated = contraindicatedCurrentMeds.has(current.med.name);
         const groupTiers = tiersByGroup.get(group) || [];
-        const candidates = groupTiers.filter(t =>
+        let candidates = groupTiers.filter(t =>
             t.med.name !== current.med.name &&
             !contraindicatedCurrentMeds.has(t.med.name) // Don't swap TO a contraindicated med
         );
+        // Within the RAAS group, a non-forced swap may only UPGRADE (ACEi/ARB → ARNI, the
+        // guideline-preferred agent — PARADIGM-HF). Never recommend the reverse downgrade
+        // (ARNI → ACEi/ARB) purely to reach a target dose — that loses the ARNI benefit; the ARNI
+        // should be up-titrated instead. (A contraindicated source can still swap to any non-CI
+        // alternative.)
+        if (group === 'RAAS Inhibitor' && !sourceContraindicated) {
+            candidates = candidates.filter(t => t.med.drug_class === 'ARNI' && current.med.drug_class !== 'ARNI');
+        }
         if (candidates.length > 0) {
             let prioritizedCandidates = candidates;
             // Ensure FUROSCIX is considered in worsening-congestion loop swaps instead of being truncated by safeSlice.
@@ -724,7 +797,6 @@ function analyzeCurrentRegimen(
     const isNyhaIIIorIV = patient.nyha_class === 'III' || patient.nyha_class === 'IV';
     const isSinusRhythm = patient.rhythm === 'Sinus';
     const hasRAASInCurrent = currentClasses.has('ARNI') || currentClasses.has('ACEi') || currentClasses.has('ARB');
-    const hasBBInCurrent = currentClasses.has('Beta Blocker');
 
     // H/ISDN: A-HeFT evidence is HFrEF-only — offer ONLY in reduced-EF phenotypes, never HFpEF.
     // Within reduced EF: Black + NYHA III-IV (A-HeFT Class I), or as a RAAS alternative when the
@@ -738,9 +810,18 @@ function analyzeCurrentRegimen(
         }
     }
 
-    // Ivabradine: Sinus + HR >= 70 + LVEF <= 35 + (has BB OR all BB contraindicated) (SHIFT; ESC 2021 Class IIb)
+    // Ivabradine: Sinus + HR >= 70 + LVEF <= 35 on a MAXIMALLY-TOLERATED beta-blocker (SHIFT;
+    // ESC 2021 Class IIb). The "max tolerated" criterion matters: ivabradine is added only after
+    // the beta-blocker is optimized — offering it to a patient on a starting BB dose (e.g.
+    // carvedilol 3.125) is wrong and crowds out the indicated BB up-titration. Proxy for
+    // "maximally tolerated": BB at its target dose, OR beta-blockers cannot be used at all
+    // (allBBExcluded — the SHIFT-eligible "BB-intolerant" fallback).
+    const bbAtTarget = currentRegimen.some(r =>
+        r.med.drug_class === 'Beta Blocker' &&
+        !!r.med.available_doses.find(d => d.strength === r.dose.strength)?.is_target_dose
+    );
     const ivabradineEligible = isSinusRhythm && patient.pulse >= 70 && patient.lvef <= 35 &&
-        (hasBBInCurrent || allBBExcluded === true);
+        (bbAtTarget || allBBExcluded === true);
     if (ivabradineEligible) {
         const ivabTiers = medTiers.filter(r => r.med.drug_class === 'If Inhibitor');
         if (ivabTiers.length > 0 && !currentClasses.has('If Inhibitor')) {
@@ -2730,14 +2811,30 @@ export function generateAndScoreModifications(
             : 0;
         overall += normalizedSFBonus;
 
-        // GDMT completeness bonus — rewards the share of indicated, achievable therapy attained,
-        // so the complete safe regimen out-ranks partial ones (see target computation above).
+        // GDMT completeness bonus — rewards the share of indicated, achievable therapy attained.
+        // DOSE-AWARE: a pillar present but below target earns PARTIAL credit, so up-titrating a
+        // sub-target agent toward its target raises the score (otherwise a quad at starting doses
+        // would look "complete" and the engine would prefer "keep" over titration — GDMT inertia).
+        // A single-dose drug, or one already at target / at its maximum available dose, earns full
+        // credit (it cannot be titrated further).
+        const SUBTARGET_CREDIT = 0.6;
+        const slotValue = (s: GdmtSlot): number => {
+            const meds = activeModSet.resulting_regimen.filter(r => s.match(r.med.drug_class));
+            if (meds.length === 0) return 0;
+            const optimal = meds.some(r => {
+                const doses = r.med.available_doses;
+                if (doses.length === 1) return true;
+                const atTarget = !!doses.find(d => d.strength === r.dose.strength)?.is_target_dose;
+                const strengths = doses.map(d => Number(d.strength)).filter(n => !Number.isNaN(n));
+                const atMax = strengths.length > 0 && Number(r.dose.strength) >= Math.max(...strengths);
+                return atTarget || atMax;
+            });
+            return optimal ? 1.0 : SUBTARGET_CREDIT;
+        };
         let gdmtCompleteness = 0;
         if (achievableSlots.length > 0) {
-            const satisfied = achievableSlots.filter(s =>
-                activeModSet.resulting_regimen.some(r => s.match(r.med.drug_class))
-            ).length;
-            gdmtCompleteness = satisfied / achievableSlots.length;
+            const attained = achievableSlots.reduce((sum, s) => sum + slotValue(s), 0);
+            gdmtCompleteness = attained / achievableSlots.length;
             overall += COMPLETENESS_MAX * gdmtCompleteness;
         }
 
@@ -2766,10 +2863,18 @@ export function generateAndScoreModifications(
         // stay under the K+ ceiling carries residual hyperkalemia risk. The binder enables the
         // regimen to be considered (DIAMOND), but must not erase the risk in ranking — an
         // otherwise-equal regimen that needs no rescue should score above one that does.
+        // Only TRUE safety warnings should reduce the score. Informational / procedural guidance
+        // (titration cadence, elderly start-low-go-slow, routine monitoring) must NOT be penalized —
+        // counting the "Titration Interval" guidance as a danger made titrating GDMT toward target
+        // score LOWER than leaving it sub-target, defeating the point. NOTE: "Binder Required" is
+        // deliberately NOT here — a regimen needing K+ binder rescue carries residual hyperkalemia
+        // risk and should rank below an equal regimen that does not (DIAMOND enables, doesn't erase).
+        const NON_PENALIZED_WARNING_MARKERS = [
+            'Elderly patient', 'Frail elderly', 'Hepatic Impairment', 'Monitor: K+',
+            'Titration Interval', 'Multiple new medications',
+        ];
         const dangerousWarnings = sim.warnings.filter(w =>
-            !w.includes("Elderly patient") &&
-            !w.includes("Frail elderly") && !w.includes("Hepatic Impairment") &&
-            !w.includes("Monitor: K+")
+            !NON_PENALIZED_WARNING_MARKERS.some(marker => w.includes(marker))
         );
         if (dangerousWarnings.length > 0) overall -= (dangerousWarnings.length * 10);
 
@@ -2820,6 +2925,13 @@ export function generateAndScoreModifications(
             modification_set: activeModSet
         });
     });
+
+    if (typeof process !== 'undefined' && process.env && process.env.DEBUG_CAND) {
+        [...results].sort((a, b) => b.overall_score - a.overall_score || (b.gdmt_completeness ?? 0) - (a.gdmt_completeness ?? 0)).slice(0, 14).forEach(r => {
+            const ch = (r.modification_set?.modifications ?? []).filter(m => m.action !== 'keep').map(m => `${m.action}:${(m.target ?? m.source)?.med.name} ${m.target?.dose?.strength ?? ''}`);
+            console.log(`   [cand] ${r.overall_score} c${(r.gdmt_completeness ?? 0).toFixed(2)} :: ${ch.join(', ') || 'KEEP'}`);
+        });
+    }
 
     // 6. Affordability filter + distinct picks (same algorithm as before)
     // Ranking is completeness-aware: when overall scores tie (common once strong regimens clamp
