@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { PatientForm } from './components/PatientForm';
 import { ClinicalSummary } from './components/ClinicalSummary';
 import { ResultsDisplay } from './components/ResultsDisplay';
@@ -20,10 +20,20 @@ function App() {
     const [excludedMeds, setExcludedMeds] = useState<ExcludedMedication[]>([]);
     const [clinicalAlerts, setClinicalAlerts] = useState<string[]>([]);
     const [monitoringPlan, setMonitoringPlan] = useState<MonitoringPlanItem[]>([]);
+    const [gdmtGaps, setGdmtGaps] = useState<string[]>([]);
+    const [eligibleAdjuncts, setEligibleAdjuncts] = useState<string[]>([]);
+    const [missingDataNotices, setMissingDataNotices] = useState<string[]>([]);
+    const [followUpCalendar, setFollowUpCalendar] = useState<MonitoringPlanItem[]>([]);
     const [loading, setLoading] = useState(false);
     const [simError, setSimError] = useState<string | null>(null);
     const [drugPrices, setDrugPrices] = useState<Record<string, number>>({});
     const [simMeds, setSimMeds] = useState<Set<string>>(new Set(MEDICATION_FORMULARY.map(m => m.name)));
+
+    // Run-state: distinguishes "never run" (show first-run guidance) from "ran, then inputs
+    // changed" (show a stale-results banner so an old plan is never read against new data).
+    const [hasRun, setHasRun] = useState(false);
+    const [resultsStale, setResultsStale] = useState(false);
+    const lastRunInputsRef = useRef<string>('');
 
     // Navigation State
     const [activeTab, setActiveTab] = useState<'simulation' | 'library' | 'faq'>('simulation');
@@ -31,6 +41,18 @@ function App() {
     useEffect(() => {
         getDrugPrices(MEDICATION_FORMULARY.map(m => m.name), patient.insurance_tier).then(setDrugPrices);
     }, [patient.insurance_tier]);
+
+    // Serialize inputs for change detection (Sets → arrays; functions on med objects are dropped
+    // by JSON.stringify, which is fine — name/dose still serialize and reflect edits).
+    const serializeInputs = (p: Patient, meds: Set<string>) =>
+        JSON.stringify({ p, m: [...meds] }, (_k, v) => (v instanceof Set ? [...v] : v));
+
+    useEffect(() => {
+        if (!hasRun) return;
+        if (serializeInputs(patient, simMeds) !== lastRunInputsRef.current) {
+            setResultsStale(true);
+        }
+    }, [patient, simMeds, hasRun]);
 
     const handleScenarioChange = (title: string) => {
         setScenario(title);
@@ -44,24 +66,34 @@ function App() {
     const runSimulation = () => {
         setLoading(true);
         setSimError(null);
-        setTimeout(() => {
-            try {
-                const { scoredRegimens, excludedMedications, clinicalAlerts: alerts, monitoringPlan: plan } = generateAndScoreModifications(patient, simMeds, drugPrices);
-                setResults(scoredRegimens);
-                setExcludedMeds(excludedMedications);
-                setClinicalAlerts(alerts);
-                setMonitoringPlan(plan);
-            } catch (err) {
-                const message = err instanceof Error ? err.message : 'An unexpected error occurred during simulation.';
-                setSimError(message);
-                setResults([]);
-                setExcludedMeds([]);
-                setClinicalAlerts([]);
-                setMonitoringPlan([]);
-            } finally {
-                setLoading(false);
-            }
-        }, 800);
+        lastRunInputsRef.current = serializeInputs(patient, simMeds);
+        setHasRun(true);
+        setResultsStale(false);
+        // The engine is synchronous and fast — compute inline (no artificial delay).
+        try {
+            const { scoredRegimens, excludedMedications, clinicalAlerts: alerts, monitoringPlan: plan, gdmtGaps: gaps, eligibleAdjuncts: adjuncts, missingDataNotices: notices, followUpCalendar: calendar } = generateAndScoreModifications(patient, simMeds, drugPrices);
+            setResults(scoredRegimens);
+            setExcludedMeds(excludedMedications);
+            setClinicalAlerts(alerts);
+            setMonitoringPlan(plan);
+            setGdmtGaps(gaps ?? []);
+            setEligibleAdjuncts(adjuncts ?? []);
+            setMissingDataNotices(notices ?? []);
+            setFollowUpCalendar(calendar ?? []);
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'An unexpected error occurred during analysis.';
+            setSimError(message);
+            setResults([]);
+            setExcludedMeds([]);
+            setClinicalAlerts([]);
+            setMonitoringPlan([]);
+            setGdmtGaps([]);
+            setEligibleAdjuncts([]);
+            setMissingDataNotices([]);
+            setFollowUpCalendar([]);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const tabClass = (tab: 'simulation' | 'library' | 'faq') =>
@@ -80,7 +112,7 @@ function App() {
                     </div>
                     <div>
                         <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none">HeartFailurePATH</h1>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mt-0.5">HFrEF Optimization Engine</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mt-0.5">GDMT Gap &amp; Safety Checklist</p>
                     </div>
                 </div>
 
@@ -95,7 +127,7 @@ function App() {
                         aria-controls="tabpanel-simulation"
                     >
                         <TableIcon className="w-4 h-4" aria-hidden="true" />
-                        Simulation
+                        Analysis
                     </button>
                     <button
                         id="tab-library"
@@ -117,7 +149,7 @@ function App() {
                         aria-controls="tabpanel-faq"
                     >
                         <QuestionMarkCircleIcon className="w-4 h-4" aria-hidden="true" />
-                        Logic
+                        Evidence
                     </button>
                 </nav>
             </header>
@@ -152,9 +184,16 @@ function App() {
                                     results={results}
                                     isLoading={loading}
                                     error={simError}
+                                    hasRun={hasRun}
+                                    resultsStale={resultsStale}
+                                    onRerun={runSimulation}
                                     excludedMedications={excludedMeds}
                                     clinicalAlerts={clinicalAlerts}
                                     monitoringPlan={monitoringPlan}
+                                    gdmtGaps={gdmtGaps}
+                                    eligibleAdjuncts={eligibleAdjuncts}
+                                    missingDataNotices={missingDataNotices}
+                                    followUpCalendar={followUpCalendar}
                                 />
                             </div>
                         </section>

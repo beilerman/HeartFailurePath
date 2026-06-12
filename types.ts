@@ -146,6 +146,26 @@ export interface MonitoringPlanItem {
     details: string;
 }
 
+// Direction-only projection shown to clinicians INSTEAD of false-precision biomarker
+// values. The underlying engine still computes numeric estimates (population-average
+// effect sizes through uncalibrated curves), but those are not individually predictive,
+// so the clinician-facing output is qualitative.
+export type ProjectionDirection = 'improve' | 'worsen' | 'stable' | 'caution';
+
+export interface QualitativeProjection {
+    label: string;                 // e.g. "Reverse remodeling", "Congestion", "Blood pressure", "Potassium"
+    direction: ProjectionDirection;
+    detail: string;                // qualitative phrasing — no decimal biomarker values
+}
+
+export type TradeOffTone = 'good' | 'neutral' | 'bad';
+
+export interface TradeOffLabel {
+    dimension: string;             // "Cost", "Pill burden", "Evidence"
+    label: string;                 // "Low cost", "High complexity", "Class I (strong)"
+    tone: TradeOffTone;
+}
+
 export interface ScoredRegimen {
     regimen: RegimenMed[];
 
@@ -167,6 +187,10 @@ export interface ScoredRegimen {
     warnings: string[];
     monitoring_plan?: MonitoringPlanItem[];
 
+    // Clinician-facing qualitative outputs (preferred over raw projected_patient values)
+    qualitative_projections?: QualitativeProjection[];
+    trade_offs?: TradeOffLabel[];
+
     modification_set?: ModificationSet;
 }
 
@@ -175,6 +199,12 @@ export interface SimulationOutput {
     excludedMedications: ExcludedMedication[];
     clinicalAlerts: string[];
     monitoringPlan: MonitoringPlanItem[];
+
+    // Categorical, deterministic outputs that the tool can defend (vs. composite ranking)
+    gdmtGaps?: string[];              // indicated-but-missing pillars/adjuncts for this phenotype
+    eligibleAdjuncts?: string[];     // criteria-met add-ons (H/ISDN, ivabradine, vericiguat, iron…) even if not in top picks
+    missingDataNotices?: string[];   // inputs not entered → dependent inference withheld
+    followUpCalendar?: MonitoringPlanItem[]; // STRONG-HF high-intensity follow-up schedule
 }
 
 // --- Delta-from-Current Modification Types ---

@@ -48,8 +48,11 @@ const domainCards = [
 
 const safetyChecks = [
     'Input safety: SBP must be greater than DBP; duplicate current medications are removed before scoring.',
+    'Implausible inputs hard-stop: physiologically impossible values (e.g. LVEF 99, K+ > 8) return verification alerts only — no recommendations are computed on suspect data.',
     'Hemodynamic hard gate: SBP < 90 mmHg returns alerts only (no regimen output).',
-    'Display safety filter: regimens with projected SBP < 85 or projected potassium > 6.0 are not shown.',
+    'Display safety filter: regimens with projected SBP < 85, projected potassium > 6.0, or projected HR < 45 are not shown.',
+    'Nitrate + PDE5 inhibitor (sildenafil/tadalafil) is an absolute exclusion — H/ISDN is removed from the formulary and force-removed from a current regimen, not merely warned about.',
+    'Potassium-binder rescue enables a regimen to be considered (DIAMOND) but carries a residual-risk score penalty — a regimen needing rescue ranks below an equal regimen that does not.',
     'Pregnancy exclusions: RAAS classes, MRA/nsMRA, and SGLT2i are excluded from recommendations.',
     'Acute decompensation handling: beta-blocker initiation is blocked; existing beta-blockers are down-titrated rather than abruptly stopped.',
     'Ivabradine initiation requires sinus rhythm, HR >= 70, and LVEF <= 35.',

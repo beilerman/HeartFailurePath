@@ -1,6 +1,51 @@
 
-import { Patient, Medication, ScoredRegimen, RegimenMed, ExcludedMedication, ModificationAction, RegimenModification, ModificationSet, MonitoringPlanItem, SimulationOutput } from '../types';
+import { Patient, Medication, ScoredRegimen, RegimenMed, ExcludedMedication, ModificationAction, RegimenModification, ModificationSet, MonitoringPlanItem, SimulationOutput, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores } from '../types';
 import { MEDICATION_FORMULARY } from '../constants';
+
+// =====================================================================================
+// DRUG-CLASS REGISTRY — single source of truth for class behavior.
+//
+// Every fact the engine needs about a drug class lives here, instead of being re-encoded
+// across ~80 inline `drug_class === '...'` branches and several parallel Set literals.
+// Adding a new class (or therapy of a new class) means adding ONE row here plus the
+// formulary entry — not grep-and-patching the engine. A missing membership becomes a
+// missing row (one place to check), not a silent clinical error scattered across files.
+//
+// `flags`:
+//   raas                          → counts as RAAS-inhibitor blockade (dual-RAAS prevention, etc.)
+//   mra                           → mineralocorticoid blockade (dual-MRA prevention, grouping)
+//   diuretic                      → loop / thiazide volume management
+//   disease-modifying             → GDMT/adjunct that alters disease course (STRONG-HF follow-up trigger)
+//   volume-sensitive-intensifier  → initiation deferred while a patient is volume-depleted on diuretics
+// `group`: the class-GROUP used for "one-per-group" logic (RAAS pool, MRA pool, GLP-1 pool).
+// `dbpRatio`: drug-class-specific SBP→DBP coupling (see evidence block near getDbpRatio).
+// =====================================================================================
+type ClassFlag = 'raas' | 'mra' | 'diuretic' | 'disease-modifying' | 'volume-sensitive-intensifier';
+interface ClassMeta { group: string; dbpRatio: number; flags: ClassFlag[]; }
+
+const DRUG_CLASS_REGISTRY: Record<string, ClassMeta> = {
+    'ARNI':                   { group: 'RAAS Inhibitor', dbpRatio: 0.50, flags: ['raas', 'disease-modifying', 'volume-sensitive-intensifier'] },
+    'ACEi':                   { group: 'RAAS Inhibitor', dbpRatio: 0.50, flags: ['raas', 'disease-modifying', 'volume-sensitive-intensifier'] },
+    'ARB':                    { group: 'RAAS Inhibitor', dbpRatio: 0.50, flags: ['raas', 'disease-modifying', 'volume-sensitive-intensifier'] },
+    'Beta Blocker':           { group: 'Beta Blocker', dbpRatio: 0.70, flags: ['disease-modifying'] },
+    'MRA':                    { group: 'MRA', dbpRatio: 0.60, flags: ['mra', 'disease-modifying', 'volume-sensitive-intensifier'] },
+    'nsMRA':                  { group: 'MRA', dbpRatio: 0.50, flags: ['mra', 'disease-modifying', 'volume-sensitive-intensifier'] },
+    'SGLT2i':                 { group: 'SGLT2i', dbpRatio: 0.40, flags: ['disease-modifying', 'volume-sensitive-intensifier'] },
+    'Loop Diuretic':          { group: 'Loop Diuretic', dbpRatio: 0.50, flags: ['diuretic'] },
+    'Thiazide-like Diuretic': { group: 'Thiazide-like Diuretic', dbpRatio: 0.50, flags: ['diuretic'] },
+    'Vasodilator':            { group: 'Vasodilator', dbpRatio: 0.50, flags: [] },
+    'sGC Stimulator':         { group: 'sGC Stimulator', dbpRatio: 0.55, flags: ['disease-modifying'] },
+    'If Inhibitor':           { group: 'If Inhibitor', dbpRatio: 0.60, flags: [] },
+    'Inotrope':               { group: 'Inotrope', dbpRatio: 0.60, flags: [] },
+    'GLP-1 RA':               { group: 'GLP-1 Therapy', dbpRatio: 0.60, flags: [] },
+    'GLP-1/GIP RA':           { group: 'GLP-1 Therapy', dbpRatio: 0.60, flags: [] },
+    'IV Iron':                { group: 'IV Iron', dbpRatio: 0.60, flags: [] },
+    'K+ Binder':              { group: 'K+ Binder', dbpRatio: 0.60, flags: [] },
+};
+
+function classesWithFlag(flag: ClassFlag): Set<string> {
+    return new Set(Object.entries(DRUG_CLASS_REGISTRY).filter(([, v]) => v.flags.includes(flag)).map(([k]) => k));
+}
 
 // --- Helper Functions ---
 function pickPreferredFrequency(med: Medication, options: string[], patient: Patient): string {
@@ -49,10 +94,7 @@ function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
 }
 
 function getMedicationClassGroup(drugClass: string): string {
-    if (['ARNI', 'ACEi', 'ARB'].includes(drugClass)) return 'RAAS Inhibitor';
-    if (['GLP-1 RA', 'GLP-1/GIP RA'].includes(drugClass)) return 'GLP-1 Therapy';
-    if (drugClass === 'nsMRA') return 'MRA'; // Group with steroidal MRA — prevents dual MRA therapy
-    return drugClass;
+    return DRUG_CLASS_REGISTRY[drugClass]?.group ?? drugClass;
 }
 
 function hasHistoricalHFrEF(patient: Patient): boolean {
@@ -75,6 +117,48 @@ function shouldPreserveQuadForUnknownHistory(patient: Patient): boolean {
 
 function hasRecentWorseningHF(patient: Patient): boolean {
     return patient.recent_hf_worsening_within_6mo === 'yes';
+}
+
+// When a patient arrives on duplicate same-class therapy (dual RAAS or dual MRA — never
+// appropriate), pick the agent to KEEP and return the names of the others to deprescribe.
+// RAAS preference: ARNI > ACEi > ARB (ARNI preferred for HFrEF; ARB reserved for ACEi-intolerant).
+// MRA: keep the steroidal MRA (established pillar across the EF spectrum) and drop the nsMRA —
+// dual steroidal + nsMRA blockade markedly raises hyperkalemia risk with no added benefit.
+const RAAS_KEEP_PREFERENCE: Record<string, number> = { ARNI: 3, ACEi: 2, ARB: 1 };
+
+function computeRedundantCurrentMeds(currentRegimen: RegimenMed[]): Set<string> {
+    const redundant = new Set<string>();
+
+    const raas = currentRegimen.filter(r => ['ARNI', 'ACEi', 'ARB'].includes(r.med.drug_class));
+    if (raas.length > 1) {
+        const keeper = raas.reduce((best, cur) =>
+            (RAAS_KEEP_PREFERENCE[cur.med.drug_class] ?? 0) > (RAAS_KEEP_PREFERENCE[best.med.drug_class] ?? 0) ? cur : best
+        );
+        raas.forEach(r => { if (r.med.name !== keeper.med.name) redundant.add(r.med.name); });
+    }
+
+    const steroidalMra = currentRegimen.filter(r => r.med.drug_class === 'MRA');
+    const nsMra = currentRegimen.filter(r => r.med.drug_class === 'nsMRA');
+    if (steroidalMra.length + nsMra.length > 1) {
+        const keeper = steroidalMra[0] ?? nsMra[0];
+        [...steroidalMra, ...nsMra].forEach(r => { if (r.med.name !== keeper.med.name) redundant.add(r.med.name); });
+    }
+
+    return redundant;
+}
+
+// Iron deficiency in HF — ESC 2021, IRONMAN, AFFIRM-AHF, FAIR-HF/CONFIRM-HF criteria:
+//   - Absolute deficiency:   ferritin < 100 ng/mL (regardless of TSAT)
+//   - Functional deficiency: ferritin 100-300 ng/mL AND TSAT < 20%
+// TSAT < 20% with ferritin > 300 (or with ferritin unknown) is NOT, by itself, a
+// treatment indication — ferritin context is required to classify. The prior logic
+// (ferritin < 100 OR tsat < 20) over-flagged functional/inflammatory states.
+function isIronDeficient(patient: Patient): boolean {
+    const { ferritin, tsat } = patient;
+    if (ferritin === undefined) return false;                              // cannot classify without ferritin
+    if (ferritin < 100) return true;                                       // absolute
+    if (ferritin <= 300 && tsat !== undefined && tsat < 20) return true;   // functional
+    return false;
 }
 
 // H2 fix: Require ≥2 of 3 hypoperfusion markers to avoid false positives from a single
@@ -152,11 +236,13 @@ interface RegimenAnalysis {
     addablePillars: Map<string, RegimenMed[]>;  // missing pillar class group → candidate meds+doses
     contraindicatedCurrentMeds: Set<string>;     // names of current meds now contraindicated
     forcedBbDownTitrateNames: Set<string>;       // existing BBs that must be down-titrated in acute decomp
+    redundantCurrentMeds: Set<string>;           // names of duplicate-class agents to deprescribe (dual RAAS/MRA)
 }
 
-const RAAS_CLASSES = new Set(['ARNI', 'ACEi', 'ARB']);
-const DIURETIC_CLASSES = new Set(['Loop Diuretic', 'Thiazide-like Diuretic']);
-const VOLUME_SENSITIVE_INTENSIFICATION_CLASSES = new Set(['ARNI', 'ACEi', 'ARB', 'MRA', 'nsMRA', 'SGLT2i']);
+// Derived from DRUG_CLASS_REGISTRY — single source of truth (see top of file).
+const RAAS_CLASSES = classesWithFlag('raas');
+const DIURETIC_CLASSES = classesWithFlag('diuretic');
+const VOLUME_SENSITIVE_INTENSIFICATION_CLASSES = classesWithFlag('volume-sensitive-intensifier');
 
 function isDiureticClass(drugClass: string): boolean {
     return DIURETIC_CLASSES.has(drugClass);
@@ -246,6 +332,234 @@ function buildMonitoringPlan(
     return plan;
 }
 
+// --- Clinician-facing qualitative / categorical builders ------------------------------
+// These are the deterministic, guideline-anchored outputs the tool can defend. They are
+// independent of the composite score and of the false-precision projected biomarker values.
+
+const PILLAR_LABELS: Record<string, string> = {
+    'RAAS Inhibitor': 'RAAS inhibitor (ARNI preferred for HFrEF)',
+    'Beta Blocker': 'Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol)',
+    'MRA': 'Mineralocorticoid receptor antagonist (MRA)',
+    'SGLT2i': 'SGLT2 inhibitor'
+};
+
+function computePhenotypePillars(patient: Patient): string[] {
+    const preserveQuadForUnknownHistory = shouldPreserveQuadForUnknownHistory(patient);
+    const isHFimpEF = patient.lvef > 40 && (hasHistoricalHFrEF(patient) || preserveQuadForUnknownHistory);
+    const isHFpEF = patient.lvef >= 50 && !isHFimpEF;
+    return isHFpEF
+        ? ['SGLT2i']
+        : ['RAAS Inhibitor', 'Beta Blocker', 'MRA', 'SGLT2i'];
+}
+
+// Indicated-but-missing GDMT classes relative to the CURRENT regimen.
+function computeGdmtGaps(patient: Patient): string[] {
+    const currentGroups = new Set((patient.current_regimen || []).map(r => getMedicationClassGroup(r.med.drug_class)));
+    return computePhenotypePillars(patient)
+        .filter(p => !currentGroups.has(p))
+        .map(p => PILLAR_LABELS[p] || p);
+}
+
+function buildMissingDataNotices(patient: Patient): string[] {
+    const notices: string[] = [];
+    if (patient.lvedd === undefined && patient.lavi === undefined) {
+        notices.push('No LVEDD or LAVI entered — chamber remodeling is not assessed. Structural inference is limited to LVEF alone.');
+    }
+    if (patient.ferritin === undefined && patient.tsat === undefined) {
+        notices.push('No iron studies (ferritin / TSAT) entered — iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.');
+    } else if (patient.ferritin !== undefined && patient.ferritin >= 100 && patient.ferritin <= 300 && patient.tsat === undefined) {
+        notices.push('Ferritin 100-300 with TSAT not entered — functional iron deficiency cannot be confirmed or excluded. Obtain TSAT.');
+    }
+    if (patient.daily_step_count === undefined) {
+        notices.push('No activity / step data entered — functional status is based on NYHA and KCCQ only.');
+    }
+    if (patient.lvef > 40 && hasUnknownHistoricalHFrEF(patient)) {
+        notices.push('Prior LVEF (ever ≤ 40%?) is undocumented — HFimpEF vs HFpEF classification is uncertain. Clarify prior echocardiograms before de-escalating.');
+    }
+    return notices;
+}
+
+// STRONG-HF high-intensity follow-up schedule. Triggered when a disease-modifying class
+// is initiated/up-titrated — safe practice is rapid sequencing with structured early
+// reassessment, not a single cross-sectional decision.
+const DISEASE_MODIFYING_CLASSES = classesWithFlag('disease-modifying');
+
+function buildFollowUpCalendar(modSet: ModificationSet | undefined): MonitoringPlanItem[] {
+    if (!modSet) return [];
+    const initiatesOrTitrates = modSet.modifications.some(m =>
+        (m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap') &&
+        m.target && DISEASE_MODIFYING_CLASSES.has(m.target.med.drug_class)
+    );
+    if (!initiatesOrTitrates) return [];
+    return [
+        { test: 'Clinical review + BMP (K+, creatinine, eGFR) + BP/HR', timing: 'Day 7 (±2)', details: 'STRONG-HF model: assess tolerance and labs within ~1 week of any GDMT initiation or up-titration. Hold/reduce if K+ ≥ 5.5 or creatinine rises > 30% from baseline.' },
+        { test: 'BMP + BP/HR + congestion check; up-titrate if tolerated', timing: 'Week 2', details: 'Advance toward target doses if BP, HR, renal function and K+ permit. Reinforce daily-weight self-monitoring and adherence.' },
+        { test: 'BMP + BP/HR; continue stepwise titration', timing: 'Week 4', details: 'Continue up-titration of each pillar toward guideline target / maximally tolerated dose.' },
+        { test: 'NT-proBNP + clinical assessment; confirm target doses', timing: 'Week 6', details: 'Confirm quadruple therapy at target/maximally tolerated doses. Document residual gaps and any device/referral needs.' }
+    ];
+}
+
+function buildQualitativeProjections(baseline: Patient, projected: Patient, hasMraInRegimen: boolean): QualitativeProjection[] {
+    const out: QualitativeProjection[] = [];
+
+    const lvefDelta = projected.lvef - baseline.lvef;
+    if (lvefDelta >= 3) out.push({ label: 'Reverse remodeling', direction: 'improve', detail: 'Meaningful EF improvement likely over months with disease-modifying therapy.' });
+    else if (lvefDelta >= 1) out.push({ label: 'Reverse remodeling', direction: 'improve', detail: 'Modest EF improvement possible.' });
+    else if (lvefDelta <= -2) out.push({ label: 'Reverse remodeling', direction: 'caution', detail: 'EF may decline if disease-modifying therapy is reduced or removed.' });
+    else out.push({ label: 'Reverse remodeling', direction: 'stable', detail: 'EF expected to remain broadly stable.' });
+
+    const baseExcess = baseline.volume_status.current_weight_kg - baseline.volume_status.dry_weight_kg;
+    const projExcess = projected.volume_status.current_weight_kg - projected.volume_status.dry_weight_kg;
+    if (projExcess < baseExcess - 1) out.push({ label: 'Congestion', direction: 'improve', detail: 'Decongestion expected; monitor for over-diuresis.' });
+    else if (baseExcess > 1.5) out.push({ label: 'Congestion', direction: 'caution', detail: 'Residual volume overload — diuretic strategy may need adjustment.' });
+    else out.push({ label: 'Congestion', direction: 'stable', detail: 'Near-euvolemic / stable volume status.' });
+
+    if (projected.nt_pro_bnp < baseline.nt_pro_bnp * 0.85) out.push({ label: 'Neurohormonal stress', direction: 'improve', detail: 'Natriuretic-peptide burden expected to fall.' });
+    else if (projected.nt_pro_bnp > baseline.nt_pro_bnp * 1.1) out.push({ label: 'Neurohormonal stress', direction: 'caution', detail: 'Natriuretic-peptide burden may rise — reassess.' });
+    else out.push({ label: 'Neurohormonal stress', direction: 'stable', detail: 'Little change in natriuretic-peptide burden expected.' });
+
+    // Conservative projected SBP (post safety change — compensation excluded from this value)
+    if (projected.sbp < 95) out.push({ label: 'Blood pressure', direction: 'caution', detail: 'Hypotension risk — monitor BP and symptoms closely; consider staggered initiation.' });
+    else if (projected.sbp < 105) out.push({ label: 'Blood pressure', direction: 'stable', detail: 'Mild BP reduction expected; generally tolerated.' });
+    else out.push({ label: 'Blood pressure', direction: 'stable', detail: 'Minimal BP impact expected.' });
+
+    if (projected.potassium > 5.5) out.push({ label: 'Potassium', direction: 'worsen', detail: 'Hyperkalemia risk — binder and close monitoring required.' });
+    else if (projected.potassium > 5.0) out.push({ label: 'Potassium', direction: 'caution', detail: 'Borderline potassium — recheck BMP within ~1 week.' });
+    else if (projected.potassium < 3.5) out.push({ label: 'Potassium', direction: 'caution', detail: 'Hypokalemia risk — replete and monitor (esp. with diuretics / digoxin).' });
+    else if (hasMraInRegimen) out.push({ label: 'Potassium', direction: 'stable', detail: 'Potassium expected acceptable; routine MRA monitoring applies.' });
+    else out.push({ label: 'Potassium', direction: 'stable', detail: 'Potassium expected stable.' });
+
+    return out;
+}
+
+// Human label + evidence for a criteria-met adjunct, so guideline-indicated add-ons are surfaced
+// even when they do not rank inside the top display picks (e.g. A-HeFT H/ISDN, SHIFT ivabradine).
+function describeAdjunct(m: Medication): string {
+    switch (m.drug_class) {
+        case 'Vasodilator': return 'Hydralazine + isosorbide dinitrate (H/ISDN) — A-HeFT: Class I add-on for Black patients NYHA III–IV on GDMT, or an option when RAAS is not tolerated.';
+        case 'If Inhibitor': return 'Ivabradine — SHIFT: sinus rhythm with HR ≥ 70 on maximally-tolerated beta-blocker.';
+        case 'sGC Stimulator': return 'Vericiguat — VICTORIA: worsening HFrEF (recent hospitalization / IV diuretics), NT-proBNP ≥ 1600.';
+        case 'Inotrope': return 'Digoxin — rate control in AF and/or symptom reduction in HFrEF (narrow therapeutic index — monitor levels).';
+        case 'GLP-1 RA':
+        case 'GLP-1/GIP RA': return 'GLP-1 / GIP receptor agonist — obesity with HFpEF/HFmrEF (STEP-HFpEF, SUMMIT).';
+        case 'IV Iron': return 'IV iron — iron deficiency in symptomatic HF (AFFIRM-AHF / IRONMAN): improves symptoms and reduces hospitalization.';
+        case 'nsMRA': return 'Finerenone (nsMRA) — FINEARTS-HF: HFmrEF / HFpEF (LVEF ≥ 40).';
+        case 'MRA': return 'Mineralocorticoid receptor antagonist — adjunct per phenotype (TOPCAT in HFpEF).';
+        case 'Loop Diuretic': return 'Loop diuretic — symptomatic volume management; titrate to daily weights.';
+        case 'Thiazide-like Diuretic': return 'Thiazide add-on — sequential nephron blockade for diuretic resistance.';
+        default: return m.name;
+    }
+}
+
+function buildEligibleAdjuncts(addableAdjuncts: RegimenMed[]): string[] {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    addableAdjuncts.forEach(r => {
+        const label = describeAdjunct(r.med);
+        if (!seen.has(label)) { seen.add(label); out.push(label); }
+    });
+    return out;
+}
+
+function buildTradeOffLabels(domain: DomainScores): TradeOffLabel[] {
+    const band = (s: number, good: string, mid: string, bad: string): { label: string; tone: TradeOffTone } =>
+        s >= 80 ? { label: good, tone: 'good' } : s >= 50 ? { label: mid, tone: 'neutral' } : { label: bad, tone: 'bad' };
+    const cost = band(domain.cost, 'Low cost', 'Moderate cost', 'High cost / financial-toxicity risk');
+    const burden = band(domain.adherence, 'Low pill burden', 'Moderate complexity', 'High complexity / adherence risk');
+    const evidence = band(domain.guideline, 'Strong guideline concordance', 'Partial concordance', 'Limited concordance');
+    return [
+        { dimension: 'Cost', label: cost.label, tone: cost.tone },
+        { dimension: 'Pill burden', label: burden.label, tone: burden.tone },
+        { dimension: 'Evidence', label: evidence.label, tone: evidence.tone }
+    ];
+}
+
+// --- Real-world robustness: incomplete data & inappropriate regimens -----------------
+
+// Physiologically-impossible zero (or undefined / NaN) is treated as "not entered" for
+// safety-critical fields. A potassium of 0 is not a measured value — it is a blank field,
+// and must NOT be allowed to read as "safe" (e.g. clearing a hyperkalemia gate).
+function valueUnknown(v: number | undefined): boolean {
+    return v === undefined || Number.isNaN(v) || v <= 0;
+}
+
+interface CriticalDataAudit {
+    alerts: string[];
+    unknownPotassium: boolean;
+    unknownRenal: boolean;
+    unknownBnp: boolean;
+    unknownLvef: boolean;
+}
+
+function auditCriticalData(patient: Patient): CriticalDataAudit {
+    const alerts: string[] = [];
+    const unknownLvef = valueUnknown(patient.lvef);
+    const unknownPotassium = valueUnknown(patient.potassium);
+    const unknownRenal = valueUnknown(patient.egfr) || valueUnknown(patient.creatinine);
+    const unknownBnp = valueUnknown(patient.nt_pro_bnp);
+
+    if (unknownLvef) alerts.push('DATA REQUIRED: LVEF not entered. HF phenotype (HFrEF / HFmrEF / HFpEF) cannot be determined and a GDMT pathway cannot be selected. Obtain an echocardiogram before relying on recommendations.');
+    if (unknownPotassium) alerts.push('DATA REQUIRED: Serum potassium not entered. Obtain a BMP before initiating or up-titrating a RAAS inhibitor or MRA — hyperkalemia risk cannot be assessed and must not be assumed absent.');
+    if (unknownRenal) alerts.push('DATA REQUIRED: Renal function (eGFR / creatinine) not entered. Required for renal dose adjustment and RAAS / MRA / SGLT2i safety. Obtain a BMP.');
+    if (unknownBnp) alerts.push('DATA NOTE: NT-proBNP not entered. Neurohormonal status is not assessed and is excluded from scoring (not scored as normal).');
+
+    return { alerts, unknownPotassium, unknownRenal, unknownBnp, unknownLvef };
+}
+
+// Catches data-entry errors (unit confusion, transcription slips) — values outside the range
+// physiology allows. These are flagged for verification rather than silently consumed, because a
+// typo like LVEF 250 or K+ 50 (mg instead of mEq/L) would otherwise drive confident output.
+function validatePhysiologicBounds(patient: Patient): string[] {
+    const alerts: string[] = [];
+    const flag = (cond: boolean, msg: string) => { if (cond) alerts.push('IMPLAUSIBLE VALUE: ' + msg); };
+
+    flag(patient.lvef > 80, `LVEF ${patient.lvef}% exceeds the physiologic maximum (~80%). Verify entry.`);
+    flag(patient.potassium > 8.0, `Serum potassium ${patient.potassium} mEq/L is extreme — confirm units (mEq/L, not mg) and rule out a transcription error. If accurate, this is a hyperkalemic emergency.`);
+    flag(patient.potassium > 0 && patient.potassium < 2.0, `Serum potassium ${patient.potassium} mEq/L is below survivable range — verify entry.`);
+    flag(patient.sbp > 260 || patient.dbp > 200, `Blood pressure ${patient.sbp}/${patient.dbp} mmHg is outside the recordable range — verify entry.`);
+    flag(patient.egfr > 150, `eGFR ${patient.egfr} mL/min/1.73m² exceeds the physiologic maximum (~120). Verify entry.`);
+    flag(patient.pulse > 250 || (patient.pulse > 0 && patient.pulse < 20), `Heart rate ${patient.pulse} bpm is outside the physiologic range — verify entry.`);
+    flag(patient.creatinine > 20, `Creatinine ${patient.creatinine} mg/dL is extreme — confirm units and entry.`);
+    flag(patient.bmi > 80 || (patient.bmi > 0 && patient.bmi < 10), `BMI ${patient.bmi} is outside the physiologic range — verify height/weight entry.`);
+
+    return alerts;
+}
+
+// Flags regimens the patient ARRIVES on that are themselves unsafe/inappropriate — the
+// engine should actively prompt deprescribing, not silently filter these out of output.
+function detectInappropriateRegimen(patient: Patient): string[] {
+    const alerts: string[] = [];
+    const current = patient.current_regimen || [];
+
+    const raasInCurrent = current.filter(r => RAAS_CLASSES.has(r.med.drug_class));
+    if (raasInCurrent.length > 1) {
+        alerts.push(`INAPPROPRIATE REGIMEN: Patient is on dual RAAS blockade (${raasInCurrent.map(r => r.med.name).join(' + ')}). Deprescribe one agent — the combination raises hyperkalemia, AKI, and hypotension risk without survival benefit (ACC/AHA 2022; ONTARGET).`);
+    }
+
+    const allMra = current.filter(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA');
+    if (allMra.length > 1) {
+        alerts.push(`INAPPROPRIATE REGIMEN: Patient is on more than one MRA (${allMra.map(r => r.med.name).join(' + ')}). Use a single MRA — combination markedly increases severe hyperkalemia risk with no added benefit.`);
+    }
+
+    const ext = patient.external_medications || new Set<string>();
+    const onNonDhpCcb = ext.has('Verapamil') || ext.has('Diltiazem') || patient.comorbidities.has('On Verapamil/Diltiazem');
+    if (onNonDhpCcb && patient.lvef > 0 && patient.lvef <= 40) {
+        alerts.push('INAPPROPRIATE THERAPY: Non-dihydropyridine calcium-channel blocker (verapamil / diltiazem) in HFrEF is potentially harmful — it is a negative inotrope and can worsen heart failure (ACC/AHA 2022, Class III). Deprescribe; if rate control is needed, use a beta-blocker ± digoxin.');
+    }
+
+    if (patient.comorbidities.has('Chronic NSAID Use')) {
+        alerts.push('AVOID: Chronic NSAID use is discouraged in heart failure — sodium / fluid retention, blunted diuretic response, and AKI risk (amplified with RAAS / MRA). Deprescribe or substitute acetaminophen / topical analgesia where feasible.');
+    }
+
+    const onPde5i = ext.has('Sildenafil') || ext.has('Tadalafil');
+    const onNitrate = current.some(r => r.med.drug_class === 'Vasodilator');
+    if (onPde5i && onNitrate) {
+        alerts.push('INAPPROPRIATE THERAPY: Nitrate (Isosorbide Dinitrate) with a PDE5 inhibitor (sildenafil/tadalafil) is an absolute contraindication — risk of profound or fatal hypotension (FDA label). The nitrate has been removed from all recommendations; deprescribe one agent immediately.');
+    }
+
+    return alerts;
+}
+
 function analyzeCurrentRegimen(
     patient: Patient,
     formulary: Medication[],
@@ -302,14 +616,19 @@ function analyzeCurrentRegimen(
         }
     });
 
+    // Redundant same-class therapy the patient arrived on (dual RAAS / dual MRA). These must be
+    // deprescribed — the engine synthesizes their removal into every candidate (below) so a
+    // corrected regimen is produced rather than the whole regimen being filtered out.
+    const redundantCurrentMeds = computeRedundantCurrentMeds(currentRegimen);
+
     // Titration analysis: for each current med, find higher/lower dose tiers
     const titratableUp: RegimenAnalysis['titratableUp'] = [];
     const titratableDown: RegimenAnalysis['titratableDown'] = [];
     const forcedBbDownTitrateNames = new Set<string>();
 
     currentRegimen.forEach(current => {
-        // Block titration UP and swaps for contraindicated meds — only allow down-titration/removal
-        const isContraindicated = contraindicatedCurrentMeds.has(current.med.name);
+        // Block titration UP and swaps for contraindicated OR redundant meds — they are being removed
+        const isContraindicated = contraindicatedCurrentMeds.has(current.med.name) || redundantCurrentMeds.has(current.med.name);
         // Block BB titration UP when acutely decompensated (reduce dose instead)
         const isBBBlockedUp = forceDownBB && current.med.drug_class === 'Beta Blocker';
 
@@ -362,11 +681,11 @@ function analyzeCurrentRegimen(
         }
     });
 
-    // Removable: diuretics when euvolemic, OR any contraindicated current med
+    // Removable: diuretics when euvolemic, OR any contraindicated/redundant current med
     const removable: RegimenMed[] = [];
     currentRegimen.forEach(r => {
-        // Contraindicated current meds MUST be flagged for removal
-        if (contraindicatedCurrentMeds.has(r.med.name)) {
+        // Contraindicated or redundant (dual RAAS/MRA) current meds MUST be flagged for removal
+        if (contraindicatedCurrentMeds.has(r.med.name) || redundantCurrentMeds.has(r.med.name)) {
             removable.push(r);
             return;
         }
@@ -458,8 +777,8 @@ function analyzeCurrentRegimen(
         }
     }
 
-    // Iron if iron-deficient
-    const needsIron = (patient.ferritin && patient.ferritin < 100) || (patient.tsat && patient.tsat < 20);
+    // Iron if iron-deficient (ESC 2021 / IRONMAN / AFFIRM-AHF — see isIronDeficient)
+    const needsIron = isIronDeficient(patient);
     if (needsIron && !currentClasses.has('IV Iron')) {
         const ironTiers = medTiers.filter(r => r.med.drug_class === 'IV Iron');
         if (ironTiers.length > 0) {
@@ -508,7 +827,8 @@ function analyzeCurrentRegimen(
         addableAdjuncts,
         addablePillars,
         contraindicatedCurrentMeds,
-        forcedBbDownTitrateNames
+        forcedBbDownTitrateNames,
+        redundantCurrentMeds
     };
 }
 
@@ -819,23 +1139,24 @@ function generateCandidateModifications(
     // --- d) Binder rescue: for candidates projecting K+ > 5.3 ---
     // This will be handled during simulation, not at generation time
 
-    // --- e) Force-remove contraindicated current meds from ALL candidates ---
-    // A patient currently on ACEi who becomes pregnant must not retain ACEi in any recommendation
+    // --- e) Force-remove contraindicated AND redundant current meds from ALL candidates ---
+    // Contraindicated: e.g. a patient on ACEi who becomes pregnant must not retain ACEi anywhere.
+    // Redundant: a patient on dual RAAS / dual MRA must have the duplicate deprescribed in every
+    // candidate — otherwise all candidates retain the duplicate and get filtered out (empty output).
     const contraindicated = analysis.contraindicatedCurrentMeds;
-    if (contraindicated.size > 0) {
+    const redundant = analysis.redundantCurrentMeds;
+    if (contraindicated.size > 0 || redundant.size > 0) {
         const forcedRemovals: RegimenModification[] = [];
         currentRegimen.forEach(r => {
+            // Contraindication takes precedence in the displayed reason.
             if (contraindicated.has(r.med.name)) {
-                forcedRemovals.push({
-                    action: 'remove',
-                    source: r,
-                    summary: `Remove ${r.med.name} (contraindicated)`
-                });
+                forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (contraindicated)` });
+            } else if (redundant.has(r.med.name)) {
+                forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (redundant — deprescribe duplicate ${getMedicationClassGroup(r.med.drug_class)} therapy)` });
             }
         });
 
         candidates.forEach(c => {
-            // Check if this candidate already removes the contraindicated med
             forcedRemovals.forEach(forced => {
                 const alreadyRemoved = c.modifications.some(m =>
                     m.action === 'remove' && m.source?.med.name === forced.source!.med.name
@@ -844,6 +1165,13 @@ function generateCandidateModifications(
                     m.action === 'swap' && m.source?.med.name === forced.source!.med.name
                 );
                 if (!alreadyRemoved && !alreadySwapped) {
+                    // Coherence: a med that is being force-removed must not also carry a
+                    // titrate/keep modification in the same candidate (would render as the
+                    // incoherent "down-titrate AND remove the same drug" in one visit).
+                    c.modifications = c.modifications.filter(m =>
+                        !((m.action === 'titrate_up' || m.action === 'titrate_down' || m.action === 'keep')
+                            && m.source?.med.name === forced.source!.med.name)
+                    );
                     c.modifications.push(forced);
                     c.resulting_regimen = c.resulting_regimen.filter(
                         r => r.med.name !== forced.source!.med.name
@@ -855,11 +1183,15 @@ function generateCandidateModifications(
 
     // Filter by max_new_classes_per_visit
     return candidates.filter(c => {
+        // A forced BB dose-reduction (acute decompensation) is satisfied by EITHER a down-titration
+        // OR a removal. Removal is the stronger reduction and is the correct action when the BB is
+        // also contraindicated (e.g. decompensated HF + new bronchospasm). Without the `remove`
+        // branch, such a patient would have every candidate filtered out → zero recommendations.
         const satisfiesForcedBbDownTitration =
             analysis.forcedBbDownTitrateNames.size === 0 ||
             Array.from(analysis.forcedBbDownTitrateNames).every(bbName =>
                 c.modifications.some(m =>
-                    m.action === 'titrate_down' && m.source?.med.name === bbName
+                    (m.action === 'titrate_down' || m.action === 'remove') && m.source?.med.name === bbName
                 )
             );
         const newClassCount = countNewClassGroups(c.resulting_regimen, currentRegimen);
@@ -1113,92 +1445,117 @@ function calculateAdherenceScore(complexity: number, toleranceInput: number): nu
  *   + 5 pts/pillar at target (max 20) + volume management (10) = 100.
  * HFpEF (LVEF ≥ 50): SGLT2i (70) + target dose (15) + volume management (15) = 100.
  */
-function calculateGuidelineConcordanceScore(
-    resultingRegimen: RegimenMed[],
-    patient: Patient
-): number {
-    const pillarClasses = new Set<string>();
-    resultingRegimen.forEach(r => {
-        const cls = r.med.drug_class;
-        if (['ARNI', 'ACEi', 'ARB'].includes(cls)) pillarClasses.add('RAAS');
-        else if (cls === 'Beta Blocker') pillarClasses.add('BB');
-        else if (cls === 'MRA' || cls === 'nsMRA') pillarClasses.add('MRA');
-        else if (cls === 'SGLT2i') pillarClasses.add('SGLT2i');
-    });
+// =====================================================================================
+// GUIDELINE-CONCORDANCE EVIDENCE TABLE — evidence as data, not magic numbers.
+//
+// Each phenotype declares, per GDMT pillar: the recommendation class + landmark trials
+// (the WHY) and the points that class is worth in this phenotype (calibrated to evidence
+// strength: Class I = 20-22, IIa ≈ 22, IIb = 8-13). The scorer below is a single generic
+// pass over this table — the three former hardcoded phenotype branches are gone. Adding a
+// pillar/phenotype, or restating evidence as trials mature, is now a data edit here.
+// =====================================================================================
+type PillarKey = 'RAAS' | 'BB' | 'MRA' | 'SGLT2i';
+type RecClass = 'I' | 'IIa' | 'IIb' | 'III';
+interface PillarConcordance { base: number; targetBonus: number; recClass: RecClass; trials: string; }
+type Phenotype = 'HFrEF' | 'HFmrEF' | 'HFpEF';
+interface PhenoConcordance {
+    pillars: Partial<Record<PillarKey, PillarConcordance>>;
+    targetBonusCap: number;   // cap on summed at-target bonuses
+    volumeBonus: number;      // awarded when euvolemic or on a diuretic
+}
 
-    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
-    const hasDiuretic = resultingRegimen.some(r =>
-        r.med.drug_class === 'Loop Diuretic' || r.med.drug_class === 'Thiazide-like Diuretic'
-    );
+const CONCORDANCE_TABLE: Record<Phenotype, PhenoConcordance> = {
+    HFrEF: {
+        pillars: {
+            RAAS:   { base: 20, targetBonus: 5, recClass: 'I', trials: 'PARADIGM-HF / SOLVD' },
+            BB:     { base: 20, targetBonus: 5, recClass: 'I', trials: 'MERIT-HF / COPERNICUS / CIBIS-II' },
+            MRA:    { base: 20, targetBonus: 5, recClass: 'I', trials: 'RALES / EMPHASIS-HF' },
+            SGLT2i: { base: 20, targetBonus: 5, recClass: 'I', trials: 'DAPA-HF / EMPEROR-Reduced' },
+        },
+        targetBonusCap: Infinity,
+        volumeBonus: 0,
+    },
+    HFmrEF: {
+        pillars: {
+            RAAS:   { base: 22, targetBonus: 5, recClass: 'IIb', trials: 'ACC/AHA 2022 §7.3.2 (CHARM subgroup)' },
+            SGLT2i: { base: 22, targetBonus: 5, recClass: 'IIa', trials: 'DELIVER / EMPEROR-Preserved (LVEF 41-49)' },
+            BB:     { base: 13, targetBonus: 5, recClass: 'IIb', trials: 'subgroup / observational' },
+            MRA:    { base: 13, targetBonus: 5, recClass: 'IIb', trials: 'TOPCAT (LVEF 45-49)' },
+        },
+        targetBonusCap: 20,
+        volumeBonus: 10,
+    },
+    HFpEF: {
+        pillars: {
+            SGLT2i: { base: 70, targetBonus: 15, recClass: 'I', trials: 'EMPEROR-Preserved / DELIVER' },
+            MRA:    { base: 8, targetBonus: 0, recClass: 'IIb', trials: 'TOPCAT Americas / FINEARTS-HF' },
+        },
+        targetBonusCap: Infinity,
+        volumeBonus: 15,
+    },
+};
 
-    // G4: HFimpEF — if LVEF was ≤40% and has improved, score as HFrEF (continue all pillars)
+function pillarKeyOf(drugClass: string): PillarKey | null {
+    if (RAAS_CLASSES.has(drugClass)) return 'RAAS';
+    if (drugClass === 'Beta Blocker') return 'BB';
+    if (drugClass === 'MRA' || drugClass === 'nsMRA') return 'MRA';
+    if (drugClass === 'SGLT2i') return 'SGLT2i';
+    return null;
+}
+
+function classifyPhenotype(patient: Patient): Phenotype {
     const preserveQuadForUnknownHistory = shouldPreserveQuadForUnknownHistory(patient);
     const isHFimpEF = patient.lvef > 40 && (hasHistoricalHFrEF(patient) || preserveQuadForUnknownHistory);
+    if (isHFimpEF) return 'HFrEF';            // HFimpEF continues full HFrEF pillar expectations
+    if (patient.lvef >= 50) return 'HFpEF';
+    if (patient.lvef >= 41) return 'HFmrEF';
+    return 'HFrEF';
+}
 
-    if (patient.lvef >= 50 && !isHFimpEF) {
-        // HFpEF: SGLT2i is the only Class I pillar (EMPEROR-Preserved, DELIVER)
-        let score = 0;
-        if (pillarClasses.has('SGLT2i')) {
-            score += 70;
-            const sglt2med = resultingRegimen.find(r => r.med.drug_class === 'SGLT2i');
-            if (sglt2med) {
-                const isTarget = sglt2med.med.available_doses.find(
-                    d => d.strength === sglt2med.dose.strength
-                )?.is_target_dose;
-                if (isTarget) score += 15;
-            }
-        }
-        // MRA in HFpEF: Class IIb adjunct (TOPCAT Americas / FINEARTS-HF)
-        if (pillarClasses.has('MRA')) score += 8;
-        if (fluidExcess <= 1.0 || hasDiuretic) score += 15;
-        return Math.min(100, score);
-    }
+// Returns, per pillar present in the regimen, whether it is at target dose.
+function pillarsPresentAtTarget(regimen: RegimenMed[]): Map<PillarKey, boolean> {
+    const present = new Map<PillarKey, boolean>();
+    regimen.forEach(r => {
+        const key = pillarKeyOf(r.med.drug_class);
+        if (!key) return;
+        const atTarget = !!r.med.available_doses.find(d => d.strength === r.dose.strength)?.is_target_dose;
+        present.set(key, (present.get(key) ?? false) || atTarget);
+    });
+    return present;
+}
 
-    if (patient.lvef >= 41 && !isHFimpEF) {
-        // HFmrEF (LVEF 41-49): RAAS & SGLT2i = Class I, BB & MRA = Class IIb
-        let score = 0;
-        // Class I pillars: 22 pts each
-        if (pillarClasses.has('RAAS')) score += 22;
-        if (pillarClasses.has('SGLT2i')) score += 22;
-        // Class IIb pillars: 13 pts each (weaker evidence — CHARM/TOPCAT subgroups)
-        if (pillarClasses.has('BB')) score += 13;
-        if (pillarClasses.has('MRA')) score += 13;
-        // = max 70 from pillars
+function calculateGuidelineConcordanceScore(resultingRegimen: RegimenMed[], patient: Patient): number {
+    const table = CONCORDANCE_TABLE[classifyPhenotype(patient)];
+    const present = pillarsPresentAtTarget(resultingRegimen);
 
-        // Target dose bonus: +5 per pillar at target (max 20)
-        resultingRegimen.forEach(r => {
-            const group = getMedicationClassGroup(r.med.drug_class);
-            if (['RAAS Inhibitor', 'Beta Blocker', 'MRA', 'SGLT2i'].includes(group)) {
-                const isTarget = r.med.available_doses.find(
-                    d => d.strength === r.dose.strength
-                )?.is_target_dose;
-                if (isTarget) score += 5;
-            }
-        });
-
-        // Volume management bonus
-        if (fluidExcess <= 1.0 || hasDiuretic) score += 10;
-        return Math.min(100, score);
-    }
-
-    // HFrEF (LVEF ≤ 40): Class I — all 4 pillars equal weight
     let score = 0;
-    ['RAAS', 'BB', 'MRA', 'SGLT2i'].forEach(pillar => {
-        if (pillarClasses.has(pillar)) score += 20;
+    let targetBonusSum = 0;
+    (Object.entries(table.pillars) as [PillarKey, PillarConcordance][]).forEach(([key, ev]) => {
+        if (!present.has(key)) return;
+        score += ev.base;
+        if (present.get(key)) targetBonusSum += ev.targetBonus;
     });
+    score += Math.min(table.targetBonusCap, targetBonusSum);
 
-    // Target dose bonus: +5 per pillar at guideline target
-    resultingRegimen.forEach(r => {
-        const group = getMedicationClassGroup(r.med.drug_class);
-        if (['RAAS Inhibitor', 'Beta Blocker', 'MRA', 'SGLT2i'].includes(group)) {
-            const isTarget = r.med.available_doses.find(
-                d => d.strength === r.dose.strength
-            )?.is_target_dose;
-            if (isTarget) score += 5;
-        }
-    });
+    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const hasDiuretic = resultingRegimen.some(r => DIURETIC_CLASSES.has(r.med.drug_class));
+    if (fluidExcess <= 1.0 || hasDiuretic) score += table.volumeBonus;
 
     return Math.min(100, score);
+}
+
+// Surfaceable evidence for the pillars actually present — the "why" behind the concordance score.
+function describeConcordance(resultingRegimen: RegimenMed[], patient: Patient): string[] {
+    const table = CONCORDANCE_TABLE[classifyPhenotype(patient)];
+    const present = pillarsPresentAtTarget(resultingRegimen);
+    const labels: Record<PillarKey, string> = { RAAS: 'RAAS inhibitor', BB: 'Beta-blocker', MRA: 'MRA', SGLT2i: 'SGLT2i' };
+    const out: string[] = [];
+    (Object.keys(table.pillars) as PillarKey[]).forEach(key => {
+        if (!present.has(key)) return;
+        const ev = table.pillars[key]!;
+        out.push(`Guideline: ${labels[key]} — Class ${ev.recClass} (${ev.trials})`);
+    });
+    return out;
 }
 
 // --- DBP Coupling: Drug-class-specific SBP→DBP ratios ---
@@ -1216,14 +1573,7 @@ function calculateGuidelineConcordanceScore(
 //   sGC Stimulator (0.55): VICTORIA — vericiguat has modest balanced vasodilation.
 //   nsMRA (0.50): FINEARTS-HF — anti-fibrotic with mild natriuretic (preload-dominant).
 function getDbpRatio(drugClass: string): number {
-    if (['ARNI', 'ACEi', 'ARB'].includes(drugClass)) return 0.50;  // Vasodilators
-    if (drugClass === 'Beta Blocker') return 0.70;                   // Proportional
-    if (drugClass === 'Loop Diuretic' || drugClass === 'Thiazide-like Diuretic') return 0.50; // Preload
-    if (drugClass === 'SGLT2i') return 0.40;                         // Osmotic/preload
-    if (drugClass === 'Vasodilator') return 0.50;                    // H/ISDN
-    if (drugClass === 'sGC Stimulator') return 0.55;                 // Vericiguat
-    if (drugClass === 'nsMRA') return 0.50;                            // Finerenone (anti-fibrotic, mild preload)
-    return 0.60;                                                      // Default
+    return DRUG_CLASS_REGISTRY[drugClass]?.dbpRatio ?? 0.60;
 }
 
 // --- 3. Modification-Based Simulation (Delta Engine) ---
@@ -1383,6 +1733,14 @@ function simulateModificationEffect(
             }
 
             rationale.push(`- ${mod.source.med.name}: ${mod.summary}`);
+
+            // Abrupt beta-blocker withdrawal is Class III harm (rebound tachycardia, ischemia,
+            // arrhythmia). Whenever a BB is discontinued, attach explicit taper guidance — the
+            // acute-decompensation path already tapers via dose reduction; the contraindication
+            // removal path previously dropped the BB with no instruction.
+            if (mod.source.med.drug_class === 'Beta Blocker') {
+                warnings.push('BETA-BLOCKER DISCONTINUATION: Do NOT stop abruptly — taper over ~1-2 weeks with HR/symptom monitoring (abrupt withdrawal risks rebound tachycardia, ischemia, and arrhythmia). If the reason is bronchospasm and asthma is not severe, a low-dose β1-selective agent (bisoprolol/metoprolol succinate) may be tolerated.');
+            }
         }
 
         if ((mod.action === 'titrate_up' || mod.action === 'titrate_down') && mod.source && mod.target) {
@@ -1563,15 +1921,26 @@ function simulateModificationEffect(
     //   - PIONEER-HF: Enrolled SBP ≥ 100 in-hospital; sacubitril/valsartan showed less
     //     hypotension than expected from its vasodilatory potency, consistent with CO offset.
     // M7: Extended to LVEF < 50 (HFmrEF) with attenuated factor — Frank-Starling applies across
-    // the reduced EF spectrum, but effect diminishes as LVEF approaches normal
+    // the reduced EF spectrum, but effect diminishes as LVEF approaches normal.
+    //
+    // SAFETY CHANGE: Forward-flow (Frank-Starling) compensation is real physiology in the
+    // aggregate, but it is an UNCALIBRATED estimate for any individual. Previously this term
+    // was subtracted from sbpDelta, raising the projected SBP — which could lift a fragile
+    // patient's projected SBP across the display/penalty floors and manufacture apparent
+    // safety from a constant. We now keep the projected SBP CONSERVATIVE (pre-compensation)
+    // for every safety gate and display, and surface the compensation as an informational
+    // note only. The note never feeds a threshold decision.
     if (currentPatient.lvef < 50 && attenuatedLvefDelta > 0 && sbpDelta > 0) {
         // Full 0.35 offset for LVEF < 40; linearly attenuated to 0.15 at LVEF 50
         const coFactor = currentPatient.lvef < 40
             ? 0.35
             : 0.35 - (currentPatient.lvef - 40) / 10 * 0.20; // 40→0.35, 45→0.25, 50→0.15
         const coCompensation = Math.min(sbpDelta * coFactor, attenuatedLvefDelta * 0.4);
-        sbpDelta -= coCompensation;
-        dbpDelta -= coCompensation * 0.5;
+        if (coCompensation >= 1) {
+            uniqueRationale.push(
+                `Physiology note: improved forward flow (Frank-Starling) may offset roughly ${coCompensation.toFixed(0)} mmHg of the projected BP drop in a recovering ventricle. This is NOT applied to safety thresholds — the projected BP shown is the conservative (pre-compensation) estimate.`
+            );
+        }
     }
 
     if (currentPatient.lavi) {
@@ -1730,6 +2099,20 @@ function simulateModificationEffect(
         warnings.push("Hypoxia Alert: SpO2 < 90%. Evaluate for Pulmonary Edema.");
     }
 
+    // β1-selective beta-blocker in mild/moderate asthma: acceptable but not risk-free.
+    // (Severe asthma is an absolute CI for all BBs and is handled by exclusion upstream.)
+    if (currentPatient.comorbidities.has('Asthma (Mild/Moderate)')) {
+        const selectiveBB = resultingRegimen.find(r =>
+            r.med.name === 'Bisoprolol' || r.med.name === 'Metoprolol Succinate'
+        );
+        if (selectiveBB) {
+            const preferredNote = selectiveBB.med.name === 'Bisoprolol'
+                ? ''
+                : ' Bisoprolol is the most cardioselective option if bronchospasm emerges.';
+            warnings.push(`ASTHMA + BETA-BLOCKER: ${selectiveBB.med.name} (β1-selective) is acceptable in mild/moderate asthma but cardioselectivity decreases at higher doses. Start low, monitor for wheeze/PEF drop, and ensure a rescue inhaler is available.${preferredNote} Non-selective carvedilol is avoided.`);
+        }
+    }
+
     // Liver disease safety warnings
     if (currentPatient.comorbidities.has('Liver Disease (Child-Pugh B/C)')) {
         const hasMRAInRegimen = resultingRegimen.some(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA');
@@ -1876,6 +2259,31 @@ export function generateAndScoreModifications(
         );
     }
 
+    // --- Real-world robustness: audit incomplete data and inappropriate arriving regimens ---
+    const dataAudit = auditCriticalData(patient);
+    clinicalAlerts.push(...dataAudit.alerts);
+    const implausibleValueAlerts = validatePhysiologicBounds(patient);
+    clinicalAlerts.push(...implausibleValueAlerts);
+    clinicalAlerts.push(...detectInappropriateRegimen(patient));
+
+    // Physiologically-impossible inputs are data-entry errors (unit confusion, transcription
+    // slips). Every downstream decision — phenotype, contraindications, projections — would be
+    // computed on garbage, so this is a hard stop, not a flag-and-proceed. (e.g. LVEF 99 would
+    // otherwise classify as HFpEF and drive a confident SGLT2i pathway off a typo.)
+    if (implausibleValueAlerts.length > 0) {
+        return { scoredRegimens: [], excludedMedications: [...patient.discontinued_meds], clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] };
+    }
+
+    // LVEF is the axis the entire phenotype/pathway selection turns on. Without it the tool
+    // cannot pick HFrEF vs HFmrEF vs HFpEF — fail safe with alerts only rather than guessing.
+    if (dataAudit.unknownLvef) {
+        return { scoredRegimens: [], excludedMedications: [...patient.discontinued_meds], clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] };
+    }
+
+    // Deterministic, guideline-anchored categorical outputs — independent of scoring.
+    const gdmtGaps = computeGdmtGaps(patient);
+    const missingDataNotices = buildMissingDataNotices(patient);
+
     if (patient.sbp <= patient.dbp) {
         clinicalAlerts.push(
             'INPUT ERROR: Systolic BP must be greater than diastolic BP (SBP > DBP). ' +
@@ -1998,11 +2406,38 @@ export function generateAndScoreModifications(
     const matchesReason = (dm: ExcludedMedication, keyword: string) =>
         `${dm.reason} ${dm.reason_detail ?? ''}`.toLowerCase().includes(keyword);
 
+    // Expanded, class-attributed intolerance recognition. Each intolerance is matched only
+    // against the drug class that plausibly caused it (prevents e.g. a beta-blocker's
+    // bradycardia from excluding a RAAS inhibitor). Reasons are free text, so we match on
+    // clinically meaningful keyword families.
+    const bbDiscontinued = excludedMeds.filter(m => m.drug_class === 'Beta Blocker');
+    const glp1Discontinued = excludedMeds.filter(m => m.drug_class === 'GLP-1 RA' || m.drug_class === 'GLP-1/GIP RA');
+
     const hasAngioedemaFromRaas = raasDiscontinued.some(dm => matchesReason(dm, 'angioedema'));
     const hasAngioedemaRisk = hasAngioedemaFromRaas || patient.comorbidities.has("History of Angioedema");
     const hasAceiCoughHistory = raasDiscontinued.some(dm => matchesReason(dm, 'cough'));
     const hasHyperkalemiaHistory = mraDiscontinued.some(dm => matchesReason(dm, 'hyperkalemia'));
     const hasGynecomastiaHistory = mraDiscontinued.some(dm => matchesReason(dm, 'gynecomastia'));
+
+    // Beta-blocker intolerance → defer NEW BB initiation (existing BB is still continued via
+    // current-regimen analysis). Bradycardia/AV block → defer all BB; bronchospasm → avoid the
+    // non-selective agent (carvedilol), β1-selective agents remain acceptable with caution.
+    const hasBbBradycardia = bbDiscontinued.some(dm => matchesReason(dm, 'bradycardia') || matchesReason(dm, 'av block') || matchesReason(dm, 'heart block'));
+    const hasBbBronchospasm = bbDiscontinued.some(dm => matchesReason(dm, 'bronchospasm') || matchesReason(dm, 'asthma') || matchesReason(dm, 'wheez'));
+    const hasGlp1GiIntolerance = glp1Discontinued.some(dm => matchesReason(dm, 'nausea') || matchesReason(dm, 'vomit') || matchesReason(dm, 'gastrointestinal') || matchesReason(dm, 'gi intolerance'));
+    const hasSulfaAllergy = [...patient.allergies].some(a => a.toLowerCase().includes('sulfa') || a.toLowerCase().includes('sulfonamide'));
+
+    const excludeBB = hasBbBradycardia;            // defer all NEW beta-blocker initiation
+    const excludeCarvedilol = hasBbBronchospasm;   // non-selective β; prefer β1-selective
+    const excludeGLP1 = hasGlp1GiIntolerance;
+
+    if (hasSulfaAllergy) {
+        clinicalAlerts.push('SULFA ALLERGY: Loop and thiazide diuretics are sulfonamide derivatives. Cross-reactivity is low but documented — monitor for rash/hypersensitivity. Ethacrynic acid is the sulfonamide-free loop alternative if a true reaction occurs.');
+    }
+    if (excludeBB) {
+        clinicalAlerts.push('BETA-BLOCKER INTOLERANCE: Prior bradycardia/AV block on a beta-blocker. New beta-blocker initiation is deferred; if a beta-blocker is essential, evaluate for pacing. An existing beta-blocker should be reduced, not abruptly stopped.');
+    }
+
     const excludeACEi = hasAngioedemaRisk || hasAceiCoughHistory;
     // H1 fix: ACEi angioedema cross-reactivity with ARBs is only ~2-8% (different mechanism).
     // ACC/AHA 2022: ARBs "can be used with caution" after ACEi angioedema.
@@ -2039,6 +2474,19 @@ export function generateAndScoreModifications(
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Cross-reactivity with prior MRA intolerance" });
             return false;
         }
+        if (m.drug_class === 'Beta Blocker' && excludeBB) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Prior beta-blocker intolerance (bradycardia / AV block) — new initiation deferred" });
+            excludedClasses.add(m.drug_class);
+            return false;
+        }
+        if (m.name === 'Carvedilol' && excludeCarvedilol) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Non-selective beta-blocker avoided after bronchospasm; prefer β1-selective (bisoprolol / metoprolol succinate)" });
+            return false;
+        }
+        if ((m.drug_class === 'GLP-1 RA' || m.drug_class === 'GLP-1/GIP RA') && excludeGLP1) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Prior GLP-1 GI intolerance" });
+            return false;
+        }
         if (m.drug_class === 'nsMRA' && hasHyperkalemiaHistory) {
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Hyperkalemia intolerance (applies to all MRA types)" });
             return false;
@@ -2070,6 +2518,11 @@ export function generateAndScoreModifications(
     // 3. Analyze current regimen
     const analysis = analyzeCurrentRegimen(patient, formulary, medTiers, allBBExcluded);
 
+    // Criteria-met adjuncts to surface regardless of whether they rank in the top picks —
+    // prevents a guideline-indicated add-on (e.g. A-HeFT H/ISDN, SHIFT ivabradine) from being
+    // silently absent just because the composite score favored other changes.
+    const eligibleAdjuncts = buildEligibleAdjuncts(analysis.addableAdjuncts);
+
     // 4. Generate candidate modifications
     const binders = medTiers.filter(r => r.med.drug_class === 'K+ Binder');
     const candidateSets = generateCandidateModifications(analysis, patient, binders);
@@ -2078,8 +2531,7 @@ export function generateAndScoreModifications(
     // H7: Binder rescue — prefer Patiromer, fallback to any available K+ binder (Lokelma)
     const rescueBinder = binders.find(b => b.med.name === 'Patiromer') || binders[0];
     const ivIron = medTiers.find(r => r.med.drug_class === 'IV Iron');
-    const ironDeficient = (patient.ferritin !== undefined && patient.ferritin < 100)
-        || (patient.tsat !== undefined && patient.tsat < 20);
+    const ironDeficient = isIronDeficient(patient);
     const results: ScoredRegimen[] = [];
 
     candidateSets.forEach(modSet => {
@@ -2155,13 +2607,17 @@ export function generateAndScoreModifications(
 
         const p = sim.projectedPatient;
 
-        const s_neuro = calculateNeurohormonalScore(p.nt_pro_bnp);
+        // Unknown baseline NT-proBNP → neutral 50, not a false 100 (it would otherwise
+        // read as "perfect neurohormonal status" simply because the field was blank).
+        const s_neuro = dataAudit.unknownBnp ? 50 : calculateNeurohormonalScore(p.nt_pro_bnp);
         const s_func = calculateFunctionalScore(p.nyha_class, p.kccq_score, p.daily_step_count);
         const s_vol = calculateVolumeScore(p.volume_status.dry_weight_kg, p.volume_status.current_weight_kg, p.volume_status.exam_findings, p.oxygen_saturation);
         const s_struc = calculateStructureScore(p.lvef, p.lvedd, p.lavi, patient.lvef, patient.lvedd, patient.lavi);
         const s_cost = calculateCostScore(sim.cost, patient.max_affordable_cost, patient.cost_sensitivity);
         const s_adhere = calculateAdherenceScore(sim.complexity, patient.complexity_tolerance);
         const s_guide = calculateGuidelineConcordanceScore(activeModSet.resulting_regimen, patient);
+        // Attach the evidence basis (recommendation class + trials) for the pillars present.
+        sim.rationale = [...sim.rationale, ...describeConcordance(activeModSet.resulting_regimen, patient)];
 
         // Weighted scoring: Clinical domains 60%, Patient factors 25%, Evidence 15%
         // Neuro 20% | Func 15% | Vol 15% | Struct 10% | Cost 15% | Adhere 10% | Guideline 15%
@@ -2190,27 +2646,50 @@ export function generateAndScoreModifications(
         if (p.pulse < 50) overall -= 50;
         if (p.potassium > 5.5) overall -= 50;
 
+        // "Binder Required" deliberately COUNTS here: a regimen that needs a rescue binder to
+        // stay under the K+ ceiling carries residual hyperkalemia risk. The binder enables the
+        // regimen to be considered (DIAMOND), but must not erase the risk in ranking — an
+        // otherwise-equal regimen that needs no rescue should score above one that does.
         const dangerousWarnings = sim.warnings.filter(w =>
-            !w.includes("Binder Required") && !w.includes("Elderly patient") &&
+            !w.includes("Elderly patient") &&
             !w.includes("Frail elderly") && !w.includes("Hepatic Impairment") &&
             !w.includes("Monitor: K+")
         );
         if (dangerousWarnings.length > 0) overall -= (dangerousWarnings.length * 10);
+
+        // Unknown baseline potassium: the projected-K+ hyperkalemia gate above is meaningless
+        // when K+ was never entered (it computes from a 0 baseline and always looks "safe").
+        // For any RAAS/MRA initiation or up-titration, apply an explicit caution penalty and
+        // a mandatory pre-initiation check — never let blank data clear the gate. (Placed after
+        // the dangerousWarnings penalty so the added warning is not double-counted.)
+        if (dataAudit.unknownPotassium) {
+            const initiatesRaasMra = activeModSet.modifications.some(m =>
+                (m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap') &&
+                m.target && (RAAS_CLASSES.has(m.target.med.drug_class) || m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
+            );
+            if (initiatesRaasMra) {
+                overall -= 15;
+                sim.warnings.push('POTASSIUM UNKNOWN: Baseline serum potassium was not entered. Obtain a BMP and confirm K+ ≤ 5.0 before initiating or up-titrating this RAAS inhibitor / MRA.');
+            }
+        }
+
+        const domainScores: DomainScores = {
+            neurohormonal: Math.round(s_neuro),
+            functional: Math.round(s_func),
+            volume: Math.round(s_vol),
+            structure: Math.round(s_struc),
+            cost: Math.round(s_cost),
+            adherence: Math.round(s_adhere),
+            guideline: Math.round(s_guide)
+        };
+        const hasMraInRegimen = activeModSet.resulting_regimen.some(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA');
 
         results.push({
             regimen: activeModSet.resulting_regimen,
             projected_patient: p,
             baseline_lvef: patient.lvef,
             overall_score: Math.round(Math.min(100, Math.max(0, overall))),
-            domain_scores: {
-                neurohormonal: Math.round(s_neuro),
-                functional: Math.round(s_func),
-                volume: Math.round(s_vol),
-                structure: Math.round(s_struc),
-                cost: Math.round(s_cost),
-                adherence: Math.round(s_adhere),
-                guideline: Math.round(s_guide)
-            },
+            domain_scores: domainScores,
             special_feature_bonus: Math.round(normalizedSFBonus),
             cost: sim.cost,
             complexity: sim.complexity,
@@ -2218,6 +2697,8 @@ export function generateAndScoreModifications(
             risks: [],
             warnings: sim.warnings,
             monitoring_plan: buildMonitoringPlan(patient, p, activeModSet),
+            qualitative_projections: buildQualitativeProjections(patient, p, hasMraInRegimen),
+            trade_offs: buildTradeOffLabels(domainScores),
             modification_set: activeModSet
         });
     });
@@ -2239,23 +2720,26 @@ export function generateAndScoreModifications(
         }));
     }
 
+    // Display-safety floors mirror the graduated score penalties: penalties begin at SBP < 95,
+    // K+ > 5.5, HR < 50; the more extreme floors below are hard display gates — a projected
+    // state past them is never shown, regardless of how well the regimen scores elsewhere.
     const displaySafeRegimens = outputRegimens.filter(r =>
-        r.projected_patient.sbp >= 85 && r.projected_patient.potassium <= 6.0
+        r.projected_patient.sbp >= 85 && r.projected_patient.potassium <= 6.0 && r.projected_patient.pulse >= 45
     );
     if (outputRegimens.length > 0 && displaySafeRegimens.length === 0) {
         clinicalAlerts.push(
-            'NO DISPLAY-SAFE REGIMEN: Candidate regimens projected severe hypotension (SBP < 85) or severe hyperkalemia (K+ > 6.0). ' +
+            'NO DISPLAY-SAFE REGIMEN: Candidate regimens projected severe hypotension (SBP < 85), severe hyperkalemia (K+ > 6.0), or severe bradycardia (HR < 45). ' +
             'Stabilize and reassess before oral intensification.'
         );
     }
     outputRegimens = displaySafeRegimens;
 
     const topPick = outputRegimens[0];
-    if (!topPick) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
+    if (!topPick) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [], gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar: [] };
 
     // S2: When hemodynamically unstable (SBP < 90), return alerts only — no oral GDMT.
     if (patient.sbp < 90) {
-        return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [] };
+        return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [], gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar: [] };
     }
 
     const distinctPicks: ScoredRegimen[] = [topPick];
@@ -2311,6 +2795,10 @@ export function generateAndScoreModifications(
         scoredRegimens: finalPicks,
         excludedMedications: excludedMeds,
         clinicalAlerts,
-        monitoringPlan: topPick.monitoring_plan || []
+        monitoringPlan: topPick.monitoring_plan || [],
+        gdmtGaps,
+        eligibleAdjuncts,
+        missingDataNotices,
+        followUpCalendar: buildFollowUpCalendar(topPick.modification_set)
     };
 }

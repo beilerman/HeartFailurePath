@@ -20,7 +20,10 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
             {/* Cardiac Structure */}
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <Label htmlFor="lvef">LVEF (%)</Label>
+                    <Label htmlFor="lvef">
+                        LVEF (%)
+                        <span className="ml-1.5 align-middle text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded uppercase tracking-wide">Required</span>
+                    </Label>
                     <Input type="number" name="lvef" value={patientData.lvef} onChange={onChange} error={validationErrors.lvef} />
                 </div>
                 <div>

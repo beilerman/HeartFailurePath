@@ -226,7 +226,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                     aria-busy={isLoading}
                     className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3.5 px-4 rounded-xl hover:shadow-lg transition-all disabled:opacity-50 text-base tracking-wide"
                 >
-                    {isLoading ? 'Running Simulation...' : hasValidationErrors ? 'Fix Errors to Run Analysis' : 'Run Analysis'}
+                    {isLoading ? 'Running Analysis...' : hasValidationErrors ? 'Fix Errors to Run Analysis' : 'Run Analysis'}
                 </button>
             </div>
         </div>

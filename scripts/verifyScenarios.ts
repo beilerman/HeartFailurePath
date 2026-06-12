@@ -74,7 +74,17 @@ const ASSERTION_TITLE_MARKERS = [
     'Furoscix Allergy Guardrail',
     'ARNI Hepatic CI',
     'MRA + DIAMOND Binder',
-    'HFpEF Steroidal MRA Eligible'
+    'HFpEF Steroidal MRA Eligible',
+    'Incomplete Data: Missing Potassium',
+    'Incomplete Data: Missing LVEF',
+    'Inappropriate Dual RAAS on Arrival',
+    'Inappropriate Non-DHP CCB in HFrEF',
+    'BB Intolerance Defer New Initiation',
+    'Sulfa Allergy Diuretic Caution',
+    'Inappropriate Dual MRA on Arrival',
+    'Decompensated HFrEF + Contraindicated BB',
+    'Implausible Lab Value',
+    'Mild Asthma BB Selection'
 ];
 
 async function runVerification() {
@@ -176,6 +186,18 @@ async function runVerification() {
             }
             if (scoredRegimens.some(r => r.projected_patient.potassium > 6.0)) {
                 failures.push('Displayed regimen projects K+ > 6.0');
+                scenarioPassed = false;
+            }
+            if (scoredRegimens.some(r => r.projected_patient.pulse < 45)) {
+                failures.push('Displayed regimen projects HR < 45 (severe bradycardia)');
+                scenarioPassed = false;
+            }
+
+            // Global hard-gate invariant: a confirmed PDE5 inhibitor exposure must never co-display
+            // with a nitrate (absolute contraindication — fatal hypotension), in ANY scenario.
+            const pde5Exposure = externalMeds.has('Sildenafil') || externalMeds.has('Tadalafil');
+            if (pde5Exposure && scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Vasodilator'))) {
+                failures.push('Nitrate displayed to a patient with confirmed PDE5 inhibitor exposure');
                 scenarioPassed = false;
             }
 
@@ -377,21 +399,33 @@ async function runVerification() {
                 }
             }
 
+            // ADVERSARIAL: nitrate + PDE5i is an absolute CI (fatal hypotension) — must be a hard
+            // gate, not a displayed regimen with a warning attached.
             if (scenario.title.includes('Nitrate + PDE5 Exposure')) {
                 const nitrateRegimens = scoredRegimens.filter(r =>
                     r.regimen.some(m => m.med.drug_class === 'Vasodilator')
                 );
-                if (nitrateRegimens.length === 0) {
-                    failures.push('Expected at least one nitrate-containing regimen in PDE5 exposure scenario');
+                if (nitrateRegimens.length > 0) {
+                    failures.push('Nitrate-containing regimen DISPLAYED despite PDE5 inhibitor exposure (absolute contraindication)');
                     scenarioPassed = false;
-                } else {
-                    const missingWarning = nitrateRegimens.some(r =>
-                        !r.warnings.some(w => w.includes('PDE5') || w.toLowerCase().includes('sildenafil/tadalafil'))
-                    );
-                    if (missingWarning) {
-                        failures.push('Nitrate regimen missing explicit PDE5 interaction warning');
-                        scenarioPassed = false;
-                    }
+                }
+                const nitrateExcluded = excludedMedications.some(e => e.name === 'Hydralazine/Isosorbide Dinitrate');
+                if (!nitrateExcluded) {
+                    failures.push('H/ISDN not present in excludedMedications despite PDE5 inhibitor exposure');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.includes('INAPPROPRIATE THERAPY') && a.includes('PDE5'))) {
+                    failures.push('Missing INAPPROPRIATE THERAPY deprescribe alert for arriving nitrate + PDE5i combination');
+                    scenarioPassed = false;
+                }
+                const nitrateForcedRemoval = scoredRegimens.length > 0 && scoredRegimens.every(r =>
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        m.action === 'remove' && m.source?.med.drug_class === 'Vasodilator'
+                    )
+                );
+                if (!nitrateForcedRemoval) {
+                    failures.push('Current H/ISDN not force-removed from every candidate regimen');
+                    scenarioPassed = false;
                 }
             }
 
@@ -1215,6 +1249,165 @@ async function runVerification() {
                 // SGLT2i should still be in top regimen (primary HFpEF pillar)
                 if (topRegimen && !topRegimen.regimen.some(m => m.med.drug_class === 'SGLT2i')) {
                     failures.push('SGLT2i missing in top regimen for HFpEF');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 70. Missing potassium -> data-required alert + RAAS/MRA initiation flagged for pre-init BMP
+            if (scenario.title.includes('Incomplete Data: Missing Potassium')) {
+                if (!clinicalAlerts.some(a => a.includes('DATA REQUIRED') && a.toLowerCase().includes('potassium'))) {
+                    failures.push('Missing potassium: no DATA REQUIRED alert for unentered serum potassium');
+                    scenarioPassed = false;
+                }
+                const raasMraRegimens = scoredRegimens.filter(r =>
+                    r.regimen.some(m => RAAS_CLASSES.has(m.med.drug_class) || m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA')
+                );
+                const newRaasMra = raasMraRegimens.filter(r =>
+                    r.warnings.some(w => w.includes('POTASSIUM UNKNOWN'))
+                );
+                if (raasMraRegimens.length > 0 && newRaasMra.length === 0) {
+                    failures.push('Missing potassium: RAAS/MRA-containing regimen lacks POTASSIUM UNKNOWN pre-initiation warning');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 71. Missing LVEF -> fail safe (no recs) with phenotype-unknown alert
+            if (scenario.title.includes('Incomplete Data: Missing LVEF')) {
+                if (scoredRegimens.length > 0) {
+                    failures.push('Missing LVEF: regimens generated despite undeterminable phenotype');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.includes('DATA REQUIRED') && a.includes('LVEF'))) {
+                    failures.push('Missing LVEF: no DATA REQUIRED alert for unentered LVEF');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 72. Dual RAAS on arrival -> deprescribe alert AND a corrected (single-RAAS) regimen
+            if (scenario.title.includes('Inappropriate Dual RAAS on Arrival')) {
+                if (!clinicalAlerts.some(a => a.includes('INAPPROPRIATE REGIMEN') && a.includes('dual RAAS'))) {
+                    failures.push('Dual RAAS arrival: no INAPPROPRIATE REGIMEN deprescribe alert');
+                    scenarioPassed = false;
+                }
+                // The engine must now synthesize a correction, not just alert: produce regimen(s)
+                if (scoredRegimens.length === 0) {
+                    failures.push('Dual RAAS arrival: no corrected regimen produced (should deprescribe the redundant agent and recommend)');
+                    scenarioPassed = false;
+                }
+                // The redundant ARB (Valsartan, lower preference than the ACEi) must be removed from every output
+                if (scoredRegimens.some(r => r.regimen.some(m => m.med.name === 'Valsartan'))) {
+                    failures.push('Dual RAAS arrival: redundant ARB (Valsartan) retained in a recommended regimen');
+                    scenarioPassed = false;
+                }
+                // Every output regimen must keep exactly one RAAS agent (global invariant covers >1; ensure ≥1 present somewhere)
+                if (topRegimen && topRegimen.regimen.filter(m => RAAS_CLASSES.has(m.med.drug_class)).length !== 1) {
+                    failures.push('Dual RAAS arrival: top regimen does not retain exactly one RAAS agent');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 73. Non-DHP CCB in HFrEF -> harm alert
+            if (scenario.title.includes('Inappropriate Non-DHP CCB in HFrEF')) {
+                if (!clinicalAlerts.some(a => a.includes('INAPPROPRIATE THERAPY') && a.includes('Non-dihydropyridine'))) {
+                    failures.push('Non-DHP CCB in HFrEF: no harm alert generated');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 74. BB intolerance (bradycardia/AV block) -> no NEW beta-blocker offered + alert
+            if (scenario.title.includes('BB Intolerance Defer New Initiation')) {
+                if (anyRegimenHasClass('Beta Blocker')) {
+                    failures.push('BB intolerance: a beta-blocker was offered despite prior bradycardia/AV block');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.includes('BETA-BLOCKER INTOLERANCE'))) {
+                    failures.push('BB intolerance: no BETA-BLOCKER INTOLERANCE alert');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 75. Sulfa allergy -> diuretic cross-reactivity caution alert
+            if (scenario.title.includes('Sulfa Allergy Diuretic Caution')) {
+                if (!clinicalAlerts.some(a => a.includes('SULFA ALLERGY'))) {
+                    failures.push('Sulfa allergy: no diuretic cross-reactivity caution alert');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 76. Dual MRA on arrival -> deprescribe alert + corrected regimen keeping a single MRA (steroidal)
+            if (scenario.title.includes('Inappropriate Dual MRA on Arrival')) {
+                if (!clinicalAlerts.some(a => a.includes('INAPPROPRIATE REGIMEN') && a.includes('more than one MRA'))) {
+                    failures.push('Dual MRA arrival: no INAPPROPRIATE REGIMEN deprescribe alert');
+                    scenarioPassed = false;
+                }
+                if (scoredRegimens.length === 0) {
+                    failures.push('Dual MRA arrival: no corrected regimen produced');
+                    scenarioPassed = false;
+                }
+                // nsMRA (Finerenone) must be deprescribed; steroidal MRA retained
+                if (scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'nsMRA'))) {
+                    failures.push('Dual MRA arrival: nsMRA (Finerenone) retained instead of deprescribed');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 77. RED-TEAM: decompensated HFrEF + contraindicated BB -> still produce a regimen, BB removed + taper guidance
+            if (scenario.title.includes('Decompensated HFrEF + Contraindicated BB')) {
+                if (scoredRegimens.length === 0) {
+                    failures.push('Decompensated + contraindicated BB: zero regimens (silent blank / under-treatment)');
+                    scenarioPassed = false;
+                }
+                if (anyRegimenHasClass('Beta Blocker')) {
+                    failures.push('Decompensated + contraindicated BB: a contraindicated beta-blocker is still in a regimen');
+                    scenarioPassed = false;
+                }
+                const taperWarned = scoredRegimens.some(r => r.warnings.some(w => w.includes('BETA-BLOCKER DISCONTINUATION') || /taper/i.test(w)));
+                if (scoredRegimens.length > 0 && !taperWarned) {
+                    failures.push('Decompensated + contraindicated BB: removal lacks taper guidance (abrupt withdrawal = Class III harm)');
+                    scenarioPassed = false;
+                }
+                // Coherence: no regimen should both titrate and remove the same beta-blocker
+                const incoherent = scoredRegimens.some(r => {
+                    const mods = r.modification_set?.modifications ?? [];
+                    return mods.some(m => m.action === 'remove' && m.source?.med.drug_class === 'Beta Blocker'
+                        && mods.some(n => (n.action === 'titrate_down' || n.action === 'titrate_up') && n.source?.med.name === m.source?.med.name));
+                });
+                if (incoherent) {
+                    failures.push('Decompensated + contraindicated BB: incoherent mod list (same BB titrated AND removed)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 78. RED-TEAM: physiologically impossible input value -> flagged for verification
+            if (scenario.title.includes('Implausible Lab Value')) {
+                if (!clinicalAlerts.some(a => a.includes('IMPLAUSIBLE VALUE'))) {
+                    failures.push('Implausible value: no IMPLAUSIBLE VALUE verification alert generated');
+                    scenarioPassed = false;
+                }
+                // ADVERSARIAL: impossible inputs must HARD-STOP, not flag-and-recommend —
+                // LVEF 99 would otherwise classify as HFpEF and drive recommendations off a typo.
+                if (scoredRegimens.length > 0) {
+                    failures.push('Implausible value: recommendations generated on physiologically impossible input');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 79. Mild asthma -> carvedilol excluded; β1-selective BB available (not all BBs lost)
+            if (scenario.title.includes('Mild Asthma BB Selection')) {
+                if (anyRegimenHasMed('Carvedilol')) {
+                    failures.push('Mild asthma: non-selective Carvedilol offered (should use β1-selective)');
+                    scenarioPassed = false;
+                }
+                const carvedilolExcluded = excludedMedications.some(e => e.name === 'Carvedilol');
+                if (!carvedilolExcluded) {
+                    failures.push('Mild asthma: Carvedilol not excluded');
+                    scenarioPassed = false;
+                }
+                // A β1-selective BB must remain available (pillar not lost): offered or eligible
+                const selectiveAvailable = anyRegimenHasMed('Bisoprolol') || anyRegimenHasMed('Metoprolol Succinate')
+                    || !excludedMedications.some(e => e.name === 'Bisoprolol');
+                if (!selectiveAvailable) {
+                    failures.push('Mild asthma: all beta-blockers lost — β1-selective should remain available');
                     scenarioPassed = false;
                 }
             }

@@ -1608,7 +1608,7 @@ export const SCENARIOS: TestScenario[] = [
         }
     },
     {
-        title: 'Nitrate + PDE5 Exposure (Fatal DDI Warning)',
+        title: 'Nitrate + PDE5 Exposure (Hard Exclusion)',
         patient: {
             ...INITIAL_PATIENT,
             race: 'Black',
@@ -2053,6 +2053,127 @@ export const SCENARIOS: TestScenario[] = [
             insurance_tier: 'medicare',
             complexity_tolerance: 6,
             max_new_classes_per_visit: 2
+        }
+    },
+    // --- Real-world robustness: incomplete data, inappropriate regimens, intolerances ---
+    {
+        // De-novo HFrEF with potassium field left blank (0) — labs pending. Engine must NOT
+        // treat unknown K+ as safe when INITIATING an MRA/RAAS — it should alert and flag the
+        // new-initiation regimen for a pre-init BMP.
+        title: 'Incomplete Data: Missing Potassium (K+ Not Entered)',
+        patient: {
+            ...INITIAL_PATIENT,
+            potassium: 0, // not entered
+            egfr: 60,
+            creatinine: 1.0,
+            current_regimen: [] // de-novo: every candidate initiates RAAS/MRA
+        }
+    },
+    {
+        // LVEF left blank (0). Phenotype is undeterminable → fail safe (alerts only, no recs).
+        title: 'Incomplete Data: Missing LVEF (Phenotype Unknown)',
+        patient: {
+            ...INITIAL_PATIENT,
+            lvef: 0, // not entered
+        }
+    },
+    {
+        // Patient arrives on ACEi + ARB (dual RAAS) — must be flagged for deprescribing.
+        title: 'Inappropriate Dual RAAS on Arrival (ACEi + ARB)',
+        patient: {
+            ...INITIAL_PATIENT,
+            current_regimen: buildCurrentRegimen([
+                { name: 'Lisinopril', strength: 10, freq: 'qd' },
+                { name: 'Valsartan', strength: 80, freq: 'bid' },
+                { name: 'Carvedilol', strength: 25, freq: 'bid' }
+            ])
+        }
+    },
+    {
+        // Non-DHP CCB (verapamil) in HFrEF — negative inotrope, Class III harm.
+        title: 'Inappropriate Non-DHP CCB in HFrEF (Verapamil)',
+        patient: {
+            ...INITIAL_PATIENT,
+            lvef: 25,
+            external_medications: new Set<string>(['Verapamil'])
+        }
+    },
+    {
+        // Documented beta-blocker intolerance (bradycardia/AV block). New BB initiation deferred.
+        title: 'BB Intolerance Defer New Initiation',
+        patient: {
+            ...INITIAL_PATIENT,
+            pulse: 58,
+            current_regimen: buildCurrentRegimen([
+                { name: 'Lisinopril', strength: 10, freq: 'qd' },
+                { name: 'Furosemide', strength: 40, freq: 'qd' }
+            ]),
+            discontinued_meds: [
+                { name: 'Carvedilol', drug_class: 'Beta Blocker', reason: 'Symptomatic bradycardia and AV block' }
+            ]
+        }
+    },
+    {
+        // Sulfa allergy — loop/thiazide diuretics are sulfonamides; surface cross-reactivity note.
+        title: 'Sulfa Allergy Diuretic Caution',
+        patient: {
+            ...INITIAL_PATIENT,
+            allergies: new Set<string>(['Sulfa'])
+        }
+    },
+    {
+        // RED-TEAM REGRESSION: decompensated HFrEF (forces BB dose reduction) whose beta-blocker is
+        // ALSO contraindicated (new severe asthma). Removal must satisfy the forced-reduction rule —
+        // the patient must still get a regimen (not a silent blank), with taper guidance and no BB.
+        title: 'Decompensated HFrEF + Contraindicated BB (Asthma)',
+        patient: {
+            ...INITIAL_PATIENT,
+            lvef: 28,
+            nyha_class: 'III' as const,
+            volume_status: { dry_weight_kg: 70, current_weight_kg: 73.5, exam_findings: new Set(['Edema (2+)', 'JVP Elevated', 'Orthopnea']) },
+            comorbidities: new Set(['HFrEF', 'Severe Asthma / Bronchospasm']),
+            current_regimen: buildCurrentRegimen([
+                { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' },
+                { name: 'Furosemide', strength: 40, freq: 'qd' }
+            ])
+        }
+    },
+    {
+        // RED-TEAM REGRESSION: data-entry error (LVEF 99% is physiologically impossible) must be flagged.
+        title: 'Implausible Lab Value (LVEF 99)',
+        patient: {
+            ...INITIAL_PATIENT,
+            lvef: 99
+        }
+    },
+    {
+        // Mild/moderate asthma: non-selective carvedilol excluded, β1-selective BB available with caution.
+        title: 'Mild Asthma BB Selection (Beta-1 Selective)',
+        patient: {
+            ...INITIAL_PATIENT,
+            lvef: 30,
+            pulse: 75,
+            comorbidities: new Set(['HFrEF', 'Asthma (Mild/Moderate)']),
+            current_regimen: []
+        }
+    },
+    {
+        // HFmrEF patient arrives on dual MRA (steroidal + finerenone) — keep steroidal, deprescribe nsMRA.
+        title: 'Inappropriate Dual MRA on Arrival (Steroidal + nsMRA)',
+        patient: {
+            ...INITIAL_PATIENT,
+            lvef: 45, // HFmrEF — both MRA types are otherwise permissible, so this is true redundancy
+            nyha_class: 'II' as const,
+            nt_pro_bnp: 1200,
+            potassium: 4.6,
+            egfr: 55,
+            comorbidities: new Set(['HFmrEF']),
+            current_regimen: buildCurrentRegimen([
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Finerenone (Kerendia)', strength: 10, freq: 'qd' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' }
+            ])
         }
     },
 ];

@@ -95,11 +95,16 @@ Implemented high-priority safeguards include:
 - Input validity:
   - SBP must be greater than DBP
   - duplicate current medications are removed with safety alert
+  - physiologically impossible values (LVEF > 80, K+ > 8, etc.) hard-stop: alerts only, no recommendations
 - Hemodynamic safety:
   - `SBP < 90` returns alerts only (no regimen output)
   - projected `SBP < 85` excluded from display
+  - projected `HR < 45` excluded from display
 - Electrolyte safety:
   - projected `K+ > 6.0` excluded from display
+  - K+ binder rescue counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
+- Drug-interaction hard gates:
+  - nitrate (H/ISDN) is contraindicated with confirmed PDE5 inhibitor exposure (Sildenafil/Tadalafil in external medications) — excluded from formulary and force-removed from arriving regimens
 - Pregnancy safety:
   - excludes RAAS classes, MRAs/nsMRA, and SGLT2i
 - Acute decompensation handling:
@@ -151,7 +156,7 @@ Major class groups include RAAS, beta blockers, MRAs/nsMRA, SGLT2i, loop/thiazid
 
 Current regression scope:
 
-- 71 scenarios
+- 81 scenarios
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations

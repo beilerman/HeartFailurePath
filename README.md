@@ -51,9 +51,12 @@ Weighted overall score:
 ### 4) Hard safety gates and output filters
 
 - Input hard stop: `SBP < 90` -> no regimen output, alerts only.
-- Display safety filter: excludes regimens with projected `SBP < 85` or `K+ > 6.0`.
+- Input hard stop: physiologically impossible values (e.g. `LVEF > 80`, `K+ > 8`) -> verification alerts only, no recommendations computed on suspect data.
+- Display safety filter: excludes regimens with projected `SBP < 85`, `K+ > 6.0`, or `HR < 45`.
 - Pregnancy exclusions: RAAS classes, steroidal/non-steroidal MRAs, and SGLT2 inhibitors are excluded.
+- Nitrate + PDE5 inhibitor exposure: H/ISDN is hard-excluded from the formulary and force-removed from an arriving regimen (absolute contraindication — fatal hypotension risk).
 - Acute decompensation handling: blocks beta-blocker initiation and forces down-titration logic for existing beta-blockers.
+- K+ binder rescue carries a residual-risk score penalty: rescue enables consideration (DIAMOND) but never erases the underlying hyperkalemia risk in ranking.
 
 ### 5) Furoscix implementation
 
@@ -69,7 +72,7 @@ Weighted overall score:
 
 Clinical logic is guarded by scenario-based assertions in `scripts/verifyScenarios.ts`.
 
-- Current scenario set: `71`
+- Current scenario set: `81`
 - CI command: `npm run ci`
 - Verification command: `npm run verify`
 
@@ -78,7 +81,9 @@ Global invariants covered include:
 - no dual RAAS overlap
 - no dual MRA overlap
 - score bounds stay within `0-100`
-- display safety floors are respected
+- display safety floors are respected (projected SBP, K+, and HR)
+- no nitrate is ever displayed alongside confirmed PDE5 inhibitor exposure
+- implausible inputs hard-stop recommendation generation
 - duplicate medications are removed
 - key DDI warnings are present when high-risk combinations exist
 

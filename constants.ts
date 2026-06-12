@@ -29,6 +29,8 @@ export const RELEVANT_COMORBIDITIES = [
     "Prior DKA / Euglycemic DKA",
     "Chronic Kidney Disease",
     "Severe Asthma / Bronchospasm",
+    "Asthma (Mild/Moderate)",
+    "COPD",
     "Gout",
     "History of Angioedema",
     "Medullary Thyroid Carcinoma",
@@ -339,6 +341,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             p.rhythm === '2nd Degree AV Block' ||
             p.rhythm === '3rd Degree AV Block' ||
             p.comorbidities.has("Severe Asthma / Bronchospasm") ||
+            p.comorbidities.has("Asthma (Mild/Moderate)") || // Non-selective β: avoid in ANY asthma; use β1-selective instead
             p.comorbidities.has("Liver Disease (Child-Pugh B/C)"),
         // COPERNICUS: 50mg BID target only for patients > 85kg; standard target is 25mg BID
         renal_adjustment: (_egfr, patient) => {
@@ -412,9 +415,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
             p.rhythm === '2nd Degree AV Block' ||
             p.rhythm === '3rd Degree AV Block' ||
             p.comorbidities.has("Severe Asthma / Bronchospasm"), // All BBs CI in severe asthma (ACC/AHA); cardioselectivity lost at higher doses
-        // Most beta-1 selective — preferred BB in COPD (NOT asthma, which remains an absolute CI)
+        // Most beta-1 selective — preferred BB in COPD and mild/moderate asthma (SEVERE asthma remains an absolute CI for all BBs)
         special_features: [
-            { feature: 'Preferred in COPD (most beta-1 selective)', points: 10, criteria: (p) => p.comorbidities.has("COPD") }
+            { feature: 'Preferred in COPD / mild-moderate asthma (most beta-1 selective)', points: 10, criteria: (p) => p.comorbidities.has("COPD") || p.comorbidities.has("Asthma (Mild/Moderate)") }
         ],
     },
 
@@ -866,6 +869,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
             };
         },
         hemodynamic_effects: () => ({ sbp_drop: 10, hr_drop: 0, potassium_change: 0 }),
+        contraindications: (p) => {
+            // Absolute CI: nitrate + PDE5 inhibitor → profound/potentially fatal hypotension (FDA label).
+            // Confirmed exposure is a hard gate; suspected exposure (pulmonary HTN without a
+            // documented PDE5i) remains a caution warning in the engine.
+            const ext = p.external_medications || new Set<string>();
+            return ext.has('Sildenafil') || ext.has('Tadalafil');
+        },
         special_features: [
             { feature: 'Significant benefit in African American patients (A-HeFT)', points: 30, criteria: (p) => p.race === 'Black' || p.race === 'African American' }
         ],
