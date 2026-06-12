@@ -59,7 +59,8 @@ const safetyChecks = [
     'Vericiguat requires NYHA II-IV, NT-proBNP >= 1600, LVEF < 45, and recent worsening HF context.',
     'GLP-1 therapy is restricted to obesity phenotype with LVEF >= 40 and is not used for HFrEF/HFimpEF pathways.',
     'Dual RAAS and dual MRA combinations are structurally blocked.',
-    'Monitoring plans are auto-generated for high-risk RAAS/MRA/diuretic/SGLT2i intensification.'
+    'Monitoring plans are auto-generated for high-risk RAAS/MRA/diuretic/SGLT2i intensification.',
+    'GDMT-completeness ranking: among safe options, the regimen closing the most indicated, achievable therapies (pillars + eligible disease-modifying adjuncts such as GLP-1 in obesity) ranks first — the tool favors complete guideline therapy over the smallest change. Safety gates still override.'
 ];
 
 const evidenceRows = [

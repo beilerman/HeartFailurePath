@@ -2,6 +2,42 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### Softness audit + aggressiveness fixes (2026-06-12) — still 81 scenarios
+User flagged the engine as too "soft" (e.g. obese patients not recommended GLP-1 even with
+unlimited budget). Ran an unconstrained audit (budget 999999, maxNew 4, tol 10, cost_sens 0)
+across all scenarios comparing indicated vs displayed therapies. Three real mechanisms found
+and fixed:
+1. **Composite rewarded SMALLER regimens.** Guideline domain (15% × 20 ≈ +3/pillar) was
+   out-weighed by cost/adherence penalties, so partial regimens out-ranked complete ones and
+   the 3-slot display dropped the rest. FIX: **GDMT completeness bonus** (`COMPLETENESS_MAX=30`,
+   in scoring loop) = `30 × (achievable indicated therapies present / achievable total)`. Slots =
+   phenotype pillars (HFrEF: RAAS/BB/MRA/SGLT2i; HFpEF: SGLT2i + MRA) PLUS eligible
+   disease-modifying adjuncts derived from `analysis.addableAdjuncts` ∩ {If Inhibitor, sGC
+   Stimulator, Vasodilator, GLP-1, IV Iron} (symptomatic loop/thiazide/digoxin excluded).
+   "Achievable" = a non-excluded formulary med exists (never penalize for a contraindicated
+   therapy). Applied BEFORE the SBP/K+ penalties so safety still disqualifies. Stored as
+   `gdmt_completeness` (0-1) on ScoredRegimen.
+2. **Projected-SBP ranking penalty too punitive.** Was <90→−60, <95→−30 — made hemodynamically
+   inert Digoxin out-rank SGLT2i for de-novo patients near SBP 100 (SGLT2i nudged projSBP to 94
+   → −30). FIX: recalibrated to <90→−25, <95→−8 (COPERNICUS ≥85, PIONEER-HF ≥100; projected SBP
+   is already the conservative pre-compensation value; hard gates input<90/display<85 unchanged).
+3. **Display top-3 dropped complete/important options via 100-cap compression.** FIX:
+   completeness-aware ranking `byScoreThenCompleteness` = overall_score, then `gdmt_completeness`,
+   then UNCAPPED `raw_score` (preserves evidence/SF differentiation the cap erased). Cost is NOT
+   a tiebreaker (must not override evidence). `raw_score` stored on ScoredRegimen.
+Also fixed: **H/ISDN was wrongly offered to HFpEF** (the "no RAAS" branch fired for de-novo HFpEF
+since RAAS isn't a HFpEF pillar) — now gated to `!isHFpEF` (A-HeFT is HFrEF-only); this freed the
+display slot so GLP-1 surfaces for obese HFpEF (#3 = Dapa+Tirzepatide).
+Results: warm de-novo HFrEF → SGLT2i leads (was Digoxin); obese HFpEF → GLP-1 surfaced; HFmrEF
+→ SGLT2i no longer dropped. Remaining audit "findings" are all clinically correct: BB deferred
+in congestion (don't initiate until decongested), SGLT2i deferred when volume-depleted, GLP-1
+behind 4 pillars in HFmrEF (in adjunct list). **Finerenone-in-HFpEF assertion CORRECTED** (not
+weakened): both finerenone (FINEARTS) and steroidal MRA (TOPCAT) are Class IIb HFpEF adjuncts, so
+the test now requires nsMRA be eligible + surfaced (regimen or adjunct list), not strictly
+out-rank steroidal — they tie within 0.1 raw because both SF bonuses hit the +15 normalization cap.
+KNOWN LIMITATION: the SF normalization cap (+15) flattens finerenone (SF45) vs spironolactone
+(SF18) — finerenone can't win on raw score; relies on generation order / surfacing.
+
 ### Decompensation under-treatment fix — warm vs cold (2026-06-12) — still 81 scenarios
 A standard-of-care audit found the engine was NOT aggressive enough for the DEFAULT patient
 (John Doe, LVEF 25 NYHA III, on RAAS+BB+loop, missing MRA+SGLT2i): the sole recommendation was

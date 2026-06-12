@@ -48,6 +48,13 @@ Weighted overall score:
 - Adherence `10%`
 - Guideline concordance `15%`
 
+Plus a **GDMT-completeness bonus** (up to +30) proportional to the share of indicated, achievable
+therapies present (phenotype pillars + eligible disease-modifying adjuncts such as GLP-1 in
+obesity). This makes the engine favor complete guideline therapy over the smallest safe change.
+It is applied before the hemodynamic/electrolyte penalties, so safety gates still override.
+Displayed options are ranked by score, then completeness, then uncapped raw score (cost is not a
+tiebreaker — it must not override an evidence-based preference).
+
 ### 4) Hard safety gates and output filters
 
 - Input hard stop: `SBP < 90` -> no regimen output, alerts only.

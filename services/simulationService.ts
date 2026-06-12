@@ -726,8 +726,12 @@ function analyzeCurrentRegimen(
     const hasRAASInCurrent = currentClasses.has('ARNI') || currentClasses.has('ACEi') || currentClasses.has('ARB');
     const hasBBInCurrent = currentClasses.has('Beta Blocker');
 
-    // H/ISDN: Black + NYHA III-IV (A-HeFT), or no RAAS
-    if ((isBlack && isNyhaIIIorIV) || !hasRAASInCurrent) {
+    // H/ISDN: A-HeFT evidence is HFrEF-only — offer ONLY in reduced-EF phenotypes, never HFpEF.
+    // Within reduced EF: Black + NYHA III-IV (A-HeFT Class I), or as a RAAS alternative when the
+    // patient is not on a RAAS inhibitor. (Previously the "no RAAS" branch fired for de-novo HFpEF
+    // patients too, since RAAS is not an HFpEF pillar — wrongly surfacing H/ISDN and crowding out
+    // genuinely indicated HFpEF adjuncts such as GLP-1.)
+    if (!isHFpEF && ((isBlack && isNyhaIIIorIV) || !hasRAASInCurrent)) {
         const hidralazineTiers = medTiers.filter(r => r.med.drug_class === 'Vasodilator');
         if (hidralazineTiers.length > 0 && !currentClasses.has('Vasodilator')) {
             addableAdjuncts.push(hidralazineTiers[0]);
@@ -2579,6 +2583,56 @@ export function generateAndScoreModifications(
     const ironDeficient = isIronDeficient(patient);
     const results: ScoredRegimen[] = [];
 
+    // --- GDMT completeness target -------------------------------------------------------
+    // Standard of care is COMPLETE guideline therapy, rapidly sequenced — not the smallest
+    // safe change. The weighted domains alone under-reward each added pillar (guideline 15% ×
+    // 20 pts ≈ +3) while cost/adherence immediately penalize the extra drug, so partial
+    // regimens out-rank complete ones and the 3-slot display drops the rest. This bonus rewards
+    // each INDICATED, ACHIEVABLE therapy actually present, proportionally, with enough weight
+    // that the complete safe regimen leads. "Achievable" excludes therapies the patient cannot
+    // take (already filtered out of `formulary`), so a patient is never penalized for a
+    // contraindicated pillar. It is applied BEFORE the hemodynamic/electrolyte penalties below,
+    // so an unsafe projection still disqualifies the regimen regardless of completeness.
+    const COMPLETENESS_MAX = 30;
+    const phenotype = classifyPhenotype(patient);
+    const isReducedPhenotype = phenotype === 'HFrEF' || phenotype === 'HFmrEF';
+
+    interface GdmtSlot { match: (cls: string) => boolean; }
+    const completenessSlots: GdmtSlot[] = [];
+    if (isReducedPhenotype) {
+        completenessSlots.push(
+            { match: (c) => RAAS_CLASSES.has(c) },
+            { match: (c) => c === 'Beta Blocker' },
+            { match: (c) => c === 'MRA' || c === 'nsMRA' },
+            { match: (c) => c === 'SGLT2i' }
+        );
+    } else { // HFpEF
+        completenessSlots.push(
+            { match: (c) => c === 'SGLT2i' },
+            { match: (c) => c === 'MRA' || c === 'nsMRA' } // TOPCAT / FINEARTS-HF adjunct
+        );
+    }
+    // Eligible DISEASE-MODIFYING adjuncts also count toward completeness, sourced from the engine's
+    // own eligibility (analysis.addableAdjuncts) so criteria (HR/rhythm for ivabradine, NT-proBNP +
+    // worsening for vericiguat, BMI/EF for GLP-1, A-HeFT for H/ISDN, iron studies for IV iron) stay
+    // in ONE place. Symptomatic-only adjuncts (loop/thiazide diuretics, digoxin) are excluded — they
+    // are not guideline "completeness." Without this, adding an indicated adjunct earned no
+    // completeness credit, so the bare pillar regimen out-ranked it and the adjunct fell out of the
+    // 3-slot display (e.g. ivabradine in a SHIFT candidate, vericiguat in a VICTORIA candidate).
+    const ADJUNCT_COMPLETENESS_CLASSES = new Set(['If Inhibitor', 'sGC Stimulator', 'Vasodilator', 'GLP-1 RA', 'GLP-1/GIP RA', 'IV Iron']);
+    const eligibleAdjunctClasses = new Set<string>();
+    analysis.addableAdjuncts.forEach(a => { if (ADJUNCT_COMPLETENESS_CLASSES.has(a.med.drug_class)) eligibleAdjunctClasses.add(a.med.drug_class); });
+    (patient.current_regimen ?? []).forEach(r => { if (ADJUNCT_COMPLETENESS_CLASSES.has(r.med.drug_class)) eligibleAdjunctClasses.add(r.med.drug_class); });
+    // GLP-1 RA and GLP-1/GIP RA are one therapeutic slot (either agent satisfies it).
+    const hasGlp1Slot = [...eligibleAdjunctClasses].some(c => c === 'GLP-1 RA' || c === 'GLP-1/GIP RA');
+    eligibleAdjunctClasses.delete('GLP-1 RA');
+    eligibleAdjunctClasses.delete('GLP-1/GIP RA');
+    if (hasGlp1Slot) completenessSlots.push({ match: (c) => c === 'GLP-1 RA' || c === 'GLP-1/GIP RA' });
+    eligibleAdjunctClasses.forEach(cls => completenessSlots.push({ match: (c) => c === cls }));
+
+    // Keep only slots the patient can actually attain (a non-excluded formulary med exists).
+    const achievableSlots = completenessSlots.filter(s => formulary.some(m => s.match(m.drug_class)));
+
     candidateSets.forEach(modSet => {
         const requiresDiureticFirst = isVolumeDepleted && hasDiureticInCurrent;
         if (requiresDiureticFirst) {
@@ -2676,18 +2730,35 @@ export function generateAndScoreModifications(
             : 0;
         overall += normalizedSFBonus;
 
+        // GDMT completeness bonus — rewards the share of indicated, achievable therapy attained,
+        // so the complete safe regimen out-ranks partial ones (see target computation above).
+        let gdmtCompleteness = 0;
+        if (achievableSlots.length > 0) {
+            const satisfied = achievableSlots.filter(s =>
+                activeModSet.resulting_regimen.some(r => s.match(r.med.drug_class))
+            ).length;
+            gdmtCompleteness = satisfied / achievableSlots.length;
+            overall += COMPLETENESS_MAX * gdmtCompleteness;
+        }
+
         // P5: Volume depletion — boost diuretic removal candidates
         if (isVolumeDepleted) {
             const hasDiureticRemoval = hasDiureticDeEscalation(activeModSet);
             if (hasDiureticRemoval) overall += 20;
         }
 
-        // Graduated hemodynamic safety penalties for PROJECTED SBP
-        // The input SBP < 90 gate is a separate hard block for truly hypotensive patients.
-        // These penalties apply to the projected state after adding medications.
-        if (p.sbp < 85) overall = 0;         // Projected severe hypotension — disqualify
-        else if (p.sbp < 90) overall -= 60;  // Projected moderate hypotension — heavy penalty
-        else if (p.sbp < 95) overall -= 30;  // Projected borderline — moderate penalty
+        // Graduated hemodynamic safety penalties for PROJECTED SBP.
+        // The input SBP < 90 gate is a separate hard block for truly hypotensive patients, and the
+        // display filter hides any regimen projecting SBP < 85 — those protect against real harm.
+        // This RANKING penalty is therefore recalibrated to trial tolerability so it no longer
+        // swamps guideline value: a projected SBP in the low-to-mid 90s is well within COPERNICUS
+        // (enrolled ≥ 85) and PIONEER-HF (≥ 100) tolerability, and the projected value here is the
+        // CONSERVATIVE pre-compensation estimate. The prior −60/−30 made hemodynamically-inert
+        // drugs (e.g. digoxin) out-rank SGLT2i / full GDMT in de-novo patients starting near
+        // SBP 100 — backwards. Disqualification at < 85 is retained.
+        if (p.sbp < 85) overall = 0;         // Projected severe hypotension — disqualify (also display-filtered)
+        else if (p.sbp < 90) overall -= 25;  // Caution; GDMT often still appropriate with monitoring
+        else if (p.sbp < 95) overall -= 8;   // Mild; within trial tolerability for the conservative estimate
         if (p.pulse < 50) overall -= 50;
         if (p.potassium > 5.5) overall -= 50;
 
@@ -2734,8 +2805,10 @@ export function generateAndScoreModifications(
             projected_patient: p,
             baseline_lvef: patient.lvef,
             overall_score: Math.round(Math.min(100, Math.max(0, overall))),
+            raw_score: overall,
             domain_scores: domainScores,
             special_feature_bonus: Math.round(normalizedSFBonus),
+            gdmt_completeness: gdmtCompleteness,
             cost: sim.cost,
             complexity: sim.complexity,
             rationale: sim.rationale,
@@ -2749,11 +2822,26 @@ export function generateAndScoreModifications(
     });
 
     // 6. Affordability filter + distinct picks (same algorithm as before)
+    // Ranking is completeness-aware: when overall scores tie (common once strong regimens clamp
+    // at the 100 cap), the MORE guideline-complete regimen ranks first, so the option carrying an
+    // indicated add-on (e.g. GLP-1 in obese HFpEF/HFmrEF) wins the display slot instead of an
+    // equally-scored but less complete sibling. Score still dominates when it differs.
+    // Once strong regimens clamp at the 100 cap, the displayed overall_score ties. Break ties by
+    // GDMT completeness FIRST, so an indicated add-on (e.g. GLP-1 in obese HFpEF) wins a display
+    // slot over a less-complete but raw-score-inflated sibling (e.g. SGLT2i + a symptomatic loop
+    // diuretic). Among equally complete regimens, fall to the UNCAPPED raw score, which preserves
+    // the evidence/special-feature differentiation the cap erased (e.g. SGLT2i over an MRA-only
+    // pairing in HFmrEF). Cost is deliberately NOT a tiebreaker — it must not override an
+    // evidence-based preference (it is already in the cost domain and the affordability filter).
+    const byScoreThenCompleteness = (a: ScoredRegimen, b: ScoredRegimen) =>
+        b.overall_score - a.overall_score ||
+        (b.gdmt_completeness ?? 0) - (a.gdmt_completeness ?? 0) ||
+        (b.raw_score ?? 0) - (a.raw_score ?? 0);
     const affordableRegimens = results.filter(r => r.cost <= patient.max_affordable_cost);
     let outputRegimens: ScoredRegimen[] = [];
 
     if (affordableRegimens.length > 0) {
-        outputRegimens = affordableRegimens.sort((a, b) => b.overall_score - a.overall_score);
+        outputRegimens = affordableRegimens.sort(byScoreThenCompleteness);
     } else if (results.length > 0) {
         const cheapest = results.sort((a, b) => a.cost - b.cost).slice(0, 5);
         const budgetMessage = patient.max_affordable_cost <= 0

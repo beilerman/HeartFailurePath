@@ -177,6 +177,8 @@ export interface ScoredRegimen {
     overall_score: number;
     domain_scores: DomainScores;
     special_feature_bonus?: number; // Bonus from guideline-specific special features
+    gdmt_completeness?: number; // Fraction (0-1) of indicated, achievable GDMT therapies present — display tiebreaker
+    raw_score?: number; // Uncapped pre-clamp score — preserves differentiation lost to the 100 cap (display tiebreaker)
 
     cost: number;
     complexity: number;

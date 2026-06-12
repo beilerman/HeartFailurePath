@@ -88,6 +88,14 @@ Guideline domain behavior:
 - HFpEF (`>= 50`): SGLT2i-first pathway with adjunct logic
 - HFimpEF preservation: continue full HFrEF logic when prior reduced EF is known or strongly suspected
 
+GDMT-completeness bonus (anti-softness):
+
+- Additive bonus up to +30 = `30 × (achievable indicated therapies present / achievable total)`.
+- Slots = phenotype pillars + eligible disease-modifying adjuncts (GLP-1, H/ISDN [reduced-EF only], ivabradine, vericiguat, IV iron) derived from `analysis.addableAdjuncts`.
+- "Achievable" excludes therapies filtered out of the formulary (never penalize a contraindicated therapy). Applied before SBP/K+ penalties so safety still overrides.
+- Stored as `gdmt_completeness` (0-1); display ranks by score → completeness → uncapped `raw_score` (cost is not a tiebreaker).
+- Projected-SBP ranking penalty recalibrated to trial tolerability (`<90 → -25`, `<95 → -8`) so disease-modifying therapy is not out-ranked by hemodynamically-inert drugs; hard gates (input `<90`, display `<85`) unchanged.
+
 ## Safety Logic and Hard Blocks
 
 Implemented high-priority safeguards include:
