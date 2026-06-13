@@ -12,7 +12,7 @@ npm install          # install dependencies
 npm run dev          # start Vite dev server (default 3000)
 npm run build        # production build
 npm run typecheck    # TypeScript check only
-npm run verify       # run scenario assertion harness (87 scenarios)
+npm run verify       # run scenario assertion harness (90 scenarios)
 npm run test         # alias for verify
 npm run ci           # typecheck + build + verify
 npm run preview      # preview production build
@@ -93,7 +93,8 @@ GDMT-completeness bonus (anti-softness):
 - Additive bonus up to +30 = `30 × (achievable indicated therapies present / achievable total)`.
 - Slots = phenotype pillars + eligible disease-modifying adjuncts (GLP-1, H/ISDN [reduced-EF only], ivabradine, vericiguat, IV iron) derived from `analysis.addableAdjuncts`.
 - "Achievable" excludes therapies filtered out of the formulary (never penalize a contraindicated therapy). Applied before SBP/K+ penalties so safety still overrides.
-- Stored as `gdmt_completeness` (0-1); display ranks by score → completeness → uncapped `raw_score` (cost is not a tiebreaker).
+- Stored as `gdmt_completeness` (0-1); display ranks by score → completeness → uncapped `raw_score` → **cost (final tiebreaker)**. Cost decides last so it never overrides an evidence-based preference, but among clinically-indistinguishable regimens the cheaper one wins (maximize health benefit per dollar). The over-budget fallback surfaces the cheapest candidates ordered by this same value-first key (best near-affordable option leads, not the absolute cheapest).
+- Special-feature `points` calibration: outcome-level benefits are large (A-HeFT 30, FINEARTS 45, obesity 50-60, iron 40, DIAMOND/HARMONIZE binders 50, TOPCAT HFpEF 18) while intra-class tolerability tiebreakers are small (eplerenone "no gynecomastia" 3). A tolerability footnote must not lift a single-pillar regimen above multi-pillar GDMT (the SF-bonus normalization `/regimenLength * 3` otherwise amplifies a lone special drug to the +15 cap).
 - Projected-SBP ranking penalty recalibrated to trial tolerability (`<90 → -25`, `<95 → -8`) so disease-modifying therapy is not out-ranked by hemodynamically-inert drugs; hard gates (input `<90`, display `<85`) unchanged.
 
 ## Safety Logic and Hard Blocks
@@ -172,7 +173,7 @@ Major class groups include RAAS, beta blockers, MRAs/nsMRA, SGLT2i, loop/thiazid
 
 Current regression scope:
 
-- 87 scenarios
+- 90 scenarios
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations

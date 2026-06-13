@@ -485,7 +485,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => ({ sbp_drop: 3, hr_drop: 0, potassium_change: 0.4 }),
         side_effects: () => ({ hyperkalemia: 0.15 }),
         special_features: [
-            { feature: 'Fewer endocrine side effects (No gynecomastia risk)', points: 10, criteria: (p) => p.sex === 'Male' } // Only relevant advantage over spironolactone in males
+            // Intra-class tolerability tiebreaker (eplerenone vs spironolactone in males), NOT an
+            // outcome benefit — must stay small so it nudges MRA-agent choice without lifting a lone
+            // MRA above multi-pillar GDMT. (Cf. spironolactone's TOPCAT outcome feature at 18 pts.)
+            { feature: 'Fewer endocrine side effects (No gynecomastia risk)', points: 3, criteria: (p) => p.sex === 'Male' }
         ],
         contraindications: (p) => p.potassium > 5.5 || p.egfr < 30 || (p.is_pregnant === true), // Relaxed from 5.2 → 5.5; pregnancy Category X
         renal_adjustment: (egfr) => {

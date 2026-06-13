@@ -90,7 +90,10 @@ const ASSERTION_TITLE_MARKERS = [
     'Dual MRA With Steroidal Intolerance',
     'ACEi Cough Intolerance Budget-Constrained',
     'Gynecomastia From Eplerenone on Spironolactone',
-    'Negated Free-Text Intolerance Detail'
+    'Negated Free-Text Intolerance Detail',
+    'De-novo HFrEF Male Multi-Pillar Start',
+    'De-novo HFrEF Diabetic Multi-Pillar Start',
+    'Over-Budget Value Ordering'
 ];
 
 async function runVerification() {
@@ -183,6 +186,24 @@ async function runVerification() {
             if (hasOutOfRangeScore) {
                 failures.push('Score out of range detected (expected all scores within 0-100)');
                 scenarioPassed = false;
+            }
+
+            // Global cost-effectiveness invariant: no displayed pick may be clinically dominated by
+            // a lower-ranked sibling that is BOTH non-inferior on every benefit key (overall score,
+            // GDMT completeness, uncapped raw score) AND cheaper. When benefit ties, the cheaper
+            // option must rank first — otherwise the engine is recommending needless spend.
+            for (let i = 0; i < scoredRegimens.length && scenarioPassed; i++) {
+                for (let j = i + 1; j < scoredRegimens.length; j++) {
+                    const a = scoredRegimens[i], b = scoredRegimens[j];
+                    const bNonInferior = b.overall_score >= a.overall_score
+                        && (b.gdmt_completeness ?? 0) >= (a.gdmt_completeness ?? 0)
+                        && (b.raw_score ?? 0) >= (a.raw_score ?? 0);
+                    if (bNonInferior && b.cost < a.cost) {
+                        failures.push(`Cost-inefficient ranking: pick #${j + 1} ($${b.cost}) is clinically >= pick #${i + 1} ($${a.cost}) but ranked below it`);
+                        scenarioPassed = false;
+                        break;
+                    }
+                }
             }
 
             // Global display-safety invariant: every displayed regimen must remain above critical hemodynamic/lab floors.
@@ -1521,6 +1542,32 @@ async function runVerification() {
                 }
                 if (!anyRegimenHasClass('nsMRA')) {
                     failures.push('Dual MRA steroidal intolerance: both MRAs dropped — viable nsMRA (finerenone) should be the keeper');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 83. COST-EFFECTIVENESS (budget sweep): de-novo HFrEF allowed 2 new classes must
+            // receive a multi-pillar GDMT start as the TOP pick — never single-agent monotherapy.
+            if (scenario.title.includes('De-novo HFrEF Male Multi-Pillar Start') ||
+                scenario.title.includes('De-novo HFrEF Diabetic Multi-Pillar Start')) {
+                const pillarClasses = new Set(['ARNI', 'ACEi', 'ARB', 'Beta Blocker', 'MRA', 'nsMRA', 'SGLT2i']);
+                const topPillars = topRegimen ? topRegimen.regimen.filter(m => pillarClasses.has(m.med.drug_class)).length : 0;
+                if (topPillars < 2) {
+                    failures.push(`De-novo HFrEF: top pick has ${topPillars} GDMT pillar(s) — expected a multi-pillar start (>=2) when 2 new classes are permitted`);
+                    scenarioPassed = false;
+                }
+            }
+
+            // 84. COST-EFFECTIVENESS (budget sweep): over-budget fallback must order the displayed
+            // cheapest options by clinical value (highest benefit leads), not by absolute cost.
+            if (scenario.title.includes('Over-Budget Value Ordering')) {
+                if (!scoredRegimens.some(r => r.warnings.some(w => w.includes('BUDGET EXCEEDED')))) {
+                    failures.push('Over-budget value ordering: expected a BUDGET EXCEEDED fallback for sub-generic budget');
+                    scenarioPassed = false;
+                }
+                const topScore = topRegimen ? topRegimen.overall_score : -1;
+                if (scoredRegimens.some(r => r.overall_score > topScore)) {
+                    failures.push('Over-budget value ordering: a displayed pick out-scores the top pick — fallback not value-ordered');
                     scenarioPassed = false;
                 }
             }

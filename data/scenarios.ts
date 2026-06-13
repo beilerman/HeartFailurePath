@@ -2303,6 +2303,80 @@ export const SCENARIOS: TestScenario[] = [
             ])
         }
     },
+    {
+        // COST-EFFECTIVENESS REGRESSION (budget sweep): de-novo male HFrEF allowed 2 new classes
+        // this visit at a typical commercial copay. The top recommendation must be a multi-pillar
+        // GDMT start (>= 2 pillars), NOT MRA monotherapy. Previously eplerenone's "no gynecomastia"
+        // tolerability feature (10 pts) was amplified by the special-feature normalization to a
+        // full +15 overall, lifting a lone eplerenone above 2-pillar GDMT for any male patient.
+        title: 'De-novo HFrEF Male Multi-Pillar Start',
+        patient: {
+            ...INITIAL_PATIENT,
+            sex: 'Male',
+            lvef: 25,
+            sbp: 118,
+            dbp: 76,
+            nyha_class: 'II' as const,
+            potassium: 4.4,
+            egfr: 70,
+            comorbidities: new Set(['HFrEF']),
+            current_regimen: [],
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80, exam_findings: new Set() },
+            insurance_tier: 'commercial' as const,
+            max_affordable_cost: 80,
+            cost_sensitivity: 5,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // COST-EFFECTIVENESS REGRESSION (budget sweep): same as above but diabetic — confirms the
+        // SGLT2i "preferred in diabetics" tolerability feature likewise cannot lift a single-pillar
+        // start above 2-pillar GDMT. Guards against the monotherapy-amplification bias recurring
+        // via a different special feature.
+        title: 'De-novo HFrEF Diabetic Multi-Pillar Start',
+        patient: {
+            ...INITIAL_PATIENT,
+            sex: 'Male',
+            lvef: 25,
+            sbp: 120,
+            dbp: 78,
+            nyha_class: 'II' as const,
+            potassium: 4.4,
+            egfr: 70,
+            comorbidities: new Set(['HFrEF', 'Diabetes Mellitus Type 2']),
+            current_regimen: [],
+            volume_status: { dry_weight_kg: 88, current_weight_kg: 88, exam_findings: new Set() },
+            insurance_tier: 'commercial' as const,
+            max_affordable_cost: 80,
+            cost_sensitivity: 5,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // COST-EFFECTIVENESS REGRESSION (budget sweep): budget below the cheapest generic forces
+        // the over-budget fallback. It must surface the cheapest options BUT order them by clinical
+        // value — the highest-benefit near-affordable option leads. Previously the fallback sorted
+        // by absolute cost only, so at equal price a lower-benefit agent could lead a higher-benefit
+        // one (and a 0-pillar symptomatic-only regimen could top the list).
+        title: 'Over-Budget Value Ordering',
+        patient: {
+            ...INITIAL_PATIENT,
+            sex: 'Male',
+            lvef: 25,
+            sbp: 122,
+            dbp: 78,
+            nyha_class: 'II' as const,
+            potassium: 4.4,
+            egfr: 70,
+            comorbidities: new Set(['HFrEF']),
+            current_regimen: [],
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80, exam_findings: new Set() },
+            insurance_tier: 'cash' as const,
+            max_affordable_cost: 2,
+            cost_sensitivity: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
 ];
 
 // Helper to deep clone patient (useful for resetting state in tests/app)

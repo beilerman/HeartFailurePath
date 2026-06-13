@@ -3103,19 +3103,29 @@ export function generateAndScoreModifications(
     // slot over a less-complete but raw-score-inflated sibling (e.g. SGLT2i + a symptomatic loop
     // diuretic). Among equally complete regimens, fall to the UNCAPPED raw score, which preserves
     // the evidence/special-feature differentiation the cap erased (e.g. SGLT2i over an MRA-only
-    // pairing in HFmrEF). Cost is deliberately NOT a tiebreaker — it must not override an
-    // evidence-based preference (it is already in the cost domain and the affordability filter).
+    // pairing in HFmrEF). Cost is the FINAL tiebreaker — it ranks AFTER overall score, GDMT
+    // completeness, and the uncapped raw score, so it can never override an evidence-based clinical
+    // preference (those all decide first; cost is also already in the cost domain and the
+    // affordability filter). It only breaks ties where two regimens are clinically indistinguishable
+    // down to the raw score — there, recommending the cheaper one is the cost-effective choice
+    // (maximize health benefit per dollar).
     const byScoreThenCompleteness = (a: ScoredRegimen, b: ScoredRegimen) =>
         b.overall_score - a.overall_score ||
         (b.gdmt_completeness ?? 0) - (a.gdmt_completeness ?? 0) ||
-        (b.raw_score ?? 0) - (a.raw_score ?? 0);
+        (b.raw_score ?? 0) - (a.raw_score ?? 0) ||
+        a.cost - b.cost;
     const affordableRegimens = results.filter(r => r.cost <= patient.max_affordable_cost);
     let outputRegimens: ScoredRegimen[] = [];
 
     if (affordableRegimens.length > 0) {
         outputRegimens = affordableRegimens.sort(byScoreThenCompleteness);
     } else if (results.length > 0) {
-        const cheapest = results.sort((a, b) => a.cost - b.cost).slice(0, 5);
+        // Nothing fits the budget. Surface the lowest-cost candidates (closest to affordable), but
+        // order THEM by clinical value so the best-benefit near-affordable option leads — among
+        // equal benefit the cheaper wins (byScoreThenCompleteness ends in cost). Pure cost-ascending
+        // would lead with a thin monotherapy / symptomatic-only regimen over a higher-benefit
+        // sibling at the same price.
+        const cheapest = [...results].sort((a, b) => a.cost - b.cost).slice(0, 5).sort(byScoreThenCompleteness);
         const budgetMessage = patient.max_affordable_cost <= 0
             ? 'No zero-copay regimen found. Add covered medications or raise budget.'
             : 'Increase budget to find valid options.';

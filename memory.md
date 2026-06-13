@@ -2,6 +2,34 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### Cost-effectiveness: budget trade-offs maximize health benefit per dollar (2026-06-13)
+Ran a budget sweep (4 phenotypes × cash/commercial/medicare × multiple realistic budgets) to
+validate that trade-offs maximize health benefit for cost. The cost trade-offs among AFFORDABLE
+options were already sound (cheaper-when-equal), but the sweep exposed two issues — both fixed:
+- **Eplerenone MRA-monotherapy ranked #1 for de-novo HFrEF at most budgets.** Root cause: the
+  special-feature normalization `specialFeatureBonus / regimenLength * 3` (cap +15) AMPLIFIES a
+  lone special drug — a single drug with any feature ≥5 pts maxes to +15, while a 2nd pillar
+  dilutes it. Eplerenone's "No gynecomastia risk" feature was **10 pts** (fires for any male), so
+  a lone eplerenone got +15 overall, beating 2-pillar GDMT. Fix: recalibrated that feature
+  **10 → 3 pts** (it's an intra-class tolerability tiebreaker vs spironolactone, NOT an outcome
+  benefit — cf. spironolactone TOPCAT 18, A-HeFT 30, FINEARTS 45). De-novo HFrEF now always
+  starts ≥2 pillars (Carvedilol+Spironolactone $8 at tight budgets → ARNI+Dapagliflozin as budget
+  allows). The `/regimenLength * 3` monotherapy-amplification is a latent systemic bias left in
+  place (load-bearing for scoring); watch for it if another tolerability feature is set too high.
+- **Cost was not a ranking tiebreaker** ("deliberately NOT" per old comment). Added it as the
+  FINAL key in `byScoreThenCompleteness` (after score → completeness → raw_score → `a.cost - b.cost`),
+  so it can never override evidence but breaks genuine ties toward the cheaper regimen. Also fixed
+  the over-budget fallback: was `results.sort(by cost).slice(0,5)` displayed in pure cost order
+  (a 0-pillar diuretic-only could lead); now `.slice(0,5).sort(byScoreThenCompleteness)` so the
+  highest-value near-affordable option leads, still with the BUDGET EXCEEDED warning.
+- Regression scenarios (now 90): 'De-novo HFrEF Male Multi-Pillar Start', 'De-novo HFrEF Diabetic
+  Multi-Pillar Start', 'Over-Budget Value Ordering' + a GLOBAL cost-efficiency invariant in
+  verifyScenarios (no displayed pick may be clinically ≥ a cheaper lower-ranked sibling). All
+  green: 90/90, 100/100 audit, 51/51 mistake, red-team 0/0/0.
+- NOTE: the special-feature `points` are the lever for agent preference. Outcome benefits should
+  be large; tolerability/tiebreakers small (≤3-5). Setting a tiebreaker ≥~5 reintroduces the
+  monotherapy-amplification bias.
+
 ### Documented-intolerance policy unified for new starts AND current regimen (2026-06-12)
 100-scenario audit (`scripts/hundredScenarioAudit.ts`) findings 072/073: intolerance logic from
 `discontinued_meds` filtered NEW starts only — `analyzeCurrentRegimen` never checked it, so a
