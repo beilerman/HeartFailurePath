@@ -2,6 +2,63 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### Documented-intolerance policy unified for new starts AND current regimen (2026-06-12)
+100-scenario audit (`scripts/hundredScenarioAudit.ts`) findings 072/073: intolerance logic from
+`discontinued_meds` filtered NEW starts only — `analyzeCurrentRegimen` never checked it, so a
+patient on Ramipril with documented ACEi cough (or on spironolactone with documented
+gynecomastia) kept the offending drug in every recommendation. Fix:
+- `deriveIntolerancePolicy(patient)` is the single source of truth (class-attributed keyword
+  matching: angioedema, cough, hyperkalemia, gynecomastia, BB bradycardia/bronchospasm, GLP-1 GI).
+- `currentMedIntoleranceReason(med, policy)` flags arriving meds; they join
+  `contraindicatedCurrentMeds` (blocks keep/titrate-up, enables swap) + a reason map
+  (`intolerableCurrentMeds`).
+- Forced cleanup (section e) injects a **SWAP to swappable.candidates[0]** instead of a bare
+  remove when a tolerated same-group agent exists — otherwise bare "remove ACEi" candidates
+  out-rank swaps (removal *raises* projected SBP) and the displayed top-3 silently lose the RAAS
+  pillar. Falls back to removal when no alternative (e.g. pregnancy excludes all RAAS).
+- Gynecomastia is agent-specific, NOT class-wide: exclude spironolactone + named offender; keep
+  eplerenone/finerenone so the MRA pillar survives (was previously excluding all steroidal MRA).
+- Deliberately NOT removed from current regimen: existing BB (intolerance defers initiation only;
+  abrupt stop = Class III harm) and currently-tolerated GLP-1.
+- Knock-on (red-team probe 2): `computeRedundantCurrentMeds` keeper selection is now
+  intolerance/contraindication-aware (`isUnkeepable` predicate, required param) — with dual MRA
+  where the steroidal is intolerable, the viable nsMRA becomes the keeper instead of both being
+  dropped (keeper removed for intolerance + alternative removed as "redundant" = lost pillar).
+- Pre-commit multi-agent review found 6 more confirmed bugs in the first cut; all fixed:
+  1. Bare "$0 Remove <med>" candidate survived the affordability filter while every swap-carrying
+     candidate (ARNI-priced) died → EMPTY regimen displayed as the top pick for a cash-tier
+     budget patient. Fix: `removable` skips intolerable meds that have a swap alternative.
+  2. Swap candidate list was 3 dose tiers of ONE agent (`safeSlice(3)` over tier-expanded list)
+     → no affordable-ARB swap ever generated. Fix: reorder to one starting tier per DISTINCT
+     agent first (formulary order preserved within).
+  3. "Dual MRA prevention" formulary exclusion keyed on the ARRIVING regimen including a
+     steroidal MRA being force-removed → finerenone excluded by the departing drug; MRA pillar
+     silently lost when the gynecomastia offender was eplerenone. Fix: `isStayingOnRegimen`
+     check (skip intolerable/contraindicated current meds when computing currentHas*MRA).
+  4. Free-text `reason_detail` substring matches ("no cough", "angioedema ruled out") could
+     force-swap tolerated current therapy. Fix: two evidence tiers — `suspected` (free text)
+     blocks new starts only; `confirmed` (structured dropdown reason / comorbidity) is required
+     to alter current therapy. UI dropdown values all match the keyword families.
+  5. nsMRA gynecomastia offender currently on board wasn't flagged (class check was 'MRA' only).
+     Fix: MRA_POOL_CLASSES (registry-derived classesWithFlag('mra')) in all MRA-pool checks.
+  6. Intolerance swaps missed the +15 mandatory-swap bonus (simulateModificationEffect keyed on
+     med.contraindications only) → bare removal could out-rank the swap. Fix: it now also calls
+     currentMedIntoleranceReason. Reason strings are advice-free ("antiandrogenic agent
+     avoided", not "switch to eplerenone") so they can't recommend an excluded/offending agent;
+     hard contraindication takes label precedence over historical intolerance.
+- Regression scenarios in verifyScenarios (now 87): 'ACEi Cough Intolerance on Current ACEi',
+  'Gynecomastia on Current Spironolactone', 'Dual MRA With Steroidal Intolerance', 'ACEi Cough
+  Intolerance Budget-Constrained', 'Gynecomastia From Eplerenone on Spironolactone', 'Negated
+  Free-Text Intolerance Detail'. All harnesses green: 87/87, 100/100 audit, 51/51 mistake,
+  red-team 0/0/0.
+- KNOWN LIMITATION (accepted): the forced swap target is `swappable.candidates[0]` — first
+  agent in formulary declaration order (ARNI for RAAS). Under tight budgets the add-pillar
+  candidates carry the ARNI price and can be filtered; the diverse standalone ARB swaps keep the
+  output safe, but a budget-aware target choice (needs prices plumbed into
+  generateCandidateModifications) would be the deeper fix.
+- PITFALL: never round-trip CLAUDE.md/README.md through PS5.1 `Get-Content -Raw | Set-Content`
+  — it decodes UTF-8 as CP1252 and writes mojibake. Use the Edit tool for doc text changes.
+
 ### Mistake-audit pass — 9 real bugs found & fixed (2026-06-12)
 Built `scripts/mistakeAudit.ts` (51 scenarios, meds-on-board, common treatment errors;
 standalone QA like redTeam.ts — run `npx tsx scripts/mistakeAudit.ts`). Found and fixed:

@@ -2178,6 +2178,131 @@ export const SCENARIOS: TestScenario[] = [
             ])
         }
     },
+    {
+        // INTOLERANCE REGRESSION (audit 072): documented ACEi cough intolerance (Lisinopril) while
+        // the patient ARRIVES on a different ACEi (Ramipril). Class intolerance must clean up the
+        // current regimen too — not just block new ACEi starts. RAAS pillar preserved via ARB/ARNI.
+        title: 'ACEi Cough Intolerance on Current ACEi',
+        patient: {
+            ...INITIAL_PATIENT,
+            discontinued_meds: [
+                { name: 'Lisinopril', drug_class: 'ACEi', reason: 'Cough' }
+            ],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Ramipril', strength: 5, freq: 'qd' }
+            ])
+        }
+    },
+    {
+        // INTOLERANCE REGRESSION (red-team probe 2): dual MRA on arrival where the STEROIDAL agent
+        // is the intolerable one (gynecomastia history from an MRA) and the nsMRA is viable.
+        // Redundancy cleanup must keep the TOLERATED agent (finerenone) — previously the keeper
+        // rule blindly preferred the steroidal, so intolerance removal + redundancy removal
+        // dropped BOTH MRAs (under-treatment).
+        title: 'Dual MRA With Steroidal Intolerance',
+        patient: {
+            ...INITIAL_PATIENT,
+            sex: 'Male',
+            lvef: 45, // HFmrEF — both MRA types otherwise permissible
+            nyha_class: 'II' as const,
+            nt_pro_bnp: 1200,
+            potassium: 4.6,
+            egfr: 55,
+            comorbidities: new Set(['HFmrEF']),
+            discontinued_meds: [
+                { name: 'Eplerenone', drug_class: 'MRA', reason: 'Gynecomastia' }
+            ],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Finerenone (Kerendia)', strength: 10, freq: 'qd' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' }
+            ])
+        }
+    },
+    {
+        // INTOLERANCE REGRESSION (audit 073): documented spironolactone gynecomastia while the
+        // patient is STILL ON spironolactone. It must be removed/swapped in every displayed
+        // regimen, and eplerenone (minimal antiandrogenic effect) must remain available so the
+        // MRA pillar is not lost to an agent-specific intolerance.
+        title: 'Gynecomastia on Current Spironolactone',
+        patient: {
+            ...INITIAL_PATIENT,
+            sex: 'Male',
+            discontinued_meds: [
+                { name: 'Spironolactone', drug_class: 'MRA', reason: 'Gynecomastia' }
+            ],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' }
+            ])
+        }
+    },
+    {
+        // INTOLERANCE REGRESSION (review): budget-constrained ACEi-cough patient. The bare
+        // "Remove Ramipril" candidate costs $0 and previously survived the affordability filter
+        // while every swap-carrying candidate (ARNI-priced) died — leaving an EMPTY regimen as
+        // the top recommendation. Every displayed regimen must retain RAAS coverage.
+        title: 'ACEi Cough Intolerance Budget-Constrained',
+        patient: {
+            ...INITIAL_PATIENT,
+            insurance_tier: 'cash' as const,
+            max_affordable_cost: 10,
+            cost_sensitivity: 9,
+            discontinued_meds: [
+                { name: 'Lisinopril', drug_class: 'ACEi', reason: 'Cough' }
+            ],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Ramipril', strength: 5, freq: 'qd' }
+            ])
+        }
+    },
+    {
+        // INTOLERANCE REGRESSION (review): the documented gynecomastia offender is EPLERENONE and
+        // the patient arrives on spironolactone (HFmrEF, so finerenone is viable). Spironolactone
+        // and eplerenone are both avoided; the nsMRA must survive — previously the "dual MRA
+        // prevention" formulary exclusion keyed on the departing steroidal MRA and blocked
+        // finerenone too, silently dropping the whole MRA pillar.
+        title: 'Gynecomastia From Eplerenone on Spironolactone',
+        patient: {
+            ...INITIAL_PATIENT,
+            sex: 'Male',
+            lvef: 45,
+            ever_lvef_le_40: 'no' as const,
+            nyha_class: 'II' as const,
+            nt_pro_bnp: 1200,
+            potassium: 4.6,
+            egfr: 55,
+            comorbidities: new Set(['HFmrEF']),
+            discontinued_meds: [
+                { name: 'Eplerenone', drug_class: 'MRA', reason: 'Gynecomastia' }
+            ],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' }
+            ])
+        }
+    },
+    {
+        // INTOLERANCE REGRESSION (review): free-text reason_detail containing NEGATED keywords
+        // ("no cough", "angioedema ruled out") must NOT force the patient's current tolerated
+        // ACEi out of the regimen. Forced current-regimen cleanup requires the structured
+        // dropdown reason; free text only (conservatively) blocks new starts.
+        title: 'Negated Free-Text Intolerance Detail',
+        patient: {
+            ...INITIAL_PATIENT,
+            discontinued_meds: [
+                {
+                    name: 'Lisinopril',
+                    drug_class: 'ACEi',
+                    reason: 'Renal Impairment / AKI',
+                    reason_detail: 'no cough; angioedema ruled out, K+ stable throughout'
+                }
+            ],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Ramipril', strength: 5, freq: 'qd' }
+            ])
+        }
+    },
 ];
 
 // Helper to deep clone patient (useful for resetting state in tests/app)

@@ -136,7 +136,15 @@ function hasRecentWorseningHF(patient: Patient): boolean {
 // dose, which is closest to an established target.
 const RAAS_KEEP_PREFERENCE: Record<string, number> = { ARNI: 3, ACEi: 2, ARB: 1 };
 
-function computeRedundantCurrentMeds(currentRegimen: RegimenMed[]): Set<string> {
+function computeRedundantCurrentMeds(
+    currentRegimen: RegimenMed[],
+    // A med the patient must come OFF anyway (contraindicated / documented intolerance) must
+    // never be chosen as the duplicate-group keeper while a tolerated alternative is on board —
+    // otherwise the keeper is removed for intolerance AND the alternative is removed as
+    // "redundant", dropping the whole pillar (red-team probe 2: dual MRA, steroidal intolerable).
+    // Required (not defaulted) so a future call site cannot silently skip the safety predicate.
+    isUnkeepable: (med: Medication) => boolean
+): Set<string> {
     const redundant = new Set<string>();
 
     const byGroup = new Map<string, RegimenMed[]>();
@@ -146,8 +154,10 @@ function computeRedundantCurrentMeds(currentRegimen: RegimenMed[]): Set<string> 
         byGroup.get(g)!.push(r);
     });
 
-    byGroup.forEach((meds, group) => {
-        if (meds.length <= 1) return;
+    byGroup.forEach((allMeds, group) => {
+        if (allMeds.length <= 1) return;
+        const keepable = allMeds.filter(r => !isUnkeepable(r.med));
+        const meds = keepable.length > 0 ? keepable : allMeds;
         let keeper: RegimenMed;
         if (group === 'RAAS Inhibitor') {
             keeper = meds.reduce((best, cur) =>
@@ -163,7 +173,9 @@ function computeRedundantCurrentMeds(currentRegimen: RegimenMed[]): Set<string> 
                 return cs > bs ? cur : best;
             });
         }
-        meds.forEach(r => { if (r.med.name !== keeper.med.name) redundant.add(r.med.name); });
+        // Every non-keeper in the group is the redundant duplicate — including unkeepable ones
+        // (those are additionally force-removed with their contraindication/intolerance reason).
+        allMeds.forEach(r => { if (r.med.name !== keeper.med.name) redundant.add(r.med.name); });
     });
 
     return redundant;
@@ -257,6 +269,7 @@ interface RegimenAnalysis {
     addableAdjuncts: RegimenMed[];
     addablePillars: Map<string, RegimenMed[]>;  // missing pillar class group → candidate meds+doses
     contraindicatedCurrentMeds: Set<string>;     // names of current meds now contraindicated
+    intolerableCurrentMeds: Map<string, string>; // current meds violating documented-intolerance policy → reason
     forcedBbDownTitrateNames: Set<string>;       // existing BBs that must be down-titrated in acute decomp
     redundantCurrentMeds: Set<string>;           // names of duplicate-class agents to deprescribe (dual RAAS/MRA)
 }
@@ -265,6 +278,105 @@ interface RegimenAnalysis {
 const RAAS_CLASSES = classesWithFlag('raas');
 const DIURETIC_CLASSES = classesWithFlag('diuretic');
 const VOLUME_SENSITIVE_INTENSIFICATION_CLASSES = classesWithFlag('volume-sensitive-intensifier');
+
+const MRA_POOL_CLASSES = classesWithFlag('mra'); // steroidal MRA + nsMRA (registry-derived)
+
+// --- Documented-intolerance policy -------------------------------------------------------------
+// Single source of truth for what a patient's discontinued_meds history forbids. Used by BOTH the
+// formulary filter (blocking NEW starts) and analyzeCurrentRegimen (cleaning up meds the patient
+// ARRIVED on) — previously only new starts were filtered, so a class excluded from initiation
+// could still be retained/titrated when already on board (100-scenario audit, findings 072/073).
+//
+// TWO EVIDENCE TIERS per intolerance. `suspected` matches keywords anywhere in the free-text
+// reason + reason_detail and only BLOCKS NEW STARTS (conservative: withholding a new drug on weak
+// evidence is safe). `confirmed` requires the keyword in the STRUCTURED reason field (the UI's
+// side-effect dropdown) and additionally FORCES CLEANUP of the current regimen — actively
+// changing working therapy needs the higher evidence bar, because free-text details like
+// "patient denies cough" or "hyperkalemia ruled out" substring-match their negated keyword.
+interface IntoleranceSignal { suspected: boolean; confirmed: boolean; }
+interface IntolerancePolicy {
+    angioedema: IntoleranceSignal;        // ACEi + ARNI forbidden; ARB allowed with caution
+    aceiCough: IntoleranceSignal;         // ACEi forbidden; ARB/ARNI remain acceptable
+    mraHyperkalemia: IntoleranceSignal;   // all MRA types (steroidal + nsMRA) forbidden
+    // Gynecomastia is agent-specific antiandrogenic toxicity, NOT a class effect: spironolactone
+    // (and any specifically named offender) is avoided, while non-offending selective agents
+    // (eplerenone, finerenone) remain acceptable — preserves the MRA pillar.
+    gynecomastiaAvoidedMeds: Set<string>;          // suspected tier (blocks new starts)
+    confirmedGynecomastiaAvoidedMeds: Set<string>; // confirmed tier (forces current-regimen cleanup)
+    hasBbBradycardia: boolean;            // defer NEW BB initiation only — existing BB is continued
+    hasBbBronchospasm: boolean;           // avoid non-selective carvedilol; β1-selective acceptable
+    hasGlp1GiIntolerance: boolean;        // new starts only — a currently tolerated GLP-1 is kept
+}
+
+function deriveIntolerancePolicy(patient: Patient): IntolerancePolicy {
+    const discontinued = patient.discontinued_meds;
+    // Drug-class-aware attribution: only match a side effect against the drug class that
+    // plausibly caused it (prevents e.g. a beta-blocker's bradycardia excluding a RAAS inhibitor).
+    const raasDiscontinued = discontinued.filter(m => RAAS_CLASSES.has(m.drug_class) || m.drug_class === 'RAAS');
+    const mraDiscontinued = discontinued.filter(m => MRA_POOL_CLASSES.has(m.drug_class));
+    const bbDiscontinued = discontinued.filter(m => m.drug_class === 'Beta Blocker');
+    const glp1Discontinued = discontinued.filter(m => getMedicationClassGroup(m.drug_class) === 'GLP-1 Therapy');
+
+    const matchesFreeText = (dm: ExcludedMedication, keyword: string) =>
+        `${dm.reason} ${dm.reason_detail ?? ''}`.toLowerCase().includes(keyword);
+    const matchesStructuredReason = (dm: ExcludedMedication, keyword: string) =>
+        dm.reason.toLowerCase().includes(keyword);
+    const signal = (meds: ExcludedMedication[], ...keywords: string[]): IntoleranceSignal => ({
+        suspected: meds.some(dm => keywords.some(k => matchesFreeText(dm, k))),
+        confirmed: meds.some(dm => keywords.some(k => matchesStructuredReason(dm, k))),
+    });
+
+    // Spironolactone carries the dominant antiandrogenic burden — avoid it whenever ANY MRA
+    // caused gynecomastia, even if the documented offender was a different agent.
+    const collectGynecomastiaOffenders = (match: (dm: ExcludedMedication, k: string) => boolean) => {
+        const offenders = new Set(mraDiscontinued.filter(dm => match(dm, 'gynecomastia')).map(dm => dm.name));
+        if (offenders.size > 0) offenders.add('Spironolactone');
+        return offenders;
+    };
+
+    // A structured "History of Angioedema" comorbidity is confirmed-tier evidence.
+    const angioedema = signal(raasDiscontinued, 'angioedema');
+    if (patient.comorbidities.has("History of Angioedema")) {
+        angioedema.suspected = true;
+        angioedema.confirmed = true;
+    }
+
+    return {
+        angioedema,
+        aceiCough: signal(raasDiscontinued, 'cough'),
+        mraHyperkalemia: signal(mraDiscontinued, 'hyperkalemia'),
+        gynecomastiaAvoidedMeds: collectGynecomastiaOffenders(matchesFreeText),
+        confirmedGynecomastiaAvoidedMeds: collectGynecomastiaOffenders(matchesStructuredReason),
+        hasBbBradycardia: bbDiscontinued.some(dm => matchesFreeText(dm, 'bradycardia') || matchesFreeText(dm, 'av block') || matchesFreeText(dm, 'heart block')),
+        hasBbBronchospasm: bbDiscontinued.some(dm => matchesFreeText(dm, 'bronchospasm') || matchesFreeText(dm, 'asthma') || matchesFreeText(dm, 'wheez')),
+        hasGlp1GiIntolerance: glp1Discontinued.some(dm => matchesFreeText(dm, 'nausea') || matchesFreeText(dm, 'vomit') || matchesFreeText(dm, 'gastrointestinal') || matchesFreeText(dm, 'gi intolerance') || matchesFreeText(dm, 'diarrhea')),
+    };
+}
+
+// Reason an ALREADY-PRESCRIBED med violates the intolerance policy (null = tolerated). Uses the
+// CONFIRMED tier only (structured dropdown reason) — free-text matches never alter the current
+// regimen. Scope is deliberately narrower than the new-start filter: BB intolerance defers
+// initiation but an existing BB is continued (abrupt withdrawal = Class III harm), and a
+// currently-tolerated GLP-1 is not removed for a historical GI intolerance to a prior agent.
+// Reasons state the intolerance only — the replacement (if any) is shown by the swap itself.
+function currentMedIntoleranceReason(med: Medication, policy: IntolerancePolicy): string | null {
+    if (med.drug_class === 'ACEi' && policy.angioedema.confirmed) {
+        return 'Documented angioedema history — ACEi must not be continued';
+    }
+    if (med.drug_class === 'ACEi' && policy.aceiCough.confirmed) {
+        return 'Documented ACEi cough intolerance';
+    }
+    if (med.drug_class === 'ARNI' && policy.angioedema.confirmed) {
+        return 'Documented angioedema history — neprilysin inhibition worsens bradykinin-mediated angioedema risk';
+    }
+    if (MRA_POOL_CLASSES.has(med.drug_class) && policy.mraHyperkalemia.confirmed) {
+        return 'Documented hyperkalemia on MRA therapy — applies to all MRA types';
+    }
+    if (MRA_POOL_CLASSES.has(med.drug_class) && policy.confirmedGynecomastiaAvoidedMeds.has(med.name)) {
+        return 'Documented gynecomastia — antiandrogenic agent avoided';
+    }
+    return null;
+}
 
 function isDiureticClass(drugClass: string): boolean {
     return DIURETIC_CLASSES.has(drugClass);
@@ -669,18 +781,35 @@ function analyzeCurrentRegimen(
     });
 
     // Safety check: identify current meds that are now contraindicated
-    // These must NOT be titrated up or kept — only down-titration or removal
+    // These must NOT be titrated up or kept — only down-titration, swap, or removal
+    const intolerancePolicy = deriveIntolerancePolicy(patient);
     const contraindicatedCurrentMeds = new Set<string>();
+    const intolerableCurrentMeds = new Map<string, string>();
     currentRegimen.forEach(r => {
         if (r.med.contraindications && r.med.contraindications(patient)) {
             contraindicatedCurrentMeds.add(r.med.name);
+        }
+        // Documented intolerance applies to meds the patient ARRIVED on, not just new starts —
+        // a class excluded from the formulary must not survive inside the current regimen
+        // (e.g. ACEi cough history while on a different ACEi; gynecomastia on spironolactone).
+        // Flagged meds join contraindicatedCurrentMeds (blocks keep/titrate-up, enables swap) and
+        // are tracked separately so the forced cleanup can SWAP to a tolerated same-group agent
+        // instead of dropping the pillar outright.
+        const intoleranceReason = currentMedIntoleranceReason(r.med, intolerancePolicy);
+        if (intoleranceReason) {
+            contraindicatedCurrentMeds.add(r.med.name);
+            intolerableCurrentMeds.set(r.med.name, intoleranceReason);
         }
     });
 
     // Redundant same-class therapy the patient arrived on (dual RAAS / dual MRA). These must be
     // deprescribed — the engine synthesizes their removal into every candidate (below) so a
-    // corrected regimen is produced rather than the whole regimen being filtered out.
-    const redundantCurrentMeds = computeRedundantCurrentMeds(currentRegimen);
+    // corrected regimen is produced rather than the whole regimen being filtered out. The keeper
+    // must be a med the patient can actually STAY on — never the contraindicated/intolerable one.
+    const redundantCurrentMeds = computeRedundantCurrentMeds(
+        currentRegimen,
+        med => contraindicatedCurrentMeds.has(med.name)
+    );
 
     // Titration analysis: for each current med, find higher/lower dose tiers
     const titratableUp: RegimenAnalysis['titratableUp'] = [];
@@ -753,12 +882,20 @@ function analyzeCurrentRegimen(
             candidates = candidates.filter(t => t.med.drug_class === 'ARNI' && current.med.drug_class !== 'ARNI');
         }
         if (candidates.length > 0) {
-            let prioritizedCandidates = candidates;
+            // AGENT DIVERSITY: tiersByGroup lists every dose tier in formulary order, so the
+            // safeSlice(3) downstream would spend all slots on one agent's dose ladder (e.g.
+            // three ARNI tiers) and never offer the cheaper/alternative agents in the group.
+            // Reorder to one starting tier per DISTINCT agent first, remaining tiers after —
+            // a swap to a new agent starts at the low tier and up-titrates anyway.
+            const firstTierByMed = new Map<string, RegimenMed>();
+            candidates.forEach(t => { if (!firstTierByMed.has(t.med.name)) firstTierByMed.set(t.med.name, t); });
+            const firstTiers = [...firstTierByMed.values()];
+            let prioritizedCandidates = [...firstTiers, ...candidates.filter(t => !firstTiers.includes(t))];
             // Ensure FUROSCIX is considered in worsening-congestion loop swaps instead of being truncated by safeSlice.
             if (current.med.drug_class === 'Loop Diuretic' && fluidExcess >= 2.0) {
-                const furoscix = candidates.find(t => t.med.name === 'Furoscix (SC Furosemide)');
+                const furoscix = prioritizedCandidates.find(t => t.med.name === 'Furoscix (SC Furosemide)');
                 if (furoscix) {
-                    prioritizedCandidates = [furoscix, ...candidates.filter(t => t !== furoscix)];
+                    prioritizedCandidates = [furoscix, ...prioritizedCandidates.filter(t => t !== furoscix)];
                 }
             }
             swappable.push({ from: current, candidates: prioritizedCandidates });
@@ -768,6 +905,12 @@ function analyzeCurrentRegimen(
     // Removable: diuretics when euvolemic, OR any contraindicated/redundant current med
     const removable: RegimenMed[] = [];
     currentRegimen.forEach(r => {
+        // An intolerable med with a tolerated same-group replacement is SWAPPED, never offered as
+        // a bare removal — a $0 "just stop it" candidate would survive the affordability filter
+        // when every swap-carrying candidate dies, displaying an empty/pillar-less regimen.
+        if (intolerableCurrentMeds.has(r.med.name) && swappable.some(s => s.from.med.name === r.med.name)) {
+            return;
+        }
         // Contraindicated or redundant (dual RAAS/MRA) current meds MUST be flagged for removal
         if (contraindicatedCurrentMeds.has(r.med.name) || redundantCurrentMeds.has(r.med.name)) {
             removable.push(r);
@@ -923,6 +1066,7 @@ function analyzeCurrentRegimen(
         addableAdjuncts,
         addablePillars,
         contraindicatedCurrentMeds,
+        intolerableCurrentMeds,
         forcedBbDownTitrateNames,
         redundantCurrentMeds
     };
@@ -1235,18 +1379,36 @@ function generateCandidateModifications(
     // --- d) Binder rescue: for candidates projecting K+ > 5.3 ---
     // This will be handled during simulation, not at generation time
 
-    // --- e) Force-remove contraindicated AND redundant current meds from ALL candidates ---
+    // --- e) Force-remove (or force-swap) contraindicated AND redundant current meds from ALL candidates ---
     // Contraindicated: e.g. a patient on ACEi who becomes pregnant must not retain ACEi anywhere.
     // Redundant: a patient on dual RAAS / dual MRA must have the duplicate deprescribed in every
     // candidate — otherwise all candidates retain the duplicate and get filtered out (empty output).
+    // Documented intolerance: SWAP to a tolerated same-group agent when one exists (ACEi cough →
+    // ARB/ARNI, spironolactone gynecomastia → eplerenone) so the cleanup never costs the patient a
+    // GDMT pillar; only when no tolerated alternative exists does it fall back to plain removal.
     const contraindicated = analysis.contraindicatedCurrentMeds;
     const redundant = analysis.redundantCurrentMeds;
     if (contraindicated.size > 0 || redundant.size > 0) {
         const forcedRemovals: RegimenModification[] = [];
         currentRegimen.forEach(r => {
-            // Contraindication takes precedence in the displayed reason.
-            if (contraindicated.has(r.med.name)) {
-                forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (contraindicated)` });
+            // A HARD contraindication (med.contraindications(patient) true, e.g. K+ > 5.5 on an
+            // MRA) takes precedence over a historical intolerance — it gets the urgent
+            // 'contraindicated' removal, never an elective-tolerability swap framing.
+            const hardContraindicated = r.med.contraindications?.(patient) === true;
+            const intoleranceReason = hardContraindicated ? undefined : analysis.intolerableCurrentMeds.get(r.med.name);
+            const swapTarget = intoleranceReason
+                ? analysis.swappable.find(s => s.from.med.name === r.med.name)?.candidates[0]
+                : undefined;
+            if (intoleranceReason && swapTarget) {
+                forcedRemovals.push({
+                    action: 'swap',
+                    source: r,
+                    target: swapTarget,
+                    summary: `${formatSwapSummary(r, swapTarget)} (${intoleranceReason})`
+                });
+            } else if (contraindicated.has(r.med.name)) {
+                const label = hardContraindicated ? 'contraindicated' : intoleranceReason ?? 'contraindicated';
+                forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (${label})` });
             } else if (redundant.has(r.med.name)) {
                 forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (redundant — deprescribe duplicate ${getMedicationClassGroup(r.med.drug_class)} therapy)` });
             }
@@ -1272,6 +1434,11 @@ function generateCandidateModifications(
                     c.resulting_regimen = c.resulting_regimen.filter(
                         r => r.med.name !== forced.source!.med.name
                     );
+                    // A forced SWAP also introduces its replacement (unless already present).
+                    if (forced.action === 'swap' && forced.target
+                        && !c.resulting_regimen.some(r => r.med.name === forced.target!.med.name)) {
+                        c.resulting_regimen.push(forced.target);
+                    }
                 }
             });
         });
@@ -1722,6 +1889,9 @@ function simulateModificationEffect(
 } {
     const proj = clonePatient(currentPatient);
     const resultingRegimen = modificationSet.resulting_regimen;
+    // For the mandatory-swap bonus: a swap is forced both by hard contraindications AND by
+    // documented intolerances (the policy is pure and cheap — regimens are ≤ ~8 meds).
+    const intolerancePolicy = deriveIntolerancePolicy(currentPatient);
 
     let totalCost = 0;
     let complexityScore = 0;
@@ -1914,12 +2084,15 @@ function simulateModificationEffect(
         }
 
         if (mod.action === 'swap' && mod.source && mod.target) {
-            // Mandatory swap bonus: swapping FROM a contraindicated med preserves drug class
-            // coverage (better than outright removal which loses the class entirely)
+            // Mandatory swap bonus: swapping FROM a contraindicated OR documented-intolerable med
+            // preserves drug class coverage (better than outright removal which loses the class
+            // entirely) — without it, a pillar-dropping bare removal can out-rank the swap.
             const isContraindicatedSwap = mod.source.med.contraindications?.(currentPatient) === true;
-            if (isContraindicatedSwap) {
+            const isIntoleranceSwap = !isContraindicatedSwap && currentMedIntoleranceReason(mod.source.med, intolerancePolicy) !== null;
+            if (isContraindicatedSwap || isIntoleranceSwap) {
                 specialFeatureBonus += 15;
-                rationale.push(`+ SAFETY: Mandatory swap from contraindicated ${mod.source.med.name} preserves ${getMedicationClassGroup(mod.source.med.drug_class)} coverage`);
+                const cause = isContraindicatedSwap ? 'contraindicated' : 'intolerance-documented';
+                rationale.push(`+ SAFETY: Mandatory swap from ${cause} ${mod.source.med.name} preserves ${getMedicationClassGroup(mod.source.med.drug_class)} coverage`);
             }
 
             // S1: ACEi → ARNI mandatory 36-hour washout (angioedema risk — PARADIGM-HF protocol, FDA black-box)
@@ -2527,39 +2700,19 @@ export function generateAndScoreModifications(
     // 1. Filter Formulary & Check Exclusions (same logic as before)
     const excludedMeds: ExcludedMedication[] = [...patient.discontinued_meds];
     const excludedNames = new Set(excludedMeds.map(m => m.name));
-    // H3 fix: Drug-class-aware exclusion matching. Only attribute side effects to the
-    // drug class that caused them — prevents cross-contamination (e.g., cough from a BB
-    // incorrectly excluding ACEi, or angioedema from an NSAID excluding all RAAS).
-    const raasDiscontinued = excludedMeds.filter(m => RAAS_CLASSES.has(m.drug_class) || m.drug_class === 'RAAS');
-    const mraDiscontinued = excludedMeds.filter(m => m.drug_class === 'MRA' || m.drug_class === 'nsMRA');
-
-    const matchesReason = (dm: ExcludedMedication, keyword: string) =>
-        `${dm.reason} ${dm.reason_detail ?? ''}`.toLowerCase().includes(keyword);
-
-    // Expanded, class-attributed intolerance recognition. Each intolerance is matched only
-    // against the drug class that plausibly caused it (prevents e.g. a beta-blocker's
-    // bradycardia from excluding a RAAS inhibitor). Reasons are free text, so we match on
-    // clinically meaningful keyword families.
-    const bbDiscontinued = excludedMeds.filter(m => m.drug_class === 'Beta Blocker');
-    const glp1Discontinued = excludedMeds.filter(m => m.drug_class === 'GLP-1 RA' || m.drug_class === 'GLP-1/GIP RA');
-
-    const hasAngioedemaFromRaas = raasDiscontinued.some(dm => matchesReason(dm, 'angioedema'));
-    const hasAngioedemaRisk = hasAngioedemaFromRaas || patient.comorbidities.has("History of Angioedema");
-    const hasAceiCoughHistory = raasDiscontinued.some(dm => matchesReason(dm, 'cough'));
-    const hasHyperkalemiaHistory = mraDiscontinued.some(dm => matchesReason(dm, 'hyperkalemia'));
-    const hasGynecomastiaHistory = mraDiscontinued.some(dm => matchesReason(dm, 'gynecomastia'));
-
-    // Beta-blocker intolerance → defer NEW BB initiation (existing BB is still continued via
-    // current-regimen analysis). Bradycardia/AV block → defer all BB; bronchospasm → avoid the
-    // non-selective agent (carvedilol), β1-selective agents remain acceptable with caution.
-    const hasBbBradycardia = bbDiscontinued.some(dm => matchesReason(dm, 'bradycardia') || matchesReason(dm, 'av block') || matchesReason(dm, 'heart block'));
-    const hasBbBronchospasm = bbDiscontinued.some(dm => matchesReason(dm, 'bronchospasm') || matchesReason(dm, 'asthma') || matchesReason(dm, 'wheez'));
-    const hasGlp1GiIntolerance = glp1Discontinued.some(dm => matchesReason(dm, 'nausea') || matchesReason(dm, 'vomit') || matchesReason(dm, 'gastrointestinal') || matchesReason(dm, 'gi intolerance'));
+    // Documented-intolerance policy (shared with analyzeCurrentRegimen so an excluded class can
+    // never survive inside the arriving regimen). New starts use the SUSPECTED tier (free-text
+    // keyword match is enough to withhold a new drug); current-regimen cleanup uses the CONFIRMED
+    // tier inside currentMedIntoleranceReason. See deriveIntolerancePolicy for the rationale.
+    const intolerancePolicy = deriveIntolerancePolicy(patient);
+    const hasAngioedemaRisk = intolerancePolicy.angioedema.suspected;
+    const hasAceiCoughHistory = intolerancePolicy.aceiCough.suspected;
+    const hasHyperkalemiaHistory = intolerancePolicy.mraHyperkalemia.suspected;
     const hasSulfaAllergy = [...patient.allergies].some(a => a.toLowerCase().includes('sulfa') || a.toLowerCase().includes('sulfonamide'));
 
-    const excludeBB = hasBbBradycardia;            // defer all NEW beta-blocker initiation
-    const excludeCarvedilol = hasBbBronchospasm;   // non-selective β; prefer β1-selective
-    const excludeGLP1 = hasGlp1GiIntolerance;
+    const excludeBB = intolerancePolicy.hasBbBradycardia;          // defer all NEW beta-blocker initiation
+    const excludeCarvedilol = intolerancePolicy.hasBbBronchospasm; // non-selective β; prefer β1-selective
+    const excludeGLP1 = intolerancePolicy.hasGlp1GiIntolerance;
 
     if (hasSulfaAllergy) {
         clinicalAlerts.push('SULFA ALLERGY: Loop and thiazide diuretics are sulfonamide derivatives. Cross-reactivity is low but documented — monitor for rash/hypersensitivity. Ethacrynic acid is the sulfonamide-free loop alternative if a true reaction occurs.');
@@ -2574,9 +2727,14 @@ export function generateAndScoreModifications(
     // ARNI excluded (neprilysin inhibition raises bradykinin → worsens angioedema risk).
     // ARBs allowed with mandatory monitoring warning (see below).
     const excludeARNI = hasAngioedemaRisk;
-    const excludeMRA = hasHyperkalemiaHistory || hasGynecomastiaHistory;
-    const currentHasSteroidalMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'MRA');
-    const currentHasNsMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'nsMRA');
+    // Dual-MRA prevention must ignore a current MRA the engine is about to force OFF the regimen
+    // (intolerance or hard contraindication) — otherwise the DEPARTING steroidal MRA blocks the
+    // tolerated nsMRA from the formulary (and vice versa), and the patient loses the pillar that
+    // the forced swap was supposed to preserve.
+    const isStayingOnRegimen = (r: RegimenMed) =>
+        !currentMedIntoleranceReason(r.med, intolerancePolicy) && !(r.med.contraindications?.(patient));
+    const currentHasSteroidalMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'MRA' && isStayingOnRegimen(r));
+    const currentHasNsMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'nsMRA' && isStayingOnRegimen(r));
 
     // G2: Track which drug classes are fully excluded (for BB-contraindicated ivabradine path)
     const excludedClasses = new Set<string>();
@@ -2600,8 +2758,14 @@ export function generateAndScoreModifications(
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "ARNI excluded: neprilysin inhibition worsens bradykinin-mediated angioedema risk" });
             return false;
         }
-        if (m.drug_class === 'MRA' && excludeMRA) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Cross-reactivity with prior MRA intolerance" });
+        if (MRA_POOL_CLASSES.has(m.drug_class) && hasHyperkalemiaHistory) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Hyperkalemia intolerance (applies to all MRA types)" });
+            return false;
+        }
+        // Gynecomastia is agent-specific (antiandrogenic), not class-wide: avoid spironolactone /
+        // the documented offender, keep non-offending selective agents to preserve the MRA pillar.
+        if (MRA_POOL_CLASSES.has(m.drug_class) && intolerancePolicy.gynecomastiaAvoidedMeds.has(m.name)) {
+            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Prior MRA gynecomastia — antiandrogenic agent avoided" });
             return false;
         }
         if (m.drug_class === 'Beta Blocker' && excludeBB) {
@@ -2615,10 +2779,6 @@ export function generateAndScoreModifications(
         }
         if ((m.drug_class === 'GLP-1 RA' || m.drug_class === 'GLP-1/GIP RA') && excludeGLP1) {
             excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Prior GLP-1 GI intolerance" });
-            return false;
-        }
-        if (m.drug_class === 'nsMRA' && hasHyperkalemiaHistory) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Hyperkalemia intolerance (applies to all MRA types)" });
             return false;
         }
         if (m.drug_class === 'nsMRA' && currentHasSteroidalMRA) {

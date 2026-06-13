@@ -84,7 +84,13 @@ const ASSERTION_TITLE_MARKERS = [
     'Inappropriate Dual MRA on Arrival',
     'Decompensated HFrEF + Contraindicated BB',
     'Implausible Lab Value',
-    'Mild Asthma BB Selection'
+    'Mild Asthma BB Selection',
+    'ACEi Cough Intolerance on Current ACEi',
+    'Gynecomastia on Current Spironolactone',
+    'Dual MRA With Steroidal Intolerance',
+    'ACEi Cough Intolerance Budget-Constrained',
+    'Gynecomastia From Eplerenone on Spironolactone',
+    'Negated Free-Text Intolerance Detail'
 ];
 
 async function runVerification() {
@@ -1428,6 +1434,93 @@ async function runVerification() {
                     || !excludedMedications.some(e => e.name === 'Bisoprolol');
                 if (!selectiveAvailable) {
                     failures.push('Mild asthma: all beta-blockers lost — β1-selective should remain available');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 80. INTOLERANCE REGRESSION (audit 072): documented ACEi cough intolerance while
+            // arriving on a DIFFERENT ACEi -> no displayed regimen may retain any ACEi, and the
+            // RAAS pillar must survive via ARB/ARNI (cough is not a contraindication to either).
+            if (scenario.title.includes('ACEi Cough Intolerance on Current ACEi')) {
+                if (anyRegimenHasClass('ACEi')) {
+                    failures.push('ACEi cough intolerance: an ACEi is still displayed in a regimen');
+                    scenarioPassed = false;
+                }
+                if (!anyRegimenHasClass('ARNI') && !anyRegimenHasClass('ARB')) {
+                    failures.push('ACEi cough intolerance: RAAS pillar lost — no ARB/ARNI replacement offered');
+                    scenarioPassed = false;
+                }
+                // The patient ARRIVED on RAAS therapy — no displayed option may silently drop the pillar.
+                if (scoredRegimens.some(r => !r.regimen.some(m => RAAS_CLASSES.has(m.med.drug_class)))) {
+                    failures.push('ACEi cough intolerance: a displayed regimen lost RAAS coverage entirely');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 81. INTOLERANCE REGRESSION (audit 073): gynecomastia on spironolactone while still
+            // taking it -> spironolactone removed/swapped in every displayed regimen; eplerenone
+            // (agent-specific intolerance, not class-wide) must remain available.
+            if (scenario.title.includes('Gynecomastia on Current Spironolactone')) {
+                if (anyRegimenHasMed('Spironolactone')) {
+                    failures.push('Gynecomastia intolerance: spironolactone retained in a displayed regimen');
+                    scenarioPassed = false;
+                }
+                if (excludedMedications.some(e => e.name === 'Eplerenone')) {
+                    failures.push('Gynecomastia intolerance: eplerenone excluded — agent-specific intolerance wrongly applied class-wide');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 82a. INTOLERANCE REGRESSION (review): budget-constrained ACEi-cough patient must
+            // never see an empty or RAAS-less regimen — the $0 bare-removal candidate must not
+            // out-survive the swap candidates under the affordability filter.
+            if (scenario.title.includes('ACEi Cough Intolerance Budget-Constrained')) {
+                if (anyRegimenHasClass('ACEi')) {
+                    failures.push('Budget ACEi cough: an ACEi is still displayed');
+                    scenarioPassed = false;
+                }
+                const raasLess = scoredRegimens.filter(r => !r.regimen.some(m => RAAS_CLASSES.has(m.med.drug_class)));
+                if (raasLess.length > 0) {
+                    failures.push(`Budget ACEi cough: ${raasLess.length} displayed regimen(s) lost RAAS coverage entirely (incl. possible empty regimen)`);
+                    scenarioPassed = false;
+                }
+            }
+
+            // 82b. INTOLERANCE REGRESSION (review): gynecomastia offender = eplerenone, arriving
+            // on spironolactone, HFmrEF -> both offenders avoided, nsMRA (finerenone) must
+            // survive as the MRA-pool agent instead of the whole pillar being dropped.
+            if (scenario.title.includes('Gynecomastia From Eplerenone on Spironolactone')) {
+                if (anyRegimenHasMed('Spironolactone') || anyRegimenHasMed('Eplerenone')) {
+                    failures.push('Eplerenone-offender gynecomastia: an avoided MRA agent is still displayed');
+                    scenarioPassed = false;
+                }
+                if (!anyRegimenHasClass('nsMRA')) {
+                    failures.push('Eplerenone-offender gynecomastia: MRA pillar dropped — viable finerenone not offered');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 82c. INTOLERANCE REGRESSION (review): negated free-text detail ("no cough",
+            // "angioedema ruled out") must not strip the current tolerated ACEi. Forced
+            // current-regimen cleanup requires the structured dropdown reason.
+            if (scenario.title.includes('Negated Free-Text Intolerance Detail')) {
+                if (!anyRegimenHasMed('Ramipril')) {
+                    failures.push('Negated free text: current tolerated Ramipril was force-removed/swapped on a negated keyword match');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 82. INTOLERANCE REGRESSION (red-team probe 2): dual MRA on arrival where the
+            // steroidal is intolerable but the nsMRA is viable -> the TOLERATED agent must be
+            // the keeper. Dropping BOTH MRAs is under-treatment; keeping spironolactone is
+            // re-exposure to the intolerance.
+            if (scenario.title.includes('Dual MRA With Steroidal Intolerance')) {
+                if (anyRegimenHasMed('Spironolactone')) {
+                    failures.push('Dual MRA steroidal intolerance: spironolactone retained despite gynecomastia history');
+                    scenarioPassed = false;
+                }
+                if (!anyRegimenHasClass('nsMRA')) {
+                    failures.push('Dual MRA steroidal intolerance: both MRAs dropped — viable nsMRA (finerenone) should be the keeper');
                     scenarioPassed = false;
                 }
             }

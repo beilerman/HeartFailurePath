@@ -59,6 +59,7 @@ const safetyChecks = [
     'Vericiguat requires NYHA II-IV, NT-proBNP >= 1600, LVEF < 45, and recent worsening HF context.',
     'GLP-1 therapy is restricted to obesity phenotype with LVEF >= 40 and is not used for HFrEF/HFimpEF pathways.',
     'Dual RAAS and dual MRA combinations are structurally blocked.',
+    'Documented intolerances (prior discontinued medications) apply to the CURRENT regimen, not just new starts: an arriving medication that violates the intolerance history is swapped to a tolerated same-group agent when one exists (ACEi cough → ARB/ARNI; spironolactone gynecomastia → eplerenone/finerenone) or removed. Changing CURRENT therapy requires the structured side-effect reason (dropdown); free-text details only block new starts — so negated notes like "no cough" can never strip working therapy. Gynecomastia is treated as agent-specific (spironolactone and the named offender avoided, non-offending agents preserved); MRA hyperkalemia intolerance applies to all MRA types; angioedema excludes ACEi and ARNI with ARB allowed under caution.',
     'Monitoring plans are auto-generated for high-risk RAAS/MRA/diuretic/SGLT2i intensification.',
     'GDMT-completeness ranking: among safe options, the regimen closing the most indicated, achievable therapies (pillars + eligible disease-modifying adjuncts such as GLP-1 in obesity) ranks first — the tool favors complete guideline therapy over the smallest change. Safety gates still override.'
 ];

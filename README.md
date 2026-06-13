@@ -119,7 +119,7 @@ Default dev host/port: `0.0.0.0:3000` (Vite auto-increments if occupied).
 ```bash
 npm run typecheck   # tsc --noEmit
 npm run build       # production build
-npm run verify      # 71 scenario assertion harness
+npm run verify      # 87 scenario assertion harness
 npm run test        # alias of verify
 npm run ci          # typecheck + build + verify
 npm run preview     # preview production build

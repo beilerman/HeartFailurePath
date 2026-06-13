@@ -12,7 +12,7 @@ npm install          # install dependencies
 npm run dev          # start Vite dev server (default 3000)
 npm run build        # production build
 npm run typecheck    # TypeScript check only
-npm run verify       # run scenario assertion harness (71 scenarios)
+npm run verify       # run scenario assertion harness (87 scenarios)
 npm run test         # alias for verify
 npm run ci           # typecheck + build + verify
 npm run preview      # preview production build
@@ -122,6 +122,13 @@ Implemented high-priority safeguards include:
 - Structural regimen safety:
   - blocks dual RAAS combinations
   - blocks dual MRA combinations
+- Documented-intolerance policy (`deriveIntolerancePolicy`, single source of truth):
+  - applied to BOTH new-start formulary filtering AND the arriving regimen (`analyzeCurrentRegimen`) — a class excluded from initiation can never be retained/titrated when already on board
+  - two evidence tiers: free-text keyword match (`suspected`) only blocks NEW starts; the structured dropdown reason (`confirmed`) is required to force changes to CURRENT therapy (protects against negated free text like "no cough" / "angioedema ruled out")
+  - an intolerable current med is force-SWAPPED to a tolerated same-group agent when one exists (ACEi cough → ARB/ARNI; spironolactone gynecomastia → eplerenone/finerenone), falling back to removal — cleanup never silently costs a GDMT pillar; the bare "just stop it" removal candidate is suppressed when a swap exists (it would win the affordability filter at $0 and display an empty regimen)
+  - gynecomastia is agent-specific (spironolactone + named offender avoided; non-offending eplerenone/finerenone preserved); MRA hyperkalemia intolerance applies to all MRA types; angioedema excludes ACEi + ARNI with ARB allowed under caution; BB intolerance defers NEW initiation only (existing BB continued)
+  - dual-MRA prevention ignores a current MRA that is departing (intolerance/contraindication) so the tolerated replacement is not blocked by the drug being removed
+  - a hard contraindication (`med.contraindications(patient)`) takes precedence over historical intolerance in forced-removal labeling
 
 Additional safety support:
 
@@ -165,7 +172,7 @@ Major class groups include RAAS, beta blockers, MRAs/nsMRA, SGLT2i, loop/thiazid
 
 Current regression scope:
 
-- 81 scenarios
+- 87 scenarios
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
