@@ -27,6 +27,8 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [simError, setSimError] = useState<string | null>(null);
     const [drugPrices, setDrugPrices] = useState<Record<string, number>>({});
+    const [pricesLoading, setPricesLoading] = useState(true);
+    const [priceLoadError, setPriceLoadError] = useState<string | null>(null);
     const [simMeds, setSimMeds] = useState<Set<string>>(new Set(MEDICATION_FORMULARY.map(m => m.name)));
 
     // Run-state: distinguishes "never run" (show first-run guidance) from "ran, then inputs
@@ -39,8 +41,28 @@ function App() {
     const [activeTab, setActiveTab] = useState<'simulation' | 'library' | 'faq'>('simulation');
 
     useEffect(() => {
-        getDrugPrices(MEDICATION_FORMULARY.map(m => m.name), patient.insurance_tier).then(setDrugPrices);
+        let active = true;
+        setPricesLoading(true);
+        setPriceLoadError(null);
+        getDrugPrices(MEDICATION_FORMULARY.map(m => m.name), patient.insurance_tier)
+            .then(prices => {
+                if (!active) return;
+                setDrugPrices(prices);
+            })
+            .catch(err => {
+                if (!active) return;
+                setDrugPrices({});
+                setPriceLoadError(err instanceof Error ? err.message : 'Unable to load drug prices.');
+            })
+            .finally(() => {
+                if (active) setPricesLoading(false);
+            });
+        return () => {
+            active = false;
+        };
     }, [patient.insurance_tier]);
+
+    const pricesReady = !pricesLoading && !priceLoadError && Object.keys(drugPrices).length > 0;
 
     // Serialize inputs for change detection (Sets → arrays; functions on med objects are dropped
     // by JSON.stringify, which is fine — name/dose still serialize and reflect edits).
@@ -64,6 +86,10 @@ function App() {
     };
 
     const runSimulation = () => {
+        if (!pricesReady) {
+            setSimError(priceLoadError ?? 'Drug pricing is still loading. Run analysis after prices finish loading.');
+            return;
+        }
         setLoading(true);
         setSimError(null);
         lastRunInputsRef.current = serializeInputs(patient, simMeds);
@@ -166,6 +192,7 @@ function App() {
                                 setSimulationMedicationNames={setSimMeds}
                                 onRunSimulation={runSimulation}
                                 isLoading={loading}
+                                pricesReady={pricesReady}
                                 testScenarios={SCENARIOS}
                                 selectedScenario={scenario}
                                 onScenarioChange={handleScenarioChange}

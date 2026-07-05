@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem } from '../types';
 import { RecommendationCard } from './RecommendationCard';
+import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 
 interface Props {
     results: ScoredRegimen[];
@@ -41,9 +42,11 @@ function buildChartSummary(
 
     const top = results[0];
     if (top) {
-        lines.push('REGIMEN (Option 1):');
+        const targetDoseContext = getTargetDosePatientContext(top);
+        lines.push('REGIMEN (top ordered option):');
         top.regimen.forEach(r => {
-            lines.push(`  - ${r.med.name} ${r.dose.strength}${r.dose.unit} ${r.selected_frequency}${r.dose.is_target_dose ? ' (target dose)' : ''}`);
+            const targetLabel = isTargetDoseForPatient(r, targetDoseContext) ? ' (target dose)' : '';
+            lines.push(`  - ${r.med.name} ${r.dose.strength}${r.dose.unit} ${r.selected_frequency}${targetLabel}`);
         });
         const changes = (top.modification_set?.modifications ?? []).filter(m => m.action !== 'keep');
         if (changes.length > 0) {
@@ -113,7 +116,7 @@ export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, has
             <div className="space-y-6 pb-16">
                 <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4" role="note">
                     <p className="text-sm font-semibold text-amber-900">
-                        This is a guideline-concordance and safety <span className="underline">checklist</span>, not an outcome predictor. It surfaces GDMT gaps, contraindications, interactions, and monitoring needs — it does <span className="font-bold">not</span> rank therapies for you.
+                        This is a guideline-concordance and safety <span className="underline">checklist</span>, not an outcome predictor. It surfaces GDMT gaps, contraindications, interactions, and monitoring needs, then orders valid options with a transparent guideline/safety/feasibility heuristic.
                     </p>
                 </div>
                 <div className="rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/40 p-8">
@@ -142,7 +145,7 @@ export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, has
         <div className="space-y-8 pb-16">
             <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4" role="note" aria-live="polite">
                 <p className="text-sm font-semibold text-amber-900">
-                    This is a guideline-concordance and safety <span className="underline">checklist</span>, not an outcome predictor. It surfaces GDMT gaps, contraindications, interactions, and monitoring needs. It does <span className="font-bold">not</span> predict an individual's response and does <span className="font-bold">not</span> rank therapies for you — choose among valid options with the patient using the labeled trade-offs.
+                    This is a guideline-concordance and safety <span className="underline">checklist</span>, not an outcome predictor. It surfaces GDMT gaps, contraindications, interactions, and monitoring needs. It does <span className="font-bold">not</span> predict an individual's response; displayed options are ordered by an internal guideline/safety/feasibility heuristic and must be chosen with the patient using the labeled trade-offs.
                 </p>
             </div>
 
@@ -265,8 +268,8 @@ export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, has
 
             <div className="flex items-end justify-between border-b border-slate-200 pb-4 gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Guideline-Concordant Options</h2>
-                    <p className="text-slate-500 mt-1 text-sm">Valid regimens that close GDMT gaps. Compare the labeled trade-offs and choose with the patient — order is not a clinical ranking.</p>
+                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Ordered Guideline-Concordant Options</h2>
+                    <p className="text-slate-500 mt-1 text-sm">Valid regimens that close GDMT gaps, ordered by the engine's guideline, safety, feasibility, and affordability heuristic. Compare the labeled trade-offs before choosing with the patient.</p>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                     {results.length > 0 && (

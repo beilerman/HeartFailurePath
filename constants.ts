@@ -1,8 +1,30 @@
 
-import { Medication } from './types';
+import { Medication, Patient } from './types';
 
 // Helper for logarithmic calculations (dose-response curves)
 const logBase = (base: number, x: number) => Math.log(x) / Math.log(base);
+
+const hasHistoricalHFrEFForFormulary = (patient: Patient): boolean => {
+    if (patient.previous_lvef !== undefined) return patient.previous_lvef <= 40;
+    return patient.ever_lvef_le_40 === 'yes';
+};
+
+const shouldPreserveHFrEFTherapyForUnknownHistory = (patient: Patient): boolean => {
+    if (patient.lvef <= 40) return true;
+    if (patient.previous_lvef !== undefined) return false;
+    if ((patient.ever_lvef_le_40 ?? 'unknown') !== 'unknown') return false;
+    return (patient.current_regimen || []).some(r => {
+        const cls = r.med.drug_class;
+        return cls === 'ARNI' || cls === 'ACEi' || cls === 'ARB' || cls === 'Beta Blocker' || cls === 'MRA';
+    });
+};
+
+const isIronDeficientForFormulary = (patient: Patient): boolean => {
+    const { ferritin, tsat } = patient;
+    if (ferritin === undefined) return false;
+    if (ferritin < 100) return true;
+    return ferritin <= 300 && tsat !== undefined && tsat < 20;
+};
 
 export const COMMON_SIDE_EFFECTS = [
     "Angioedema",
@@ -538,8 +560,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // FINEARTS-HF enrolled LVEF ≥ 40 only; no evidence for HFrEF
             // HFimpEF (previous LVEF ≤ 40) is managed as HFrEF — use steroidal MRA instead
             // Liver Disease (Child-Pugh B/C): CYP3A4 substrate, reduced clearance in cirrhosis
-            const isHFimpEF = p.previous_lvef !== undefined && p.previous_lvef <= 40 && p.lvef > 40;
-            return p.lvef < 40 || isHFimpEF || p.potassium > 5.5 || p.egfr < 25 || (p.is_pregnant === true)
+            const isHFimpEF = p.lvef > 40 && hasHistoricalHFrEFForFormulary(p);
+            const preserveHFrEF = p.lvef > 40 && shouldPreserveHFrEFTherapyForUnknownHistory(p);
+            return p.lvef < 40 || isHFimpEF || preserveHFrEF || p.potassium > 5.5 || p.egfr < 25 || (p.is_pregnant === true)
                 || p.comorbidities.has('Liver Disease (Child-Pugh B/C)');
         },
         renal_adjustment: (egfr) => {
@@ -1009,7 +1032,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 0, potassium_change: 0 }),
         side_effects: () => ({ hypophosphatemia: 0.15 }),
         special_features: [
-            { feature: 'Treats Iron Deficiency in HF', points: 40, criteria: (p) => (p.ferritin !== undefined && p.ferritin < 100) || (p.tsat !== undefined && p.tsat < 20) }
+            { feature: 'Treats Iron Deficiency in HF', points: 40, criteria: isIronDeficientForFormulary }
         ]
     },
     {

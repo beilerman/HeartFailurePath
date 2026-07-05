@@ -796,7 +796,7 @@ export const SCENARIOS: TestScenario[] = [
         }
     },
     {
-        title: 'SBP 90 Borderline (Should Block Recs)',
+        title: 'SBP 90 Borderline (Allowed With Caution)',
         patient: {
             ...INITIAL_PATIENT,
             sbp: 90,
@@ -2203,6 +2203,7 @@ export const SCENARIOS: TestScenario[] = [
         patient: {
             ...INITIAL_PATIENT,
             sex: 'Male',
+            ever_lvef_le_40: 'no' as const,
             lvef: 45, // HFmrEF — both MRA types otherwise permissible
             nyha_class: 'II' as const,
             nt_pro_bnp: 1200,
@@ -2375,6 +2376,75 @@ export const SCENARIOS: TestScenario[] = [
             max_affordable_cost: 2,
             cost_sensitivity: 8,
             max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // CLINICAL RULE REGRESSION: categorical HFimpEF history (ever LVEF <=40) must be treated
+        // the same as numeric previous_lvef <=40. Finerenone is LVEF >=40 evidence only and must
+        // not substitute for the HFrEF/HFimpEF steroidal MRA pillar.
+        title: 'HFimpEF Categorical Prior EF Excludes Finerenone',
+        patient: {
+            ...INITIAL_PATIENT,
+            lvef: 45,
+            previous_lvef: undefined,
+            ever_lvef_le_40: 'yes' as const,
+            nyha_class: 'II' as const,
+            nt_pro_bnp: 1200,
+            potassium: 4.5,
+            egfr: 25,
+            comorbidities: new Set(['HFimpEF', 'Chronic Kidney Disease']),
+            current_regimen: [],
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80, exam_findings: new Set() },
+            insurance_tier: 'commercial' as const,
+            max_affordable_cost: 100,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // WORKFLOW REGRESSION: max_new_classes_per_visit is a patient-facing sequencing limit.
+        // Automatically appended binder/iron rescue therapy must count against it; displayed
+        // options must never exceed the configured limit.
+        title: 'Max New Classes Counts Binder Rescue',
+        patient: {
+            ...INITIAL_PATIENT,
+            lvef: 30,
+            ever_lvef_le_40: 'yes' as const,
+            sbp: 120,
+            dbp: 78,
+            nyha_class: 'II' as const,
+            potassium: 5.1,
+            egfr: 60,
+            comorbidities: new Set(['HFrEF']),
+            current_regimen: [],
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80, exam_findings: new Set() },
+            insurance_tier: 'commercial' as const,
+            max_affordable_cost: 100,
+            max_new_classes_per_visit: 1
+        }
+    },
+    {
+        // DOSE TARGET REGRESSION: carvedilol target dose is weight-contextual. A patient >85 kg
+        // should not receive target-dose credit at 25 mg BID; the engine should surface 50 mg BID.
+        title: 'High Body Weight Carvedilol Target Requires 50 BID',
+        patient: {
+            ...INITIAL_PATIENT,
+            lvef: 30,
+            sbp: 125,
+            dbp: 78,
+            nyha_class: 'II' as const,
+            potassium: 4.4,
+            egfr: 70,
+            volume_status: { dry_weight_kg: 100, current_weight_kg: 100, exam_findings: new Set() },
+            comorbidities: new Set(['HFrEF']),
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+                { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            insurance_tier: 'commercial' as const,
+            max_affordable_cost: 100,
+            max_new_classes_per_visit: 1
         }
     },
 ];

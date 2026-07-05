@@ -52,8 +52,10 @@ Plus a **GDMT-completeness bonus** (up to +30) proportional to the share of indi
 therapies present (phenotype pillars + eligible disease-modifying adjuncts such as GLP-1 in
 obesity). This makes the engine favor complete guideline therapy over the smallest safe change.
 It is applied before the hemodynamic/electrolyte penalties, so safety gates still override.
-Displayed options are ranked by score, then completeness, then uncapped raw score (cost is not a
-tiebreaker — it must not override an evidence-based preference).
+Displayed options are ranked by score, then completeness, then uncapped raw score, then cost as a final
+tiebreaker. Cost must not override an evidence-based preference, but among clinically indistinguishable
+regimens the cheaper option wins. Budget-constrained outputs should be read as best affordable interim
+options, not proof that complete GDMT is financially reachable.
 
 ### 4) Hard safety gates and output filters
 
@@ -79,7 +81,7 @@ tiebreaker — it must not override an evidence-based preference).
 
 Clinical logic is guarded by scenario-based assertions in `scripts/verifyScenarios.ts`.
 
-- Current scenario set: `81`
+- Current scenario set: `90`
 - CI command: `npm run ci`
 - Verification command: `npm run verify`
 
@@ -151,6 +153,7 @@ HeartFailurePath/
 
 ## Documentation Map
 
+- Evidence matrix and rule traceability: `docs/evidence-matrix.md`
 - Developer architecture + implementation guide: `CLAUDE.md`
 - Change history: `CHANGELOG.md`
 - In-app logic and methodology tab: `components/FAQ.tsx`

@@ -119,6 +119,7 @@ export const FAQ: React.FC = () => {
                         <p>
                             Each projected regimen receives seven domain scores (0-100), then a weighted overall score:
                             Neuro 20%, Functional 15%, Volume 15%, Structure 10%, Cost 15%, Adherence 10%, Guideline 15%.
+                            These weights are heuristic prioritization aids, not individualized outcome-probability estimates.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                             {domainCards.map(card => (
@@ -170,7 +171,7 @@ export const FAQ: React.FC = () => {
                     </div>
                     <div className="p-6 space-y-4">
                         <p className="text-sm text-slate-700">
-                            Trial alignment informs effect sizes and class-level priorities. Furoscix is implemented as a loop-strategy option for persistent congestion, with explicit contraindication checks and mandatory device-use warnings when selected.
+                            Trial alignment informs effect sizes and class-level priorities. Stable rule IDs and rule-to-evidence traceability are documented in <code>docs/evidence-matrix.md</code>. Furoscix is implemented as a loop-strategy option for persistent congestion, with explicit contraindication checks and mandatory device-use warnings when selected.
                         </p>
                         <div className="overflow-x-auto">
                             <table className="min-w-full text-sm text-left">

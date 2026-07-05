@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ScoredRegimen } from '../types';
+import { calculateStructureScoreComponents, classifyPhenotype } from '../services/simulationService';
 
 interface Props {
     domain: string;
@@ -8,6 +9,15 @@ interface Props {
     regimen: ScoredRegimen;
     onClose: () => void;
 }
+
+const nyhaScoreMap: Record<string, number> = { "I": 100, "II": 75, "III": 40, "IV": 10 };
+
+const guidelinePhenotype = (regimen: ScoredRegimen): 'HFrEF' | 'HFmrEF' | 'HFpEF' => {
+    return classifyPhenotype({
+        ...regimen.projected_patient,
+        lvef: regimen.baseline_lvef ?? regimen.projected_patient.lvef,
+    });
+};
 
 export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onClose }) => {
     const p = regimen.projected_patient;
@@ -33,11 +43,16 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 );
 
             case 'Functional':
-                const nyhaScoreMap: Record<string, number> = { "I": 100, "II": 75, "III": 40, "IV": 10 };
                 const nyhaPts = nyhaScoreMap[p.nyha_class] || 0;
+                const stepPts = p.daily_step_count !== undefined
+                    ? Math.min(100, (p.daily_step_count / 7000) * 100)
+                    : undefined;
+                const functionalTerms = stepPts !== undefined
+                    ? [nyhaPts, Math.round(p.kccq_score), Math.round(stepPts)]
+                    : [nyhaPts, Math.round(p.kccq_score)];
                 return (
                     <div className="space-y-3">
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-3 gap-3">
                             <div className="bg-slate-50 p-3 rounded border border-slate-200">
                                 <div className="text-xs text-slate-500 uppercase font-bold">NYHA Class</div>
                                 <div className="text-xl font-black text-slate-900">{p.nyha_class} <span className="text-sm font-medium text-slate-500">({nyhaPts} pts)</span></div>
@@ -46,11 +61,15 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                                 <div className="text-xs text-slate-500 uppercase font-bold">KCCQ Score</div>
                                 <div className="text-xl font-black text-slate-900">{Math.round(p.kccq_score)} <span className="text-sm font-medium text-slate-500">pts</span></div>
                             </div>
+                            <div className="bg-slate-50 p-3 rounded border border-slate-200">
+                                <div className="text-xs text-slate-500 uppercase font-bold">Steps</div>
+                                <div className="text-xl font-black text-slate-900">{stepPts !== undefined ? Math.round(stepPts) : 'N/A'} <span className="text-sm font-medium text-slate-500">pts</span></div>
+                            </div>
                         </div>
                         <div className="text-sm text-slate-600">
-                            <strong>Formula:</strong> Average of NYHA and KCCQ scores.
+                            <strong>Formula:</strong> Average of NYHA, KCCQ, and step score when step data is entered.
                             <div className="font-mono bg-slate-100 p-2 mt-1 rounded text-xs">
-                                ({nyhaPts} + {Math.round(p.kccq_score)}) / 2 = {score}
+                                ({functionalTerms.join(' + ')}) / {functionalTerms.length} = {score}
                             </div>
                         </div>
                     </div>
@@ -63,6 +82,9 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 const findingsCount = p.volume_status.exam_findings.size;
                 const weightPenalty = diff > 1.0 ? Math.round((diff - 1.0) * 15) : 0;
                 const findingsPenalty = findingsCount * 10;
+                const spo2Penalty = p.oxygen_saturation === undefined
+                    ? 0
+                    : p.oxygen_saturation < 90 ? 20 : p.oxygen_saturation < 94 ? 10 : 0;
 
                 return (
                     <div className="space-y-3">
@@ -75,11 +97,17 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                                 <span className="text-sm text-slate-600">Exam Findings:</span>
                                 <span className="font-bold text-slate-900">{findingsCount}</span>
                             </div>
+                            <div className="flex justify-between border-t border-slate-200 pt-1 mt-1">
+                                <span className="text-sm text-slate-600">SpO2:</span>
+                                <span className="font-bold text-slate-900">{p.oxygen_saturation ?? 'N/A'}{p.oxygen_saturation !== undefined ? '%' : ''}</span>
+                            </div>
                         </div>
                         <ul className="text-sm text-slate-600 space-y-1">
                             <li><strong>Base Score:</strong> 100</li>
                             <li className="text-red-600"><strong>Weight Penalty:</strong> -{weightPenalty} pts (15 pts per kg &gt; 1kg)</li>
                             <li className="text-red-600"><strong>Findings Penalty:</strong> -{findingsPenalty} pts (10 pts per finding)</li>
+                            {spo2Penalty > 0 && <li className="text-red-600"><strong>SpO2 Penalty:</strong> -{spo2Penalty} pts</li>}
+                            <li className="pt-2 border-t border-slate-100 font-bold text-slate-800">Engine Volume Score: {score}</li>
                         </ul>
                     </div>
                 );
@@ -88,40 +116,8 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 const lvef = p.lvef;
                 const lvedd = p.lvedd;
                 const lavi = p.lavi;
-                const baselineLvef = regimen.baseline_lvef;
-
-                // Base LVEF Score (55% ceiling per ACC/AHA 2022)
-                let baseLvefScore = 0;
-                if (lvef >= 55) baseLvefScore = 100;
-                else if (lvef <= 20) baseLvefScore = 0;
-                else baseLvefScore = ((lvef - 20) / 35) * 100;
-
-                // LVEDD Penalty (ASE/EACVI severity grades)
-                let lveddPenalty = 0;
-                let lveddLabel = '';
-                if (lvedd && lvedd > 68) { lveddPenalty = 25; lveddLabel = 'Severe'; }
-                else if (lvedd && lvedd > 62) { lveddPenalty = 18; lveddLabel = 'Moderate'; }
-                else if (lvedd && lvedd > 56) { lveddPenalty = 10; lveddLabel = 'Mild'; }
-                else if (lvedd && lvedd > 52) { lveddPenalty = 4; lveddLabel = 'Borderline'; }
-
-                // LAVI Penalty
-                let laviPenalty = 0;
-                if (lavi && lavi > 48) laviPenalty = 20;
-                else if (lavi && lavi > 40) laviPenalty = 10;
-                else if (lavi && lavi > 34) laviPenalty = 5;
-
-                // Reverse Remodeling Bonus
-                let remodelingBonus = 0;
-                let remodelingDetail = '';
-                if (baselineLvef !== undefined && lvef > baselineLvef) {
-                    const delta = lvef - baselineLvef;
-                    const getCat = (ef: number) => ef <= 30 ? 0 : ef <= 40 ? 1 : ef <= 55 ? 2 : 3;
-                    if (delta >= 10) remodelingBonus += 10;
-                    else if (delta >= 5) remodelingBonus += 5;
-                    if (getCat(lvef) > getCat(baselineLvef)) remodelingBonus += 5;
-                    remodelingBonus = Math.min(15, remodelingBonus);
-                    if (remodelingBonus > 0) remodelingDetail = `LVEF ${baselineLvef.toFixed(0)}% \u2192 ${lvef.toFixed(0)}% (\u0394${delta.toFixed(0)})`;
-                }
+                const baselineLvef = regimen.baseline_lvef ?? p.lvef;
+                const structure = calculateStructureScoreComponents(lvef, lvedd, lavi, baselineLvef, regimen.baseline_lvedd, regimen.baseline_lavi);
 
                 return (
                     <div className="space-y-3">
@@ -140,12 +136,10 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                             </div>
                         </div>
                         <ul className="text-sm text-slate-600 space-y-1 mt-2">
-                            <li><strong>Base LVEF Score:</strong> {Math.round(baseLvefScore)} pts <span className="text-slate-400">(ceiling 55%)</span></li>
-                            {lvedd && lveddPenalty > 0 && <li className="text-red-600"><strong>LV Dilation ({lveddLabel}):</strong> -{lveddPenalty} pts <span className="text-slate-400">({lvedd.toFixed(0)} mm)</span></li>}
-                            {lavi && laviPenalty > 0 && <li className="text-red-600"><strong>LA Dilation (LAVI):</strong> -{laviPenalty} pts</li>}
-                            {remodelingBonus > 0 && <li className="text-emerald-600"><strong>Reverse Remodeling:</strong> +{remodelingBonus} pts <span className="text-slate-400">({remodelingDetail})</span></li>}
-                            {(!lvedd || !lavi) && <li className="text-slate-400 italic">No penalty applied for missing structural data.</li>}
-                            <li className="pt-2 border-t border-slate-100 font-bold text-slate-800">Final Structure Score: {Math.max(0, Math.min(100, Math.round(baseLvefScore - lveddPenalty - laviPenalty + remodelingBonus)))}</li>
+                            <li><strong>Absolute LVEF state:</strong> {Math.round(structure.absoluteScore)} pts <span className="text-slate-400">(40% weight)</span></li>
+                            <li><strong>Improvement trajectory:</strong> {Math.round(structure.improvementScore)} pts <span className="text-slate-400">(40% weight; baseline LVEF {baselineLvef.toFixed(0)}%)</span></li>
+                            <li><strong>Chamber geometry:</strong> {Math.round(structure.chamberScore)} pts <span className="text-slate-400">(20% weight; neutral 50 if echo data unavailable)</span></li>
+                            <li className="pt-2 border-t border-slate-100 font-bold text-slate-800">Engine Structure Score: {score}</li>
                         </ul>
                     </div>
                 );
@@ -228,38 +222,38 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
 
             case 'Guideline':
                 const regimenMeds = regimen.regimen;
+                const phenotype = guidelinePhenotype(regimen);
                 const guidePillars = new Set<string>();
                 regimenMeds.forEach(r => {
                     const cls = r.med.drug_class;
                     if (['ARNI', 'ACEi', 'ARB'].includes(cls)) guidePillars.add('RAAS Inhibitor');
                     else if (cls === 'Beta Blocker') guidePillars.add('Beta Blocker');
-                    else if (cls === 'MRA') guidePillars.add('MRA');
+                    else if (cls === 'MRA' || (cls === 'nsMRA' && phenotype !== 'HFrEF')) guidePillars.add('MRA');
                     else if (cls === 'SGLT2i') guidePillars.add('SGLT2i');
                 });
 
                 // 3-tier phenotype: HFrEF (≤40), HFmrEF (41-49), HFpEF (≥50)
-                const baseLvef2 = regimen.baseline_lvef ?? p.lvef;
-                const isHFpEF = baseLvef2 >= 50;
-                const isHFmrEF = baseLvef2 >= 41 && baseLvef2 < 50;
-
                 type PillarInfo = { name: string; pts: number; evidenceClass: string };
                 let guidePillarList: PillarInfo[];
                 let phenotypeLabel: string;
                 let scoringNote: string;
 
-                if (isHFpEF) {
-                    phenotypeLabel = 'HFpEF: Class I Recommendations';
-                    guidePillarList = [{ name: 'SGLT2i', pts: 70, evidenceClass: 'Class I' }];
+                if (phenotype === 'HFpEF') {
+                    phenotypeLabel = 'HFpEF: Guideline Recommendations';
+                    guidePillarList = [
+                        { name: 'SGLT2i', pts: 70, evidenceClass: 'Class I' },
+                        { name: 'MRA', pts: 8, evidenceClass: 'Class IIb' },
+                    ];
                     scoringNote = 'SGLT2i: 70 pts. Target dose: +15 pts. Volume management: +15 pts. Total: 100.';
-                } else if (isHFmrEF) {
+                } else if (phenotype === 'HFmrEF') {
                     phenotypeLabel = 'HFmrEF: Guideline Recommendations (LVEF 41-49%)';
                     guidePillarList = [
-                        { name: 'RAAS Inhibitor', pts: 22, evidenceClass: 'Class I' },
-                        { name: 'SGLT2i', pts: 22, evidenceClass: 'Class I' },
+                        { name: 'RAAS Inhibitor', pts: 22, evidenceClass: 'Class IIb' },
+                        { name: 'SGLT2i', pts: 22, evidenceClass: 'Class IIa' },
                         { name: 'Beta Blocker', pts: 13, evidenceClass: 'Class IIb' },
                         { name: 'MRA', pts: 13, evidenceClass: 'Class IIb' },
                     ];
-                    scoringNote = 'Class I pillars (RAAS, SGLT2i): 22 pts each. Class IIb (BB, MRA): 13 pts each. Target dose: +5/pillar. Volume: +10. Total: 100.';
+                    scoringNote = 'SGLT2i is weighted strongest (Class IIa). RAAS, beta-blocker, and MRA are Class IIb. Target dose: +5/pillar capped at +20. Volume: +10.';
                 } else {
                     phenotypeLabel = 'HFrEF: Class I Pillars (2022 AHA/ACC/HFSA)';
                     guidePillarList = [
@@ -268,8 +262,9 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         { name: 'MRA', pts: 20, evidenceClass: 'Class I' },
                         { name: 'SGLT2i', pts: 20, evidenceClass: 'Class I' },
                     ];
-                    scoringNote = 'Each Class I pillar: 20 pts (max 80). Target dose: +5/pillar (max 20). Total: 100.';
+                    scoringNote = 'Each Class I pillar: 20 pts. Target dose: +5/pillar. Finerenone/nsMRA does not count for the HFrEF/HFimpEF MRA pillar.';
                 }
+                const guidelineRationale = regimen.rationale.filter(r => r.startsWith('Guideline:'));
 
                 return (
                     <div className="space-y-3">
@@ -298,6 +293,11 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         <p className="text-xs text-slate-400">
                             This domain carries 15% of the overall score, ensuring guideline-concordant therapy is prioritized.
                         </p>
+                        {guidelineRationale.length > 0 && (
+                            <ul className="text-xs text-slate-500 mt-3 space-y-1 border-t border-slate-100 pt-2">
+                                {guidelineRationale.map((r, i) => <li key={i}>{r}</li>)}
+                            </ul>
+                        )}
                     </div>
                 );
 

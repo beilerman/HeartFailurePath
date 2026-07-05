@@ -1,5 +1,5 @@
 
-import { generateAndScoreModifications } from '../services/simulationService';
+import { generateAndScoreModifications, isTargetDoseForPatient } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
@@ -93,8 +93,27 @@ const ASSERTION_TITLE_MARKERS = [
     'Negated Free-Text Intolerance Detail',
     'De-novo HFrEF Male Multi-Pillar Start',
     'De-novo HFrEF Diabetic Multi-Pillar Start',
-    'Over-Budget Value Ordering'
+    'Over-Budget Value Ordering',
+    'HFimpEF Categorical Prior EF Excludes Finerenone',
+    'Max New Classes Counts Binder Rescue',
+    'High Body Weight Carvedilol Target Requires 50 BID'
 ];
+
+function classGroupForVisitLimit(drugClass: string): string {
+    if (RAAS_CLASSES.has(drugClass)) return 'RAAS Inhibitor';
+    if (drugClass === 'nsMRA') return 'MRA';
+    return drugClass;
+}
+
+function countNewClassGroups(regimen: { med: { drug_class: string } }[], currentRegimen: { med: { drug_class: string } }[]): number {
+    const currentGroups = new Set(currentRegimen.map(r => classGroupForVisitLimit(r.med.drug_class)));
+    const resultingGroups = new Set(regimen.map(r => classGroupForVisitLimit(r.med.drug_class)));
+    let count = 0;
+    resultingGroups.forEach(group => {
+        if (!currentGroups.has(group)) count += 1;
+    });
+    return count;
+}
 
 async function runVerification() {
     console.log('Starting Clinical Scenario Verification...\n');
@@ -235,6 +254,27 @@ async function runVerification() {
             });
             if (hasDuplicateRegimenEntry) {
                 failures.push('Displayed regimen contains duplicate medication entries');
+                scenarioPassed = false;
+            }
+
+            // Global sequencing invariant: displayed regimens must respect the patient-facing
+            // max_new_classes_per_visit limit after all automatic rescue co-therapies are applied.
+            const maxNewClasses = Math.max(0, Math.round(scenario.patient.max_new_classes_per_visit ?? 2));
+            const visitLimitViolations = scoredRegimens.filter(r =>
+                countNewClassGroups(r.regimen, scenario.patient.current_regimen || []) > maxNewClasses
+            );
+            if (visitLimitViolations.length > 0) {
+                failures.push(`${visitLimitViolations.length} displayed regimen(s) exceed max_new_classes_per_visit=${maxNewClasses}`);
+                scenarioPassed = false;
+            }
+
+            // Global context invariant: weight-based target-dose labeling uses the same baseline
+            // dry weight the engine used for scoring, not post-treatment projected weight.
+            const missingBaselineDryWeight = scoredRegimens.some(r =>
+                r.baseline_dry_weight_kg !== scenario.patient.volume_status.dry_weight_kg
+            );
+            if (missingBaselineDryWeight) {
+                failures.push('Displayed regimen missing baseline dry-weight context for weight-based target-dose checks');
                 scenarioPassed = false;
             }
 
@@ -685,7 +725,7 @@ async function runVerification() {
             }
 
             // 15. HFimpEF -> Should keep all 4 GDMT pillars (not de-escalate)
-            if (scenario.title.includes('HFimpEF')) {
+            if (scenario.title.includes('HFimpEF') && !scenario.title.includes('HFimpEF Categorical Prior EF Excludes Finerenone')) {
                 if (scoredRegimens.length > 0 && anyRegimenMissingCorePillars()) {
                     failures.push('HFimpEF: one or more displayed regimens de-escalated core GDMT pillars');
                     scenarioPassed = false;
@@ -1550,7 +1590,7 @@ async function runVerification() {
             // receive a multi-pillar GDMT start as the TOP pick — never single-agent monotherapy.
             if (scenario.title.includes('De-novo HFrEF Male Multi-Pillar Start') ||
                 scenario.title.includes('De-novo HFrEF Diabetic Multi-Pillar Start')) {
-                const pillarClasses = new Set(['ARNI', 'ACEi', 'ARB', 'Beta Blocker', 'MRA', 'nsMRA', 'SGLT2i']);
+                const pillarClasses = new Set(['ARNI', 'ACEi', 'ARB', 'Beta Blocker', 'MRA', 'SGLT2i']);
                 const topPillars = topRegimen ? topRegimen.regimen.filter(m => pillarClasses.has(m.med.drug_class)).length : 0;
                 if (topPillars < 2) {
                     failures.push(`De-novo HFrEF: top pick has ${topPillars} GDMT pillar(s) — expected a multi-pillar start (>=2) when 2 new classes are permitted`);
@@ -1568,6 +1608,60 @@ async function runVerification() {
                 const topScore = topRegimen ? topRegimen.overall_score : -1;
                 if (scoredRegimens.some(r => r.overall_score > topScore)) {
                     failures.push('Over-budget value ordering: a displayed pick out-scores the top pick — fallback not value-ordered');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 85. CLINICAL RULE REGRESSION: categorical HFimpEF prior reduced EF must exclude
+            // finerenone and must not allow nsMRA to substitute for the HFrEF/HFimpEF MRA pillar.
+            if (scenario.title.includes('HFimpEF Categorical Prior EF Excludes Finerenone')) {
+                if (anyRegimenHasClass('nsMRA')) {
+                    failures.push('HFimpEF categorical prior EF: finerenone displayed despite HFrEF/HFimpEF management');
+                    scenarioPassed = false;
+                }
+                if (!excludedMedications.some(e => e.name === 'Finerenone (Kerendia)' || e.drug_class === 'nsMRA')) {
+                    failures.push('HFimpEF categorical prior EF: finerenone was not explicitly excluded');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 86. WORKFLOW REGRESSION: binder rescue must not bypass the configured new-class cap.
+            if (scenario.title.includes('Max New Classes Counts Binder Rescue')) {
+                const hasBinderPlusAnotherNewClass = scoredRegimens.some(r => {
+                    const newGroups = countNewClassGroups(r.regimen, scenario.patient.current_regimen || []);
+                    return newGroups > scenario.patient.max_new_classes_per_visit &&
+                        r.regimen.some(m => m.med.drug_class === 'K+ Binder');
+                });
+                if (hasBinderPlusAnotherNewClass) {
+                    failures.push('Max-new-class limit: binder rescue was appended after the limit and displayed');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 87. DOSE TARGET REGRESSION: carvedilol 25 mg BID is not target for patients >85 kg.
+            if (scenario.title.includes('High Body Weight Carvedilol Target Requires 50 BID')) {
+                const topCarvedilol = topRegimen?.regimen.find(m => m.med.name === 'Carvedilol');
+                if (!topCarvedilol || topCarvedilol.dose.strength !== 50) {
+                    failures.push('High body weight carvedilol: top regimen did not titrate to 50 mg BID');
+                    scenarioPassed = false;
+                }
+                if (topCarvedilol) {
+                    const stringStrengthCarvedilol = {
+                        ...topCarvedilol,
+                        dose: { ...topCarvedilol.dose, strength: String(topCarvedilol.dose.strength) }
+                    };
+                    if (!isTargetDoseForPatient(stringStrengthCarvedilol, scenario.patient)) {
+                        failures.push('High body weight carvedilol: target-dose check failed when dose strength was string-normalized');
+                        scenarioPassed = false;
+                    }
+                }
+                const hasTitration = topRegimen?.modification_set?.modifications.some(m =>
+                    m.action === 'titrate_up' &&
+                    m.source?.med.name === 'Carvedilol' &&
+                    m.target?.dose.strength === 50
+                );
+                if (!hasTitration) {
+                    failures.push('High body weight carvedilol: missing explicit 25->50 mg titration action');
                     scenarioPassed = false;
                 }
             }

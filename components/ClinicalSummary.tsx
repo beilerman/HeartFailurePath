@@ -39,7 +39,11 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
     const isPrerenal = bunCrRatio > 20;
 
     // Calculate Current Cost & Complexity
-    const currentCost = patient.current_regimen.reduce((acc, curr) => acc + (drugPrices[curr.med.name] ?? 20), 0);
+    const currentPrices = patient.current_regimen.map(curr => drugPrices[curr.med.name]);
+    const hasUnknownCurrentCost = currentPrices.some(price => price === undefined || !Number.isFinite(price));
+    const currentCost = hasUnknownCurrentCost
+        ? null
+        : currentPrices.reduce((acc, price) => acc + (price ?? 0), 0);
     const currentComplexity = patient.current_regimen.reduce((acc, curr) => {
         let val = 1;
         if (curr.dose.formulation.includes('SQ')) val = 2;
@@ -123,9 +127,16 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 tracking-wide">5. Cost Burden</h3>
                      <div className="flex items-baseline gap-2">
-                        <span className={`text-2xl font-black ${currentCost > patient.max_affordable_cost ? 'text-red-600' : 'text-slate-900'}`}>${currentCost}</span>
-                        <span className="text-sm text-slate-500 font-bold">/mo</span>
+                        <span className={`text-2xl font-black ${currentCost !== null && currentCost > patient.max_affordable_cost ? 'text-red-600' : 'text-slate-900'}`}>
+                            {currentCost === null ? 'Unavailable' : `$${currentCost}`}
+                        </span>
+                        {currentCost !== null && <span className="text-sm text-slate-500 font-bold">/mo</span>}
                     </div>
+                    {currentCost === null && (
+                        <p className="text-xs text-amber-700 font-semibold mt-2">
+                            Current regimen cost will appear after pricing data loads.
+                        </p>
+                    )}
                     <div className="flex justify-between mt-2 text-xs text-slate-400">
                         <span>Budget: ${patient.max_affordable_cost}</span>
                         <span>Sting: {patient.cost_sensitivity}</span>

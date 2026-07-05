@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
-import type { ScoredRegimen, RegimenMed, RegimenModification, QualitativeProjection, TradeOffLabel } from '../types';
+import type { Patient, ScoredRegimen, RegimenMed, RegimenModification, QualitativeProjection, TradeOffLabel } from '../types';
 import { ScoreDetailModal } from './ScoreDetailModal';
+import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 
 interface Props {
     regimen: ScoredRegimen;
@@ -50,9 +51,9 @@ const tradeOffTone: Record<TradeOffLabel['tone'], string> = {
     bad: 'bg-red-100 text-red-800',
 };
 
-const getDosingRationale = (item: RegimenMed): string => {
-    const { med, dose } = item;
-    const isTarget = dose.is_target_dose;
+const getDosingRationale = (item: RegimenMed, patient: Patient): string => {
+    const { med } = item;
+    const isTarget = isTargetDoseForPatient(item, patient);
 
     if (med.drug_class === 'SGLT2i') {
         return "Standard fixed dosing per DAPA-HF / EMPEROR-Reduced trials. No titration required.";
@@ -117,6 +118,7 @@ const modActionIcon: Record<string, string> = {
 export const RecommendationCard: React.FC<Props> = ({ regimen, rank }) => {
     const { domain_scores } = regimen;
     const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+    const targetDoseContext = getTargetDosePatientContext(regimen);
 
     const projections = regimen.qualitative_projections ?? [];
     const tradeOffs = regimen.trade_offs ?? [];
@@ -141,9 +143,10 @@ export const RecommendationCard: React.FC<Props> = ({ regimen, rank }) => {
                         {regimen.regimen.map((r, i) => {
                             const mod = getModForMed(regimen, r);
                             const badge = getModBadge(mod);
+                            const isTarget = isTargetDoseForPatient(r, targetDoseContext);
                             return (
                                 <span key={i} className="text-sm text-slate-700 bg-slate-50 px-2.5 py-1 rounded border border-slate-200 font-semibold flex items-center gap-1">
-                                    {r.dose.is_target_dose && <><span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span><span className="sr-only">Target Dose</span></>}
+                                    {isTarget && <><span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span><span className="sr-only">Target Dose</span></>}
                                     {r.med.name} <span className="text-slate-500 font-normal ml-1">{r.dose.strength}{r.dose.unit}</span>
                                     {badge && (
                                         <span className={`ml-1 text-[10px] font-bold px-1 py-0.5 rounded ${badge.className}`}>
@@ -204,6 +207,7 @@ export const RecommendationCard: React.FC<Props> = ({ regimen, rank }) => {
                     <h4 className="text-sm font-bold text-slate-500 uppercase mb-4 tracking-wide">Dosing Strategy & Evidence</h4>
                     <div className="space-y-4">
                         {regimen.regimen.map((item, idx) => {
+                            const isTarget = isTargetDoseForPatient(item, targetDoseContext);
                             const specificBenefits = regimen.rationale
                                 .filter(r => r.includes(item.med.name))
                                 .map(r => r.replace(`+ ${item.med.name}: `, ''));
@@ -213,7 +217,7 @@ export const RecommendationCard: React.FC<Props> = ({ regimen, rank }) => {
                                     <div className="w-1/3 shrink-0">
                                         <div className="font-bold text-sm text-slate-900">{item.med.name}</div>
                                         <div className="text-xs font-semibold text-indigo-600">{item.dose.strength}{item.dose.unit} {item.selected_frequency}</div>
-                                        {item.dose.is_target_dose && (
+                                        {isTarget && (
                                             <span className="inline-block mt-1 text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-bold uppercase tracking-wider">
                                                 Target Dose
                                             </span>
@@ -221,7 +225,7 @@ export const RecommendationCard: React.FC<Props> = ({ regimen, rank }) => {
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-xs text-slate-700 font-medium leading-relaxed mb-1.5">
-                                            {getDosingRationale(item)}
+                                            {getDosingRationale(item, targetDoseContext)}
                                         </p>
                                         {specificBenefits.length > 0 && (
                                             <ul className="space-y-0.5">

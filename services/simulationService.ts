@@ -242,6 +242,46 @@ function countNewClassGroups(candidate: RegimenMed[], current: RegimenMed[]): nu
     return added;
 }
 
+export function isTargetDoseForPatient(regimenMed: RegimenMed, patient: Patient): boolean {
+    const staticTarget = !!regimenMed.med.available_doses.find(d => String(d.strength) === String(regimenMed.dose.strength))?.is_target_dose;
+    if (regimenMed.med.name !== 'Carvedilol') return staticTarget;
+
+    const strength = Number(regimenMed.dose.strength);
+    if (Number.isNaN(strength)) return staticTarget;
+
+    // ACC/AHA target: 25 mg BID for <=85 kg, 50 mg BID for >85 kg.
+    const dryWeight = patient.volume_status.dry_weight_kg;
+    return dryWeight > 85 ? strength >= 50 : strength >= 25;
+}
+
+export function getTargetDosePatientContext(regimen: ScoredRegimen): Patient {
+    return {
+        ...regimen.projected_patient,
+        volume_status: {
+            ...regimen.projected_patient.volume_status,
+            dry_weight_kg: regimen.baseline_dry_weight_kg ?? regimen.projected_patient.volume_status.dry_weight_kg,
+        },
+    };
+}
+
+function mineralocorticoidCountsAsEvidencePillar(drugClass: string, phenotype: Phenotype): boolean {
+    if (drugClass === 'MRA') return true;
+    // Finerenone has LVEF >=40 evidence; it must not satisfy HFrEF/HFimpEF steroidal-MRA credit.
+    return drugClass === 'nsMRA' && phenotype !== 'HFrEF';
+}
+
+function regimenSatisfiesPillar(regimen: RegimenMed[], pillar: string, patient: Patient): boolean {
+    const phenotype = classifyPhenotype(patient);
+    return regimen.some(r => {
+        const cls = r.med.drug_class;
+        if (pillar === 'RAAS Inhibitor') return RAAS_CLASSES.has(cls);
+        if (pillar === 'Beta Blocker') return cls === 'Beta Blocker';
+        if (pillar === 'MRA') return mineralocorticoidCountsAsEvidencePillar(cls, phenotype);
+        if (pillar === 'SGLT2i') return cls === 'SGLT2i';
+        return getMedicationClassGroup(cls) === pillar;
+    });
+}
+
 export function clonePatient(p: Patient): Patient {
     return {
         ...p,
@@ -488,9 +528,9 @@ function computePhenotypePillars(patient: Patient): string[] {
 
 // Indicated-but-missing GDMT classes relative to the CURRENT regimen.
 function computeGdmtGaps(patient: Patient): string[] {
-    const currentGroups = new Set((patient.current_regimen || []).map(r => getMedicationClassGroup(r.med.drug_class)));
+    const currentRegimen = patient.current_regimen || [];
     return computePhenotypePillars(patient)
-        .filter(p => !currentGroups.has(p))
+        .filter(p => !regimenSatisfiesPillar(currentRegimen, p, patient))
         .map(p => PILLAR_LABELS[p] || p);
 }
 
@@ -746,7 +786,7 @@ function analyzeCurrentRegimen(
         ? ['SGLT2i']                                    // HFpEF: only SGLT2i is Class I
         : ['RAAS Inhibitor', 'Beta Blocker', 'MRA', 'SGLT2i'];  // HFrEF/HFmrEF/HFimpEF: full quad
 
-    let missingPillars = applicablePillars.filter(p => !currentClassMap.has(p));
+    let missingPillars = applicablePillars.filter(p => !regimenSatisfiesPillar(currentRegimen, p, patient));
 
     // Acute decompensation gating: do NOT initiate BB (Class III harm — ACC/AHA 2022)
     // NYHA IV, or NYHA III with significant volume overload = acutely decompensated
@@ -961,7 +1001,7 @@ function analyzeCurrentRegimen(
     // (allBBExcluded — the SHIFT-eligible "BB-intolerant" fallback).
     const bbAtTarget = currentRegimen.some(r =>
         r.med.drug_class === 'Beta Blocker' &&
-        !!r.med.available_doses.find(d => d.strength === r.dose.strength)?.is_target_dose
+        isTargetDoseForPatient(r, patient)
     );
     const ivabradineEligible = isSinusRhythm && patient.pulse >= 70 && patient.lvef <= 35 &&
         (bbAtTarget || allBBExcluded === true);
@@ -1589,10 +1629,10 @@ function getLvefCategory(lvef: number): number {
  * Chamber (20%): Projected LVEDD/LAVI severity (ASE/EACVI) + direction-of-change.
  *   Improving >5% → +20, worsening >5% → −20. Neutral 50 when echo data unavailable.
  */
-function calculateStructureScore(
+export function calculateStructureScoreComponents(
     lvef: number, lvedd: number | undefined, lavi: number | undefined,
     baselineLvef: number, baselineLvedd?: number, baselineLavi?: number
-): number {
+): { absoluteScore: number; improvementScore: number; chamberScore: number; blended: number } {
     // --- Component 1: Absolute State (0-100) ---
     // Piecewise-linear: gives clinical resolution at each severity tier
     let absoluteScore: number;
@@ -1668,8 +1708,15 @@ function calculateStructureScore(
         : 50; // Neutral when no echo data available
 
     // --- Blend: 40% absolute + 40% improvement + 20% chamber ---
-    const blended = absoluteScore * 0.40 + improvementScore * 0.40 + chamberScore * 0.20;
-    return Math.max(0, Math.min(100, blended));
+    const blended = Math.max(0, Math.min(100, absoluteScore * 0.40 + improvementScore * 0.40 + chamberScore * 0.20));
+    return { absoluteScore, improvementScore, chamberScore, blended };
+}
+
+function calculateStructureScore(
+    lvef: number, lvedd: number | undefined, lavi: number | undefined,
+    baselineLvef: number, baselineLvedd?: number, baselineLavi?: number
+): number {
+    return calculateStructureScoreComponents(lvef, lvedd, lavi, baselineLvef, baselineLvedd, baselineLavi).blended;
 }
 
 /**
@@ -1738,8 +1785,9 @@ function calculateAdherenceScore(complexity: number, toleranceInput: number): nu
  * Scores alignment with evidence-based GDMT recommendations — 3-tier phenotype.
  *
  * HFrEF (LVEF ≤ 40): All 4 pillars Class I — 20 pts each (max 80) + 5 pts/pillar at target (max 20) = 100.
- * HFmrEF (LVEF 41-49): RAAS+SGLT2i Class I (22 pts each), BB+MRA Class IIb (13 pts each) = 70 max
- *   + 5 pts/pillar at target (max 20) + volume management (10) = 100.
+ * HFmrEF (LVEF 41-49): SGLT2i Class IIa and RAAS/BB/MRA Class IIb weighted hybrid model
+ *   (SGLT2i/RAAS 22 pts each; BB/MRA 13 pts each = 70 max) + 5 pts/pillar at target (max 20)
+ *   + volume management (10) = 100. See docs/evidence-matrix.md (HF-GDMT-002).
  * HFpEF (LVEF ≥ 50): SGLT2i (70) + target dose (15) + volume management (15) = 100.
  */
 // =====================================================================================
@@ -1792,15 +1840,15 @@ const CONCORDANCE_TABLE: Record<Phenotype, PhenoConcordance> = {
     },
 };
 
-function pillarKeyOf(drugClass: string): PillarKey | null {
+function pillarKeyOf(drugClass: string, phenotype: Phenotype): PillarKey | null {
     if (RAAS_CLASSES.has(drugClass)) return 'RAAS';
     if (drugClass === 'Beta Blocker') return 'BB';
-    if (drugClass === 'MRA' || drugClass === 'nsMRA') return 'MRA';
+    if (mineralocorticoidCountsAsEvidencePillar(drugClass, phenotype)) return 'MRA';
     if (drugClass === 'SGLT2i') return 'SGLT2i';
     return null;
 }
 
-function classifyPhenotype(patient: Patient): Phenotype {
+export function classifyPhenotype(patient: Patient): Phenotype {
     const preserveQuadForUnknownHistory = shouldPreserveQuadForUnknownHistory(patient);
     const isHFimpEF = patient.lvef > 40 && (hasHistoricalHFrEF(patient) || preserveQuadForUnknownHistory);
     if (isHFimpEF) return 'HFrEF';            // HFimpEF continues full HFrEF pillar expectations
@@ -1810,12 +1858,13 @@ function classifyPhenotype(patient: Patient): Phenotype {
 }
 
 // Returns, per pillar present in the regimen, whether it is at target dose.
-function pillarsPresentAtTarget(regimen: RegimenMed[]): Map<PillarKey, boolean> {
+function pillarsPresentAtTarget(regimen: RegimenMed[], patient: Patient): Map<PillarKey, boolean> {
+    const phenotype = classifyPhenotype(patient);
     const present = new Map<PillarKey, boolean>();
     regimen.forEach(r => {
-        const key = pillarKeyOf(r.med.drug_class);
+        const key = pillarKeyOf(r.med.drug_class, phenotype);
         if (!key) return;
-        const atTarget = !!r.med.available_doses.find(d => d.strength === r.dose.strength)?.is_target_dose;
+        const atTarget = isTargetDoseForPatient(r, patient);
         present.set(key, (present.get(key) ?? false) || atTarget);
     });
     return present;
@@ -1823,7 +1872,7 @@ function pillarsPresentAtTarget(regimen: RegimenMed[]): Map<PillarKey, boolean> 
 
 function calculateGuidelineConcordanceScore(resultingRegimen: RegimenMed[], patient: Patient): number {
     const table = CONCORDANCE_TABLE[classifyPhenotype(patient)];
-    const present = pillarsPresentAtTarget(resultingRegimen);
+    const present = pillarsPresentAtTarget(resultingRegimen, patient);
 
     let score = 0;
     let targetBonusSum = 0;
@@ -1844,7 +1893,7 @@ function calculateGuidelineConcordanceScore(resultingRegimen: RegimenMed[], pati
 // Surfaceable evidence for the pillars actually present — the "why" behind the concordance score.
 function describeConcordance(resultingRegimen: RegimenMed[], patient: Patient): string[] {
     const table = CONCORDANCE_TABLE[classifyPhenotype(patient)];
-    const present = pillarsPresentAtTarget(resultingRegimen);
+    const present = pillarsPresentAtTarget(resultingRegimen, patient);
     const labels: Record<PillarKey, string> = { RAAS: 'RAAS inhibitor', BB: 'Beta-blocker', MRA: 'MRA', SGLT2i: 'SGLT2i' };
     const out: string[] = [];
     (Object.keys(table.pillars) as PillarKey[]).forEach(key => {
@@ -1952,7 +2001,13 @@ function simulateModificationEffect(
         if (['ARNI', 'ACEi', 'ARB'].includes(cls)) { hasRAAS = true; raasCount++; }
 
         // Cost and complexity for FULL resulting regimen
-        totalCost += prices[r.med.name] ?? 20;
+        const monthlyCost = prices[r.med.name];
+        if (monthlyCost === undefined || !Number.isFinite(monthlyCost)) {
+            totalCost += Number.POSITIVE_INFINITY;
+            warnings.push(`PRICE UNKNOWN: ${r.med.name} has no loaded cost data. Re-run after pricing loads before comparing affordability.`);
+        } else {
+            totalCost += monthlyCost;
+        }
         let medComplexity = 1;
         if (r.dose.formulation.includes('SQ') || r.dose.formulation.includes('Weekly')) medComplexity = 2;
         else if (r.selected_frequency === 'bid') medComplexity = 2;
@@ -2172,7 +2227,7 @@ function simulateModificationEffect(
 
         // Rationale for target dose and clinical effects
         const chf = r.med.chf_effects(r.dose.strength);
-        const isTarget = r.med.available_doses.find(d => d.strength === r.dose.strength)?.is_target_dose;
+        const isTarget = isTargetDoseForPatient(r, currentPatient);
         if (isTarget) rationale.push(`+ ${r.med.name}: Achieves GDMT Target Dose`);
         if (chf.lvef_improvement_absolute >= 3) rationale.push(`+ ${r.med.name}: Significant Reverse Remodeling`);
         if (chf.lvedd_reduction_percent && chf.lvedd_reduction_percent >= 0.05) {
@@ -2317,7 +2372,7 @@ function simulateModificationEffect(
     const newAdds = modificationSet.modifications.filter(m => m.action === 'add');
     const titrations = modificationSet.modifications.filter(m => m.action === 'titrate_up');
     if (newAdds.length >= 2) {
-        const targetAdds = newAdds.filter(m => m.target?.dose.is_target_dose);
+        const targetAdds = newAdds.filter(m => m.target && isTargetDoseForPatient(m.target, currentPatient));
         if (targetAdds.length >= 2) {
             warnings.push('Multiple new medications at target dose. In practice, initiate at low dose and titrate each q2-4 weeks.');
         }
@@ -2697,6 +2752,19 @@ export function generateAndScoreModifications(
         );
     }
 
+    if (patient.sbp < 90) {
+        return {
+            scoredRegimens: [],
+            excludedMedications: [...patient.discontinued_meds],
+            clinicalAlerts,
+            monitoringPlan: [],
+            gdmtGaps,
+            eligibleAdjuncts: [],
+            missingDataNotices,
+            followUpCalendar: []
+        };
+    }
+
     // 1. Filter Formulary & Check Exclusions (same logic as before)
     const excludedMeds: ExcludedMedication[] = [...patient.discontinued_meds];
     const excludedNames = new Set(excludedMeds.map(m => m.name));
@@ -2823,6 +2891,7 @@ export function generateAndScoreModifications(
     const ivIron = medTiers.find(r => r.med.drug_class === 'IV Iron');
     const ironDeficient = isIronDeficient(patient);
     const results: ScoredRegimen[] = [];
+    const maxNewPerVisit = Math.max(0, Math.round(patient.max_new_classes_per_visit ?? 2));
 
     // --- GDMT completeness target -------------------------------------------------------
     // Standard of care is COMPLETE guideline therapy, rapidly sequenced — not the smallest
@@ -2844,7 +2913,7 @@ export function generateAndScoreModifications(
         completenessSlots.push(
             { match: (c) => RAAS_CLASSES.has(c) },
             { match: (c) => c === 'Beta Blocker' },
-            { match: (c) => c === 'MRA' || c === 'nsMRA' },
+            { match: (c) => c === 'MRA' || (c === 'nsMRA' && phenotype === 'HFmrEF') },
             { match: (c) => c === 'SGLT2i' }
         );
     } else { // HFpEF
@@ -2945,6 +3014,10 @@ export function generateAndScoreModifications(
             }
         }
 
+        if (countNewClassGroups(activeModSet.resulting_regimen, patient.current_regimen || []) > maxNewPerVisit) {
+            return;
+        }
+
         const p = sim.projectedPatient;
 
         // Unknown baseline NT-proBNP → neutral 50, not a false 100 (it would otherwise
@@ -2984,7 +3057,7 @@ export function generateAndScoreModifications(
             const optimal = meds.some(r => {
                 const doses = r.med.available_doses;
                 if (doses.length === 1) return true;
-                const atTarget = !!doses.find(d => d.strength === r.dose.strength)?.is_target_dose;
+                const atTarget = isTargetDoseForPatient(r, patient);
                 const strengths = doses.map(d => Number(d.strength)).filter(n => !Number.isNaN(n));
                 const atMax = strengths.length > 0 && Number(r.dose.strength) >= Math.max(...strengths);
                 return atTarget || atMax;
@@ -3069,6 +3142,9 @@ export function generateAndScoreModifications(
             regimen: activeModSet.resulting_regimen,
             projected_patient: p,
             baseline_lvef: patient.lvef,
+            baseline_lvedd: patient.lvedd,
+            baseline_lavi: patient.lavi,
+            baseline_dry_weight_kg: patient.volume_status.dry_weight_kg,
             overall_score: Math.round(Math.min(100, Math.max(0, overall))),
             raw_score: overall,
             domain_scores: domainScores,

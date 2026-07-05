@@ -16,6 +16,7 @@ interface PatientFormProps {
     setSimulationMedicationNames: React.Dispatch<React.SetStateAction<Set<string>>>;
     onRunSimulation: () => void;
     isLoading: boolean;
+    pricesReady: boolean;
     testScenarios: TestScenario[];
     selectedScenario: string;
     onScenarioChange: (title: string) => void;
@@ -47,7 +48,7 @@ const calculateCKDEPI = (scr: number, age: number, sex: 'Male' | 'Female'): numb
 
 export const PatientForm: React.FC<PatientFormProps> = ({
     patientData, setPatientData,
-    onRunSimulation, isLoading,
+    onRunSimulation, isLoading, pricesReady,
     testScenarios, selectedScenario, onScenarioChange
 }) => {
 
@@ -222,11 +223,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             <div className="p-5 border-t border-slate-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
                 <button
                     onClick={onRunSimulation}
-                    disabled={isLoading || hasValidationErrors}
+                    disabled={isLoading || hasValidationErrors || !pricesReady}
                     aria-busy={isLoading}
                     className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3.5 px-4 rounded-xl hover:shadow-lg transition-all disabled:opacity-50 text-base tracking-wide"
                 >
-                    {isLoading ? 'Running Analysis...' : hasValidationErrors ? 'Fix Errors to Run Analysis' : 'Run Analysis'}
+                    {isLoading ? 'Running Analysis...' : !pricesReady ? 'Loading Prices...' : hasValidationErrors ? 'Fix Errors to Run Analysis' : 'Run Analysis'}
                 </button>
             </div>
         </div>

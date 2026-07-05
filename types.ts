@@ -172,6 +172,9 @@ export interface ScoredRegimen {
     // Projected Clinical State
     projected_patient: Patient;
     baseline_lvef?: number; // Pre-treatment LVEF for reverse remodeling calculations
+    baseline_lvedd?: number; // Pre-treatment LVEDD for structural scoring explanation
+    baseline_lavi?: number; // Pre-treatment LAVI for structural scoring explanation
+    baseline_dry_weight_kg?: number; // Pre-treatment dry weight for weight-based target-dose checks
 
     // Scores
     overall_score: number;
