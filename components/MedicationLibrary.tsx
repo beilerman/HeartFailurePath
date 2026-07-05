@@ -4,6 +4,11 @@ import { MEDICATION_FORMULARY } from '../constants';
 import { Medication } from '../types';
 import { HeartIcon, ActivityIcon, WarningIcon, BeakerIcon } from './icons';
 
+// Formulary encodes drops as positive values; a negative drop is an increase (e.g. GLP-1
+// mild tachycardia), so format the sign explicitly instead of hard-coding a leading minus.
+const fmtDrop = (v: number, unit: string) =>
+    v > 0 ? `-${v.toFixed(0)} ${unit}` : v < 0 ? `+${Math.abs(v).toFixed(0)} ${unit}` : `0 ${unit}`;
+
 const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
     // Get a representative dose (middle of range) for display purposes
     const repDose = med.available_doses[Math.floor(med.available_doses.length / 2)].strength;
@@ -75,11 +80,11 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                     </h4>
                     <div className="text-sm text-slate-600 flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
                         <span>SBP Effect</span>
-                        <span className="font-medium">-{hemoEffects.sbp_drop.toFixed(0)} mmHg</span>
+                        <span className="font-medium">{fmtDrop(hemoEffects.sbp_drop, 'mmHg')}</span>
                     </div>
                     <div className="text-sm text-slate-600 flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
                         <span>HR Effect</span>
-                        <span className="font-medium">-{hemoEffects.hr_drop.toFixed(0)} bpm</span>
+                        <span className="font-medium">{fmtDrop(hemoEffects.hr_drop, 'bpm')}</span>
                     </div>
                      <div className="text-sm text-slate-600 flex justify-between items-center">
                         <span>K+ Effect</span>
@@ -146,13 +151,15 @@ export const MedicationLibrary: React.FC = () => {
                             <input
                                 type="text"
                                 placeholder="Search by name..."
+                                aria-label="Search medications by name"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="block w-full md:w-64 rounded-md border-slate-300 pl-10 py-2 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm shadow-sm"
                             />
                         </div>
 
-                         <select 
+                         <select
+                            aria-label="Filter by drug class"
                             value={filterClass}
                             onChange={(e) => setFilterClass(e.target.value)}
                             className="block w-full md:w-48 rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm shadow-sm"

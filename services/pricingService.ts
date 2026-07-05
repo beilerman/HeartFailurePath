@@ -107,9 +107,9 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
 
     // --- PREFERRED BRAND / SPECIALTY ---
     'Sacubitril/Valsartan (Entresto)': {
-        cash: 50, commercial_copay: 10, medicare_copay: 74,
+        cash: 600, commercial_copay: 10, medicare_copay: 74,
         generic_available: false, has_copay_card: true, tier: 'preferred_brand',
-        notes: 'Novartis copay card covers up to $200/mo for commercial; Medicare IRA negotiated 2026'
+        notes: 'GoodRx-median brand cash ~$560-650/mo. Novartis copay card covers up to $200/mo for commercial; the IRA-negotiated ~$295 price applies to MEDICARE only (modeled via medicare_copay).'
     },
     'Dapagliflozin': {
         cash: 290, commercial_copay: 35, medicare_copay: 45,
@@ -155,6 +155,11 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
         cash: 315, commercial_copay: 50, medicare_copay: 60,
         generic_available: false, has_copay_card: false, tier: 'specialty',
         notes: 'IV infusion; often covered under medical benefit (Part B) not Part D'
+    },
+    'Furoscix (SC Furosemide)': {
+        cash: 900, commercial_copay: 100, medicare_copay: 200,
+        generic_available: false, has_copay_card: true, tier: 'specialty',
+        notes: 'scPharmaceuticals copay program for commercial. ~$900 WAC per 80mg on-body infusor dose — episodic use; figures are a monthly-equivalent for the modeled outpatient decongestion burst. Was previously MISSING from this table, silently falling back to generic-level pricing and flattening its core cost trade-off vs oral loops.'
     }
 };
 
@@ -184,7 +189,11 @@ export const getDrugPrices = (
             if (entry) {
                 prices[name] = entry[priceKey];
             } else {
-                // Fallback for unknown medications
+                // Fallback for unknown medications. A FORMULARY med landing here is a curation
+                // miss (it silently prices like a cheap generic) — the verify harness asserts
+                // every formulary name has an explicit DRUG_PRICES entry; the warn is a runtime
+                // backstop for ad-hoc callers.
+                console.warn(`pricingService: no DRUG_PRICES entry for "${name}" — using generic-level fallback.`);
                 prices[name] = tier === 'cash' ? 150 : 50;
             }
         });

@@ -1,40 +1,36 @@
 <!-- Copilot / AI-Agent instructions for HeartFailurePATH -->
 # Quick Context
-- This is a Vite + React TypeScript single-page app (UI) with a deterministic clinical "simulation engine" (domain logic) implemented in TypeScript.
-- UI: `App.tsx` (tabs: Simulation, Formulary, Logic). Core input form is `components/PatientForm` and its sub-sections under `components/patient-form/`.
-- Simulation Engine: `services/simulationService.ts` (baseline calc, regimen simulation, 6-domain scoring). Pricing is mocked in `services/pricingService.ts`.
-- Source of truth for medications: `constants.ts` (export `MEDICATION_FORMULARY`). Types are in `types.ts`. Example patients are in `data/scenarios.ts`.
+- Vite + React + TypeScript single-page app with a deterministic clinical simulation engine.
+- All source lives at the repository root (no `src/`). UI: `App.tsx` (tabs: Simulation, Formulary, Logic), form in `components/PatientForm.tsx` + `components/patient-form/*`.
+- Engine: `services/simulationService.ts`. Single public entry point:
+  `generateAndScoreModifications(patient, availableMedNames: Set<string>, prices: Record<string, number>)`
+  returning `SimulationOutput` (types.ts): `scoredRegimens`, `excludedMedications`, `clinicalAlerts`, `monitoringPlan`, plus categorical fields `gdmtGaps?`, `eligibleAdjuncts?`, `missingDataNotices?`, `followUpCalendar?`.
+- Delta-based engine with 7-domain weighted scoring (Neuro 20 / Func 15 / Vol 15 / Struct 10 / Cost 15 / Adhere 10 / Guideline 15). Candidate actions: add / titrate_up / titrate_down / swap / remove / keep.
+- Shared clinical predicates (`valueUnknown`, `hasHistoricalHFrEF`, `isIronDeficient`, `isBlackRace`) live in `services/clinicalPredicates.ts` — single source for both the engine AND the formulary. Never duplicate them.
+- Formulary: `constants.ts` (`MEDICATION_FORMULARY`, 32 meds / 17 classes). Each med implements `chf_effects()`, `hemodynamic_effects()`, optional `contraindications()` / `renal_adjustment()` / `special_features`. Pricing: `services/pricingService.ts` — every formulary med MUST have an explicit `DRUG_PRICES` entry (a verify invariant enforces this).
+- Scoring constants and the concordance table (`BNP_SCORE_TARGET`, `NYHA_SCORE_MAP`, `VOLUME_SCORING`, `CONCORDANCE_TABLE`, `pillarKeyOf`, ...) are EXPORTED from `simulationService.ts` and rendered by `ScoreDetailModal` — never re-hardcode display copies in components.
 
-# How to run locally
-- Install: `npm install`
-- Dev server: `npm run dev` (Vite, default port 3000)
-- Build check: `npm run build` (vite build)
-- Environment: set `GEMINI_API_KEY` in `.env.local` if using external models; `vite.config.ts` injects `process.env.GEMINI_API_KEY`.
+# Commands
+- `npm install`, `npm run dev` (Vite, default port 3000)
+- `npm run typecheck` / `npm run build`
+- `npm run verify` — the MANDATORY regression gate (`scripts/verifyScenarios.ts`; its printed count is authoritative, currently Passed 106 = 105 clinical scenarios + 1 structural pricing invariant). Also runs in CI (`.github/workflows/ci.yml`; `npm run ci` = typecheck + build + verify).
+- Standalone audit harnesses (not in CI, but part of the pre-release gate):
+  `npm run audit:red` (adversarial probes, pass = 0 findings), `npm run audit:mistakes` (51/51), `npm run audit:hundred` (100/100).
+- No environment variables are required; there is no external AI integration and no `lint` script.
 
-# Key patterns & conventions (specific to this repo)
-- Use `Set<string>` for `comorbidities` and `volume_status.exam_findings` (not arrays). Use `clonePatient()` from `data/scenarios.ts` when copying patients so Sets are preserved.
-- Medication objects live in `MEDICATION_FORMULARY` (in `constants.ts`). Each med must implement `chf_effects()`, `hemodynamic_effects()`, and optional `contraindications()` / `special_features` similar to existing entries.
-- Simulation reduces combinatorial explosion via `getDoseTiers()` and `cartesianProduct()` (see `simulationService.ts`). Add changes with performance impact in mind.
-- Hard-coded clinical thresholds (e.g., BNP targets, MAP < 65, K+ cutoffs) live in `simulationService.ts`. If you change them, update nearby comments and add scenario-based checks.
+# Non-negotiables for AI agents
+- `Patient` uses `Set<string>` fields (`comorbidities`, `allergies`, `exam_findings`, `external_medications`). Copy patients ONLY with `clonePatient()` (implemented in `services/simulationService.ts`, re-exported by `data/scenarios.ts`) — never spread or JSON round-trip.
+- The engine must stay deterministic and pure — no side effects, no randomness, no network. Mocks stay localized (`pricingService.ts`).
+- Every clinical-logic or threshold change requires ALL of: a scenario in `data/scenarios.ts`, an assertion in `scripts/verifyScenarios.ts`, an update to `components/FAQ.tsx` (the in-app Logic tab must match the engine), and updates to `README.md`/`CLAUDE.md`.
+- Rescue additions (K+ binder, IV iron) COUNT toward `max_new_classes_per_visit`. This is intentional and test-ratified ('Max New Classes Counts Binder Rescue') — do not "fix" it.
+- Graduated projected-SBP ranking penalties are `<90 → -25`, `<95 → -8` (recalibrated from -60/-30). Do not restore the old values; hard gates (input SBP < 90, display SBP < 85) are separate and unchanged.
+- Blank safety-critical data (eGFR/creatinine/K+ = 0) means "not entered" — it must never clear a safety gate and never read as end-stage disease. Use `valueUnknown()`.
+- Trial-enrollment criteria gate INITIATION only (vericiguat VICTORIA markers, GLP-1 BMI >= 30, SGLT2i eGFR floor) — do not force-remove patients already on the drug for improved markers; true safety CIs (e.g. pregnancy) still force removal.
 
-# Typical edits and where to make them
-- Add a new medication: add to `constants.ts` (follow the shape of e.g., `Dapagliflozin` or `Sacubitril/Valsartan`), and optionally update `services/pricingService.ts` for pricing.
-- Change scoring/clinical logic: edit `services/simulationService.ts`. Tests are not present—add scenario entries in `data/scenarios.ts` to manually validate via the UI.
-- Modify patient input or UI: edit `components/` and `components/patient-form/*`. `PatientForm` auto-calculates BMI and eGFR via `useEffect`—preserve these behaviors or centralize them.
+# Validation gate (run before claiming done)
+1. `npm run typecheck`
+2. `npm run build`
+3. `npm run verify` — all assertions must pass
+4. For clinical changes, also run the three audit harnesses.
 
-# Debugging & validation tips
-- Use the UI: load a scenario (top-left selector) and click "Run Analysis" to exercise the entire engine.
-- For unit-level inspection, log inside `simulationService.ts` or write small node scripts calling `simulateAndScoreAllRegimens()` (same import path).
-- When making scoring changes, add or modify scenarios in `data/scenarios.ts` to create reproducible regressions.
-
-# Minimal guardrails for AI agents
-- Do not change medical thresholds or models without adding a test scenario and a comment explaining rationale and expected impact.
-- Keep service functions pure and deterministic—side-effects should be explicit and localized to mocks (e.g., `pricingService.ts`).
-
-# Quick file map (examples)
-- Domain logic: `services/simulationService.ts` (scoring, baseline, simulateRegimenEffect)
-- Med formulary: `constants.ts` (`MEDICATION_FORMULARY` entries)
-- Sample data: `data/scenarios.ts` (`INITIAL_PATIENT`, `clonePatient()`)
-- UI entry + tabs: `App.tsx`
-
-If anything in this note is unclear or you'd like me to expand a section (examples, more file links, or add test scaffolding), tell me which part to iterate on.
+Deeper reference: the project `CLAUDE.md` (architecture, safety logic, pitfalls) and `docs/evidence-matrix.md` (rule-to-evidence traceability).

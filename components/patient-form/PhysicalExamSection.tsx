@@ -49,15 +49,15 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
                 <div>
                     <Label>SBP / DBP (mmHg)</Label>
                     <div className="flex gap-2">
-                        <Input type="number" name="sbp" value={patientData.sbp} onChange={onChange} placeholder="Sys" aria-label="Systolic blood pressure" error={validationErrors.sbp} />
-                        <Input type="number" name="dbp" value={patientData.dbp} onChange={onChange} placeholder="Dia" aria-label="Diastolic blood pressure" error={validationErrors.dbp} />
+                        <Input type="number" name="sbp" value={patientData.sbp ?? ''} onChange={onChange} placeholder="Sys" aria-label="Systolic blood pressure" error={validationErrors.sbp} />
+                        <Input type="number" name="dbp" value={patientData.dbp ?? ''} onChange={onChange} placeholder="Dia" aria-label="Diastolic blood pressure" error={validationErrors.dbp} />
                     </div>
                 </div>
                 <div>
                     <Label>Pulse / SpO2</Label>
                     <div className="flex gap-2">
                         <div className="relative w-full">
-                            <Input type="number" name="pulse" value={patientData.pulse} onChange={onChange} placeholder="BPM" aria-label="Pulse rate" error={validationErrors.pulse} />
+                            <Input type="number" name="pulse" value={patientData.pulse ?? ''} onChange={onChange} placeholder="BPM" aria-label="Pulse rate" error={validationErrors.pulse} />
                             <span className="absolute right-2 top-2 text-xs text-slate-400">bpm</span>
                         </div>
                         <div className="relative w-full">

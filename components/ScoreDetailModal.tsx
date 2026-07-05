@@ -1,7 +1,14 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ScoredRegimen } from '../types';
-import { calculateStructureScoreComponents, classifyPhenotype } from '../services/simulationService';
+import {
+    calculateStructureScoreComponents, classifyPhenotype,
+    // Scoring tables/constants imported from the ENGINE so this explanation panel can never
+    // drift from the actual scoring math (values were previously re-hardcoded here).
+    BNP_SCORE_TARGET, BNP_SCORE_CRITICAL, NYHA_SCORE_MAP, FUNCTIONAL_STEPS_FULL_CREDIT,
+    VOLUME_SCORING, adherenceComplexityThreshold, CONCORDANCE_TABLE, pillarKeyOf,
+} from '../services/simulationService';
+import type { Phenotype, PillarKey, PillarConcordance } from '../services/simulationService';
 
 interface Props {
     domain: string;
@@ -10,9 +17,7 @@ interface Props {
     onClose: () => void;
 }
 
-const nyhaScoreMap: Record<string, number> = { "I": 100, "II": 75, "III": 40, "IV": 10 };
-
-const guidelinePhenotype = (regimen: ScoredRegimen): 'HFrEF' | 'HFmrEF' | 'HFpEF' => {
+const guidelinePhenotype = (regimen: ScoredRegimen): Phenotype => {
     return classifyPhenotype({
         ...regimen.projected_patient,
         lvef: regimen.baseline_lvef ?? regimen.projected_patient.lvef,
@@ -33,8 +38,8 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                             <div className="text-2xl font-black text-slate-900">{bnp.toLocaleString()} <span className="text-sm font-medium text-slate-500">pg/mL</span></div>
                         </div>
                         <ul className="text-sm text-slate-600 space-y-2">
-                            <li><strong>Target:</strong> &le; 125 pg/mL (100 pts)</li>
-                            <li><strong>Critical:</strong> &ge; 4000 pg/mL (0 pts)</li>
+                            <li><strong>Target:</strong> &le; {BNP_SCORE_TARGET} pg/mL (100 pts)</li>
+                            <li><strong>Critical:</strong> &ge; {BNP_SCORE_CRITICAL.toLocaleString()} pg/mL (0 pts)</li>
                             <li className="pt-2 border-t border-slate-100">
                                 <strong>Calculation:</strong> Linear interpolation between target and critical thresholds.
                             </li>
@@ -43,9 +48,9 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 );
 
             case 'Functional':
-                const nyhaPts = nyhaScoreMap[p.nyha_class] || 0;
+                const nyhaPts = NYHA_SCORE_MAP[p.nyha_class] || 0;
                 const stepPts = p.daily_step_count !== undefined
-                    ? Math.min(100, (p.daily_step_count / 7000) * 100)
+                    ? Math.min(100, (p.daily_step_count / FUNCTIONAL_STEPS_FULL_CREDIT) * 100)
                     : undefined;
                 const functionalTerms = stepPts !== undefined
                     ? [nyhaPts, Math.round(p.kccq_score), Math.round(stepPts)]
@@ -80,11 +85,11 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 const curr = p.volume_status.current_weight_kg;
                 const diff = curr - dry;
                 const findingsCount = p.volume_status.exam_findings.size;
-                const weightPenalty = diff > 1.0 ? Math.round((diff - 1.0) * 15) : 0;
-                const findingsPenalty = findingsCount * 10;
+                const weightPenalty = diff > 1.0 ? Math.round((diff - 1.0) * VOLUME_SCORING.weightPenaltyPerKgAbove1) : 0;
+                const findingsPenalty = findingsCount * VOLUME_SCORING.findingPenalty;
                 const spo2Penalty = p.oxygen_saturation === undefined
                     ? 0
-                    : p.oxygen_saturation < 90 ? 20 : p.oxygen_saturation < 94 ? 10 : 0;
+                    : p.oxygen_saturation < 90 ? VOLUME_SCORING.spo2SeverePenalty : p.oxygen_saturation < 94 ? VOLUME_SCORING.spo2MildPenalty : 0;
 
                 return (
                     <div className="space-y-3">
@@ -104,8 +109,8 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         </div>
                         <ul className="text-sm text-slate-600 space-y-1">
                             <li><strong>Base Score:</strong> 100</li>
-                            <li className="text-red-600"><strong>Weight Penalty:</strong> -{weightPenalty} pts (15 pts per kg &gt; 1kg)</li>
-                            <li className="text-red-600"><strong>Findings Penalty:</strong> -{findingsPenalty} pts (10 pts per finding)</li>
+                            <li className="text-red-600"><strong>Weight Penalty:</strong> -{weightPenalty} pts ({VOLUME_SCORING.weightPenaltyPerKgAbove1} pts per kg &gt; 1kg)</li>
+                            <li className="text-red-600"><strong>Findings Penalty:</strong> -{findingsPenalty} pts ({VOLUME_SCORING.findingPenalty} pts per finding)</li>
                             {spo2Penalty > 0 && <li className="text-red-600"><strong>SpO2 Penalty:</strong> -{spo2Penalty} pts</li>}
                             <li className="pt-2 border-t border-slate-100 font-bold text-slate-800">Engine Volume Score: {score}</li>
                         </ul>
@@ -194,7 +199,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
             case 'Adherence':
                 const complexity = regimen.complexity;
                 const tolerance = p.complexity_tolerance;
-                const threshold = 2 + (tolerance * 1.8);
+                const threshold = adherenceComplexityThreshold(tolerance);
 
                 return (
                     <div className="space-y-3">
@@ -223,47 +228,31 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
             case 'Guideline':
                 const regimenMeds = regimen.regimen;
                 const phenotype = guidelinePhenotype(regimen);
-                const guidePillars = new Set<string>();
+                // Pillars present in this regimen, using the ENGINE's own pillar mapping
+                // (pillarKeyOf handles nsMRA-counts-as-MRA per phenotype).
+                const guidePillars = new Set<PillarKey>();
                 regimenMeds.forEach(r => {
-                    const cls = r.med.drug_class;
-                    if (['ARNI', 'ACEi', 'ARB'].includes(cls)) guidePillars.add('RAAS Inhibitor');
-                    else if (cls === 'Beta Blocker') guidePillars.add('Beta Blocker');
-                    else if (cls === 'MRA' || (cls === 'nsMRA' && phenotype !== 'HFrEF')) guidePillars.add('MRA');
-                    else if (cls === 'SGLT2i') guidePillars.add('SGLT2i');
+                    const key = pillarKeyOf(r.med.drug_class, phenotype);
+                    if (key) guidePillars.add(key);
                 });
 
-                // 3-tier phenotype: HFrEF (≤40), HFmrEF (41-49), HFpEF (≥50)
-                type PillarInfo = { name: string; pts: number; evidenceClass: string };
-                let guidePillarList: PillarInfo[];
-                let phenotypeLabel: string;
-                let scoringNote: string;
+                // Rendered straight from the engine's CONCORDANCE_TABLE — points, evidence class,
+                // and trials can never drift from the actual scoring.
+                const table = CONCORDANCE_TABLE[phenotype];
+                const PILLAR_LABELS: Record<PillarKey, string> = { RAAS: 'RAAS Inhibitor', BB: 'Beta Blocker', MRA: 'MRA', SGLT2i: 'SGLT2i' };
+                const guidePillarList = (Object.entries(table.pillars) as [PillarKey, PillarConcordance][])
+                    .sort((a, b) => b[1].base - a[1].base)
+                    .map(([key, ev]) => ({ key, name: PILLAR_LABELS[key], pts: ev.base, targetBonus: ev.targetBonus, evidenceClass: `Class ${ev.recClass}`, trials: ev.trials }));
 
-                if (phenotype === 'HFpEF') {
-                    phenotypeLabel = 'HFpEF: Guideline Recommendations';
-                    guidePillarList = [
-                        { name: 'SGLT2i', pts: 70, evidenceClass: 'Class I' },
-                        { name: 'MRA', pts: 8, evidenceClass: 'Class IIb' },
-                    ];
-                    scoringNote = 'SGLT2i: 70 pts. Target dose: +15 pts. Volume management: +15 pts. Total: 100.';
-                } else if (phenotype === 'HFmrEF') {
-                    phenotypeLabel = 'HFmrEF: Guideline Recommendations (LVEF 41-49%)';
-                    guidePillarList = [
-                        { name: 'RAAS Inhibitor', pts: 22, evidenceClass: 'Class IIb' },
-                        { name: 'SGLT2i', pts: 22, evidenceClass: 'Class IIa' },
-                        { name: 'Beta Blocker', pts: 13, evidenceClass: 'Class IIb' },
-                        { name: 'MRA', pts: 13, evidenceClass: 'Class IIb' },
-                    ];
-                    scoringNote = 'SGLT2i is weighted strongest (Class IIa). RAAS, beta-blocker, and MRA are Class IIb. Target dose: +5/pillar capped at +20. Volume: +10.';
-                } else {
-                    phenotypeLabel = 'HFrEF: Class I Pillars (2022 AHA/ACC/HFSA)';
-                    guidePillarList = [
-                        { name: 'RAAS Inhibitor', pts: 20, evidenceClass: 'Class I' },
-                        { name: 'Beta Blocker', pts: 20, evidenceClass: 'Class I' },
-                        { name: 'MRA', pts: 20, evidenceClass: 'Class I' },
-                        { name: 'SGLT2i', pts: 20, evidenceClass: 'Class I' },
-                    ];
-                    scoringNote = 'Each Class I pillar: 20 pts. Target dose: +5/pillar. Finerenone/nsMRA does not count for the HFrEF/HFimpEF MRA pillar.';
-                }
+                const phenotypeLabel = phenotype === 'HFpEF'
+                    ? 'HFpEF: Guideline Recommendations'
+                    : phenotype === 'HFmrEF'
+                        ? 'HFmrEF: Guideline Recommendations (LVEF 41-49%)'
+                        : 'HFrEF: Class I Pillars (2022 AHA/ACC/HFSA)';
+                const capNote = Number.isFinite(table.targetBonusCap) ? ` (capped at +${table.targetBonusCap} total)` : '';
+                const volumeNote = table.volumeBonus > 0 ? ` Volume management: +${table.volumeBonus}.` : '';
+                const scoringNote = `At-target dose bonus per pillar shown below${capNote}.${volumeNote}` +
+                    (phenotype === 'HFrEF' ? ' Finerenone/nsMRA does not count for the HFrEF/HFimpEF MRA pillar.' : '');
                 const guidelineRationale = regimen.rationale.filter(r => r.startsWith('Guideline:'));
 
                 return (
@@ -273,15 +262,15 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         </div>
                         <div className="space-y-2">
                             {guidePillarList.map(pillar => {
-                                const present = guidePillars.has(pillar.name);
+                                const present = guidePillars.has(pillar.key);
                                 return (
-                                    <div key={pillar.name} className={`flex items-center gap-2 p-2 rounded ${present ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                                    <div key={pillar.key} className={`flex items-center gap-2 p-2 rounded ${present ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
                                         <span className={`font-bold text-sm ${present ? 'text-green-600' : 'text-red-500'}`}>
                                             {present ? 'Present' : 'Missing'}
                                         </span>
-                                        <span className="text-sm text-slate-700 font-medium">{pillar.name}</span>
+                                        <span className="text-sm text-slate-700 font-medium" title={pillar.trials}>{pillar.name}</span>
                                         <span className="text-xs text-slate-400 ml-auto">
-                                            {present ? `+${pillar.pts} pts` : '0 pts'} <span className="text-slate-300">({pillar.evidenceClass})</span>
+                                            {present ? `+${pillar.pts} pts` : '0 pts'}{pillar.targetBonus > 0 ? ` (+${pillar.targetBonus} at target)` : ''} <span className="text-slate-300">({pillar.evidenceClass})</span>
                                         </span>
                                     </div>
                                 );
@@ -308,13 +297,18 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
 
     const dialogRef = useRef<HTMLDivElement>(null);
     const previousFocusRef = useRef<Element | null>(null);
+    // Keep the latest onClose in a ref so the effect runs once per mount — parent re-renders
+    // passing a fresh inline onClose must not tear down/re-run the trap (re-focusing the dialog
+    // and re-capturing previousFocusRef mid-open).
+    const onCloseRef = useRef(onClose);
+    onCloseRef.current = onClose;
 
     useEffect(() => {
         previousFocusRef.current = document.activeElement;
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                onClose();
+                onCloseRef.current();
                 return;
             }
 
@@ -329,7 +323,9 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 const last = focusable[focusable.length - 1];
 
                 if (e.shiftKey) {
-                    if (document.activeElement === first) {
+                    // Treat the focused dialog container (initial focus, tabIndex=-1) as
+                    // "before first" so Shift+Tab wraps to last instead of escaping the dialog.
+                    if (document.activeElement === first || document.activeElement === dialogRef.current) {
                         e.preventDefault();
                         last.focus();
                     }
@@ -351,7 +347,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 previousFocusRef.current.focus();
             }
         };
-    }, [onClose]);
+    }, []);
 
     return (
         <div

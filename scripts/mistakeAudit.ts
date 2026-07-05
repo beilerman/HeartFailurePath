@@ -1,5 +1,5 @@
 /**
- * MISTAKE AUDIT — 50 scenarios modeling common real-world treatment errors, most with
+ * MISTAKE AUDIT — 51 scenarios modeling common real-world treatment errors, most with
  * medications already on board. Each scenario declares what the engine SHOULD do; the
  * harness reports deviations. Standalone QA (not part of CI). Run: npx tsx scripts/mistakeAudit.ts
  */

@@ -1,6 +1,6 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient } from '../services/simulationService';
-import { getDrugPrices } from '../services/pricingService';
+import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
 
@@ -27,7 +27,10 @@ const ASSERTION_TITLE_MARKERS = [
     'African American NYHA III',
     'Ivabradine Candidate',
     'Ivabradine Fallback',
-    'Budget-Constrained',
+    // Exact-anchored: the bare 'Budget-Constrained' marker also matched 'ACEi Cough Intolerance
+    // Budget-Constrained' and cross-applied the $25-budget Entresto assertion to the intolerance
+    // scenario (which has its own dedicated block below).
+    'Budget-Constrained ($25)',
     'ACEi-to-ARNI Swap',
     'Euvolemic Asthma',
     'HFimpEF',
@@ -96,7 +99,19 @@ const ASSERTION_TITLE_MARKERS = [
     'Over-Budget Value Ordering',
     'HFimpEF Categorical Prior EF Excludes Finerenone',
     'Max New Classes Counts Binder Rescue',
-    'High Body Weight Carvedilol Target Requires 50 BID'
+    'High Body Weight Carvedilol Target Requires 50 BID',
+    'Pregnant Vericiguat + Ivabradine Exclusion',
+    'Vericiguat Continuation Carve-Out',
+    'GLP-1 Continuation Carve-Out (BMI 28)',
+    'Pregnant on GLP-1 (Force Removal)',
+    'GLP-1 Boundary LVEF Exactly 40',
+    'Warm-Wet Decompensation on Existing BB',
+    'Blank Renal Data Stable Spironolactone',
+    'Hyperkalemic Emergency K+ 6.2 (Deprescribe Offered)',
+    'Hyperkalemic Emergency K+ 6.8 (Alerts Only)',
+    'HFpEF Previous LVEF Zero Sentinel',
+    'HFpEF LVEF 60 No Fabricated Decline',
+    'Dual MRA Unknown History Keeps nsMRA'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -123,6 +138,22 @@ async function runVerification() {
     const formularyNames = MEDICATION_FORMULARY.map(m => m.name);
     const availableMedNames = new Set(formularyNames);
     const betaBlockerMeds = new Set(['Carvedilol', 'Metoprolol Succinate', 'Bisoprolol']);
+
+    // GLOBAL STRUCTURAL INVARIANT (pricing completeness): every formulary medication must have
+    // an explicit DRUG_PRICES entry. A missing entry silently falls back to generic-level
+    // pricing ($150 cash / $50 copay) — Furoscix (~$900/mo specialty) was missing and its core
+    // cost trade-off vs oral loops was flattened, corrupting the cost domain for every
+    // scenario that surfaced it.
+    console.log('Checking structural invariant: formulary pricing completeness...');
+    const missingPriceEntries = formularyNames.filter(name => !(name in DRUG_PRICES));
+    if (missingPriceEntries.length > 0) {
+        console.error(`  [FAIL] Formulary medication(s) missing explicit DRUG_PRICES entries (silent generic fallback): ${missingPriceEntries.join(', ')}`);
+        failed++;
+    } else {
+        console.log('  [PASS] All formulary medications have explicit DRUG_PRICES entries.');
+        passed++;
+    }
+    console.log('---');
 
     for (const scenario of SCENARIOS) {
         console.log(`Analyzing Scenario: "${scenario.title}"`);
@@ -388,17 +419,122 @@ async function runVerification() {
                 }
             }
 
-            // Coverage assertions for baseline scenarios to avoid silent orphaning when names change.
-            if (
-                scenario.title.includes('John Doe (Wet & Warm)') ||
-                scenario.title.includes('African American (A-HeFT Indication)') ||
-                scenario.title.includes('Gout & Congestion') ||
-                scenario.title.includes('HFpEF with Resistant Edema') ||
-                scenario.title.includes('Severe Dilation') ||
-                scenario.title.includes('African American NYHA III')
-            ) {
+            // Baseline default patient — the exact d631873 regression surface: warm-and-wet
+            // NYHA III on carvedilol 25 BID, missing MRA + SGLT2i. Warm decompensation must
+            // CONTINUE the beta-blocker (the forced cut is hypoperfusion/"cold"-gated) and
+            // still offer the missing pillars — the pre-fix bug produced "reduce BB, add
+            // nothing" for this very patient.
+            if (scenario.title.includes('John Doe (Wet & Warm)')) {
                 if (!topRegimen) {
-                    failures.push('Expected at least one regimen for baseline coverage scenario');
+                    failures.push('Expected at least one regimen for the baseline patient');
+                    scenarioPassed = false;
+                }
+                const everyRegimenCutsBB = scoredRegimens.length > 0 && scoredRegimens.every(r =>
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        (m.action === 'titrate_down' || m.action === 'remove') && m.source?.med.drug_class === 'Beta Blocker'
+                    )
+                );
+                if (everyRegimenCutsBB) {
+                    failures.push('Warm-and-wet baseline: beta-blocker cut forced into EVERY candidate (d631873 regression — reduction is cold/hypoperfusion-gated)');
+                    scenarioPassed = false;
+                }
+                const retainsBbAndAddsPillar = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'Beta Blocker') &&
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        m.action === 'add' && m.target && ['SGLT2i', 'MRA', 'nsMRA'].includes(m.target.med.drug_class)
+                    )
+                );
+                if (!retainsBbAndAddsPillar) {
+                    failures.push('Warm-and-wet baseline: no option retains the beta-blocker while adding a missing pillar (SGLT2i/MRA)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // A-HeFT scenarios (Black + NYHA III HFrEF): H/ISDN is the title-promised behavior —
+            // Class I add-on (A-HeFT). Eligibility-based (adjuncts may not rank in top-3 picks).
+            if (scenario.title.includes('African American (A-HeFT Indication)') ||
+                scenario.title.includes('African American NYHA III')) {
+                if (!topRegimen) {
+                    failures.push('Expected at least one regimen for A-HeFT scenario');
+                    scenarioPassed = false;
+                }
+                if (excludedMedications.some(e => e.drug_class === 'Vasodilator')) {
+                    failures.push('H/ISDN excluded despite A-HeFT indication (Black, NYHA III, no PDE5i exposure)');
+                    scenarioPassed = false;
+                }
+                const hisdnSurfaced = anyRegimenHasClass('Vasodilator') ||
+                    (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes('hydralazine'));
+                if (!hisdnSurfaced) {
+                    failures.push('H/ISDN neither displayed nor surfaced in eligible adjuncts despite A-HeFT criteria');
+                    scenarioPassed = false;
+                }
+            }
+
+            // Gout & Congestion: the title promises BOTH halves — congestion (+5kg, Edema 3+)
+            // is treated with a diuretic AND the gout/uric-acid caution is surfaced on
+            // diuretic-containing options (loop/thiazide special-feature caution).
+            if (scenario.title.includes('Gout & Congestion')) {
+                if (!topRegimen) {
+                    failures.push('Expected at least one regimen for gout + congestion scenario');
+                    scenarioPassed = false;
+                }
+                // Eligibility-based (project convention: adjuncts may not rank in the top-3
+                // display picks): a loop diuretic must not be excluded and must be surfaced.
+                const anyDiureticDisplayed = anyRegimenContainsAnyClass('Loop Diuretic', 'Thiazide-like Diuretic');
+                const allLoopsExcluded = !MEDICATION_FORMULARY.some(m =>
+                    m.drug_class === 'Loop Diuretic' && !excludedMedications.some(e => e.name === m.name)
+                );
+                const diureticSurfaced = anyDiureticDisplayed ||
+                    (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes('loop diuretic'));
+                if (allLoopsExcluded) {
+                    failures.push('All loop diuretics excluded despite +5kg fluid excess with Edema (3+)');
+                    scenarioPassed = false;
+                }
+                if (!diureticSurfaced) {
+                    failures.push('No diuretic displayed or surfaced in eligible adjuncts despite +5kg fluid excess with Edema (3+)');
+                    scenarioPassed = false;
+                }
+                const goutCautionSurfaced = scoredRegimens.some(r =>
+                    (r.rationale ?? []).some(x => x.toLowerCase().includes('gout')) ||
+                    r.warnings.some(w => w.toLowerCase().includes('gout'))
+                ) || clinicalAlerts.some(a => a.toLowerCase().includes('gout'));
+                if (anyDiureticDisplayed && !goutCautionSurfaced) {
+                    failures.push('Diuretic displayed for a gout patient without any gout / uric-acid caution surfaced');
+                    scenarioPassed = false;
+                }
+            }
+
+            // HFpEF with Resistant Edema: title-promised behavior — SGLT2i (the HFpEF Class I
+            // pillar) plus a loop diuretic for the +5kg resistant congestion.
+            if (scenario.title.includes('HFpEF with Resistant Edema')) {
+                if (!topRegimen) {
+                    failures.push('Expected at least one regimen for HFpEF resistant edema scenario');
+                    scenarioPassed = false;
+                }
+                if (!anyRegimenHasClass('SGLT2i')) {
+                    failures.push('HFpEF resistant edema: SGLT2i (Class I HFpEF pillar) missing from all displayed regimens');
+                    scenarioPassed = false;
+                }
+                if (!anyRegimenHasClass('Loop Diuretic')) {
+                    failures.push('HFpEF resistant edema: no loop diuretic offered despite +5kg fluid excess');
+                    scenarioPassed = false;
+                }
+            }
+
+            // Severe Dilation (LVEF 20, NYHA IV, +6kg, 3 exam findings): acutely decompensated
+            // with NO baseline beta-blocker — BB initiation must be blocked, while
+            // disease-modifying pillar therapy (SGLT2i / RAAS) is still offered.
+            if (scenario.title.includes('Severe Dilation')) {
+                if (!topRegimen) {
+                    failures.push('Expected at least one regimen for severe dilation scenario');
+                    scenarioPassed = false;
+                }
+                if (anyRegimenHasClass('Beta Blocker')) {
+                    failures.push('Severe dilation: beta-blocker INITIATED during NYHA IV acute decompensation');
+                    scenarioPassed = false;
+                }
+                if (!anyRegimenHasClass('SGLT2i') && !anyRegimenHasRaas()) {
+                    failures.push('Severe dilation: no disease-modifying pillar (SGLT2i/RAAS) offered');
                     scenarioPassed = false;
                 }
             }
@@ -553,8 +689,10 @@ async function runVerification() {
             }
 
             // 5. Asthma -> Selective BB only (Metoprolol or Bisoprolol), No Carvedilol
+            // (Carvedilol is the only non-selective BB in the 32-drug formulary — the old
+            // Propranolol clause could never fire and was removed as dead code.)
             if (scenario.title.includes('Severe Asthma')) {
-                if (anyRegimenHasMed('Carvedilol') || anyRegimenHasMed('Propranolol')) { // Non-selective
+                if (anyRegimenHasMed('Carvedilol')) { // Non-selective
                     failures.push('Non-selective Beta Blocker (Carvedilol) prescribed in Asthma');
                     scenarioPassed = false;
                 }
@@ -621,13 +759,21 @@ async function runVerification() {
                 }
             }
 
-            // 11. Sinus Tachycardia -> Should have Ivabradine
+            // 11. Sinus Tachycardia (HR 82, sinus, LVEF 30, target-dose BB) -> Ivabradine
+            // eligible + surfaced (SHIFT). Unconditional eligibility check — the old form was
+            // conditioned on the top regimen's PROJECTED pulse staying >= 70, so it silently
+            // passed whenever any modification projected pulse < 70 even if ivabradine was
+            // wrongly withheld.
             if (scenario.title.includes('Ivabradine Candidate')) {
-                const anyIvabradine = scoredRegimens.some(r =>
+                if (excludedMedications.some(e => e.drug_class === 'If Inhibitor')) {
+                    failures.push('Ivabradine excluded despite SHIFT criteria (HR >= 70, sinus, LVEF <= 35, target-dose BB)');
+                    scenarioPassed = false;
+                }
+                const ivabradineSurfaced = scoredRegimens.some(r =>
                     r.regimen.some(m => m.med.drug_class === 'If Inhibitor')
-                );
-                if (!anyIvabradine && topRegimen && topRegimen.projected_patient.pulse >= 70) {
-                    failures.push('Ivabradine not prescribed despite HR >= 70, sinus, LVEF <= 35, on BB');
+                ) || (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes('ivabradine'));
+                if (!ivabradineSurfaced) {
+                    failures.push('Ivabradine neither displayed nor surfaced in eligible adjuncts despite SHIFT criteria');
                     scenarioPassed = false;
                 }
             }
@@ -668,8 +814,10 @@ async function runVerification() {
                 }
             }
 
-            // 12. Budget-Constrained -> Should NOT have Entresto (too expensive)
-            if (scenario.title.includes('Budget-Constrained')) {
+            // 12. Budget-Constrained ($25) -> Should NOT have Entresto (too expensive).
+            // Exact-anchored marker: the bare 'Budget-Constrained' also matched 'ACEi Cough
+            // Intolerance Budget-Constrained', cross-applying this $25 assertion there.
+            if (scenario.title.includes('Budget-Constrained ($25)')) {
                 if (anyRegimenHasMed('Sacubitril/Valsartan (Entresto)')) {
                     failures.push('Entresto prescribed despite $25 budget');
                     scenarioPassed = false;
@@ -805,22 +953,16 @@ async function runVerification() {
                 }
             }
 
-            // 21. SBP 90 borderline -> should be blocked (SBP < 90 gate)
+            // 21. SBP 90 Borderline (Allowed With Caution) -> the hemodynamic gate is STRICT
+            // SBP < 90, so at exactly 90 recommendations ARE generated. Pin the boundary: the
+            // engine must not wrongly hard-block at 90 (the old block only inspected output
+            // when present, so it silently passed on empty output and asserted nothing the
+            // global invariants didn't already cover — projected SBP < 85 display safety is
+            // enforced globally above).
             if (scenario.title.includes('SBP 90 Borderline')) {
-                // SBP exactly 90 is NOT < 90, so should get cautious recs... BUT we check the spirit:
-                // At exactly 90, we allow recs (gate is strict < 90). Score may be low due to projected drop.
-                // This tests that the system handles the boundary correctly.
-                if (scoredRegimens.length > 0) {
-                    // If recs are generated at SBP 90, projected SBP should not be < 90 for the top pick
-                    // OR the score should be heavily penalized
-                    if (topRegimen && topRegimen.overall_score > 50) {
-                        // If projected SBP would drop below 90, score should be very low
-                        const projSbp = topRegimen.projected_patient.sbp;
-                        if (projSbp < 85) {
-                            failures.push(`Top regimen at SBP 90 projects dangerous SBP ${projSbp.toFixed(0)} with high score ${topRegimen.overall_score}`);
-                            scenarioPassed = false;
-                        }
-                    }
+                if (scoredRegimens.length === 0) {
+                    failures.push('No recommendations at SBP exactly 90 — the gate is strict < 90; the boundary was wrongly blocked');
+                    scenarioPassed = false;
                 }
             }
 
@@ -890,6 +1032,18 @@ async function runVerification() {
             if (scenario.title.includes('Liver Disease + AFib')) {
                 if (anyRegimenHasMed('Carvedilol')) {
                     failures.push('Carvedilol prescribed despite Liver Disease (Child-Pugh B/C) contraindication');
+                    scenarioPassed = false;
+                }
+                // The digoxin half of the title promise (AFib rate control, no renal/K+ CI here).
+                // Eligibility-based: digoxin is an adjunct and may not rank in the top-3 picks.
+                if (excludedMedications.some(e => e.name === 'Digoxin')) {
+                    failures.push('Digoxin excluded despite AFib rate-control indication (K+ 4.2, eGFR 55 — no CI)');
+                    scenarioPassed = false;
+                }
+                const digoxinSurfaced = anyRegimenHasMed('Digoxin') ||
+                    (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes('digoxin'));
+                if (!digoxinSurfaced) {
+                    failures.push('Digoxin neither displayed nor surfaced in eligible adjuncts for AFib rate control');
                     scenarioPassed = false;
                 }
             }
@@ -1662,6 +1816,325 @@ async function runVerification() {
                 );
                 if (!hasTitration) {
                     failures.push('High body weight carvedilol: missing explicit 25->50 mg titration action');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 88. PREGNANCY ADJUNCT GATES (audit fix): Vericiguat (FDA BOXED WARNING) and
+            // Ivabradine (fetal harm) are excluded in pregnancy even with VICTORIA/SHIFT
+            // criteria fully met; H/ISDN stays available as the pregnancy-appropriate RAAS
+            // alternative. (The shared 'Pregnant' block above already pins RAAS/MRA exclusion
+            // and the PREGNANCY alert.)
+            if (scenario.title.includes('Pregnant Vericiguat + Ivabradine Exclusion')) {
+                if (!excludedMedications.some(e => e.drug_class === 'sGC Stimulator')) {
+                    failures.push('Vericiguat not in excludedMedications despite pregnancy (FDA boxed warning — embryo-fetal toxicity)');
+                    scenarioPassed = false;
+                }
+                if (!excludedMedications.some(e => e.drug_class === 'If Inhibitor')) {
+                    failures.push('Ivabradine not in excludedMedications despite pregnancy (fetal harm)');
+                    scenarioPassed = false;
+                }
+                if (anyRegimenHasClass('sGC Stimulator')) {
+                    failures.push('Vericiguat displayed in a regimen for a pregnant patient');
+                    scenarioPassed = false;
+                }
+                if (anyRegimenHasClass('If Inhibitor')) {
+                    failures.push('Ivabradine displayed in a regimen for a pregnant patient');
+                    scenarioPassed = false;
+                }
+                // H/ISDN is the pregnancy-appropriate vasodilator strategy — it must NOT be excluded.
+                if (excludedMedications.some(e => e.drug_class === 'Vasodilator')) {
+                    failures.push('H/ISDN wrongly excluded for a pregnant patient (it is the pregnancy-appropriate RAAS alternative)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 89. VERICIGUAT CONTINUATION CARVE-OUT (audit fix): VICTORIA enrollment criteria
+            // are initiation gates only — a patient already ON vericiguat with improved
+            // NT-proBNP (900) and no recent worsening must not have it force-removed.
+            if (scenario.title.includes('Vericiguat Continuation Carve-Out')) {
+                if (excludedMedications.some(e => e.drug_class === 'sGC Stimulator')) {
+                    failures.push('Vericiguat excluded for a patient already on it (continuation carve-out regression)');
+                    scenarioPassed = false;
+                }
+                if (scoredRegimens.length === 0) {
+                    failures.push('No regimens generated for stable quad + vericiguat continuation scenario');
+                    scenarioPassed = false;
+                }
+                const anyVericiguatRemoval = scoredRegimens.some(r =>
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        (m.action === 'remove' || m.action === 'swap') && m.source?.med.drug_class === 'sGC Stimulator'
+                    )
+                );
+                if (anyVericiguatRemoval) {
+                    failures.push('Vericiguat removed/swapped in a displayed regimen despite treatment response (BNP 900, no worsening)');
+                    scenarioPassed = false;
+                }
+                const anyRegimenDropsVericiguat = scoredRegimens.some(r =>
+                    !r.regimen.some(m => m.med.drug_class === 'sGC Stimulator')
+                );
+                if (anyRegimenDropsVericiguat) {
+                    failures.push('A displayed regimen lost vericiguat despite the continuation carve-out');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 90. GLP-1 CONTINUATION CARVE-OUT (audit fix): BMI >= 30 is an initiation gate
+            // only — tirzepatide is retained after successful weight loss to BMI 28.
+            if (scenario.title.includes('GLP-1 Continuation Carve-Out (BMI 28)')) {
+                if (excludedMedications.some(e => e.name.includes('Tirzepatide'))) {
+                    failures.push('Tirzepatide excluded for a patient already on it at BMI 28 (weight-loss success must not force removal)');
+                    scenarioPassed = false;
+                }
+                // FORCE-removal signature: the pre-fix contraindication injected the removal
+                // into EVERY candidate. An elective same-class swap (Tirzepatide → Semaglutide)
+                // in a lower-ranked pick is legitimate and keeps the therapy class — so 'every',
+                // not 'some', is the regression check.
+                const everyRegimenDropsGlp1 = scoredRegimens.length > 0 && scoredRegimens.every(r =>
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        (m.action === 'remove' || m.action === 'swap') && m.source?.med.name.includes('Tirzepatide')
+                    )
+                );
+                if (everyRegimenDropsGlp1) {
+                    failures.push('Tirzepatide removed/swapped from EVERY displayed candidate at BMI 28 (force-removal — continuation carve-out regression)');
+                    scenarioPassed = false;
+                }
+                const glp1Retained = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.name.includes('Tirzepatide'))
+                );
+                if (scoredRegimens.length > 0 && !glp1Retained) {
+                    failures.push('No displayed regimen retains tirzepatide despite the continuation carve-out');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 90b. PREGNANCY OVERRIDES THE GLP-1 CARVE-OUT (audit fix): the continuation
+            // carve-out must not bypass true safety gates — semaglutide is excluded and
+            // force-removed from every candidate in pregnancy.
+            if (scenario.title.includes('Pregnant on GLP-1 (Force Removal)')) {
+                if (!excludedMedications.some(e => e.name.includes('Semaglutide'))) {
+                    failures.push('Semaglutide not in excludedMedications despite pregnancy (safety gate applies to continuation too)');
+                    scenarioPassed = false;
+                }
+                const anyGlp1Displayed = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class.includes('GLP'))
+                );
+                if (anyGlp1Displayed) {
+                    failures.push('GLP-1 retained in a displayed regimen for a pregnant patient');
+                    scenarioPassed = false;
+                }
+                const everyRegimenRemovesGlp1 = scoredRegimens.length > 0 && scoredRegimens.every(r =>
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        m.action === 'remove' && m.source?.med.name.includes('Semaglutide')
+                    )
+                );
+                if (scoredRegimens.length > 0 && !everyRegimenRemovesGlp1) {
+                    failures.push('Semaglutide not force-removed from every displayed candidate in pregnancy');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 91. GLP-1 ADJUNCT BOUNDARY (audit fix): LVEF exactly 40 is HFrEF — the adjunct
+            // gate is strictly LVEF > 40 (STEP-HFpEF/SUMMIT; no HFrEF evidence). GLP-1 is not
+            // formulary-excluded here (BMI 33, no safety CI), so the eligibility signal is:
+            // never displayed AND absent from the eligible-adjuncts list.
+            if (scenario.title.includes('GLP-1 Boundary LVEF Exactly 40')) {
+                const anyGlp1Displayed = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.name.includes('Semaglutide') || m.med.name.includes('Tirzepatide'))
+                );
+                if (anyGlp1Displayed) {
+                    failures.push('GLP-1 displayed at LVEF exactly 40 (HFrEF — gate requires LVEF > 40)');
+                    scenarioPassed = false;
+                }
+                const anyGlp1Adjunct = (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes('glp-1'));
+                if (anyGlp1Adjunct) {
+                    failures.push('GLP-1 surfaced in eligible adjuncts at LVEF exactly 40 (HFrEF — gate requires LVEF > 40)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 92. WARM-WET DECOMPENSATION ON EXISTING BB (d631873 dedicated regression):
+            // warm perfusion (no cool extremities, SBP 112, PP 42) means the BB is CONTINUED
+            // at its current dose — no up-titration (deferred in any decompensation), no
+            // forced cut (cold-gated) — and safe pillar additions (SGLT2i) still surface.
+            if (scenario.title.includes('Warm-Wet Decompensation on Existing BB')) {
+                if (scoredRegimens.length === 0) {
+                    failures.push('No regimens generated for warm-wet decompensation scenario');
+                    scenarioPassed = false;
+                }
+                const anyBbUpTitration = scoredRegimens.some(r =>
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        m.action === 'titrate_up' && m.source?.med.drug_class === 'Beta Blocker'
+                    )
+                );
+                if (anyBbUpTitration) {
+                    failures.push('Beta-blocker up-titrated during acute decompensation (deferred until euvolemia)');
+                    scenarioPassed = false;
+                }
+                const everyRegimenCutsBB = scoredRegimens.length > 0 && scoredRegimens.every(r =>
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        (m.action === 'titrate_down' || m.action === 'remove') && m.source?.med.drug_class === 'Beta Blocker'
+                    )
+                );
+                if (everyRegimenCutsBB) {
+                    failures.push('Warm-wet: beta-blocker cut forced into EVERY candidate (reduction is hypoperfusion/cold-gated)');
+                    scenarioPassed = false;
+                }
+                const bbContinuedAtCurrentDose = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.name === 'Carvedilol' && Number(m.dose.strength) === 12.5)
+                );
+                if (!bbContinuedAtCurrentDose) {
+                    failures.push('Warm-wet: no displayed option continues carvedilol at its current 12.5mg dose');
+                    scenarioPassed = false;
+                }
+                const sglt2iAddOffered = scoredRegimens.some(r =>
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        m.action === 'add' && m.target?.med.drug_class === 'SGLT2i'
+                    )
+                );
+                if (!sglt2iAddOffered) {
+                    failures.push('Warm-wet: no SGLT2i addition offered (safe in acute HF — EMPULSE/SOLOIST-WHF; decompensation must not suppress gap closure)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 93. BLANK RENAL DATA GUARD (audit fix): eGFR/creatinine 0 sentinels must not
+            // read as end-stage CKD. Working spironolactone is retained (no forced
+            // "contraindicated" removal); new renal-gated starts get the honest actionable
+            // reason; the DATA REQUIRED renal alert fires.
+            if (scenario.title.includes('Blank Renal Data Stable Spironolactone')) {
+                if (!clinicalAlerts.some(a => a.includes('DATA REQUIRED') && a.includes('Renal function'))) {
+                    failures.push('Missing DATA REQUIRED renal-function alert for blank eGFR/creatinine');
+                    scenarioPassed = false;
+                }
+                const anySpiroRemoval = scoredRegimens.some(r =>
+                    (r.modification_set?.modifications ?? []).some(m =>
+                        (m.action === 'remove' || m.action === 'swap') && m.source?.med.name === 'Spironolactone'
+                    )
+                );
+                if (anySpiroRemoval) {
+                    failures.push('Working spironolactone force-removed/swapped on BLANK renal data (fabricated end-stage-CKD contraindication)');
+                    scenarioPassed = false;
+                }
+                const spiroRetained = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.name === 'Spironolactone')
+                );
+                if (scoredRegimens.length > 0 && !spiroRetained) {
+                    failures.push('No displayed regimen retains the working spironolactone despite blank (not abnormal) renal data');
+                    scenarioPassed = false;
+                }
+                // New starts MAY be withheld — but with the honest data-required reason, never
+                // the hard "Clinical Contraindication" label fabricated from a blank field.
+                const spiroHardExcluded = excludedMedications.some(e =>
+                    e.name === 'Spironolactone' && e.reason === 'Clinical Contraindication'
+                );
+                if (spiroHardExcluded) {
+                    failures.push('Spironolactone excluded as "Clinical Contraindication" on blank renal data (expected the "Renal data required" reason)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 93b. DUAL MRA + UNKNOWN EF HISTORY (audit fix / red-team probe 2): with gynecomastia
+            // barring every steroidal MRA, the unknown-history HFimpEF presumption must NOT
+            // force-remove the tolerated finerenone the patient is already on — the presumption
+            // gates INITIATION only. The nsMRA survives; the intolerable spironolactone does not;
+            // and no displayed regimen carries dual MRA.
+            if (scenario.title.includes('Dual MRA Unknown History Keeps nsMRA')) {
+                const anyMraRetained = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA')
+                );
+                if (scoredRegimens.length > 0 && !anyMraRetained) {
+                    failures.push('Both MRAs dropped — the tolerated nsMRA (finerenone) must survive when only the steroidal is intolerable (under-treatment)');
+                    scenarioPassed = false;
+                }
+                const spiroRetainedAnywhere = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.name === 'Spironolactone')
+                );
+                if (spiroRetainedAnywhere) {
+                    failures.push('Spironolactone retained despite documented gynecomastia intolerance (antiandrogenic steroidal must be deprescribed)');
+                    scenarioPassed = false;
+                }
+                const dualMraDisplayed = scoredRegimens.some(r =>
+                    r.regimen.some(m => m.med.drug_class === 'MRA') && r.regimen.some(m => m.med.drug_class === 'nsMRA')
+                );
+                if (dualMraDisplayed) {
+                    failures.push('Displayed regimen still contains dual MRA (steroidal + nsMRA)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 94a. HYPERKALEMIC EMERGENCY 6.0-6.4 (audit fix): alert fires AND deprescribing
+            // continues — removing the offending RAAS/MRA is still clinically useful here.
+            if (scenario.title.includes('Hyperkalemic Emergency K+ 6.2')) {
+                if (!clinicalAlerts.some(a => a.includes('HYPERKALEMIC EMERGENCY'))) {
+                    failures.push('Missing HYPERKALEMIC EMERGENCY alert at K+ 6.2');
+                    scenarioPassed = false;
+                }
+                if (scoredRegimens.length === 0) {
+                    failures.push('No recommendations at K+ 6.2 — deprescribing the offending agents should still be offered (alerts-only gate is >= 6.5)');
+                    scenarioPassed = false;
+                }
+                // The offending MRA/ACEi are hard-contraindicated (K+ > 5.5 / > 5.4) — no
+                // displayed regimen may retain them.
+                if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) {
+                    failures.push('MRA retained in a displayed regimen at K+ 6.2 (hard CI at K+ > 5.5)');
+                    scenarioPassed = false;
+                }
+                if (anyRegimenHasRaas()) {
+                    failures.push('RAAS agent retained in a displayed regimen at K+ 6.2 (hard CI at K+ > 5.4)');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 94b. HYPERKALEMIC EMERGENCY >= 6.5 (audit fix): alerts only, zero regimens —
+            // parallel to the SBP < 90 hemodynamic gate.
+            if (scenario.title.includes('Hyperkalemic Emergency K+ 6.8')) {
+                if (!clinicalAlerts.some(a => a.includes('HYPERKALEMIC EMERGENCY'))) {
+                    failures.push('Missing HYPERKALEMIC EMERGENCY alert at K+ 6.8');
+                    scenarioPassed = false;
+                }
+                if (scoredRegimens.length !== 0) {
+                    failures.push(`Drug recommendations generated at K+ 6.8 (expected alerts-only at K+ >= 6.5; got ${scoredRegimens.length})`);
+                    scenarioPassed = false;
+                }
+            }
+
+            // 95. PREVIOUS-LVEF BLANK SENTINEL (audit fix): previous_lvef 0 + ever_lvef_le_40
+            // 'no' is ordinary HFpEF, NOT HFimpEF — SGLT2i-first, no RAAS/BB pillar therapy.
+            if (scenario.title.includes('HFpEF Previous LVEF Zero Sentinel')) {
+                if (!topRegimen) {
+                    failures.push('No regimen generated for HFpEF previous-LVEF-sentinel scenario');
+                    scenarioPassed = false;
+                }
+                if (anyRegimenContainsAnyClass('ARNI', 'ACEi', 'ARB')) {
+                    failures.push('RAAS pillar prescribed — previous_lvef 0 sentinel misread as documented prior EF (HFimpEF flip)');
+                    scenarioPassed = false;
+                }
+                if (anyRegimenHasClass('Beta Blocker')) {
+                    failures.push('BB pillar prescribed — previous_lvef 0 sentinel misread as documented prior EF (HFimpEF flip)');
+                    scenarioPassed = false;
+                }
+                if (!anyRegimenHasClass('SGLT2i')) {
+                    failures.push('SGLT2i (Class I HFpEF pillar) missing from all displayed regimens');
+                    scenarioPassed = false;
+                }
+            }
+
+            // 96. LVEF > 55 PROJECTION CLAMP (audit fix): for HFpEF baseline LVEF 60, adds
+            // must never project a fabricated EF decline — the ceiling holds at baseline for
+            // zero/positive deltas (old unconditional Math.min(55, ...) projected 60 → 55).
+            if (scenario.title.includes('HFpEF LVEF 60 No Fabricated Decline')) {
+                if (!topRegimen) {
+                    failures.push('No regimen generated for HFpEF LVEF 60 clamp scenario');
+                    scenarioPassed = false;
+                }
+                const anyFabricatedDecline = scoredRegimens.some(r => r.projected_patient.lvef < 60);
+                if (anyFabricatedDecline) {
+                    failures.push('A displayed regimen projects LVEF below the 60 baseline (fabricated decline from the old 55 clamp)');
+                    scenarioPassed = false;
+                }
+                if (!anyRegimenHasClass('SGLT2i')) {
+                    failures.push('SGLT2i missing — scenario must exercise an additive candidate to pin the clamp');
                     scenarioPassed = false;
                 }
             }

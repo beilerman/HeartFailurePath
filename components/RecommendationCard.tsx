@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import type { Patient, ScoredRegimen, RegimenMed, RegimenModification, QualitativeProjection, TradeOffLabel } from '../types';
+import type { Patient, ScoredRegimen, RegimenMed, RegimenModification, QualitativeProjection, TradeOffLabel, DomainScores } from '../types';
 import { ScoreDetailModal } from './ScoreDetailModal';
 import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 
@@ -115,9 +115,22 @@ const modActionIcon: Record<string, string> = {
     remove: '−',
 };
 
-export const RecommendationCard: React.FC<Props> = ({ regimen, rank }) => {
+// Display labels keyed by DomainScores keys — indexing domain_scores through this map keeps
+// domain names compiler-checked (no .toLowerCase() cast, no silent '|| 0' fallback).
+const DOMAIN_LABELS = {
+    neurohormonal: 'Neurohormonal',
+    functional: 'Functional',
+    volume: 'Volume',
+    structure: 'Structure',
+    cost: 'Cost',
+    adherence: 'Adherence',
+    guideline: 'Guideline',
+} as const satisfies Record<keyof DomainScores, string>;
+type DomainKey = keyof typeof DOMAIN_LABELS;
+
+export const RecommendationCard = React.memo(function RecommendationCard({ regimen, rank }: Props) {
     const { domain_scores } = regimen;
-    const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+    const [selectedDomain, setSelectedDomain] = useState<DomainKey | null>(null);
     const targetDoseContext = getTargetDosePatientContext(regimen);
 
     const projections = regimen.qualitative_projections ?? [];
@@ -297,13 +310,13 @@ export const RecommendationCard: React.FC<Props> = ({ regimen, rank }) => {
                         </div>
                         <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2">Domain sub-scores — tap for detail</p>
                         <div className="grid grid-cols-4 gap-y-4 gap-x-3">
-                            <ScorePill label="Neuro" score={domain_scores.neurohormonal} color="border-indigo-500 text-indigo-600" onClick={() => setSelectedDomain('Neurohormonal')} />
-                            <ScorePill label="Function" score={domain_scores.functional} color="border-blue-500 text-blue-600" onClick={() => setSelectedDomain('Functional')} />
-                            <ScorePill label="Volume" score={domain_scores.volume} color="border-emerald-500 text-emerald-600" onClick={() => setSelectedDomain('Volume')} />
-                            <ScorePill label="Structure" score={domain_scores.structure} color="border-amber-500 text-amber-600" onClick={() => setSelectedDomain('Structure')} />
-                            <ScorePill label="Guideline" score={domain_scores.guideline} color="border-rose-500 text-rose-600" onClick={() => setSelectedDomain('Guideline')} />
-                            <ScorePill label="Cost" score={domain_scores.cost} color="border-slate-500 text-slate-600" onClick={() => setSelectedDomain('Cost')} />
-                            <ScorePill label="Adherence" score={domain_scores.adherence} color="border-teal-500 text-teal-600" onClick={() => setSelectedDomain('Adherence')} />
+                            <ScorePill label="Neuro" score={domain_scores.neurohormonal} color="border-indigo-500 text-indigo-600" onClick={() => setSelectedDomain('neurohormonal')} />
+                            <ScorePill label="Function" score={domain_scores.functional} color="border-blue-500 text-blue-600" onClick={() => setSelectedDomain('functional')} />
+                            <ScorePill label="Volume" score={domain_scores.volume} color="border-emerald-500 text-emerald-600" onClick={() => setSelectedDomain('volume')} />
+                            <ScorePill label="Structure" score={domain_scores.structure} color="border-amber-500 text-amber-600" onClick={() => setSelectedDomain('structure')} />
+                            <ScorePill label="Guideline" score={domain_scores.guideline} color="border-rose-500 text-rose-600" onClick={() => setSelectedDomain('guideline')} />
+                            <ScorePill label="Cost" score={domain_scores.cost} color="border-slate-500 text-slate-600" onClick={() => setSelectedDomain('cost')} />
+                            <ScorePill label="Adherence" score={domain_scores.adherence} color="border-teal-500 text-teal-600" onClick={() => setSelectedDomain('adherence')} />
                         </div>
                     </div>
                 </details>
@@ -311,12 +324,12 @@ export const RecommendationCard: React.FC<Props> = ({ regimen, rank }) => {
 
             {selectedDomain && (
                 <ScoreDetailModal
-                    domain={selectedDomain}
-                    score={regimen.domain_scores[selectedDomain.toLowerCase() as keyof typeof regimen.domain_scores] || 0}
+                    domain={DOMAIN_LABELS[selectedDomain]}
+                    score={regimen.domain_scores[selectedDomain]}
                     regimen={regimen}
                     onClose={() => setSelectedDomain(null)}
                 />
             )}
         </>
     );
-};
+});

@@ -8,17 +8,30 @@ Deployment target: Vercel (main branch auto-deploy)
 ## Commands
 
 ```bash
-npm install          # install dependencies
-npm run dev          # start Vite dev server (default 3000)
-npm run build        # production build
-npm run typecheck    # TypeScript check only
-npm run verify       # run scenario assertion harness (90 scenarios)
-npm run test         # alias for verify
-npm run ci           # typecheck + build + verify
-npm run preview      # preview production build
+npm install              # install dependencies
+npm run dev              # start Vite dev server (default 3000)
+npm run build            # production build
+npm run typecheck        # TypeScript check only
+npm run verify           # scenario assertion harness — its printed count is authoritative
+                         #   (currently: Passed 106 = 105 clinical scenarios + 1 structural pricing invariant)
+npm run test             # alias for verify
+npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
+npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
+npm run audit:hundred    # 100-scenario broad clinical audit (standalone QA, not in CI)
+npm run ci               # typecheck + build + verify
+npm run preview          # preview production build
 ```
 
+There is no `lint` script (a misleading one was removed 2026-07-05).
+
 CI workflow: `.github/workflows/ci.yml` runs `npm ci -> typecheck -> build -> verify`.
+
+QA harnesses (full pre-release gate — all four must be green):
+
+1. `npm run verify` — scenario assertions, the CI regression gate
+2. `npm run audit:red` — adversarial safety probes; pass = 0 CRITICAL/HIGH/MEDIUM findings
+3. `npm run audit:mistakes` — 51 common treatment-error scenarios; pass = 51/51
+4. `npm run audit:hundred` — 100-scenario broad audit; pass = 100/100
 
 ## Repository Layout
 
@@ -27,7 +40,10 @@ All source files live at project root (no `src/` directory).
 ```text
 HeartFailurePath/
   App.tsx                         # top-level app shell + tabs
-  index.tsx                       # React entry point
+  index.tsx                       # React entry point (imports index.css)
+  index.css                       # Tailwind entry (build-time Tailwind v3 — no runtime CDN)
+  tailwind.config.js              # Tailwind configuration
+  postcss.config.js               # PostCSS (tailwindcss + autoprefixer)
   types.ts                        # data models and output contracts
   constants.ts                    # formulary (32 medications)
   components/
@@ -40,11 +56,23 @@ HeartFailurePath/
     patient-form/                 # form subsections
   services/
     simulationService.ts          # core clinical engine
-    pricingService.ts             # mock pricing source
+    clinicalPredicates.ts         # shared predicates (valueUnknown, hasHistoricalHFrEF,
+                                  #   isIronDeficient, isBlackRace) — single source for
+                                  #   engine AND formulary
+    pricingService.ts             # mock pricing source (insurance-tiered)
   data/
-    scenarios.ts                  # scenario fixtures and clone helper
+    scenarios.ts                  # scenario fixtures; re-exports clonePatient
   scripts/
-    verifyScenarios.ts            # scenario verification harness
+    verifyScenarios.ts            # scenario verification harness (CI regression gate)
+    redTeam.ts                    # adversarial safety probes (standalone)
+    mistakeAudit.ts               # 51 treatment-error scenarios (standalone)
+    hundredScenarioAudit.ts       # 100-scenario broad audit (standalone)
+  docs/
+    evidence-matrix.md            # rule-to-evidence traceability
+    clinical-scenario-observations-2026-07-03.md
+    model-analysis.md             # analysis references (moved into repo 2026-07-05)
+    guideline-analysis.md
+    CHF-FIRST-PRINCIPLES-ANALYSIS.md
 ```
 
 ## Core Clinical Engine
@@ -55,12 +83,19 @@ Primary entry point:
 generateAndScoreModifications(patient, availableMedNames, prices)
 ```
 
-Output contract:
+Output contract (`SimulationOutput`, types.ts):
 
 - `scoredRegimens` (up to 3 display candidates)
 - `excludedMedications`
 - `clinicalAlerts`
 - `monitoringPlan`
+- `gdmtGaps?` — indicated-but-missing pillars/adjuncts for the phenotype
+- `eligibleAdjuncts?` — criteria-met add-ons (H/ISDN, ivabradine, vericiguat, iron, ...) surfaced even when not in the top-3 picks
+- `missingDataNotices?` — inputs not entered, dependent inference withheld
+- `followUpCalendar?` — STRONG-HF high-intensity follow-up schedule
+
+The categorical fields are rendered by `ResultsDisplay`/`App` and asserted by the audit
+harnesses — they are contract surface that must be preserved on engine changes.
 
 Engine characteristics:
 
@@ -110,15 +145,29 @@ Implemented high-priority safeguards include:
   - projected `SBP < 85` excluded from display
   - projected `HR < 45` excluded from display
 - Electrolyte safety:
+  - hyperkalemic-emergency gate: baseline `K+ >= 6.0` fires a HYPERKALEMIC EMERGENCY alert (ECG, urgent treatment); `K+ >= 6.5` returns alerts only (parallel to the SBP < 90 gate); `K+ > 8.0` hard-stops as implausible
   - projected `K+ > 6.0` excluded from display
   - K+ binder rescue counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
+- Blank-data (sentinel) safety:
+  - eGFR/creatinine or K+ of 0/blank = "not entered", never a value: it must never clear a safety gate AND never read as end-stage disease
+  - blank renal data: current renal-gated meds are RETAINED (not force-removed); renal-gated new starts are excluded with reason "Renal data required — cannot assess renal safety (obtain BMP before initiation)"; candidates intensifying RAAS/MRA/SGLT2i carry a RENAL FUNCTION UNKNOWN warning + -15 penalty; renal-threshold warnings (eGFR<20 loop alert, Furoscix CKD caution, digoxin renal note) are suppressed
+  - blank potassium: projected K+ preserves the unknown sentinel; hypo-/hyperkalemia warning bands, the digoxin K-band warning, and DDI-3's interpolated K+ are suppressed (prompts for a BMP instead); digoxin's K+ < 3.5 contraindication has a > 0 guard
 - Drug-interaction hard gates:
   - nitrate (H/ISDN) is contraindicated with confirmed PDE5 inhibitor exposure (Sildenafil/Tadalafil in external medications) — excluded from formulary and force-removed from arriving regimens
 - Pregnancy safety:
-  - excludes RAAS classes, MRAs/nsMRA, and SGLT2i
-- Acute decompensation handling:
+  - excludes RAAS classes, MRAs/nsMRA, SGLT2i, Vericiguat (FDA boxed warning — embryo-fetal toxicity), Ivabradine (fetal harm), and GLP-1 therapy
+  - H/ISDN deliberately remains pregnancy-appropriate (the RAAS alternative for pregnant HFrEF)
+- Initiation-vs-continuation carve-outs (the `alreadyOn*` pattern):
+  - Vericiguat: VICTORIA enrollment criteria (NT-proBNP >= 1600, NYHA II-IV, recent worsening, LVEF < 45) gate INITIATION only — a patient already on vericiguat is never force-removed for improved markers; pregnancy still forces removal
+  - GLP-1: `BMI >= 30` gates INITIATION only; continuation is blocked only by true safety CIs (pregnancy, MTC/MEN2) — weight-loss success never forces removal
+  - SGLT2i eGFR floor and ivabradine HR thresholds follow the same pattern (initiation HR >= 70; continuation stopped only below 50)
+- Current-regimen history checks:
+  - a current med matching a documented ALLERGY by name is flagged and force-swapped to a tolerated same-group agent (else removed) — it is never kept or up-titrated
+  - a current med appearing in the discontinued list raises a MEDICATION HISTORY CONFLICT alert (verify deliberate restart) rather than forced removal
+- Acute decompensation handling (two-tier beta-blocker logic):
   - blocks beta-blocker initiation (warm OR cold)
-  - forces existing beta-blocker dose REDUCTION only with hypoperfusion ("cold-and-wet": cool extremities, SBP < 90, or pulse pressure ≤ 25); warm-and-wet continues the beta-blocker and diureses
+  - defers beta-blocker UP-TITRATION in ANY acute decompensation (warm or cold) — continue the current dose and diurese; up-titrate after euvolemia
+  - forces existing beta-blocker dose REDUCTION only with hypoperfusion ("cold-and-wet": cool extremities, SBP < 90, or pulse pressure ≤ 25) — the cut is ONE dose step down (~50%, e.g. carvedilol 25 → 12.5), not a jump to the lowest tier; warm-and-wet continues the beta-blocker and diureses
   - safe guideline ADDITIONS (esp. SGLT2i — beneficial in acute HF, EMPULSE/SOLOIST) are force-injected alongside any mandated BB reduction so decompensation never suppresses gap-closing therapy
 - Structural regimen safety:
   - blocks dual RAAS combinations
@@ -167,20 +216,28 @@ Behavioral integration:
 
 Major class groups include RAAS, beta blockers, MRAs/nsMRA, SGLT2i, loop/thiazide diuretics, vasodilator, If inhibitor, sGC stimulator, GLP-1 therapies, IV iron, K+ binders, and digoxin.
 
+Formulary modeling notes (2026-07-05 audit):
+
+- GLP-1 `chf_effects` are dose-scaled like every other titratable class (ratio to target dose, floor 0.25): semaglutide `d/2.4`, tirzepatide `d/15` — a starting-dose add is no longer credited the full STEP-HFpEF/SUMMIT steady-state benefit. Eplerenone is similarly dose-scaled (`d/50`), matching spironolactone.
+- Loop diuretic weight-loss curves are calibrated to documented dose-response anchors via `log2` ceiling curves: furosemide `1.5 + 0.9*log2(d/20)` (~1.5/2.4/3.3/4.2 kg at 20/40/80/160 mg); torsemide `1.8 + 0.96*log2(d/10)` (~1.8/2.8/4.0/5.0 kg at 10/20/50/100 mg); bumetanide inherits the furosemide curve via 40:1 equivalence; Furoscix uses the calibrated curve on a bioavailability-adjusted oral equivalent (~15% above oral at the labeled 80 mg).
+- The `renal_adjustment` contract is fully honored by the engine: `contraindicated: true` excludes exactly like `contraindications()` (formulary filter + current-med audit); `caution: true` surfaces as a "Renal dosing review" monitoring-plan item (not a ranking-penalized warning); `start_dose_modifier` surfaces as a "Reduced starting dose (renal)" monitoring item for adds.
+
 ## Verification Harness
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope:
+Current regression scope (the harness's printed count is authoritative — currently `Passed: 106`):
 
-- 90 scenarios
+- 105 clinical scenarios + 1 structural invariant (every formulary med must have a `DRUG_PRICES` entry)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
 - warning and alert expectations
 - Furoscix candidate + allergy guardrail checks
 
-This harness is the primary safety regression gate for logic edits.
+This harness is the primary safety regression gate for logic edits. The three standalone audit
+harnesses (`audit:red`, `audit:mistakes`, `audit:hundred` — see Commands) are deliberately outside
+CI but are part of the full pre-release gate.
 
 ## Development Rules of Thumb
 
@@ -213,9 +270,11 @@ Update:
 
 ## Known Pitfalls
 
-- Preserve `Set` fields when cloning patient objects.
+- Preserve `Set` fields when cloning patient objects. There is a SINGLE `clonePatient` implementation — it lives in `services/simulationService.ts` (also deep-copies dose objects) and is re-exported by `data/scenarios.ts`. Do not add a second copy.
 - Medication name matching is exact-string sensitive in seeded scenarios.
-- `max_new_classes_per_visit` counts class-group additions, not dose changes.
+- `max_new_classes_per_visit` counts class-group additions, not dose changes — and rescue additions (K+ binder, IV iron) DO count toward it. This is intentional and test-ratified ("a patient-facing sequencing limit" — see the 'Max New Classes Counts Binder Rescue' scenario). Do not "fix" rescue meds to bypass the cap.
+- Scoring constants and the concordance table (`BNP_SCORE_TARGET`/`BNP_SCORE_CRITICAL`, `NYHA_SCORE_MAP`, `FUNCTIONAL_STEPS_FULL_CREDIT`, `VOLUME_SCORING`, `adherenceComplexityThreshold`, `CONCORDANCE_TABLE`, `pillarKeyOf`) are EXPORTED from `simulationService.ts` and rendered by `ScoreDetailModal` — never re-hardcode display copies of these values in components.
+- Clinical predicates shared by the engine AND the formulary (`valueUnknown`, `hasHistoricalHFrEF`, `hasUnknownHistoricalHFrEF`, `isIronDeficient`, `isBlackRace`) live in `services/clinicalPredicates.ts` — do not duplicate them in either consumer (they previously drifted).
 - Do not rely on top-3 regimen presence for adjunct assertions; some checks must use exclusion/eligibility logic.
 - Keep path alias assumptions consistent: `@/` resolves to repository root.
 

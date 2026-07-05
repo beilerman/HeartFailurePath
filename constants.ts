@@ -1,29 +1,23 @@
 
 import { Medication, Patient } from './types';
+import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace } from './services/clinicalPredicates';
 
 // Helper for logarithmic calculations (dose-response curves)
 const logBase = (base: number, x: number) => Math.log(x) / Math.log(base);
 
-const hasHistoricalHFrEFForFormulary = (patient: Patient): boolean => {
-    if (patient.previous_lvef !== undefined) return patient.previous_lvef <= 40;
-    return patient.ever_lvef_le_40 === 'yes';
-};
-
+// Formulary-side "preserve HFrEF therapy for unknown EF history". Intentionally DIFFERENT
+// from the engine's shouldPreserveQuadForUnknownHistory: this list excludes nsMRA, because
+// including it would make finerenone self-contraindicating for a patient already taking it
+// with unknown EF history (constants Finerenone CI calls this predicate). Do NOT "harmonize"
+// the two variants — see services/clinicalPredicates.ts for the shared building blocks.
 const shouldPreserveHFrEFTherapyForUnknownHistory = (patient: Patient): boolean => {
     if (patient.lvef <= 40) return true;
-    if (patient.previous_lvef !== undefined) return false;
+    if (!valueUnknown(patient.previous_lvef)) return false;
     if ((patient.ever_lvef_le_40 ?? 'unknown') !== 'unknown') return false;
     return (patient.current_regimen || []).some(r => {
         const cls = r.med.drug_class;
         return cls === 'ARNI' || cls === 'ACEi' || cls === 'ARB' || cls === 'Beta Blocker' || cls === 'MRA';
     });
-};
-
-const isIronDeficientForFormulary = (patient: Patient): boolean => {
-    const { ferritin, tsat } = patient;
-    if (ferritin === undefined) return false;
-    if (ferritin < 100) return true;
-    return ferritin <= 300 && tsat !== undefined && tsat < 20;
 };
 
 export const COMMON_SIDE_EFFECTS = [
@@ -85,9 +79,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'ARNI',
         is_best_in_class: true,
         available_doses: [
-            { strength: '24/26', unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false },
-            { strength: '49/51', unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false },
-            { strength: '97/103', unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false, is_target_dose: true },
+            { strength: '24/26', unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
+            { strength: '49/51', unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
+            { strength: '97/103', unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
             // PROVE-HF: Average LVEF increase ~9.4% over 12 months
@@ -114,11 +108,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Lisinopril',
         drug_class: 'ACEi',
         available_doses: [
-            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true },
-            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true },
+            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
+            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
             // SOLVD: Mortality benefit, modest LVEF improvement compared to ARNI
@@ -146,10 +140,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Enalapril',
         drug_class: 'ACEi',
         available_doses: [
-            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false }, // Starting dose
-            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true },
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true, is_target_dose: true }, // SOLVD target
-            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false, is_target_dose: true }, // CONSENSUS max
+            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] }, // Starting dose
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true }, // SOLVD target
+            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true }, // CONSENSUS max
         ],
         chf_effects: (dose) => {
             // CONSENSUS/SOLVD: First ACEi with HF mortality benefit
@@ -177,10 +171,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Ramipril',
         drug_class: 'ACEi',
         available_doses: [
-            { strength: 1.25, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], scored: false }, // Starting dose
-            { strength: 2.5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], scored: true },
-            { strength: 5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], scored: true },
-            { strength: 10, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], scored: true, is_target_dose: true }, // AIRE/HOPE target
+            { strength: 1.25, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'] }, // Starting dose
+            { strength: 2.5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'] },
+            { strength: 5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'] },
+            { strength: 10, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], is_target_dose: true }, // AIRE/HOPE target
         ],
         chf_effects: (dose) => {
             // AIRE: Post-MI LV dysfunction; HOPE: High-risk CV patients
@@ -208,9 +202,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Captopril',
         drug_class: 'ACEi',
         available_doses: [
-            { strength: 6.25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], scored: false }, // Starting dose
-            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], scored: false },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], scored: false, is_target_dose: true }, // ACC/AHA target
+            { strength: 6.25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] }, // Starting dose
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], is_target_dose: true }, // ACC/AHA target
         ],
         chf_effects: (dose) => {
             // SAVE: Post-MI LV dysfunction. Historical significance; TID dosing is practical disadvantage
@@ -238,9 +232,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Valsartan',
         drug_class: 'ARB',
         available_doses: [
-            { strength: 40, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'], scored: false }, // Starting dose
-            { strength: 80, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'], scored: true },
-            { strength: 160, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'], scored: true, is_target_dose: true }, // Val-HeFT/ACC target
+            { strength: 40, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'] }, // Starting dose
+            { strength: 80, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'] },
+            { strength: 160, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'], is_target_dose: true }, // Val-HeFT/ACC target
         ],
         chf_effects: (dose) => {
             // Val-HeFT: Mortality/morbidity reduction in HFrEF
@@ -268,10 +262,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Candesartan',
         drug_class: 'ARB',
         available_doses: [
-            { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // Starting dose
-            { strength: 8, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 16, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 32, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true }, // CHARM target
+            { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Starting dose
+            { strength: 8, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 16, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 32, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true }, // CHARM target
         ],
         chf_effects: (dose) => {
             // CHARM-Alternative/Added: CV death/HF hospitalization reduction
@@ -299,10 +293,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Losartan',
         drug_class: 'ARB',
         available_doses: [
-            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true }, // ACC/AHA 2022 target
-            { strength: 150, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // HEAAL Trial dose (off-label)
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true }, // ACC/AHA 2022 target
+            { strength: 150, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // HEAAL Trial dose (off-label)
         ],
         chf_effects: (dose) => {
              // ELITE II / HEAAL: Comparable to ACEi at high doses
@@ -337,11 +331,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'Beta Blocker',
         is_best_in_class: true,
         available_doses: [
-            { strength: 3.125, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: false },
-            { strength: 6.25, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true },
-            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true },
-            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true, is_target_dose: true },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true, is_target_dose: true },
+            { strength: 3.125, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
+            { strength: 6.25, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
+            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
@@ -377,11 +371,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'Beta Blocker',
         is_best_in_class: true,
         available_doses: [
-            { strength: 12.5, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], scored: false }, // Starting dose for NYHA III-IV (MERIT-HF)
-            { strength: 25, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], scored: true },
-            { strength: 50, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], scored: true },
-            { strength: 100, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], scored: true },
-            { strength: 200, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], scored: true, is_target_dose: true },
+            { strength: 12.5, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] }, // Starting dose for NYHA III-IV (MERIT-HF)
+            { strength: 25, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] },
+            { strength: 50, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] },
+            { strength: 100, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] },
+            { strength: 200, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
             // MERIT-HF
@@ -411,10 +405,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Bisoprolol',
         drug_class: 'Beta Blocker',
         available_doses: [
-            { strength: 1.25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true },
+            { strength: 1.25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
             // CIBIS-II: 34% mortality reduction at 10mg
@@ -453,9 +447,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'MRA',
         is_best_in_class: true,
         available_doses: [
-            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true },
+            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
              const d = Number(dose);
@@ -489,22 +483,23 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Eplerenone',
         drug_class: 'MRA',
         available_doses: [
-            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true, is_target_dose: true },
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
-             // EMPHASIS-HF
+             // EMPHASIS-HF — dose-scaled like sibling spironolactone (50mg = trial steady state)
+             const ratio = Number(dose) / 50;
              return {
-                lvef_improvement_absolute: 2.5,
+                lvef_improvement_absolute: 1.5 + ratio * 1.0, // ~2-2.5%
                 bnp_reduction_percent: 0.10,
-                weight_reduction_kg: 0.2,
+                weight_reduction_kg: 0.2 * ratio,
                 kccq_improvement: 2,
                 structure_benefit_points: 30,
                 lavi_reduction_percent: 0.05,
-                lvedd_reduction_percent: 0.04 // 4% (EMPHASIS-HF)
+                lvedd_reduction_percent: 0.02 + ratio * 0.02 // ~4% at target (EMPHASIS-HF)
             };
         },
-        hemodynamic_effects: (dose) => ({ sbp_drop: 3, hr_drop: 0, potassium_change: 0.4 }),
+        hemodynamic_effects: (dose) => ({ sbp_drop: 2 + Number(dose)/50, hr_drop: 0, potassium_change: 0.25 + (Number(dose)/50 * 0.15) }),
         side_effects: () => ({ hyperkalemia: 0.15 }),
         special_features: [
             // Intra-class tolerability tiebreaker (eplerenone vs spironolactone in males), NOT an
@@ -529,9 +524,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Finerenone (Kerendia)',
         drug_class: 'nsMRA', // Distinct from 'MRA' to prevent HFrEF pillar credit
         available_doses: [
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // Starting dose; eGFR-dependent
-            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false },
-            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false, is_target_dose: true }, // HF target dose (new 40mg tablet with HF approval)
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Starting dose; eGFR-dependent
+            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true }, // HF target dose (new 40mg tablet with HF approval)
         ],
         chf_effects: (dose) => {
             // FINEARTS-HF: 16% RRR in CV death/HF events in LVEF ≥ 40
@@ -560,13 +555,22 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // FINEARTS-HF enrolled LVEF ≥ 40 only; no evidence for HFrEF
             // HFimpEF (previous LVEF ≤ 40) is managed as HFrEF — use steroidal MRA instead
             // Liver Disease (Child-Pugh B/C): CYP3A4 substrate, reduced clearance in cirrhosis
-            const isHFimpEF = p.lvef > 40 && hasHistoricalHFrEFForFormulary(p);
-            const preserveHFrEF = p.lvef > 40 && shouldPreserveHFrEFTherapyForUnknownHistory(p);
+            const isHFimpEF = p.lvef > 40 && hasHistoricalHFrEF(p);
+            // The UNKNOWN-history HFimpEF presumption (conservative: on RAAS/BB/MRA with no
+            // documented prior EF → manage as possible HFimpEF) gates INITIATION only. A patient
+            // already ON and tolerating finerenone must not have it force-removed on a mere
+            // presumption — that dropped the entire MRA pillar when gynecomastia barred the
+            // steroidal alternatives (red-team probe 2). DOCUMENTED prior LVEF ≤ 40 (isHFimpEF)
+            // still applies to continuation; K+/eGFR/pregnancy/hepatic safety gates always apply.
+            const alreadyOnFinerenone = p.current_regimen?.some(r => r.med.drug_class === 'nsMRA');
+            const preserveHFrEF = !alreadyOnFinerenone && p.lvef > 40 && shouldPreserveHFrEFTherapyForUnknownHistory(p);
             return p.lvef < 40 || isHFimpEF || preserveHFrEF || p.potassium > 5.5 || p.egfr < 25 || (p.is_pregnant === true)
                 || p.comorbidities.has('Liver Disease (Child-Pugh B/C)');
         },
         renal_adjustment: (egfr) => {
-            // Per Kerendia PI: start 10mg if eGFR 25-59, start 20mg if eGFR ≥ 60
+            // Kerendia HF dosing (FINEARTS-HF): target/max 20mg qd if eGFR 25-59, 40mg qd if
+            // eGFR >= 60; contraindicated below 25. (The PI's 10mg/20mg START-dose
+            // stratification is not modeled — adds always begin at the lowest tier.)
             if (egfr < 25) return { contraindicated: true };
             if (egfr < 60) return { max_dose: 20, caution: true };
             return {};
@@ -583,7 +587,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'SGLT2i',
         is_best_in_class: true,
         available_doses: [
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false, is_target_dose: true },
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
         chf_effects: () => ({
             lvef_improvement_absolute: 2.0, // Modest direct effect
@@ -612,7 +616,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'SGLT2i',
         is_best_in_class: true,
         available_doses: [
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false, is_target_dose: true },
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
         chf_effects: () => ({
             lvef_improvement_absolute: 2.0,
@@ -646,59 +650,86 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Semaglutide (Wegovy)',
         drug_class: 'GLP-1 RA',
         available_doses: [
-             { strength: 0.25, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false }, // Mandatory starting dose (16-week escalation)
-             { strength: 1.0, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false }, // Mid-titration
-             { strength: 2.4, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false, is_target_dose: true }
+             { strength: 0.25, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Mandatory starting dose (16-week escalation)
+             { strength: 1.0, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Mid-titration
+             { strength: 2.4, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], is_target_dose: true }
         ],
-        chf_effects: (dose) => ({
-             lvef_improvement_absolute: 1.0, // Indirect benefit
-             bnp_reduction_percent: 0.20,
-             weight_reduction_kg: 8.0, // ~10% weight loss (STEP-HFpEF)
-             kccq_improvement: 16.6, // Massive functional gain
-             structure_benefit_points: 10, // Metabolic/Epicardial fat reduction
-             lavi_reduction_percent: 0.05,
-             lvedd_reduction_percent: 0.01 // Indirect
-        }),
+        chf_effects: (dose) => {
+             // Dose-scaled like every other titratable class (trial-level effects are the
+             // 2.4mg steady-state figures from STEP-HFpEF; a starting-dose add must not be
+             // credited the full benefit). Floor 0.25 reflects early sub-maximal benefit
+             // during the mandated escalation schedule.
+             const ratio = Math.max(0.25, Math.min(1, Number(dose) / 2.4));
+             return {
+                 lvef_improvement_absolute: 1.0 * ratio, // Indirect benefit
+                 bnp_reduction_percent: 0.20 * ratio,
+                 weight_reduction_kg: 8.0 * ratio, // ~10% weight loss at 2.4mg (STEP-HFpEF)
+                 kccq_improvement: 16.6 * ratio, // Massive functional gain at target
+                 structure_benefit_points: Math.round(10 * ratio), // Metabolic/Epicardial fat reduction
+                 lavi_reduction_percent: 0.05 * ratio,
+                 lvedd_reduction_percent: 0.01 * ratio // Indirect
+             };
+        },
         hemodynamic_effects: () => ({ sbp_drop: 4, hr_drop: -2, potassium_change: 0 }), // HR can increase slightly
         side_effects: () => ({ nausea: 0.30, diarrhea: 0.20, constipation: 0.15 }),
         special_features: [
              { feature: 'Indicated for Obesity Phenotype (BMI > 30)', points: 50, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) =>
-            p.bmi < 30 ||
-            p.is_pregnant === true ||
-            p.comorbidities.has('Medullary Thyroid Carcinoma') ||
-            p.comorbidities.has('MEN2 Syndrome') // FDA boxed warning: MTC/MEN2
+        contraindications: (p) => {
+            // True safety gates — apply to initiation AND continuation:
+            const safetyCI = p.is_pregnant === true ||
+                p.comorbidities.has('Medullary Thyroid Carcinoma') ||
+                p.comorbidities.has('MEN2 Syndrome'); // FDA boxed warning: MTC/MEN2
+            // BMI >= 30 is a STEP-HFpEF/SUMMIT enrollment (INITIATION) gate only — weight-loss
+            // success on a GLP-1 must not force its removal (mirrors the SGLT2i alreadyOn* pattern).
+            const alreadyOnGlp1 = p.current_regimen?.some(r =>
+                r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA');
+            if (alreadyOnGlp1) return safetyCI;
+            return safetyCI || p.bmi < 30;
+        }
     },
     {
         name: 'Tirzepatide (Zepbound)',
         drug_class: 'GLP-1/GIP RA',
         is_best_in_class: true,
         available_doses: [
-             { strength: 2.5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false }, // Mandatory starting dose (4-week escalation schedule)
-             { strength: 5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false }, // Week 4
-             { strength: 10, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false },
-             { strength: 15, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], scored: false, is_target_dose: true }
+             { strength: 2.5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Mandatory starting dose (4-week escalation schedule)
+             { strength: 5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Week 4
+             { strength: 10, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] },
+             { strength: 15, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], is_target_dose: true }
         ],
-        chf_effects: (dose) => ({
-             lvef_improvement_absolute: 1.5,
-             bnp_reduction_percent: 0.25, // Reduces hsCRP significantly
-             weight_reduction_kg: 12.0, // ~15-20% weight loss (SUMMIT)
-             kccq_improvement: 19.5, // Unmatched symptom relief
-             structure_benefit_points: 15,
-             lavi_reduction_percent: 0.08,
-             lvedd_reduction_percent: 0.02 // SUMMIT
-        }),
+        chf_effects: (dose) => {
+             // Dose-scaled like every other titratable class (trial-level effects are the
+             // 15mg steady-state figures from SUMMIT). Floor 0.25 reflects early sub-maximal
+             // benefit during the mandated escalation schedule.
+             const ratio = Math.max(0.25, Math.min(1, Number(dose) / 15));
+             return {
+                 lvef_improvement_absolute: 1.5 * ratio,
+                 bnp_reduction_percent: 0.25 * ratio, // Reduces hsCRP significantly
+                 weight_reduction_kg: 12.0 * ratio, // ~15-20% weight loss at 15mg (SUMMIT)
+                 kccq_improvement: 19.5 * ratio, // Unmatched symptom relief at target
+                 structure_benefit_points: Math.round(15 * ratio),
+                 lavi_reduction_percent: 0.08 * ratio,
+                 lvedd_reduction_percent: 0.02 * ratio // SUMMIT
+             };
+        },
         hemodynamic_effects: () => ({ sbp_drop: 6, hr_drop: -2, potassium_change: 0 }),
         side_effects: () => ({ nausea: 0.30, diarrhea: 0.20 }),
         special_features: [
              { feature: 'Superior Weight Loss & KCCQ Benefit (SUMMIT)', points: 60, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) =>
-            p.bmi < 30 ||
-            p.is_pregnant === true ||
-            p.comorbidities.has('Medullary Thyroid Carcinoma') ||
-            p.comorbidities.has('MEN2 Syndrome') // FDA boxed warning: MTC/MEN2
+        contraindications: (p) => {
+            // True safety gates — apply to initiation AND continuation:
+            const safetyCI = p.is_pregnant === true ||
+                p.comorbidities.has('Medullary Thyroid Carcinoma') ||
+                p.comorbidities.has('MEN2 Syndrome'); // FDA boxed warning: MTC/MEN2
+            // BMI >= 30 is a STEP-HFpEF/SUMMIT enrollment (INITIATION) gate only — weight-loss
+            // success on a GLP-1 must not force its removal (mirrors the SGLT2i alreadyOn* pattern).
+            const alreadyOnGlp1 = p.current_regimen?.some(r =>
+                r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA');
+            if (alreadyOnGlp1) return safetyCI;
+            return safetyCI || p.bmi < 30;
+        }
     },
 
     // ========================================
@@ -710,16 +741,17 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Furosemide',
         drug_class: 'Loop Diuretic',
         available_doses: [
-            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 80, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid', 'tid'], scored: true },
-            { strength: 160, unit: 'mg', formulation: 'tablet', frequency_options: ['bid', 'tid'], scored: false },
+            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
+            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
+            { strength: 80, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid', 'tid'] },
+            { strength: 160, unit: 'mg', formulation: 'tablet', frequency_options: ['bid', 'tid'] },
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
-            // Sqrt-based ceiling effect: loop diuretics have diminishing returns at high doses
-            // Furosemide: ~1.5kg at 20mg, ~2.5kg at 40mg, ~3.5kg at 80mg, ~4.2kg at 160mg
-            const weightLoss = 1.0 + 2.5 * Math.sqrt(d / 40);
+            // Log-based ceiling effect calibrated to the documented dose-response anchors:
+            // Furosemide: ~1.5kg at 20mg, ~2.4kg at 40mg, ~3.3kg at 80mg, ~4.2kg at 160mg
+            // (curve produces exactly these values; the previous sqrt form drifted 40-70% above)
+            const weightLoss = 1.5 + 0.9 * Math.log2(d / 20);
             return {
                 lvef_improvement_absolute: 0, // No evidence of remodeling
                 bnp_reduction_percent: 0.10 + (d/160 * 0.20), // Reduces wall stress via volume unload
@@ -744,13 +776,16 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Furoscix (SC Furosemide)',
         drug_class: 'Loop Diuretic',
         available_doses: [
-            { strength: 80, unit: 'mg/10mL', formulation: 'SQ on-body infusor (5h)', frequency_options: ['qd'], scored: false }, // FDA-labeled single dose delivered over 5 hours
+            { strength: 80, unit: 'mg/10mL', formulation: 'SQ on-body infusor (5h)', frequency_options: ['qd'] }, // FDA-labeled single dose delivered over 5 hours
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
             // FUROSCIX provides more reliable exposure than oral furosemide (bioavailability ~99.6% vs IV).
+            // Same calibrated furosemide curve, applied to the bioavailability-adjusted oral
+            // equivalent, keeping Furoscix ~15% above oral furosemide at the same labeled dose
+            // (80mg -> ~3.5kg vs oral 80mg ~3.3kg).
             const oralEquivalent = d * 1.15;
-            const weightLoss = 1.1 + 2.6 * Math.sqrt(oralEquivalent / 40);
+            const weightLoss = 1.5 + 0.9 * Math.log2(oralEquivalent / 20);
             return {
                 lvef_improvement_absolute: 0,
                 bnp_reduction_percent: 0.12 + (oralEquivalent / 160 * 0.22),
@@ -806,16 +841,17 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'Loop Diuretic',
         is_best_in_class: true,
         available_doses: [
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
+            { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
+            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
-            // Sqrt-based ceiling: better bioavailability than furosemide but same ceiling pharmacology
-            // Torsemide: ~1.8kg at 10mg, ~2.9kg at 20mg, ~4.2kg at 50mg, ~5.0kg at 100mg
-            const weightLoss = 1.2 + 2.5 * Math.sqrt(d / 20);
+            // Log-based ceiling calibrated to the documented anchors: better bioavailability
+            // than furosemide but same ceiling pharmacology.
+            // Torsemide: ~1.8kg at 10mg, ~2.8kg at 20mg, ~4.0kg at 50mg, ~5.0kg at 100mg
+            const weightLoss = 1.8 + 0.96 * Math.log2(d / 10);
             return {
                 lvef_improvement_absolute: 0,
                 bnp_reduction_percent: 0.10 + (d/100 * 0.20),
@@ -840,16 +876,17 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Bumetanide',
         drug_class: 'Loop Diuretic',
         available_doses: [
-            { strength: 0.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 1, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'], scored: true },
-            { strength: 2, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid', 'tid'], scored: true },
-            { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['bid', 'tid'], scored: false }, // Max dose for diuretic resistance
+            { strength: 0.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
+            { strength: 1, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
+            { strength: 2, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid', 'tid'] },
+            { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['bid', 'tid'] }, // Max dose for diuretic resistance
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
-            // 1mg bumetanide ≈ 40mg furosemide; sqrt ceiling effect like furosemide
+            // 1mg bumetanide ≈ 40mg furosemide; same calibrated log ceiling as furosemide
+            // applied to the equivalent dose (0.5/1/2/4mg -> ~1.5/2.4/3.3/4.2kg)
             const furoEquiv = d * 40; // Convert to furosemide equivalents
-            const weightLoss = 1.0 + 2.5 * Math.sqrt(furoEquiv / 40);
+            const weightLoss = 1.5 + 0.9 * Math.log2(furoEquiv / 20);
             return {
                 lvef_improvement_absolute: 0,
                 bnp_reduction_percent: 0.10 + (d / 4 * 0.20),
@@ -879,8 +916,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Hydralazine/Isosorbide Dinitrate',
         drug_class: 'Vasodilator',
         available_doses: [
-            { strength: '37.5/20', unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], scored: false },
-            { strength: '75/40', unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], scored: false, is_target_dose: true },
+            { strength: '37.5/20', unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] },
+            { strength: '75/40', unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
             const level = dose === '75/40' ? 2 : 1;
@@ -903,7 +940,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             return ext.has('Sildenafil') || ext.has('Tadalafil');
         },
         special_features: [
-            { feature: 'Significant benefit in African American patients (A-HeFT)', points: 30, criteria: (p) => p.race === 'Black' || p.race === 'African American' }
+            { feature: 'Significant benefit in African American patients (A-HeFT)', points: 30, criteria: isBlackRace }
         ],
         side_effects: () => ({ headache: 0.30, dizziness: 0.15 }),
     },
@@ -911,8 +948,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Ivabradine',
         drug_class: 'If Inhibitor',
         available_doses: [
-            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true },
-            { strength: 7.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], scored: true, is_target_dose: true },
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
+            { strength: 7.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true },
         ],
         chf_effects: () => ({
             lvef_improvement_absolute: 2.0, // SHIFT Trial
@@ -925,6 +962,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         }),
         hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 12, potassium_change: 0 }),
         contraindications: (p) => {
+            // Pregnancy: Corlanor labeling — may cause fetal harm (animal embryo-fetal toxicity);
+            // applies to initiation AND continuation.
+            if (p.is_pregnant === true) return true;
             // Initiation gate: HR >= 70 required (SHIFT trial enrollment)
             // Continuation: only discontinue if HR < 50 (actual safety threshold)
             const alreadyOnIvabradine = p.current_regimen?.some(r => r.med.drug_class === 'If Inhibitor');
@@ -945,9 +985,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Vericiguat',
         drug_class: 'sGC Stimulator',
         available_doses: [
-            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // Mandatory starting dose (VICTORIA protocol)
-            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false }, // Week 2 titration
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: false, is_target_dose: true }, // Target dose (Week 4+)
+            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Mandatory starting dose (VICTORIA protocol)
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Week 2 titration
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true }, // Target dose (Week 4+)
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
@@ -965,6 +1005,16 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => ({ sbp_drop: 1.5 + Number(dose) / 10 * 2.5, hr_drop: 0, potassium_change: 0 }),
         side_effects: () => ({ hypotension: 0.10, anemia: 0.05 }),
         contraindications: (p) => {
+            // Pregnancy: FDA BOXED WARNING — embryo-fetal toxicity ("Do not administer to a
+            // pregnant female"); applies to initiation AND continuation.
+            if (p.is_pregnant === true) return true;
+            // Continuation carve-out: the VICTORIA criteria below (NT-proBNP >= 1600, NYHA II-IV,
+            // recent worsening, LVEF < 45) are trial ENROLLMENT gates for INITIATION only.
+            // A patient already on vericiguat whose NT-proBNP improved or whose worsening event
+            // aged past 6 months is showing treatment response — that must not force removal
+            // (mirrors the SGLT2i alreadyOn* continuation pattern).
+            const alreadyOnVericiguat = p.current_regimen?.some(r => r.med.drug_class === 'sGC Stimulator');
+            if (alreadyOnVericiguat) return false;
             const nyhaEligible = p.nyha_class === 'II' || p.nyha_class === 'III' || p.nyha_class === 'IV';
             const hasRequiredWorseningEvent = p.recent_hf_worsening_within_6mo === 'yes';
             return !nyhaEligible || p.lvef >= 45 || !p.nt_pro_bnp || p.nt_pro_bnp < 1600 || !hasRequiredWorseningEvent;
@@ -974,7 +1024,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Patiromer',
         drug_class: 'K+ Binder',
         available_doses: [
-            { strength: 8.4, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'], scored: false },
+            { strength: 8.4, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
         ],
         chf_effects: () => ({
             lvef_improvement_absolute: 0,
@@ -995,8 +1045,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Sodium Zirconium Cyclosilicate (Lokelma)',
         drug_class: 'K+ Binder',
         available_doses: [
-            { strength: 5, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'], scored: false },
-            { strength: 10, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'], scored: false }, // Acute correction phase
+            { strength: 5, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
+            { strength: 10, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] }, // Acute correction phase
         ],
         chf_effects: () => ({
             lvef_improvement_absolute: 0,
@@ -1018,7 +1068,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Ferric Carboxymaltose',
         drug_class: 'IV Iron',
         available_doses: [
-             { strength: 1000, unit: 'mg', formulation: 'IV', frequency_options: ['once'], scored: false },
+             { strength: 1000, unit: 'mg', formulation: 'IV', frequency_options: ['once'] },
         ],
         chf_effects: () => ({
              lvef_improvement_absolute: 0,
@@ -1032,15 +1082,15 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 0, potassium_change: 0 }),
         side_effects: () => ({ hypophosphatemia: 0.15 }),
         special_features: [
-            { feature: 'Treats Iron Deficiency in HF', points: 40, criteria: isIronDeficientForFormulary }
+            { feature: 'Treats Iron Deficiency in HF', points: 40, criteria: isIronDeficient }
         ]
     },
     {
         name: 'Digoxin',
         drug_class: 'Inotrope',
         available_doses: [
-            { strength: 62.5, unit: 'mcg', formulation: 'tablet (half of 125mcg)', frequency_options: ['qd'], scored: true },
-            { strength: 125, unit: 'mcg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+            { strength: 62.5, unit: 'mcg', formulation: 'tablet (half of 125mcg)', frequency_options: ['qd'] },
+            { strength: 125, unit: 'mcg', formulation: 'tablet', frequency_options: ['qd'] },
         ],
         chf_effects: (dose) => ({
             lvef_improvement_absolute: 0,
@@ -1058,7 +1108,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // eGFR < 15: End-stage renal without dialysis monitoring — accumulation risk too high
             // (eGFR 15-30 handled by renal_adjustment dose cap to 62.5mcg)
             const hasAvBlock = p.rhythm === '2nd Degree AV Block' || p.rhythm === '3rd Degree AV Block';
-            return p.potassium > 5.5 || p.potassium < 3.5 || p.egfr < 15 || hasAvBlock;
+            // (p.potassium > 0 guard: blank/unentered K+ is stored as 0 and must not read as
+            // hypokalemia — the engine's POTASSIUM UNKNOWN pathway governs that case.)
+            return p.potassium > 5.5 || (p.potassium > 0 && p.potassium < 3.5) || p.egfr < 15 || hasAvBlock;
         },
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 62.5, caution: true }; // Half-dose; target level 0.5-0.9 ng/mL
@@ -1072,7 +1124,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Metolazone',
         drug_class: 'Thiazide-like Diuretic',
         available_doses: [
-            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
         ],
         chf_effects: () => ({
             lvef_improvement_absolute: 0,
@@ -1091,8 +1143,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Chlorthalidone',
         drug_class: 'Thiazide-like Diuretic',
         available_doses: [
-            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
         ],
         chf_effects: (dose) => {
             // CLOROTIC: Improved decongestion when added to loop diuretics
@@ -1115,8 +1167,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Hydrochlorothiazide',
         drug_class: 'Thiazide-like Diuretic',
         available_doses: [
-            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], scored: true },
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
         ],
         chf_effects: (dose) => {
             // Less potent than chlorthalidone/metolazone for sequential nephron blockade

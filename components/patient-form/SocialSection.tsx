@@ -7,10 +7,11 @@ interface SocialSectionProps {
     patientData: Patient;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
     setPatientData: React.Dispatch<React.SetStateAction<Patient>>;
+    validationErrors?: Record<string, string>;
     clinicalWarnings?: Record<string, string>;
 }
 
-export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onChange, setPatientData, clinicalWarnings = {} }) => {
+export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onChange, setPatientData, validationErrors = {}, clinicalWarnings = {} }) => {
     return (
         <section>
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-3">
@@ -32,10 +33,11 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                     <Input
                         type="number"
                         name="max_affordable_cost"
-                        value={patientData.max_affordable_cost}
+                        value={patientData.max_affordable_cost ?? ''}
                         onChange={onChange}
                         placeholder="e.g. 50"
                         min={0}
+                        error={validationErrors.max_affordable_cost}
                     />
                 </div>
 
@@ -110,11 +112,12 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                             />
                             <span className="text-sm font-semibold text-slate-700">Pregnant</span>
                         </label>
-                        {clinicalWarnings.pregnancy && (
-                            <div className="mt-2 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">
-                                ⚠ {clinicalWarnings.pregnancy}
-                            </div>
-                        )}
+                    </div>
+                )}
+                {/* Rendered outside the sex gate so a set pregnancy flag is never invisible. */}
+                {clinicalWarnings.pregnancy && (
+                    <div className="mt-2 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">
+                        ⚠ {clinicalWarnings.pregnancy}
                     </div>
                 )}
             </div>

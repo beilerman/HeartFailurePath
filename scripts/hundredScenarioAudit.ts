@@ -16,7 +16,9 @@ const names = MEDICATION_FORMULARY.map(m => m.name);
 const available = new Set(names);
 const RAAS = new Set(['ARNI', 'ACEi', 'ARB']);
 const MRA = new Set(['MRA', 'nsMRA']);
-const TERATOGEN_OR_PREGNANCY_AVOID = new Set(['ARNI', 'ACEi', 'ARB', 'MRA', 'nsMRA', 'SGLT2i', 'GLP-1 RA', 'GLP-1/GIP RA']);
+// sGC Stimulator (vericiguat: FDA boxed warning — embryo-fetal toxicity) and If Inhibitor
+// (ivabradine: fetal harm, Corlanor labeling) are pregnancy-contraindicated in the formulary.
+const TERATOGEN_OR_PREGNANCY_AVOID = new Set(['ARNI', 'ACEi', 'ARB', 'MRA', 'nsMRA', 'SGLT2i', 'GLP-1 RA', 'GLP-1/GIP RA', 'sGC Stimulator', 'If Inhibitor']);
 
 type Check = (output: SimulationOutput, patient: Patient) => string[];
 

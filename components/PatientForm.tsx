@@ -15,7 +15,6 @@ interface PatientFormProps {
     simulationMedicationNames: Set<string>;
     setSimulationMedicationNames: React.Dispatch<React.SetStateAction<Set<string>>>;
     onRunSimulation: () => void;
-    isLoading: boolean;
     pricesReady: boolean;
     testScenarios: TestScenario[];
     selectedScenario: string;
@@ -48,7 +47,7 @@ const calculateCKDEPI = (scr: number, age: number, sex: 'Male' | 'Female'): numb
 
 export const PatientForm: React.FC<PatientFormProps> = ({
     patientData, setPatientData,
-    onRunSimulation, isLoading, pricesReady,
+    onRunSimulation, pricesReady,
     testScenarios, selectedScenario, onScenarioChange
 }) => {
 
@@ -73,13 +72,14 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     }, [patientData.volume_status.current_weight_kg, patientData.height_cm, setPatientData, patientData.bmi]);
 
     // --- 2a. Physiologic validation bounds ---
+    // LVEF max 80 matches the engine hard-stop (validatePhysiologicBounds flags > 80 as implausible).
     const VALIDATION_BOUNDS: Record<string, { min: number; max: number; label: string }> = {
         age: { min: 18, max: 120, label: 'Age' },
         height_cm: { min: 100, max: 250, label: 'Height' },
         sbp: { min: 50, max: 250, label: 'SBP' },
         dbp: { min: 20, max: 150, label: 'DBP' },
         pulse: { min: 20, max: 250, label: 'Pulse' },
-        lvef: { min: 5, max: 85, label: 'LVEF' },
+        lvef: { min: 5, max: 80, label: 'LVEF' },
         nt_pro_bnp: { min: 0, max: 50000, label: 'NT-proBNP' },
         kccq_score: { min: 0, max: 100, label: 'KCCQ' },
         potassium: { min: 2.0, max: 8.0, label: 'K+' },
@@ -92,15 +92,30 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         lavi: { min: 10, max: 80, label: 'LAVI' },
         dry_weight_kg: { min: 25, max: 300, label: 'Dry Weight' },
         current_weight_kg: { min: 25, max: 350, label: 'Current Weight' },
+        previous_lvef: { min: 5, max: 85, label: 'Prior LVEF' },
+        daily_step_count: { min: 0, max: 50000, label: 'Daily Steps' },
+        peak_flow_lpm: { min: 50, max: 900, label: 'Peak Flow' },
+        max_affordable_cost: { min: 0, max: 100000, label: 'Monthly Budget' },
     };
+
+    // Fields the engine requires — clearing one must disable Run Analysis rather than
+    // silently feeding undefined/NaN into the scoring math. Genuinely optional fields
+    // (SpO2, ferritin, TSAT, LVEDD, LAVI, prior LVEF, steps, peak flow) skip when blank.
+    const REQUIRED_FIELDS = new Set([
+        'age', 'height_cm', 'sbp', 'dbp', 'pulse', 'lvef', 'nt_pro_bnp', 'kccq_score',
+        'potassium', 'creatinine', 'bun', 'dry_weight_kg', 'current_weight_kg', 'max_affordable_cost',
+    ]);
 
     // --- 2b. Validation errors ---
     const validationErrors = useMemo(() => {
         const errors: Record<string, string> = {};
         const check = (field: string, value: number | undefined) => {
-            if (value === undefined || value === null) return;
             const bounds = VALIDATION_BOUNDS[field];
             if (!bounds) return;
+            if (value === undefined || value === null || Number.isNaN(value)) {
+                if (REQUIRED_FIELDS.has(field)) errors[field] = `${bounds.label} is required`;
+                return;
+            }
             if (value < bounds.min || value > bounds.max) {
                 errors[field] = `${bounds.label} must be ${bounds.min}–${bounds.max}`;
             }
@@ -123,7 +138,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         check('lavi', patientData.lavi);
         check('dry_weight_kg', patientData.volume_status.dry_weight_kg);
         check('current_weight_kg', patientData.volume_status.current_weight_kg);
-        if (patientData.sbp <= patientData.dbp) {
+        check('previous_lvef', patientData.previous_lvef);
+        check('daily_step_count', patientData.daily_step_count);
+        check('peak_flow_lpm', patientData.peak_flow_lpm);
+        check('max_affordable_cost', patientData.max_affordable_cost);
+        if (patientData.sbp !== undefined && patientData.dbp !== undefined && patientData.sbp <= patientData.dbp) {
             errors.sbp = 'SBP must be greater than DBP';
             errors.dbp = 'DBP must be lower than SBP';
         }
@@ -150,11 +169,17 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         if (patientData.rhythm === '2nd Degree AV Block' || patientData.rhythm === '3rd Degree AV Block') {
             warnings.av_block = 'AV block present: beta blockers and digoxin are contraindicated unless paced/specialist-directed.';
         }
-        if (patientData.egfr < 30) warnings.egfr = 'Severe CKD - MRA CI, RAAS limited, SGLT2i initiation blocked';
-        if (patientData.egfr < 20) warnings.egfr = 'eGFR < 20: loop response may be poor; consider BID/TID strategy';
+        // eGFR tiers mirror the engine: steroidal MRA CI < 30 (RAAS dose-limited); SGLT2i/finerenone
+        // initiation blocked < 25 (continuation allowed); loop-response note appended < 20.
+        if (patientData.egfr < 30) {
+            const egfrNotes = ['Severe CKD - MRA contraindicated, RAAS doses limited.'];
+            if (patientData.egfr < 25) egfrNotes.push('SGLT2i/Finerenone initiation blocked (continuation of an existing SGLT2i allowed).');
+            if (patientData.egfr < 20) egfrNotes.push('eGFR < 20: loop response may be poor; consider BID/TID strategy.');
+            warnings.egfr = egfrNotes.join(' ');
+        }
         if (patientData.lvef < 20 && hasLowOutputMarker) warnings.low_output = 'Low-output profile detected (LVEF < 20 with hypoperfusion markers)';
         return warnings;
-    }, [patientData.sbp, patientData.dbp, patientData.bun, patientData.creatinine, patientData.potassium, patientData.is_pregnant, patientData.nyha_class, patientData.pulse, patientData.egfr, patientData.lvef, patientData.volume_status.exam_findings]);
+    }, [patientData]);
 
     // --- 2d. Disable simulation when validation errors exist ---
     const hasValidationErrors = Object.keys(validationErrors).length > 0;
@@ -164,10 +189,16 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         // Helper to check if input is a number type
         const isNumber = type === 'number' || type === 'range';
 
-        setPatientData(prev => ({
-            ...prev,
-            [name]: value === '' && isNumber ? undefined : (isNumber ? Number(value) : value)
-        }));
+        setPatientData(prev => {
+            const next: Patient = {
+                ...prev,
+                [name]: value === '' && isNumber ? undefined : (isNumber ? Number(value) : value)
+            };
+            // A stale pregnancy flag must never persist invisibly after sex leaves 'Female'
+            // (the checkbox is only rendered for Female patients).
+            if (name === 'sex' && value !== 'Female') next.is_pregnant = undefined;
+            return next;
+        });
     };
 
     const handleVolumeChange = (field: 'current_weight_kg' | 'dry_weight_kg', val: number) => {
@@ -217,17 +248,16 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                 <DiagnosticsSection patientData={patientData} onChange={handleInputChange} validationErrors={validationErrors} clinicalWarnings={clinicalWarnings} />
                 <HistorySection patientData={patientData} setPatientData={setPatientData} />
                 <MedicationManager patientData={patientData} setPatientData={setPatientData} />
-                <SocialSection patientData={patientData} onChange={handleInputChange} setPatientData={setPatientData} clinicalWarnings={clinicalWarnings} />
+                <SocialSection patientData={patientData} onChange={handleInputChange} setPatientData={setPatientData} validationErrors={validationErrors} clinicalWarnings={clinicalWarnings} />
             </div>
 
             <div className="p-5 border-t border-slate-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
                 <button
                     onClick={onRunSimulation}
-                    disabled={isLoading || hasValidationErrors || !pricesReady}
-                    aria-busy={isLoading}
+                    disabled={hasValidationErrors || !pricesReady}
                     className="w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white font-bold py-3.5 px-4 rounded-xl hover:shadow-lg transition-all disabled:opacity-50 text-base tracking-wide"
                 >
-                    {isLoading ? 'Running Analysis...' : !pricesReady ? 'Loading Prices...' : hasValidationErrors ? 'Fix Errors to Run Analysis' : 'Run Analysis'}
+                    {!pricesReady ? 'Loading Prices...' : hasValidationErrors ? 'Fix Errors to Run Analysis' : 'Run Analysis'}
                 </button>
             </div>
         </div>

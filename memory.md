@@ -2,6 +2,62 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### Full verified audit pass (2026-07-05)
+Whole-codebase audit; everything below is the CURRENT state (all landed, harnesses green:
+verify Passed 106 = 105 scenarios + 1 structural pricing invariant; 100/100 audit; 51/51
+mistake; typecheck/build clean — the harness's printed count is authoritative; the tree was
+still gaining regression scenarios during the doc pass). Audit harnesses are now npm scripts: `audit:red`,
+`audit:mistakes`, `audit:hundred`.
+
+- **Rescue counts toward `max_new_classes_per_visit` — RATIFIED, do not change.** K+ binder /
+  IV iron rescue additions consume the visit cap (scenario 'Max New Classes Counts Binder
+  Rescue'). It is a patient-facing sequencing limit, not a technical accident.
+- **Initiation-vs-continuation pattern** (the `alreadyOn*` carve-out, from SGLT2i/ivabradine)
+  now also covers: vericiguat (VICTORIA criteria — NT-proBNP≥1600, NYHA II-IV, recent
+  worsening, LVEF<45 — gate INITIATION only; pregnancy still forces removal) and GLP-1
+  (BMI≥30 gates initiation only; continuation blocked only by pregnancy/MTC/MEN2 — weight-loss
+  success never forces removal).
+- **Blank-data sentinel philosophy:** 0/undefined/NaN on a safety-critical field = "not
+  entered" — it must never read as SAFE (a blank K+ clearing a hyperkalemia gate) AND never as
+  END-STAGE (a blank eGFR force-removing renal-gated meds). Use `valueUnknown()`. Blank renal:
+  retain current renal-gated meds, exclude new renal-gated starts pending BMP, -15 + warning on
+  RAAS/MRA/SGLT2i intensification, suppress renal-threshold warnings. Blank K+: sentinel is
+  preserved through projection math; K+ bands / digoxin K-band / DDI-3 interpolation suppressed.
+- **`services/clinicalPredicates.ts`** is the shared module (valueUnknown, hasHistoricalHFrEF,
+  hasUnknownHistoricalHFrEF, isIronDeficient, isBlackRace) consumed by BOTH engine and
+  formulary — they previously drifted as duplicates. The two intentionally-DIFFERENT
+  preserve-quad-for-unknown-history variants stay in their own files; do NOT merge them.
+- **Scoring constants are EXPORTED** from simulationService and rendered by ScoreDetailModal
+  (BNP_SCORE_TARGET/CRITICAL, NYHA_SCORE_MAP, FUNCTIONAL_STEPS_FULL_CREDIT, VOLUME_SCORING,
+  adherenceComplexityThreshold, CONCORDANCE_TABLE, pillarKeyOf) — never re-hardcode display
+  copies in components.
+- **Loop-curve calibration anchors** (log2 ceiling; the prior sqrt form drifted 40-70% high):
+  furosemide `1.5+0.9*log2(d/20)` → ~1.5/2.4/3.3/4.2 kg at 20/40/80/160 mg; torsemide
+  `1.8+0.96*log2(d/10)` → ~1.8/2.8/4.0/5.0 kg at 10/20/50/100 mg; bumetanide inherits via
+  40:1; Furoscix applies the curve to a 1.15× oral equivalent. GLP-1 + eplerenone chf_effects
+  are now dose-scaled (sema d/2.4, tirzepatide d/15, eplerenone d/50, floor 0.25) — a starting
+  dose is no longer credited full steady-state benefit.
+- New safety gates: baseline K+ ≥ 6.0 = HYPERKALEMIC EMERGENCY alert, ≥ 6.5 = alerts-only
+  (parallel to SBP<90), > 8.0 = implausible hard-stop. Pregnancy now also excludes vericiguat
+  (boxed warning) + ivabradine + GLP-1; H/ISDN deliberately stays (pregnant-HFrEF RAAS
+  alternative). BB UP-titration deferred in ANY decompensation (warm or cold); the forced
+  cold-and-wet reduction cuts ONE dose step (~50%), not to the lowest tier.
+- `glp1WeightDelta` accumulator: only the GLP-1 portion of a weight delta is tissue loss —
+  diuretic fluid loss is never reclassified because a GLP-1 is merely present.
+- Procedural warnings ('MANDATORY: 36-hour washout', 'BETA-BLOCKER DISCONTINUATION' taper,
+  base 'FUROSCIX SAFETY:') joined NON_PENALIZED_WARNING_MARKERS; 'MRA INITIATION AT BORDERLINE
+  K+' and FUROSCIX CKD CAUTION/TRIAGE remain penalized (genuine residual risk).
+- Pricing: every formulary med MUST have an explicit DRUG_PRICES entry (structural verify
+  invariant); Furoscix was the silent gap (added ~$900 cash); Entresto cash corrected to $600
+  (the IRA-negotiated price is Medicare-only, modeled via medicare_copay).
+- `clonePatient`: SINGLE implementation in simulationService (also deep-copies dose objects),
+  re-exported by data/scenarios.ts — never add a second copy.
+- tsconfig: +noUnusedParameters, +noFallthroughCasesInSwitch, -allowJs.
+  **noUncheckedIndexedAccess deliberately DEFERRED** (large refactor; adopt intentionally, not
+  as a drive-by).
+- Tailwind is build-time v3 (tailwind.config.js / postcss.config.js / index.css imported by
+  index.tsx); the Play CDN and the aistudiocdn importmap are gone — don't reintroduce either.
+
 ### Cost-effectiveness: budget trade-offs maximize health benefit per dollar (2026-06-13)
 Ran a budget sweep (4 phenotypes × cash/commercial/medicare × multiple realistic budgets) to
 validate that trade-offs maximize health benefit for cost. The cost trade-offs among AFFORDABLE
@@ -196,6 +252,7 @@ checklist with explicit uncertainty**, not an individual-outcome predictor. Six 
 2. **Iron-deficiency criterion** corrected to ESC 2021/IRONMAN/AFFIRM-AHF via `isIronDeficient()`:
    ferritin <100 (absolute) OR (ferritin 100–300 AND TSAT <20) (functional). TSAT<20 alone with
    ferritin >300/unknown no longer flags. Used in `analyzeCurrentRegimen` + main entry.
+   (2026-07-05: moved to the shared `services/clinicalPredicates.ts` module.)
 3. **Qualitative projections** per regimen (`buildQualitativeProjections`) — direction-only
    (improve/stable/caution/worsen) for remodeling, congestion, neurohormonal, BP, K+. No decimals.
 4. **Trade-off labels** per regimen (`buildTradeOffLabels`) from domain sub-scores — replaces

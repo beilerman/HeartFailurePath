@@ -109,9 +109,10 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
 
             {/* Comorbidities */}
             <div className="mb-6">
-                <Label>Comorbidities</Label>
+                <Label htmlFor="comorbidity-select">Comorbidities</Label>
                 <div className="flex gap-2 mb-2">
                     <Select
+                        id="comorbidity-select"
                         value={selectedComorbidity}
                         onChange={(e) => setSelectedComorbidity(e.target.value)}
                     >
@@ -134,9 +135,10 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
 
             {/* Active Non-Formulary Medications (DDI Context) */}
             <div className="mb-6">
-                <Label>Concurrent Non-Formulary Medications (for DDI checks)</Label>
+                <Label htmlFor="external-med-select">Concurrent Non-Formulary Medications (for DDI checks)</Label>
                 <div className="flex gap-2 mb-2">
                     <Select
+                        id="external-med-select"
                         value={selectedExternalMedication}
                         onChange={(e) => setSelectedExternalMedication(e.target.value)}
                     >
@@ -159,9 +161,10 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
 
             {/* Allergies */}
             <div className="mb-6">
-                <Label>Allergies</Label>
+                <Label htmlFor="allergy-input">Allergies</Label>
                 <div className="flex gap-2 mb-2">
                     <Input
+                        id="allergy-input"
                         value={allergyInput}
                         onChange={(e) => setAllergyInput(e.target.value)}
                         placeholder="e.g. Penicillin"

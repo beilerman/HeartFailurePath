@@ -34,6 +34,7 @@ This is a clinical decision support prototype and simulation environment, not an
 
 - Default: at most `2` new medication class groups per visit.
 - Dose titration and same-group swaps do not consume this limit.
+- Rescue additions (K+ binder, IV iron) DO count toward the limit — intentional and test-ratified (it is a patient-facing sequencing limit).
 - Configurable in UI: `Social Determinants -> Max New Classes Per Visit`.
 
 ### 3) Seven-domain scoring (0-100 each)
@@ -60,11 +61,14 @@ options, not proof that complete GDMT is financially reachable.
 ### 4) Hard safety gates and output filters
 
 - Input hard stop: `SBP < 90` -> no regimen output, alerts only.
+- Input hard stop: baseline `K+ >= 6.5` -> alerts only (hyperkalemic emergency); `K+ >= 6.0` fires a HYPERKALEMIC EMERGENCY alert (ECG, urgent treatment).
 - Input hard stop: physiologically impossible values (e.g. `LVEF > 80`, `K+ > 8`) -> verification alerts only, no recommendations computed on suspect data.
 - Display safety filter: excludes regimens with projected `SBP < 85`, `K+ > 6.0`, or `HR < 45`.
-- Pregnancy exclusions: RAAS classes, steroidal/non-steroidal MRAs, and SGLT2 inhibitors are excluded.
+- Pregnancy exclusions: RAAS classes, steroidal/non-steroidal MRAs, SGLT2 inhibitors, vericiguat (boxed warning), ivabradine, and GLP-1 therapy are excluded. H/ISDN remains available as the RAAS alternative.
 - Nitrate + PDE5 inhibitor exposure: H/ISDN is hard-excluded from the formulary and force-removed from an arriving regimen (absolute contraindication — fatal hypotension risk).
-- Acute decompensation handling: blocks beta-blocker initiation; forces existing beta-blocker dose reduction only with hypoperfusion (cold-and-wet), continues it for warm-and-wet; safe additions (esp. SGLT2i) are still offered alongside any mandated reduction.
+- Acute decompensation handling: blocks beta-blocker initiation and defers up-titration in ANY decompensation (warm or cold); forces existing beta-blocker dose reduction (one step, ~50%) only with hypoperfusion (cold-and-wet), continues it for warm-and-wet; safe additions (esp. SGLT2i) are still offered alongside any mandated reduction.
+- Blank safety-critical data (eGFR/creatinine or K+ = 0/empty) is treated as "not entered" — it never clears a safety gate and never reads as end-stage disease. Renal-gated new starts are withheld pending a BMP; retained meds and RAAS/MRA/SGLT2i intensification carry explicit data-unknown warnings and ranking penalties.
+- Initiation-vs-continuation carve-outs: trial-enrollment criteria (vericiguat VICTORIA markers, GLP-1 `BMI >= 30`, SGLT2i eGFR floor) gate initiation only — patients already on the drug are not force-removed for improved markers; true safety contraindications still force removal.
 - K+ binder rescue carries a residual-risk score penalty: rescue enables consideration (DIAMOND) but never erases the underlying hyperkalemia risk in ranking.
 
 ### 5) Furoscix implementation
@@ -79,16 +83,23 @@ options, not proof that complete GDMT is financially reachable.
 
 ## Verification Strategy
 
-Clinical logic is guarded by scenario-based assertions in `scripts/verifyScenarios.ts`.
+Clinical logic is guarded by a four-harness QA gate. `npm run verify` is the CI regression gate;
+the three audit harnesses are standalone (not part of CI) but constitute the full pre-release gate.
 
-- Current scenario set: `90`
-- CI command: `npm run ci`
-- Verification command: `npm run verify`
+| Harness | Command | Pass criteria |
+|---------|---------|---------------|
+| Scenario assertions (`scripts/verifyScenarios.ts`) | `npm run verify` | All pass — currently `106` (105 clinical scenarios + 1 structural pricing invariant); the harness output is authoritative |
+| Adversarial red team (`scripts/redTeam.ts`) | `npm run audit:red` | 0 CRITICAL / HIGH / MEDIUM findings |
+| Treatment-error audit (`scripts/mistakeAudit.ts`) | `npm run audit:mistakes` | 51/51 clean |
+| Broad clinical audit (`scripts/hundredScenarioAudit.ts`) | `npm run audit:hundred` | 100/100 clean |
+
+- CI command: `npm run ci` (typecheck + build + verify)
 
 Global invariants covered include:
 
 - no dual RAAS overlap
 - no dual MRA overlap
+- every formulary medication has an explicit pricing entry
 - score bounds stay within `0-100`
 - display safety floors are respected (projected SBP, K+, and HR)
 - no nitrate is ever displayed alongside confirmed PDE5 inhibitor exposure
@@ -119,12 +130,15 @@ Default dev host/port: `0.0.0.0:3000` (Vite auto-increments if occupied).
 ## Commands
 
 ```bash
-npm run typecheck   # tsc --noEmit
-npm run build       # production build
-npm run verify      # 90 scenario assertion harness
-npm run test        # alias of verify
-npm run ci          # typecheck + build + verify
-npm run preview     # preview production build
+npm run typecheck        # tsc --noEmit
+npm run build            # production build
+npm run verify           # scenario assertion harness (its printed count is authoritative; currently 106 passing)
+npm run test             # alias of verify
+npm run audit:red        # adversarial red-team probes (standalone)
+npm run audit:mistakes   # 51-scenario treatment-error audit (standalone)
+npm run audit:hundred    # 100-scenario broad clinical audit (standalone)
+npm run ci               # typecheck + build + verify
+npm run preview          # preview production build
 ```
 
 ## Deployment (Vercel)
@@ -143,17 +157,21 @@ Typical production deployment:
 HeartFailurePath/
   App.tsx
   index.tsx
+  index.css        # Tailwind entry (build-time Tailwind v3; no runtime CDN)
   constants.ts
   types.ts
   components/
   services/
   data/
-  scripts/
+  scripts/         # verifyScenarios, redTeam, mistakeAudit, hundredScenarioAudit
+  docs/
 ```
 
 ## Documentation Map
 
 - Evidence matrix and rule traceability: `docs/evidence-matrix.md`
+- Clinical scenario observations: `docs/clinical-scenario-observations-2026-07-03.md`
+- Analysis references: `docs/model-analysis.md`, `docs/guideline-analysis.md`, `docs/CHF-FIRST-PRINCIPLES-ANALYSIS.md`
 - Developer architecture + implementation guide: `CLAUDE.md`
 - Change history: `CHANGELOG.md`
 - In-app logic and methodology tab: `components/FAQ.tsx`

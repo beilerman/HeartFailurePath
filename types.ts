@@ -8,11 +8,6 @@ export interface ExcludedMedication {
     occurred_at?: string;
 }
 
-export interface ExamFinding {
-    name: string;
-    severity_points: number; // Penalty points
-}
-
 export interface VolumeStatus {
     dry_weight_kg: number;
     current_weight_kg: number;
@@ -22,11 +17,16 @@ export interface VolumeStatus {
 export type HistoricalHFrEFStatus = 'yes' | 'no' | 'unknown';
 export type RecentHFWorseningStatus = 'yes' | 'no' | 'unknown';
 
+// Closed union matching the form's Race select options (DemographicsSection). Keeping this a
+// union (not string) makes a dead comparison literal (e.g. the old 'African American' check)
+// a compile error — the A-HeFT race criterion lives in clinicalPredicates.isBlackRace.
+export type Race = 'White' | 'Black' | 'Asian' | 'Hispanic' | 'Other';
+
 export interface Patient {
     // Demographics
     age: number;
     sex: 'Male' | 'Female';
-    race: string;
+    race: Race;
     height_cm: number;
     bmi: number;
 
@@ -93,7 +93,6 @@ export interface MedicationDose {
     unit: string;
     formulation: string;
     frequency_options: string[];
-    scored: boolean;
     is_target_dose?: boolean;
 }
 
@@ -109,8 +108,7 @@ export interface ChfEffects {
 
 export interface Medication {
     name: string;
-    drug_class: string; // e.g., 'ARNI', 'BB', 'MRA', 'SGLT2i', 'Loop'
-    subclass?: string;
+    drug_class: string; // e.g., 'ARNI', 'BB', 'MRA', 'SGLT2i', 'Loop' — must have a DRUG_CLASS_REGISTRY row in simulationService
     available_doses: MedicationDose[];
 
     // Pharmacodynamics

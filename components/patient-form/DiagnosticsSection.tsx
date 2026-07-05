@@ -24,11 +24,11 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                         LVEF (%)
                         <span className="ml-1.5 align-middle text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded uppercase tracking-wide">Required</span>
                     </Label>
-                    <Input type="number" name="lvef" value={patientData.lvef} onChange={onChange} error={validationErrors.lvef} />
+                    <Input type="number" name="lvef" value={patientData.lvef ?? ''} onChange={onChange} error={validationErrors.lvef} />
                 </div>
                 <div>
                     <Label htmlFor="nt_pro_bnp">NT-proBNP</Label>
-                    <Input type="number" name="nt_pro_bnp" value={patientData.nt_pro_bnp} onChange={onChange} error={validationErrors.nt_pro_bnp} />
+                    <Input type="number" name="nt_pro_bnp" value={patientData.nt_pro_bnp ?? ''} onChange={onChange} error={validationErrors.nt_pro_bnp} />
                 </div>
             </div>
 
@@ -49,6 +49,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                         value={patientData.previous_lvef ?? ''}
                         onChange={onChange}
                         placeholder="Optional (e.g. 25)"
+                        error={validationErrors.previous_lvef}
                     />
                 </div>
             </div>
@@ -89,7 +90,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <Label htmlFor="creatinine">Creatinine</Label>
-                    <Input type="number" step="0.1" name="creatinine" value={patientData.creatinine} onChange={onChange} error={validationErrors.creatinine} />
+                    <Input type="number" step="0.1" name="creatinine" value={patientData.creatinine ?? ''} onChange={onChange} error={validationErrors.creatinine} />
                 </div>
                 <div className="relative">
                     <Label htmlFor="egfr">eGFR (Calc)</Label>
@@ -104,11 +105,11 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 </div>
                 <div>
                     <Label htmlFor="bun">BUN</Label>
-                    <Input type="number" name="bun" value={patientData.bun} onChange={onChange} error={validationErrors.bun} />
+                    <Input type="number" name="bun" value={patientData.bun ?? ''} onChange={onChange} error={validationErrors.bun} />
                 </div>
                 <div>
                     <Label htmlFor="potassium">Potassium</Label>
-                    <Input type="number" step="0.1" name="potassium" value={patientData.potassium} onChange={onChange} error={validationErrors.potassium} warning={clinicalWarnings.potassium} />
+                    <Input type="number" step="0.1" name="potassium" value={patientData.potassium ?? ''} onChange={onChange} error={validationErrors.potassium} warning={clinicalWarnings.potassium} />
                 </div>
             </div>
 
@@ -130,7 +131,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 </div>
                 <div>
                     <Label htmlFor="peak_flow_lpm">Peak Flow (L/min)</Label>
-                    <Input type="number" name="peak_flow_lpm" value={patientData.peak_flow_lpm ?? ''} onChange={onChange} placeholder="e.g. 400" />
+                    <Input type="number" name="peak_flow_lpm" value={patientData.peak_flow_lpm ?? ''} onChange={onChange} placeholder="e.g. 400" error={validationErrors.peak_flow_lpm} />
                 </div>
             </div>
         </section>

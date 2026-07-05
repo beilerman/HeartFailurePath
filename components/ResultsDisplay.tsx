@@ -6,7 +6,7 @@ import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services
 
 interface Props {
     results: ScoredRegimen[];
-    isLoading: boolean;
+    runId?: number;
     error: string | null;
     hasRun?: boolean;
     resultsStale?: boolean;
@@ -85,7 +85,7 @@ function buildChartSummary(
     return lines.join('\n');
 }
 
-export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [] }) => {
+export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runId = 0, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [] }: Props) {
     const [copied, setCopied] = useState(false);
 
     const handleCopy = async () => {
@@ -98,16 +98,6 @@ export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, has
             // Clipboard API unavailable (e.g. insecure context) — no-op; button simply won't confirm.
         }
     };
-
-    if (isLoading) return (
-        <div className="flex flex-col items-center justify-center h-96 text-slate-400" role="status" aria-live="polite">
-            <svg className="animate-spin h-10 w-10 mb-4 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span className="font-semibold text-lg">Analyzing patient data...</span>
-        </div>
-    );
 
     // First-run orientation: before any analysis is run, guide the user instead of showing a
     // bare empty pane next to a dense form.
@@ -174,19 +164,26 @@ export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, has
 
             {clinicalAlerts.length > 0 && (
                 <div className="space-y-3" role="alert" aria-live="assertive">
-                    {clinicalAlerts.map((alert, i) => (
-                        <div key={i} className="rounded-xl border-2 border-red-300 bg-red-50 p-5 shadow-md">
-                            <div className="flex items-start gap-3">
-                                <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                </svg>
-                                <div>
-                                    <p className="text-sm font-bold text-red-800">{alert.split(':')[0]}</p>
-                                    <p className="text-sm text-red-700 mt-1 leading-relaxed">{alert.substring(alert.indexOf(':') + 2)}</p>
+                    {clinicalAlerts.map((alert, i) => {
+                        // Alerts conventionally follow 'HEADER: body' — guard the parse so a
+                        // colon-less alert renders as a single line instead of mangled text.
+                        const sep = alert.indexOf(': ');
+                        const head = sep > 0 ? alert.slice(0, sep) : null;
+                        const body = sep > 0 ? alert.slice(sep + 2) : alert;
+                        return (
+                            <div key={i} className="rounded-xl border-2 border-red-300 bg-red-50 p-5 shadow-md">
+                                <div className="flex items-start gap-3">
+                                    <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                    </svg>
+                                    <div>
+                                        {head && <p className="text-sm font-bold text-red-800">{head}</p>}
+                                        <p className={head ? 'text-sm text-red-700 mt-1 leading-relaxed' : 'text-sm font-bold text-red-800 leading-relaxed'}>{body}</p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             )}
 
@@ -296,7 +293,9 @@ export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, has
             {results.length > 0 && (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                     {results.map((regimen, idx) => (
-                        <RecommendationCard key={idx} regimen={regimen} rank={idx + 1} />
+                        // runId in the key remounts cards on each analysis run so per-card UI
+                        // state (details expansion, open modal) never carries onto a different regimen.
+                        <RecommendationCard key={`${runId}-${idx}`} regimen={regimen} rank={idx + 1} />
                     ))}
                 </div>
             )}
@@ -329,4 +328,4 @@ export const ResultsDisplay: React.FC<Props> = ({ results, isLoading, error, has
             )}
         </div>
     );
-};
+});

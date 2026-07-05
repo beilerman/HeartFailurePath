@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { PatientForm } from './components/PatientForm';
 import { ClinicalSummary } from './components/ClinicalSummary';
 import { ResultsDisplay } from './components/ResultsDisplay';
@@ -24,7 +24,9 @@ function App() {
     const [eligibleAdjuncts, setEligibleAdjuncts] = useState<string[]>([]);
     const [missingDataNotices, setMissingDataNotices] = useState<string[]>([]);
     const [followUpCalendar, setFollowUpCalendar] = useState<MonitoringPlanItem[]>([]);
-    const [loading, setLoading] = useState(false);
+    // Incremented per successful analysis so result cards remount (resetting per-card
+    // disclosure/modal state) instead of positionally inheriting it across runs.
+    const [runId, setRunId] = useState(0);
     const [simError, setSimError] = useState<string | null>(null);
     const [drugPrices, setDrugPrices] = useState<Record<string, number>>({});
     const [pricesLoading, setPricesLoading] = useState(true);
@@ -90,7 +92,6 @@ function App() {
             setSimError(priceLoadError ?? 'Drug pricing is still loading. Run analysis after prices finish loading.');
             return;
         }
-        setLoading(true);
         setSimError(null);
         lastRunInputsRef.current = serializeInputs(patient, simMeds);
         setHasRun(true);
@@ -106,6 +107,7 @@ function App() {
             setEligibleAdjuncts(adjuncts ?? []);
             setMissingDataNotices(notices ?? []);
             setFollowUpCalendar(calendar ?? []);
+            setRunId(r => r + 1);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'An unexpected error occurred during analysis.';
             setSimError(message);
@@ -117,13 +119,34 @@ function App() {
             setEligibleAdjuncts([]);
             setMissingDataNotices([]);
             setFollowUpCalendar([]);
-        } finally {
-            setLoading(false);
         }
     };
 
+    // Referentially-stable rerun callback so React.memo on ResultsDisplay is effective —
+    // the ref always points at the latest runSimulation closure.
+    const runSimRef = useRef(runSimulation);
+    runSimRef.current = runSimulation;
+    const stableRerun = useCallback(() => runSimRef.current(), []);
+
     const tabClass = (tab: 'simulation' | 'library' | 'faq') =>
         `px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === tab ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`;
+
+    // WAI-ARIA Tabs keyboard pattern: roving tabindex with arrow-key navigation and
+    // automatic activation (selection follows focus).
+    const TABS = ['simulation', 'library', 'faq'] as const;
+    const handleTablistKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+        const currentIndex = TABS.indexOf(activeTab);
+        let nextIndex: number;
+        if (e.key === 'ArrowRight') nextIndex = (currentIndex + 1) % TABS.length;
+        else if (e.key === 'ArrowLeft') nextIndex = (currentIndex - 1 + TABS.length) % TABS.length;
+        else if (e.key === 'Home') nextIndex = 0;
+        else if (e.key === 'End') nextIndex = TABS.length - 1;
+        else return;
+        e.preventDefault();
+        const nextTab = TABS[nextIndex];
+        setActiveTab(nextTab);
+        document.getElementById(`tab-${nextTab}`)?.focus();
+    };
 
     return (
         <div className="h-screen w-screen flex flex-col bg-slate-50 text-slate-800 font-sans overflow-hidden">
@@ -143,7 +166,7 @@ function App() {
                 </div>
 
                 {/* Navigation Tabs */}
-                <nav className="flex bg-slate-100 p-1 rounded-lg" role="tablist" aria-label="Application sections">
+                <nav className="flex bg-slate-100 p-1 rounded-lg" role="tablist" aria-label="Application sections" onKeyDown={handleTablistKeyDown}>
                     <button
                         id="tab-simulation"
                         onClick={() => setActiveTab('simulation')}
@@ -151,6 +174,7 @@ function App() {
                         role="tab"
                         aria-selected={activeTab === 'simulation'}
                         aria-controls="tabpanel-simulation"
+                        tabIndex={activeTab === 'simulation' ? 0 : -1}
                     >
                         <TableIcon className="w-4 h-4" aria-hidden="true" />
                         Analysis
@@ -162,6 +186,7 @@ function App() {
                         role="tab"
                         aria-selected={activeTab === 'library'}
                         aria-controls="tabpanel-library"
+                        tabIndex={activeTab === 'library' ? 0 : -1}
                     >
                         <BookOpenIcon className="w-4 h-4" aria-hidden="true" />
                         Formulary
@@ -173,6 +198,7 @@ function App() {
                         role="tab"
                         aria-selected={activeTab === 'faq'}
                         aria-controls="tabpanel-faq"
+                        tabIndex={activeTab === 'faq' ? 0 : -1}
                     >
                         <QuestionMarkCircleIcon className="w-4 h-4" aria-hidden="true" />
                         Evidence
@@ -191,7 +217,6 @@ function App() {
                                 simulationMedicationNames={simMeds}
                                 setSimulationMedicationNames={setSimMeds}
                                 onRunSimulation={runSimulation}
-                                isLoading={loading}
                                 pricesReady={pricesReady}
                                 testScenarios={SCENARIOS}
                                 selectedScenario={scenario}
@@ -209,11 +234,11 @@ function App() {
                             <div className="max-w-5xl mx-auto">
                                 <ResultsDisplay
                                     results={results}
-                                    isLoading={loading}
+                                    runId={runId}
                                     error={simError}
                                     hasRun={hasRun}
                                     resultsStale={resultsStale}
-                                    onRerun={runSimulation}
+                                    onRerun={stableRerun}
                                     excludedMedications={excludedMeds}
                                     clinicalAlerts={clinicalAlerts}
                                     monitoringPlan={monitoringPlan}

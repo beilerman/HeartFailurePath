@@ -1,0 +1,11 @@
+# Normalize line endings: source files are stored with LF in the repo and checked out as LF
+# everywhere (ends the per-diff "LF will be replaced by CRLF" warning churn on Windows).
+* text=auto
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.js text eol=lf

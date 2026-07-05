@@ -1,7 +1,7 @@
 {
   "name": "heartfailurepath",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "engines": {
     "node": ">=22.0.0"
@@ -11,9 +11,11 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit",
     "verify": "tsx scripts/verifyScenarios.ts",
     "test": "npm run verify",
+    "audit:red": "tsx scripts/redTeam.ts",
+    "audit:mistakes": "tsx scripts/mistakeAudit.ts",
+    "audit:hundred": "tsx scripts/hundredScenarioAudit.ts",
     "ci": "npm run typecheck && npm run build && npm run verify"
   },
   "dependencies": {
@@ -25,6 +27,9 @@
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-react": "^5.0.0",
+    "autoprefixer": "^10.5.2",
+    "postcss": "^8.5.16",
+    "tailwindcss": "^3.4.19",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"

@@ -1,5 +1,5 @@
 {
   "name": "HeartFailurePATH",
-  "description": "Advanced clinical decision support for Chronic Heart Failure (HFrEF) optimization, simulating effects on Neurohormonal, Functional, Volume, and Structural domains.",
+  "description": "Deterministic clinical decision support for chronic heart failure (HFrEF / HFmrEF / HFpEF / HFimpEF), ranking guideline-directed regimen modifications across seven weighted domains: neurohormonal, functional, volume, structure, cost, adherence, and guideline concordance.",
   "requestFramePermissions": []
 }

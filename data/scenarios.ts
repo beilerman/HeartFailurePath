@@ -7,17 +7,12 @@ interface ScenarioMedSeed {
     freq: string;
 }
 
-const NON_FORMULARY_DATA_ALIASES: Record<string, string> = {
-    Enalapril: 'Lisinopril'
-};
-
 // Helper to build a current regimen from a list of med seeds
 const buildCurrentRegimen = (seeds: ScenarioMedSeed[]): RegimenMed[] => {
     return seeds.map((m): RegimenMed => {
-        const dataName = NON_FORMULARY_DATA_ALIASES[m.name] ?? m.name;
-        const foundMed = MEDICATION_FORMULARY.find(f => f.name === dataName);
+        const foundMed = MEDICATION_FORMULARY.find(f => f.name === m.name);
         if (!foundMed) {
-            throw new Error(`[scenarios] Missing medication data for "${m.name}" (resolved as "${dataName}").`);
+            throw new Error(`[scenarios] Missing medication data for "${m.name}".`);
         }
         const foundDose = foundMed.available_doses.find(d => String(d.strength) === String(m.strength));
         if (!foundDose) {
@@ -32,31 +27,11 @@ const buildCurrentRegimen = (seeds: ScenarioMedSeed[]): RegimenMed[] => {
 
 // Helper to construct regimen items for initial state
 const getInitialRegimen = (): RegimenMed[] => {
-    const meds: ScenarioMedSeed[] = [
-        // Non-formulary medication resolved to equivalent med with known clinical data.
-        { name: 'Enalapril', strength: 20, freq: 'qd' },
+    return buildCurrentRegimen([
+        { name: 'Lisinopril', strength: 20, freq: 'qd' },
         { name: 'Carvedilol', strength: 25, freq: 'bid' },
         { name: 'Furosemide', strength: 40, freq: 'qd' }
-    ];
-
-    return meds.map((m): RegimenMed => {
-        const dataName = NON_FORMULARY_DATA_ALIASES[m.name] ?? m.name;
-        const foundMed = MEDICATION_FORMULARY.find(f => f.name === dataName);
-        if (!foundMed) {
-            throw new Error(`[scenarios] Missing medication data for "${m.name}" (resolved as "${dataName}").`);
-        }
-
-        const foundDose = foundMed.available_doses.find(d => d.strength === m.strength);
-        if (!foundDose) {
-            throw new Error(`[scenarios] Missing dose data for "${m.name}" at "${m.strength}".`);
-        }
-
-        const selectedFrequency = foundDose.frequency_options.includes(m.freq)
-            ? m.freq
-            : foundDose.frequency_options[0];
-
-        return { med: foundMed, dose: foundDose, selected_frequency: selectedFrequency };
-    });
+    ]);
 };
 
 // Initial State: John Doe (Warm and Wet HFrEF)
@@ -2447,23 +2422,475 @@ export const SCENARIOS: TestScenario[] = [
             max_new_classes_per_visit: 1
         }
     },
+    // --- AUDIT-FIX REGRESSION SCENARIOS (pregnancy adjunct gates, continuation carve-outs,
+    // --- decompensation phenotyping, blank-data guards, hyperkalemic emergency, LVEF clamps) ---
+    {
+        // REGRESSION (audit fix): Vericiguat (FDA BOXED WARNING — embryo-fetal toxicity) and
+        // Ivabradine (Corlanor labeling — fetal harm in animal studies) are pregnancy-
+        // contraindicated even when their trial criteria (VICTORIA: NT-proBNP >= 1600 + recent
+        // worsening + LVEF < 45; SHIFT: sinus, HR >= 70, LVEF <= 35 on target-dose BB) are
+        // otherwise fully met. H/ISDN remains the pregnancy-appropriate RAAS alternative and
+        // must NOT be excluded.
+        title: 'Pregnant Vericiguat + Ivabradine Exclusion',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 33,
+            sex: 'Female' as const,
+            is_pregnant: true,
+            sbp: 118,
+            dbp: 74,
+            pulse: 75, // >= 70: SHIFT initiation criterion met
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 55,
+            nt_pro_bnp: 2000, // >= 1600: VICTORIA criterion met
+            lvef: 30, // < 45 (VICTORIA) and <= 35 (SHIFT)
+            recent_hf_worsening_within_6mo: 'yes' as const,
+            volume_status: { dry_weight_kg: 68, current_weight_kg: 69, exam_findings: new Set<string>() },
+            egfr: 90,
+            potassium: 4.2,
+            creatinine: 0.8,
+            bun: 14,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            // Target-dose BB (25 BID is target at dry weight <= 85kg) — SHIFT "max tolerated BB" proxy
+            current_regimen: buildCurrentRegimen([
+                { name: 'Carvedilol', strength: 25, freq: 'bid' }
+            ]),
+            max_affordable_cost: 300,
+            cost_sensitivity: 3,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 3
+        }
+    },
+    {
+        // REGRESSION (audit fix): the VICTORIA criteria (NT-proBNP >= 1600, worsening event
+        // within 6 months) are trial ENROLLMENT gates for INITIATION only. A patient already
+        // ON vericiguat whose NT-proBNP improved to 900 and whose worsening event aged out is
+        // showing treatment RESPONSE — that must not force removal (continuation carve-out,
+        // mirrors the SGLT2i alreadyOn* pattern).
+        title: 'Vericiguat Continuation Carve-Out',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 61,
+            sbp: 116,
+            dbp: 72,
+            pulse: 68,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 60,
+            nt_pro_bnp: 900, // below the 1600 initiation gate — improved on therapy
+            lvef: 35,
+            recent_hf_worsening_within_6mo: 'no' as const,
+            volume_status: { dry_weight_kg: 78, current_weight_kg: 78.5, exam_findings: new Set<string>() },
+            egfr: 55,
+            potassium: 4.3,
+            creatinine: 1.2,
+            bun: 18,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+                { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+                { name: 'Vericiguat', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 300,
+            cost_sensitivity: 3,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // REGRESSION (audit fix): BMI >= 30 is a STEP-HFpEF/SUMMIT ENROLLMENT (initiation)
+        // gate only. Weight-loss SUCCESS on tirzepatide (BMI now 28) must not force its
+        // removal — treatment response is not an indication to stop (continuation carve-out,
+        // mirrors the SGLT2i alreadyOn* pattern).
+        title: 'GLP-1 Continuation Carve-Out (BMI 28)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 60,
+            sex: 'Female' as const,
+            bmi: 28, // below the 30 initiation gate — successful weight loss on therapy
+            sbp: 128,
+            dbp: 78,
+            pulse: 72,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 62,
+            nt_pro_bnp: 700,
+            lvef: 55,
+            ever_lvef_le_40: 'no' as const,
+            volume_status: { dry_weight_kg: 76, current_weight_kg: 77, exam_findings: new Set<string>() },
+            egfr: 65,
+            potassium: 4.1,
+            creatinine: 1.0,
+            bun: 16,
+            comorbidities: new Set(['HFpEF', 'Obesity']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Tirzepatide (Zepbound)', strength: 15, freq: 'weekly' },
+                { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 300,
+            cost_sensitivity: 3,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // REGRESSION (audit fix): the GLP-1 continuation carve-out must NOT bypass true safety
+        // gates — pregnancy (like MTC/MEN2, an FDA gate) applies to initiation AND
+        // continuation. A pregnant patient arriving on semaglutide must have it excluded and
+        // force-removed from every candidate; the pregnancy-safe beta-blocker is retained.
+        title: 'Pregnant on GLP-1 (Force Removal)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 31,
+            sex: 'Female' as const,
+            is_pregnant: true,
+            bmi: 34,
+            sbp: 118,
+            dbp: 74,
+            pulse: 82,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 58,
+            nt_pro_bnp: 1200,
+            lvef: 32,
+            volume_status: { dry_weight_kg: 88, current_weight_kg: 89, exam_findings: new Set<string>() },
+            egfr: 95,
+            potassium: 4.0,
+            creatinine: 0.7,
+            bun: 10,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Semaglutide (Wegovy)', strength: 2.4, freq: 'weekly' },
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' }
+            ]),
+            max_affordable_cost: 300,
+            cost_sensitivity: 3,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // REGRESSION (audit fix): LVEF exactly 40 classifies as HFrEF (quad pathway) — the
+        // GLP-1 adjunct gate is strictly LVEF > 40 (STEP-HFpEF / SUMMIT enrolled LVEF > 40;
+        // no HFrEF evidence). BMI 33 alone must not surface a GLP-1: not displayed and not in
+        // the eligible-adjuncts list. NOTE: GLP-1 is not formulary-EXCLUDED here (BMI >= 30,
+        // no safety CI) — the eligibility signal is adjunct gating, not contraindication.
+        title: 'GLP-1 Boundary LVEF Exactly 40',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 59,
+            bmi: 33,
+            sbp: 124,
+            dbp: 78,
+            pulse: 74,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 55,
+            nt_pro_bnp: 1400,
+            lvef: 40, // exactly at the boundary — HFrEF, not HFmrEF
+            volume_status: { dry_weight_kg: 96, current_weight_kg: 97, exam_findings: new Set<string>() },
+            egfr: 65,
+            potassium: 4.2,
+            creatinine: 1.1,
+            bun: 18,
+            comorbidities: new Set(['HFrEF', 'Obesity']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 300,
+            cost_sensitivity: 3,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 8,
+            max_new_classes_per_visit: 3
+        }
+    },
+    {
+        // REGRESSION (d631873): WARM-and-wet decompensation (NYHA III, +5kg, 2 congestion
+        // findings, NO hypoperfusion — no cool extremities, SBP >= 100, pulse pressure > 25)
+        // CONTINUES the beta-blocker at its current dose and diureses (ACC/AHA 2022); the
+        // forced BB dose-reduction is hypoperfusion-gated ("cold-and-wet") only. The pre-fix
+        // bug force-cut the BB in every candidate and suppressed all pillar additions
+        // ("reduce beta-blocker, add nothing"). Up-titration is still deferred while
+        // decompensated, but safe additions (esp. SGLT2i — EMPULSE/SOLOIST-WHF) must appear.
+        title: 'Warm-Wet Decompensation on Existing BB',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 63,
+            sbp: 112, // adequate perfusion; pulse pressure 42 > 25
+            dbp: 70,
+            pulse: 88,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'III' as const,
+            kccq_score: 34,
+            nt_pro_bnp: 3600,
+            lvef: 28,
+            volume_status: {
+                dry_weight_kg: 75,
+                current_weight_kg: 80, // +5kg fluid excess
+                exam_findings: new Set(['Edema (2+)', 'JVP Elevated']) // congestion WITHOUT Cool Extremities
+            },
+            egfr: 55,
+            potassium: 4.3,
+            creatinine: 1.3,
+            bun: 24,
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' }, // sub-target — up-titration deferred, dose CONTINUED
+                { name: 'Lisinopril', strength: 10, freq: 'qd' },
+                { name: 'Furosemide', strength: 80, freq: 'qd' }
+            ]),
+            max_affordable_cost: 250,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // REGRESSION (audit fix): blank eGFR/creatinine (the 0 "not entered" sentinel) trips
+        // every `egfr < X` formulary gate. Missing data must not read as end-stage CKD:
+        // working spironolactone is NOT force-removed as "contraindicated"; new renal-gated
+        // starts are withheld with the honest "Renal data required" reason (not "Clinical
+        // Contraindication"); and the DATA REQUIRED renal alert fires.
+        title: 'Blank Renal Data Stable Spironolactone',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 66,
+            sbp: 120,
+            dbp: 76,
+            pulse: 70,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 58,
+            nt_pro_bnp: 1500,
+            lvef: 30,
+            volume_status: { dry_weight_kg: 78, current_weight_kg: 78.5, exam_findings: new Set<string>() },
+            egfr: 0, // not entered (blank sentinel)
+            creatinine: 0, // not entered (blank sentinel)
+            bun: 18,
+            potassium: 4.5, // K+ IS entered and safe — only renal data is missing
+            comorbidities: new Set(['HFrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' },
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' }
+            ]),
+            max_affordable_cost: 250,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // REGRESSION (audit fix / red-team probe 2): dual MRA (spironolactone + finerenone) where
+        // gynecomastia bars every steroidal MRA. The unknown-EF-history HFimpEF presumption
+        // (patient on RAAS/MRA, no documented prior EF) previously contraindicated the KEPT
+        // finerenone too — force-removing BOTH MRAs and dropping the pillar entirely. The
+        // presumption now gates INITIATION only: the tolerated nsMRA the patient is already on
+        // must be retained (FINEARTS-HF: LVEF >= 40).
+        title: 'Dual MRA Unknown History Keeps nsMRA',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 63,
+            sbp: 124,
+            dbp: 78,
+            pulse: 72,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 62,
+            nt_pro_bnp: 1200,
+            lvef: 45,
+            volume_status: { dry_weight_kg: 82, current_weight_kg: 82.5, exam_findings: new Set<string>() },
+            egfr: 55,
+            creatinine: 1.3,
+            bun: 20,
+            potassium: 4.6,
+            comorbidities: new Set(['HFmrEF']),
+            allergies: new Set<string>(),
+            discontinued_meds: [
+                { name: 'Eplerenone', drug_class: 'MRA', reason: 'gynecomastia' }
+            ],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Finerenone (Kerendia)', strength: 10, freq: 'qd' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 250,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // REGRESSION (audit fix): baseline K+ 6.0-6.4 is a medical emergency (ECG, urgent
+        // treatment) — the HYPERKALEMIC EMERGENCY alert must fire, but deprescribing the
+        // offending RAAS/MRA with binder rescue is still clinically useful, so
+        // recommendations continue (unlike the >= 6.5 alerts-only gate).
+        title: 'Hyperkalemic Emergency K+ 6.2 (Deprescribe Offered)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 70,
+            sbp: 122,
+            dbp: 76,
+            pulse: 72,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 55,
+            nt_pro_bnp: 1600,
+            lvef: 30,
+            volume_status: { dry_weight_kg: 76, current_weight_kg: 76.5, exam_findings: new Set<string>() },
+            egfr: 45,
+            potassium: 6.2,
+            creatinine: 1.6,
+            bun: 28,
+            comorbidities: new Set(['HFrEF', 'Chronic Kidney Disease']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Spironolactone', strength: 25, freq: 'qd' }, // K+ > 5.5 → hard CI, force-removed
+                { name: 'Lisinopril', strength: 10, freq: 'qd' }, // K+ > 5.4 → hard CI, force-removed
+                { name: 'Carvedilol', strength: 12.5, freq: 'bid' }
+            ]),
+            max_affordable_cost: 250,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // REGRESSION (audit fix): baseline K+ >= 6.5 returns ALERTS ONLY (parallel to the
+        // SBP < 90 hemodynamic gate) — no drug recommendations while an immediate emergency
+        // (ECG, IV calcium, insulin/glucose, binder or dialysis) is untreated.
+        title: 'Hyperkalemic Emergency K+ 6.8 (Alerts Only)',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 72,
+            sbp: 124,
+            dbp: 78,
+            pulse: 74,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 52,
+            nt_pro_bnp: 1800,
+            lvef: 30,
+            volume_status: { dry_weight_kg: 74, current_weight_kg: 74.5, exam_findings: new Set<string>() },
+            egfr: 40,
+            potassium: 6.8,
+            creatinine: 1.8,
+            bun: 32,
+            comorbidities: new Set(['HFrEF', 'Chronic Kidney Disease']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: buildCurrentRegimen([
+                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Lisinopril', strength: 10, freq: 'qd' }
+            ]),
+            max_affordable_cost: 250,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // REGRESSION (audit fix): previous_lvef 0 is a BLANK field, not a documented prior EF
+        // of 0% — with ever_lvef_le_40 'no' this patient is ordinary HFpEF (SGLT2i-first
+        // pathway). Pre-fix, the 0 sentinel read as "prior LVEF <= 40" and flipped the
+        // phenotype to HFimpEF quad therapy (RAAS/BB pillars for a never-reduced EF).
+        title: 'HFpEF Previous LVEF Zero Sentinel',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 71,
+            sex: 'Female' as const,
+            sbp: 138,
+            dbp: 80,
+            pulse: 72,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 58,
+            nt_pro_bnp: 700,
+            lvef: 60,
+            previous_lvef: 0, // blank sentinel — NOT a measured prior EF
+            ever_lvef_le_40: 'no' as const,
+            volume_status: { dry_weight_kg: 70, current_weight_kg: 71, exam_findings: new Set(['Edema (1+)']) },
+            egfr: 60,
+            potassium: 4.2,
+            creatinine: 1.0,
+            bun: 18,
+            comorbidities: new Set(['HFpEF', 'Hypertension']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 250,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 2
+        }
+    },
+    {
+        // REGRESSION (audit fix): the projected-LVEF ceiling no longer pulls BELOW baseline.
+        // For HFpEF baselines above 55 (here 60), a zero/positive therapy delta must HOLD at
+        // baseline — the old unconditional Math.min(55, ...) fabricated a 60 → 55 EF decline
+        // (and a false "EF may decline" caution) on every candidate, including a simple
+        // SGLT2i add.
+        title: 'HFpEF LVEF 60 No Fabricated Decline',
+        patient: {
+            ...INITIAL_PATIENT,
+            age: 69,
+            sex: 'Male' as const,
+            sbp: 136,
+            dbp: 82,
+            pulse: 74,
+            rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const,
+            kccq_score: 60,
+            nt_pro_bnp: 650,
+            lvef: 60,
+            ever_lvef_le_40: 'no' as const,
+            volume_status: { dry_weight_kg: 82, current_weight_kg: 83, exam_findings: new Set(['Edema (1+)']) },
+            egfr: 62,
+            potassium: 4.1,
+            creatinine: 1.1,
+            bun: 18,
+            comorbidities: new Set(['HFpEF', 'Hypertension']),
+            allergies: new Set<string>(),
+            discontinued_meds: [],
+            current_regimen: [],
+            max_affordable_cost: 250,
+            cost_sensitivity: 4,
+            insurance_tier: 'commercial' as const,
+            complexity_tolerance: 7,
+            max_new_classes_per_visit: 2
+        }
+    },
 ];
 
-// Helper to deep clone patient (useful for resetting state in tests/app)
-export const clonePatient = (p: Patient): Patient => {
-    return {
-        ...p,
-        volume_status: {
-            ...p.volume_status, // Shallow copy, but nested Set needs helper if mutated deeply, here just replacing reference is enough if Set is new
-            exam_findings: new Set(p.volume_status.exam_findings)
-        },
-        comorbidities: new Set(p.comorbidities),
-        external_medications: new Set(p.external_medications || []),
-        allergies: new Set(p.allergies),
-        discontinued_meds: p.discontinued_meds.map(m => ({ ...m })),
-        current_regimen: p.current_regimen.map(r => ({
-            ...r,
-            dose: { ...r.dose }
-        }))
-    };
-};
+// The single clonePatient implementation lives in the engine (services/simulationService.ts)
+// and is re-exported here for existing import sites. The two previous copies had already
+// drifted (this one deep-copied dose objects; the engine's tolerated a missing
+// current_regimen) — a Patient-shape change applied to only one would silently corrupt the
+// other side. The unified engine version is a superset of both behaviors.
+export { clonePatient } from '../services/simulationService';

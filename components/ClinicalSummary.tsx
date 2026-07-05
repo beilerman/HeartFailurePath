@@ -7,21 +7,22 @@ interface ClinicalSummaryProps {
     drugPrices: Record<string, number>;
 }
 
-const DomainBar = ({ label, value, max, colorClass }: { label: string, value: number, max: number, colorClass: string }) => {
-    const percent = Math.min(100, (value / max) * 100);
+const DomainBar = ({ label, value, max, colorClass }: { label: string, value: number | undefined, max: number, colorClass: string }) => {
+    // Cleared form fields arrive as undefined — render a placeholder instead of crashing.
+    const percent = value != null ? Math.min(100, (value / max) * 100) : 0;
     return (
         <div className="mb-3">
             <div className="flex justify-between text-xs font-bold uppercase text-slate-500 mb-1.5 tracking-wide">
                 <span>{label}</span>
-                <span>{value.toFixed(0)} <span className="text-[10px] font-normal text-slate-400">/ {max}</span></span>
+                <span>{value != null ? value.toFixed(0) : '—'} <span className="text-[10px] font-normal text-slate-400">/ {max}</span></span>
             </div>
             <div
                 className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden"
                 role="progressbar"
-                aria-valuenow={Math.round(value)}
+                aria-valuenow={value != null ? Math.round(value) : 0}
                 aria-valuemin={0}
                 aria-valuemax={max}
-                aria-label={`${label}: ${value.toFixed(0)} of ${max}`}
+                aria-label={`${label}: ${value != null ? value.toFixed(0) : 'not entered'} of ${max}`}
             >
                 <div className={`h-full ${colorClass}`} style={{ width: `${percent}%` }}></div>
             </div>
@@ -31,11 +32,21 @@ const DomainBar = ({ label, value, max, colorClass }: { label: string, value: nu
 
 export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugPrices }) => {
     const weightDiff = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
-    const weightStatus = weightDiff > 0 ? `+${weightDiff.toFixed(1)} kg` : 'Euvolemic';
-    const weightColor = weightDiff > 1 ? 'text-red-600' : 'text-emerald-600';
+    // Three-band status mirroring PhysicalExamSection: Overload > +1.0, Volume Depleted < -1.0, else Euvolemic.
+    const hasWeightData = Number.isFinite(weightDiff);
+    const isOverloaded = hasWeightData && weightDiff > 1.0;
+    const isDehydrated = hasWeightData && weightDiff < -1.0;
+    const weightStatus = !hasWeightData
+        ? '—'
+        : isOverloaded
+            ? `+${weightDiff.toFixed(1)} kg`
+            : isDehydrated
+                ? `${weightDiff.toFixed(1)} kg (Volume Depleted)`
+                : 'Euvolemic';
+    const weightColor = isOverloaded ? 'text-red-600' : isDehydrated ? 'text-amber-600' : 'text-emerald-600';
 
     // Renal Calculations
-    const bunCrRatio = patient.creatinine > 0 ? patient.bun / patient.creatinine : 0;
+    const bunCrRatio = patient.creatinine > 0 && patient.bun != null ? patient.bun / patient.creatinine : 0;
     const isPrerenal = bunCrRatio > 20;
 
     // Calculate Current Cost & Complexity
@@ -64,7 +75,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-xs font-bold text-indigo-500 uppercase mb-3 tracking-wide">1. Neurohormonal</h3>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-slate-900">{patient.nt_pro_bnp.toLocaleString()}</span>
+                        <span className="text-3xl font-black text-slate-900">{patient.nt_pro_bnp != null ? patient.nt_pro_bnp.toLocaleString() : '—'}</span>
                         <span className="text-sm text-slate-500 font-bold">pg/mL</span>
                     </div>
                     <div className="mt-2 text-sm text-slate-500 font-medium">Target: &lt; 125 pg/mL</div>
@@ -80,7 +91,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                         </div>
                         <div className="h-10 w-px bg-slate-100 mx-2"></div>
                         <div className="text-center flex-1">
-                            <div className="text-2xl font-black text-slate-900">{patient.kccq_score}</div>
+                            <div className="text-2xl font-black text-slate-900">{patient.kccq_score ?? '—'}</div>
                             <div className="text-xs font-bold text-slate-400 uppercase mt-1">KCCQ Score</div>
                         </div>
                      </div>
@@ -138,7 +149,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                         </p>
                     )}
                     <div className="flex justify-between mt-2 text-xs text-slate-400">
-                        <span>Budget: ${patient.max_affordable_cost}</span>
+                        <span>Budget: ${patient.max_affordable_cost ?? '—'}</span>
                         <span>Sting: {patient.cost_sensitivity}</span>
                     </div>
                 </div>
