@@ -124,6 +124,41 @@ export interface Medication {
     contraindications?: (patient: Patient) => boolean;
     special_features?: { feature: string; points: number; criteria: (p: Patient) => boolean }[];
     is_best_in_class?: boolean;
+
+    /**
+     * Drug facts the engine asks the entry about instead of comparing drug names.
+     * Function-valued on purpose: the golden master serializes plain data fields of every
+     * medication that appears in engine output, and catalog metadata must not alter it.
+     * Read with `drugFacts(med)` (services/engine/drugFacts.ts).
+     */
+    facts?: () => MedFacts;
+    /** Patient-dependent GDMT target-dose check (when the static `is_target_dose` flag is not enough). */
+    is_target_dose_for?: (strength: number, patient: Patient) => boolean;
+}
+
+export interface MedFacts {
+    /** Non-selective beta-blocker (beta-2 blockade) — withheld after prior bronchospasm/asthma intolerance. */
+    nonselective_beta_blocker?: boolean;
+    /** Beta-1-selective beta-blocker — the acceptable option in mild/moderate asthma. */
+    beta1_selective?: boolean;
+    /** Among beta-1-selective agents, the one named as the most cardioselective alternative in asthma guidance. */
+    most_cardioselective?: boolean;
+    /** Extensively hepatically metabolized (beta-blockers): increased exposure in cirrhosis. */
+    hepatically_metabolized?: boolean;
+    /** CYP3A4 substrate with reduced clearance in cirrhosis (Finerenone). */
+    cirrhosis_cyp3a4_caution?: boolean;
+    /** Dominant antiandrogenic burden: avoided after ANY MRA caused gynecomastia (Spironolactone). */
+    antiandrogenic?: boolean;
+    /** Delivered by a single-use on-body subcutaneous infusor (Furoscix): device, CKD and SpO2 safety warnings apply. */
+    delivery?: 'on_body_infusor';
+    /** Moved to the front of the candidate list when congestion is worsening (loop diuretic swaps / new adds). */
+    preferred_for_congestion?: boolean;
+    /** Dose (in the entry's dose unit) at or above which a euvolemic patient is flagged for loop over-treatment. */
+    high_dose_threshold?: number;
+    /** Role when the engine must append a rescue agent (K+ binder): `preferred` is tried first, else the first available. */
+    rescue_role?: { kind: 'k_binder'; preferred?: boolean };
+    /** Two regimens differing in presence of this key are always "distinct" in top-pick selection. */
+    pick_distinctness_key?: string;
 }
 
 export interface RegimenMed {

@@ -4,6 +4,8 @@ import {
     DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_WEIGHTS, DEFAULT_WEIGHT_PROFILE, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS,
     ScoreBreakdown, ScoreBreakdownAdjustment, ScoreBreakdownDomainLine, ScoreBreakdownOverride, ScoreDomainKey,
 } from './engine/scoreModel';
+import { drugFacts } from './engine/drugFacts';
+import { MEDICATION_FORMULARY } from '../constants';
 import { buildEligibilityContext, filterEligibleMedications, taggedDiscontinuedMeds } from './engine/eligibility';
 import { valueUnknown, hasHistoricalHFrEF, hasUnknownHistoricalHFrEF, isIronDeficient, isBlackRace } from './clinicalPredicates';
 
@@ -239,14 +241,13 @@ function countNewClassGroups(candidate: RegimenMed[], current: RegimenMed[]): nu
  */
 export function isTargetDoseForPatient(regimenMed: RegimenMed, patient: Patient): boolean {
     const staticTarget = !!regimenMed.med.available_doses.find(d => String(d.strength) === String(regimenMed.dose.strength))?.is_target_dose;
-    if (regimenMed.med.name !== 'Carvedilol') return staticTarget;
+    const patientDependentTarget = regimenMed.med.is_target_dose_for;
+    if (!patientDependentTarget) return staticTarget;
 
     const strength = Number(regimenMed.dose.strength);
     if (Number.isNaN(strength)) return staticTarget;
 
-    // ACC/AHA target: 25 mg BID for <=85 kg, 50 mg BID for >85 kg.
-    const dryWeight = patient.volume_status.dry_weight_kg;
-    return dryWeight > 85 ? strength >= 50 : strength >= 25;
+    return patientDependentTarget(strength, patient);
 }
 
 /**
@@ -391,7 +392,7 @@ export function deriveIntolerancePolicy(patient: Patient): IntolerancePolicy {
     // caused gynecomastia, even if the documented offender was a different agent.
     const collectGynecomastiaOffenders = (match: (dm: ExcludedMedication, k: string) => boolean) => {
         const offenders = new Set(mraDiscontinued.filter(dm => match(dm, 'gynecomastia')).map(dm => dm.name));
-        if (offenders.size > 0) offenders.add('Spironolactone');
+        if (offenders.size > 0) MEDICATION_FORMULARY.filter(m => drugFacts(m).antiandrogenic).forEach(m => offenders.add(m.name));
         return offenders;
     };
 
@@ -810,9 +811,8 @@ function detectInappropriateRegimen(patient: Patient): string[] {
     // handled separately by the volume-depletion alert.)
     const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
     const euvolemic = Math.abs(fluidExcess) <= 1.0;
-    const highDoseLoopThreshold: Record<string, number> = { Furosemide: 120, 'Furoscix (SC Furosemide)': 80, Torsemide: 50, Bumetanide: 2 };
     const highDoseLoop = current.find(r => {
-        const t = highDoseLoopThreshold[r.med.name];
+        const t = drugFacts(r.med).high_dose_threshold;
         return r.med.drug_class === 'Loop Diuretic' && t !== undefined && Number(r.dose.strength) >= t;
     });
     if (euvolemic && highDoseLoop) {
@@ -1028,7 +1028,7 @@ function analyzeCurrentRegimen(
             let prioritizedCandidates = [...firstTiers, ...candidates.filter(t => !firstTiers.includes(t))];
             // Ensure FUROSCIX is considered in worsening-congestion loop swaps instead of being truncated by safeSlice.
             if (current.med.drug_class === 'Loop Diuretic' && fluidExcess >= 2.0) {
-                const furoscix = prioritizedCandidates.find(t => t.med.name === 'Furoscix (SC Furosemide)');
+                const furoscix = prioritizedCandidates.find(t => drugFacts(t.med).preferred_for_congestion);
                 if (furoscix) {
                     prioritizedCandidates = [furoscix, ...prioritizedCandidates.filter(t => t !== furoscix)];
                 }
@@ -1136,7 +1136,7 @@ function analyzeCurrentRegimen(
         if (loopTiers.length > 0) {
             let prioritizedLoopTiers = loopTiers;
             if (fluidExcess >= 3.0) {
-                const furoscix = loopTiers.find(r => r.med.name === 'Furoscix (SC Furosemide)');
+                const furoscix = loopTiers.find(r => drugFacts(r.med).preferred_for_congestion);
                 if (furoscix) {
                     prioritizedLoopTiers = [furoscix, ...loopTiers.filter(r => r !== furoscix)];
                 }
@@ -2612,10 +2612,10 @@ function simulateModificationEffect(
     // (Severe asthma is an absolute CI for all BBs and is handled by exclusion upstream.)
     if (currentPatient.comorbidities.has('Asthma (Mild/Moderate)')) {
         const selectiveBB = resultingRegimen.find(r =>
-            r.med.name === 'Bisoprolol' || r.med.name === 'Metoprolol Succinate'
+            drugFacts(r.med).beta1_selective
         );
         if (selectiveBB) {
-            const preferredNote = selectiveBB.med.name === 'Bisoprolol'
+            const preferredNote = drugFacts(selectiveBB.med).most_cardioselective
                 ? ''
                 : ' Bisoprolol is the most cardioselective option if bronchospasm emerges.';
             warnings.push(`ASTHMA + BETA-BLOCKER: ${selectiveBB.med.name} (β1-selective) is acceptable in mild/moderate asthma but cardioselectivity decreases at higher doses. Start low, monitor for wheeze/PEF drop, and ensure a rescue inhaler is available.${preferredNote} Non-selective carvedilol is avoided.`);
@@ -2631,13 +2631,13 @@ function simulateModificationEffect(
         }
         // BB: Carvedilol and Metoprolol are extensively hepatically metabolized
         const hepaticBBs = resultingRegimen.filter(r =>
-            r.med.drug_class === 'Beta Blocker' && (r.med.name === 'Carvedilol' || r.med.name === 'Metoprolol Succinate')
+            r.med.drug_class === 'Beta Blocker' && drugFacts(r.med).hepatically_metabolized
         );
         if (hepaticBBs.length > 0) {
             warnings.push(`Hepatic Impairment: ${hepaticBBs[0].med.name} is hepatically metabolized — increased exposure in cirrhosis. Consider Bisoprolol (renally cleared) as alternative.`);
         }
         // Finerenone: CYP3A4 substrate with reduced clearance in cirrhosis
-        const hasFinerenone = resultingRegimen.some(r => r.med.name === 'Finerenone (Kerendia)');
+        const hasFinerenone = resultingRegimen.some(r => drugFacts(r.med).cirrhosis_cyp3a4_caution);
         if (hasFinerenone) {
             warnings.push('Hepatic Impairment: Finerenone is a CYP3A4 substrate with reduced clearance in cirrhosis. Avoid in Child-Pugh C; use with caution in Child-Pugh B.');
         }
@@ -2686,7 +2686,7 @@ function simulateModificationEffect(
         warnings.push('Severe CKD Loop Strategy: eGFR < 20 may blunt loop response. Consider split dosing (BID/TID), torsemide/bumetanide conversion, and close urine output + daily weight tracking.');
     }
 
-    const hasFuroscix = resultingRegimen.some(r => r.med.name === 'Furoscix (SC Furosemide)');
+    const hasFuroscix = resultingRegimen.some(r => drugFacts(r.med).delivery === 'on_body_infusor');
     if (hasFuroscix) {
         warnings.push('FUROSCIX SAFETY: On-body SQ infusor delivers 80mg over ~5 hours. Keep device dry and minimize vigorous activity during infusion to reduce incomplete dosing risk.');
         if (!renalUnknown && currentPatient.egfr < 30) {
@@ -2999,7 +2999,7 @@ export function generateAndScoreModifications(
 
     // 5. Score each candidate
     // H7: Binder rescue — prefer Patiromer, fallback to any available K+ binder (Lokelma)
-    const rescueBinder = binders.find(b => b.med.name === 'Patiromer') || binders[0];
+    const rescueBinder = binders.find(b => drugFacts(b.med).rescue_role?.preferred) || binders[0];
     const ivIron = medTiers.find(r => r.med.drug_class === 'IV Iron');
     const ironDeficient = isIronDeficient(patient);
     const results: ScoredRegimen[] = [];
@@ -3425,16 +3425,20 @@ export function generateAndScoreModifications(
             const costDiff = Math.abs(r.cost - existing.cost);
             const rNames = new Set(r.regimen.map(x => x.med.name));
             const eNames = new Set(existing.regimen.map(x => x.med.name));
+            const distinctnessKeys = (reg: RegimenMed[]) => new Set(reg.map(x => drugFacts(x.med).pick_distinctness_key));
+            const rKeys = distinctnessKeys(r.regimen);
+            const eKeys = distinctnessKeys(existing.regimen);
 
             const intersection = [...rNames].filter(x => eNames.has(x)).length;
             const union = new Set([...rNames, ...eNames]).size;
             const similarity = intersection / union;
 
-            const hasArniR = rNames.has('Sacubitril/Valsartan (Entresto)');
-            const hasArniE = eNames.has('Sacubitril/Valsartan (Entresto)');
+            const hasArniR = rKeys.has('ARNI');
+            const hasArniE = eKeys.has('ARNI');
 
-            const hasGLPR = [...rNames].some(n => n.includes('Semaglutide') || n.includes('Tirzepatide'));
-            const hasGLPE = [...eNames].some(n => n.includes('Semaglutide') || n.includes('Tirzepatide'));
+            const isGlp1 = (x: RegimenMed) => getMedicationClassGroup(x.med.drug_class) === 'GLP-1 Therapy';
+            const hasGLPR = r.regimen.some(isGlp1);
+            const hasGLPE = existing.regimen.some(isGlp1);
 
             if (hasArniR !== hasArniE) return true;
             if (hasGLPR !== hasGLPE) return true;

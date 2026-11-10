@@ -24,6 +24,7 @@ import {
     deriveIntolerancePolicy, currentMedIntoleranceReason, isRenalOnlyContraindication, MRA_POOL_CLASSES,
     type IntolerancePolicy,
 } from '../simulationService';
+import { drugFacts } from './drugFacts';
 
 /** Everything the rules need, computed once per patient (not per drug). */
 export interface EligibilityContext {
@@ -137,7 +138,7 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
     {
         id: 'E08', name: 'Carvedilol after bronchospasm',
         summary: 'Carvedilol (non-selective) is avoided after beta-blocker bronchospasm; beta-1-selective agents are preferred.',
-        evaluate: (ctx, med) => med.name === 'Carvedilol' && ctx.excludeCarvedilol
+        evaluate: (ctx, med) => drugFacts(med).nonselective_beta_blocker && ctx.excludeCarvedilol
             ? 'Non-selective beta-blocker avoided after bronchospasm; prefer β1-selective (bisoprolol / metoprolol succinate)' : null,
     },
     {

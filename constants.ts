@@ -77,6 +77,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Sacubitril/Valsartan (Entresto)',
         drug_class: 'ARNI',
+        facts: () => ({ pick_distinctness_key: 'ARNI' }),
         is_best_in_class: true,
         available_doses: [
             { strength: '24/26', unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
@@ -329,6 +330,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Carvedilol',
         drug_class: 'Beta Blocker',
+        facts: () => ({ nonselective_beta_blocker: true, hepatically_metabolized: true }),
+        // ACC/AHA target: 25 mg BID for <= 85 kg dry weight, 50 mg BID above.
+        is_target_dose_for: (strength, patient) => patient.volume_status.dry_weight_kg > 85 ? strength >= 50 : strength >= 25,
         is_best_in_class: true,
         available_doses: [
             { strength: 3.125, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
@@ -369,6 +373,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Metoprolol Succinate',
         drug_class: 'Beta Blocker',
+        facts: () => ({ beta1_selective: true, hepatically_metabolized: true }),
         is_best_in_class: true,
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] }, // Starting dose for NYHA III-IV (MERIT-HF)
@@ -404,6 +409,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Bisoprolol',
         drug_class: 'Beta Blocker',
+        facts: () => ({ beta1_selective: true, most_cardioselective: true }),
         available_doses: [
             { strength: 1.25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
@@ -445,6 +451,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Spironolactone',
         drug_class: 'MRA',
+        facts: () => ({ antiandrogenic: true }),
         is_best_in_class: true,
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
@@ -523,6 +530,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Finerenone (Kerendia)',
         drug_class: 'nsMRA', // Distinct from 'MRA' to prevent HFrEF pillar credit
+        facts: () => ({ cirrhosis_cyp3a4_caution: true }),
         available_doses: [
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Starting dose; eGFR-dependent
             { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
@@ -740,6 +748,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Furosemide',
         drug_class: 'Loop Diuretic',
+        facts: () => ({ high_dose_threshold: 120 }),
         available_doses: [
             { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
             { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
@@ -775,6 +784,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Furoscix (SC Furosemide)',
         drug_class: 'Loop Diuretic',
+        facts: () => ({ high_dose_threshold: 80, delivery: 'on_body_infusor', preferred_for_congestion: true }),
         available_doses: [
             { strength: 80, unit: 'mg/10mL', formulation: 'SQ on-body infusor (5h)', frequency_options: ['qd'] }, // FDA-labeled single dose delivered over 5 hours
         ],
@@ -839,6 +849,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Torsemide',
         drug_class: 'Loop Diuretic',
+        facts: () => ({ high_dose_threshold: 50 }),
         is_best_in_class: true,
         available_doses: [
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
@@ -875,6 +886,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Bumetanide',
         drug_class: 'Loop Diuretic',
+        facts: () => ({ high_dose_threshold: 2 }),
         available_doses: [
             { strength: 0.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
             { strength: 1, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
@@ -1023,6 +1035,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Patiromer',
         drug_class: 'K+ Binder',
+        facts: () => ({ rescue_role: { kind: 'k_binder', preferred: true } }),
         available_doses: [
             { strength: 8.4, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
         ],
@@ -1044,6 +1057,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Sodium Zirconium Cyclosilicate (Lokelma)',
         drug_class: 'K+ Binder',
+        facts: () => ({ rescue_role: { kind: 'k_binder' } }),
         available_doses: [
             { strength: 5, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
             { strength: 10, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] }, // Acute correction phase

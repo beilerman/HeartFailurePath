@@ -4,6 +4,8 @@ import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/elig
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
+import { readFileSync, readdirSync } from 'node:fs';
+import path from 'node:path';
 
 const RAAS_CLASSES = new Set(['ARNI', 'ACEi', 'ARB']);
 const ASSERTION_TITLE_MARKERS = [
@@ -2213,6 +2215,66 @@ async function runVerification() {
     } else {
         console.log(`  [PASS] ${ruleIds.length} rules ordered; ${exclusionsChecked} exclusions all carry a known rule_id.`);
         passed++;
+    }
+
+    console.log('Checking structural invariant: no formulary drug name is a string literal in engine code...');
+    {
+        // Drug facts belong on the formulary entry (`Medication.facts`, constants.ts). A name that
+        // reappears as a whole string literal (or an object key) in engine code is a name-keyed
+        // branch. Prose inside longer warning/alert strings is deliberately not matched: only a
+        // literal that IS a drug name (or a distinctive fragment of one) fails.
+        // Anything that legitimately must stay is listed here with a reason.
+        const ALLOWLIST: { file: string; literal: string; why: string }[] = [];
+        const GENERIC_WORDS = new Set(['sodium']);
+        const fragments = new Set<string>();
+        for (const m of MEDICATION_FORMULARY) {
+            const paren = m.name.match(/\(([^)]+)\)/);
+            const base = m.name.replace(/\s*\([^)]*\)/, '').trim();
+            [m.name, base, paren?.[1] ?? '', ...base.split(/[\/\s]+/)]
+                .map(x => x.trim().toLowerCase())
+                .filter(x => x.length >= 4 && !GENERIC_WORDS.has(x))
+                .forEach(x => fragments.add(x));
+        }
+        const stripComments = (src: string): string => {
+            let out = ''; let i = 0; let quote = '';
+            while (i < src.length) {
+                const c = src[i]; const n = src[i + 1];
+                if (quote) {
+                    out += c;
+                    if (c === '\\') { out += src[i + 1] ?? ''; i += 2; continue; }
+                    if (c === quote) quote = '';
+                    i++; continue;
+                }
+                if (c === '/' && n === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
+                if (c === '/' && n === '*') { i += 2; while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) i++; i += 2; continue; }
+                if (c === "'" || c === '"' || c === '`') quote = c;
+                out += c; i++;
+            }
+            return out;
+        };
+        const engineFiles = ['services/simulationService.ts',
+            ...readdirSync(path.join(process.cwd(), 'services/engine')).filter(f => f.endsWith('.ts')).map(f => `services/engine/${f}`)];
+        const nameViolations: string[] = [];
+        for (const file of engineFiles) {
+            const code = stripComments(readFileSync(path.join(process.cwd(), file), 'utf8'));
+            const found: string[] = [];
+            for (const mt of code.matchAll(/'((?:[^'\\\n]|\\.)*)'|"((?:[^"\\\n]|\\.)*)"|`((?:[^`\\]|\\.)*)`/g)) {
+                found.push((mt[1] ?? mt[2] ?? mt[3] ?? '').trim());
+            }
+            for (const mt of code.matchAll(/\b([A-Za-z][A-Za-z]+)\s*:/g)) found.push(mt[1]);
+            for (const lit of found) {
+                if (!fragments.has(lit.toLowerCase())) continue;
+                if (ALLOWLIST.some(a => a.file === file && a.literal.toLowerCase() === lit.toLowerCase())) continue;
+                nameViolations.push(`${file}: drug-name literal '${lit}' — move the fact onto the formulary entry (Medication.facts) or add a justified ALLOWLIST row`);
+            }
+        }
+        if (nameViolations.length > 0) {
+            [...new Set(nameViolations)].slice(0, 20).forEach(m => console.error(`  [FAIL] ${m}`));
+            failed++;
+        } else {
+            console.log(`  [PASS] ${engineFiles.length} engine files contain no drug-name literals (${ALLOWLIST.length} allowlisted).`);
+            passed++;
+        }
     }
 
     console.log(`\nVerification Complete.`);
