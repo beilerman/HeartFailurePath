@@ -1,6 +1,10 @@
 
 import { Patient, Medication, ScoredRegimen, RegimenMed, ExcludedMedication, ModificationAction, RegimenModification, ModificationSet, MonitoringPlanItem, SimulationOutput, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores } from '../types';
 import { MEDICATION_FORMULARY } from '../constants';
+import {
+    DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_WEIGHTS, DEFAULT_WEIGHT_PROFILE, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS,
+    ScoreBreakdown, ScoreBreakdownAdjustment, ScoreBreakdownDomainLine, ScoreBreakdownOverride, ScoreDomainKey,
+} from './engine/scoreModel';
 import { valueUnknown, hasHistoricalHFrEF, hasUnknownHistoricalHFrEF, isIronDeficient, isBlackRace } from './clinicalPredicates';
 
 // =====================================================================================
@@ -3115,7 +3119,7 @@ export function generateAndScoreModifications(
     // take (already filtered out of `formulary`), so a patient is never penalized for a
     // contraindicated pillar. It is applied BEFORE the hemodynamic/electrolyte penalties below,
     // so an unsafe projection still disqualifies the regimen regardless of completeness.
-    const COMPLETENESS_MAX = 30;
+    const COMPLETENESS_MAX = SCORE_ADJUSTMENTS.GDMT_COMPLETENESS.max;
     const phenotype = classifyPhenotype(patient);
     const isReducedPhenotype = phenotype === 'HFrEF' || phenotype === 'HFmrEF';
 
@@ -3248,15 +3252,36 @@ export function generateAndScoreModifications(
 
         // Weighted scoring: Clinical domains 60%, Patient factors 25%, Evidence 15%
         // Neuro 20% | Func 15% | Vol 15% | Struct 10% | Cost 15% | Adhere 10% | Guideline 15%
-        let overall = s_neuro * 0.20 + s_func * 0.15 + s_vol * 0.15 + s_struc * 0.10
-                     + s_cost * 0.15 + s_adhere * 0.10 + s_guide * 0.15;
+        // Computed from the DOMAIN_WEIGHTS table, accumulated left-to-right in DOMAIN_KEYS order
+        // (identical float operation order to the original literal expression).
+        const unroundedDomainScores: Record<ScoreDomainKey, number> = {
+            neurohormonal: s_neuro, functional: s_func, volume: s_vol, structure: s_struc,
+            cost: s_cost, adherence: s_adhere, guideline: s_guide,
+        };
+        const breakdownDomains: ScoreBreakdownDomainLine[] = DOMAIN_KEYS.map(key => ({
+            key,
+            label: DOMAIN_LABELS[key],
+            score: unroundedDomainScores[key],
+            weight: DOMAIN_WEIGHTS[key],
+            contribution: unroundedDomainScores[key] * DOMAIN_WEIGHTS[key],
+        }));
+        let overall = breakdownDomains.reduce((sum, d) => sum + d.contribution, 0);
+        const weightedSubtotal = overall;
+        const breakdownAdjustments: ScoreBreakdownAdjustment[] = [];
+        const breakdownOverrides: ScoreBreakdownOverride[] = [];
+        const addAdjustment = (spec: { code: string; label: string }, points: number, detail?: string) => {
+            overall += points;
+            breakdownAdjustments.push(detail === undefined
+                ? { code: spec.code, label: spec.label, points }
+                : { code: spec.code, label: spec.label, points, detail });
+        };
 
         // Special feature bonus (normalized by regimen size, capped +15)
         const regimenLength = activeModSet.resulting_regimen.length;
         const normalizedSFBonus = regimenLength > 0
-            ? Math.max(-10, Math.min(15, sim.specialFeatureBonus / regimenLength * 3))
+            ? Math.max(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.min, Math.min(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.max, sim.specialFeatureBonus / regimenLength * SCORE_ADJUSTMENTS.SPECIAL_FEATURES.factor))
             : 0;
-        overall += normalizedSFBonus;
+        addAdjustment(SCORE_ADJUSTMENTS.SPECIAL_FEATURES, normalizedSFBonus);
 
         // GDMT completeness bonus — rewards the share of indicated, achievable therapy attained.
         // DOSE-AWARE: a pillar present but below target earns PARTIAL credit, so up-titrating a
@@ -3282,13 +3307,14 @@ export function generateAndScoreModifications(
         if (achievableSlots.length > 0) {
             const attained = achievableSlots.reduce((sum, s) => sum + slotValue(s), 0);
             gdmtCompleteness = attained / achievableSlots.length;
-            overall += COMPLETENESS_MAX * gdmtCompleteness;
+            addAdjustment(SCORE_ADJUSTMENTS.GDMT_COMPLETENESS, COMPLETENESS_MAX * gdmtCompleteness,
+                `${(gdmtCompleteness * 100).toFixed(0)}% of ${achievableSlots.length} achievable indicated therapies`);
         }
 
         // P5: Volume depletion — boost diuretic removal candidates
         if (isVolumeDepleted) {
             const hasDiureticRemoval = hasDiureticDeEscalation(activeModSet);
-            if (hasDiureticRemoval) overall += 20;
+            if (hasDiureticRemoval) addAdjustment(SCORE_ADJUSTMENTS.VOLUME_DEPLETION_DEESCALATION, SCORE_ADJUSTMENTS.VOLUME_DEPLETION_DEESCALATION.points);
         }
 
         // Graduated hemodynamic safety penalties for PROJECTED SBP.
@@ -3300,11 +3326,23 @@ export function generateAndScoreModifications(
         // CONSERVATIVE pre-compensation estimate. The prior −60/−30 made hemodynamically-inert
         // drugs (e.g. digoxin) out-rank SGLT2i / full GDMT in de-novo patients starting near
         // SBP 100 — backwards. Disqualification at < 85 is retained.
-        if (p.sbp < 85) overall = 0;         // Projected severe hypotension — disqualify (also display-filtered)
-        else if (p.sbp < 90) overall -= 25;  // Caution; GDMT often still appropriate with monitoring
-        else if (p.sbp < 95) overall -= 8;   // Mild; within trial tolerability for the conservative estimate
-        if (p.pulse < 50) overall -= 50;
-        if (p.potassium > 5.5) overall -= 50;
+        if (p.sbp < SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.threshold) {
+            // Projected severe hypotension — disqualify (also display-filtered). Non-additive: recorded as an override.
+            // NOTE: later adjustments (HR, K+, warnings, unknown-lab) still apply on top of this zeroed total.
+            breakdownOverrides.push({
+                code: SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.code,
+                label: SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.label,
+                applies_to: 'raw_score',
+                before: overall,
+                after: 0,
+                detail: `projected SBP ${p.sbp}`,
+            });
+            overall = 0;
+        }
+        else if (p.sbp < SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90, SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.points, `projected SBP ${p.sbp}`);  // Caution; GDMT often still appropriate with monitoring
+        else if (p.sbp < SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95, SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.points, `projected SBP ${p.sbp}`);   // Mild; within trial tolerability for the conservative estimate
+        if (p.pulse < SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50, SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.points, `projected HR ${p.pulse}`);
+        if (p.potassium > SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5, SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.points, `projected K+ ${p.potassium}`);
 
         // "Binder Required" deliberately COUNTS here: a regimen that needs a rescue binder to
         // stay under the K+ ceiling carries residual hyperkalemia risk. The binder enables the
@@ -3316,23 +3354,11 @@ export function generateAndScoreModifications(
         // score LOWER than leaving it sub-target, defeating the point. NOTE: "Binder Required" is
         // deliberately NOT here — a regimen needing K+ binder rescue carries residual hyperkalemia
         // risk and should rank below an equal regimen that does not (DIAMOND enables, doesn't erase).
-        const NON_PENALIZED_WARNING_MARKERS = [
-            'Elderly patient', 'Frail elderly', 'Hepatic Impairment', 'Monitor: K+',
-            'Titration Interval', 'Multiple new medications',
-            // Purely PROCEDURAL instructions attached unconditionally to specific actions must not
-            // dock the action's rank: the ACEi→ARNI washout text fires on EVERY guideline-preferred
-            // ARNI upgrade (docking it vs merely up-titrating the ACEi), the taper guidance on every
-            // BB removal, and the base Furoscix device instruction on every Furoscix regimen.
-            // (FUROSCIX CKD CAUTION / FUROSCIX TRIAGE remain penalized — they flag genuine patient
-            // risk states. 'MRA INITIATION AT BORDERLINE K+' also remains penalized: it is the
-            // residual-hyperkalemia-risk marker for the DIAMOND proactive-binder path, parallel to
-            // 'Binder Required' on the reactive rescue path.)
-            'MANDATORY: 36-hour washout', 'BETA-BLOCKER DISCONTINUATION', 'FUROSCIX SAFETY:',
-        ];
+        // Marker list (NON_PENALIZED_WARNING_MARKERS) lives in services/engine/scoreModel.ts.
         const dangerousWarnings = sim.warnings.filter(w =>
             !NON_PENALIZED_WARNING_MARKERS.some(marker => w.includes(marker))
         );
-        if (dangerousWarnings.length > 0) overall -= (dangerousWarnings.length * 10);
+        if (dangerousWarnings.length > 0) addAdjustment(SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS, dangerousWarnings.length * SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.perUnit, dangerousWarnings.join(' | '));
 
         // Unknown baseline potassium: the projected-K+ hyperkalemia gate above is meaningless
         // when K+ was never entered (it computes from a 0 baseline and always looks "safe").
@@ -3345,7 +3371,7 @@ export function generateAndScoreModifications(
                 m.target && (RAAS_CLASSES.has(m.target.med.drug_class) || m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
             );
             if (initiatesRaasMra) {
-                overall -= 15;
+                addAdjustment(SCORE_ADJUSTMENTS.UNKNOWN_POTASSIUM, SCORE_ADJUSTMENTS.UNKNOWN_POTASSIUM.points);
                 sim.warnings.push('POTASSIUM UNKNOWN: Baseline serum potassium was not entered. Obtain a BMP and confirm K+ ≤ 5.0 before initiating or up-titrating this RAAS inhibitor / MRA.');
             }
         }
@@ -3361,7 +3387,7 @@ export function generateAndScoreModifications(
                     || m.target.med.drug_class === 'nsMRA' || m.target.med.drug_class === 'SGLT2i')
             );
             if (intensifiesRenalGated) {
-                overall -= 15;
+                addAdjustment(SCORE_ADJUSTMENTS.UNKNOWN_RENAL, SCORE_ADJUSTMENTS.UNKNOWN_RENAL.points);
                 sim.warnings.push('RENAL FUNCTION UNKNOWN: eGFR/creatinine was not entered. Obtain a BMP before initiating or up-titrating RAAS / MRA / SGLT2i therapy — renal dosing and safety cannot be assessed.');
             }
         }
@@ -3375,6 +3401,27 @@ export function generateAndScoreModifications(
             adherence: Math.round(s_adhere),
             guideline: Math.round(s_guide)
         };
+        const finalOverall = Math.round(Math.min(SCORE_ADJUSTMENTS.SCORE_CLAMP.max, Math.max(SCORE_ADJUSTMENTS.SCORE_CLAMP.min, overall)));
+        const wasClamped = overall < SCORE_ADJUSTMENTS.SCORE_CLAMP.min || overall > SCORE_ADJUSTMENTS.SCORE_CLAMP.max;
+        if (wasClamped) {
+            breakdownOverrides.push({
+                code: SCORE_ADJUSTMENTS.SCORE_CLAMP.code,
+                label: SCORE_ADJUSTMENTS.SCORE_CLAMP.label,
+                applies_to: 'overall_score',
+                before: overall,
+                after: finalOverall,
+            });
+        }
+        const scoreBreakdown: ScoreBreakdown = {
+            weight_profile: DEFAULT_WEIGHT_PROFILE,
+            domains: breakdownDomains,
+            weighted_subtotal: weightedSubtotal,
+            adjustments: breakdownAdjustments,
+            raw_score: overall,
+            overall_score: finalOverall,
+            clamped: wasClamped,
+            ...(breakdownOverrides.length > 0 ? { overrides: breakdownOverrides } : {}),
+        };
         results.push({
             regimen: activeModSet.resulting_regimen,
             projected_patient: p,
@@ -3382,8 +3429,9 @@ export function generateAndScoreModifications(
             baseline_lvedd: patient.lvedd,
             baseline_lavi: patient.lavi,
             baseline_dry_weight_kg: patient.volume_status.dry_weight_kg,
-            overall_score: Math.round(Math.min(100, Math.max(0, overall))),
+            overall_score: finalOverall,
             raw_score: overall,
+            score_breakdown: scoreBreakdown,
             domain_scores: domainScores,
             special_feature_bonus: Math.round(normalizedSFBonus),
             gdmt_completeness: gdmtCompleteness,
@@ -3522,11 +3570,30 @@ export function generateAndScoreModifications(
             'Do NOT initiate new agents until perfusion is restored. ' +
             'If patient is currently on beta-blocker, do NOT abruptly discontinue (Class III harm) — reduce dose if needed. ' +
             'Prioritize: IV inotropes → hemodynamic monitoring → Advanced HF consultation → then cautious oral GDMT.';
-        finalPicks = distinctPicks.map(r => ({
-            ...r,
-            overall_score: Math.min(r.overall_score, 35), // Cap score to signal caution
-            warnings: [lowOutputWarning, ...r.warnings]
-        }));
+        const lowOutputCap = SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.max;
+        finalPicks = distinctPicks.map(r => {
+            const cappedScore = Math.min(r.overall_score, lowOutputCap); // Cap score to signal caution
+            const bd = r.score_breakdown;
+            const capped = bd && cappedScore !== r.overall_score
+                ? {
+                    ...bd,
+                    overall_score: cappedScore,
+                    overrides: [...(bd.overrides ?? []), {
+                        code: SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.code,
+                        label: SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.label,
+                        applies_to: 'overall_score' as const,
+                        before: r.overall_score,
+                        after: cappedScore,
+                    }],
+                }
+                : bd;
+            return {
+                ...r,
+                overall_score: cappedScore,
+                score_breakdown: capped,
+                warnings: [lowOutputWarning, ...r.warnings]
+            };
+        });
     }
 
     return {

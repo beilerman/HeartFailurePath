@@ -134,6 +134,9 @@ async function runVerification() {
     console.log('Starting Clinical Scenario Verification...\n');
     let passed = 0;
     let failed = 0;
+    // Score-breakdown reconciliation accumulator (one structural invariant, reported after all scenarios).
+    let breakdownChecked = 0;
+    const breakdownViolations: string[] = [];
 
     const formularyNames = MEDICATION_FORMULARY.map(m => m.name);
     const availableMedNames = new Set(formularyNames);
@@ -165,6 +168,25 @@ async function runVerification() {
                 : availableMedNames;
             const { scoredRegimens, excludedMedications, clinicalAlerts, monitoringPlan, eligibleAdjuncts } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
             const topRegimen = scoredRegimens[0];
+
+            // GLOBAL STRUCTURAL INVARIANT (score breakdown reconciles): see services/engine/scoreModel.ts.
+            for (const r of scoredRegimens) {
+                breakdownChecked++;
+                const bd = r.score_breakdown;
+                const tag = `"${scenario.title}"`;
+                if (!bd) { breakdownViolations.push(`${tag}: missing score_breakdown`); continue; }
+                const eps = 1e-9;
+                const sumContrib = bd.domains.reduce((a, d) => a + d.contribution, 0);
+                if (Math.abs(bd.weighted_subtotal - sumContrib) > eps) breakdownViolations.push(`${tag}: weighted_subtotal != sum(contributions)`);
+                for (const d of bd.domains) {
+                    if (Math.abs(d.weight * d.score - d.contribution) > eps) breakdownViolations.push(`${tag}: ${d.key} weight x score != contribution`);
+                }
+                const rawOverrides = (bd.overrides ?? []).filter(o => o.applies_to === 'raw_score').reduce((a, o) => a + (o.after - o.before), 0);
+                const target = bd.weighted_subtotal + bd.adjustments.reduce((a, x) => a + x.points, 0) + rawOverrides;
+                if (Math.abs(target - bd.raw_score) > eps) breakdownViolations.push(`${tag}: subtotal + adjustments + overrides (${target}) != raw_score (${bd.raw_score})`);
+                if (bd.raw_score !== r.raw_score) breakdownViolations.push(`${tag}: breakdown.raw_score != regimen.raw_score`);
+                if (bd.overall_score !== r.overall_score) breakdownViolations.push(`${tag}: breakdown.overall_score != regimen.overall_score`);
+            }
 
             if (clinicalAlerts.length > 0) {
                 clinicalAlerts.forEach(a => console.log(`  ALERT: ${a.substring(0, 80)}...`));
@@ -2158,6 +2180,15 @@ async function runVerification() {
             failed++;
         }
         console.log('---');
+    }
+
+    console.log('Checking structural invariant: score breakdown reconciles (subtotal + adjustments + raw overrides == raw_score)...');
+    if (breakdownViolations.length > 0) {
+        breakdownViolations.slice(0, 20).forEach(m => console.error(`  [FAIL] ${m}`));
+        failed++;
+    } else {
+        console.log(`  [PASS] ${breakdownChecked} scored regimens reconcile.`);
+        passed++;
     }
 
     console.log(`\nVerification Complete.`);
