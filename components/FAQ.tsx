@@ -1,6 +1,6 @@
 import React from 'react';
 import { DOMAIN_WEIGHTS, SCORE_ADJUSTMENTS } from '../services/engine/scoreModel';
-import { VOLUME_SCORING } from '../services/simulationService';
+import { VOLUME_SCORING, STRUCTURE_BLEND_WEIGHTS, DISPLAY_FLOORS } from '../services/simulationService';
 import { QuestionMarkCircleIcon, LightBulbIcon, CalculationIcon, HeartIcon } from './icons';
 
 const w = (x: number) => `${Math.round(x * 1000) / 10}%`;
@@ -28,7 +28,7 @@ const domainCards = [
         title: '4. Structure',
         color: 'text-amber-700',
         description: 'Blends current remodeling state with trajectory and chamber geometry.',
-        bullets: ['40% absolute LVEF state', '40% LVEF improvement trajectory', '20% LVEDD/LAVI chamber component']
+        bullets: [`${w(STRUCTURE_BLEND_WEIGHTS.absolute)} absolute LVEF state`, `${w(STRUCTURE_BLEND_WEIGHTS.improvement)} LVEF improvement trajectory`, `${w(STRUCTURE_BLEND_WEIGHTS.chamber)} LVEDD/LAVI chamber component`]
     },
     {
         title: '5. Cost',
@@ -55,7 +55,7 @@ const safetyChecks = [
     'Implausible inputs hard-stop: physiologically impossible values (e.g. LVEF 99, K+ > 8) return verification alerts only — no recommendations are computed on suspect data.',
     'Hemodynamic hard gate: SBP < 90 mmHg returns alerts only (no regimen output).',
     'Hyperkalemic emergency gate: baseline K+ >= 6.0 mEq/L fires a HYPERKALEMIC EMERGENCY alert (ECG and urgent treatment, not outpatient optimization); K+ >= 6.5 returns alerts only — no regimen output (parallel to the SBP < 90 gate). K+ > 8.0 is treated as an implausible value.',
-    'Display safety filter: regimens with projected SBP < 85, projected potassium > 6.0, or projected HR < 45 are not shown.',
+    `Display safety filter: regimens with projected SBP < ${DISPLAY_FLOORS.minProjectedSbp}, projected potassium > ${DISPLAY_FLOORS.maxProjectedPotassium.toFixed(1)}, or projected HR < ${DISPLAY_FLOORS.minProjectedPulse} are not shown.`,
     'Blank safety-critical data is treated as "not entered", never as a value: a blank potassium (0) never clears a hyperkalemia gate and never flows into projected-K+ math, and blank renal data (eGFR/creatinine 0) never evaluates as end-stage CKD. Renal-gated new starts are withheld pending a BMP, current renal-gated medications are retained, and any candidate intensifying RAAS/MRA/SGLT2i carries an explicit data-unknown warning and ranking penalty.',
     'Nitrate + PDE5 inhibitor (sildenafil/tadalafil) is an absolute exclusion — H/ISDN is removed from the formulary and force-removed from a current regimen, not merely warned about.',
     'Rescue mechanisms: a K+ binder is auto-appended when a candidate projects K+ > 5.3 (reactive rescue) and is co-prescribed proactively when an MRA is initiated at baseline K+ > 5.0 (DIAMOND protocol); IV iron is appended for iron deficiency per ESC criteria (ferritin < 100, or ferritin 100-300 with TSAT < 20). Binder rescue enables a regimen to be considered but carries a residual-risk score penalty — a regimen needing rescue ranks below an equal regimen that does not. Rescue additions count toward the max-new-classes-per-visit limit (a deliberate patient-facing sequencing limit).',

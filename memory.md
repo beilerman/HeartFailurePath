@@ -2,6 +2,28 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### GlucosePATH alignment refactor (2026-11-10, behavior-preserving)
+Engine restructured to mirror GlucosePATH's shape (numbered exclusions -> enumerate -> factor
+scores x one weight table -> printed arithmetic). Structure is in `docs/scoring-architecture.md`
+and CLAUDE.md; what is NOT obvious from the code:
+- **Golden master was captured BEFORE any refactor** (commit 7c920fc) and never updated; every
+  phase was byte-identical against it. It is the proof the refactor changed no clinical output.
+- **Deliberately not done (they change rankings — Brad's call):** patient-selected weight
+  profiles (GlucosePATH's cost-sensitivity row; `WEIGHT_PROFILES` has only `default`); folding
+  GDMT completeness / special-feature bonus into 0-100 domains; per-patient goals instead of
+  constant targets. Listed in `docs/glucosepath-alignment-plan.md`.
+- **Preserved quirk:** after projected SBP<85 zeroes the score, later penalties still apply, so
+  `raw_score` can go negative (only affects tie-breaks among display-hidden regimens). Recorded
+  as an override in `score_breakdown`; do not "fix" without a golden update.
+- **E14 (renal dosing contraindication) is probably unreachable** — E13 catches the same eGFR
+  cutoffs first. Kept as belt-and-braces. **E03 uses the 'suspected' free-text tier**, so
+  "denies cough" can withhold an ACEi for new starts (pre-existing).
+- **`Medication.facts` is plain data** and is in the golden harness's ADDITIVE_KEYS. An agent
+  first made it function-valued to hide it from the snapshot — don't do that again.
+- Still engine code, not formulary data: adjunct initiation criteria (candidates.ts) and DDI
+  warning prose (effects.ts). Moving warnings risks reordering, which changes the −10/warning
+  penalty and golden output — convert warnings to structured {code, penalizes, text} first.
+
 ### Full verified audit pass (2026-07-05)
 Whole-codebase audit; everything below is the CURRENT state (all landed, harnesses green:
 verify Passed 106 = 105 scenarios + 1 structural pricing invariant; 100/100 audit; 51/51

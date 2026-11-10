@@ -13,18 +13,20 @@ npm run dev              # start Vite dev server (default 3000)
 npm run build            # production build
 npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
-                         #   (currently: Passed 106 = 105 clinical scenarios + 1 structural pricing invariant)
+                         #   (currently: Passed 110 = 105 clinical scenarios + 5 structural invariants)
 npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone QA, not in CI)
-npm run ci               # typecheck + build + verify
+npm run golden           # golden master: 315 full engine outputs must be byte-identical
+npm run gate             # typecheck + golden + verify + all three audits (full pre-release gate)
+npm run ci               # typecheck + build + golden + verify
 npm run preview          # preview production build
 ```
 
 There is no `lint` script (a misleading one was removed 2026-07-05).
 
-CI workflow: `.github/workflows/ci.yml` runs `npm ci -> typecheck -> build -> verify`.
+CI workflow: `.github/workflows/ci.yml` runs `npm ci -> typecheck -> build -> golden -> verify`.
 
 QA harnesses (full pre-release gate — all four must be green):
 
@@ -55,7 +57,11 @@ HeartFailurePath/
     RecommendationCard.tsx        # regimen card rendering
     patient-form/                 # form subsections
   services/
-    simulationService.ts          # core clinical engine
+    simulationService.ts          # public facade: 45-line staged orchestrator + re-exports
+    engine/                       # the engine, one module per stage (see docs/scoring-architecture.md):
+                                  #   gates, eligibility (rules E01-E14), candidates, effects, domains,
+                                  #   scoreModel (weights + adjustments as data), scoring, selection,
+                                  #   explain, registry, intolerance, regimenUtils, drugFacts
     clinicalPredicates.ts         # shared predicates (valueUnknown, hasHistoricalHFrEF,
                                   #   isIronDeficient, isBlackRace) — single source for
                                   #   engine AND formulary
@@ -226,9 +232,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — currently `Passed: 106`):
+Current regression scope (the harness's printed count is authoritative — currently `Passed: 110`):
 
-- 105 clinical scenarios + 1 structural invariant (every formulary med must have a `DRUG_PRICES` entry)
+- 105 clinical scenarios + 5 structural invariants (every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
@@ -239,9 +245,21 @@ This harness is the primary safety regression gate for logic edits. The three st
 harnesses (`audit:red`, `audit:mistakes`, `audit:hundred` — see Commands) are deliberately outside
 CI but are part of the full pre-release gate.
 
+## Architecture (GlucosePATH-aligned, 2026-11-10)
+
+Read `docs/scoring-architecture.md` before changing the engine. Rules that keep the shape:
+
+- Weights and every adjustment magnitude live in `services/engine/scoreModel.ts` (`WEIGHT_PROFILES`, `SCORE_ADJUSTMENTS`). Never inline a scoring number in engine or component code; a new adjustment needs a code there AND a line in `score_breakdown`, or the reconciliation invariant fails.
+- A new exclusion is a new numbered rule in `ELIGIBILITY_RULES` (`services/engine/eligibility.ts`), not an inline `if`. Rule order is precedence (first match wins).
+- Drug-specific knowledge goes on the formulary entry (`facts`, hooks) and is read with `drugFacts(med)`. A drug-name string literal in engine code fails verify.
+- Import engine symbols from `services/simulationService` (the facade) outside `services/engine/`; inside it, never import the facade.
+- `npm run golden` must stay byte-identical for a refactor. Run `npm run golden:update` only for an intended clinical change, in its own commit explaining why. New explanation-only output fields are listed in `ADDITIVE_KEYS` in `scripts/goldenMaster.ts`.
+
 ## Development Rules of Thumb
 
 ### If you add or change medications
+
+Follow `docs/HOW_TO_ADD_A_MEDICATION.md`.
 
 Update:
 
@@ -254,7 +272,7 @@ Update:
 
 Update:
 
-1. `services/simulationService.ts`
+1. the relevant stage module in `services/engine/` (see `docs/scoring-architecture.md`)
 2. `components/FAQ.tsx` (in-app logic documentation)
 3. `README.md` and this file (`CLAUDE.md`)
 4. verification scenarios/assertions to prevent silent regressions

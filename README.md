@@ -93,7 +93,7 @@ the three audit harnesses are standalone (not part of CI) but constitute the ful
 | Treatment-error audit (`scripts/mistakeAudit.ts`) | `npm run audit:mistakes` | 51/51 clean |
 | Broad clinical audit (`scripts/hundredScenarioAudit.ts`) | `npm run audit:hundred` | 100/100 clean |
 
-- CI command: `npm run ci` (typecheck + build + verify)
+- CI command: `npm run ci` (typecheck + build + golden + verify)
 
 Global invariants covered include:
 
@@ -137,7 +137,7 @@ npm run test             # alias of verify
 npm run audit:red        # adversarial red-team probes (standalone)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone)
-npm run ci               # typecheck + build + verify
+npm run ci               # typecheck + build + golden + verify
 npm run preview          # preview production build
 ```
 

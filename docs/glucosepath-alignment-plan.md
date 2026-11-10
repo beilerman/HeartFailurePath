@@ -1,6 +1,6 @@
 # Aligning HeartFailurePath with the GlucosePATH architecture
 
-Drafted 2026-11-10 · Branch `refactor/glucosepath-alignment`
+Drafted 2026-11-10 · Branch `refactor/glucosepath-alignment` · **Status: all phases complete; `npm run gate` green; engine output byte-identical to the pre-refactor baseline.** Current structure: `scoring-architecture.md`.
 
 ## What makes GlucosePATH understandable
 

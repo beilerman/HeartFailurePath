@@ -9,6 +9,9 @@ import {
     VOLUME_SCORING, adherenceComplexityThreshold, CONCORDANCE_TABLE, pillarKeyOf,
 } from '../services/simulationService';
 import { DOMAIN_WEIGHTS } from '../services/engine/scoreModel';
+import { STRUCTURE_BLEND_WEIGHTS } from '../services/simulationService';
+
+const pct = (x: number) => `${Math.round(x * 100)}%`;
 import { ScoreLedger } from './ScoreLedger';
 import type { Phenotype, PillarKey, PillarConcordance } from '../services/simulationService';
 
@@ -143,9 +146,9 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                             </div>
                         </div>
                         <ul className="text-sm text-slate-600 space-y-1 mt-2">
-                            <li><strong>Absolute LVEF state:</strong> {Math.round(structure.absoluteScore)} pts <span className="text-slate-400">(40% weight)</span></li>
-                            <li><strong>Improvement trajectory:</strong> {Math.round(structure.improvementScore)} pts <span className="text-slate-400">(40% weight; baseline LVEF {baselineLvef.toFixed(0)}%)</span></li>
-                            <li><strong>Chamber geometry:</strong> {Math.round(structure.chamberScore)} pts <span className="text-slate-400">(20% weight; neutral 50 if echo data unavailable)</span></li>
+                            <li><strong>Absolute LVEF state:</strong> {Math.round(structure.absoluteScore)} pts <span className="text-slate-400">({pct(STRUCTURE_BLEND_WEIGHTS.absolute)} weight)</span></li>
+                            <li><strong>Improvement trajectory:</strong> {Math.round(structure.improvementScore)} pts <span className="text-slate-400">({pct(STRUCTURE_BLEND_WEIGHTS.improvement)} weight; baseline LVEF {baselineLvef.toFixed(0)}%)</span></li>
+                            <li><strong>Chamber geometry:</strong> {Math.round(structure.chamberScore)} pts <span className="text-slate-400">({pct(STRUCTURE_BLEND_WEIGHTS.chamber)} weight; neutral 50 if echo data unavailable)</span></li>
                             <li className="pt-2 border-t border-slate-100 font-bold text-slate-800">Engine Structure Score: {score}</li>
                         </ul>
                     </div>

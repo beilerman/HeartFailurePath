@@ -26,5 +26,8 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Golden master
+        run: npm run golden
+
       - name: Verify scenarios
         run: npm run verify
