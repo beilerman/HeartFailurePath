@@ -8,6 +8,8 @@ import {
     BNP_SCORE_TARGET, BNP_SCORE_CRITICAL, NYHA_SCORE_MAP, FUNCTIONAL_STEPS_FULL_CREDIT,
     VOLUME_SCORING, adherenceComplexityThreshold, CONCORDANCE_TABLE, pillarKeyOf,
 } from '../services/simulationService';
+import { DOMAIN_WEIGHTS } from '../services/engine/scoreModel';
+import { ScoreLedger } from './ScoreLedger';
 import type { Phenotype, PillarKey, PillarConcordance } from '../services/simulationService';
 
 interface Props {
@@ -280,7 +282,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                             <strong>Scoring:</strong> {scoringNote}
                         </p>
                         <p className="text-xs text-slate-400">
-                            This domain carries 15% of the overall score, ensuring guideline-concordant therapy is prioritized.
+                            This domain carries {Math.round(DOMAIN_WEIGHTS.guideline * 100)}% of the overall score, ensuring guideline-concordant therapy is prioritized.
                         </p>
                         {guidelineRationale.length > 0 && (
                             <ul className="text-xs text-slate-500 mt-3 space-y-1 border-t border-slate-100 pt-2">
@@ -289,6 +291,9 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         )}
                     </div>
                 );
+
+            case 'Overall':
+                return <ScoreLedger breakdown={regimen.score_breakdown} />;
 
             default:
                 return null;
@@ -360,7 +365,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
             <div
                 ref={dialogRef}
                 tabIndex={-1}
-                className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden outline-none"
+                className={`bg-white rounded-xl shadow-2xl w-full ${domain === 'Overall' ? 'max-w-xl max-h-[90vh] flex flex-col' : 'max-w-sm'} overflow-hidden outline-none`}
                 onClick={e => e.stopPropagation()}
             >
                 <div className="bg-indigo-600 p-4 flex justify-between items-center">
@@ -369,7 +374,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-                <div className="p-6">
+                <div className={`p-6 ${domain === 'Overall' ? 'overflow-y-auto' : ''}`}>
                     <div className="flex justify-center mb-6">
                         <div className="h-20 w-20 rounded-full border-4 border-indigo-100 flex items-center justify-center bg-indigo-50">
                             <span className="text-3xl font-black text-indigo-600">{score}</span>
