@@ -126,12 +126,10 @@ export interface Medication {
     is_best_in_class?: boolean;
 
     /**
-     * Drug facts the engine asks the entry about instead of comparing drug names.
-     * Function-valued on purpose: the golden master serializes plain data fields of every
-     * medication that appears in engine output, and catalog metadata must not alter it.
+     * Drug facts the engine asks the entry about instead of comparing drug names. Plain data.
      * Read with `drugFacts(med)` (services/engine/drugFacts.ts).
      */
-    facts?: () => MedFacts;
+    facts?: MedFacts;
     /** Patient-dependent GDMT target-dose check (when the static `is_target_dose` flag is not enough). */
     is_target_dose_for?: (strength: number, patient: Patient) => boolean;
 }

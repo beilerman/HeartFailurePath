@@ -10,5 +10,5 @@ import { Medication, MedFacts } from '../../types';
 const NO_FACTS: MedFacts = Object.freeze({});
 
 export function drugFacts(med: Medication): MedFacts {
-    return med.facts ? med.facts() : NO_FACTS;
+    return med.facts ?? NO_FACTS;
 }

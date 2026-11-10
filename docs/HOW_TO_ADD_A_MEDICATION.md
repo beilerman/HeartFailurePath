@@ -11,7 +11,7 @@ facts, adding it is a data change and no engine edit. Written 2026-11-10 (alignm
    `hemodynamic_effects(dose)`, `side_effects(dose)`.
    Optional: `renal_adjustment`, `contraindications(patient)`, `special_features`.
 2. **Facts the engine asks about** (all optional):
-   - `facts: () => ({ ... })` holds:
+   - `facts: { ... }` (plain data) holds:
      `nonselective_beta_blocker` (withheld after bronchospasm), `beta1_selective` and
      `most_cardioselective` (asthma warning), `hepatically_metabolized` (BB cirrhosis warning),
      `cirrhosis_cyp3a4_caution`, `antiandrogenic` (avoided after any MRA gynecomastia),
@@ -20,8 +20,6 @@ facts, adding it is a data change and no engine edit. Written 2026-11-10 (alignm
      `high_dose_threshold` (loop over-treatment alert), `rescue_role` (K+ binder rescue;
      `preferred: true` is tried first), `pick_distinctness_key` (top-pick distinctness).
    - `is_target_dose_for(strength, patient)` for patient-dependent targets (carvedilol by weight).
-   - `facts` is a function on purpose: the golden master serializes plain data fields of any
-     medication in engine output, so catalog metadata must not be a data field.
    - Combination products must declare their component classes the way existing combos do.
 3. **Class registry**: if `drug_class` is new, add a row to `DRUG_CLASS_REGISTRY` in
    `services/simulationService.ts` (group, `dbpRatio`, flags). An existing class needs nothing.
