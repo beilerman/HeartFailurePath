@@ -1,5 +1,9 @@
 import React from 'react';
+import { DOMAIN_WEIGHTS, SCORE_ADJUSTMENTS } from '../services/engine/scoreModel';
+import { VOLUME_SCORING } from '../services/simulationService';
 import { QuestionMarkCircleIcon, LightBulbIcon, CalculationIcon, HeartIcon } from './icons';
+
+const w = (x: number) => `${Math.round(x * 1000) / 10}%`;
 
 const domainCards = [
     {
@@ -18,7 +22,7 @@ const domainCards = [
         title: '3. Volume',
         color: 'text-emerald-700',
         description: 'Measures fluid status using weight delta, exam findings, and oxygenation.',
-        bullets: ['Weight penalty beyond +1.0 kg', '-10 points per exam finding', 'Additional SpO2 penalty if < 94%']
+        bullets: ['Weight penalty beyond +1.0 kg', `-${VOLUME_SCORING.findingPenalty} points per exam finding`, 'Additional SpO2 penalty if < 94%']
     },
     {
         title: '4. Structure',
@@ -121,7 +125,8 @@ export const FAQ: React.FC = () => {
                     <div className="p-6 space-y-4 text-slate-700">
                         <p>
                             Each projected regimen receives seven domain scores (0-100), then a weighted overall score:
-                            Neuro 20%, Functional 15%, Volume 15%, Structure 10%, Cost 15%, Adherence 10%, Guideline 15%.
+                            {`Neuro ${w(DOMAIN_WEIGHTS.neurohormonal)}, Functional ${w(DOMAIN_WEIGHTS.functional)}, Volume ${w(DOMAIN_WEIGHTS.volume)}, Structure ${w(DOMAIN_WEIGHTS.structure)}, Cost ${w(DOMAIN_WEIGHTS.cost)}, Adherence ${w(DOMAIN_WEIGHTS.adherence)}, Guideline ${w(DOMAIN_WEIGHTS.guideline)}.`}
+                            {` Adjustments are then added: GDMT completeness up to +${SCORE_ADJUSTMENTS.GDMT_COMPLETENESS.max}; projected SBP below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.threshold} ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.points}, below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.threshold} ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.points}; ${SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.perUnit} per safety warning. Open "How this score was calculated" on any recommendation to see the exact lines.`}
                             These weights are heuristic prioritization aids, not individualized outcome-probability estimates.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">

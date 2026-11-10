@@ -131,6 +131,7 @@ type DomainKey = keyof typeof DOMAIN_LABELS;
 export const RecommendationCard = React.memo(function RecommendationCard({ regimen, rank }: Props) {
     const { domain_scores } = regimen;
     const [selectedDomain, setSelectedDomain] = useState<DomainKey | null>(null);
+    const [showLedger, setShowLedger] = useState(false);
     const targetDoseContext = getTargetDosePatientContext(regimen);
 
     const projections = regimen.qualitative_projections ?? [];
@@ -307,6 +308,15 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                                 <span className="text-xs font-medium text-slate-500">Composite (internal)</span>
                                 <span className="text-sm font-bold text-slate-700">{regimen.overall_score}/100</span>
                             </div>
+                            {regimen.score_breakdown && (
+                                <button
+                                    type="button"
+                                    onClick={() => setShowLedger(true)}
+                                    className="col-span-2 text-left text-xs font-bold text-indigo-600 hover:text-indigo-800 underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded"
+                                >
+                                    How this score was calculated
+                                </button>
+                            )}
                         </div>
                         <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2">Domain sub-scores — tap for detail</p>
                         <div className="grid grid-cols-4 gap-y-4 gap-x-3">
@@ -322,6 +332,14 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                 </details>
             </div>
 
+            {showLedger && regimen.score_breakdown && (
+                <ScoreDetailModal
+                    domain="Overall"
+                    score={regimen.overall_score}
+                    regimen={regimen}
+                    onClose={() => setShowLedger(false)}
+                />
+            )}
             {selectedDomain && (
                 <ScoreDetailModal
                     domain={DOMAIN_LABELS[selectedDomain]}
