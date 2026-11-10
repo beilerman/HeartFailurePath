@@ -15,15 +15,15 @@
  *     seeded, never re-pushed), then new exclusions in formulary order.
  *   - Rule ids are unique and ascending (asserted in scripts/verifyScenarios.ts).
  *
- * Dependencies on engine helpers are imported from simulationService (a circular import that is
- * safe: the helpers are only called at run time, never at module load).
+ * Dependencies on engine helpers are imported from ./intolerance (no import of simulationService:
+ * the facade depends on the engine modules, never the reverse).
  */
 import type { Patient, Medication, RegimenMed, ExcludedMedication } from '../../types';
 import { MEDICATION_FORMULARY } from '../../constants';
 import {
     deriveIntolerancePolicy, currentMedIntoleranceReason, isRenalOnlyContraindication, MRA_POOL_CLASSES,
     type IntolerancePolicy,
-} from '../simulationService';
+} from './intolerance';
 import { drugFacts } from './drugFacts';
 
 /** Everything the rules need, computed once per patient (not per drug). */
