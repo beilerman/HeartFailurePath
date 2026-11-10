@@ -16,7 +16,10 @@
     "audit:red": "tsx scripts/redTeam.ts",
     "audit:mistakes": "tsx scripts/mistakeAudit.ts",
     "audit:hundred": "tsx scripts/hundredScenarioAudit.ts",
-    "ci": "npm run typecheck && npm run build && npm run verify"
+    "golden": "tsx scripts/goldenMaster.ts",
+    "golden:update": "tsx scripts/goldenMaster.ts --update",
+    "gate": "npm run typecheck && npm run golden && npm run verify && npm run audit:hundred && npm run audit:mistakes && npm run audit:red",
+    "ci": "npm run typecheck && npm run build && npm run golden && npm run verify"
   },
   "dependencies": {
     "react": "^19.2.0",
