@@ -1,10 +1,10 @@
 
 import { Patient, Medication, ScoredRegimen, RegimenMed, ExcludedMedication, ModificationAction, RegimenModification, ModificationSet, MonitoringPlanItem, SimulationOutput, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores } from '../types';
-import { MEDICATION_FORMULARY } from '../constants';
 import {
     DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_WEIGHTS, DEFAULT_WEIGHT_PROFILE, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS,
     ScoreBreakdown, ScoreBreakdownAdjustment, ScoreBreakdownDomainLine, ScoreBreakdownOverride, ScoreDomainKey,
 } from './engine/scoreModel';
+import { buildEligibilityContext, filterEligibleMedications, taggedDiscontinuedMeds } from './engine/eligibility';
 import { valueUnknown, hasHistoricalHFrEF, hasUnknownHistoricalHFrEF, isIronDeficient, isBlackRace } from './clinicalPredicates';
 
 // =====================================================================================
@@ -310,7 +310,7 @@ export function clonePatient(p: Patient): Patient {
 // therapy). Detects whether a med's contraindication is RENAL-DRIVEN by re-evaluating it
 // against a renal-neutral clone: contraindicated with the real data but clean with neutral
 // renal values ⇒ the only trigger was the blank renal field.
-function isRenalOnlyContraindication(med: Medication, patient: Patient): boolean {
+export function isRenalOnlyContraindication(med: Medication, patient: Patient): boolean {
     if (!med.contraindications || !med.contraindications(patient)) return false;
     const renalNeutral = clonePatient(patient);
     renalNeutral.egfr = 90;
@@ -340,7 +340,7 @@ const RAAS_CLASSES = classesWithFlag('raas');
 const DIURETIC_CLASSES = classesWithFlag('diuretic');
 const VOLUME_SENSITIVE_INTENSIFICATION_CLASSES = classesWithFlag('volume-sensitive-intensifier');
 
-const MRA_POOL_CLASSES = classesWithFlag('mra'); // steroidal MRA + nsMRA (registry-derived)
+export const MRA_POOL_CLASSES = classesWithFlag('mra'); // steroidal MRA + nsMRA (registry-derived)
 
 // --- Documented-intolerance policy -------------------------------------------------------------
 // Single source of truth for what a patient's discontinued_meds history forbids. Used by BOTH the
@@ -355,7 +355,7 @@ const MRA_POOL_CLASSES = classesWithFlag('mra'); // steroidal MRA + nsMRA (regis
 // changing working therapy needs the higher evidence bar, because free-text details like
 // "patient denies cough" or "hyperkalemia ruled out" substring-match their negated keyword.
 interface IntoleranceSignal { suspected: boolean; confirmed: boolean; }
-interface IntolerancePolicy {
+export interface IntolerancePolicy {
     angioedema: IntoleranceSignal;        // ACEi + ARNI forbidden; ARB allowed with caution
     aceiCough: IntoleranceSignal;         // ACEi forbidden; ARB/ARNI remain acceptable
     mraHyperkalemia: IntoleranceSignal;   // all MRA types (steroidal + nsMRA) forbidden
@@ -369,7 +369,7 @@ interface IntolerancePolicy {
     hasGlp1GiIntolerance: boolean;        // new starts only — a currently tolerated GLP-1 is kept
 }
 
-function deriveIntolerancePolicy(patient: Patient): IntolerancePolicy {
+export function deriveIntolerancePolicy(patient: Patient): IntolerancePolicy {
     const discontinued = patient.discontinued_meds;
     // Drug-class-aware attribution: only match a side effect against the drug class that
     // plausibly caused it (prevents e.g. a beta-blocker's bradycardia excluding a RAAS inhibitor).
@@ -420,7 +420,7 @@ function deriveIntolerancePolicy(patient: Patient): IntolerancePolicy {
 // initiation but an existing BB is continued (abrupt withdrawal = Class III harm), and a
 // currently-tolerated GLP-1 is not removed for a historical GI intolerance to a prior agent.
 // Reasons state the intolerance only — the replacement (if any) is shown by the swap itself.
-function currentMedIntoleranceReason(med: Medication, policy: IntolerancePolicy): string | null {
+export function currentMedIntoleranceReason(med: Medication, policy: IntolerancePolicy): string | null {
     if (med.drug_class === 'ACEi' && policy.angioedema.confirmed) {
         return 'Documented angioedema history — ACEi must not be continued';
     }
@@ -2812,13 +2812,13 @@ export function generateAndScoreModifications(
     // computed on garbage, so this is a hard stop, not a flag-and-proceed. (e.g. LVEF 99 would
     // otherwise classify as HFpEF and drive a confident SGLT2i pathway off a typo.)
     if (implausibleValueAlerts.length > 0) {
-        return { scoredRegimens: [], excludedMedications: [...patient.discontinued_meds], clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] };
+        return { scoredRegimens: [], excludedMedications: taggedDiscontinuedMeds(patient), clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] };
     }
 
     // LVEF is the axis the entire phenotype/pathway selection turns on. Without it the tool
     // cannot pick HFrEF vs HFmrEF vs HFpEF — fail safe with alerts only rather than guessing.
     if (dataAudit.unknownLvef) {
-        return { scoredRegimens: [], excludedMedications: [...patient.discontinued_meds], clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] };
+        return { scoredRegimens: [], excludedMedications: taggedDiscontinuedMeds(patient), clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] };
     }
 
     // Deterministic, guideline-anchored categorical outputs — independent of scoring.
@@ -2830,7 +2830,7 @@ export function generateAndScoreModifications(
             'INPUT ERROR: Systolic BP must be greater than diastolic BP (SBP > DBP). ' +
             'Correct blood pressure values before running recommendations.'
         );
-        return { scoredRegimens: [], excludedMedications: [...patient.discontinued_meds], clinicalAlerts, monitoringPlan: [] };
+        return { scoredRegimens: [], excludedMedications: taggedDiscontinuedMeds(patient), clinicalAlerts, monitoringPlan: [] };
     }
 
     // --- S4: Pregnancy safety alert ---
@@ -2954,7 +2954,7 @@ export function generateAndScoreModifications(
     if (patient.sbp < 90 || patient.potassium >= 6.5) {
         return {
             scoredRegimens: [],
-            excludedMedications: [...patient.discontinued_meds],
+            excludedMedications: taggedDiscontinuedMeds(patient),
             clinicalAlerts,
             monitoringPlan: [],
             gdmtGaps,
@@ -2965,121 +2965,17 @@ export function generateAndScoreModifications(
     }
 
     // 1. Filter Formulary & Check Exclusions (same logic as before)
-    const excludedMeds: ExcludedMedication[] = [...patient.discontinued_meds];
-    const excludedNames = new Set(excludedMeds.map(m => m.name));
-    // Documented-intolerance policy (shared with analyzeCurrentRegimen so an excluded class can
-    // never survive inside the arriving regimen). New starts use the SUSPECTED tier (free-text
-    // keyword match is enough to withhold a new drug); current-regimen cleanup uses the CONFIRMED
-    // tier inside currentMedIntoleranceReason. See deriveIntolerancePolicy for the rationale.
-    const intolerancePolicy = deriveIntolerancePolicy(patient);
-    const hasAngioedemaRisk = intolerancePolicy.angioedema.suspected;
-    const hasAceiCoughHistory = intolerancePolicy.aceiCough.suspected;
-    const hasHyperkalemiaHistory = intolerancePolicy.mraHyperkalemia.suspected;
-    const hasSulfaAllergy = [...patient.allergies].some(a => a.toLowerCase().includes('sulfa') || a.toLowerCase().includes('sulfonamide'));
-
-    const excludeBB = intolerancePolicy.hasBbBradycardia;          // defer all NEW beta-blocker initiation
-    const excludeCarvedilol = intolerancePolicy.hasBbBronchospasm; // non-selective β; prefer β1-selective
-    const excludeGLP1 = intolerancePolicy.hasGlp1GiIntolerance;
-
-    if (hasSulfaAllergy) {
+    // Eligibility stage: ordered, numbered rules (services/engine/eligibility.ts). Each exclusion
+    // carries rule_id/rule_name. Discontinuations are listed first, then new exclusions.
+    const eligibility = buildEligibilityContext(patient, dataAudit.unknownRenal);
+    const intolerancePolicy = eligibility.intolerancePolicy;
+    if (eligibility.hasSulfaAllergy) {
         clinicalAlerts.push('SULFA ALLERGY: Loop and thiazide diuretics are sulfonamide derivatives. Cross-reactivity is low but documented — monitor for rash/hypersensitivity. Ethacrynic acid is the sulfonamide-free loop alternative if a true reaction occurs.');
     }
-    if (excludeBB) {
+    if (eligibility.excludeBB) {
         clinicalAlerts.push('BETA-BLOCKER INTOLERANCE: Prior bradycardia/AV block on a beta-blocker. New beta-blocker initiation is deferred; if a beta-blocker is essential, evaluate for pacing. An existing beta-blocker should be reduced, not abruptly stopped.');
     }
-
-    const excludeACEi = hasAngioedemaRisk || hasAceiCoughHistory;
-    // H1 fix: ACEi angioedema cross-reactivity with ARBs is only ~2-8% (different mechanism).
-    // ACC/AHA 2022: ARBs "can be used with caution" after ACEi angioedema.
-    // ARNI excluded (neprilysin inhibition raises bradykinin → worsens angioedema risk).
-    // ARBs allowed with mandatory monitoring warning (see below).
-    const excludeARNI = hasAngioedemaRisk;
-    // Dual-MRA prevention must ignore a current MRA the engine is about to force OFF the regimen
-    // (intolerance or hard contraindication) — otherwise the DEPARTING steroidal MRA blocks the
-    // tolerated nsMRA from the formulary (and vice versa), and the patient loses the pillar that
-    // the forced swap was supposed to preserve.
-    const isStayingOnRegimen = (r: RegimenMed) =>
-        !currentMedIntoleranceReason(r.med, intolerancePolicy) &&
-        // A renal-only "contraindication" from blank renal data does NOT make the med departing —
-        // analyzeCurrentRegimen keeps it on board (see the renalDataUnknown guard there), so it
-        // must still count for dual-MRA prevention here.
-        (!(r.med.contraindications?.(patient)) || (dataAudit.unknownRenal && isRenalOnlyContraindication(r.med, patient)));
-    const currentHasSteroidalMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'MRA' && isStayingOnRegimen(r));
-    const currentHasNsMRA = (patient.current_regimen || []).some(r => r.med.drug_class === 'nsMRA' && isStayingOnRegimen(r));
-
-    const formulary = MEDICATION_FORMULARY.filter(m => {
-        if (!availableMedNames.has(m.name)) return false;
-        if (excludedNames.has(m.name)) return false;
-
-        // D8: Cross-reference patient allergies against formulary drug names
-        if (patient.allergies.has(m.name)) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Patient-reported allergy" });
-            return false;
-        }
-
-        if (m.drug_class === 'ACEi' && excludeACEi) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Cross-reactivity with prior ACEi intolerance" });
-            return false;
-        }
-        if (excludeARNI && m.drug_class === 'ARNI') {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "ARNI excluded: neprilysin inhibition worsens bradykinin-mediated angioedema risk" });
-            return false;
-        }
-        if (MRA_POOL_CLASSES.has(m.drug_class) && hasHyperkalemiaHistory) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Hyperkalemia intolerance (applies to all MRA types)" });
-            return false;
-        }
-        // Gynecomastia is agent-specific (antiandrogenic), not class-wide: avoid spironolactone /
-        // the documented offender, keep non-offending selective agents to preserve the MRA pillar.
-        if (MRA_POOL_CLASSES.has(m.drug_class) && intolerancePolicy.gynecomastiaAvoidedMeds.has(m.name)) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Prior MRA gynecomastia — antiandrogenic agent avoided" });
-            return false;
-        }
-        if (m.drug_class === 'Beta Blocker' && excludeBB) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Prior beta-blocker intolerance (bradycardia / AV block) — new initiation deferred" });
-            return false;
-        }
-        if (m.name === 'Carvedilol' && excludeCarvedilol) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Non-selective beta-blocker avoided after bronchospasm; prefer β1-selective (bisoprolol / metoprolol succinate)" });
-            return false;
-        }
-        if ((m.drug_class === 'GLP-1 RA' || m.drug_class === 'GLP-1/GIP RA') && excludeGLP1) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Prior GLP-1 GI intolerance" });
-            return false;
-        }
-        if (m.drug_class === 'nsMRA' && currentHasSteroidalMRA) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Dual MRA prevention: current steroidal MRA in regimen" });
-            return false;
-        }
-        if (m.drug_class === 'MRA' && currentHasNsMRA) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Dual MRA prevention: current nsMRA in regimen" });
-            return false;
-        }
-
-        if (m.contraindications && m.contraindications(patient)) {
-            // Blank renal data must not be labeled a hard clinical contraindication. New starts
-            // of renal-gated therapy are still withheld (conservative — don't initiate without a
-            // BMP), but with an honest actionable reason instead of "Clinical Contraindication".
-            if (dataAudit.unknownRenal && isRenalOnlyContraindication(m, patient)) {
-                excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Renal data required — cannot assess renal safety (obtain BMP before initiation)" });
-                return false;
-            }
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Clinical Contraindication" });
-            return false;
-        }
-
-        // Honor the renal_adjustment contract: `contraindicated: true` excludes exactly like
-        // contraindications() (belt-and-suspenders — the affected meds currently duplicate the
-        // same eGFR cutoff there, but a future entry relying on this field alone must not
-        // silently pass). Skipped when renal data is blank (the 0 sentinel would trip it).
-        if (!dataAudit.unknownRenal && m.renal_adjustment
-            && m.renal_adjustment(patient.egfr, patient).contraindicated === true) {
-            excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason: "Renal Contraindication (eGFR below labeled threshold)" });
-            return false;
-        }
-
-        return true;
-    });
+    const { formulary, excludedMeds } = filterEligibleMedications(eligibility, availableMedNames);
     // (Per-class exclusion tracking is derived from the filtered formulary where needed —
     // e.g. allBBExcluded below — rather than a parallel excludedClasses set, which drifted.)
 

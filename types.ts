@@ -7,6 +7,9 @@ export interface ExcludedMedication {
     reason: string;
     reason_detail?: string;
     occurred_at?: string;
+    /** Eligibility rule that withheld this drug (services/engine/eligibility.ts); set by the engine. */
+    rule_id?: string;
+    rule_name?: string;
 }
 
 export interface VolumeStatus {

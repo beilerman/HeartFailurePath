@@ -1,5 +1,6 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient } from '../services/simulationService';
+import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
@@ -137,6 +138,9 @@ async function runVerification() {
     // Score-breakdown reconciliation accumulator (one structural invariant, reported after all scenarios).
     let breakdownChecked = 0;
     const breakdownViolations: string[] = [];
+    // Eligibility-rule invariant accumulator (see services/engine/eligibility.ts).
+    let exclusionsChecked = 0;
+    const exclusionViolations: string[] = [];
 
     const formularyNames = MEDICATION_FORMULARY.map(m => m.name);
     const availableMedNames = new Set(formularyNames);
@@ -168,6 +172,14 @@ async function runVerification() {
                 : availableMedNames;
             const { scoredRegimens, excludedMedications, clinicalAlerts, monitoringPlan, eligibleAdjuncts } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
             const topRegimen = scoredRegimens[0];
+
+            // GLOBAL STRUCTURAL INVARIANT (every exclusion has a known rule): see services/engine/eligibility.ts.
+            for (const e of excludedMedications) {
+                exclusionsChecked++;
+                if (!e.rule_id || !ELIGIBILITY_RULE_IDS.has(e.rule_id)) {
+                    exclusionViolations.push(`"${scenario.title}": ${e.name} excluded without a known rule_id (${e.rule_id ?? 'missing'})`);
+                }
+            }
 
             // GLOBAL STRUCTURAL INVARIANT (score breakdown reconciles): see services/engine/scoreModel.ts.
             for (const r of scoredRegimens) {
@@ -2188,6 +2200,18 @@ async function runVerification() {
         failed++;
     } else {
         console.log(`  [PASS] ${breakdownChecked} scored regimens reconcile.`);
+        passed++;
+    }
+
+    console.log('Checking structural invariant: eligibility rule ids are unique/ascending and every exclusion carries one...');
+    const ruleIds = ELIGIBILITY_RULES.map(r => r.id);
+    const idsOrdered = ruleIds.every((id, i) => i === 0 || id > ruleIds[i - 1]) && new Set(ruleIds).size === ruleIds.length;
+    if (!idsOrdered) exclusionViolations.push(`ELIGIBILITY_RULES ids not unique+ascending: ${ruleIds.join(',')}`);
+    if (exclusionViolations.length > 0) {
+        exclusionViolations.slice(0, 20).forEach(m => console.error(`  [FAIL] ${m}`));
+        failed++;
+    } else {
+        console.log(`  [PASS] ${ruleIds.length} rules ordered; ${exclusionsChecked} exclusions all carry a known rule_id.`);
         passed++;
     }
 
