@@ -1,9 +1,10 @@
 /** Display/explanation builders: monitoring plan, qualitative projections, trade-offs, follow-up calendar. Moved verbatim from simulationService.ts (phase 4). */
-import { Patient, Medication, RegimenMed, ModificationSet, MonitoringPlanItem, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores } from '../../types';
+import { Patient, Medication, ScoredRegimen, ExcludedMedication, SimulationOutput, RegimenMed, ModificationSet, MonitoringPlanItem, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores } from '../../types';
 import { valueUnknown, hasHistoricalHFrEF, hasUnknownHistoricalHFrEF } from '../clinicalPredicates';
 import { DISEASE_MODIFYING_CLASSES, DIURETIC_CLASSES, RAAS_CLASSES } from './registry';
 import { hasRelevantIntensification, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { regimenSatisfiesPillar } from './domains';
+import { SCORE_ADJUSTMENTS } from './scoreModel';
 
 export function buildMonitoringPlan(
     currentPatient: Patient,
@@ -242,3 +243,78 @@ export function buildTradeOffLabels(domain: DomainScores): TradeOffLabel[] {
 // --- Real-world robustness: incomplete data & inappropriate regimens -----------------
 
 // valueUnknown now lives in services/clinicalPredicates.ts (shared with constants.ts).
+
+/**
+ * Pipeline stage 8 - assemble the final output: fill the display-only artifacts (monitoring plan,
+ * qualitative projections, trade-offs) for the picks actually returned, apply the low-output cap,
+ * and attach the categorical lists. Moved verbatim from generateAndScoreModifications.
+ */
+export function assembleOutput(
+    patient: Patient,
+    distinctPicks: ScoredRegimen[],
+    lowOutput: boolean,
+    parts: {
+        excludedMeds: ExcludedMedication[];
+        clinicalAlerts: string[];
+        gdmtGaps: string[];
+        eligibleAdjuncts: string[];
+        missingDataNotices: string[];
+    }
+): SimulationOutput {
+    const { excludedMeds, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices } = parts;
+    const topPick = distinctPicks[0];
+
+    // Populate the deferred display-only artifacts for the ≤ 3 picks actually returned.
+    distinctPicks.forEach(r => {
+        const hasMra = r.regimen.some(x => x.med.drug_class === 'MRA' || x.med.drug_class === 'nsMRA');
+        if (r.modification_set) r.monitoring_plan = buildMonitoringPlan(patient, r.projected_patient, r.modification_set);
+        r.qualitative_projections = buildQualitativeProjections(patient, r.projected_patient, hasMra);
+        r.trade_offs = buildTradeOffLabels(r.domain_scores);
+    });
+
+    // H2: Low-output state — still show recommendations but with mandatory warnings and capped scores.
+    // NPs need guidance on current medication management, not a blank screen.
+    let finalPicks = distinctPicks;
+    if (lowOutput) {
+        const lowOutputWarning =
+            'LOW OUTPUT STATE: These recommendations require hemodynamic stabilization first. ' +
+            'Do NOT initiate new agents until perfusion is restored. ' +
+            'If patient is currently on beta-blocker, do NOT abruptly discontinue (Class III harm) — reduce dose if needed. ' +
+            'Prioritize: IV inotropes → hemodynamic monitoring → Advanced HF consultation → then cautious oral GDMT.';
+        const lowOutputCap = SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.max;
+        finalPicks = distinctPicks.map(r => {
+            const cappedScore = Math.min(r.overall_score, lowOutputCap); // Cap score to signal caution
+            const bd = r.score_breakdown;
+            const capped = bd && cappedScore !== r.overall_score
+                ? {
+                    ...bd,
+                    overall_score: cappedScore,
+                    overrides: [...(bd.overrides ?? []), {
+                        code: SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.code,
+                        label: SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.label,
+                        applies_to: 'overall_score' as const,
+                        before: r.overall_score,
+                        after: cappedScore,
+                    }],
+                }
+                : bd;
+            return {
+                ...r,
+                overall_score: cappedScore,
+                score_breakdown: capped,
+                warnings: [lowOutputWarning, ...r.warnings]
+            };
+        });
+    }
+
+    return {
+        scoredRegimens: finalPicks,
+        excludedMedications: excludedMeds,
+        clinicalAlerts,
+        monitoringPlan: topPick.monitoring_plan || [],
+        gdmtGaps,
+        eligibleAdjuncts,
+        missingDataNotices,
+        followUpCalendar: buildFollowUpCalendar(topPick.modification_set)
+    };
+}

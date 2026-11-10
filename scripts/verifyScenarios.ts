@@ -2277,6 +2277,26 @@ async function runVerification() {
         }
     }
 
+    console.log('Checking structural invariant: no engine module imports the simulationService facade...');
+    {
+        // The facade depends on the engine modules, never the reverse (no circular imports).
+        const engineDir = path.join(process.cwd(), 'services/engine');
+        const importViolations: string[] = [];
+        for (const f of readdirSync(engineDir).filter(n => n.endsWith('.ts'))) {
+            const code = readFileSync(path.join(engineDir, f), 'utf8');
+            for (const mt of code.matchAll(/(?:from|import)\s*\(?\s*['"]([^'"]+)['"]/g)) {
+                if (/(^|\/)simulationService(\.ts)?$/.test(mt[1])) importViolations.push(`services/engine/${f} imports '${mt[1]}'`);
+            }
+        }
+        if (importViolations.length > 0) {
+            importViolations.forEach(m => console.error(`  [FAIL] ${m}`));
+            failed++;
+        } else {
+            console.log('  [PASS] no services/engine file imports simulationService.');
+            passed++;
+        }
+    }
+
     console.log(`\nVerification Complete.`);
     console.log(`Passed: ${passed}`);
     console.log(`Failed: ${failed}`);

@@ -218,3 +218,35 @@ export function filterEligibleMedications(
     });
     return { formulary, excludedMeds };
 }
+
+// =====================================================================================
+// Pipeline stage 4 - eligibility. Body moved verbatim from generateAndScoreModifications.
+// =====================================================================================
+
+/**
+ * Run the eligibility rules for one patient: raises the sulfa-allergy / beta-blocker-intolerance
+ * alerts, filters the formulary, and reports whether EVERY beta blocker was excluded.
+ */
+export function runEligibilityStage(
+    patient: Patient,
+    unknownRenal: boolean,
+    availableMedNames: Set<string>,
+    clinicalAlerts: string[]
+) {
+    const eligibility = buildEligibilityContext(patient, unknownRenal);
+    const intolerancePolicy = eligibility.intolerancePolicy;
+    if (eligibility.hasSulfaAllergy) {
+        clinicalAlerts.push('SULFA ALLERGY: Loop and thiazide diuretics are sulfonamide derivatives. Cross-reactivity is low but documented — monitor for rash/hypersensitivity. Ethacrynic acid is the sulfonamide-free loop alternative if a true reaction occurs.');
+    }
+    if (eligibility.excludeBB) {
+        clinicalAlerts.push('BETA-BLOCKER INTOLERANCE: Prior bradycardia/AV block on a beta-blocker. New beta-blocker initiation is deferred; if a beta-blocker is essential, evaluate for pacing. An existing beta-blocker should be reduced, not abruptly stopped.');
+    }
+    const { formulary, excludedMeds } = filterEligibleMedications(eligibility, availableMedNames);
+    // (Per-class exclusion tracking is derived from the filtered formulary where needed —
+    // e.g. allBBExcluded below — rather than a parallel excludedClasses set, which drifted.)
+
+    // Check if ALL beta blockers were excluded (not just one)
+    const allBBExcluded = !formulary.some(m => m.drug_class === 'Beta Blocker');
+
+    return { formulary, excludedMeds, intolerancePolicy, allBBExcluded };
+}

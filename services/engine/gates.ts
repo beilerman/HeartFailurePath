@@ -1,8 +1,12 @@
 /** Input audit and safety gates (stages 1-3 of the pipeline). Moved verbatim from simulationService.ts (phase 4). */
-import { Patient, RegimenMed } from '../../types';
+import { Patient, RegimenMed, SimulationOutput } from '../../types';
 import { drugFacts } from './drugFacts';
 import { valueUnknown } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
+import { hasUnknownHistoricalHFrEF } from '../clinicalPredicates';
+import { taggedDiscontinuedMeds } from './eligibility';
+import { buildMissingDataNotices, computeGdmtGaps } from './explain';
+import { dedupeCurrentRegimen, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 
 export interface CriticalDataAudit {
     alerts: string[];
@@ -118,4 +122,230 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     }
 
     return alerts;
+}
+
+// =====================================================================================
+// Pipeline stages 1-3 (input audit and safety gates). Bodies moved verbatim from
+// generateAndScoreModifications; they push onto the caller's `clinicalAlerts` in the same order.
+// =====================================================================================
+
+export interface InputAudit {
+    dataAudit: CriticalDataAudit;
+    /** Guideline-anchored gap list; [] when the audit stopped the run before it was computed. */
+    gdmtGaps: string[];
+    missingDataNotices: string[];
+    /** Non-null when the run must end here with alerts only (implausible values, unknown LVEF, SBP <= DBP). */
+    stop: SimulationOutput | null;
+}
+
+/**
+ * Stage 1 - audit inputs: remove duplicate current meds, flag missing critical data and
+ * inappropriate arriving regimens, and hard-stop on implausible values / unknown LVEF / SBP <= DBP.
+ * Mutates `patient.current_regimen` (the caller's clone) when duplicates are removed.
+ */
+export function auditInputs(patient: Patient, clinicalAlerts: string[]): InputAudit {
+    const dedupedCurrent = dedupeCurrentRegimen(patient.current_regimen || []);
+    if (dedupedCurrent.duplicateNames.length > 0) {
+        patient.current_regimen = dedupedCurrent.regimen;
+        clinicalAlerts.push(
+            `INPUT SAFETY: Duplicate current medications removed (${dedupedCurrent.duplicateNames.join(', ')}). ` +
+            'Duplicate entries can double-count hemodynamic effects.'
+        );
+    }
+
+    // --- Real-world robustness: audit incomplete data and inappropriate arriving regimens ---
+    const dataAudit = auditCriticalData(patient);
+    const stopped = (stop: SimulationOutput): InputAudit => ({ dataAudit, gdmtGaps: [], missingDataNotices: [], stop });
+    clinicalAlerts.push(...dataAudit.alerts);
+    const implausibleValueAlerts = validatePhysiologicBounds(patient);
+    clinicalAlerts.push(...implausibleValueAlerts);
+    clinicalAlerts.push(...detectInappropriateRegimen(patient));
+
+    // Physiologically-impossible inputs are data-entry errors (unit confusion, transcription
+    // slips). Every downstream decision — phenotype, contraindications, projections — would be
+    // computed on garbage, so this is a hard stop, not a flag-and-proceed. (e.g. LVEF 99 would
+    // otherwise classify as HFpEF and drive a confident SGLT2i pathway off a typo.)
+    if (implausibleValueAlerts.length > 0) {
+        return stopped({ scoredRegimens: [], excludedMedications: taggedDiscontinuedMeds(patient), clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] });
+    }
+
+    // LVEF is the axis the entire phenotype/pathway selection turns on. Without it the tool
+    // cannot pick HFrEF vs HFmrEF vs HFpEF — fail safe with alerts only rather than guessing.
+    if (dataAudit.unknownLvef) {
+        return stopped({ scoredRegimens: [], excludedMedications: taggedDiscontinuedMeds(patient), clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] });
+    }
+
+    // Deterministic, guideline-anchored categorical outputs — independent of scoring.
+    const gdmtGaps = computeGdmtGaps(patient);
+    const missingDataNotices = buildMissingDataNotices(patient);
+
+    if (patient.sbp <= patient.dbp) {
+        clinicalAlerts.push(
+            'INPUT ERROR: Systolic BP must be greater than diastolic BP (SBP > DBP). ' +
+            'Correct blood pressure values before running recommendations.'
+        );
+        return stopped({ scoredRegimens: [], excludedMedications: taggedDiscontinuedMeds(patient), clinicalAlerts, monitoringPlan: [] });
+    }
+
+    return { dataAudit, gdmtGaps, missingDataNotices, stop: null };
+}
+
+/** Flags computed while raising alerts that the later stages still need. */
+export interface ClinicalFlags {
+    lowOutput: boolean;
+    isVolumeDepleted: boolean;
+    hasDiureticInCurrent: boolean;
+}
+
+/**
+ * Stage 2 - raise the alert-only gates (pregnancy, low output, hypotension, hyperkalemic emergency,
+ * advanced-HF / device / rehab referrals, volume depletion, severe CKD, HFimpEF status, vericiguat
+ * documentation). These add alerts; they never remove drugs by themselves.
+ */
+export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAudit, clinicalAlerts: string[]): ClinicalFlags {
+    // --- S4: Pregnancy safety alert ---
+    if (patient.is_pregnant === true) {
+        clinicalAlerts.push('PREGNANCY ALERT: ACEi, ARB, ARNI, MRA, and nsMRA (Finerenone) are contraindicated (Category X). SGLT2i excluded (Category C — insufficient human safety data). Vericiguat excluded (FDA BOXED WARNING — embryo-fetal toxicity) and Ivabradine excluded (fetal harm in animal studies). GLP-1 therapy excluded. These agents have been excluded from all recommendations.');
+    }
+
+    // --- S2: Hemodynamic instability — block pharmacologic optimization ---
+    // Threshold raised to SBP < 90 (MAP ~65 mmHg): oral GDMT initiation requires adequate perfusion
+    const lowOutput = isLowOutputState(patient);
+    if (lowOutput) {
+        clinicalAlerts.push(
+            'LOW OUTPUT STATE: LVEF < 20% with hypoperfusion markers (cool extremities, narrow pulse pressure, or pre-renal azotemia). ' +
+            'Consider inotropic support and Advanced HF consultation before oral GDMT initiation.'
+        );
+    }
+
+    if (patient.sbp < 90) {
+        clinicalAlerts.push(
+            'HEMODYNAMIC INSTABILITY: SBP < 90 mmHg. Oral GDMT optimization is unsafe at current blood pressure. ' +
+            'Stabilize hemodynamics first. Consider: IV inotropes (dobutamine/milrinone), hemodynamic monitoring (PA catheter), ' +
+            'vasopressor support if needed, and Advanced Heart Failure consultation.'
+        );
+    }
+
+    // --- S2b: Hyperkalemic emergency — baseline K+ 6.0-8.0 (values > 8.0 already hard-stop as
+    // implausible/extreme in validatePhysiologicBounds). A medical emergency requiring ECG and
+    // urgent treatment, not outpatient regimen optimization. For K+ >= 6.5 the engine returns
+    // alerts only (parallel to the SBP < 90 gate below); for 6.0-6.4 it alerts and proceeds —
+    // deprescribing the offending agent with binder rescue is still clinically useful there.
+    const hyperkalemicEmergency = patient.potassium >= 6.0 && patient.potassium <= 8.0;
+    if (hyperkalemicEmergency) {
+        clinicalAlerts.push(
+            'HYPERKALEMIC EMERGENCY: Serum K+ ' + patient.potassium.toFixed(1) + ' mEq/L (≥ 6.0). ' +
+            'Obtain ECG immediately and treat urgently — IV calcium if ECG changes, insulin/glucose, ' +
+            'K+ binder or dialysis — before oral GDMT optimization.'
+        );
+    }
+
+    // --- S3: Advanced HF referral trigger ---
+    const advancedHFCriteria = lowOutput ||
+        (patient.lvef <= 20 && patient.sbp < 90) ||
+        (patient.nyha_class === 'IV' && patient.nt_pro_bnp > 4000);
+    if (advancedHFCriteria) {
+        clinicalAlerts.push(
+            'ADVANCED HEART FAILURE ALERT: This patient meets criteria for Advanced HF evaluation (INTERMACS 3-4). ' +
+            'Consider: IV inotropic support, mechanical circulatory support (LVAD/Impella), heart transplant evaluation, ' +
+            'CRT/ICD assessment, and palliative care discussion. Refer to Advanced HF specialist.'
+        );
+    }
+
+    // --- D4: ICD/CRT device eligibility screening (ACC/AHA 2022 §7.3.5, Class I) ---
+    const icdCrtEligible = patient.lvef <= 35 &&
+        (patient.nyha_class === 'II' || patient.nyha_class === 'III') &&
+        !advancedHFCriteria; // Advanced HF already triggers its own referral
+    if (icdCrtEligible) {
+        clinicalAlerts.push(
+            'DEVICE THERAPY SCREENING: LVEF ≤ 35% with NYHA Class ' + patient.nyha_class + '. ' +
+            'Evaluate for ICD (primary prevention of sudden cardiac death) after ≥ 3 months of optimized GDMT. ' +
+            'If QRS ≥ 150ms with LBBB morphology, also evaluate for CRT (Class I, ACC/AHA 2022). ' +
+            'Refer to electrophysiology if not already assessed.'
+        );
+    }
+
+    // --- D5: Cardiac rehabilitation referral (ACC/AHA 2022 §7.3.4, Class I) ---
+    const cardiacRehabEligible = patient.lvef <= 40 &&
+        (patient.nyha_class === 'II' || patient.nyha_class === 'III') &&
+        patient.sbp >= 90 && !advancedHFCriteria;
+    if (cardiacRehabEligible) {
+        clinicalAlerts.push(
+            'CARDIAC REHABILITATION: HFrEF with NYHA Class ' + patient.nyha_class +
+            '. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients — improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.'
+        );
+    }
+
+    // --- P5: Volume depletion alert ---
+    const currentFluidBalance = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const isVolumeDepleted = currentFluidBalance < -1.0;
+    const hasDiureticInCurrent = (patient.current_regimen || []).some(r =>
+        r.med.drug_class === 'Loop Diuretic' || r.med.drug_class === 'Thiazide-like Diuretic'
+    );
+    if (isVolumeDepleted && hasDiureticInCurrent) {
+        clinicalAlerts.push(
+            'VOLUME DEPLETION: Patient is ' + Math.abs(currentFluidBalance).toFixed(1) + 'kg below dry weight while on diuretics. ' +
+            'Diuretic reduction/discontinuation is the priority intervention before adding new agents. Risk of AKI and hemodynamic collapse.'
+        );
+    }
+
+    if (!dataAudit.unknownRenal && patient.egfr < 20) {
+        clinicalAlerts.push(
+            'SEVERE CKD DIURETIC ALERT: eGFR < 20 may blunt oral loop diuretic response. Consider BID/TID loop dosing strategy, conversion to torsemide/bumetanide, and close daily weight/urine monitoring.'
+        );
+    }
+
+    const historicalStatusUnknown = hasUnknownHistoricalHFrEF(patient);
+    const preservingQuadForUnknownHistory = shouldPreserveQuadForUnknownHistory(patient);
+    if (patient.lvef > 40 && historicalStatusUnknown) {
+        if (preservingQuadForUnknownHistory) {
+            clinicalAlerts.push(
+                'HFimpEF STATUS UNKNOWN: Prior reduced EF is undocumented, but existing RAAS/BB/MRA therapy suggests possible HFimpEF. Recommendations preserve quad GDMT while prior records are clarified.'
+            );
+        } else {
+            clinicalAlerts.push(
+                'HFimpEF STATUS UNKNOWN: Cannot determine if this patient previously had LVEF <= 40%. If previously on quad GDMT, consider continuing RAAS/BB/MRA/SGLT2i until prior records are clarified.'
+            );
+        }
+    }
+
+    const vericiguatCoreEligible = (patient.nyha_class === 'II' || patient.nyha_class === 'III' || patient.nyha_class === 'IV') &&
+        patient.nt_pro_bnp >= 1600 &&
+        patient.lvef < 45;
+    // M5: Only alert when worsening status is unknown — suppress when explicitly 'no' (patient
+    // definitively ineligible). Coalesce: an absent field means the same as 'unknown' — both block
+    // vericiguat via hasRecentWorseningHF, so both must prompt for documentation.
+    if (vericiguatCoreEligible && (patient.recent_hf_worsening_within_6mo ?? 'unknown') === 'unknown') {
+        clinicalAlerts.push(
+            'VERICIGUAT ELIGIBILITY WARNING: Recent HF worsening status unknown. Document if hospitalization or IV diuretics occurred within 6 months — required before Vericiguat use.'
+        );
+    }
+
+    return { lowOutput, isVolumeDepleted, hasDiureticInCurrent };
+}
+
+/**
+ * Stage 3 - hard safety stops: SBP < 90 or K+ >= 6.5 returns alerts only (no regimen output).
+ * Returns null when the run may proceed.
+ */
+export function checkSafetyHardStops(
+    patient: Patient,
+    clinicalAlerts: string[],
+    gdmtGaps: string[],
+    missingDataNotices: string[]
+): SimulationOutput | null {
+    if (patient.sbp < 90 || patient.potassium >= 6.5) {
+        return {
+            scoredRegimens: [],
+            excludedMedications: taggedDiscontinuedMeds(patient),
+            clinicalAlerts,
+            monitoringPlan: [],
+            gdmtGaps,
+            eligibleAdjuncts: [],
+            missingDataNotices,
+            followUpCalendar: []
+        };
+    }
+
+    return null;
 }

@@ -112,6 +112,9 @@ export function getLvefCategory(lvef: number): number {
     return 3; // Normal
 }
 
+/** Blend of the three structure sub-scores (absolute LVEF / improvement vs baseline / chamber size). Sums to 1. */
+export const STRUCTURE_BLEND_WEIGHTS = { absolute: 0.40, improvement: 0.40, chamber: 0.20 } as const;
+
 /**
  * Domain 4: Structure (Cardiac Remodeling & Recovery)
  * Blended: 40% absolute state + 40% improvement trajectory + 20% chamber geometry.
@@ -206,7 +209,7 @@ export function calculateStructureScoreComponents(
         : 50; // Neutral when no echo data available
 
     // --- Blend: 40% absolute + 40% improvement + 20% chamber ---
-    const blended = Math.max(0, Math.min(100, absoluteScore * 0.40 + improvementScore * 0.40 + chamberScore * 0.20));
+    const blended = Math.max(0, Math.min(100, absoluteScore * STRUCTURE_BLEND_WEIGHTS.absolute + improvementScore * STRUCTURE_BLEND_WEIGHTS.improvement + chamberScore * STRUCTURE_BLEND_WEIGHTS.chamber));
     return { absoluteScore, improvementScore, chamberScore, blended };
 }
 
