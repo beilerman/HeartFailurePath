@@ -2,6 +2,27 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### Medication review + source-verified corrections (2026-11-10)
+Full record: `docs/medication-review-2026-11-10/` (README = outcome + open items; `verified-*.md` =
+sources with URLs; `changes-*.txt` = which recommendations each pass changed). Non-obvious points:
+- **Review-from-memory was wrong in places; verification caught it.** E.g. the Entresto label's
+  default start is 49/51 (24/26 is the reduced start); the carvedilol label DOES say act at HR<55 —
+  by reducing the dose; CLOROTIC tested HCTZ with MORE drug at lower clearance. Never correct the
+  engine from a review that did not open the source.
+- **Guideline pages (ahajournals/jacc/ESC) return 403 to automated fetch.** DailyMed (incl. its
+  JSON/XML API), PubMed E-utilities (efetch) and Europe PMC work. Guideline-only claims stayed unverified.
+- **DIAMOND's -0.10 mmol/L is not patiromer's effect** (both arms had RAAS therapy adjusted to
+  potassium). Using it made the engine prefer Lokelma (sodium load) — reverted to PEARL-HF -0.45.
+  Watch for this class of error: a between-arm difference from a treat-to-target trial.
+- **A sweep over every scenario x tier x priority is how the carvedilol-25-mg new start was found**
+  after five targeted passes missed it. Run broad invariant sweeps, not only targeted scenarios.
+- **Scores are not comparable across this date** (scale change, then pricing/effect corrections).
+- **UI:** blank potassium/creatinine map to the engine's 0 = "not entered" sentinel (the form used
+  to reject 0, so the missing-potassium sample could not run). Evidence tab renders
+  `docs/evidence-matrix.md` via `?raw` — keep its table structure; rule IDs in its core and
+  2026-11-10 sections collide (HF-ADJ-001..006 appear twice) and should be renumbered.
+- **Not verified by anyone:** a real print preview, screen-reader behavior.
+
 ### GlucosePATH alignment refactor (2026-11-10, behavior-preserving)
 Engine restructured to mirror GlucosePATH's shape (numbered exclusions -> enumerate -> factor
 scores x one weight table -> printed arithmetic). Structure is in `docs/scoring-architecture.md`

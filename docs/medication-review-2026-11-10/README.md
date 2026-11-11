@@ -10,7 +10,7 @@ sources, and the confirmed ones were corrected in the engine.
 | Review (from memory) | 7 high, 48 medium, about 83 low findings |
 | Source verification | 91 confirmed, 55 partly confirmed, 4 refuted, 32 not verified |
 | Corrections | Confirmed and partly confirmed findings implemented; refuted and unverified ones left unchanged |
-| Tests | 235 scenarios (130 added), 13 structural invariants, three audits, all passing |
+| Tests | 241 scenarios (136 added), 14 structural invariants, three audits, all passing |
 
 Sources that could be opened: FDA labels on DailyMed, trial abstracts (PubMed E-utilities, Europe
 PMC), a full-text mirror of the 2022 guideline for one group. The AHA/ACC and ESC guideline pages

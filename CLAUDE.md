@@ -18,7 +18,7 @@ npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone QA, not in CI)
-npm run golden           # golden master: every scenario x 3 insurance tiers (705 runs) must be byte-identical
+npm run golden           # golden master: every scenario x 3 insurance tiers (723 runs) must be byte-identical
 npm run gate             # typecheck + golden + verify + all three audits (full pre-release gate)
 npm run ci               # typecheck + build + golden + verify
 npm run preview          # preview production build
@@ -279,9 +279,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — on 2026-11-10 `Passed: 248`):
+Current regression scope (the harness's printed count is authoritative — on 2026-11-10 `Passed: 255`):
 
-- 235 clinical scenarios + 13 structural invariants (every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no MRA start above potassium 5.0 without a binder; no new start above the declared starting dose; no regimen above a declared maximum daily dose)
+- 241 clinical scenarios + 14 structural invariants (every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no MRA start above potassium 5.0 without a binder; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
