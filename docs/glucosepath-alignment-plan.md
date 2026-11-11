@@ -62,13 +62,13 @@ exclusion text changes. Anything that would change clinical behavior is listed u
 Phases 1–4 all edit the engine file, so they run in sequence, one agent each. Phase 5 touches only
 components and docs and runs alongside phase 2 in a separate worktree.
 
-## Decisions for Brad (not done here — they change clinical output)
+## Decisions taken 2026-11-10 (Brad: "best case for clinical use and understandability")
 
-1. **Patient-selected weight profiles.** GlucosePATH lets cost sensitivity pick the weight row. HF
-   weights are fixed; patient values act only inside the cost and adherence curves. Phase 1 leaves a
-   single `default` profile in a table shaped to take more rows.
-2. **Folding adjustments into domains.** GDMT completeness (+30) and the special-feature bonus sit
-   outside the 0–100 weighted sum, which is why raw scores exceed 100 and clamp. A GlucosePATH-pure
-   design would make them domains. This would re-rank regimens.
-3. **Explicit goals.** GlucosePATH takes an A1c goal band as input. HF's targets (NT-proBNP 125,
-   steps 7000, SBP floors) are constants, not per-patient goals.
+1. **Patient-selected weight profiles: done.** `care_priority` selects the row of `WEIGHT_PROFILES`.
+2. **Bonuses folded into the weighted sum: done.** Therapy completeness is an eighth factor; eight
+   weights sum to 100%. The evidence bonus and safety deductions stay as itemized adjustments.
+3. **Per-patient numeric goals: not done.** Heart-failure targets are not individualized the way an
+   A1c goal is. Each factor's fixed goal is now shown in the ledger instead.
+
+Also added: "why this ranked lower" comparison, numbered exclusions with specific reasons.
+Open for review: the six changed top picks and the uncalibrated non-default profiles (see memory.md).

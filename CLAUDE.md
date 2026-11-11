@@ -13,7 +13,7 @@ npm run dev              # start Vite dev server (default 3000)
 npm run build            # production build
 npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
-                         #   (currently: Passed 110 = 105 clinical scenarios + 5 structural invariants)
+                         #   (currently: Passed 115 = 105 clinical scenarios + 10 structural invariants)
 npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
@@ -110,17 +110,34 @@ Engine characteristics:
 - candidate modifications include add/up/down/swap/remove/keep
 - affordability filter and display-safety filter applied before UI output
 
-## Seven-Domain Scoring
+## Scoring Model (weighted sum, 2026-11-10)
 
-Weighted overall score:
+Full description: `docs/scoring-architecture.md`. All numbers live in `services/engine/scoreModel.ts`.
 
-- Neurohormonal: 20%
-- Functional: 15%
-- Volume: 15%
-- Structure: 10%
-- Cost: 15%
-- Adherence: 10%
-- Guideline concordance: 15%
+- Score = Σ (eight factor scores, each 0-100) × weights that sum to 100%, plus named adjustments.
+- Balanced weights: Neurohormonal 15, Functional 12, Volume 12, Structure 8 (clinical outcomes);
+  Guideline concordance 12, Therapy completeness 22 (guideline-directed therapy); Cost 12,
+  Adherence 7 (patient values).
+- `patient.care_priority` ("What matters most to this patient?") selects the weight row:
+  `default` (Balanced), `outcomes_first`, `cost_first`, `simplicity_first`. It changes ONLY the eight
+  weights — never eligibility, alerts, adjustments, display floors or the budget filter (verify
+  enforces this for every scenario × profile). The non-default rows are a first calibration, not
+  yet clinically reviewed.
+- Adjustments (visible ledger lines): patient-specific evidence bonus `clamp(sum/len × 2.3, −8, +12)`;
+  volume-depletion de-escalation +15; projected SBP < 90 −20, < 95 −6, < 85 sets the score to 0;
+  projected HR < 50 −40; projected K+ > 5.5 −40; −8 per residual-risk warning; unknown K+ / eGFR
+  −12 each; low-output cap 25.
+- Ranking: displayed score → therapy completeness → unrounded score → cost. The completeness
+  tie-break is deliberate (anti-softness): a fraction of a point must not drop a guideline pillar.
+- Therapy completeness = achievable indicated therapies present / achievable total (pillars +
+  eligible adjuncts; 60% credit below target dose). "Achievable" excludes therapies filtered out
+  of the formulary — never penalize a contraindicated therapy.
+- Special-feature `points` calibration: outcome-level benefits are large (A-HeFT 30, FINEARTS 45,
+  obesity 50-60, iron 40, binders 50, TOPCAT HFpEF 18); intra-class tolerability tiebreakers are
+  small (eplerenone "no gynecomastia" 3). The `/regimenLength` normalization amplifies a lone
+  special drug, so a tolerability footnote must stay small.
+- Scores before and after 2026-11-10 are not comparable (the old scale had 30 points of headroom
+  and clamped at 100).
 
 Guideline domain behavior:
 
@@ -128,15 +145,6 @@ Guideline domain behavior:
 - HFmrEF (`41-49`): weighted hybrid scoring
 - HFpEF (`>= 50`): SGLT2i-first pathway with adjunct logic
 - HFimpEF preservation: continue full HFrEF logic when prior reduced EF is known or strongly suspected
-
-GDMT-completeness bonus (anti-softness):
-
-- Additive bonus up to +30 = `30 × (achievable indicated therapies present / achievable total)`.
-- Slots = phenotype pillars + eligible disease-modifying adjuncts (GLP-1, H/ISDN [reduced-EF only], ivabradine, vericiguat, IV iron) derived from `analysis.addableAdjuncts`.
-- "Achievable" excludes therapies filtered out of the formulary (never penalize a contraindicated therapy). Applied before SBP/K+ penalties so safety still overrides.
-- Stored as `gdmt_completeness` (0-1); display ranks by score → completeness → uncapped `raw_score` → **cost (final tiebreaker)**. Cost decides last so it never overrides an evidence-based preference, but among clinically-indistinguishable regimens the cheaper one wins (maximize health benefit per dollar). The over-budget fallback surfaces the cheapest candidates ordered by this same value-first key (best near-affordable option leads, not the absolute cheapest).
-- Special-feature `points` calibration: outcome-level benefits are large (A-HeFT 30, FINEARTS 45, obesity 50-60, iron 40, DIAMOND/HARMONIZE binders 50, TOPCAT HFpEF 18) while intra-class tolerability tiebreakers are small (eplerenone "no gynecomastia" 3). A tolerability footnote must not lift a single-pillar regimen above multi-pillar GDMT (the SF-bonus normalization `/regimenLength * 3` otherwise amplifies a lone special drug to the +15 cap).
-- Projected-SBP ranking penalty recalibrated to trial tolerability (`<90 → -25`, `<95 → -8`) so disease-modifying therapy is not out-ranked by hemodynamically-inert drugs; hard gates (input `<90`, display `<85`) unchanged.
 
 ## Safety Logic and Hard Blocks
 
@@ -232,9 +240,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — currently `Passed: 110`):
+Current regression scope (the harness's printed count is authoritative — currently `Passed: 115`):
 
-- 105 clinical scenarios + 5 structural invariants (every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade)
+- 105 clinical scenarios + 10 structural invariants (every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
@@ -251,6 +259,7 @@ Read `docs/scoring-architecture.md` before changing the engine. Rules that keep 
 
 - Weights and every adjustment magnitude live in `services/engine/scoreModel.ts` (`WEIGHT_PROFILES`, `SCORE_ADJUSTMENTS`). Never inline a scoring number in engine or component code; a new adjustment needs a code there AND a line in `score_breakdown`, or the reconciliation invariant fails.
 - A new exclusion is a new numbered rule in `ELIGIBILITY_RULES` (`services/engine/eligibility.ts`), not an inline `if`. Rule order is precedence (first match wins).
+- Contraindications are a list of named checks with reasons (`ci([...])` in `constants.ts`); the boolean is derived from them. Never write a bare boolean `contraindications`.
 - Drug-specific knowledge goes on the formulary entry (`facts`, hooks) and is read with `drugFacts(med)`. A drug-name string literal in engine code fails verify.
 - Import engine symbols from `services/simulationService` (the facade) outside `services/engine/`; inside it, never import the facade.
 - `npm run golden` must stay byte-identical for a refactor. Run `npm run golden:update` only for an intended clinical change, in its own commit explaining why. New explanation-only output fields are listed in `ADDITIVE_KEYS` in `scripts/goldenMaster.ts`.

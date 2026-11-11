@@ -148,7 +148,7 @@ IV iron) in `candidates.ts`, and drug-interaction warning text in `effects.ts`.
 | Check | Command | Guards |
 |---|---|---|
 | Golden master | `npm run golden` | 315 full engine outputs are byte-identical |
-| Scenarios | `npm run verify` | 105 clinical scenarios plus 5 structural invariants |
+| Scenarios | `npm run verify` | 105 clinical scenarios plus 10 structural invariants |
 | Audits | `npm run audit:hundred`, `audit:mistakes`, `audit:red` | Broad, treatment-error and adversarial sweeps |
 | All of the above | `npm run gate` | |
 

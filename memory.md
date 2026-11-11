@@ -8,10 +8,23 @@ scores x one weight table -> printed arithmetic). Structure is in `docs/scoring-
 and CLAUDE.md; what is NOT obvious from the code:
 - **Golden master was captured BEFORE any refactor** (commit 7c920fc) and never updated; every
   phase was byte-identical against it. It is the proof the refactor changed no clinical output.
-- **Deliberately not done (they change rankings — Brad's call):** patient-selected weight
-  profiles (GlucosePATH's cost-sensitivity row; `WEIGHT_PROFILES` has only `default`); folding
-  GDMT completeness / special-feature bonus into 0-100 domains; per-patient goals instead of
-  constant targets. Listed in `docs/glucosepath-alignment-plan.md`.
+- **Same day, intended scoring change (golden regenerated once):** completeness became an 8th
+  domain, the scale was divided by 1.3 and rounded to clean weights/penalties, patient-selected
+  weight profiles were added. Measured against the pre-refactor baseline: 309/315 top picks
+  unchanged; exclusions, alerts and warnings identical in all 315.
+- **The completeness tie-break in the sort is load-bearing.** Sorting on unrounded score alone
+  was tried and reverted the same day: it led with eplerenone monotherapy (HFmrEF obese), a
+  beta-blocker alone (pregnant on GLP-1) and dropped spironolactone in acute NYHA IV on <0.5-pt
+  differences. Keep displayed score → completeness → unrounded → cost.
+- **Six top picks differ from the pre-change baseline** (near-ties): MRA Boundary (commercial)
+  now leads with Furoscix + half-dose ARNI over patiromer-rescued full-dose ARNI; Acute
+  Decompensated NYHA IV (medicare) drops spironolactone; HFmrEF Obese (cash) and Pregnant on
+  GLP-1 (all tiers) now lead with two-drug regimens instead of monotherapy. Not yet reviewed by Brad.
+- **Weight profiles are uncalibrated.** `simplicity_first` can lead with SGLT2i monotherapy
+  (Angioedema Hx, Non-Compliant); `outcomes_first` barely differs from Balanced (2/98 scenarios).
+- **Not done:** per-patient numeric targets (HF targets are not individualized in guidelines).
+- `ExcludedMedication.why` (not `details` — that name collides with followUpCalendar items in
+  the golden harness's ADDITIVE_KEYS).
 - **Preserved quirk:** after projected SBP<85 zeroes the score, later penalties still apply, so
   `raw_score` can go negative (only affects tie-breaks among display-hidden regimens). Recorded
   as an override in `score_breakdown`; do not "fix" without a golden update.
