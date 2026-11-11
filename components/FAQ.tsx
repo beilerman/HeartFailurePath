@@ -111,7 +111,7 @@ export const FAQ: React.FC = () => {
                         Clinical Logic, Safety, and Evidence
                     </h2>
                     <p className="text-slate-500 mt-2 text-lg leading-relaxed">
-                        HeartFailurePATH uses a deterministic seven-domain simulation engine for regimen optimization across HFrEF, HFmrEF, HFpEF, and HFimpEF-preservation pathways.
+                        HeartFailurePATH uses a deterministic eight-domain simulation engine for regimen optimization across HFrEF, HFmrEF, HFpEF, and HFimpEF-preservation pathways.
                     </p>
                 </div>
 
@@ -119,14 +119,14 @@ export const FAQ: React.FC = () => {
                     <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
                         <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                             <HeartIcon className="w-6 h-6 text-indigo-600" />
-                            Seven-Domain Scoring Framework
+                            Eight-Domain Scoring Framework
                         </h3>
                     </div>
                     <div className="p-6 space-y-4 text-slate-700">
                         <p>
-                            Each projected regimen receives seven domain scores (0-100), then a weighted overall score:
-                            {`Neuro ${w(DOMAIN_WEIGHTS.neurohormonal)}, Functional ${w(DOMAIN_WEIGHTS.functional)}, Volume ${w(DOMAIN_WEIGHTS.volume)}, Structure ${w(DOMAIN_WEIGHTS.structure)}, Cost ${w(DOMAIN_WEIGHTS.cost)}, Adherence ${w(DOMAIN_WEIGHTS.adherence)}, Guideline ${w(DOMAIN_WEIGHTS.guideline)}.`}
-                            {` Adjustments are then added: GDMT completeness up to +${SCORE_ADJUSTMENTS.GDMT_COMPLETENESS.max}; projected SBP below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.threshold} ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.points}, below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.threshold} ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.points}; ${SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.perUnit} per safety warning. Open "How this score was calculated" on any recommendation to see the exact lines.`}
+                            Each projected regimen receives eight domain scores (0-100), then a weighted overall score:
+                            {`Neuro ${w(DOMAIN_WEIGHTS.neurohormonal)}, Functional ${w(DOMAIN_WEIGHTS.functional)}, Volume ${w(DOMAIN_WEIGHTS.volume)}, Structure ${w(DOMAIN_WEIGHTS.structure)}, Cost ${w(DOMAIN_WEIGHTS.cost)}, Adherence ${w(DOMAIN_WEIGHTS.adherence)}, Guideline ${w(DOMAIN_WEIGHTS.guideline)}, Therapy completeness ${w(DOMAIN_WEIGHTS.completeness)}.`}
+                            {` Adjustments are then added: projected SBP below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.threshold} ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.points}, below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.threshold} ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.points}; ${SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.perUnit} per safety warning. Open "How this score was calculated" on any recommendation to see the exact lines.`}
                             These weights are heuristic prioritization aids, not individualized outcome-probability estimates.
                         </p>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -157,7 +157,7 @@ export const FAQ: React.FC = () => {
                                 <li>Validate and sanitize current patient data (for example duplicate current meds, BP consistency).</li>
                                 <li>Generate candidate modifications (add/up/down/swap/remove) under visit-class and contraindication constraints.</li>
                                 <li>Project physiologic and safety deltas for each candidate regimen.</li>
-                                <li>Score candidates across seven domains, apply safety penalties, and filter unsafe projections.</li>
+                                <li>Score candidates across eight domains, apply safety penalties, and filter unsafe projections.</li>
                                 <li>Return up to three clinically distinct regimens plus structured monitoring plans.</li>
                             </ol>
                         </div>

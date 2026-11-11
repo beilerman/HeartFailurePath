@@ -4,6 +4,7 @@ import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/elig
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
+import { SCORE_ADJUSTMENTS, WEIGHT_PROFILES, DOMAIN_KEYS } from '../services/engine/scoreModel';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
@@ -281,9 +282,8 @@ async function runVerification() {
             for (let i = 0; i < scoredRegimens.length && scenarioPassed; i++) {
                 for (let j = i + 1; j < scoredRegimens.length; j++) {
                     const a = scoredRegimens[i], b = scoredRegimens[j];
-                    const bNonInferior = b.overall_score >= a.overall_score
-                        && (b.gdmt_completeness ?? 0) >= (a.gdmt_completeness ?? 0)
-                        && (b.raw_score ?? 0) >= (a.raw_score ?? 0);
+                    // Ranking is raw_score then cost, so non-inferior == raw_score at least as high.
+                    const bNonInferior = (b.raw_score ?? 0) >= (a.raw_score ?? 0);
                     if (bNonInferior && b.cost < a.cost) {
                         failures.push(`Cost-inefficient ranking: pick #${j + 1} ($${b.cost}) is clinically >= pick #${i + 1} ($${a.cost}) but ranked below it`);
                         scenarioPassed = false;
@@ -441,9 +441,9 @@ async function runVerification() {
                 }
                 // H2: Low-output now returns recommendations with mandatory stabilization warnings (not empty)
                 if (scoredRegimens.length > 0) {
-                    // Scores must be capped at 35
-                    if (scoredRegimens.some(r => r.overall_score > 35)) {
-                        failures.push('Low-output regimen scores should be capped at 35');
+                    // Scores must be capped at the low-output cap
+                    if (scoredRegimens.some(r => r.overall_score > SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.max)) {
+                        failures.push(`Low-output regimen scores should be capped at ${SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.max}`);
                         scenarioPassed = false;
                     }
                     // Mandatory low-output warning must be present
@@ -2202,6 +2202,22 @@ async function runVerification() {
         failed++;
     } else {
         console.log(`  [PASS] ${breakdownChecked} scored regimens reconcile.`);
+        passed++;
+    }
+
+    console.log('Checking structural invariant: every weight profile covers every domain and sums to 100%...');
+    const weightViolations: string[] = [];
+    for (const [name, row] of Object.entries(WEIGHT_PROFILES)) {
+        const keys = Object.keys(row).sort().join(',');
+        if (keys !== [...DOMAIN_KEYS].sort().join(',')) weightViolations.push(`profile ${name}: domains ${keys} != DOMAIN_KEYS`);
+        const sum = Object.values(row).reduce((a, w) => a + w, 0);
+        if (Math.abs(sum - 1) > 1e-9) weightViolations.push(`profile ${name}: weights sum to ${sum}, expected 1`);
+    }
+    if (weightViolations.length > 0) {
+        weightViolations.forEach(m => console.error(`  [FAIL] ${m}`));
+        failed++;
+    } else {
+        console.log(`  [PASS] ${Object.keys(WEIGHT_PROFILES).length} weight profile(s) sum to 100%.`);
         passed++;
     }
 

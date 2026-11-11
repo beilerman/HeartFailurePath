@@ -5,6 +5,15 @@
  * `generateAndScoreModifications` lives here, so the number a clinician sees is a visible,
  * reconciling piece of arithmetic (cf. GlucosePATH printing every factor score + the weights).
  *
+ * THE MODEL: a true weighted sum. Eight domains, each scored 0-100, are weighted by
+ * `WEIGHT_PROFILES` (the weights sum to 100%), so a regimen that is perfect on every domain scores
+ * exactly 100. GDMT completeness is one of the eight domains (score = fraction of indicated,
+ * achievable therapies attained x 100). On top of the weighted sum sit only NAMED adjustments -
+ * the special-feature evidence bonus and the safety penalties - each a visible line item. There is
+ * no hidden bonus layer and no routine clamping: the final [0,100] clamp is a guard that appears in
+ * the breakdown only when it actually changes the value. Ranking is raw_score (unrounded, higher
+ * first), then cost (cheaper first).
+ *
  * This module has NO imports so both `types.ts` and the engine can depend on it without cycles.
  *
  * RECONCILIATION (the contract `ScoreBreakdown` satisfies, asserted in scripts/verifyScenarios.ts):
@@ -14,24 +23,24 @@
  *                       + Σ adjustments[i].points
  *                       + Σ (o.after − o.before) for overrides with applies_to === 'raw_score'
  *
- * `raw_score` is the engine's un-clamped, un-rounded running total — the exact value stored in
- * `ScoredRegimen.raw_score` and used as a ranking tiebreaker. Adjustments are listed in the order
- * the engine applies them. The projected-SBP<85 step is NOT additive ("set to 0"): it is an override
- * on `raw_score` whose before/after capture the running value at that moment. Because the engine
- * keeps applying later adjustments (HR, K+, warnings, unknown-lab) to that zeroed total, those lines
- * still appear in `adjustments` after the override; the sum above remains exact.
+ * `raw_score` is the engine's un-clamped, un-rounded running total - the exact value stored in
+ * `ScoredRegimen.raw_score` and the ranking key. Adjustments are listed in the order the engine
+ * applies them. The projected-SBP<85 step is NOT additive ("set to 0"): it is an override on
+ * `raw_score` whose before/after capture the running value at that moment. Because the engine keeps
+ * applying later adjustments (HR, K+, warnings, unknown-lab) to that zeroed total, those lines still
+ * appear in `adjustments` after the override; the sum above remains exact.
  *
- * `overall_score` (the displayed 0-100 integer) is derived from `raw_score` by the final [0,100] clamp
- * and rounding, plus — for low-output patients — the cap at 35. Those two are overrides with
+ * `overall_score` (the displayed 0-100 integer) is derived from `raw_score` by the guard clamp and
+ * rounding, plus - for low-output patients - the cap. Those are overrides with
  * applies_to === 'overall_score' and are NOT part of the raw_score sum.
  */
 
 export type ScoreDomainKey =
-    | 'neurohormonal' | 'functional' | 'volume' | 'structure' | 'cost' | 'adherence' | 'guideline';
+    | 'neurohormonal' | 'functional' | 'volume' | 'structure' | 'guideline' | 'completeness' | 'cost' | 'adherence';
 
-/** Domain order matters: the weighted sum is accumulated left-to-right in this order (float-identical to the original expression). */
+/** Display and accumulation order (the weighted sum is accumulated left-to-right in this order). */
 export const DOMAIN_KEYS: readonly ScoreDomainKey[] = [
-    'neurohormonal', 'functional', 'volume', 'structure', 'cost', 'adherence', 'guideline',
+    'neurohormonal', 'functional', 'volume', 'structure', 'guideline', 'completeness', 'cost', 'adherence',
 ];
 
 export const DOMAIN_LABELS: Record<ScoreDomainKey, string> = {
@@ -39,24 +48,38 @@ export const DOMAIN_LABELS: Record<ScoreDomainKey, string> = {
     functional: 'Functional',
     volume: 'Volume',
     structure: 'Structure',
+    guideline: 'Guideline concordance',
+    completeness: 'Therapy completeness',
     cost: 'Cost',
     adherence: 'Adherence',
-    guideline: 'Guideline concordance',
 };
+
+/** Domains grouped for display, in reading order. */
+export const DOMAIN_GROUPS: readonly { key: string; label: string; domains: readonly ScoreDomainKey[] }[] = [
+    { key: 'outcomes', label: 'Clinical outcomes', domains: ['neurohormonal', 'functional', 'volume', 'structure'] },
+    { key: 'therapy', label: 'Guideline-directed therapy', domains: ['guideline', 'completeness'] },
+    { key: 'values', label: 'Patient values', domains: ['cost', 'adherence'] },
+];
 
 export type WeightProfileName = 'default';
 
-/** Add more rows here to support patient-selected profiles later. Only `default` exists today. */
+/** Add more rows here to support patient-selected profiles later. Only `default` exists today. Each row must sum to 1. */
 export const WEIGHT_PROFILES: Record<WeightProfileName, Record<ScoreDomainKey, number>> = {
     default: {
-        neurohormonal: 0.20,
-        functional: 0.15,
-        volume: 0.15,
-        structure: 0.10,
-        cost: 0.15,
-        adherence: 0.10,
-        guideline: 0.15,
+        neurohormonal: 0.15,
+        functional: 0.12,
+        volume: 0.12,
+        structure: 0.08,
+        guideline: 0.12,
+        completeness: 0.22,
+        cost: 0.12,
+        adherence: 0.07,
     },
+};
+
+/** Clinician-facing name and one-line description of each weight profile. */
+export const WEIGHT_PROFILE_META: Record<WeightProfileName, { label: string; description: string }> = {
+    default: { label: 'Balanced', description: 'Standard weighting of outcomes, guideline therapy, cost and regimen burden.' },
 };
 export const DEFAULT_WEIGHT_PROFILE: WeightProfileName = 'default';
 export const DOMAIN_WEIGHTS = WEIGHT_PROFILES.default;
@@ -82,17 +105,12 @@ export const SCORE_ADJUSTMENTS = {
     SPECIAL_FEATURES: {
         code: 'SPECIAL_FEATURES',
         label: 'Special-feature bonus (normalized by regimen size)',
-        factor: 3, min: -10, max: 15,
-    },
-    GDMT_COMPLETENESS: {
-        code: 'GDMT_COMPLETENESS',
-        label: 'GDMT completeness bonus',
-        max: 30,
+        factor: 2.3, min: -8, max: 12,
     },
     VOLUME_DEPLETION_DEESCALATION: {
         code: 'VOLUME_DEPLETION_DEESCALATION',
         label: 'Volume depletion: diuretic de-escalation bonus',
-        points: 20,
+        points: 15,
     },
     PROJECTED_SBP_LT_85: {
         code: 'PROJECTED_SBP_LT_85',
@@ -102,53 +120,53 @@ export const SCORE_ADJUSTMENTS = {
     PROJECTED_SBP_LT_90: {
         code: 'PROJECTED_SBP_LT_90',
         label: 'Projected SBP < 90 penalty',
-        threshold: 90, points: -25,
+        threshold: 90, points: -20,
     },
     PROJECTED_SBP_LT_95: {
         code: 'PROJECTED_SBP_LT_95',
         label: 'Projected SBP < 95 penalty',
-        threshold: 95, points: -8,
+        threshold: 95, points: -6,
     },
     PROJECTED_HR_LT_50: {
         code: 'PROJECTED_HR_LT_50',
         label: 'Projected heart rate < 50 penalty',
-        threshold: 50, points: -50,
+        threshold: 50, points: -40,
     },
     PROJECTED_K_GT_5_5: {
         code: 'PROJECTED_K_GT_5_5',
         label: 'Projected potassium > 5.5 penalty',
-        threshold: 5.5, points: -50,
+        threshold: 5.5, points: -40,
     },
     DANGEROUS_WARNINGS: {
         code: 'DANGEROUS_WARNINGS',
         label: 'Safety warnings (per warning)',
-        perUnit: -10,
+        perUnit: -8,
     },
     UNKNOWN_POTASSIUM: {
         code: 'UNKNOWN_POTASSIUM',
         label: 'Unknown baseline potassium with RAAS/MRA initiation or up-titration',
-        points: -15,
+        points: -12,
     },
     UNKNOWN_RENAL: {
         code: 'UNKNOWN_RENAL',
         label: 'Unknown renal function with RAAS/MRA/SGLT2i initiation or up-titration',
-        points: -15,
+        points: -12,
     },
     SCORE_CLAMP: {
         code: 'SCORE_CLAMP',
-        label: 'Final clamp to the 0-100 display range',
+        label: 'Guard clamp to the 0-100 display range',
         min: 0, max: 100,
     },
     LOW_OUTPUT_CAP: {
         code: 'LOW_OUTPUT_CAP',
         label: 'Low-output state: displayed score capped',
-        max: 35,
+        max: 25,
     },
 } as const satisfies Record<string, ScoreAdjustmentSpec>;
 
 /**
  * Warning substrings that are informational/procedural and must NOT be counted as "dangerous"
- * (−10 each). See the rationale at the point of use in simulationService (binder-required and
+ * (penalized per warning). See the rationale at the point of use in simulationService (binder-required and
  * MRA-initiation-at-borderline-K+ deliberately remain penalized).
  */
 export const NON_PENALIZED_WARNING_MARKERS: readonly string[] = [
@@ -173,6 +191,8 @@ export interface ScoreBreakdownDomainLine {
     weight: number;
     /** weight × score */
     contribution: number;
+    /** Optional note on how the score was derived (e.g. the completeness domain with no achievable slots). */
+    detail?: string;
 }
 
 export interface ScoreBreakdownAdjustment {
@@ -181,6 +201,8 @@ export interface ScoreBreakdownAdjustment {
     /** Signed additive points actually applied to the running total. */
     points: number;
     detail?: string;
+    /** SPECIAL_FEATURES only: each feature that fired, with its pre-normalization points. */
+    items?: { med: string; feature: string; points: number }[];
 }
 
 export interface ScoreBreakdownOverride {

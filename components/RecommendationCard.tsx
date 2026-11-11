@@ -125,6 +125,7 @@ const DOMAIN_LABELS = {
     cost: 'Cost',
     adherence: 'Adherence',
     guideline: 'Guideline',
+    completeness: 'Completeness',
 } as const satisfies Record<keyof DomainScores, string>;
 type DomainKey = keyof typeof DOMAIN_LABELS;
 

@@ -50,35 +50,42 @@ required", not "contraindicated"), and E10/E11 ignore a current MRA that is bein
 
 ## Stage 6: the score
 
-Each candidate's projected state is scored in seven domains, each 0–100. The domains are the
-clinical goals (first four and guideline) and the patient's values (cost and adherence).
+The score is a true weighted sum. Each candidate's projected state is scored in eight domains, each
+0-100, and the eight weights sum to 100%, so a regimen that is perfect on every domain scores 100.
+The domains are grouped (`DOMAIN_GROUPS`) as clinical outcomes, guideline-directed therapy, and
+patient values. What a score of 100 means for each is in `DOMAIN_GOALS` (`domains.ts`).
 
-| Domain | Weight | Measures | Patient input that moves it |
-|---|---|---|---|
-| Neurohormonal | 20% | Projected NT-proBNP between 125 and 4000 | |
-| Functional | 15% | NYHA class, KCCQ, daily steps | |
-| Volume | 15% | Weight above dry weight, exam findings, SpO2 | |
-| Structure | 10% | LVEF level and improvement, chamber size | |
-| Cost | 15% | Monthly out-of-pocket cost against the budget | `max_affordable_cost`, `cost_sensitivity` |
-| Adherence | 10% | Regimen complexity against tolerance | `complexity_tolerance` |
-| Guideline | 15% | Indicated pillars present and at target dose for the phenotype | |
+| Group | Domain | Weight | Measures | Patient input that moves it |
+|---|---|---|---|---|
+| Clinical outcomes | Neurohormonal | 15% | Projected NT-proBNP between 125 and 4000 | |
+| Clinical outcomes | Functional | 12% | NYHA class, KCCQ, daily steps | |
+| Clinical outcomes | Volume | 12% | Weight above dry weight, exam findings, SpO2 | |
+| Clinical outcomes | Structure | 8% | LVEF level and improvement, chamber size | |
+| Guideline-directed therapy | Guideline | 12% | Indicated pillars present and at target dose for the phenotype | |
+| Guideline-directed therapy | Therapy completeness | 22% | Share of indicated, achievable therapies on board (partial credit below target dose) | |
+| Patient values | Cost | 12% | Monthly out-of-pocket cost against the budget | `max_affordable_cost`, `cost_sensitivity` |
+| Patient values | Adherence | 7% | Regimen complexity against tolerance | `complexity_tolerance` |
 
-The weights are `WEIGHT_PROFILES.default` in `scoreModel.ts`. There is one profile today.
+The weights are `WEIGHT_PROFILES.default` ("Balanced", `WEIGHT_PROFILE_META`) in `scoreModel.ts`;
+a structural invariant in `npm run verify` asserts every profile row covers all domains and sums
+to 1. Therapy completeness is a domain, not a bonus: its score is the fraction of achievable
+indicated slots attained x 100. If a patient had no achievable slots the domain scores 0 (the
+breakdown line carries a note); across the 315 golden runs no scored candidate hit that case.
 
-Named adjustments are then applied in this order. Every magnitude is in `SCORE_ADJUSTMENTS`.
+Only named adjustments sit on top of the weighted sum. Every magnitude is in `SCORE_ADJUSTMENTS`
+and each is a visible line item in the breakdown, in this order.
 
 | Code | Effect |
 |---|---|
-| `SPECIAL_FEATURES` | Per-drug evidence bonuses, normalized by regimen size, −10 to +15 |
-| `GDMT_COMPLETENESS` | +30 × fraction of achievable indicated therapies present |
-| `VOLUME_DEPLETION_DEESCALATION` | +20 for reducing diuretics in a volume-depleted patient |
+| `SPECIAL_FEATURES` | Per-drug evidence bonuses, normalized by regimen size (x 2.3), clamped to -8..+12. The line lists each feature that fired (`items`) |
+| `VOLUME_DEPLETION_DEESCALATION` | +15 for reducing diuretics in a volume-depleted patient |
 | `PROJECTED_SBP_LT_85` | Override: score set to 0 |
-| `PROJECTED_SBP_LT_90` / `_LT_95` | −25 / −8 |
-| `PROJECTED_HR_LT_50` | −50 |
-| `PROJECTED_K_GT_5_5` | −50 |
-| `DANGEROUS_WARNINGS` | −10 per residual-risk warning |
-| `UNKNOWN_POTASSIUM` / `UNKNOWN_RENAL` | −15 each when intensifying without the lab |
-| `SCORE_CLAMP`, `LOW_OUTPUT_CAP` | Overrides on the displayed score: clamp to 0–100; cap at 35 in low output |
+| `PROJECTED_SBP_LT_90` / `_LT_95` | -20 / -6 |
+| `PROJECTED_HR_LT_50` | -40 |
+| `PROJECTED_K_GT_5_5` | -40 |
+| `DANGEROUS_WARNINGS` | -8 per residual-risk warning |
+| `UNKNOWN_POTASSIUM` / `UNKNOWN_RENAL` | -12 each when intensifying without the lab |
+| `SCORE_CLAMP`, `LOW_OUTPUT_CAP` | Overrides on the displayed score: guard clamp to 0-100 (listed only when it changes the value); cap at 25 in low output |
 
 Every `ScoredRegimen` carries `score_breakdown` with these lines. The contract, checked for every
 regimen by `npm run verify`:
@@ -86,14 +93,21 @@ regimen by `npm run verify`:
 ```
 weighted_subtotal = Σ (domain score × weight)
 raw_score         = weighted_subtotal + Σ adjustment points + Σ raw-score override deltas
-overall_score     = raw_score, clamped to 0–100 and rounded (then capped at 35 if low output)
+overall_score     = raw_score, clamped to 0-100 and rounded (then capped at 25 if low output)
 ```
+
+**Ranking** (`byScoreThenCost` in `selection.ts`): `raw_score` (unrounded, higher first), then
+cost (cheaper first). The same comparator orders the over-budget fallback. There is no rounded-score
+or completeness key; the old cascade existed only because good regimens piled up at the 100 clamp.
 
 The UI shows this ledger under "How this score was calculated" on each recommendation card.
 
 One quirk is preserved from before the refactor: after a projected SBP < 85 zeroes the score, later
 penalties still apply, so `raw_score` can be negative. It only affects tie-breaking among regimens
 that are hidden by the display floor anyway.
+
+History: until 2026-11-10 the weights summed to 130% (completeness was a +30 bonus) and the result
+was clamped to 100. The model was rescaled by exactly 1/1.3, then rounded to the clean values above.
 
 ## Drug knowledge lives on the formulary entry
 

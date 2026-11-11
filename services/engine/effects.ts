@@ -22,6 +22,8 @@ export function simulateModificationEffect(
     warnings: string[];
     rationale: string[];
     specialFeatureBonus: number;
+    /** Each special feature that fired (pre-normalization points) - the audit trail behind specialFeatureBonus. */
+    specialFeatureItems: { med: string; feature: string; points: number }[];
 } {
     const proj = clonePatient(currentPatient);
     const resultingRegimen = modificationSet.resulting_regimen;
@@ -44,6 +46,7 @@ export function simulateModificationEffect(
     let hrDelta = 0;
     let kDelta = 0;
     let specialFeatureBonus = 0;
+    const specialFeatureItems: { med: string; feature: string; points: number }[] = [];
 
     // Track drug types from RESULTING regimen for interaction checks
     let hasDiuretic = false;
@@ -237,6 +240,11 @@ export function simulateModificationEffect(
             const isIntoleranceSwap = !isContraindicatedSwap && currentMedIntoleranceReason(mod.source.med, intolerancePolicy) !== null;
             if (isContraindicatedSwap || isIntoleranceSwap) {
                 specialFeatureBonus += 15;
+                specialFeatureItems.push({
+                    med: mod.target.med.name,
+                    feature: `Mandatory swap from ${isContraindicatedSwap ? 'contraindicated' : 'intolerance-documented'} ${mod.source.med.name}`,
+                    points: 15,
+                });
                 const cause = isContraindicatedSwap ? 'contraindicated' : 'intolerance-documented';
                 rationale.push(`+ SAFETY: Mandatory swap from ${cause} ${mod.source.med.name} preserves ${getMedicationClassGroup(mod.source.med.drug_class)} coverage`);
             }
@@ -316,6 +324,7 @@ export function simulateModificationEffect(
                 if (sf.criteria(currentPatient)) {
                     rationale.push(`+ ${r.med.name}: ${sf.feature}`);
                     specialFeatureBonus += sf.points;
+                    specialFeatureItems.push({ med: r.med.name, feature: sf.feature, points: sf.points });
                 }
             });
         }
@@ -712,7 +721,7 @@ export function simulateModificationEffect(
         warnings.push('DDI WARNING: Beta blocker + Ivabradine has additive chronotropic suppression. Monitor heart rate/ECG every 2 weeks during co-titration.');
     }
 
-    return { projectedPatient: proj, cost: totalCost, complexity: complexityScore, warnings, rationale: uniqueRationale, specialFeatureBonus };
+    return { projectedPatient: proj, cost: totalCost, complexity: complexityScore, warnings, rationale: uniqueRationale, specialFeatureBonus, specialFeatureItems };
 }
 
 // --- 4. Delta-from-Current Entry Point ---

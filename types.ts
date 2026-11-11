@@ -170,9 +170,10 @@ export interface DomainScores {
     functional: number;
     volume: number;
     structure: number;
+    guideline: number;
+    completeness: number;
     cost: number;
     adherence: number;
-    guideline: number;
 }
 
 export interface MonitoringPlanItem {

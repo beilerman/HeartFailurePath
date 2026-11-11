@@ -1,5 +1,6 @@
-/** The seven domain scorers, their scoring constants, and the guideline-concordance table. Moved verbatim from simulationService.ts (phase 4). */
+/** The domain scorers, their scoring constants, and the guideline-concordance table. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, RegimenMed } from '../../types';
+import type { ScoreDomainKey } from './scoreModel';
 import { hasHistoricalHFrEF } from '../clinicalPredicates';
 import { DIURETIC_CLASSES, RAAS_CLASSES, getMedicationClassGroup } from './registry';
 import { isTargetDoseForPatient, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
@@ -42,6 +43,22 @@ export const VOLUME_SCORING = {
 
 // Tolerance 0 → threshold 2 (~1 drug BID); 5 → 11 (quad therapy); 10 → 20 (unlimited).
 export const adherenceComplexityThreshold = (tolerance: number): number => 2 + tolerance * 1.8;
+
+/**
+ * One plain sentence per score domain stating what a domain score of 100 means, built from the
+ * exported scoring constants above so the wording cannot drift from the math. (Lives here, not in
+ * scoreModel.ts, because scoreModel has no imports and these constants live in this module.)
+ */
+export const DOMAIN_GOALS: Record<ScoreDomainKey, string> = {
+    neurohormonal: `NT-proBNP is at or below ${BNP_SCORE_TARGET} pg/mL (0 at ${BNP_SCORE_CRITICAL} or above).`,
+    functional: `NYHA class I, a full KCCQ score of 100, and ${FUNCTIONAL_STEPS_FULL_CREDIT.toLocaleString('en-US')} or more daily steps.`,
+    volume: 'At dry weight with no congestion findings on exam and normal oxygen saturation.',
+    structure: 'Normal LVEF with normal chamber size, and recovery or improvement from baseline.',
+    guideline: 'Every guideline-indicated pillar for the heart-failure phenotype is present at its target dose.',
+    completeness: 'Every achievable indicated therapy is on board at its target dose.',
+    cost: 'Monthly out-of-pocket cost is within budget and low relative to it.',
+    adherence: "The regimen's complexity is within the patient's complexity tolerance.",
+};
 
 /**
  * Domain 1: Neurohormonal (NT-proBNP)

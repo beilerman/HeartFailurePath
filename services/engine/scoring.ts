@@ -59,16 +59,11 @@ export function buildScoringContext(
     const ironDeficient = isIronDeficient(patient);
     const maxNewPerVisit = Math.max(0, Math.round(patient.max_new_classes_per_visit ?? 2));
 
-    // --- GDMT completeness target -------------------------------------------------------
-    // Standard of care is COMPLETE guideline therapy, rapidly sequenced — not the smallest
-    // safe change. The weighted domains alone under-reward each added pillar (guideline 15% ×
-    // 20 pts ≈ +3) while cost/adherence immediately penalize the extra drug, so partial
-    // regimens out-rank complete ones and the 3-slot display drops the rest. This bonus rewards
-    // each INDICATED, ACHIEVABLE therapy actually present, proportionally, with enough weight
-    // that the complete safe regimen leads. "Achievable" excludes therapies the patient cannot
-    // take (already filtered out of `formulary`), so a patient is never penalized for a
-    // contraindicated pillar. It is applied BEFORE the hemodynamic/electrolyte penalties below,
-    // so an unsafe projection still disqualifies the regimen regardless of completeness.
+    // --- GDMT completeness slots (the `completeness` domain, see gdmtCompletenessFraction) ----
+    // Each INDICATED, ACHIEVABLE therapy is one slot. "Achievable" excludes therapies the patient
+    // cannot take (already filtered out of `formulary`), so a patient is never penalized for a
+    // contraindicated pillar. Safety penalties are applied on top of the weighted sum, so an unsafe
+    // projection still disqualifies the regimen regardless of completeness.
     const phenotype = classifyPhenotype(patient);
     const isReducedPhenotype = phenotype === 'HFrEF' || phenotype === 'HFmrEF';
 
@@ -182,93 +177,25 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
     return { activeModSet, sim };
 }
 
-/** The seven domain scores for one simulated candidate (unrounded for the math, rounded for display). */
-export function scoreDomains(
-    sim: Simulation,
-    activeModSet: ModificationSet,
-    ctx: ScoringContext
-): { unrounded: Record<ScoreDomainKey, number>; rounded: DomainScores } {
-    const { patient, dataAudit, phenotype } = ctx;
-    const p = sim.projectedPatient;
-
-    // Unknown baseline NT-proBNP → neutral 50, not a false 100 (it would otherwise
-    // read as "perfect neurohormonal status" simply because the field was blank).
-    const s_neuro = dataAudit.unknownBnp ? 50 : calculateNeurohormonalScore(p.nt_pro_bnp);
-    const s_func = calculateFunctionalScore(p.nyha_class, p.kccq_score, p.daily_step_count);
-    const s_vol = calculateVolumeScore(p.volume_status.dry_weight_kg, p.volume_status.current_weight_kg, p.volume_status.exam_findings, p.oxygen_saturation);
-    const s_struc = calculateStructureScore(p.lvef, p.lvedd, p.lavi, patient.lvef, patient.lvedd, patient.lavi);
-    const s_cost = calculateCostScore(sim.cost, patient.max_affordable_cost, patient.cost_sensitivity);
-    const s_adhere = calculateAdherenceScore(sim.complexity, patient.complexity_tolerance);
-    const s_guide = calculateGuidelineConcordanceScore(activeModSet.resulting_regimen, patient, phenotype);
-    // Attach the evidence basis (recommendation class + trials) for the pillars present.
-    sim.rationale = [...sim.rationale, ...describeConcordance(activeModSet.resulting_regimen, patient, phenotype)];
-    const unroundedDomainScores: Record<ScoreDomainKey, number> = {
-        neurohormonal: s_neuro, functional: s_func, volume: s_vol, structure: s_struc,
-        cost: s_cost, adherence: s_adhere, guideline: s_guide,
-    };
-    const domainScores: DomainScores = {
-        neurohormonal: Math.round(s_neuro),
-        functional: Math.round(s_func),
-        volume: Math.round(s_vol),
-        structure: Math.round(s_struc),
-        cost: Math.round(s_cost),
-        adherence: Math.round(s_adhere),
-        guideline: Math.round(s_guide)
-    };
-
-    return { unrounded: unroundedDomainScores, rounded: domainScores };
-}
-
 /**
- * Weighted domain sum + the named adjustments (special features, GDMT completeness, volume
- * depletion, projected SBP/HR/K+, warnings, unknown labs) + clamp, with the reconciling breakdown.
- * Pushes the unknown-lab warnings onto `sim.warnings`, exactly as the inline code did.
+ * GDMT completeness: the share of indicated, ACHIEVABLE therapy attained, 0-1. It is the
+ * `completeness` domain (score = fraction x 100).
+ *
+ * Standard of care is COMPLETE guideline therapy, rapidly sequenced - not the smallest safe change.
+ * The other domains alone under-reward each added pillar while cost/adherence immediately penalize
+ * the extra drug, so partial regimens would out-rank complete ones. "Achievable" excludes
+ * therapies the patient cannot take, so a patient is never penalized for a contraindicated pillar.
+ *
+ * DOSE-AWARE: a pillar present but below target earns PARTIAL credit, so up-titrating a sub-target
+ * agent toward its target raises the score (otherwise a quad at starting doses would look
+ * "complete" and the engine would prefer "keep" over titration - GDMT inertia). A single-dose
+ * drug, or one already at target / at its maximum available dose, earns full credit.
+ *
+ * With NO achievable slots the fraction is 0 (this reproduces the pre-rescale behavior, where no
+ * completeness bonus was added in that case).
  */
-export function aggregateScore(
-    unroundedDomainScores: Record<ScoreDomainKey, number>,
-    sim: Simulation,
-    activeModSet: ModificationSet,
-    ctx: ScoringContext
-): { overall: number; raw: number; breakdown: ScoreBreakdown; normalizedSFBonus: number; gdmtCompleteness: number } {
-    const { patient, dataAudit, isVolumeDepleted, achievableSlots } = ctx;
-    const COMPLETENESS_MAX = SCORE_ADJUSTMENTS.GDMT_COMPLETENESS.max;
-    const p = sim.projectedPatient;
-
-    // Weighted scoring: Clinical domains 60%, Patient factors 25%, Evidence 15%
-    // Neuro 20% | Func 15% | Vol 15% | Struct 10% | Cost 15% | Adhere 10% | Guideline 15%
-    // Computed from the DOMAIN_WEIGHTS table, accumulated left-to-right in DOMAIN_KEYS order
-    // (identical float operation order to the original literal expression).
-    const breakdownDomains: ScoreBreakdownDomainLine[] = DOMAIN_KEYS.map(key => ({
-        key,
-        label: DOMAIN_LABELS[key],
-        score: unroundedDomainScores[key],
-        weight: DOMAIN_WEIGHTS[key],
-        contribution: unroundedDomainScores[key] * DOMAIN_WEIGHTS[key],
-    }));
-    let overall = breakdownDomains.reduce((sum, d) => sum + d.contribution, 0);
-    const weightedSubtotal = overall;
-    const breakdownAdjustments: ScoreBreakdownAdjustment[] = [];
-    const breakdownOverrides: ScoreBreakdownOverride[] = [];
-    const addAdjustment = (spec: { code: string; label: string }, points: number, detail?: string) => {
-        overall += points;
-        breakdownAdjustments.push(detail === undefined
-            ? { code: spec.code, label: spec.label, points }
-            : { code: spec.code, label: spec.label, points, detail });
-    };
-
-    // Special feature bonus (normalized by regimen size, capped +15)
-    const regimenLength = activeModSet.resulting_regimen.length;
-    const normalizedSFBonus = regimenLength > 0
-        ? Math.max(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.min, Math.min(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.max, sim.specialFeatureBonus / regimenLength * SCORE_ADJUSTMENTS.SPECIAL_FEATURES.factor))
-        : 0;
-    addAdjustment(SCORE_ADJUSTMENTS.SPECIAL_FEATURES, normalizedSFBonus);
-
-    // GDMT completeness bonus — rewards the share of indicated, achievable therapy attained.
-    // DOSE-AWARE: a pillar present but below target earns PARTIAL credit, so up-titrating a
-    // sub-target agent toward its target raises the score (otherwise a quad at starting doses
-    // would look "complete" and the engine would prefer "keep" over titration — GDMT inertia).
-    // A single-dose drug, or one already at target / at its maximum available dose, earns full
-    // credit (it cannot be titrated further).
+export function gdmtCompletenessFraction(activeModSet: ModificationSet, ctx: ScoringContext): { fraction: number; slots: number } {
+    const { patient, achievableSlots } = ctx;
     const SUBTARGET_CREDIT = 0.6;
     const slotValue = (s: GdmtSlot): number => {
         const meds = activeModSet.resulting_regimen.filter(r => s.match(r.med.drug_class));
@@ -283,13 +210,100 @@ export function aggregateScore(
         });
         return optimal ? 1.0 : SUBTARGET_CREDIT;
     };
-    let gdmtCompleteness = 0;
-    if (achievableSlots.length > 0) {
-        const attained = achievableSlots.reduce((sum, s) => sum + slotValue(s), 0);
-        gdmtCompleteness = attained / achievableSlots.length;
-        addAdjustment(SCORE_ADJUSTMENTS.GDMT_COMPLETENESS, COMPLETENESS_MAX * gdmtCompleteness,
-            `${(gdmtCompleteness * 100).toFixed(0)}% of ${achievableSlots.length} achievable indicated therapies`);
-    }
+    if (achievableSlots.length === 0) return { fraction: 0, slots: 0 };
+    const attained = achievableSlots.reduce((sum, s) => sum + slotValue(s), 0);
+    return { fraction: attained / achievableSlots.length, slots: achievableSlots.length };
+}
+
+/** The eight domain scores for one simulated candidate (unrounded for the math, rounded for display). */
+export function scoreDomains(
+    sim: Simulation,
+    activeModSet: ModificationSet,
+    ctx: ScoringContext
+): { unrounded: Record<ScoreDomainKey, number>; rounded: DomainScores; completenessSlots: number } {
+    const { patient, dataAudit, phenotype } = ctx;
+    const p = sim.projectedPatient;
+
+    // Unknown baseline NT-proBNP → neutral 50, not a false 100 (it would otherwise
+    // read as "perfect neurohormonal status" simply because the field was blank).
+    const s_neuro = dataAudit.unknownBnp ? 50 : calculateNeurohormonalScore(p.nt_pro_bnp);
+    const s_func = calculateFunctionalScore(p.nyha_class, p.kccq_score, p.daily_step_count);
+    const s_vol = calculateVolumeScore(p.volume_status.dry_weight_kg, p.volume_status.current_weight_kg, p.volume_status.exam_findings, p.oxygen_saturation);
+    const s_struc = calculateStructureScore(p.lvef, p.lvedd, p.lavi, patient.lvef, patient.lvedd, patient.lavi);
+    const s_cost = calculateCostScore(sim.cost, patient.max_affordable_cost, patient.cost_sensitivity);
+    const s_adhere = calculateAdherenceScore(sim.complexity, patient.complexity_tolerance);
+    const s_guide = calculateGuidelineConcordanceScore(activeModSet.resulting_regimen, patient, phenotype);
+    const completeness = gdmtCompletenessFraction(activeModSet, ctx);
+    const s_complete = completeness.fraction * 100;
+    // Attach the evidence basis (recommendation class + trials) for the pillars present.
+    sim.rationale = [...sim.rationale, ...describeConcordance(activeModSet.resulting_regimen, patient, phenotype)];
+    const unroundedDomainScores: Record<ScoreDomainKey, number> = {
+        neurohormonal: s_neuro, functional: s_func, volume: s_vol, structure: s_struc,
+        guideline: s_guide, completeness: s_complete, cost: s_cost, adherence: s_adhere,
+    };
+    const domainScores: DomainScores = {
+        neurohormonal: Math.round(s_neuro),
+        functional: Math.round(s_func),
+        volume: Math.round(s_vol),
+        structure: Math.round(s_struc),
+        guideline: Math.round(s_guide),
+        completeness: Math.round(s_complete),
+        cost: Math.round(s_cost),
+        adherence: Math.round(s_adhere),
+    };
+
+    return { unrounded: unroundedDomainScores, rounded: domainScores, completenessSlots: completeness.slots };
+}
+
+/**
+ * Weighted domain sum + the named adjustments (special features, GDMT completeness, volume
+ * depletion, projected SBP/HR/K+, warnings, unknown labs) + clamp, with the reconciling breakdown.
+ * Pushes the unknown-lab warnings onto `sim.warnings`, exactly as the inline code did.
+ */
+export function aggregateScore(
+    unroundedDomainScores: Record<ScoreDomainKey, number>,
+    sim: Simulation,
+    activeModSet: ModificationSet,
+    ctx: ScoringContext,
+    completenessSlots: number = ctx.achievableSlots.length
+): { overall: number; raw: number; breakdown: ScoreBreakdown; normalizedSFBonus: number; gdmtCompleteness: number } {
+    const { dataAudit, isVolumeDepleted } = ctx;
+    const p = sim.projectedPatient;
+
+    // Weighted sum of the eight domains (weights sum to 100%), from the DOMAIN_WEIGHTS table,
+    // accumulated left-to-right in DOMAIN_KEYS order.
+    const breakdownDomains: ScoreBreakdownDomainLine[] = DOMAIN_KEYS.map(key => ({
+        key,
+        label: DOMAIN_LABELS[key],
+        score: unroundedDomainScores[key],
+        weight: DOMAIN_WEIGHTS[key],
+        contribution: unroundedDomainScores[key] * DOMAIN_WEIGHTS[key],
+        ...(key === 'completeness' && completenessSlots === 0
+            ? { detail: 'No achievable indicated therapies for this patient - scored 0' }
+            : {}),
+    }));
+    let overall = breakdownDomains.reduce((sum, d) => sum + d.contribution, 0);
+    const weightedSubtotal = overall;
+    const breakdownAdjustments: ScoreBreakdownAdjustment[] = [];
+    const breakdownOverrides: ScoreBreakdownOverride[] = [];
+    const addAdjustment = (spec: { code: string; label: string }, points: number, detail?: string, items?: ScoreBreakdownAdjustment['items']) => {
+        overall += points;
+        breakdownAdjustments.push({
+            code: spec.code, label: spec.label, points,
+            ...(detail === undefined ? {} : { detail }),
+            ...(items === undefined ? {} : { items }),
+        });
+    };
+
+    // Special feature bonus (normalized by regimen size, clamped to the SPECIAL_FEATURES bounds)
+    const regimenLength = activeModSet.resulting_regimen.length;
+    const normalizedSFBonus = regimenLength > 0
+        ? Math.max(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.min, Math.min(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.max, sim.specialFeatureBonus / regimenLength * SCORE_ADJUSTMENTS.SPECIAL_FEATURES.factor))
+        : 0;
+    addAdjustment(SCORE_ADJUSTMENTS.SPECIAL_FEATURES, normalizedSFBonus, undefined, sim.specialFeatureItems);
+
+    // GDMT completeness is the eighth weighted DOMAIN (see gdmtCompletenessFraction), not a bonus here.
+    const gdmtCompleteness = unroundedDomainScores.completeness / 100;
 
     // P5: Volume depletion — boost diuretic removal candidates
     if (isVolumeDepleted) {
@@ -420,7 +434,7 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
         }
 
         const domains = scoreDomains(sim, activeModSet, ctx);
-        const agg = aggregateScore(domains.unrounded, sim, activeModSet, ctx);
+        const agg = aggregateScore(domains.unrounded, sim, activeModSet, ctx, domains.completenessSlots);
         results.push({
             regimen: activeModSet.resulting_regimen,
             projected_patient: sim.projectedPatient,
@@ -450,9 +464,9 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
     });
 
     if (typeof process !== 'undefined' && process.env && process.env.DEBUG_CAND) {
-        [...results].sort((a, b) => b.overall_score - a.overall_score || (b.gdmt_completeness ?? 0) - (a.gdmt_completeness ?? 0)).slice(0, 14).forEach(r => {
+        [...results].sort((a, b) => (b.raw_score ?? 0) - (a.raw_score ?? 0)).slice(0, 14).forEach(r => {
             const ch = (r.modification_set?.modifications ?? []).filter(m => m.action !== 'keep').map(m => `${m.action}:${(m.target ?? m.source)?.med.name} ${m.target?.dose?.strength ?? ''}`);
-            console.log(`   [cand] ${r.overall_score} c${(r.gdmt_completeness ?? 0).toFixed(2)} :: ${ch.join(', ') || 'KEEP'}`);
+            console.log(`   [cand] ${(r.raw_score ?? 0).toFixed(1)} c${(r.gdmt_completeness ?? 0).toFixed(2)} :: ${ch.join(', ') || 'KEEP'}`);
         });
     }
 

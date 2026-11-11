@@ -17,25 +17,15 @@ export const DISPLAY_FLOORS = {
     minProjectedPulse: 45,       // projected HR < 45 bpm is hidden
 } as const;
 
-// 6. Affordability filter + distinct picks (same algorithm as before)
-// Ranking is completeness-aware: when overall scores tie (common once strong regimens clamp
-// at the 100 cap), the MORE guideline-complete regimen ranks first, so the option carrying an
-// indicated add-on (e.g. GLP-1 in obese HFpEF/HFmrEF) wins the display slot instead of an
-// equally-scored but less complete sibling. Score still dominates when it differs.
-// Once strong regimens clamp at the 100 cap, the displayed overall_score ties. Break ties by
-// GDMT completeness FIRST, so an indicated add-on (e.g. GLP-1 in obese HFpEF) wins a display
-// slot over a less-complete but raw-score-inflated sibling (e.g. SGLT2i + a symptomatic loop
-// diuretic). Among equally complete regimens, fall to the UNCAPPED raw score, which preserves
-// the evidence/special-feature differentiation the cap erased (e.g. SGLT2i over an MRA-only
-// pairing in HFmrEF). Cost is the FINAL tiebreaker — it ranks AFTER overall score, GDMT
-// completeness, and the uncapped raw score, so it can never override an evidence-based clinical
-// preference (those all decide first; cost is also already in the cost domain and the
-// affordability filter). It only breaks ties where two regimens are clinically indistinguishable
-// down to the raw score — there, recommending the cheaper one is the cost-effective choice
-// (maximize health benefit per dollar).
-export const byScoreThenCompleteness = (a: ScoredRegimen, b: ScoredRegimen) =>
-    b.overall_score - a.overall_score ||
-    (b.gdmt_completeness ?? 0) - (a.gdmt_completeness ?? 0) ||
+// 6. Affordability filter + distinct picks.
+// Ranking is the score a clinician can read: the UNROUNDED raw_score (higher first), then cost
+// (cheaper first). There is no completeness or rounded-score key - completeness is already one of
+// the eight weighted domains, and the score is no longer clamped at 100 in normal use, so strong
+// regimens do not pile up on a tie. Cost is the final tiebreaker only: it breaks ties between
+// regimens that are clinically indistinguishable down to the raw score (recommending the cheaper
+// one is the cost-effective choice); cost is also already in the cost domain and the affordability
+// filter.
+export const byScoreThenCost = (a: ScoredRegimen, b: ScoredRegimen) =>
     (b.raw_score ?? 0) - (a.raw_score ?? 0) ||
     a.cost - b.cost;
 
@@ -49,14 +39,14 @@ export function selectDisplayPicks(results: ScoredRegimen[], patient: Patient, c
     let outputRegimens: ScoredRegimen[] = [];
 
     if (affordableRegimens.length > 0) {
-        outputRegimens = affordableRegimens.sort(byScoreThenCompleteness);
+        outputRegimens = affordableRegimens.sort(byScoreThenCost);
     } else if (results.length > 0) {
         // Nothing fits the budget. Surface the lowest-cost candidates (closest to affordable), but
         // order THEM by clinical value so the best-benefit near-affordable option leads — among
-        // equal benefit the cheaper wins (byScoreThenCompleteness ends in cost). Pure cost-ascending
+        // equal benefit the cheaper wins (byScoreThenCost ends in cost). Pure cost-ascending
         // would lead with a thin monotherapy / symptomatic-only regimen over a higher-benefit
         // sibling at the same price.
-        const cheapest = [...results].sort((a, b) => a.cost - b.cost).slice(0, 5).sort(byScoreThenCompleteness);
+        const cheapest = [...results].sort((a, b) => a.cost - b.cost).slice(0, 5).sort(byScoreThenCost);
         const budgetMessage = patient.max_affordable_cost <= 0
             ? 'No zero-copay regimen found. Add covered medications or raise budget.'
             : 'Increase budget to find valid options.';

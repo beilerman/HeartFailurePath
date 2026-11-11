@@ -15,7 +15,7 @@
  */
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { gzipSync, gunzipSync } from 'node:zlib';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { dirname, join } from 'node:path';
 import { generateAndScoreModifications } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
@@ -25,9 +25,9 @@ import { MEDICATION_FORMULARY } from '../constants';
 const ADDITIVE_KEYS = new Set<string>(['score_breakdown', 'rule_id', 'rule_name', 'facts']);
 
 const here = dirname(fileURLToPath(import.meta.url));
-const SNAPSHOT = join(here, '..', 'data', 'golden', 'engine-output.json.gz');
+export const SNAPSHOT = join(here, '..', 'data', 'golden', 'engine-output.json.gz');
 
-function normalize(value: unknown): unknown {
+export function normalize(value: unknown): unknown {
     if (value === undefined || typeof value === 'function') return undefined;
     if (typeof value === 'number') {
         if (Number.isNaN(value)) return '__NaN__';
@@ -47,7 +47,7 @@ function normalize(value: unknown): unknown {
     return out;
 }
 
-async function capture(): Promise<Record<string, unknown>> {
+export async function capture(): Promise<Record<string, unknown>> {
     const names = MEDICATION_FORMULARY.map(m => m.name);
     const available = new Set(names);
     const tiers = ['cash', 'commercial', 'medicare'] as const;
@@ -101,4 +101,5 @@ async function main() {
     console.log(`Golden master OK: ${keys.size} runs byte-identical.`);
 }
 
-main();
+// Only run the CLI when executed directly (rankingDiff.ts imports capture/normalize).
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

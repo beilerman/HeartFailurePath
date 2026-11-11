@@ -16,7 +16,7 @@ export { MRA_POOL_CLASSES } from './engine/registry';
 export {
     BNP_SCORE_TARGET, BNP_SCORE_CRITICAL, NYHA_SCORE_MAP, FUNCTIONAL_STEPS_FULL_CREDIT, VOLUME_SCORING,
     adherenceComplexityThreshold, calculateStructureScoreComponents, CONCORDANCE_TABLE, pillarKeyOf, classifyPhenotype,
-    STRUCTURE_BLEND_WEIGHTS,
+    STRUCTURE_BLEND_WEIGHTS, DOMAIN_GOALS,
 } from './engine/domains';
 export type { PillarKey, PillarConcordance, Phenotype } from './engine/domains';
 export { DISPLAY_FLOORS } from './engine/selection';
@@ -78,7 +78,7 @@ export function generateAndScoreModifications(
     const eligibleAdjuncts = buildEligibleAdjuncts(analysis.addableAdjuncts);
     const candidateSets = generateCandidateModifications(analysis, patient);
 
-    // 6. Score: rescue appends -> simulate -> 7 domain scores -> weights + named adjustments -> ScoredRegimen.
+    // 6. Score: rescue appends -> simulate -> 8 domain scores -> weights + named adjustments -> ScoredRegimen.
     const scoringContext = buildScoringContext(patient, prices, intolerancePolicy, dataAudit, formulary, medTiers, analysis, flags);
     const results = scoreCandidates(candidateSets, scoringContext);
 
