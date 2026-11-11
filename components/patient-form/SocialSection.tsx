@@ -3,6 +3,8 @@ import { BanknotesIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
 import { WEIGHT_PROFILE_NAMES, WEIGHT_PROFILE_META, resolveWeightProfile } from '../../services/engine/scoreModel';
+import { resolveRankingMode } from '../../services/engine/selection';
+import { RANKING_MODE_META, RANKING_MODE_NAMES, RANKING_MODE_VS_PRIORITY_NOTE } from '../rankingModeMeta';
 
 interface SocialSectionProps {
     patientData: Patient;
@@ -44,6 +46,22 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                     </Select>
                     <p id="care_priority-help" className="mt-1 text-xs text-slate-500">
                         {WEIGHT_PROFILE_META[resolveWeightProfile(patientData)].description}
+                    </p>
+                </div>
+                <div>
+                    <Label htmlFor="ranking_mode">Ranking approach</Label>
+                    <Select
+                        name="ranking_mode"
+                        value={resolveRankingMode(patientData)}
+                        onChange={onChange}
+                        aria-describedby="ranking_mode-help"
+                    >
+                        {RANKING_MODE_NAMES.map(name => (
+                            <option key={name} value={name}>{RANKING_MODE_META[name].label}</option>
+                        ))}
+                    </Select>
+                    <p id="ranking_mode-help" className="mt-1 text-xs text-slate-500">
+                        {RANKING_MODE_META[resolveRankingMode(patientData)].description} {RANKING_MODE_VS_PRIORITY_NOTE}
                     </p>
                 </div>
                 <div>

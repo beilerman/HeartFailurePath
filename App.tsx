@@ -5,10 +5,11 @@ import { ResultsDisplay } from './components/ResultsDisplay';
 import { MedicationLibrary } from './components/MedicationLibrary';
 import { FAQ } from './components/FAQ';
 import { EvidenceContext } from './components/EvidenceContext';
-import { Patient, ScoredRegimen, ExcludedMedication, MonitoringPlanItem } from './types';
+import { Patient, ScoredRegimen, ExcludedMedication, MonitoringPlanItem, RankingInfo } from './types';
 import { generateAndScoreModifications } from './services/simulationService';
 import { getDrugPrices } from './services/pricingService';
 import { MEDICATION_FORMULARY } from './constants';
+import { SCOPE_STATEMENT } from './components/rankingModeMeta';
 import { TableIcon, BookOpenIcon, QuestionMarkCircleIcon } from './components/icons';
 import { SCENARIOS, INITIAL_PATIENT, clonePatient } from './data/scenarios';
 
@@ -44,6 +45,7 @@ function App() {
     const [eligibleAdjuncts, setEligibleAdjuncts] = useState<string[]>([]);
     const [missingDataNotices, setMissingDataNotices] = useState<string[]>([]);
     const [followUpCalendar, setFollowUpCalendar] = useState<MonitoringPlanItem[]>([]);
+    const [ranking, setRanking] = useState<RankingInfo | undefined>(undefined);
     // Incremented per successful analysis so result cards remount (resetting per-card
     // disclosure/modal state) instead of positionally inheriting it across runs.
     const [runId, setRunId] = useState(0);
@@ -131,7 +133,7 @@ function App() {
         setResultsStale(false);
         // The engine is synchronous and fast — compute inline (no artificial delay).
         try {
-            const { scoredRegimens, excludedMedications, clinicalAlerts: alerts, monitoringPlan: plan, gdmtGaps: gaps, eligibleAdjuncts: adjuncts, missingDataNotices: notices, followUpCalendar: calendar } = generateAndScoreModifications(patient, simMeds, drugPrices);
+            const { scoredRegimens, excludedMedications, clinicalAlerts: alerts, monitoringPlan: plan, gdmtGaps: gaps, eligibleAdjuncts: adjuncts, missingDataNotices: notices, followUpCalendar: calendar, ranking: rankingInfo } = generateAndScoreModifications(patient, simMeds, drugPrices);
             setResults(scoredRegimens);
             setExcludedMeds(excludedMedications);
             setClinicalAlerts(alerts);
@@ -140,6 +142,7 @@ function App() {
             setEligibleAdjuncts(adjuncts ?? []);
             setMissingDataNotices(notices ?? []);
             setFollowUpCalendar(calendar ?? []);
+            setRanking(rankingInfo);
             setRunId(r => r + 1);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'An unexpected error occurred during analysis.';
@@ -152,6 +155,7 @@ function App() {
             setEligibleAdjuncts([]);
             setMissingDataNotices([]);
             setFollowUpCalendar([]);
+            setRanking(undefined);
         }
     };
 
@@ -281,6 +285,7 @@ function App() {
                                     eligibleAdjuncts={eligibleAdjuncts}
                                     missingDataNotices={missingDataNotices}
                                     followUpCalendar={followUpCalendar}
+                                    ranking={ranking}
                                 />
                             </div>
                         </section>
@@ -299,6 +304,9 @@ function App() {
                     </section>
                 )}
             </main>
+            <footer className="px-4 sm:px-6 py-1.5 bg-white border-t border-slate-200 text-xs text-slate-600 print:hidden">
+                {SCOPE_STATEMENT}
+            </footer>
         </div>
         </EvidenceContext.Provider>
     );

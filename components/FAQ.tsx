@@ -6,6 +6,7 @@ import {
 import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
 import { VOLUME_SCORING, STRUCTURE_BLEND_WEIGHTS, DISPLAY_FLOORS, DOMAIN_GOALS, BNP_SCORE_TARGET, BNP_SCORE_CRITICAL } from '../services/simulationService';
 import { TIE_RULE_TEXT, goalAfterEquals } from './scoreExplain';
+import { RANKING_MODE_META, SCOPE_STATEMENT } from './rankingModeMeta';
 import { QuestionMarkCircleIcon, LightBulbIcon, CalculationIcon, HeartIcon } from './icons';
 import { EVIDENCE_MATRIX, ALL_EVIDENCE_ROWS, rowMatches } from './evidenceMatrix';
 import { Disclosure } from './Disclosure';
@@ -169,7 +170,8 @@ const safetyChecks = [
     'Hemodynamic hard gate: SBP < 90 mmHg returns alerts only (no regimen output).',
     'Hyperkalemic emergency gate: baseline K+ >= 6.0 mEq/L fires a HYPERKALEMIC EMERGENCY alert (ECG and urgent treatment, not outpatient optimization); K+ >= 6.5 returns alerts only — no regimen output (parallel to the SBP < 90 gate). K+ > 8.0 is treated as an implausible value.',
     `Display safety filter: regimens with projected SBP < ${DISPLAY_FLOORS.minProjectedSbp}, projected potassium > ${DISPLAY_FLOORS.maxProjectedPotassium.toFixed(1)}, or projected HR < ${DISPLAY_FLOORS.minProjectedPulse} are not shown.`,
-    'Blank safety-critical data is treated as "not entered", never as a value: a blank potassium (0) never clears a hyperkalemia gate and never flows into projected-K+ math, and blank renal data (eGFR/creatinine 0) never evaluates as end-stage CKD. Renal-gated new starts are withheld pending a BMP, current renal-gated medications are retained, and any candidate intensifying RAAS/MRA/SGLT2i carries an explicit data-unknown warning and ranking penalty.',
+    'Blank safety-critical data is treated as "not entered", never as a value: a blank potassium (0) never clears a hyperkalemia gate and never flows into projected-K+ math, and blank renal data (eGFR/creatinine 0) never evaluates as end-stage CKD. Renal-gated new starts are withheld pending a BMP, current renal-gated medications are retained. There is no score deduction for a blank potassium: instead, new starts and dose increases of RAAS inhibitors and MRAs are withheld (see the laboratory prerequisite below). A candidate that starts or increases an SGLT2 inhibitor with kidney function blank still carries a data-unknown warning and a score deduction.',
+    'Laboratory prerequisite (rule E16): potassium and kidney function must be entered before starting or increasing an ACE inhibitor, ARB, ARNI or MRA. With either blank, those new starts and dose increases are withheld and one LABS REQUIRED alert is shown; a drug the patient already takes is continued at its current dose. No time window for how recent the labs are is applied, because the form does not record lab dates. This rule comes from the physician owner (2026-11-11); the label wording behind it was not re-verified in that pass.',
     'Nitrate + PDE5 inhibitor (sildenafil/tadalafil/vardenafil/avanafil) or riociguat is an absolute exclusion — H/ISDN is removed from the formulary and force-removed from a current regimen, not merely warned about.',
     'Rescue mechanisms: a K+ binder is auto-appended when a candidate projects K+ > 5.3 (reactive rescue) and is co-prescribed proactively when an MRA is initiated at baseline K+ > 5.0 (DIAMOND protocol); IV iron is appended for iron deficiency per ESC criteria (ferritin < 100, or ferritin 100-300 with TSAT < 20) when LVEF < 50, NYHA is II-III and hemoglobin is below 15. An MRA is never started above K+ 5.0 without a binder in the same option, and that option carries a plain warning that the label threshold for starting is 5.0 (start the binder first, begin the MRA once a repeat potassium is 5.0 or below); if no binder can be offered, the MRA is not started (rule E15). Binder potassium effects are the smaller preventive figures (patiromer about -0.1, Lokelma -0.3/-0.6/-0.7 at 5/10/15 g), tried lowest dose first. Binder rescue enables a regimen to be considered but carries a residual-risk score penalty — a regimen needing rescue ranks below an equal regimen that does not. Rescue additions count toward the max-new-classes-per-visit limit (a deliberate patient-facing sequencing limit).',
     'Pregnancy exclusions: RAAS classes, MRA/nsMRA, SGLT2i, vericiguat (FDA boxed warning — embryo-fetal toxicity), ivabradine (fetal harm), and GLP-1 therapy are excluded from recommendations. Hydralazine/isosorbide dinitrate remains available as the pregnancy-appropriate RAAS alternative.',
@@ -253,6 +255,7 @@ export const FAQ: React.FC<FAQProps> = ({ evidenceQuery, onEvidenceQueryChange, 
                     <p className="text-slate-500 mt-2 text-lg leading-relaxed">
                         HeartFailurePATH uses a deterministic eight-domain simulation engine for regimen optimization across HFrEF, HFmrEF, HFpEF, and HFimpEF-preservation pathways.
                     </p>
+                    <p className="text-slate-600 mt-2 text-sm" data-testid="faq-scope">{SCOPE_STATEMENT}</p>
                     <nav aria-label="On this page" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm font-semibold">
                         <a href="#faq-score" className="text-indigo-700 underline">How the score works</a>
                         <a href="#faq-safety" className="text-indigo-700 underline">Safety and eligibility checks</a>
@@ -354,6 +357,16 @@ export const FAQ: React.FC<FAQProps> = ({ evidenceQuery, onEvidenceQueryChange, 
                             <h4 className="font-bold text-lg mb-1">How options are ranked</h4>
                             <p className="text-sm text-slate-600">
                                 Options are listed from the highest score down. {TIE_RULE_TEXT} Under each option, &quot;Compared with option 1&quot; shows which factors and adjustments account for the difference.
+                            </p>
+                            <h5 className="font-bold text-sm mt-3 mb-1">Ranking approach: Balanced or Prioritize foundational therapy</h5>
+                            <p className="text-sm text-slate-600">
+                                <span className="font-semibold">{RANKING_MODE_META.balanced.label}</span> (the default): {RANKING_MODE_META.balanced.description}
+                            </p>
+                            <p className="text-sm text-slate-600 mt-1">
+                                <span className="font-semibold">{RANKING_MODE_META.foundational_first.label}</span>: {RANKING_MODE_META.foundational_first.description} An option is set aside in this ordering only if it would itself push projected systolic BP below 90 (or 85), heart rate below 50, or potassium above 5.5 further than where the patient is now. Among the rest, the option with the higher foundational coverage comes first (each of the four therapies counts fully at target dose and 60% below target), then the Balanced order breaks ties.
+                            </p>
+                            <p className="text-sm text-slate-600 mt-1">
+                                This is separate from &quot;What matters most to this patient?&quot;, which changes the score weights. Under either approach, scores, safety exclusions, alerts, the budget limit and the display safety filter are the same; only the order of the options changes. When the foundational approach changes the lead option, the results show what Balanced would have led with. An option the patient cannot afford is never presented as a plan under either approach.
                             </p>
                         </div>
 

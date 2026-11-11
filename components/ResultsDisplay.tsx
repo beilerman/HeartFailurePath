@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem } from '../types';
+import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem, RankingInfo } from '../types';
 import { RecommendationCard } from './RecommendationCard';
 import { Disclosure } from './Disclosure';
 import { useEvidenceLink } from './EvidenceContext';
 import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
 import {
     buildChartSummary, partitionAlerts, partitionWarnings, groupExclusions, exclusionsForGap, startedByTopOption,
-    entryReasonText, sentenceCase,
+    entryReasonText, sentenceCase, isOverBudgetFallback, rankingModeLines,
     type ExclusionEntry, type ExclusionGroup,
 } from './resultsModel';
 
@@ -24,6 +24,7 @@ interface Props {
     eligibleAdjuncts?: string[];
     missingDataNotices?: string[];
     followUpCalendar?: MonitoringPlanItem[];
+    ranking?: RankingInfo;
 }
 
 const modIcon: Record<string, string> = { add: '+', titrate_up: '↑', titrate_down: '↓', swap: '⇄', remove: '−' };
@@ -77,7 +78,7 @@ const ExclusionList: React.FC<{ group: ExclusionGroup }> = ({ group }) => (
     <ul className="space-y-2">{group.entries.map((e, i) => <ExclusionEntryRow key={i} entry={e} />)}</ul>
 );
 
-export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runId = 0, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [] }: Props) {
+export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runId = 0, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [], ranking }: Props) {
     const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
     const regionRef = useRef<HTMLDivElement>(null);
 
@@ -92,9 +93,11 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
     const alerts = useMemo(() => partitionAlerts(clinicalAlerts), [clinicalAlerts]);
     const exclusionGroups = useMemo(() => groupExclusions(excludedMedications), [excludedMedications]);
     const top = results[0];
+    const overBudget = isOverBudgetFallback(top);
+    const modeLines = rankingModeLines(ranking);
 
     const handleCopy = async () => {
-        const text = buildChartSummary({ results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications });
+        const text = buildChartSummary({ results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications, ranking });
         try {
             await navigator.clipboard.writeText(text);
             setCopyState('copied');
@@ -223,6 +226,17 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                     )}
                 </div>
                 <div className="p-5 space-y-4">
+                    {top && overBudget && (
+                        <div className="rounded-lg border-2 border-red-300 bg-red-50 px-4 py-3" role="alert">
+                            <p className="text-sm font-bold text-red-800">Not affordable at the stated budget</p>
+                            <p className="text-sm text-red-800 mt-0.5">Nothing fits the budget entered. The options below are the closest to affordable, shown for discussion. They are not plans the patient can carry out as entered.</p>
+                        </div>
+                    )}
+                    {top && modeLines.length > 0 && (
+                        <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5" data-testid="ranking-mode-note">
+                            {modeLines.map((l, i) => <p key={i} className={i === 0 ? 'text-sm font-semibold text-indigo-900' : 'text-sm text-indigo-900 mt-0.5'}>{l}</p>)}
+                        </div>
+                    )}
                     {!top && (
                         <p className="text-sm text-slate-800 font-semibold">
                             {alerts.urgent.length > 0
@@ -234,7 +248,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                     )}
                     {top && (
                         <div>
-                            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wide mb-1.5">Changes in option 1</h3>
+                            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wide mb-1.5">{overBudget ? 'Changes in option 1 (for discussion only)' : 'Changes in option 1'}</h3>
                             {changes.length === 0 ? (
                                 <p className="text-sm font-semibold text-slate-800">No change needed this visit: continue the current regimen.</p>
                             ) : (
@@ -283,7 +297,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                             // runId in the key remounts cards on each analysis run so per-card UI
                             // state (details expansion, open modal) never carries onto a different regimen.
                             <div key={`${runId}-${idx}`} id={`results-option-${idx + 1}`} tabIndex={-1} className={`focus:outline-none scroll-mt-4 break-inside-avoid ${idx === 0 && results.length > 1 ? 'xl:col-span-2' : ''}`}>
-                                <RecommendationCard regimen={regimen} rank={idx + 1} leader={idx > 0 ? results[0] : undefined} />
+                                <RecommendationCard regimen={regimen} rank={idx + 1} leader={idx > 0 ? results[0] : undefined} showFoundationalCoverage={ranking?.applied === true} />
                             </div>
                         ))}
                     </div>

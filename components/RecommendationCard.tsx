@@ -6,7 +6,7 @@ import { ScoreComparisonLine } from './ScoreComparison';
 import { Disclosure } from './Disclosure';
 import { useEvidenceLink } from './EvidenceContext';
 import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
-import { partitionWarnings, stripDrugNotePrefix } from './resultsModel';
+import { partitionWarnings, stripDrugNotePrefix, isOverBudgetFallback } from './resultsModel';
 import { DOMAIN_LABELS, DOMAIN_GROUPS, type ScoreDomainKey } from '../services/engine/scoreModel';
 import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 
@@ -15,6 +15,8 @@ interface Props {
     rank: number;
     /** Option 1, so options 2 and 3 can say why they ranked lower. Omit for option 1. */
     leader?: ScoredRegimen;
+    /** True when the foundational ranking mode is applied to this run (HFrEF/HFimpEF): shows the coverage line. */
+    showFoundationalCoverage?: boolean;
 }
 
 const ScorePill = ({ label, fullLabel, score, color, onClick }: { label: string, fullLabel: string, score: number, color: string, onClick: () => void }) => (
@@ -149,7 +151,7 @@ const PILL_COLORS = {
 const _domainKeysMatch: Record<keyof DomainScores, true> = { neurohormonal: true, functional: true, volume: true, structure: true, cost: true, adherence: true, guideline: true, completeness: true };
 void _domainKeysMatch;
 
-export const RecommendationCard = React.memo(function RecommendationCard({ regimen, rank, leader }: Props) {
+export const RecommendationCard = React.memo(function RecommendationCard({ regimen, rank, leader, showFoundationalCoverage = false }: Props) {
     const { domain_scores } = regimen;
     const [selectedDomain, setSelectedDomain] = useState<ScoreDomainKey | null>(null);
     const [showLedger, setShowLedger] = useState(false);
@@ -175,7 +177,13 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                     <div className="flex items-center gap-2.5 mb-3">
                         <span className="bg-slate-200 text-slate-700 text-xs font-bold px-2 py-0.5 rounded" aria-label={`Option ${rank}`}>Option {rank}</span>
                         <h3 className="font-bold text-slate-900 text-lg">{rank === 1 ? 'Top-ordered regimen' : 'Alternative regimen'}</h3>
+                        {isOverBudgetFallback(regimen) && (
+                            <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-0.5 rounded border border-red-300">Over budget: not affordable as entered</span>
+                        )}
                     </div>
+                    {showFoundationalCoverage && regimen.foundational_coverage !== undefined && (
+                        <p className="text-xs font-semibold text-slate-600 mb-3">Foundational coverage {Math.round(regimen.foundational_coverage)}%</p>
+                    )}
                     <div className="flex flex-wrap gap-2">
                         {regimen.regimen.map((r, i) => {
                             const mod = getModForMed(regimen, r);
@@ -361,7 +369,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                                     How this score was calculated
                                 </button>
                             )}
-                            {leader && <ScoreComparisonLine regimen={regimen} leader={leader} rank={rank} />}
+                            {leader && <ScoreComparisonLine regimen={regimen} leader={leader} rank={rank} foundationalOrder={showFoundationalCoverage} />}
                         </div>
                         <p className="text-[11px] text-slate-600 font-medium uppercase tracking-wider mb-2">Domain sub-scores — tap for detail</p>
                         <div className="space-y-3">
@@ -387,6 +395,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                     regimen={regimen}
                     leader={leader}
                     rank={rank}
+                    foundationalOrder={showFoundationalCoverage}
                     onClose={() => setShowLedger(false)}
                 />
             )}

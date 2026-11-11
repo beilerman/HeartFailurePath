@@ -1,4 +1,5 @@
-import type { ExcludedMedication, MonitoringPlanItem, ScoredRegimen } from '../types';
+import type { ExcludedMedication, MonitoringPlanItem, ScoredRegimen, RankingInfo } from '../types';
+import { RANKING_MODE_META } from './rankingModeMeta';
 import { PILLAR_LABELS } from '../services/engine/explain';
 import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
 import { pillarKeyOf, getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
@@ -38,6 +39,25 @@ export const sentenceCase = (t: string): string => t.charAt(0) + t.slice(1).toLo
 // ---- Per-regimen warnings -----------------------------------------------------------------------
 
 const DRUG_NOTE = /^Drug note\b[:\s]*/i;
+
+/** Engine prefix of the over-budget fallback warning (selection.ts). Display only: it must keep matching that text. */
+export const BUDGET_EXCEEDED_PREFIX = 'BUDGET EXCEEDED';
+
+/** True for a regimen the engine shows only for discussion because nothing fit the stated budget. */
+export const isOverBudgetFallback = (r: Pick<ScoredRegimen, 'warnings'> | undefined): boolean =>
+    !!r && r.warnings.some(w => w.startsWith(BUDGET_EXCEEDED_PREFIX));
+
+/** Short statement of the active ranking mode for the results screen and the chart note. Null in Balanced mode. */
+export function rankingModeLines(ranking: RankingInfo | undefined): string[] {
+    if (!ranking || ranking.mode !== 'foundational_first') return [];
+    const lines = [`Ranking approach: ${RANKING_MODE_META.foundational_first.label}.`];
+    if (!ranking.applied) {
+        if (ranking.reason_not_applied) lines.push(ranking.reason_not_applied);
+    } else if (ranking.balanced_lead_differs && ranking.balanced_lead_summary) {
+        lines.push(`Under Balanced the lead option would be: ${ranking.balanced_lead_summary}`);
+    }
+    return lines;
+}
 
 /** Prescribing notes are the engine's non-penalized "Drug note" strings; every other warning stays prominent. */
 export function partitionWarnings(warnings: string[]): { safety: string[]; notes: string[] } {
@@ -136,6 +156,7 @@ export interface ChartInput {
     followUpCalendar: MonitoringPlanItem[];
     monitoringPlan: MonitoringPlanItem[];
     excludedMedications: ExcludedMedication[];
+    ranking?: RankingInfo;
 }
 
 const bullets = (title: string, items: string[]): string[] => items.length === 0 ? [] : ['', `${title}:`, ...items.map(i => `  - ${i}`)];
@@ -145,11 +166,15 @@ export function buildChartSummary(c: ChartInput): string {
     const { urgent, advisory } = partitionAlerts(c.clinicalAlerts);
     const lines: string[] = ['HEART FAILURE GDMT PLAN (decision-support output; verify before acting)'];
     lines.push(...bullets('SAFETY ALERTS', urgent.map(a => a.raw)));
+    const modeLines = rankingModeLines(c.ranking);
+    if (modeLines.length > 0) lines.push('', ...modeLines);
 
     const top = c.results[0];
     if (top) {
         const ctx = getTargetDosePatientContext(top);
-        lines.push('', `RECOMMENDED REGIMEN (option 1 of ${c.results.length}; the other options are on screen):`);
+        lines.push('', isOverBudgetFallback(top)
+            ? `REGIMEN FOR DISCUSSION ONLY (option 1 of ${c.results.length}; over the stated budget, so the patient cannot carry it out as entered; the other options are on screen):`
+            : `RECOMMENDED REGIMEN (option 1 of ${c.results.length}; the other options are on screen):`);
         top.regimen.forEach(r => {
             const target = isTargetDoseForPatient(r, ctx) ? ' (target dose)' : '';
             lines.push(`  - ${r.med.name} ${r.dose.strength}${r.dose.unit} ${r.selected_frequency}${target}`);

@@ -26,6 +26,8 @@ interface Props {
     onClose: () => void;
     /** Option 1, for the "why ranked lower" comparison. Omit for option 1 itself. */
     leader?: ScoredRegimen;
+    /** Foundational ranking mode applied: the comparison explains the order accordingly. */
+    foundationalOrder?: boolean;
     rank?: number;
 }
 
@@ -38,7 +40,7 @@ const guidelinePhenotype = (regimen: ScoredRegimen): Phenotype => {
 
 const COMPLETENESS_SUBTARGET_CREDIT_PCT = Math.round(COMPLETENESS_SUBTARGET_CREDIT * 100);
 
-export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onClose, leader, rank = 1 }) => {
+export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onClose, leader, rank = 1, foundationalOrder = false }) => {
     const p = regimen.projected_patient;
     const { openEvidence } = useEvidenceLink();
     const title = domain === 'overall' ? 'Overall' : DOMAIN_LABELS[domain];
@@ -339,7 +341,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 return (
                     <>
                         <ScoreLedger breakdown={regimen.score_breakdown} onEvidence={(term) => { onClose(); openEvidence(term); }} />
-                        {leader && leader !== regimen && <ScoreComparisonDetail regimen={regimen} leader={leader} rank={rank} />}
+                        {leader && leader !== regimen && <ScoreComparisonDetail regimen={regimen} leader={leader} rank={rank} foundationalOrder={foundationalOrder} />}
                     </>
                 );
 

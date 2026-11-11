@@ -128,6 +128,10 @@ export function topDeltas(deltas: ScoreDelta[], n: number): { lower: ScoreDelta[
 export const TIE_RULE_TEXT =
     'When two options show the same whole-number score, the one covering more of the indicated therapy is listed first; if that is also equal, the one with the higher unrounded score; then the cheaper one.';
 
+/** Shown beside the option-versus-option comparison when the foundational ranking mode is applied. */
+export const FOUNDATIONAL_ORDER_NOTE =
+    'Ranking approach: Prioritize foundational therapy. Options are ordered by how much of the four foundational therapies they cover (after setting aside any that push blood pressure, heart rate or potassium into a severe range), and only then by score. An option can score higher and still be listed lower. The score itself is the same as under Balanced.';
+
 /** One sentence on how a tie against the leader was settled, or null when the displayed scores differ. */
 export function tieSentence(self: ScoredRegimen, leader: ScoredRegimen, leaderRank: number): string | null {
     if (self.overall_score !== leader.overall_score) return null;
