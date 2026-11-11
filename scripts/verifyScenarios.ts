@@ -126,7 +126,8 @@ const ASSERTION_TITLE_MARKERS = [
     'Rate-Source',
     'Adjunct-Source',
     'Diuretic-Source',
-    'Final-Gaps'
+    'Final-Gaps',
+    'Lab-Prereq'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -1632,11 +1633,14 @@ async function runVerification() {
                 const raasMraRegimens = scoredRegimens.filter(r =>
                     r.regimen.some(m => RAAS_CLASSES.has(m.med.drug_class) || m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA')
                 );
-                const newRaasMra = raasMraRegimens.filter(r =>
-                    r.warnings.some(w => w.includes('POTASSIUM UNKNOWN'))
-                );
-                if (raasMraRegimens.length > 0 && newRaasMra.length === 0) {
-                    failures.push('Missing potassium: RAAS/MRA-containing regimen lacks POTASSIUM UNKNOWN pre-initiation warning');
+                // Since the 2026-11-11 laboratory prerequisite (E16) a blank potassium withholds RAAS/MRA starts entirely
+                // (the old "POTASSIUM UNKNOWN" -12 caution was removed as unreachable): none may be displayed.
+                if (raasMraRegimens.length > 0) {
+                    failures.push('Missing potassium: a RAAS/MRA-containing regimen was displayed (rule E16 should withhold RAAS/MRA starts)');
+                    scenarioPassed = false;
+                }
+                if (!excludedMedications.some(e => e.rule_id === 'E16')) {
+                    failures.push('Missing potassium: no E16 (laboratory prerequisite) exclusion');
                     scenarioPassed = false;
                 }
             }
@@ -2960,6 +2964,67 @@ async function runVerification() {
                     };
                     if (pulseAfter('Sinus') !== 90) fail('Digoxin lowers heart rate in sinus rhythm in the model (credited only in AFib)');
                     if (!(pulseAfter('AFib') < 90)) fail('Digoxin does not lower heart rate in AFib in the model');
+                }
+            }
+
+            // ===== Laboratory prerequisite (E16): potassium and renal function required before RAAS/MRA new starts / increases =====
+            if (scenario.title.includes('Lab-Prereq')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const P = scenario.patient;
+                const isRaasMra = (c: string) => RAAS_CLASSES.has(c) || c === 'MRA' || c === 'nsMRA';
+                const labsBlank = t.includes('Blank');
+                const e16 = excludedMedications.filter(e => e.rule_id === 'E16');
+                const allMods = scoredRegimens.flatMap(r => r.modification_set?.modifications ?? []);
+                const hasLabAlert = clinicalAlerts.some(a => a.startsWith('LABS REQUIRED'));
+                const classesOffered = new Set(scoredRegimens.flatMap(r => r.regimen.map(x => x.med.drug_class)));
+                if (scoredRegimens.length === 0) fail('No regimen displayed');
+                if (!labsBlank) {
+                    if (e16.length > 0) fail('E16 fired with both labs present');
+                    if (hasLabAlert) fail('LABS REQUIRED alert shown with both labs present');
+                    if (!allMods.some(m => (m.action === 'titrate_up') && m.target && isRaasMra(m.target.med.drug_class)) &&
+                        !allMods.some(m => (m.action === 'add' || m.action === 'swap') && m.target && isRaasMra(m.target.med.drug_class))) {
+                        fail('With both labs present the engine offered no RAAS/MRA intensification (expected unchanged behavior)');
+                    }
+                } else {
+                    if (!hasLabAlert) fail('No LABS REQUIRED alert with a blank laboratory prerequisite');
+                    if (clinicalAlerts.filter(a => a.startsWith('LABS REQUIRED')).length !== 1) fail('LABS REQUIRED alert must appear exactly once');
+                    // No RAAS/MRA add, swap-to or increase in ANY displayed regimen.
+                    const bad = allMods.filter(m => (m.action === 'add' || m.action === 'swap' || m.action === 'titrate_up') && m.target && isRaasMra(m.target.med.drug_class));
+                    if (bad.length > 0) fail(`RAAS/MRA intensification displayed with blank labs: ${bad.map(m => m.summary).join('; ')}`);
+                    // Every formulary RAAS/MRA drug the patient is not on is withheld, by E16 (or E12/E13/E14 for a more specific reason).
+                    const currentNames = new Set((P.current_regimen ?? []).map(r => r.med.name));
+                    for (const m of MEDICATION_FORMULARY.filter(x => isRaasMra(x.drug_class) && !currentNames.has(x.name))) {
+                        const ex = excludedMedications.find(e => e.name === m.name);
+                        if (!ex) fail(`${m.name} (new RAAS/MRA start) was not withheld with blank labs`);
+                        else if (!['E12', 'E13', 'E14', 'E16'].includes(ex.rule_id ?? '')) fail(`${m.name} withheld by unexpected rule ${ex.rule_id}`);
+                    }
+                    if (e16.length === 0) fail('No E16 exclusion with blank labs');
+                    for (const e of e16) {
+                        if (!(e.why && e.why.length > 0)) fail(`E16 exclusion for ${e.name} has no details line`);
+                        const wantK = P.potassium === 0, wantR = P.egfr === 0;
+                        if (wantK && !/potassium/.test(e.reason)) fail('E16 reason does not name potassium');
+                        if (wantR && !/renal/.test(e.reason)) fail('E16 reason does not name renal function');
+                        if (!wantK && /potassium/.test(e.reason)) fail('E16 reason names potassium although it is entered');
+                    }
+                    // Other classes stay available: a beta-blocker or SGLT2i remains in the displayed plans for naive patients.
+                    if (t.includes('Naive')) {
+                        if (P.egfr === 0) {
+                            // Renal-gated SGLT2i new starts are withheld by the existing E12 (unchanged), never relabeled E16.
+                            const sg = excludedMedications.filter(e => e.drug_class === 'SGLT2i');
+                            if (sg.some(e => e.rule_id === 'E16')) fail('An SGLT2 inhibitor was withheld by E16 (not in scope)');
+                            if (sg.length > 0 && !sg.every(e => e.rule_id === 'E12')) fail('Renal-gated SGLT2i start under blank eGFR no longer reports E12');
+                        } else if (!classesOffered.has('SGLT2i')) fail('SGLT2 inhibitor not offered for a treatment-naive patient with blank potassium (only RAAS/MRA should be withheld)');
+                        if (!classesOffered.has('Beta Blocker')) fail('Beta-blocker not offered for a treatment-naive patient with blank labs');
+                    }
+                    if (t.includes('Naive') && classesOffered.size > 0 && [...classesOffered].some(c => isRaasMra(c))) fail('A treatment-naive blank-lab plan contains a RAAS/MRA drug');
+                    if (t.includes('Lisinopril')) {
+                        // Lisinopril is kept (never removed or swapped out), not up-titrated, and no ARNI swap.
+                        if (allMods.some(m => (m.action === 'remove' || m.action === 'swap') && m.source?.med.name === 'Lisinopril')) fail('Lisinopril removed/swapped because a lab is blank');
+                        if (!scoredRegimens.every(r => r.regimen.some(x => x.med.name === 'Lisinopril' && Number(x.dose.strength) === 10))) fail('Not every displayed regimen keeps lisinopril 10 mg');
+                        if (classesOffered.has('ARNI')) fail('ARNI offered with blank labs');
+                        if (excludedMedications.some(e => e.name === 'Lisinopril')) fail('Lisinopril (current drug) is listed as excluded');
+                    }
                 }
             }
 

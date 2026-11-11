@@ -24,6 +24,8 @@ import {
     deriveIntolerancePolicy, currentMedIntoleranceReason, isRenalOnlyContraindication, MRA_POOL_CLASSES,
     type IntolerancePolicy,
 } from './intolerance';
+import { RAAS_CLASSES } from './registry';
+import { valueUnknown } from '../clinicalPredicates';
 import { drugFacts } from './drugFacts';
 import { contraindicationReasons } from './contraindications';
 import { MRA_START_K_BINDER_ABOVE } from './thresholds';
@@ -99,6 +101,14 @@ export function buildEligibilityContext(patient: Patient, renalDataUnknown: bool
         currentHasSteroidalMRA: (patient.current_regimen || []).some(r => r.med.drug_class === 'MRA' && isStayingOnRegimen(r)),
         currentHasNsMRA: (patient.current_regimen || []).some(r => r.med.drug_class === 'nsMRA' && isStayingOnRegimen(r)),
     };
+}
+
+/** Names of the basic-metabolic-panel values that are blank (not entered), for E16 text. Empty when both are present. */
+export function blankLabNames(ctx: Pick<EligibilityContext, 'patient' | 'renalDataUnknown'>): string[] {
+    const names: string[] = [];
+    if (valueUnknown(ctx.patient.potassium)) names.push('potassium');
+    if (ctx.renalDataUnknown) names.push('renal function (eGFR/creatinine)');
+    return names;
 }
 
 export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
@@ -211,6 +221,21 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             ? 'MRA start above potassium 5.0 needs a potassium binder, and none can be offered' : null,
         details: (ctx) => [
             `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above the 5.0 start threshold; the tool only starts an MRA at 5.0-5.5 together with a binder, and no binder is available for this patient`,
+        ],
+    },
+    {
+        id: 'E16', name: 'Potassium and renal function required',
+        summary: 'A NEW ACE inhibitor, ARB, ARNI or MRA is not started while potassium or renal function is blank; obtain a basic metabolic panel first. A drug the patient already takes is not affected here (dose increases are held at the candidate level).',
+        // Physician-owner decision 2026-11-11: a current potassium and renal function are required before intensifying
+        // RAAS or MRA therapy where clinically appropriate. Engine policy: no freshness window and no new numeric
+        // threshold; "blank" is the existing not-entered sentinel. Placed LAST so a real contraindication (E13/E14)
+        // and the renal-gated start (E12) keep their own labels; E16 covers every other RAAS/MRA new start.
+        evaluate: (ctx, med) => (RAAS_CLASSES.has(med.drug_class) || MRA_POOL_CLASSES.has(med.drug_class))
+            && blankLabNames(ctx).length > 0
+            && !(ctx.patient.current_regimen ?? []).some(r => r.med.name === med.name)
+            ? `Laboratory prerequisite — ${blankLabNames(ctx).join(' and ')} not entered; obtain a BMP before starting this drug` : null,
+        details: (ctx, med) => [
+            `${blankLabNames(ctx).join(' and ')} ${blankLabNames(ctx).length > 1 ? 'are' : 'is'} blank (not entered): a new ${med.drug_class} start needs a current potassium and renal function — obtain a BMP first`,
         ],
     },
 ];

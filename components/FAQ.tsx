@@ -159,8 +159,7 @@ const adjustmentRows: { name: string; effect: string }[] = [
     { name: `Projected heart rate below ${SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.threshold}`, effect: `${signedPts(SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.points)} points.` },
     { name: `Projected potassium above ${SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.threshold}`, effect: `${signedPts(SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.points)} points.` },
     { name: 'Unresolved safety warnings', effect: `${signedPts(SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.perUnit)} points for each warning that reflects real residual patient risk. Procedural reminders do not count.` },
-    { name: 'Potassium not entered', effect: `${signedPts(SCORE_ADJUSTMENTS.UNKNOWN_POTASSIUM.points)} points when the option starts or increases a RAAS inhibitor or MRA.` },
-    { name: 'Kidney function not entered', effect: `${signedPts(SCORE_ADJUSTMENTS.UNKNOWN_RENAL.points)} points when the option starts or increases a RAAS inhibitor, MRA or SGLT2 inhibitor.` },
+    { name: 'Kidney function not entered', effect: `${signedPts(SCORE_ADJUSTMENTS.UNKNOWN_RENAL.points)} points when the option starts or increases an SGLT2 inhibitor.` },
     { name: 'Low-output state', effect: `The displayed score is capped at ${SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.max}.` },
 ];
 

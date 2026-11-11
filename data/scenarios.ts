@@ -3260,6 +3260,31 @@ export const SCENARIOS: TestScenario[] = [
                 current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
         ];
     })(),
+
+    // ===== Laboratory prerequisite (rule E16, 2026-11-11 physician-owner decision): potassium and renal function required before RAAS/MRA new starts and dose increases =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 62, sex: 'Male' as const, sbp: 126, dbp: 78, pulse: 74, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 62, nt_pro_bnp: 1400, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 70, creatinine: 1.1, bun: 18, potassium: 4.4,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            current_regimen: [] as RegimenMed[],
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const onLisinopril = buildCurrentRegimen([{ name: 'Lisinopril', strength: 10, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]);
+        return [
+            { title: 'Lab-Prereq Naive HFrEF Blank Potassium', patient: { ...base, potassium: 0 } },
+            { title: 'Lab-Prereq Lisinopril 10 mg Blank Potassium', patient: { ...base, potassium: 0, current_regimen: onLisinopril } },
+            { title: 'Lab-Prereq Naive HFrEF Blank Renal', patient: { ...base, egfr: 0, creatinine: 0 } },
+            { title: 'Lab-Prereq Lisinopril 10 mg Blank Renal', patient: { ...base, egfr: 0, creatinine: 0, current_regimen: onLisinopril } },
+            { title: 'Lab-Prereq Both Labs Present Unchanged', patient: { ...base, current_regimen: onLisinopril } },
+        ];
+    })(),
 ];
 
 // The single clonePatient implementation lives in the engine (services/simulationService.ts)

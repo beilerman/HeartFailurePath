@@ -38,10 +38,8 @@ export function describeAdjustment(a: ScoreBreakdownAdjustment): { title: string
                 lines: warnings,
             };
         }
-        case T.UNKNOWN_POTASSIUM.code:
-            return { title: 'Safety deduction: potassium not entered while starting or increasing a RAAS inhibitor or MRA', lines: [] };
         case T.UNKNOWN_RENAL.code:
-            return { title: 'Safety deduction: kidney function not entered while starting or increasing a RAAS inhibitor, MRA or SGLT2 inhibitor', lines: [] };
+            return { title: 'Safety deduction: kidney function not entered while starting or increasing an SGLT2 inhibitor', lines: [] };
         default:
             return { title: a.label, lines: a.detail ? [a.detail] : [] };
     }

@@ -13,7 +13,7 @@ import {
 } from './scoreModel';
 import { drugFacts } from './drugFacts';
 import { ivIronCreditTier } from '../clinicalPredicates';
-import { RAAS_CLASSES, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES } from './registry';
+import { RAAS_CLASSES, MRA_POOL_CLASSES, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES } from './registry';
 import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, isTargetDoseForPatient, restrictToStartTiers } from './regimenUtils';
 import { calculateAdherenceScore, calculateCostScore, calculateFunctionalScore, calculateGuidelineConcordanceScore, calculateNeurohormonalScore, calculateStructureScore, calculateVolumeScore, classifyPhenotype, describeConcordance, Phenotype } from './domains';
 import { simulateModificationEffect } from './effects';
@@ -380,35 +380,22 @@ export function aggregateScore(
     );
     if (dangerousWarnings.length > 0) addAdjustment(SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS, dangerousWarnings.length * SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.perUnit, dangerousWarnings.join(' | '));
 
-    // Unknown baseline potassium: the projected-K+ hyperkalemia gate above is meaningless
-    // when K+ was never entered (it computes from a 0 baseline and always looks "safe").
-    // For any RAAS/MRA initiation or up-titration, apply an explicit caution penalty and
-    // a mandatory pre-initiation check — never let blank data clear the gate. (Placed after
-    // the dangerousWarnings penalty so the added warning is not double-counted.)
-    if (dataAudit.unknownPotassium) {
-        const initiatesRaasMra = activeModSet.modifications.some(m =>
-            (m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap') &&
-            m.target && (RAAS_CLASSES.has(m.target.med.drug_class) || m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
-        );
-        if (initiatesRaasMra) {
-            addAdjustment(SCORE_ADJUSTMENTS.UNKNOWN_POTASSIUM, SCORE_ADJUSTMENTS.UNKNOWN_POTASSIUM.points);
-            sim.warnings.push('POTASSIUM UNKNOWN: Baseline serum potassium was not entered. Obtain a BMP and confirm K+ ≤ 5.0 before initiating or up-titrating this RAAS inhibitor / MRA.');
-        }
-    }
+    // Unknown baseline potassium: a RAAS/MRA start or dose increase can no longer reach this point with the lab
+    // blank - eligibility rule E16 withholds new starts and scoreCandidates drops dose increases (2026-11-11
+    // physician-owner decision), so the old -12 caution (UNKNOWN_POTASSIUM) was removed as unreachable.
 
-    // Unknown renal function: same pattern as unknown potassium. Renal-gated current meds
-    // are retained (not force-removed on blank data) and renal-gated new starts are withheld
-    // with a data-required reason — but any candidate that UP-TITRATES a retained renal-gated
-    // class must carry an explicit caution and ranking penalty until a BMP is obtained.
+    // Unknown renal function: RAAS/MRA intensification is dropped before scoring (E16 + scoreCandidates), so only
+    // SGLT2i remains reachable here. Renal-gated current meds are retained (not force-removed on blank data) and
+    // renal-gated new starts are withheld (E12) - but a candidate that adds or up-titrates an SGLT2i must carry an
+    // explicit caution and ranking penalty until a BMP is obtained.
     if (dataAudit.unknownRenal) {
         const intensifiesRenalGated = activeModSet.modifications.some(m =>
             (m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap') &&
-            m.target && (RAAS_CLASSES.has(m.target.med.drug_class) || m.target.med.drug_class === 'MRA'
-                || m.target.med.drug_class === 'nsMRA' || m.target.med.drug_class === 'SGLT2i')
+            m.target && m.target.med.drug_class === 'SGLT2i'
         );
         if (intensifiesRenalGated) {
             addAdjustment(SCORE_ADJUSTMENTS.UNKNOWN_RENAL, SCORE_ADJUSTMENTS.UNKNOWN_RENAL.points);
-            sim.warnings.push('RENAL FUNCTION UNKNOWN: eGFR/creatinine was not entered. Obtain a BMP before initiating or up-titrating RAAS / MRA / SGLT2i therapy — renal dosing and safety cannot be assessed.');
+            sim.warnings.push('RENAL FUNCTION UNKNOWN: eGFR/creatinine was not entered. Obtain a BMP before initiating or up-titrating SGLT2i therapy — renal dosing and safety cannot be assessed.');
         }
     }
 
@@ -437,12 +424,31 @@ export function aggregateScore(
     return { overall: finalOverall, raw: overall, breakdown: scoreBreakdown, normalizedSFBonus, gdmtCompleteness };
 }
 
+/**
+ * True when the candidate adds, swaps to, or up-titrates an ACEi/ARB/ARNI, MRA or nsMRA. Dose reductions,
+ * removals and keeps do not count.
+ */
+export function intensifiesRaasOrMra(modSet: ModificationSet): boolean {
+    return modSet.modifications.some(m =>
+        (m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap') &&
+        m.target && (RAAS_CLASSES.has(m.target.med.drug_class) || MRA_POOL_CLASSES.has(m.target.med.drug_class)));
+}
+
+/** Potassium or renal function is blank: RAAS/MRA intensification is withheld (rule E16, candidate level). */
+export function labPrerequisiteBlank(dataAudit: CriticalDataAudit): boolean {
+    return dataAudit.unknownPotassium || dataAudit.unknownRenal;
+}
+
 /** Score every candidate; candidates dropped by the volume-depletion gate or the new-class cap are skipped. */
 export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringContext): ScoredRegimen[] {
     const { patient, isVolumeDepleted, hasDiureticInCurrent, maxNewPerVisit } = ctx;
     const results: ScoredRegimen[] = [];
 
     candidateSets.forEach(modSet => {
+        // Laboratory prerequisite (engine policy, physician-owner decision 2026-11-11): with potassium or renal
+        // function blank, any candidate that adds, swaps to or up-titrates a RAAS inhibitor / MRA is dropped.
+        if (labPrerequisiteBlank(ctx.dataAudit) && intensifiesRaasOrMra(modSet)) return;
+
         const requiresDiureticFirst = isVolumeDepleted && hasDiureticInCurrent;
         if (requiresDiureticFirst) {
             const hasUnsafeIntensification = hasRelevantIntensification(modSet, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES);

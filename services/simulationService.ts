@@ -3,7 +3,7 @@ import { runEligibilityStage } from './engine/eligibility';
 import { getDoseTiers, clonePatient } from './engine/regimenUtils';
 import { auditInputs, raiseClinicalAlerts, checkSafetyHardStops } from './engine/gates';
 import { analyzeCurrentRegimen, generateCandidateModifications } from './engine/candidates';
-import { buildScoringContext, scoreCandidates } from './engine/scoring';
+import { buildScoringContext, scoreCandidates, intensifiesRaasOrMra, labPrerequisiteBlank } from './engine/scoring';
 import { selectDisplayPicks } from './engine/selection';
 import { buildEligibleAdjuncts, assembleOutput } from './engine/explain';
 
@@ -78,6 +78,13 @@ export function generateAndScoreModifications(
     // silently absent just because the composite score favored other changes.
     const eligibleAdjuncts = buildEligibleAdjuncts(analysis.addableAdjuncts);
     const candidateSets = generateCandidateModifications(analysis, patient);
+
+    // Laboratory prerequisite (rule E16 + candidate drop): say once, not per candidate, that RAAS/MRA starts and
+    // dose increases are withheld because potassium or renal function is blank.
+    if (labPrerequisiteBlank(dataAudit) &&
+        (excludedMeds.some(m => m.rule_id === 'E16') || candidateSets.some(intensifiesRaasOrMra))) {
+        clinicalAlerts.push('LABS REQUIRED: potassium/renal function not entered — RAAS inhibitor and MRA starts and dose increases are withheld until a basic metabolic panel is available.');
+    }
 
     // 6. Score: rescue appends -> simulate -> 8 domain scores -> weights + named adjustments -> ScoredRegimen.
     const scoringContext = buildScoringContext(patient, prices, intolerancePolicy, dataAudit, formulary, medTiers, analysis, flags);

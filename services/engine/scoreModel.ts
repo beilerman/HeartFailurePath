@@ -198,14 +198,9 @@ export const SCORE_ADJUSTMENTS = {
         label: 'Safety warnings (per warning)',
         perUnit: -8,
     },
-    UNKNOWN_POTASSIUM: {
-        code: 'UNKNOWN_POTASSIUM',
-        label: 'Unknown baseline potassium with RAAS/MRA initiation or up-titration',
-        points: -12,
-    },
     UNKNOWN_RENAL: {
         code: 'UNKNOWN_RENAL',
-        label: 'Unknown renal function with RAAS/MRA/SGLT2i initiation or up-titration',
+        label: 'Unknown renal function with SGLT2i initiation or up-titration',
         points: -12,
     },
     SCORE_CLAMP: {
