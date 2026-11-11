@@ -282,8 +282,9 @@ async function runVerification() {
             for (let i = 0; i < scoredRegimens.length && scenarioPassed; i++) {
                 for (let j = i + 1; j < scoredRegimens.length; j++) {
                     const a = scoredRegimens[i], b = scoredRegimens[j];
-                    // Ranking is raw_score then cost, so non-inferior == raw_score at least as high.
-                    const bNonInferior = (b.raw_score ?? 0) >= (a.raw_score ?? 0);
+                    const bNonInferior = b.overall_score >= a.overall_score
+                        && (b.gdmt_completeness ?? 0) >= (a.gdmt_completeness ?? 0)
+                        && (b.raw_score ?? 0) >= (a.raw_score ?? 0);
                     if (bNonInferior && b.cost < a.cost) {
                         failures.push(`Cost-inefficient ranking: pick #${j + 1} ($${b.cost}) is clinically >= pick #${i + 1} ($${a.cost}) but ranked below it`);
                         scenarioPassed = false;

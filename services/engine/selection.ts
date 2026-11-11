@@ -17,15 +17,16 @@ export const DISPLAY_FLOORS = {
     minProjectedPulse: 45,       // projected HR < 45 bpm is hidden
 } as const;
 
-// 6. Affordability filter + distinct picks.
-// Ranking is the score a clinician can read: the UNROUNDED raw_score (higher first), then cost
-// (cheaper first). There is no completeness or rounded-score key - completeness is already one of
-// the eight weighted domains, and the score is no longer clamped at 100 in normal use, so strong
-// regimens do not pile up on a tie. Cost is the final tiebreaker only: it breaks ties between
-// regimens that are clinically indistinguishable down to the raw score (recommending the cheaper
-// one is the cost-effective choice); cost is also already in the cost domain and the affordability
-// filter.
+// Ranking rule (stated to the clinician in the FAQ and score ledger):
+//   1. Higher displayed score first.
+//   2. Same displayed score (the same whole number): the regimen covering more of the indicated
+//      therapy first. A fraction-of-a-point difference must not drop a guideline pillar.
+//   3. Still tied: higher unrounded score, then the cheaper regimen.
+// Completeness is also one of the eight weighted domains; here it only orders regimens the
+// clinician sees as equal.
 export const byScoreThenCost = (a: ScoredRegimen, b: ScoredRegimen) =>
+    b.overall_score - a.overall_score ||
+    (b.gdmt_completeness ?? 0) - (a.gdmt_completeness ?? 0) ||
     (b.raw_score ?? 0) - (a.raw_score ?? 0) ||
     a.cost - b.cost;
 
