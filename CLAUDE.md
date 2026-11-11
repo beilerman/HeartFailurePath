@@ -18,7 +18,7 @@ npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone QA, not in CI)
-npm run golden           # golden master: 315 full engine outputs must be byte-identical
+npm run golden           # golden master: every scenario x 3 insurance tiers (705 runs) must be byte-identical
 npm run gate             # typecheck + golden + verify + all three audits (full pre-release gate)
 npm run ci               # typecheck + build + golden + verify
 npm run preview          # preview production build
@@ -273,9 +273,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — currently `Passed: 248`):
+Current regression scope (the harness's printed count is authoritative — on 2026-11-10 `Passed: 248`):
 
-- 105 clinical scenarios + 10 structural invariants (every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why)
+- 235 clinical scenarios + 13 structural invariants (every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no MRA start above potassium 5.0 without a binder; no new start above the declared starting dose; no regimen above a declared maximum daily dose)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
@@ -296,6 +296,33 @@ Read `docs/scoring-architecture.md` before changing the engine. Rules that keep 
 - Drug-specific knowledge goes on the formulary entry (`facts`, hooks) and is read with `drugFacts(med)`. A drug-name string literal in engine code fails verify.
 - Import engine symbols from `services/simulationService` (the facade) outside `services/engine/`; inside it, never import the facade.
 - `npm run golden` must stay byte-identical for a refactor. Run `npm run golden:update` only for an intended clinical change, in its own commit explaining why. New explanation-only output fields are listed in `ADDITIVE_KEYS` in `scripts/goldenMaster.ts`.
+
+## Medication Modeling (source-verified 2026-11-10)
+
+`docs/medication-review-2026-11-10/` holds the review of all formulary drugs, the source
+verification (`verified-*.md`, with URLs) and the measured effect of each correction
+(`changes-*.txt`). `docs/evidence-matrix.md` maps each rule to its source. Rules that came out of it:
+
+- **Starting versus continuing.** A threshold that blocks a NEW start must not remove a drug the
+  patient already takes. Continuation rules are data on the entry: `facts.k_continuation` (MRAs:
+  reduce one step at potassium 5.5-5.9, withhold at 6.0), `facts.hr_continuation` (ivabradine),
+  beta-blockers reduce one step below heart rate 55 and are removed only for high-grade AV block,
+  sick sinus syndrome without a pacemaker, or bradycardia at the lowest dose.
+- **New starts use the label starting dose.** Declare `start_dose_for(patient)` (a ceiling) and, when
+  the label gives one exact start, `facts.start_dose_exact`. Higher tiers are reached by titration.
+  `facts.titrate_one_step` forbids skipping tiers (GLP-1 drugs).
+- **Daily dose.** Loop effects, the high-dose alert and `facts.max_daily_dose` use total daily dose
+  (`dailyDose` in `regimenUtils.ts`), never the per-dose strength.
+- **Effects are treatment effects.** Use the placebo-adjusted trial difference, not the active-arm
+  change (the GLP-1 quality-of-life values were corrected for this).
+- **An MRA is not started above potassium 5.0 unless a binder is projected to hold potassium within
+  3.5-5.3**; otherwise the candidate is dropped. Patiromer is the preferred binder in heart failure
+  (Lokelma carries a sodium load; automatic rescue is capped at 10 g).
+- **Furoscix is a short-course add-on** beside an oral loop, never a standing replacement.
+- **Sourced versus policy.** A number with no primary source is marked "engine policy" or
+  "assumption" in its code comment and in the evidence matrix. Do not present policy as evidence.
+- Unverified findings were NOT changed. They are listed for physician review in
+  `docs/medication-review-2026-11-10/README.md`.
 
 ## Development Rules of Thumb
 

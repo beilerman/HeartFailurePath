@@ -1,4 +1,94 @@
-# Medication model review — 2026-11-10
+# Medication model review and corrections — 2026-11-10
+
+All 32 formulary drugs were reviewed at every dose tier, the findings were checked against primary
+sources, and the confirmed ones were corrected in the engine.
+
+## Outcome
+
+| Step | Result |
+|---|---|
+| Review (from memory) | 7 high, 48 medium, about 83 low findings |
+| Source verification | 91 confirmed, 55 partly confirmed, 4 refuted, 32 not verified |
+| Corrections | Confirmed and partly confirmed findings implemented; refuted and unverified ones left unchanged |
+| Tests | 235 scenarios (130 added), 13 structural invariants, three audits, all passing |
+
+Sources that could be opened: FDA labels on DailyMed, trial abstracts (PubMed E-utilities, Europe
+PMC), a full-text mirror of the 2022 guideline for one group. The AHA/ACC and ESC guideline pages
+themselves returned access errors for most verifiers, so guideline-only claims rest on secondary
+copies or were left unverified. Each `verified-*.md` file lists the URL opened for every row.
+
+All seven high findings were confirmed and fixed:
+
+| # | Finding | Now |
+|---|---|---|
+| 1 | Heart rate below 55 removed a beta-blocker already in use | Reduced one dose step with an alert; removed only for high-grade AV block, sick sinus syndrome without a pacemaker, or bradycardia at the lowest dose |
+| 2 | Sacubitril/valsartan could be newly started at 97/103 mg | New starts are 24/26 mg (not on an ACEi/ARB or on a low dose, eGFR below 30, Child-Pugh B) or 49/51 mg; 97/103 mg by titration only |
+| 3 | Bumetanide 4 mg tier, up to 12 mg a day | Tier removed; every loop declares a maximum daily dose, enforced by a test |
+| 4 | Eplerenone and finerenone lacked the strong CYP3A4 inhibitor contraindication | Added, with the inhibitors selectable as outside medications |
+| 5 | Finerenone lacked the adrenal-insufficiency contraindication | Added (also spironolactone and Addison's disease) |
+| 6, 7 | Semaglutide and tirzepatide quality-of-life gains used the active-arm change | Placebo-adjusted values: 7.8 (7.3 with diabetes) and 6.9 |
+
+Found while correcting, and also fixed: an MRA could be started above potassium 5.0 with no binder;
+a binder-enabled MRA start could project a potassium above baseline; carvedilol could be newly
+started at 25 mg; loop effects and alerts ignored dosing frequency.
+
+How many top recommendations each pass changed is recorded in the `changes-*.txt` files.
+
+## Open for physician review
+
+These are judgment calls made during the corrections, numbers that are engine policy rather than
+sourced, and findings left unchanged because no source could be opened.
+
+**Policy numbers (not sourced)**
+- Beta-blockers: reduce below heart rate 55 for metoprolol succinate and bisoprolol (the carvedilol
+  label states 55; the other two labels give no number); no up-titration below 60; no new start below 55.
+- Sacubitril/valsartan "low dose" of a prior ACEi/ARB: at most 10 mg/day enalapril or lisinopril,
+  5 mg ramipril, 75 mg captopril, 160 mg valsartan, 16 mg candesartan, 50 mg losartan.
+- Digoxin in sinus rhythm: LVEF 40 or below, NYHA III-IV, and no pillar left to add or titrate.
+- Ivabradine: starts at 2.5 mg with a conduction defect or amiodarone/digoxin; hypotension
+  contraindication at systolic pressure below 90.
+- Vericiguat: starts at 2.5 mg when systolic pressure is below 110.
+- Loop high-dose alert: furosemide 120, torsemide 60, bumetanide 3 mg a day.
+- Furoscix: four kits per course for pricing; commercial and Medicare copays.
+- Evidence bonus points: A-HeFT 60, GLP-1 40, IV iron 40 (20 at LVEF 41-49), binders 50.
+- IV iron cost amortized over six months.
+
+**Assumptions (interpolated or extended beyond the source)**
+- Patiromer potassium effect: -0.45 at 25.2 g from PEARL-HF; 8.4 g and 16.8 g interpolated.
+- Tirzepatide dose fractions at 2.5, 7.5 and 12.5 mg; the fractions applied to every effect, although
+  only weight is sourced. Semaglutide intermediate doses keep linear scaling.
+- Thiazide add-on credit of 1.1 kg (CLOROTIC, hydrochlorothiazide) applied to chlorthalidone and
+  metolazone, and flat across metolazone doses.
+- Spironolactone continuation rule borrowed from the eplerenone and finerenone labels.
+- Blank eGFR treated as below 30 for the sacubitril/valsartan starting dose.
+
+**Design decisions kept**
+- An MRA may still be started at potassium 5.0-5.5 together with a binder when the projection stays
+  within range. The spironolactone and finerenone labels say 5.0.
+- The undifferentiated "Child-Pugh B/C" option still excludes sacubitril/valsartan and carvedilol;
+  the new "Child-Pugh B confirmed" option allows them with a reduced start or caution.
+- "Best in class" badges remain on sacubitril/valsartan, spironolactone, dapagliflozin and
+  empagliflozin without a verified source for or against.
+
+**Left unchanged because unverified**
+- Efficacy magnitudes for RAAS inhibitors, MRAs, H/ISDN and vericiguat (LVEF, NT-proBNP, quality of life).
+- Spironolactone potassium rise and blood-pressure effect (the review judged both too large).
+- Finerenone quality-of-life credit; iron quality-of-life and NT-proBNP credit.
+- Torsemide 20 mg = furosemide 40 mg equivalence, which the torsemide alert level and Furoscix
+  crediting depend on.
+- Reduced loop response at low eGFR is a dosing note only; no multiplier.
+- Digoxin LVEF credit stays zero although the label states an increase.
+- Several prices (other generics, vericiguat, H/ISDN, dose-based Wegovy cash price).
+
+**Known gaps**
+- Ramipril twice daily is scored on the single-dose strength, so 5 mg twice daily does not count as the
+  10 mg/day target.
+- Lisinopril now has six tiers and the titration sampler skips 10 mg.
+- Loop-to-loop swaps offer non-equivalent starting doses.
+- Restart-after-withhold rules for MRAs and Lokelma's 48-hour correction phase are not modeled.
+- No potassium gate on up-titrating an MRA.
+
+## Original findings (before verification)
 
 Findings only. Nothing in the engine was changed. All 32 formulary drugs were reviewed at every
 dose tier by five reviewers (one per drug group) against labels, pivotal trials and the 2022

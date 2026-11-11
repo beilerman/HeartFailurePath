@@ -147,8 +147,8 @@ Still in engine code: adjunct initiation criteria for ivabradine, digoxin and H/
 
 | Check | Command | Guards |
 |---|---|---|
-| Golden master | `npm run golden` | 315 full engine outputs are byte-identical |
-| Scenarios | `npm run verify` | 105 clinical scenarios plus 10 structural invariants |
+| Golden master | `npm run golden` | Every scenario under three insurance tiers (705 runs) is byte-identical |
+| Scenarios | `npm run verify` | 235 clinical scenarios plus 13 structural invariants |
 | Audits | `npm run audit:hundred`, `audit:mistakes`, `audit:red` | Broad, treatment-error and adversarial sweeps |
 | All of the above | `npm run gate` | |
 
