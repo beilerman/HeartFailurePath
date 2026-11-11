@@ -1,7 +1,7 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
 import { isProjectedSafetyClean } from '../services/engine/selection';
-import { getDoseTiers, dailyDose, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
+import { getDoseTiers, dailyDose, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
 import { isAcutelyDecompensated } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
 import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary } from '../services/engine/candidates';
@@ -3051,6 +3051,27 @@ async function runVerification() {
                         const targeted = m.available_doses.some(d => d.is_target_dose) || !!m.is_target_dose_for;
                         if (multi && targeted && m.facts?.target_daily_dose === undefined) fail(`${m.name} offers more than one frequency and has a target dose but declares no facts.target_daily_dose`);
                     }
+                }
+                if (t.includes('Ramipril 5 mg bid eGFR 40 Exceeds Renal Cap')) {
+                    // The label renal maximum (5 mg/day at eGFR < 45) is a TOTAL DAILY dose: 5 mg twice daily is 10 mg/day.
+                    const hit = renalCapExceeded(rm('Ramipril', 5, 'bid'), P);
+                    if (!hit || hit.basis !== 'daily' || hit.cap !== 5 || hit.amount !== 10) fail('Ramipril 5 mg bid at eGFR 40 is not flagged against the 5 mg/day renal maximum on a total-daily-dose basis');
+                    if (renalCapExceeded(rm('Ramipril', 2.5, 'bid'), P)) fail('Ramipril 2.5 mg bid (5 mg/day) flagged although it is at the cap');
+                    if (renalCapExceeded(rm('Ramipril', 5, 'qd'), P)) fail('Ramipril 5 mg qd flagged although it is at the cap');
+                    if (renalCapExceeded(rm('Ramipril', 10, 'qd'), P) === null) fail('Ramipril 10 mg qd (above the renal cap) is not flagged');
+                    if (effectDose(rm('Ramipril', 5, 'bid')) !== effectDose(rm('Ramipril', 10, 'qd'))) fail('Ramipril 5 mg bid and 10 mg qd (both 10 mg/day) are not evaluated at the same effect dose');
+                    // Every displayed regimen reduces ramipril to at most 5 mg/day, never keeps 5 mg bid, and never raises it.
+                    if (scoredRegimens.length === 0) fail('No regimen displayed');
+                    for (const r of scoredRegimens) {
+                        const ram = r.regimen.find(x => x.med.name === 'Ramipril');
+                        if (ram && dailyDose(ram) > 5) fail(`A displayed regimen keeps ramipril at ${dailyDose(ram)} mg/day above the 5 mg/day renal maximum (${r.modification_set?.modifications.map(m => m.summary).join(' | ')})`);
+                    }
+                    if (!scoredRegimens.some(r => r.modification_set?.modifications.some(m => m.action === 'titrate_down' && m.source?.med.name === 'Ramipril' && /renal maximum/.test(m.summary)))) fail('No displayed regimen reduces ramipril with the renal-maximum reason');
+                    if (upOf('Ramipril').length > 0) fail('Ramipril is offered an increase while above the renal cap');
+                }
+                if (t.includes('Ramipril 2.5 mg bid eGFR 40 At Renal Cap')) {
+                    if (analysis.forcedReduceNames.has('Ramipril')) fail('Ramipril 2.5 mg bid at eGFR 40 (5 mg/day, at the cap) is force-reduced');
+                    if (upOf('Ramipril').some(o => dailyDose(o) > 5)) fail('Ramipril offered an increase above the 5 mg/day renal maximum');
                 }
                 if (t.includes('Lisinopril 5 mg Offers 10 mg Next')) {
                     if (!upOf('Lisinopril').some(o => Number(o.dose.strength) === 10)) fail('Lisinopril 5 mg is not offered 10 mg as the next titration step');

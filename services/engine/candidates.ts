@@ -3,7 +3,7 @@ import { Patient, Medication, RegimenMed, ModificationAction, RegimenModificatio
 import { drugFacts } from './drugFacts';
 import { valueUnknown, hasHistoricalHFrEF, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
-import { adjacentTiers, dailyCapFor, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication } from './intolerance';
 import { regimenSatisfiesPillar } from './domains';
 
@@ -171,11 +171,14 @@ export function analyzeCurrentRegimen(
         const kRule = kContinuationAction(current.med, patient);
         const cap = current.med.interaction_dose_cap?.(patient) ?? null;
         const aboveCap = cap !== null && Number(current.dose.strength) > cap.max_dose;
+        // Arriving ABOVE the renal dose cap: compared with the total daily dose where the entry's cap is a daily maximum (facts.renal_cap_is_daily).
+        const renalCapHit = renalCapExceeded(current, patient);
         // Heart-rate rule (beta-blockers, ivabradine): below facts.hr_continuation.reduce_below the drug drops ONE step
         // (withheld at the lowest dose); below no_uptitration_below it is not up-titrated. Never a removal at a higher dose.
         const hrRule = hrContinuationAction(current.med, patient);
         const reduceReason = (kRule?.action === 'reduce' ? kRule.reason : undefined)
             ?? (aboveCap ? `${cap!.reason}: current dose is above the maximum` : undefined)
+            ?? (renalCapHit ? `eGFR ${patient.egfr}: ${renalCapHit.basis === 'daily' ? 'total daily dose' : 'dose'} ${renalCapHit.amount} ${current.dose.unit} is above the renal maximum of ${renalCapHit.cap} ${current.dose.unit}${renalCapHit.basis === 'daily' ? '/day' : ''}` : undefined)
             ?? (hrRule?.reduce ? hrRule.reduceReason : undefined);
 
         const allTiers = getDoseTiers(current.med, patient);
@@ -225,7 +228,7 @@ export function analyzeCurrentRegimen(
         if (reduceReason !== undefined && !isContraindicated) {
             if (lowerDoses.length > 0) {
                 forcedReduceNames.set(current.med.name, reduceReason);
-                if (hrRule?.reduce && kRule?.action !== 'reduce' && !aboveCap) forcedReduceExactStep.add(current.med.name);
+                if (hrRule?.reduce && kRule?.action !== 'reduce' && !aboveCap && !renalCapHit) forcedReduceExactStep.add(current.med.name);
             } else if (kRule?.action === 'reduce') {
                 // Already at the lowest dose: the label says withhold.
                 kWithholdReasons.set(current.med.name, kRule.reason);

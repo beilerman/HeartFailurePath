@@ -248,6 +248,11 @@ export interface MedFacts {
      */
     target_daily_dose?: number;
     /**
+     * The entry's `renal_adjustment.max_dose` is a maximum TOTAL DAILY dose (ramipril label: 5 mg/day at CrCl < 40), so it is compared with
+     * strength x doses per day. Without it the cap is a per-dose strength (the other entries' caps).
+     */
+    renal_cap_is_daily?: boolean;
+    /**
      * VERIFIED oral furosemide-equivalent mg per mg of this loop (furosemide 1; bumetanide 40, label). A swap between two loops that both
      * declare it lands on the nearest tier at or above the equivalent TOTAL DAILY dose. A loop without it (torsemide: no source opened states
      * an equivalence) keeps the conservative lowest-tier swap, and the summary says the prescriber must convert the dose.

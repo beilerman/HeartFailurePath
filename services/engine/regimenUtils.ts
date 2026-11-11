@@ -1,6 +1,6 @@
 /** Small regimen/patient helpers shared by the candidate, effects and scoring stages. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, MedicationDose, ScoredRegimen, RegimenMed, ModificationSet } from '../../types';
-import { hasUnknownHistoricalHFrEF } from '../clinicalPredicates';
+import { hasUnknownHistoricalHFrEF, valueUnknown } from '../clinicalPredicates';
 import { getMedicationClassGroup, isDiureticClass } from './registry';
 import { drugFacts } from './drugFacts';
 import { LOW_OUTPUT } from './thresholds';
@@ -91,6 +91,20 @@ export function eligibleDoses(med: Medication, patient: Patient): MedicationDose
         return validDoses.slice(0, Math.max(2, Math.ceil(validDoses.length / 2)));
     }
     return validDoses;
+}
+
+/**
+ * Is the dose a patient ARRIVES on above the renal dose cap (renal_adjustment.max_dose)? The cap is compared with the TOTAL DAILY dose
+ * for an entry that declares `facts.renal_cap_is_daily` (ramipril), else with the per-dose strength. Blank renal data (the 0 sentinel,
+ * which would trip every cap) never counts. Returns the cap, the compared amount and the basis, or null.
+ */
+export function renalCapExceeded(r: RegimenMed, patient: Patient): { cap: number; amount: number; basis: 'daily' | 'dose' } | null {
+    if (!r.med.renal_adjustment || valueUnknown(patient.egfr) || valueUnknown(patient.creatinine)) return null;
+    const cap = r.med.renal_adjustment(patient.egfr, patient).max_dose;
+    if (cap === undefined) return null;
+    const daily = drugFacts(r.med).renal_cap_is_daily === true;
+    const amount = daily ? dailyDose(r) : Number(r.dose.strength);
+    return Number.isNaN(amount) || amount <= cap ? null : { cap, amount, basis: daily ? 'daily' : 'dose' };
 }
 
 /** The daily cap (renal / interaction) used to stop a carried frequency from exceeding it; undefined when none. */

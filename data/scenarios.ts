@@ -3248,6 +3248,10 @@ export const SCENARIOS: TestScenario[] = [
         return [
             { title: 'Final-Gaps Ramipril 5 mg bid Counts As Target', patient: { ...base,
                 current_regimen: buildCurrentRegimen([{ name: 'Ramipril', strength: 5, freq: 'bid' }, ...rest]) } },
+            { title: 'Final-Gaps Ramipril 5 mg bid eGFR 40 Exceeds Renal Cap', patient: { ...base, egfr: 40, creatinine: 1.7,
+                current_regimen: buildCurrentRegimen([{ name: 'Ramipril', strength: 5, freq: 'bid' }, ...rest]) } },
+            { title: 'Final-Gaps Ramipril 2.5 mg bid eGFR 40 At Renal Cap', patient: { ...base, egfr: 40, creatinine: 1.7,
+                current_regimen: buildCurrentRegimen([{ name: 'Ramipril', strength: 2.5, freq: 'bid' }, ...rest]) } },
             { title: 'Final-Gaps Lisinopril 5 mg Offers 10 mg Next', patient: { ...base,
                 current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 5, freq: 'qd' }, ...rest]) } },
             { title: 'Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased', patient: { ...base, potassium: 5.2,

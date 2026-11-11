@@ -290,8 +290,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
             low_dose_max_daily_mg: 5,
             // Label HF regimen 5 mg bid = 10 mg/day = the guideline target (2022 Table 14: 10 mg daily). Target is judged on TOTAL DAILY dose.
             target_daily_dose: 10,
+            // The renal cap (5 mg/day at eGFR < 45, 2.5 mg/day below 30) is a TOTAL DAILY dose: 5 mg twice daily is 10 mg/day and exceeds it.
+            renal_cap_is_daily: true,
+            // Effects are evaluated at the TOTAL DAILY dose (5 mg twice daily credits the same as 10 mg once daily).
+            effects_on_daily_dose: true,
             regimen_warnings: [
-                { text: 'Drug note: the ramipril label heart-failure regimen (post-MI) is 2.5 mg bid, then 5 mg bid (10 mg/day, the guideline target). Target-dose credit uses the total daily dose (5 mg twice daily counts as target); effects are still modeled from the per-dose strength, so a twice-daily regimen reads as the single-dose strength.' },
+                { text: 'Drug note: the ramipril label heart-failure regimen (post-MI) is 2.5 mg bid, then 5 mg bid (10 mg/day, the guideline target). Target-dose credit, the renal maximum and the modeled effects all use the total daily dose (5 mg twice daily is 10 mg/day).' },
             ],
         },
         start_dose_for: () => 1.25,
