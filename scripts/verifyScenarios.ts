@@ -1,5 +1,6 @@
 
-import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS } from '../services/simulationService';
+import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
+import { isProjectedSafetyClean } from '../services/engine/selection';
 import { getDoseTiers, dailyDose, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
 import { isAcutelyDecompensated } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
@@ -3352,6 +3353,94 @@ async function runVerification() {
         }
         if (!dirOk) { console.error('  [FAIL] a profile direction check failed'); failed++; }
         else { console.log('  [PASS] cost_first, simplicity_first and outcomes_first move cost, complexity and completeness the stated way.'); passed++; }
+    }
+
+    console.log('Checking structural invariant: the ranking mode changes order only (Balanced default; Prioritize foundational therapy)...');
+    {
+        const violations: string[] = [];
+        const examples: { tag: string; bal: string; fnd: string; balR: ScoredRegimenLike; fndR: ScoredRegimenLike }[] = [];
+        type ScoredRegimenLike = { overall_score: number; gdmt_completeness?: number; cost: number };
+        const label = (r: { regimen: { med: { name: string }; dose: { strength: number | string; unit: string }; selected_frequency: string }[] }) =>
+            r.regimen.map(m => `${m.med.name} ${m.dose.strength}${m.dose.unit} ${m.selected_frequency}`).join(' + ');
+        let runs = 0, applicableRuns = 0, leadChanged = 0, lowerCompletenessLeads = 0;
+        for (const scenario of SCENARIOS) {
+            for (const tier of ['cash', 'commercial', 'medicare'] as const) {
+                const pt = clonePatient(scenario.patient);
+                pt.insurance_tier = tier;
+                const prices = await getDrugPrices(formularyNames, tier);
+                const avail = availableFor(scenario.title);
+                const tag = `"${scenario.title}" [${tier}]`;
+                let def, bal, fnd;
+                try {
+                    def = generateAndScoreModifications(clonePatient(pt), avail, prices);
+                    bal = generateAndScoreModifications({ ...clonePatient(pt), ranking_mode: 'balanced' }, avail, prices);
+                    fnd = generateAndScoreModifications({ ...clonePatient(pt), ranking_mode: 'foundational_first' }, avail, prices);
+                } catch (err) { violations.push(`${tag}: threw: ${(err as Error).message}`); continue; }
+                runs++;
+                // ranking_mode is echoed into projected_patient; everything else must be byte-identical.
+                const noMode = (_k: string, v: unknown) => (_k === 'ranking_mode' ? undefined : v);
+                if (JSON.stringify(def, noMode) !== JSON.stringify(bal, noMode)) violations.push(`${tag}: missing ranking_mode differs from explicit 'balanced'`);
+                for (const k of ['excludedMedications', 'clinicalAlerts', 'gdmtGaps', 'eligibleAdjuncts', 'missingDataNotices'] as const) {
+                    if (JSON.stringify(bal[k]) !== JSON.stringify(fnd[k])) violations.push(`${tag}: ${k} differ between modes`);
+                }
+                if (bal.scoredRegimens.length === 0 && fnd.scoredRegimens.length > 0) violations.push(`${tag}: foundational mode shows regimens although Balanced shows none`);
+                // Scores never change with the mode: a regimen shown in both runs has identical scores.
+                for (const r of fnd.scoredRegimens) {
+                    const m = bal.scoredRegimens.find(x => label(x) === label(r));
+                    if (m && (m.overall_score !== r.overall_score || m.raw_score !== r.raw_score)) violations.push(`${tag}: ${label(r)} scores differ between modes`);
+                }
+                // Over-budget fallback wording (owner decision 2026-11-11): never presented as an implementable plan.
+                for (const r of [...bal.scoredRegimens, ...fnd.scoredRegimens]) {
+                    const w = r.warnings.find(x => x.startsWith('BUDGET EXCEEDED'));
+                    if (w && !(w.includes('nothing fits the stated budget') && w.includes('not as a plan the patient can carry out'))) violations.push(`${tag}: BUDGET EXCEEDED warning lacks the not-implementable wording`);
+                }
+                const phen = classifyPhenotype(pt);
+                const rk = fnd.ranking;
+                // Hard-stop outputs (alerts only) return before selection and carry no ranking info.
+                if (fnd.scoredRegimens.length > 0 && (!rk || rk.mode !== 'foundational_first')) violations.push(`${tag}: ranking info missing/wrong mode`);
+                if (bal.ranking && (bal.ranking.mode !== 'balanced' || bal.ranking.applied || bal.ranking.balanced_lead_differs)) violations.push(`${tag}: balanced ranking info wrong`);
+                if (phen !== 'HFrEF') {
+                    if (JSON.stringify(bal.scoredRegimens, noMode) !== JSON.stringify(fnd.scoredRegimens, noMode)) violations.push(`${tag}: ${phen} picks differ between modes (must be identical)`);
+                    if (rk && (rk.applied || !rk.reason_not_applied)) violations.push(`${tag}: non-applicable phenotype must report applied=false with a reason`);
+                } else {
+                    applicableRuns++;
+                    const b0 = bal.scoredRegimens[0], f0 = fnd.scoredRegimens[0];
+                    // Both leads clean: the foundational lead can never cover less therapy than the balanced lead. (If the balanced
+                    // lead trips a projected-safety adjustment and the foundational lead does not, the safe-first rule legitimately
+                    // allows lower completeness - that case is counted and reported below, not failed.)
+                    if (b0 && f0 && isProjectedSafetyClean(f0) && isProjectedSafetyClean(b0) && (f0.gdmt_completeness ?? 0) < (b0.gdmt_completeness ?? 0) - 1e-12) {
+                        violations.push(`${tag}: foundational lead completeness ${f0.gdmt_completeness} < balanced lead ${b0.gdmt_completeness} although both leads are clean`);
+                    }
+                    if (b0 && f0 && isProjectedSafetyClean(f0) && !isProjectedSafetyClean(b0) && (f0.gdmt_completeness ?? 0) < (b0.gdmt_completeness ?? 0) - 1e-12) lowerCompletenessLeads++;
+                    const differs = !!b0 && !!f0 && label(b0) !== label(f0);
+                    if (differs !== !!rk?.balanced_lead_differs) violations.push(`${tag}: balanced_lead_differs=${rk?.balanced_lead_differs} but leads ${differs ? 'differ' : 'match'}`);
+                    if (differs && !rk?.balanced_lead_summary) violations.push(`${tag}: balanced_lead_differs without a summary`);
+                    if (differs) { leadChanged++; examples.push({ tag, bal: label(b0), fnd: label(f0), balR: b0, fndR: f0 }); }
+                }
+            }
+        }
+        // Source guard: only selection.ts (and the facade re-export) may read the mode, so it cannot reach scoring or eligibility.
+        for (const f of readdirSync(path.join(process.cwd(), 'services', 'engine')).filter(n => n.endsWith('.ts') && n !== 'selection.ts')) {
+            const text = readFileSync(path.join(process.cwd(), 'services', 'engine', f), 'utf8');
+            if (/ranking_mode|resolveRankingMode/.test(text)) violations.push(`services/engine/${f} reads the ranking mode (only selection.ts may)`);
+        }
+        if (violations.length > 0) {
+            violations.slice(0, 20).forEach(m => console.error(`  [FAIL] ${m}`));
+            failed++;
+        } else {
+            console.log(`  [PASS] ${runs} scenario x tier runs: default == balanced; exclusions, alerts, gaps, adjuncts, notices and scores identical across modes; non-HFrEF picks identical.`);
+            passed++;
+        }
+        console.log(`  RANKING MODE EFFECT: foundational_first changes the lead pick in ${leadChanged} of ${applicableRuns} HFrEF/HFimpEF runs (${runs} runs total).`);
+        console.log(`  Foundational lead covers LESS therapy than the balanced lead (balanced lead trips a projected-safety adjustment, foundational lead does not): ${lowerCompletenessLeads} runs.`);
+        const seen = new Set<string>();
+        for (const e of examples) {
+            const title = e.tag.replace(/ \[[a-z]+\]$/, '');
+            if (seen.has(title)) continue;
+            seen.add(title);
+            if (seen.size > 12) break;
+            console.log(`    ${e.tag}\n      Balanced lead:     ${e.bal} [score ${e.balR.overall_score}, completeness ${Math.round((e.balR.gdmt_completeness ?? 0) * 100)}%, $${e.balR.cost}]\n      Foundational lead: ${e.fnd} [score ${e.fndR.overall_score}, completeness ${Math.round((e.fndR.gdmt_completeness ?? 0) * 100)}%, $${e.fndR.cost}]`);
+        }
     }
 
     console.log('Checking structural invariant: every weight profile covers every domain and sums to 100%...');

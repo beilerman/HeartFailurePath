@@ -1,5 +1,5 @@
 /** Display/explanation builders: monitoring plan, qualitative projections, trade-offs, follow-up calendar. Moved verbatim from simulationService.ts (phase 4). */
-import { Patient, Medication, ScoredRegimen, ExcludedMedication, SimulationOutput, RegimenMed, ModificationSet, MonitoringPlanItem, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores } from '../../types';
+import { Patient, Medication, ScoredRegimen, ExcludedMedication, SimulationOutput, RegimenMed, ModificationSet, MonitoringPlanItem, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores, RankingInfo } from '../../types';
 import { valueUnknown, hasHistoricalHFrEF, hasUnknownHistoricalHFrEF, isIronDeficient, ivIronCreditTier } from '../clinicalPredicates';
 import { DISEASE_MODIFYING_CLASSES, DIURETIC_CLASSES, RAAS_CLASSES } from './registry';
 import { hasRelevantIntensification, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
@@ -279,9 +279,10 @@ export function assembleOutput(
         gdmtGaps: string[];
         eligibleAdjuncts: string[];
         missingDataNotices: string[];
+        ranking?: RankingInfo;
     }
 ): SimulationOutput {
-    const { excludedMeds, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices } = parts;
+    const { excludedMeds, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, ranking } = parts;
     const topPick = distinctPicks[0];
 
     // Populate the deferred display-only artifacts for the ≤ 3 picks actually returned.
@@ -335,6 +336,7 @@ export function assembleOutput(
         gdmtGaps,
         eligibleAdjuncts,
         missingDataNotices,
-        followUpCalendar: buildFollowUpCalendar(topPick.modification_set)
+        followUpCalendar: buildFollowUpCalendar(topPick.modification_set),
+        ...(ranking ? { ranking } : {}),
     };
 }

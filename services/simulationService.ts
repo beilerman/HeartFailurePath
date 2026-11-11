@@ -4,7 +4,7 @@ import { getDoseTiers, clonePatient } from './engine/regimenUtils';
 import { auditInputs, raiseClinicalAlerts, checkSafetyHardStops } from './engine/gates';
 import { analyzeCurrentRegimen, generateCandidateModifications } from './engine/candidates';
 import { buildScoringContext, scoreCandidates, intensifiesRaasOrMra, labPrerequisiteBlank } from './engine/scoring';
-import { selectDisplayPicks } from './engine/selection';
+import { selectWithRanking } from './engine/selection';
 import { buildEligibleAdjuncts, assembleOutput } from './engine/explain';
 
 // Public facade: every symbol this module exported before the phase-4 split is re-exported here,
@@ -19,7 +19,7 @@ export {
     STRUCTURE_BLEND_WEIGHTS, DOMAIN_GOALS,
 } from './engine/domains';
 export type { PillarKey, PillarConcordance, Phenotype } from './engine/domains';
-export { DISPLAY_FLOORS } from './engine/selection';
+export { DISPLAY_FLOORS, resolveRankingMode } from './engine/selection';
 export { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_BINDER_ABOVE, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from './engine/thresholds';
 
 /**
@@ -91,9 +91,9 @@ export function generateAndScoreModifications(
     const results = scoreCandidates(candidateSets, scoringContext);
 
     // 7. Rank and select: affordability filter/fallback, display-safety floors, <= 3 distinct picks.
-    const picks = selectDisplayPicks(results, patient, clinicalAlerts);
-    if (picks.length === 0) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [], gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar: [] };
+    const { picks, ranking } = selectWithRanking(results, patient, clinicalAlerts);
+    if (picks.length === 0) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [], gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar: [], ranking };
 
     // 8. Explain: monitoring plan, projections, trade-offs, low-output cap, follow-up calendar.
-    return assembleOutput(patient, picks, flags.lowOutput, { excludedMeds, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices });
+    return assembleOutput(patient, picks, flags.lowOutput, { excludedMeds, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, ranking });
 }

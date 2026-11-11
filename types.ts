@@ -97,6 +97,25 @@ export interface Patient {
     max_new_classes_per_visit: number; // Default 2. Class substitutions/dose changes do not count as new classes.
     /** What matters most to this patient; selects the score weight row only (never safety). Missing/unknown => 'default'. */
     care_priority?: WeightProfileName;
+    /**
+     * How eligible options are ordered. Missing => 'balanced' (the score ranking). 'foundational_first' applies only to
+     * HFrEF/HFimpEF and orders by projected-safety, then therapy completeness, then the balanced ranking; it never changes
+     * scores, eligibility, alerts or gaps.
+     */
+    ranking_mode?: RankingMode;
+}
+
+export type RankingMode = 'balanced' | 'foundational_first';
+
+/** Explanation-only description of the ranking mode used for a run (not part of the golden comparison). */
+export interface RankingInfo {
+    mode: RankingMode;
+    /** True when the mode changed the ordering rule (foundational_first AND HFrEF/HFimpEF). */
+    applied: boolean;
+    reason_not_applied?: string;
+    /** True when Balanced would have led with a different regimen. */
+    balanced_lead_differs: boolean;
+    balanced_lead_summary?: string;
 }
 
 export interface TestScenario {
@@ -362,6 +381,7 @@ export interface SimulationOutput {
     eligibleAdjuncts?: string[];     // criteria-met add-ons (H/ISDN, ivabradine, vericiguat, iron…) even if not in top picks
     missingDataNotices?: string[];   // inputs not entered → dependent inference withheld
     followUpCalendar?: MonitoringPlanItem[]; // STRONG-HF high-intensity follow-up schedule
+    ranking?: RankingInfo;           // which ranking mode was used, and what Balanced would have led with (explanation only)
 }
 
 // --- Delta-from-Current Modification Types ---
