@@ -7,6 +7,7 @@
  *
  * Run: npx tsx scripts/hundredScenarioAudit.ts
  */
+import { withCarePriority } from './carePriorityEnv';
 import { generateAndScoreModifications } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
 import { MEDICATION_FORMULARY } from '../constants';
@@ -438,7 +439,7 @@ async function run() {
     for (const scenario of S) {
         let output: SimulationOutput;
         try {
-            output = generateAndScoreModifications(scenario.patient, available, prices);
+            output = generateAndScoreModifications(withCarePriority(scenario.patient), available, prices);
         } catch (error) {
             failures.push({
                 title: scenario.title,

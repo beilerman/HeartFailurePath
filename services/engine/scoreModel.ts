@@ -61,9 +61,14 @@ export const DOMAIN_GROUPS: readonly { key: string; label: string; domains: read
     { key: 'values', label: 'Patient values', domains: ['cost', 'adherence'] },
 ];
 
-export type WeightProfileName = 'default';
+export type WeightProfileName = 'default' | 'outcomes_first' | 'cost_first' | 'simplicity_first';
 
-/** Add more rows here to support patient-selected profiles later. Only `default` exists today. Each row must sum to 1. */
+/**
+ * Patient-selected weight rows (the clinician records what matters most to this patient). A profile
+ * changes ONLY these eight weights. It never touches eligibility, gates, alerts, candidate
+ * generation, rescue logic, adjustments/penalties, display floors or the affordability filter.
+ * Each row must sum to 1.
+ */
 export const WEIGHT_PROFILES: Record<WeightProfileName, Record<ScoreDomainKey, number>> = {
     default: {
         neurohormonal: 0.15,
@@ -75,13 +80,58 @@ export const WEIGHT_PROFILES: Record<WeightProfileName, Record<ScoreDomainKey, n
         cost: 0.12,
         adherence: 0.07,
     },
+    outcomes_first: {
+        neurohormonal: 0.17,
+        functional: 0.13,
+        volume: 0.13,
+        structure: 0.09,
+        guideline: 0.13,
+        completeness: 0.25,
+        cost: 0.06,
+        adherence: 0.04,
+    },
+    cost_first: {
+        neurohormonal: 0.13,
+        functional: 0.10,
+        volume: 0.10,
+        structure: 0.07,
+        guideline: 0.11,
+        completeness: 0.20,
+        cost: 0.24,
+        adherence: 0.05,
+    },
+    simplicity_first: {
+        neurohormonal: 0.13,
+        functional: 0.10,
+        volume: 0.10,
+        structure: 0.07,
+        guideline: 0.11,
+        completeness: 0.20,
+        cost: 0.10,
+        adherence: 0.19,
+    },
 };
 
 /** Clinician-facing name and one-line description of each weight profile. */
 export const WEIGHT_PROFILE_META: Record<WeightProfileName, { label: string; description: string }> = {
     default: { label: 'Balanced', description: 'Standard weighting of outcomes, guideline therapy, cost and regimen burden.' },
+    outcomes_first: { label: 'Maximize outcomes', description: 'Cost and regimen burden count for less; disease-modifying therapy counts for more.' },
+    cost_first: { label: 'Keep cost low', description: 'Out-of-pocket cost counts double. The budget limit still applies separately.' },
+    simplicity_first: { label: 'Keep the regimen simple', description: 'Pill burden and dosing complexity count for more.' },
 };
+
+/** Profiles in display order (first is the default). */
+export const WEIGHT_PROFILE_NAMES: readonly WeightProfileName[] = ['default', 'outcomes_first', 'cost_first', 'simplicity_first'];
+
 export const DEFAULT_WEIGHT_PROFILE: WeightProfileName = 'default';
+
+/** Resolve a patient's care priority to a profile name; missing or unknown values fall back to 'default'. */
+export function resolveWeightProfile(patient: { care_priority?: string }): WeightProfileName {
+    const v = patient.care_priority;
+    return v !== undefined && Object.prototype.hasOwnProperty.call(WEIGHT_PROFILES, v)
+        ? (v as WeightProfileName)
+        : DEFAULT_WEIGHT_PROFILE;
+}
 export const DOMAIN_WEIGHTS = WEIGHT_PROFILES.default;
 
 export interface ScoreAdjustmentSpec {

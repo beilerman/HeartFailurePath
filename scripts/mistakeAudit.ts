@@ -3,6 +3,7 @@
  * medications already on board. Each scenario declares what the engine SHOULD do; the
  * harness reports deviations. Standalone QA (not part of CI). Run: npx tsx scripts/mistakeAudit.ts
  */
+import { withCarePriority } from './carePriorityEnv';
 import { generateAndScoreModifications } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
 import { MEDICATION_FORMULARY } from '../constants';
@@ -189,7 +190,7 @@ async function run() {
     for (const sc of S) {
         const prices = await getDrugPrices(names, sc.patient.insurance_tier);
         let out: SimulationOutput;
-        try { out = generateAndScoreModifications(sc.patient, available, prices); }
+        try { out = generateAndScoreModifications(withCarePriority(sc.patient), available, prices); }
         catch (err) { problems.push({ title: sc.title, errs: ['THREW: ' + (err as Error).message] }); continue; }
         const errs = sc.expect(out, sc.patient);
         if (errs.length === 0) pass++;

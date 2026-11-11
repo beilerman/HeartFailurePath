@@ -1,4 +1,4 @@
-import type { ScoreBreakdown } from './services/engine/scoreModel';
+import type { ScoreBreakdown, WeightProfileName } from './services/engine/scoreModel';
 export type InsuranceTier = 'cash' | 'commercial' | 'medicare';
 
 export interface ExcludedMedication {
@@ -85,6 +85,8 @@ export interface Patient {
     insurance_tier: InsuranceTier; // 'cash' | 'commercial' | 'medicare'
     complexity_tolerance: number; // 0-10
     max_new_classes_per_visit: number; // Default 2. Class substitutions/dose changes do not count as new classes.
+    /** What matters most to this patient; selects the score weight row only (never safety). Missing/unknown => 'default'. */
+    care_priority?: WeightProfileName;
 }
 
 export interface TestScenario {

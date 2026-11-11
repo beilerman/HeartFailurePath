@@ -7,7 +7,7 @@
  */
 import { Patient, Medication, ScoredRegimen, RegimenMed, RegimenModification, ModificationSet, DomainScores } from '../../types';
 import {
-    DOMAIN_KEYS, DOMAIN_LABELS, DOMAIN_WEIGHTS, DEFAULT_WEIGHT_PROFILE, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS,
+    DOMAIN_KEYS, DOMAIN_LABELS, WEIGHT_PROFILES, resolveWeightProfile, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS,
     ScoreBreakdown, ScoreBreakdownAdjustment, ScoreBreakdownDomainLine, ScoreBreakdownOverride, ScoreDomainKey,
 } from './scoreModel';
 import { drugFacts } from './drugFacts';
@@ -269,15 +269,18 @@ export function aggregateScore(
 ): { overall: number; raw: number; breakdown: ScoreBreakdown; normalizedSFBonus: number; gdmtCompleteness: number } {
     const { dataAudit, isVolumeDepleted } = ctx;
     const p = sim.projectedPatient;
+    // Resolve the patient-selected weight profile once; it affects ONLY the eight domain weights below.
+    const weightProfile = resolveWeightProfile(ctx.patient);
+    const weights = WEIGHT_PROFILES[weightProfile];
 
-    // Weighted sum of the eight domains (weights sum to 100%), from the DOMAIN_WEIGHTS table,
+    // Weighted sum of the eight domains (weights sum to 100%), from the patient's WEIGHT_PROFILES row,
     // accumulated left-to-right in DOMAIN_KEYS order.
     const breakdownDomains: ScoreBreakdownDomainLine[] = DOMAIN_KEYS.map(key => ({
         key,
         label: DOMAIN_LABELS[key],
         score: unroundedDomainScores[key],
-        weight: DOMAIN_WEIGHTS[key],
-        contribution: unroundedDomainScores[key] * DOMAIN_WEIGHTS[key],
+        weight: weights[key],
+        contribution: unroundedDomainScores[key] * weights[key],
         ...(key === 'completeness' && completenessSlots === 0
             ? { detail: 'No achievable indicated therapies for this patient - scored 0' }
             : {}),
@@ -398,7 +401,7 @@ export function aggregateScore(
         });
     }
     const scoreBreakdown: ScoreBreakdown = {
-        weight_profile: DEFAULT_WEIGHT_PROFILE,
+        weight_profile: weightProfile,
         domains: breakdownDomains,
         weighted_subtotal: weightedSubtotal,
         adjustments: breakdownAdjustments,

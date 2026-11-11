@@ -2,6 +2,7 @@ import React from 'react';
 import { BanknotesIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
+import { WEIGHT_PROFILE_NAMES, WEIGHT_PROFILE_META, resolveWeightProfile } from '../../services/engine/scoreModel';
 
 interface SocialSectionProps {
     patientData: Patient;
@@ -27,6 +28,22 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                         <option value="commercial">Commercial Insurance</option>
                         <option value="medicare">Medicare Part D</option>
                     </Select>
+                </div>
+                <div>
+                    <Label htmlFor="care_priority">What matters most to this patient?</Label>
+                    <Select
+                        name="care_priority"
+                        value={resolveWeightProfile(patientData)}
+                        onChange={onChange}
+                        aria-describedby="care_priority-help"
+                    >
+                        {WEIGHT_PROFILE_NAMES.map(name => (
+                            <option key={name} value={name}>{WEIGHT_PROFILE_META[name].label}</option>
+                        ))}
+                    </Select>
+                    <p id="care_priority-help" className="mt-1 text-xs text-slate-400">
+                        {WEIGHT_PROFILE_META[resolveWeightProfile(patientData)].description}
+                    </p>
                 </div>
                 <div>
                     <Label htmlFor="max_affordable_cost">Monthly Med Budget ($)</Label>

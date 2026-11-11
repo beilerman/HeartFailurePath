@@ -6,6 +6,7 @@
  *
  * Run: npx tsx scripts/redTeam.ts
  */
+import { withCarePriority } from './carePriorityEnv';
 import { generateAndScoreModifications } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
 import { INITIAL_PATIENT, clonePatient } from '../data/scenarios';
@@ -37,7 +38,7 @@ async function run() {
     const probe = (name: string, patient: Patient, check: (out: ReturnType<typeof shape>) => Finding[]) => {
         let out;
         try {
-            out = shape(generateAndScoreModifications(patient, allNames, prices));
+            out = shape(generateAndScoreModifications(withCarePriority(patient), allNames, prices));
         } catch (e) {
             findings.push({ probe: name, findings: [{ severity: 'CRITICAL', msg: `ENGINE CRASHED: ${(e as Error).message}` }] });
             return;

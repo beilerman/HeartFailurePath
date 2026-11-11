@@ -74,7 +74,8 @@ export const INITIAL_PATIENT: Patient = {
     cost_sensitivity: 5, // Default medium sensitivity
     insurance_tier: 'commercial',
     complexity_tolerance: 5,
-    max_new_classes_per_visit: 2
+    max_new_classes_per_visit: 2,
+    care_priority: 'default'
 };
 
 export const SCENARIOS: TestScenario[] = [

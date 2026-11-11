@@ -1,10 +1,10 @@
 
-import { generateAndScoreModifications, isTargetDoseForPatient } from '../services/simulationService';
+import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS } from '../services/simulationService';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
-import { SCORE_ADJUSTMENTS, WEIGHT_PROFILES, DOMAIN_KEYS } from '../services/engine/scoreModel';
+import { SCORE_ADJUSTMENTS, WEIGHT_PROFILES, DOMAIN_KEYS, WEIGHT_PROFILE_NAMES, type WeightProfileName } from '../services/engine/scoreModel';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
@@ -2204,6 +2204,111 @@ async function runVerification() {
     } else {
         console.log(`  [PASS] ${breakdownChecked} scored regimens reconcile.`);
         passed++;
+    }
+
+    console.log('Checking structural invariant: patient-selected weight profiles never change safety output...');
+    const profileSafetyViolations: string[] = [];
+    const profileTops: Record<string, Map<string, { label: string; cost: number; complexity: number; completeness: number }>> = {};
+    {
+        const nonDefault = WEIGHT_PROFILE_NAMES.filter(n => n !== 'default');
+        const regimenLabel = (r: { regimen: { med: { name: string }; dose: { strength: number | string; unit: string } }[] }) =>
+            r.regimen.map(m => `${m.med.name} ${m.dose.strength}${m.dose.unit}`).join(' + ');
+        let runs = 0;
+        for (const profile of WEIGHT_PROFILE_NAMES) profileTops[profile] = new Map();
+        for (const scenario of SCENARIOS) {
+            const prices = await getDrugPrices(formularyNames, scenario.patient.insurance_tier);
+            const avail = scenario.title.includes('No BB Available')
+                ? new Set([...availableMedNames].filter(name => !betaBlockerMeds.has(name)))
+                : availableMedNames;
+            const runWith = (profile: WeightProfileName) => {
+                const pt = clonePatient(scenario.patient);
+                pt.care_priority = profile;
+                return generateAndScoreModifications(pt, avail, prices);
+            };
+            const byProfile = {} as Record<WeightProfileName, ReturnType<typeof generateAndScoreModifications>>;
+            try {
+                for (const profile of WEIGHT_PROFILE_NAMES) byProfile[profile] = runWith(profile);
+            } catch (err) {
+                profileSafetyViolations.push(`"${scenario.title}": threw under a profile: ${(err as Error).message}`);
+                continue;
+            }
+            for (const profile of WEIGHT_PROFILE_NAMES) {
+                const top = byProfile[profile].scoredRegimens[0];
+                if (top) profileTops[profile].set(scenario.title, { label: regimenLabel(top), cost: top.cost, complexity: top.complexity, completeness: top.gdmt_completeness ?? 0 });
+            }
+            const base = byProfile.default;
+            for (const profile of nonDefault) {
+                runs++;
+                const out = byProfile[profile];
+                const tag = `"${scenario.title}" [${profile}]`;
+                const same = (k: 'excludedMedications' | 'clinicalAlerts' | 'gdmtGaps' | 'eligibleAdjuncts' | 'missingDataNotices') =>
+                    JSON.stringify(out[k]) === JSON.stringify(base[k]);
+                for (const k of ['excludedMedications', 'clinicalAlerts', 'gdmtGaps', 'eligibleAdjuncts', 'missingDataNotices'] as const) {
+                    if (!same(k)) profileSafetyViolations.push(`${tag}: ${k} differ from the default-profile run`);
+                }
+                if (out.scoredRegimens.length === 0 && base.scoredRegimens.length > 0) profileSafetyViolations.push(`${tag}: no regimens although default shows some`);
+                if (out.scoredRegimens.length > 0 && base.scoredRegimens.length === 0) profileSafetyViolations.push(`${tag}: regimens shown although default shows none`);
+                for (const r of out.scoredRegimens) {
+                    const pp = r.projected_patient;
+                    if (pp.sbp < DISPLAY_FLOORS.minProjectedSbp || pp.potassium > DISPLAY_FLOORS.maxProjectedPotassium || pp.pulse < DISPLAY_FLOORS.minProjectedPulse) {
+                        profileSafetyViolations.push(`${tag}: displayed regimen violates a display floor`);
+                    }
+                    if (r.regimen.filter(m => RAAS_CLASSES.has(m.med.drug_class)).length > 1) profileSafetyViolations.push(`${tag}: dual RAAS displayed`);
+                    const classes = new Set(r.regimen.map(m => m.med.drug_class));
+                    if (classes.has('MRA') && classes.has('nsMRA')) profileSafetyViolations.push(`${tag}: dual MRA displayed`);
+                    const budget = scenario.patient.max_affordable_cost;
+                    if (budget !== undefined && r.cost > budget && !r.warnings.some(w => w.includes('BUDGET EXCEEDED'))) {
+                        profileSafetyViolations.push(`${tag}: cost $${r.cost} exceeds budget $${budget} without BUDGET EXCEEDED warning`);
+                    }
+                    const bd = r.score_breakdown;
+                    if (!bd) { profileSafetyViolations.push(`${tag}: missing score_breakdown`); continue; }
+                    if (bd.weight_profile !== profile) profileSafetyViolations.push(`${tag}: breakdown.weight_profile ${bd.weight_profile} != ${profile}`);
+                    for (const d of bd.domains) {
+                        if (d.weight !== WEIGHT_PROFILES[profile][d.key]) profileSafetyViolations.push(`${tag}: ${d.key} weight is not the ${profile} row`);
+                    }
+                    const eps = 1e-9;
+                    const rawOv = (bd.overrides ?? []).filter(o => o.applies_to === 'raw_score').reduce((a, o) => a + (o.after - o.before), 0);
+                    const target = bd.domains.reduce((a, d) => a + d.contribution, 0) + bd.adjustments.reduce((a, x) => a + x.points, 0) + rawOv;
+                    if (Math.abs(target - bd.raw_score) > eps || Math.abs(bd.weighted_subtotal - bd.domains.reduce((a, d) => a + d.contribution, 0)) > eps) {
+                        profileSafetyViolations.push(`${tag}: score_breakdown does not reconcile`);
+                    }
+                }
+            }
+        }
+        if (profileSafetyViolations.length > 0) {
+            profileSafetyViolations.slice(0, 20).forEach(m => console.error(`  [FAIL] ${m}`));
+            failed++;
+        } else {
+            console.log(`  [PASS] ${runs} profile runs (${SCENARIOS.length} scenarios x ${nonDefault.length} profiles): exclusions, alerts, gaps, adjuncts and notices identical; floors, dual-class, budget and breakdown hold.`);
+            passed++;
+        }
+    }
+
+    console.log('Checking structural invariant: weight profiles move the top pick in the stated direction...');
+    {
+        const paired = (profile: WeightProfileName) => [...profileTops.default.keys()].filter(t => profileTops[profile].has(t));
+        const mean = (profile: WeightProfileName, titles: string[], f: 'cost' | 'complexity' | 'completeness') =>
+            titles.reduce((a, t) => a + profileTops[profile].get(t)![f], 0) / (titles.length || 1);
+        const checks: { profile: WeightProfileName; f: 'cost' | 'complexity' | 'completeness'; dir: 'le' | 'ge'; what: string }[] = [
+            { profile: 'cost_first', f: 'cost', dir: 'le', what: 'mean top-pick cost ($/mo)' },
+            { profile: 'simplicity_first', f: 'complexity', dir: 'le', what: 'mean top-pick complexity' },
+            { profile: 'outcomes_first', f: 'completeness', dir: 'ge', what: 'mean top-pick GDMT completeness' },
+        ];
+        let dirOk = true;
+        for (const c of checks) {
+            const titles = paired(c.profile);
+            const d = mean('default', titles, c.f), p = mean(c.profile, titles, c.f);
+            const ok = c.dir === 'le' ? p <= d + 1e-9 : p >= d - 1e-9;
+            if (!ok) dirOk = false;
+            console.log(`  ${c.profile}: ${c.what} ${p.toFixed(4)} vs default ${d.toFixed(4)} over ${titles.length} scenarios (${c.dir === 'le' ? '<=' : '>='} expected) ${ok ? 'ok' : 'VIOLATED'}`);
+        }
+        for (const profile of WEIGHT_PROFILE_NAMES.filter(n => n !== 'default')) {
+            const diff = paired(profile).filter(t => profileTops[profile].get(t)!.label !== profileTops.default.get(t)!.label);
+            console.log(`  EFFECT ${profile}: top pick differs from default in ${diff.length}/${paired(profile).length} scenarios`);
+            diff.slice(0, 8).forEach(t => console.log(`    ${t} -> default: ${profileTops.default.get(t)!.label} | ${profile}: ${profileTops[profile].get(t)!.label}`));
+        }
+        if (!dirOk) { console.error('  [FAIL] a profile direction check failed'); failed++; }
+        else { console.log('  [PASS] cost_first, simplicity_first and outcomes_first move cost, complexity and completeness the stated way.'); passed++; }
     }
 
     console.log('Checking structural invariant: every weight profile covers every domain and sums to 100%...');
