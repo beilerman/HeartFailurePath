@@ -151,6 +151,9 @@ export interface ScoreAdjustmentSpec {
     threshold?: number;
 }
 
+/** Therapy-completeness credit for a therapy that is on board but below its target dose (full credit = 1). */
+export const COMPLETENESS_SUBTARGET_CREDIT = 0.6;
+
 export const SCORE_ADJUSTMENTS = {
     SPECIAL_FEATURES: {
         code: 'SPECIAL_FEATURES',

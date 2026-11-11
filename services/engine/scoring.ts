@@ -9,6 +9,7 @@ import { Patient, Medication, ScoredRegimen, RegimenMed, RegimenModification, Mo
 import {
     DOMAIN_KEYS, DOMAIN_LABELS, WEIGHT_PROFILES, resolveWeightProfile, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS,
     ScoreBreakdown, ScoreBreakdownAdjustment, ScoreBreakdownDomainLine, ScoreBreakdownOverride, ScoreDomainKey,
+    COMPLETENESS_SUBTARGET_CREDIT,
 } from './scoreModel';
 import { drugFacts } from './drugFacts';
 import { isIronDeficient } from '../clinicalPredicates';
@@ -196,7 +197,7 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
  */
 export function gdmtCompletenessFraction(activeModSet: ModificationSet, ctx: ScoringContext): { fraction: number; slots: number } {
     const { patient, achievableSlots } = ctx;
-    const SUBTARGET_CREDIT = 0.6;
+    const SUBTARGET_CREDIT = COMPLETENESS_SUBTARGET_CREDIT;
     const slotValue = (s: GdmtSlot): number => {
         const meds = activeModSet.resulting_regimen.filter(r => s.match(r.med.drug_class));
         if (meds.length === 0) return 0;

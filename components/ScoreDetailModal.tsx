@@ -8,7 +8,7 @@ import {
     BNP_SCORE_TARGET, BNP_SCORE_CRITICAL, NYHA_SCORE_MAP, FUNCTIONAL_STEPS_FULL_CREDIT,
     VOLUME_SCORING, adherenceComplexityThreshold, CONCORDANCE_TABLE, pillarKeyOf,
 } from '../services/simulationService';
-import { DOMAIN_WEIGHTS, DOMAIN_LABELS, WEIGHT_PROFILE_META, type ScoreDomainKey } from '../services/engine/scoreModel';
+import { DOMAIN_WEIGHTS, DOMAIN_LABELS, WEIGHT_PROFILE_META, COMPLETENESS_SUBTARGET_CREDIT, type ScoreDomainKey } from '../services/engine/scoreModel';
 import { STRUCTURE_BLEND_WEIGHTS, DOMAIN_GOALS } from '../services/simulationService';
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
@@ -35,9 +35,7 @@ const guidelinePhenotype = (regimen: ScoredRegimen): Phenotype => {
     });
 };
 
-// Credit for a therapy that is on board but below its target dose. Mirrors SUBTARGET_CREDIT in
-// services/engine/scoring.ts (gdmtCompletenessFraction), which the engine does not export.
-const COMPLETENESS_SUBTARGET_CREDIT_PCT = 60;
+const COMPLETENESS_SUBTARGET_CREDIT_PCT = Math.round(COMPLETENESS_SUBTARGET_CREDIT * 100);
 
 export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onClose, leader, rank = 1 }) => {
     const p = regimen.projected_patient;
