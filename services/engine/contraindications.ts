@@ -33,8 +33,25 @@ export const CI_POTASSIUM_GT_5_4: ContraindicationCheck = {
 export const CI_BILATERAL_RAS: ContraindicationCheck = {
     reason: 'Bilateral renal artery stenosis', when: p => p.comorbidities.has("Bilateral Renal Artery Stenosis"),
 };
+/**
+ * Hepatic status. The form has one general option, "Liver Disease (Child-Pugh B/C)", which every drug that gates
+ * on liver disease reads as the conservative "B or C". A second option confirms the severity is Child-Pugh B
+ * (not C); only the ARNI reads it (label: B = reduced start with caution, C = not recommended). Selecting the
+ * B-confirmed option alone still counts as liver disease for every other drug (`hasChildPughBorC`).
+ */
+export const LIVER_BC = "Liver Disease (Child-Pugh B/C)";
+export const LIVER_B_CONFIRMED = "Liver Disease: Child-Pugh B confirmed (not C)";
+export const hasChildPughBorC = (p: Patient): boolean => p.comorbidities.has(LIVER_BC) || p.comorbidities.has(LIVER_B_CONFIRMED);
+export const hasChildPughBConfirmed = (p: Patient): boolean => p.comorbidities.has(LIVER_B_CONFIRMED);
 export const CI_LIVER_CHILD_PUGH_BC: ContraindicationCheck = {
-    reason: 'Liver disease, Child-Pugh B/C', when: p => p.comorbidities.has("Liver Disease (Child-Pugh B/C)"),
+    reason: 'Liver disease, Child-Pugh B/C', when: hasChildPughBorC,
+};
+/** Aliskiren in diabetes: contraindicated with ARNI, ACE inhibitors and ARBs (Entresto and Zestril labels, section 4). */
+export const ALISKIREN = 'Aliskiren';
+export const CI_ALISKIREN_DIABETES: ContraindicationCheck = {
+    reason: 'Taking aliskiren with diabetes (labeled contraindication with ARNI, ACE inhibitors and ARBs)',
+    when: p => (p.external_medications?.has(ALISKIREN) ?? false)
+        && (p.comorbidities.has('Diabetes Mellitus Type 2') || p.comorbidities.has('Type 1 Diabetes Mellitus')),
 };
 export const CI_PULSE_LT_55: ContraindicationCheck = {
     reason: 'Heart rate below 55 bpm', when: p => p.pulse < 55,

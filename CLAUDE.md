@@ -189,6 +189,12 @@ Implemented high-priority safeguards include:
   - eplerenone/finerenone contraindicated with strong CYP3A inhibitors (`STRONG_CYP3A_INHIBITORS`); eplerenone capped at 25 mg with a moderate inhibitor (`interaction_dose_cap`) and contraindicated at eGFR <= 30; finerenone/spironolactone contraindicated in adrenal insufficiency
   - `Medication.start_dose_for(patient)` is the opt-in per-drug cap on the dose a NEW START may begin at (finerenone 10/20 mg by eGFR, spironolactone 12.5/25 mg by eGFR); finerenone's target comes from `is_target_dose_for` (20 mg if eGFR < 60, else 40 mg)
   - binders: prevention potassium effects (patiromer -0.1; Lokelma -0.3/-0.6/-0.7 at 5/10/15 g), tried lowest dose first across binders; the "+50 enables RAAS/MRA" bonus needs a RAASi/MRA in the regimen; drug-data warnings/monitoring come from `facts.regimen_warnings` / `facts.monitoring_items` (warning text starts "Drug note" and is not score-penalized)
+- RAAS rules (2026-11-10, `docs/medication-review-2026-11-10/verified-raas.md`):
+  - every ACEi/ARB/ARNI declares `start_dose_for` (new starts begin at the lowest tier; the ARNI uses `facts.start_dose_exact`: 24/26 mg bid when not on an ACEi/ARB or on a low dose (`facts.low_dose_max_daily_mg`), eGFR < 30/blank, or Child-Pugh B; otherwise 49/51; 97/103 only by titration) and verify fails any RAAS add/swap-in above it (root cause of the old "Add 97/103" bug: `restrictToStartTiers` passed through any drug without the hook)
+  - hepatic: "Liver Disease (Child-Pugh B/C)" excludes the ARNI (severity unknown); the extra option "Liver Disease: Child-Pugh B confirmed (not C)" lifts it with a reduced start; all other liver-gated drugs treat either option as liver disease (`hasChildPughBorC`)
+  - aliskiren + diabetes contraindicates ARNI/ACEi/ARB (`CI_ALISKIREN_DIABETES`); 36-hour washout warns in both directions (ACEi<->ARNI); ARNI start at SBP < 100 carries a score-penalized caution
+  - lisinopril/enalapril/losartan/candesartan have no renal max-dose caps (valsartan 80 mg and ramipril caps kept); losartan 100 and 150 mg are targets
+  - generic sacubitril/valsartan pricing (cash ~$60 with a discount card)
 - Structural regimen safety:
   - blocks dual RAAS combinations
   - blocks dual MRA combinations

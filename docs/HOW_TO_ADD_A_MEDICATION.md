@@ -28,7 +28,11 @@ facts, adding it is a data change and no engine edit. Written 2026-11-10 (alignm
      `high_dose_threshold` (loop over-treatment alert), `rescue_role` (K+ binder rescue;
      `preferred: true` is tried first), `pick_distinctness_key` (top-pick distinctness).
    - `is_target_dose_for(strength, patient)` for patient-dependent targets (carvedilol by weight, finerenone by eGFR).
-   - `start_dose_for(patient)` (opt-in): the highest strength a NEW START may begin at; `interaction_dose_cap(patient)`: a patient-dependent maximum dose from an interaction (eplerenone + moderate CYP3A inhibitor).
+   - `start_dose_for(patient)` (opt-in): the highest strength a NEW START (add or swap-in) may begin at;
+     `facts.start_dose_exact: true` makes it the EXACT start tier instead of a ceiling (the ARNI: 24/26 or 49/51, never both).
+     Every ACEi/ARB/ARNI entry declares one (new RAAS starts begin at the lowest tier; a verify invariant fails any RAAS add or
+     swap-in above its declared tier, and any RAAS entry without the hook). `facts.low_dose_max_daily_mg` (ACEi/ARB): the total
+     daily dose at or below which the Entresto label's "low dose" conversion rule applies (see `services/engine/raasStart.ts`); `interaction_dose_cap(patient)`: a patient-dependent maximum dose from an interaction (eplerenone + moderate CYP3A inhibitor).
    - `facts.k_continuation` (MRA potassium rule for a drug already on board), `facts.regimen_warnings` / `facts.monitoring_items` (warnings and monitoring shown whenever the drug is in a regimen; warning text starts "Drug note").
    - Combination products must declare their component classes the way existing combos do.
 3. **Class registry**: if `drug_class` is new, add a row to `DRUG_CLASS_REGISTRY` in

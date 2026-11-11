@@ -1,7 +1,8 @@
 
 import { Medication, Patient } from './types';
-import { ci, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_LIVER_CHILD_PUGH_BC, CI_PULSE_LT_55, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
+import { ci, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, CI_LIVER_CHILD_PUGH_BC, CI_PULSE_LT_55, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
     STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, moderateCyp3aInhibitor } from './services/engine/contraindications';
+import { arniStartDose } from './services/engine/raasStart';
 import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace } from './services/clinicalPredicates';
 
 // Helper for logarithmic calculations (dose-response curves)
@@ -54,7 +55,8 @@ export const RELEVANT_COMORBIDITIES = [
     "Medullary Thyroid Carcinoma",
     "MEN2 Syndrome",
     "Hypotension (Chronic)",
-    "Liver Disease (Child-Pugh B/C)",
+    LIVER_BC,
+    LIVER_B_CONFIRMED,
     "Obesity (BMI > 30)",
     "Pulmonary Hypertension",
     "Chronic NSAID Use",
@@ -69,6 +71,8 @@ export const RELEVANT_EXTERNAL_MEDICATIONS = [
     'Lithium',
     'Sildenafil',
     'Tadalafil',
+    // Aliskiren: contraindicated with ARNI / ACEi / ARB in diabetes (Entresto and Zestril labels).
+    'Aliskiren',
     // CYP3A inhibitors that gate eplerenone / finerenone (single-sourced in services/engine/contraindications.ts).
     // Verapamil and Diltiazem are already listed above; Erythromycin and Fluconazole are the other moderate agents.
     ...STRONG_CYP3A_INHIBITORS,
@@ -80,6 +84,9 @@ const LOKELMA_EDEMA_RATE = (dose: number | string): number => {
     const d = Number(dose);
     return d >= 15 ? 0.161 : d >= 10 ? 0.059 : 0.044;
 };
+
+// Wording for the RAAS pregnancy checks: all eight carry a boxed warning for fetal toxicity (replaces the obsolete "Category X").
+const BOXED_FETAL_TOXICITY = 'boxed warning: fetal toxicity';
 
 // A potassium binder's "enables RAAS/MRA optimization" credit only applies when a RAAS inhibitor or MRA is
 // actually in the resulting regimen (DIAMOND enrolled patients on RAASi; it showed enabling, not outcomes).
@@ -95,7 +102,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Sacubitril/Valsartan (Entresto)',
         drug_class: 'ARNI',
-        facts: { pick_distinctness_key: 'ARNI' },
+        facts: { pick_distinctness_key: 'ARNI', start_dose_exact: true },
+        // Label start (exact, not a ceiling): 49/51 mg bid, halved to 24/26 mg bid when not on an ACEi/ARB or on a low dose, eGFR < 30 or
+        // Child-Pugh B (Entresto label 2.2, 2.7, 2.8). 97/103 mg is reached only by up-titration. See raasStart.ts.
+        start_dose_for: arniStartDose,
         is_best_in_class: true,
         available_doses: [
             { strength: '24/26', unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
@@ -119,24 +129,37 @@ export const MEDICATION_FORMULARY: Medication[] = [
             const level = dose === '97/103' ? 3 : dose === '49/51' ? 2 : 1;
             return { sbp_drop: 6 + (level * 2), hr_drop: 0, potassium_change: 0.15 };
         },
-        side_effects: () => ({ hypotension: 0.15, angioedema: 0.005, hyperkalemia: 0.05 }),
+        // Display only. PARADIGM-HF adverse-event table (Entresto label 6.1, vs enalapril): hypotension 18% (12%),
+        // hyperkalemia 12% (14%), cough 9% (13%). Angioedema is the label's rare-but-serious risk (not re-verified).
+        side_effects: () => ({ hypotension: 0.18, angioedema: 0.005, hyperkalemia: 0.12, cough: 0.09 }),
         ...ci([
             CI_ANGIOEDEMA,
             CI_POTASSIUM_GT_5_4, // Higher cutoff due to binder logic
-            pregnancyCheck('Category X'), // Category X
+            pregnancyCheck(BOXED_FETAL_TOXICITY),
             CI_BILATERAL_RAS, // bilateral RAS = absolute CI
-            { reason: 'Liver disease, Child-Pugh B/C (sacubitril exposure roughly 1.5-2x)', when: p => p.comorbidities.has("Liver Disease (Child-Pugh B/C)") }, // sacubitril AUC ~1.5-2x in Child-Pugh B/C (Entresto PI)
+            CI_ALISKIREN_DIABETES, // Entresto label section 4
+            // Child-Pugh B: reduced start (24/26) plus caution, NOT excluded (label 2.8). Child-Pugh C: not recommended / not
+            // studied. The general "B/C" option cannot say which, so it stays excluded; the "B confirmed (not C)" option
+            // (read together with it, or alone) lifts the exclusion and halves the start dose (raasStart.ts).
+            { reason: 'Liver disease, Child-Pugh B/C with severity not specified: not recommended in Child-Pugh C (not studied); if the patient is Child-Pugh B, select "Child-Pugh B confirmed (not C)" to allow a reduced start',
+              when: p => hasChildPughBorC(p) && !hasChildPughBConfirmed(p) },
         ]),
         renal_adjustment: (egfr) => egfr < 30 ? { start_dose_modifier: 0.5, caution: true } : {},
     },
     {
         name: 'Lisinopril',
         drug_class: 'ACEi',
+        // New starts begin at the lowest tier (Zestril HF label start 5 mg, 2022 Table 14 start 2.5-5 mg; 2.5 mg when
+        // CrCl 10-30). Titration to 40 mg/day is allowed at any renal function. "Low dose" for the ARNI conversion
+        // rule: <= 10 mg/day (judgment: enalapril 10 mg/day is the label's reference; see raasStart.ts).
+        facts: { low_dose_max_daily_mg: 10 },
+        start_dose_for: () => 2.5,
         available_doses: [
             { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
+            { strength: 30, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true }, // Zestril 30 mg tablet; inside the 20-40 mg target range
             { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
@@ -154,16 +177,18 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose)/5, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
-        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
-        renal_adjustment: (egfr) => {
-            if (egfr < 30) return { max_dose: 10, caution: true };
-            if (egfr < 45) return { max_dose: 20, caution: true };
-            return {};
-        },
+        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(BOXED_FETAL_TOXICITY), CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES]),
+        // Zestril label 2.4: no adjustment for CrCl above 30; CrCl 10-30 halve the initial dose (HF 2.5 mg), then titrate
+        // as tolerated to 40 mg/day. No maximum-dose cap (the old 10 mg / 20 mg caps were stricter than the label).
+        renal_adjustment: (egfr) => egfr < 30 ? { start_dose_modifier: 0.5, caution: true } : {},
     },
     {
         name: 'Enalapril',
         drug_class: 'ACEi',
+        // New starts begin at 2.5 mg bid (Vasotec HF label; 2.5 mg daily first when creatinine > 1.6 or Na < 130).
+        // "Low dose" for the ARNI conversion rule: <= 10 mg/day (the Entresto label's enalapril reference).
+        facts: { low_dose_max_daily_mg: 10 },
+        start_dose_for: () => 2.5,
         available_doses: [
             { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] }, // Starting dose
             { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
@@ -185,20 +210,27 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 5, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
-        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
-        renal_adjustment: (egfr) => {
-            if (egfr < 30) return { max_dose: 5, caution: true }; // More conservative than Lisinopril (BID dosing)
-            if (egfr < 45) return { max_dose: 10, caution: true };
-            return {};
-        },
+        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(BOXED_FETAL_TOXICITY), CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES]),
+        // Vasotec label: HF with serum creatinine > 1.6 mg/dL or Na < 130 starts at 2.5 mg, then titrates (>= 4-day steps) to
+        // a maximum of 40 mg/day. No maximum-dose cap (the old 5 mg / 10 mg caps were stricter than the label).
+        renal_adjustment: (egfr) => egfr < 30 ? { start_dose_modifier: 0.5, caution: true } : {},
     },
     {
         name: 'Ramipril',
         drug_class: 'ACEi',
+        // New starts begin at 1.25 mg (2022 Table 14: start 1.25-2.5 mg daily). "Low dose" for the ARNI conversion rule:
+        // <= 5 mg/day (judgment: the dose-equivalent of the enalapril 10 mg/day reference; see raasStart.ts).
+        facts: {
+            low_dose_max_daily_mg: 5,
+            regimen_warnings: [
+                { text: 'Drug note: the ramipril label heart-failure regimen (post-MI) is 2.5 mg bid, then 5 mg bid (10 mg/day, the guideline target). Effects are modeled from the per-dose strength, so a twice-daily regimen reads as the single-dose strength.' },
+            ],
+        },
+        start_dose_for: () => 1.25,
         available_doses: [
             { strength: 1.25, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'] }, // Starting dose
-            { strength: 2.5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'] },
-            { strength: 5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'] },
+            { strength: 2.5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd', 'bid'] }, // bid = label post-MI HF regimen
+            { strength: 5, unit: 'mg', formulation: 'capsule', frequency_options: ['qd', 'bid'] }, // 5 mg bid = label target (10 mg/day)
             { strength: 10, unit: 'mg', formulation: 'capsule', frequency_options: ['qd'], is_target_dose: true }, // AIRE/HOPE target
         ],
         chf_effects: (dose) => {
@@ -216,7 +248,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 2, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
-        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
+        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(BOXED_FETAL_TOXICITY), CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES]),
+        // Kept as is (verified-raas.md R2): label HF with CrCl < 40 starts 1.25 mg and caps at 5 mg/day; the 2.5 mg cap at
+        // eGFR < 30 is stricter than the label and is retained as the conservative reading.
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 2.5, caution: true };
             if (egfr < 45) return { max_dose: 5, caution: true };
@@ -226,8 +260,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Captopril',
         drug_class: 'ACEi',
+        // New starts begin at 6.25 mg tid (2022 Table 14). "Low dose" for the ARNI conversion rule: <= 75 mg/day
+        // (judgment: the dose-equivalent of the enalapril 10 mg/day reference; see raasStart.ts).
+        facts: { low_dose_max_daily_mg: 75 },
+        start_dose_for: () => 6.25,
         available_doses: [
             { strength: 6.25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] }, // Starting dose
+            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] }, // label start in diuretic-treated / hyponatremic patients
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] },
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], is_target_dose: true }, // ACC/AHA target
         ],
@@ -246,7 +285,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 10, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.12, hypotension: 0.10, hyperkalemia: 0.06, angioedema: 0.01, taste_disturbance: 0.05 }),
-        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
+        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(BOXED_FETAL_TOXICITY), CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 6.25, caution: true };
             if (egfr < 45) return { max_dose: 25, caution: true };
@@ -256,6 +295,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Valsartan',
         drug_class: 'ARB',
+        // New starts begin at 40 mg bid (Diovan HF label). "Low dose" for the ARNI conversion rule: <= 160 mg/day
+        // (the Entresto label's valsartan reference).
+        facts: { low_dose_max_daily_mg: 160 },
+        start_dose_for: () => 40,
         available_doses: [
             { strength: 40, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'] }, // Starting dose
             { strength: 80, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'] },
@@ -277,7 +320,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 30, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.06, hyperkalemia: 0.04, dizziness: 0.05 }),
-        ...ci([CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
+        ...ci([CI_POTASSIUM_GT_5_4, pregnancyCheck(BOXED_FETAL_TOXICITY), CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES]),
+        // Kept (verified-raas.md V2): Diovan label has no adjustment for GFR 30-90 and no data below 30; the 80 mg cap is conservative.
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 80, caution: true };
             return {};
@@ -286,6 +330,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Candesartan',
         drug_class: 'ARB',
+        // New starts begin at 4 mg daily (Atacand HF label). "Low dose" for the ARNI conversion rule: <= 16 mg/day
+        // (judgment: the dose-equivalent of valsartan 160 mg/day; see raasStart.ts).
+        facts: { low_dose_max_daily_mg: 16 },
+        start_dose_for: () => 4,
         available_doses: [
             { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Starting dose
             { strength: 8, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
@@ -308,20 +356,30 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 6, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.05, hyperkalemia: 0.04 }),
-        ...ci([CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
-        renal_adjustment: (egfr) => {
-            if (egfr < 30) return { max_dose: 8, caution: true };
-            return {};
-        },
+        ...ci([CI_POTASSIUM_GT_5_4, pregnancyCheck(BOXED_FETAL_TOXICITY), CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES]),
+        // Atacand HF dosing has no renal-specific adjustment (start low under close supervision if volume-depleted or renally
+        // impaired). No maximum-dose cap (the old 8 mg cap at eGFR < 30 was stricter than the label); caution text only.
+        renal_adjustment: (egfr) => egfr < 30 ? { caution: true } : {},
     },
     {
         name: 'Losartan',
         drug_class: 'ARB',
+        // New starts begin at 25 mg (2022 Table 14: start 25-50 mg). "Low dose" for the ARNI conversion rule: <= 50 mg/day
+        // (judgment: the dose-equivalent of valsartan 160 mg/day; see raasStart.ts).
+        facts: {
+            low_dose_max_daily_mg: 50,
+            regimen_warnings: [
+                { text: 'Drug note: losartan has no FDA-labeled heart-failure indication (label: hypertension, stroke-risk reduction with LVH, diabetic nephropathy); its use in HFrEF is guideline-supported (2022 AHA/ACC/HFSA Table 14, target 50-150 mg daily; HEAAL tested 150 mg). 150 mg is taken as two tablets (100 mg + 50 mg).' },
+            ],
+        },
+        start_dose_for: () => 25,
         available_doses: [
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
-            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true }, // ACC/AHA 2022 target
-            { strength: 150, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // HEAAL Trial dose (off-label)
+            // 2022 AHA/ACC/HFSA Table 14 target: 50-150 mg daily. Per verified-raas.md LO1 both 100 and 150 mg are flagged;
+            // 50 mg (inside the range) is deliberately not flagged: the verified correction lists only 100 and 150.
+            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
+            { strength: 150, unit: 'mg', formulation: 'two tablets (100 mg + 50 mg)', frequency_options: ['qd'], is_target_dose: true }, // no 150 mg tablet exists (Cozaar: 25/50/100); HEAAL dose
         ],
         chf_effects: (dose) => {
              // ELITE II / HEAAL: Comparable to ACEi at high doses
@@ -339,11 +397,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose)/25, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.05, hyperkalemia: 0.04 }),
-        ...ci([CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
-        renal_adjustment: (egfr) => {
-            if (egfr < 30) return { max_dose: 50, caution: true };
-            return {};
-        },
+        ...ci([CI_POTASSIUM_GT_5_4, pregnancyCheck(BOXED_FETAL_TOXICITY), CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES]),
+        // Cozaar label 8.6: no dose adjustment for renal impairment. No cap (the old 50 mg cap was stricter than the label); caution text only.
+        renal_adjustment: (egfr) => egfr < 30 ? { caution: true } : {},
     },
 
     // ========================================
@@ -428,7 +484,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
             CI_SEVERE_ASTHMA,
-            { reason: 'Liver disease, Child-Pugh B/C (CYP2D6 metabolized; increased exposure in cirrhosis)', when: p => p.comorbidities.has("Liver Disease (Child-Pugh B/C)") }, // CYP2D6 metabolized; increased exposure in cirrhosis
+            { reason: 'Liver disease, Child-Pugh B/C (CYP2D6 metabolized; increased exposure in cirrhosis)', when: hasChildPughBorC }, // CYP2D6 metabolized; increased exposure in cirrhosis
         ]),
     },
 
@@ -669,7 +725,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             CI_STRONG_CYP3A, // Kerendia label contraindication (strong CYP3A4 inhibitors)
             CI_ADRENAL_INSUFFICIENCY, // Kerendia label contraindication
             pregnancyCheck(),
-            { reason: 'Liver disease, Child-Pugh B/C (CYP3A4 substrate; reduced clearance in cirrhosis)', when: p => p.comorbidities.has('Liver Disease (Child-Pugh B/C)') },
+            { reason: 'Liver disease, Child-Pugh B/C (CYP3A4 substrate; reduced clearance in cirrhosis)', when: hasChildPughBorC },
         ]),
         renal_adjustment: (egfr) => {
             // Kerendia HF dosing: maximum 20 mg qd if eGFR 25-59, 40 mg qd if eGFR >= 60; contraindicated below 25.

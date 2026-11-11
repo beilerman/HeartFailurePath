@@ -189,6 +189,17 @@ export interface MedFacts {
      * if already at the lowest tier). K+ at or above `withhold_at`: withhold (remove). `basis` states the rule.
      */
     k_continuation?: { reduce_at: number; withhold_at: number; basis: string };
+    /**
+     * ACEi/ARB only: the TOTAL DAILY dose (mg) at or below which the Entresto label treats the agent as a "low dose"
+     * when converting to sacubitril/valsartan (start 24/26 mg bid instead of 49/51 mg bid). Read by the ARNI's
+     * `start_dose_for` through `services/engine/raasStart.ts`.
+     */
+    low_dose_max_daily_mg?: number;
+    /**
+     * `start_dose_for` names the EXACT new-start tier, not a ceiling (the label prescribes one start dose, e.g. the ARNI:
+     * 24/26 or 49/51 mg, never the other). Default false: lower tiers are also allowed ("start low, go slow").
+     */
+    start_dose_exact?: boolean;
     /** Plain-language warnings shown whenever this drug is in a recommended regimen (optionally only when `when(patient)`); informational, not score-penalized (text starts 'Drug note:'). */
     regimen_warnings?: { text: string; when?: (p: Patient) => boolean }[];
     /** Monitoring-plan items added whenever this drug is in a recommended regimen. */

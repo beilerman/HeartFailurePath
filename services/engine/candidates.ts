@@ -486,6 +486,10 @@ export function formatSwapSummary(from: RegimenMed, to: RegimenMed): string {
     if (from.med.drug_class === 'ACEi' && to.med.drug_class === 'ARNI') {
         return `STOP ${from.med.name}. WAIT 36 hours. THEN start ${to.med.name} ${formatDose(to)}`;
     }
+    if (from.med.drug_class === 'ARNI' && to.med.drug_class === 'ACEi') {
+        // Mirror rule (Zestril label 4): no ACEi within 36 hours of the last ARNI dose.
+        return `STOP ${from.med.name}. WAIT 36 hours. THEN start ${to.med.name} ${formatDose(to)}`;
+    }
     return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)}`;
 }
 

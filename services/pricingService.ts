@@ -107,9 +107,11 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
 
     // --- PREFERRED BRAND / SPECIALTY ---
     'Sacubitril/Valsartan (Entresto)': {
-        cash: 600, commercial_copay: 10, medicare_copay: 74,
-        generic_available: false, has_copay_card: true, tier: 'preferred_brand',
-        notes: 'GoodRx-median brand cash ~$560-650/mo. Novartis copay card covers up to $200/mo for commercial; the IRA-negotiated ~$295 price applies to MEDICARE only (modeled via medicare_copay).'
+        // Generic sacubitril/valsartan has been marketed in the US since 22-24 Jul 2025 (Novadoz/MSN, Torrent). Cash is the
+        // GENERIC price with a discount card (~$30-75 per 30 days; SingleCare 2026-11 lists ~$31-48 at chain pharmacies).
+        cash: 60, commercial_copay: 10, medicare_copay: 74,
+        generic_available: true, has_copay_card: false, tier: 'generic',
+        notes: 'Generic cash ~$30-75/30 d with a discount card; brand or no-card cash is $600-750 (SingleCare 2026-11: ~$751 per 60 x 24/26). Medicare negotiated price for brand Entresto is $295 per 30 days from 1 Jan 2026 (list WAC $628, CMS): a plan ceiling, the patient copay is set by the plan tier and the Part D cap, so medicare_copay is a plan-tier estimate. Re-check against GoodRx when updating.'
     },
     'Dapagliflozin': {
         cash: 290, commercial_copay: 35, medicare_copay: 45,

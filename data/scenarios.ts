@@ -2937,6 +2937,52 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'MRA-Source Patiromer Warnings (No Lokelma Available)', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
         ];
     })(),
+
+    // ===== RAAS (ARNI / ACEi / ARB) source-verified corrections (docs/medication-review-2026-11-10/verified-raas.md) =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 62, sex: 'Male' as const, sbp: 140, dbp: 80, pulse: 74, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 62, nt_pro_bnp: 1400, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 70, creatinine: 1.0, bun: 20, potassium: 4.3,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            current_regimen: [] as RegimenMed[],
+            max_affordable_cost: 3000, cost_sensitivity: 3, insurance_tier: 'commercial' as const,
+            complexity_tolerance: 8, max_new_classes_per_visit: 3,
+        };
+        const onBbSglt = buildCurrentRegimen([
+            { name: 'Carvedilol', strength: 12.5, freq: 'bid' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        return [
+            { title: 'RAAS-Source RAAS-Naive eGFR 22 ARNI 24/26 Only', patient: { ...base, egfr: 22, creatinine: 2.9 } },
+            { title: 'RAAS-Source RAAS-Naive Normal Renal ARNI 24/26', patient: { ...base, current_regimen: onBbSglt } },
+            { title: 'RAAS-Source RAAS-Naive SBP 150 On Carvedilol Dapagliflozin ARNI 24/26', patient: { ...base, current_regimen: onBbSglt, sbp: 150 } },
+            { title: 'RAAS-Source Target-Dose ACEi To ARNI Swap 49/51 Washout', patient: { ...base, sbp: 132,
+                current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 40, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'RAAS-Source Low-Dose ACEi To ARNI Swap 24/26', patient: { ...base, sbp: 132,
+                current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 5, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'RAAS-Source ARNI To ACEi Washout No ARB Available', patient: { ...base, sbp: 132,
+                comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']),
+                current_regimen: buildCurrentRegimen([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'RAAS-Source Aliskiren With Diabetes Excludes ARNI ACEi ARB', patient: { ...base, current_regimen: onBbSglt,
+                comorbidities: new Set(['HFrEF', 'Diabetes Mellitus Type 2']), external_medications: new Set(['Aliskiren']) } },
+            { title: 'RAAS-Source Aliskiren Without Diabetes Not Excluded', patient: { ...base, current_regimen: onBbSglt, external_medications: new Set(['Aliskiren']) } },
+            { title: 'RAAS-Source Losartan 150 Counts As Target', patient: { ...base, sbp: 138,
+                current_regimen: buildCurrentRegimen([{ name: 'Losartan', strength: 150, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'RAAS-Source ARNI At SBP 98 Caution', patient: { ...base, sbp: 98, dbp: 62,
+                current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }, { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'RAAS-Source Lisinopril eGFR 25 Not Capped Below Label No ARNI Available', patient: { ...base, egfr: 25, creatinine: 2.6,
+                current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 5, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'RAAS-Source Child-Pugh B Confirmed ARNI Reduced Start', patient: { ...base, sbp: 138,
+                comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)', 'Liver Disease: Child-Pugh B confirmed (not C)']),
+                current_regimen: buildCurrentRegimen([{ name: 'Valsartan', strength: 160, freq: 'bid' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'RAAS-Source ACEi Add Starts At Lowest Tier No ARNI Available', patient: { ...base, current_regimen: onBbSglt } },
+        ];
+    })(),
 ];
 
 // The single clonePatient implementation lives in the engine (services/simulationService.ts)

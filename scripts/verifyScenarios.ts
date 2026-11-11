@@ -1,5 +1,6 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS } from '../services/simulationService';
+import { getDoseTiers } from '../services/engine/regimenUtils';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
@@ -116,7 +117,8 @@ const ASSERTION_TITLE_MARKERS = [
     'HFpEF Previous LVEF Zero Sentinel',
     'HFpEF LVEF 60 No Fabricated Decline',
     'Dual MRA Unknown History Keeps nsMRA',
-    'MRA-Source'
+    'MRA-Source',
+    'RAAS-Source'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -145,6 +147,9 @@ async function runVerification() {
     // Eligibility-rule invariant accumulator (see services/engine/eligibility.ts).
     let exclusionsChecked = 0;
     const exclusionViolations: string[] = [];
+    // New-start dose invariant for the RAAS classes (see services/engine/raasStart.ts, HOW_TO_ADD_A_MEDICATION.md).
+    let raasStartsChecked = 0;
+    const raasStartViolations: string[] = [];
 
     const formularyNames = MEDICATION_FORMULARY.map(m => m.name);
     const availableMedNames = new Set(formularyNames);
@@ -154,6 +159,8 @@ async function runVerification() {
         let out = new Set(availableMedNames);
         if (title.includes('No BB Available')) out = new Set([...out].filter(n => !betaBlockerMeds.has(n)));
         if (title.includes('No Binder Available')) out = new Set([...out].filter(n => n !== 'Patiromer' && n !== 'Sodium Zirconium Cyclosilicate (Lokelma)'));
+        if (title.includes('No ARB Available')) out = new Set([...out].filter(n => !['Valsartan', 'Candesartan', 'Losartan'].includes(n)));
+        if (title.includes('No ARNI Available')) out.delete('Sacubitril/Valsartan (Entresto)');
         if (title.includes('No Patiromer Available')) out.delete('Patiromer');
         if (title.includes('No Lokelma Available')) out.delete('Sodium Zirconium Cyclosilicate (Lokelma)');
         return out;
@@ -189,6 +196,22 @@ async function runVerification() {
                 exclusionsChecked++;
                 if (!e.rule_id || !ELIGIBILITY_RULE_IDS.has(e.rule_id)) {
                     exclusionViolations.push(`"${scenario.title}": ${e.name} excluded without a known rule_id (${e.rule_id ?? 'missing'})`);
+                }
+            }
+
+            // GLOBAL STRUCTURAL INVARIANT (no RAAS new start above its starting tier): every add or swap-in of an
+            // ARNI / ACEi / ARB in any displayed option must be at or below the start dose its entry declares
+            // (verified-raas.md S1: "never add at 97/103"; label start doses for the ACEi/ARB).
+            for (const r of scoredRegimens) {
+                for (const m of r.modification_set?.modifications ?? []) {
+                    if (!(m.action === 'add' || m.action === 'swap') || !m.target || !RAAS_CLASSES.has(m.target.med.drug_class)) continue;
+                    raasStartsChecked++;
+                    const med = m.target.med;
+                    if (!med.start_dose_for) { raasStartViolations.push(`${med.name} declares no start_dose_for`); continue; }
+                    const order = med.available_doses.map(d => String(d.strength));
+                    const startIdx = order.indexOf(String(med.start_dose_for(scenario.patient)));
+                    const idx = order.indexOf(String(m.target.dose.strength));
+                    if (startIdx < 0 || idx > startIdx) raasStartViolations.push(`"${scenario.title}": ${m.summary} is above the ${med.name} starting tier ${med.start_dose_for(scenario.patient)}`);
                 }
             }
 
@@ -2272,6 +2295,92 @@ async function runVerification() {
                 }
             }
 
+            // ===== RAAS (ARNI / ACEi / ARB) source-verified corrections (verified-raas.md; labels: Entresto, Zestril, Vasotec, Cozaar; 2022 Table 14) =====
+            if (scenario.title.includes('RAAS-Source')) {
+                const ARNI = 'Sacubitril/Valsartan (Entresto)';
+                const excl = (name: string) => excludedMedications.find(e => e.name === name);
+                const whyText = (name: string) => (excl(name)?.why ?? []).join(' | ');
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const mods = scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => ({ r, m })));
+                const startsOf = (name: string) => mods.filter(x => (x.m.action === 'add' || x.m.action === 'swap') && x.m.target?.med.name === name).map(x => String(x.m.target!.dose.strength));
+                const allSummaries = mods.map(x => x.m.summary);
+                const allWarnings = scoredRegimens.flatMap(r => r.warnings ?? []);
+
+                if (t.includes('ARNI 24/26 Only') || t.includes('ARNI 24/26')) {
+                    const s = startsOf(ARNI);
+                    if (s.length === 0) fail('ARNI not offered as a new start (check is vacuous)');
+                    if (s.some(x => x !== '24/26')) fail(`RAAS-naive ARNI start must be 24/26 only (found ${s.join(', ')}); 49/51 and 97/103 are reached by titration`);
+                }
+                if (t.includes('Target-Dose ACEi To ARNI Swap 49/51')) {
+                    const s = startsOf(ARNI);
+                    if (!s.includes('49/51')) fail(`Target-dose ACEi -> ARNI swap not offered at 49/51 (found ${s.join(', ') || 'none'})`);
+                    if (s.includes('97/103')) fail('ARNI swap offered at 97/103');
+                    if (!allSummaries.some(x => x.includes('WAIT 36 hours'))) fail('ACEi -> ARNI swap lacks the 36-hour washout instruction');
+                    if (!allWarnings.some(w => w.includes('36-hour washout'))) fail('ACEi -> ARNI swap lacks the washout warning');
+                    if (scoredRegimens.some(r => r.regimen.filter(m => RAAS_CLASSES.has(m.med.drug_class)).length > 1)) fail('A regimen holds ARNI and ACEi together (hard exclusion)');
+                }
+                if (t.includes('Low-Dose ACEi To ARNI Swap 24/26')) {
+                    const s = startsOf(ARNI);
+                    if (s.length === 0) fail('ARNI swap not offered (check is vacuous)');
+                    if (s.some(x => x !== '24/26')) fail(`Low-dose ACEi -> ARNI swap must start at 24/26 (found ${s.join(', ')})`);
+                }
+                if (t.includes('ARNI To ACEi Washout')) {
+                    const toAcei = mods.filter(x => x.m.action === 'swap' && x.m.source?.med.drug_class === 'ARNI' && x.m.target?.med.drug_class === 'ACEi');
+                    if (toAcei.length === 0) fail('No ARNI -> ACEi swap produced (check is vacuous)');
+                    if (toAcei.some(x => !x.m.summary.includes('WAIT 36 hours'))) fail('ARNI -> ACEi swap lacks the 36-hour washout instruction (Zestril label: mirror rule)');
+                    if (toAcei.some(x => !x.r.warnings.some(w => w.includes('36-hour washout') && w.includes('last ARNI dose')))) fail('ARNI -> ACEi swap lacks the washout warning');
+                }
+                if (t.includes('Aliskiren With Diabetes')) {
+                    for (const n of ['Sacubitril/Valsartan (Entresto)', 'Lisinopril', 'Enalapril', 'Ramipril', 'Captopril', 'Valsartan', 'Candesartan', 'Losartan']) {
+                        if (!excl(n) || !/aliskiren/i.test(whyText(n))) fail(`${n} not excluded with the aliskiren + diabetes reason (Entresto / Zestril label section 4)`);
+                    }
+                    if (anyRegimenContainsAnyClass('ARNI', 'ACEi', 'ARB')) fail('A RAAS inhibitor is offered despite aliskiren in a patient with diabetes');
+                }
+                if (t.includes('Aliskiren Without Diabetes')) {
+                    if (excl(ARNI) && /aliskiren/i.test(whyText(ARNI))) fail('Aliskiren exclusion fired without diabetes (the label contraindication is diabetes-specific)');
+                }
+                if (t.includes('Losartan 150 Counts As Target')) {
+                    const los = MEDICATION_FORMULARY.find(m => m.name === 'Losartan')!;
+                    const isT = (strength: number) => isTargetDoseForPatient({ med: los, dose: los.available_doses.find(d => d.strength === strength)!, selected_frequency: 'qd' }, scenario.patient);
+                    if (!isT(150)) fail('Losartan 150 mg is not a target dose (2022 Table 14 target range 50-150 mg)');
+                    if (!isT(100)) fail('Losartan 100 mg stopped counting as a target dose');
+                    if (isT(50)) fail('Losartan 50 mg is flagged target; the verified correction flags only 100 and 150');
+                    if (/tablet/.test(los.available_doses.find(d => d.strength === 150)!.formulation) && !/two tablets/.test(los.available_doses.find(d => d.strength === 150)!.formulation)) fail('Losartan 150 mg is not labelled as two tablets');
+                    if (mods.some(x => x.m.action === 'titrate_up' && x.m.source?.med.name === 'Losartan')) fail('Losartan 150 mg offered a further up-titration (it is at target)');
+                    if (!scoredRegimens.some(r => r.warnings.some(w => w.includes('no FDA-labeled heart-failure indication')))) fail('Losartan regimen lacks the no-HF-label display note');
+                }
+                if (t.includes('ARNI At SBP 98 Caution')) {
+                    const withArni = scoredRegimens.filter(r => r.modification_set?.modifications.some(m => m.target?.med.name === ARNI));
+                    if (withArni.length === 0) fail('No ARNI option at SBP 98 (check is vacuous)');
+                    if (withArni.some(r => !r.warnings.some(w => w.includes('ARNI AT LOW BASELINE SBP') && w.includes('PARADIGM')))) fail('ARNI start at SBP 98 lacks the PARADIGM-HF caution');
+                    if (withArni.some(r => !(r.score_breakdown?.adjustments ?? []).some(a => a.code === 'DANGEROUS_WARNINGS'))) fail('The SBP < 100 ARNI caution is not score-penalized (design: genuine residual-risk warning)');
+                    if (startsOf(ARNI).some(x => x !== '24/26')) fail('ARNI started above 24/26 at SBP 98');
+                }
+                if (t.includes('Lisinopril eGFR 25 Not Capped')) {
+                    if (excl('Lisinopril')) fail('Lisinopril excluded at eGFR 25');
+                    const lis = MEDICATION_FORMULARY.find(m => m.name === 'Lisinopril')!;
+                    const adj = lis.renal_adjustment!(25, scenario.patient);
+                    if (adj.max_dose !== undefined) fail(`Lisinopril still has a renal max_dose (${adj.max_dose}) at eGFR 25; label allows titration to 40 mg/day`);
+                    const tiers = getDoseTiers(lis, scenario.patient).map(x => Number(x.dose.strength));
+                    if (!tiers.includes(20) || !tiers.includes(40)) fail(`Lisinopril 20 and 40 mg are not titration tiers at eGFR 25 (found ${tiers.join(', ')}); label: titrate to 40 mg/day`);
+                }
+                if (t.includes('Child-Pugh B Confirmed ARNI Reduced Start')) {
+                    const s = startsOf(ARNI);
+                    if (excl(ARNI)) fail('ARNI excluded in Child-Pugh B (label: reduced start, not a contraindication)');
+                    if (s.length === 0) fail('ARNI not offered in Child-Pugh B (check is vacuous)');
+                    if (s.some(x => x !== '24/26')) fail(`ARNI start in Child-Pugh B must be 24/26 (found ${s.join(', ')})`);
+                    if (!allWarnings.some(w => w.includes('Child-Pugh B') && w.includes('24/26'))) fail('ARNI in Child-Pugh B lacks the hepatic caution');
+                }
+                if (t.includes('ACEi Add Starts At Lowest Tier')) {
+                    const adds = mods.filter(x => x.m.action === 'add' && (x.m.target?.med.drug_class === 'ACEi' || x.m.target?.med.drug_class === 'ARB'));
+                    if (adds.length === 0) fail('No ACEi/ARB add produced (check is vacuous)');
+                    for (const x of adds) {
+                        if (String(x.m.target!.dose.strength) !== String(x.m.target!.med.available_doses[0].strength)) fail(`${x.m.summary} is not the lowest tier`);
+                    }
+                }
+            }
+
             // 95. PREVIOUS-LVEF BLANK SENTINEL (audit fix): previous_lvef 0 + ever_lvef_le_40
             // 'no' is ordinary HFpEF, NOT HFimpEF — SGLT2i-first, no RAAS/BB pillar therapy.
             if (scenario.title.includes('HFpEF Previous LVEF Zero Sentinel')) {
@@ -2461,6 +2570,16 @@ async function runVerification() {
         failed++;
     } else {
         console.log(`  [PASS] ${Object.keys(WEIGHT_PROFILES).length} weight profile(s) sum to 100%.`);
+        passed++;
+    }
+
+    console.log('Checking structural invariant: every RAAS new start is at or below its starting tier...');
+    if (raasStartViolations.length > 0 || raasStartsChecked === 0) {
+        raasStartViolations.slice(0, 10).forEach(m => console.error(`  [FAIL] ${m}`));
+        if (raasStartsChecked === 0) console.error('  [FAIL] no RAAS add/swap was checked (vacuous)');
+        failed++;
+    } else {
+        console.log(`  [PASS] ${raasStartsChecked} RAAS add/swap options across all scenarios, none above the declared starting tier.`);
         passed++;
     }
 

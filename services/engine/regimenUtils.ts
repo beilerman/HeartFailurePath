@@ -2,6 +2,7 @@
 import { Patient, Medication, ScoredRegimen, RegimenMed, ModificationSet } from '../../types';
 import { hasUnknownHistoricalHFrEF } from '../clinicalPredicates';
 import { getMedicationClassGroup, isDiureticClass } from './registry';
+import { drugFacts } from './drugFacts';
 
 // --- Helper Functions ---
 export function pickPreferredFrequency(med: Medication, options: string[], patient: Patient): string {
@@ -62,7 +63,8 @@ export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
 
 /**
  * Opt-in "new starts never begin above the start dose" (Medication.start_dose_for). For a drug that declares it,
- * keep only the offered tiers at or below the start strength (a LOWER start is always allowed: start low, go slow);
+ * keep only the offered tiers at or below the start strength (a LOWER start is allowed: start low, go slow, unless the
+ * drug sets facts.start_dose_exact, when only the start tier itself is kept);
  * if none qualifies, the lowest offered tier. Other drugs pass through. Apply to NEW-START candidates only;
  * titration of a drug already on board uses the full tier list.
  */
@@ -79,7 +81,8 @@ export function restrictToStartTiers(tiers: RegimenMed[], patient: Patient): Reg
         const order = med.available_doses;
         const idx = (t: RegimenMed) => order.findIndex(d => d.strength === t.dose.strength);
         const startIdx = order.findIndex(d => String(d.strength) === String(med.start_dose_for!(patient)));
-        const allowed = startIdx < 0 ? [] : medTiers.filter(t => idx(t) <= startIdx);
+        const exact = drugFacts(med).start_dose_exact === true;
+        const allowed = startIdx < 0 ? [] : medTiers.filter(t => exact ? idx(t) === startIdx : idx(t) <= startIdx);
         if (allowed.length > 0) { allowed.forEach(t => keep.add(t)); return; }
         keep.add([...medTiers].sort((a, b) => idx(a) - idx(b))[0]);
     });

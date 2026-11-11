@@ -2,6 +2,7 @@
 import { Patient, ModificationSet } from '../../types';
 import { drugFacts } from './drugFacts';
 import { valueUnknown } from '../clinicalPredicates';
+import { hasChildPughBorC, hasChildPughBConfirmed } from './contraindications';
 import { RAAS_CLASSES, getDbpRatio, getMedicationClassGroup } from './registry';
 import { clonePatient, isTargetDoseForPatient } from './regimenUtils';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
@@ -247,11 +248,6 @@ export function simulateModificationEffect(
                 });
                 const cause = isContraindicatedSwap ? 'contraindicated' : 'intolerance-documented';
                 rationale.push(`+ SAFETY: Mandatory swap from ${cause} ${mod.source.med.name} preserves ${getMedicationClassGroup(mod.source.med.drug_class)} coverage`);
-            }
-
-            // S1: ACEi → ARNI mandatory 36-hour washout (angioedema risk — PARADIGM-HF protocol, FDA black-box)
-            if (mod.source.med.drug_class === 'ACEi' && mod.target.med.drug_class === 'ARNI') {
-                warnings.push('MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).');
             }
 
             const oldDose = mod.source.dose.strength;
@@ -603,8 +599,34 @@ export function simulateModificationEffect(
         }
     }
 
+    // 36-hour washout between an ACE inhibitor and the ARNI, in EITHER direction (Entresto label 2.1 and 4; Zestril
+    // label 4 states the mirror rule). Covers a swap and a remove + add pair. Procedural, so not score-penalized
+    // ('MANDATORY: 36-hour washout' is in NON_PENALIZED_WARNING_MARKERS).
+    const leavingClasses = new Set<string>();
+    const enteringClasses = new Set<string>();
+    modificationSet.modifications.forEach(m => {
+        if ((m.action === 'remove' || m.action === 'swap') && m.source) leavingClasses.add(m.source.med.drug_class);
+        if ((m.action === 'add' || m.action === 'swap') && m.target) enteringClasses.add(m.target.med.drug_class);
+    });
+    if (leavingClasses.has('ACEi') && enteringClasses.has('ARNI')) {
+        warnings.push('MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).');
+    }
+    if (leavingClasses.has('ARNI') && enteringClasses.has('ACEi')) {
+        warnings.push('MANDATORY: 36-hour washout required between last ARNI dose and first ACEi dose (life-threatening angioedema risk).');
+    }
+
+    // ARNI started at a low baseline SBP: PARADIGM-HF excluded SBP < 100 (the label gives no SBP threshold; it says to correct
+    // volume or salt depletion first, or start at a lower dose). A caution, not a block. It is a genuine residual-risk
+    // statement (symptomatic hypotension in a population the pivotal trial did not enroll), so it IS score-penalized
+    // like other residual-risk warnings; the dose is already limited to the starting tier by the ARNI start rule.
+    const startsArni = modificationSet.modifications.some(m =>
+        (m.action === 'add' || m.action === 'swap') && m.target?.med.drug_class === 'ARNI');
+    if (startsArni && currentPatient.sbp < 100) {
+        warnings.push(`ARNI AT LOW BASELINE SBP: Starting systolic BP is ${currentPatient.sbp} mmHg; PARADIGM-HF excluded SBP below 100. Start at 24/26 mg bid, correct any volume or salt depletion first, and recheck BP and renal function within 1-2 weeks (the label sets no SBP threshold).`);
+    }
+
     // Liver disease safety warnings
-    if (currentPatient.comorbidities.has('Liver Disease (Child-Pugh B/C)')) {
+    if (hasChildPughBorC(currentPatient)) {
         const hasMRAInRegimen = resultingRegimen.some(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA');
         if (hasMRAInRegimen) {
             const mraName = resultingRegimen.find(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA')?.med.name;
@@ -625,7 +647,9 @@ export function simulateModificationEffect(
         // ARNI: sacubitril AUC increases in hepatic impairment (Entresto PI)
         const hasARNI = resultingRegimen.some(r => r.med.drug_class === 'ARNI');
         if (hasARNI) {
-            warnings.push('Hepatic Impairment: Sacubitril/Valsartan — sacubitril AUC increases ~1.5-2x in Child-Pugh B/C (Entresto PI). Avoid; switch to ACEi/ARB.');
+            warnings.push(hasChildPughBConfirmed(currentPatient)
+                ? 'Hepatic Impairment: Sacubitril/Valsartan in Child-Pugh B — start at 24/26 mg bid and titrate cautiously (sacubitril exposure is higher; Entresto label 2.8). Not recommended in Child-Pugh C (not studied).'
+                : 'Hepatic Impairment: Sacubitril/Valsartan — sacubitril AUC increases ~1.5-2x in Child-Pugh B/C (Entresto PI). Avoid in Child-Pugh C; Child-Pugh B needs a reduced start. Switch to ACEi/ARB if severity is unconfirmed.');
         }
         // Loop diuretics: cirrhosis with ascites may need higher doses
         const hasLoop = resultingRegimen.some(r => r.med.drug_class === 'Loop Diuretic');
