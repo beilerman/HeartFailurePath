@@ -76,17 +76,24 @@ sourced, and findings left unchanged because no source could be opened.
 - Finerenone quality-of-life credit; iron quality-of-life and NT-proBNP credit.
 - Torsemide 20 mg = furosemide 40 mg equivalence, which the torsemide alert level and Furoscix
   crediting depend on.
+  Rechecked 2026-11-10: the torsemide label on DailyMed (SPL 09305350-e317-419c-96f5-aa8fbeb4044d) states
+  no furosemide equivalence, and no guideline text could be opened, so it stays unverified.
 - Reduced loop response at low eGFR is a dosing note only; no multiplier.
 - Digoxin LVEF credit stays zero although the label states an increase.
 - Several prices (other generics, vericiguat, H/ISDN, dose-based Wegovy cash price).
 
 **Known gaps**
-- Ramipril twice daily is scored on the single-dose strength, so 5 mg twice daily does not count as the
-  10 mg/day target.
-- Lisinopril now has six tiers and the titration sampler skips 10 mg.
-- Loop-to-loop swaps offer non-equivalent starting doses.
 - Restart-after-withhold rules for MRAs and Lokelma's 48-hour correction phase are not modeled.
-- No potassium gate on up-titrating an MRA.
+- Swaps to or from torsemide keep the lowest tier and tell the prescriber to convert the dose (no verified equivalence).
+- Ramipril effects are still evaluated at the per-dose strength (only the target judgment uses the daily dose).
+- A ramipril regimen that arrives above the label renal cap as a total daily dose (5 mg twice daily at eGFR below 45) is not flagged; the cap compares the per-dose strength.
+
+**Closed in the final engine pass (changes: `changes-final-gaps.txt`)**
+- Target dose is judged on the total daily dose where an entry declares `facts.target_daily_dose` (ramipril only: 5 mg twice daily is the 10 mg/day target).
+- The immediately next tier above and below the current dose is always a titration candidate (lisinopril 5 mg offers 10 mg); a verify invariant checks it for every scenario.
+- An MRA dose is not increased at potassium 5.0 or above (`facts.k_uptitration_max`; finerenone and eplerenone labels, spironolactone by engine policy), with an alert stating why.
+- Loop-to-loop swaps land at the equivalent total daily dose when both agents declare `facts.verified_furosemide_equivalent_per_mg` (furosemide, bumetanide).
+- Form input hints read the engine thresholds (`services/engine/thresholds.ts`); the display-only "K+ 3.5-4.0" hint was dropped because no engine rule uses 4.0.
 
 ## Original findings (before verification)
 

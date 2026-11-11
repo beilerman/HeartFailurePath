@@ -1,8 +1,9 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS } from '../services/simulationService';
-import { getDoseTiers, dailyDose } from '../services/engine/regimenUtils';
+import { getDoseTiers, dailyDose, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
+import { isAcutelyDecompensated } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
-import { analyzeCurrentRegimen } from '../services/engine/candidates';
+import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary } from '../services/engine/candidates';
 import { simulateModificationEffect, patientChfEffects } from '../services/engine/effects';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
@@ -124,7 +125,8 @@ const ASSERTION_TITLE_MARKERS = [
     'RAAS-Source',
     'Rate-Source',
     'Adjunct-Source',
-    'Diuretic-Source'
+    'Diuretic-Source',
+    'Final-Gaps'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -2961,6 +2963,70 @@ async function runVerification() {
                 }
             }
 
+            // ===== Final engine gaps: daily-dose target, one-step titration, MRA K+ up-titration gate, equivalent loop swaps =====
+            if (scenario.title.includes('Final-Gaps')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const P = scenario.patient;
+                const med = (n: string) => MEDICATION_FORMULARY.find(m => m.name === n)!;
+                const analysis = analyzeCurrentRegimen(P, MEDICATION_FORMULARY, MEDICATION_FORMULARY.flatMap(m => getDoseTiers(m, P)));
+                const upOf = (name: string) => (analysis.titratableUp.find(x => x.current.med.name === name)?.options ?? []);
+                const rm = (name: string, strength: number | string, freq: string): RegimenMed => ({ med: med(name), dose: med(name).available_doses.find(d => String(d.strength) === String(strength))!, selected_frequency: freq });
+
+                if (t.includes('Ramipril 5 mg bid Counts As Target')) {
+                    if (!isTargetDoseForPatient(rm('Ramipril', 5, 'bid'), P)) fail('Ramipril 5 mg twice daily (10 mg/day) is not recognized as the target dose');
+                    if (!isTargetDoseForPatient(rm('Ramipril', 10, 'qd'), P)) fail('Ramipril 10 mg once daily is not the target dose');
+                    if (isTargetDoseForPatient(rm('Ramipril', 5, 'qd'), P)) fail('Ramipril 5 mg once daily (5 mg/day) wrongly counted as target');
+                    if (isTargetDoseForPatient(rm('Ramipril', 2.5, 'bid'), P)) fail('Ramipril 2.5 mg twice daily (5 mg/day) wrongly counted as target');
+                    if (upOf('Ramipril').length > 0) fail('Ramipril 5 mg bid (already 10 mg/day) is offered an up-titration that does not raise the daily dose');
+                    // Every other formulary entry with more than one frequency option is dosed by total daily dose and is not target-dosed, or declares a daily target.
+                    for (const m of MEDICATION_FORMULARY) {
+                        const multi = m.available_doses.some(d => d.frequency_options.length > 1);
+                        const targeted = m.available_doses.some(d => d.is_target_dose) || !!m.is_target_dose_for;
+                        if (multi && targeted && m.facts?.target_daily_dose === undefined) fail(`${m.name} offers more than one frequency and has a target dose but declares no facts.target_daily_dose`);
+                    }
+                }
+                if (t.includes('Lisinopril 5 mg Offers 10 mg Next')) {
+                    if (!upOf('Lisinopril').some(o => Number(o.dose.strength) === 10)) fail('Lisinopril 5 mg is not offered 10 mg as the next titration step');
+                    const down = analysis.titratableDown.find(x => x.current.med.name === 'Lisinopril')?.options ?? [];
+                    if (!down.some(o => Number(o.dose.strength) === 2.5)) fail('Lisinopril 5 mg is not offered 2.5 mg as the next step down');
+                }
+                if (t.includes('Spironolactone 25 mg Potassium 5.2 Not Increased')) {
+                    if (upOf('Spironolactone').length > 0) fail('Spironolactone up-titration offered at potassium 5.2');
+                    const alert = clinicalAlerts.find(a => a.startsWith('POTASSIUM HOLD ON SPIRONOLACTONE'));
+                    if (!alert || !alert.includes('5.2') || !/not increased/.test(alert) || !/Engine policy/.test(alert)) fail('No plain potassium-hold alert (with the engine-policy basis) for spironolactone at potassium 5.2');
+                    if (scoredRegimens.some(r => r.modification_set?.modifications.some(m => m.action === 'titrate_up' && m.target?.med.name === 'Spironolactone'))) fail('A displayed regimen up-titrates spironolactone at potassium 5.2');
+                    if (analysis.forcedReduceNames.has('Spironolactone')) fail('Potassium 5.2 forces an MRA reduction (reduction starts at 5.5)');
+                }
+                if (t.includes('Finerenone 20 mg Potassium 5.1 Not Increased')) {
+                    if (upOf('Finerenone (Kerendia)').length > 0) fail('Finerenone 20 mg is offered an increase at potassium 5.1 (label: increase to 40 mg only if potassium is below 5.0)');
+                    if (!clinicalAlerts.some(a => a.startsWith('POTASSIUM HOLD ON FINERENONE') && a.includes('Kerendia label'))) fail('No finerenone potassium-hold alert citing the label');
+                }
+                if (t.includes('To Bumetanide Equivalent Daily Dose')) {
+                    const swaps = analysis.swappable.find(x => x.from.med.name === 'Furosemide');
+                    const bum = (swaps?.candidates ?? []).filter(c => c.med.name === 'Bumetanide');
+                    if (bum.length !== 1) fail(`Expected exactly one bumetanide swap tier, found ${bum.length}`);
+                    else if (dailyDose(bum[0]) !== 4) fail(`Furosemide 80 mg bid (160 mg/day) -> bumetanide must land at 4 mg/day (found ${dailyDose(bum[0])} mg/day: ${bum[0].dose.strength} ${bum[0].selected_frequency})`);
+                    // nearest at or above: furosemide 40 mg bid (80/day) -> bumetanide 2 mg/day; 60 mg daily (60) -> 1.5 mg -> 2 mg nearest at or above
+                    const from = (strength: number, f: string) => equivalentSwapTier(rm('Furosemide', strength, f), med('Bumetanide'), P, 1);
+                    if (!from(40, 'bid') || dailyDose(from(40, 'bid')!) !== 2) fail('Furosemide 40 mg bid -> bumetanide is not 2 mg/day');
+                    if (!from(20, 'qd') || dailyDose(from(20, 'qd')!) !== 0.5) fail('Furosemide 20 mg daily -> bumetanide is not 0.5 mg/day');
+                    const back = equivalentSwapTier(rm('Bumetanide', 1, 'qd'), med('Furosemide'), P, 40);
+                    if (!back || dailyDose(back) < 40 || dailyDose(back) > 40) fail('Bumetanide 1 mg daily -> furosemide is not 40 mg/day');
+                    if (bum.length === 1 && !/equivalent total daily dose: 160 mg\/day Furosemide is about 4 mg\/day Bumetanide/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), bum[0]))) fail('Equivalent loop swap summary does not state the equivalent daily dose');
+                }
+                if (t.includes('To Torsemide Prescriber Converts')) {
+                    const swaps = analysis.swappable.find(x => x.from.med.name === 'Furosemide');
+                    const tor = (swaps?.candidates ?? []).filter(c => c.med.name === 'Torsemide');
+                    if (tor.length === 0) fail('No torsemide swap offered (check is vacuous)');
+                    // Torsemide equivalence is NOT verified (label opened, states none): the conservative lowest tier stays.
+                    if (tor.length > 0 && Number(tor[0].dose.strength) !== 5) fail('Unverified torsemide swap no longer offers the lowest tier');
+                    if (tor.length > 0 && !/prescriber must convert the dose/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), tor[0]))) fail('Unverified torsemide swap summary does not tell the prescriber to convert the dose');
+                    if (equivalentSwapTier(rm('Furosemide', 80, 'bid'), med('Torsemide'), P, 1) !== null) fail('A torsemide equivalent dose is computed although no verified equivalence is declared');
+                    if (med('Torsemide').facts?.verified_furosemide_equivalent_per_mg !== undefined) fail('Torsemide declares a verified equivalence without a recorded source');
+                }
+            }
+
             // ===== RAAS (ARNI / ACEi / ARB) source-verified corrections (verified-raas.md; labels: Entresto, Zestril, Vasotec, Cozaar; 2022 Table 14) =====
             if (scenario.title.includes('RAAS-Source')) {
                 const ARNI = 'Sacubitril/Valsartan (Entresto)';
@@ -3237,6 +3303,45 @@ async function runVerification() {
     } else {
         console.log(`  [PASS] ${Object.keys(WEIGHT_PROFILES).length} weight profile(s) sum to 100%.`);
         passed++;
+    }
+
+    console.log('Checking structural invariant: titration never skips the next step (one-step up and down candidates)...');
+    {
+        // For every scenario patient and every current drug: the immediately next tier (above / below, as eligible for this patient) is among the
+        // titration candidates, unless a rule blocks the move. The blocks are READ from the engine's own analysis (contraindicated / redundant /
+        // forced reduction / potassium and heart-rate gates / decompensation), never re-encoded here.
+        let checked = 0; const skipViolations: string[] = [];
+        for (const sc of SCENARIOS) {
+            const P = sc.patient;
+            const analysis = analyzeCurrentRegimen(P, MEDICATION_FORMULARY, MEDICATION_FORMULARY.flatMap(m => getDoseTiers(m, P)));
+            for (const cur of P.current_regimen ?? []) {
+                const name = cur.med.name;
+                const adj = adjacentTiers(cur, P);
+                const up = analysis.titratableUp.find(x => x.current.med.name === name)?.options ?? [];
+                const down = analysis.titratableDown.find(x => x.current.med.name === name)?.options ?? [];
+                const single = cur.med.facts?.single_course_dose === true;
+                const blockedUp = single || analysis.contraindicatedCurrentMeds.has(name) || analysis.redundantCurrentMeds.has(name) || analysis.forcedReduceNames.has(name)
+                    || kUptitrationBlock(cur.med, P) !== null || hrContinuationAction(cur.med, P)?.blockUp === true
+                    || (cur.med.drug_class === 'Beta Blocker' && isAcutelyDecompensated(P));
+                const raises = (t: RegimenMed | undefined, dir: 1 | -1) => !!t && (Number.isNaN(dailyDose(t)) || Number.isNaN(dailyDose(cur)) || (dir === 1 ? dailyDose(t) > dailyDose(cur) : dailyDose(t) < dailyDose(cur)));
+                if (!blockedUp && raises(adj.up, 1)) {
+                    checked++;
+                    if (!up.some(o => String(o.dose.strength) === String(adj.up!.dose.strength))) skipViolations.push(`${sc.title}: ${name} ${cur.dose.strength} has no one-step up candidate (${adj.up!.dose.strength})`);
+                }
+                if (!single && raises(adj.down, -1)) {
+                    checked++;
+                    if (!down.some(o => String(o.dose.strength) === String(adj.down!.dose.strength))) skipViolations.push(`${sc.title}: ${name} ${cur.dose.strength} has no one-step down candidate (${adj.down!.dose.strength})`);
+                }
+            }
+        }
+        if (skipViolations.length > 0 || checked === 0) {
+            skipViolations.slice(0, 10).forEach(m => console.error(`  [FAIL] ${m}`));
+            if (checked === 0) console.error('  [FAIL] no titration step was checked (vacuous)');
+            failed++;
+        } else {
+            console.log(`  [PASS] ${checked} next-step titration checks across all scenarios, none skipped.`);
+            passed++;
+        }
     }
 
     console.log('Checking structural invariant: every RAAS new start is at or below its starting tier...');

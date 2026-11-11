@@ -214,6 +214,12 @@ Implemented high-priority safeguards include:
   - strengths are marketed ones only (bumetanide 4 mg removed; torsemide 5/10/20/40/100; furosemide 160 = 2 x 80 mg; HCTZ 12.5; metolazone 2.5 (below the labeled HF range)/5/10)
   - thiazide-type add-on credit 1.1 kg (CLOROTIC, HCTZ; same for chlorthalidone and metolazone as an assumption); `facts.raises_uric_acid` gives every loop and thiazide-type drug the gout caution; metolazone: BMP monitoring item and a penalized hypokalemia caution below K+ 3.5 (`facts.hypokalemia_caution_below_k`, not a contraindication); HCTZ eGFR < 30 is a caution (< 15 and anuria excluded)
   - loop response at low eGFR: monitoring note only (no sourced multiplier); torsemide has no best-in-class badge
+- Dose-step rules (2026-11-10 final pass, `docs/evidence-matrix.md` HF-MRA-007, HF-RAAS-012, HF-DIU-014, HF-TITR-001):
+  - `facts.target_daily_dose` (ramipril 10 mg/day): `isTargetDoseForPatient` compares total daily dose, so 5 mg bid is target; `carryFrequency` keeps the current frequency on titration (never above the renal daily cap) and a step that does not raise the daily dose is not an up-titration
+  - the immediate next tier above and below the current dose is always a titration candidate (`adjacentTiers`), on top of the sampler's lowest/middle/highest/target; verify invariant "titration never skips the next step"
+  - `facts.k_uptitration_max` (finerenone/eplerenone label 5.0; spironolactone 5.0 engine policy): no MRA increase at K+ >= 5.0, alert `POTASSIUM HOLD ON <DRUG>`
+  - loop swaps: `facts.verified_furosemide_equivalent_per_mg` (furosemide 1, bumetanide 40) lands the swap at the equivalent daily dose (`equivalentSwapTier`); torsemide declares none (label states no equivalence) and keeps the lowest tier with a "prescriber must convert" note
+  - form input hints read `services/engine/thresholds.ts` (exported via the facade); never keep display-only copies
 - Structural regimen safety:
   - blocks dual RAAS combinations
   - blocks dual MRA combinations

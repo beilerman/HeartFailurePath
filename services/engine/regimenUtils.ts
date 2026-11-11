@@ -1,8 +1,9 @@
 /** Small regimen/patient helpers shared by the candidate, effects and scoring stages. Moved verbatim from simulationService.ts (phase 4). */
-import { Patient, Medication, ScoredRegimen, RegimenMed, ModificationSet } from '../../types';
+import { Patient, Medication, MedicationDose, ScoredRegimen, RegimenMed, ModificationSet } from '../../types';
 import { hasUnknownHistoricalHFrEF } from '../clinicalPredicates';
 import { getMedicationClassGroup, isDiureticClass } from './registry';
 import { drugFacts } from './drugFacts';
+import { LOW_OUTPUT } from './thresholds';
 
 // --- Helper Functions ---
 const DOSES_PER_DAY: Record<string, number> = { qd: 1, bid: 2, tid: 3 };
@@ -54,18 +55,24 @@ export function pickPreferredFrequency(med: Medication, options: string[], patie
  * another strength (80 mg bid -> 160 mg bid, not 160 mg once daily, which would credit no change). Never above the declared daily maximum
  * or the tier's own frequency options. Other drugs keep the tier's preferred frequency.
  */
-export function carryFrequency(tier: RegimenMed, current: RegimenMed): RegimenMed {
-    if (!drugFacts(tier.med).effects_on_daily_dose) return tier;
+export function carryFrequency(tier: RegimenMed, current: RegimenMed, dailyCap?: number): RegimenMed {
     const want = dosesPerDay(current.selected_frequency);
     const have = dosesPerDay(tier.selected_frequency);
     if (want <= have) return tier;
+    const strength = Number(tier.dose.strength);
     const best = frequenciesWithinMax(tier.med, tier.dose.frequency_options, tier.dose.strength)
+        // A renal / interaction maximum is a daily maximum for a drug dosed by total daily dose (ramipril label: 5 mg/day at CrCl < 40).
+        .filter(f => dailyCap === undefined || Number.isNaN(strength) || strength * dosesPerDay(f) <= dailyCap)
         .filter(f => dosesPerDay(f) <= want && dosesPerDay(f) > have)
         .sort((x, y) => dosesPerDay(y) - dosesPerDay(x))[0];
     return best ? { ...tier, selected_frequency: best } : tier;
 }
 
-export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
+/**
+ * Doses of `med` this patient may be offered (renal / interaction caps, declared daily maximum, the age > 80 lower-half rule), ascending in
+ * ladder order. getDoseTiers samples from this list; titration also reads the immediate neighbours from it.
+ */
+export function eligibleDoses(med: Medication, patient: Patient): MedicationDose[] {
     const adjustment = med.renal_adjustment ? med.renal_adjustment(patient.egfr, patient) : {};
     const interactionCap = med.interaction_dose_cap?.(patient)?.max_dose;
     const maxDose = interactionCap !== undefined
@@ -79,15 +86,59 @@ export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
         }
         return true;
     });
-
-    if (validDoses.length === 0) return [];
-
-    // P3: Age-adjusted dosing — elderly patients (>80) limited to lower dose tiers
-    let dosesForTiering = validDoses;
+    // P3: Age-adjusted dosing — elderly patients (>80) limited to lower dose tiers (start low, go slow)
     if (patient.age > 80 && validDoses.length > 2) {
-        // Limit to bottom half of dose range (start low, go slow)
-        dosesForTiering = validDoses.slice(0, Math.max(2, Math.ceil(validDoses.length / 2)));
+        return validDoses.slice(0, Math.max(2, Math.ceil(validDoses.length / 2)));
     }
+    return validDoses;
+}
+
+/** The daily cap (renal / interaction) used to stop a carried frequency from exceeding it; undefined when none. */
+export function dailyCapFor(med: Medication, patient: Patient): number | undefined {
+    const adjustment = med.renal_adjustment ? med.renal_adjustment(patient.egfr, patient) : {};
+    const interactionCap = med.interaction_dose_cap?.(patient)?.max_dose;
+    const caps = [adjustment.max_dose, interactionCap].filter((x): x is number => typeof x === 'number');
+    return caps.length ? Math.min(...caps) : undefined;
+}
+
+/**
+ * Titration neighbours: the IMMEDIATELY next tier above (and below) the current dose, so a one-step change is always offered even when
+ * the sampler (lowest / middle / highest / target) skips it. Same eligibility as getDoseTiers; frequency carried from the current regimen.
+ * The current dose must be on the drug's ladder; otherwise nothing is added.
+ */
+export function adjacentTiers(current: RegimenMed, patient: Patient): { up?: RegimenMed; down?: RegimenMed } {
+    const med = current.med;
+    const order = med.available_doses;
+    const currentIdx = order.findIndex(d => d.strength === current.dose.strength);
+    if (currentIdx < 0) return {};
+    const idx = (d: MedicationDose) => order.indexOf(d);
+    const eligible = eligibleDoses(med, patient);
+    const cap = dailyCapFor(med, patient);
+    const make = (dose: MedicationDose | undefined): RegimenMed | undefined => dose
+        ? carryFrequency({ med, dose, selected_frequency: pickPreferredFrequency(med, dose.frequency_options, patient, dose.strength) }, current, cap)
+        : undefined;
+    return {
+        up: make(eligible.find(d => idx(d) > currentIdx)),
+        down: make([...eligible].reverse().find(d => idx(d) < currentIdx)),
+    };
+}
+
+/**
+ * Potassium rule for INCREASING an MRA the patient already takes (facts.k_uptitration_max): at or above `below` the dose is not raised.
+ * Blank potassium (0) never triggers (the unknown-K+ penalty and data alert govern). Returns the plain-language reason, or null.
+ */
+export function kUptitrationBlock(med: Medication, patient: Patient): { reason: string; basis: string } | null {
+    const rule = med.facts?.k_uptitration_max;
+    if (!rule || !(patient.potassium > 0) || patient.potassium < rule.below) return null;
+    return {
+        reason: `potassium ${patient.potassium.toFixed(1)} mEq/L is ${rule.below.toFixed(1)} or above: the dose is not increased (maintain; recheck potassium)`,
+        basis: rule.basis,
+    };
+}
+
+export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
+    const dosesForTiering = eligibleDoses(med, patient);
+    if (dosesForTiering.length === 0) return [];
 
     // One-step titration drugs (facts.titrate_one_step: weekly GLP-1 / GLP-1-GIP agents) offer EVERY labeled tier, so the next
     // step is always available and titratableUp can offer exactly one step; the sampler below would skip steps.
@@ -264,13 +315,13 @@ export function computeRedundantCurrentMeds(
 export function isLowOutputState(patient: Patient): boolean {
     // Invalid BP input can create false pulse-pressure triggers. Treat as not-assessable here.
     if (patient.sbp <= patient.dbp) return false;
-    if (patient.lvef >= 20) return false;
+    if (patient.lvef >= LOW_OUTPUT.lvefBelow) return false;
 
     const hasCoolExtremities = patient.volume_status.exam_findings.has('Cool Extremities');
     const pulsePressure = patient.sbp - patient.dbp;
-    const hasNarrowPulsePressure = pulsePressure <= 25;
+    const hasNarrowPulsePressure = pulsePressure <= LOW_OUTPUT.pulsePressureMax;
     const bunCrRatio = patient.creatinine > 0 ? patient.bun / patient.creatinine : 0;
-    const hasPrerenalAzotemia = bunCrRatio > 20;
+    const hasPrerenalAzotemia = bunCrRatio > LOW_OUTPUT.bunCrAbove;
 
     const markerCount = [hasCoolExtremities, hasNarrowPulsePressure, hasPrerenalAzotemia].filter(Boolean).length;
     return markerCount >= 2;
@@ -312,6 +363,13 @@ export function countNewClassGroups(candidate: RegimenMed[], current: RegimenMed
  * Used by the concordance scorer, the GDMT-completeness bonus, and the UI med pills.
  */
 export function isTargetDoseForPatient(regimenMed: RegimenMed, patient: Patient): boolean {
+    // A drug whose doses can be given at more than one frequency declares its target as a TOTAL DAILY dose (facts.target_daily_dose):
+    // ramipril 5 mg twice daily is the 10 mg/day target.
+    const dailyTarget = drugFacts(regimenMed.med).target_daily_dose;
+    if (dailyTarget !== undefined) {
+        const daily = dailyDose(regimenMed);
+        if (!Number.isNaN(daily)) return daily >= dailyTarget;
+    }
     const staticTarget = !!regimenMed.med.available_doses.find(d => String(d.strength) === String(regimenMed.dose.strength))?.is_target_dose;
     const patientDependentTarget = regimenMed.med.is_target_dose_for;
     if (!patientDependentTarget) return staticTarget;

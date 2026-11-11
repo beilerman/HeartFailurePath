@@ -11,6 +11,7 @@
 import type { Patient } from '../../types';
 import { drugFacts } from './drugFacts';
 import { hasChildPughBConfirmed } from './contraindications';
+import { SEVERE_CKD_EGFR_BELOW } from './thresholds';
 
 const DOSES_PER_DAY: Record<string, number> = { qd: 1, bid: 2, tid: 3 };
 
@@ -33,7 +34,7 @@ export function raasNaiveOrLowDose(p: Patient): boolean {
 export function arniReducedStartReasons(p: Patient): string[] {
     const reasons: string[] = [];
     if (raasNaiveOrLowDose(p)) reasons.push('not taking an ACE inhibitor or ARB, or taking only a low dose of one');
-    if (p.egfr < 30) reasons.push('eGFR below 30 (or not entered)');
+    if (p.egfr < SEVERE_CKD_EGFR_BELOW) reasons.push('eGFR below 30 (or not entered)');
     if (hasChildPughBConfirmed(p)) reasons.push('moderate hepatic impairment (Child-Pugh B)');
     return reasons;
 }

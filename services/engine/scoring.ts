@@ -20,6 +20,7 @@ import { simulateModificationEffect } from './effects';
 import { IntolerancePolicy } from './intolerance';
 import { RegimenAnalysis } from './candidates';
 import { CriticalDataAudit, ClinicalFlags } from './gates';
+import { MRA_START_K_BINDER_ABOVE } from './thresholds';
 
 type Simulation = ReturnType<typeof simulateModificationEffect>;
 
@@ -172,7 +173,7 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
     let sim: Simulation | undefined;
     // An MRA start above K+ 5.0 never appears without a binder: eligibility rule E15 withholds the MRA when no
     // binder can be offered, so rescueBinders is non-empty here whenever an MRA is being added.
-    if (isMraAdd && patient.potassium > 5.0 && rescueBinders.length > 0 && !alreadyHasBinder) {
+    if (isMraAdd && patient.potassium > MRA_START_K_BINDER_ABOVE && rescueBinders.length > 0 && !alreadyHasBinder) {
         // The labels say do not START an MRA above 5.0 (spironolactone, finerenone). The binder-enabled start
         // is offered only when a binder tier is projected to hold potassium inside 3.5-5.3; if none does, the
         // candidate is dropped (treat the potassium first) rather than starting the MRA anyway.

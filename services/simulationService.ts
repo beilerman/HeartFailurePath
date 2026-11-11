@@ -20,6 +20,7 @@ export {
 } from './engine/domains';
 export type { PillarKey, PillarConcordance, Phenotype } from './engine/domains';
 export { DISPLAY_FLOORS } from './engine/selection';
+export { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_BINDER_ABOVE, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from './engine/thresholds';
 
 /**
  * THE engine entry point. Deterministic and side-effect free: given a patient (including

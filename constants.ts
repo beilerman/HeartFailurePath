@@ -5,6 +5,7 @@ import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL
     PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
 import { valueUnknown, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
+import { BB_HR_BELOW, HYPOKALEMIA_K_BELOW } from './services/engine/thresholds';
 
 // Helper for logarithmic calculations (dose-response curves)
 const logBase = (base: number, x: number) => Math.log(x) / Math.log(base);
@@ -287,8 +288,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // <= 5 mg/day (judgment: the dose-equivalent of the enalapril 10 mg/day reference; see raasStart.ts).
         facts: {
             low_dose_max_daily_mg: 5,
+            // Label HF regimen 5 mg bid = 10 mg/day = the guideline target (2022 Table 14: 10 mg daily). Target is judged on TOTAL DAILY dose.
+            target_daily_dose: 10,
             regimen_warnings: [
-                { text: 'Drug note: the ramipril label heart-failure regimen (post-MI) is 2.5 mg bid, then 5 mg bid (10 mg/day, the guideline target). Effects are modeled from the per-dose strength, so a twice-daily regimen reads as the single-dose strength.' },
+                { text: 'Drug note: the ramipril label heart-failure regimen (post-MI) is 2.5 mg bid, then 5 mg bid (10 mg/day, the guideline target). Target-dose credit uses the total daily dose (5 mg twice daily counts as target); effects are still modeled from the per-dose strength, so a twice-daily regimen reads as the single-dose strength.' },
             ],
         },
         start_dose_for: () => 1.25,
@@ -481,7 +484,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             nonselective_beta_blocker: true, hepatically_metabolized: true,
             // Coreg label sec 2.1 and 5.2: "reduce the dose if heart rate is less than 55 beats per minute" (sourced). No
             // up-titration below 60 bpm is ENGINE POLICY (no label number). Established therapy is reduced one step, never stopped at a rate.
-            hr_continuation: { reduce_below: 55, no_uptitration_below: 60, basis: 'Coreg label: reduce the dose if heart rate is below 55; no up-titration below 60 is this tool\'s policy' },
+            hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'Coreg label: reduce the dose if heart rate is below 55; no up-titration below 60 is this tool\'s policy' },
         },
         // ACC/AHA target: 25 mg BID for <= 85 kg dry weight, 50 mg BID above (the label calls 50 mg BID the maximum
         // ADMINISTERED to patients over 85 kg; the weight-based target is from the guideline, secondary source).
@@ -542,7 +545,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             beta1_selective: true, hepatically_metabolized: true,
             // Toprol-XL/generic label: "if patients experience symptomatic bradycardia, reduce the dose" (no number). Below 55 bpm as the
             // trigger (same as carvedilol's labeled number) and no up-titration below 60 are ENGINE POLICY.
-            hr_continuation: { reduce_below: 55, no_uptitration_below: 60, basis: 'metoprolol label: reduce the dose for symptomatic bradycardia (no number); below 55 and no up-titration below 60 are this tool\'s policy' },
+            hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'metoprolol label: reduce the dose for symptomatic bradycardia (no number); below 55 and no up-titration below 60 are this tool\'s policy' },
         },
         // is_best_in_class removed: the three beta-blockers are modeled as equal at target (verified-rate-control.md); no verified source ranks one above the others.
         available_doses: [
@@ -588,7 +591,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             beta1_selective: true, most_cardioselective: true,
             // The US label gives no heart-rate number ("marked sinus bradycardia" is a contraindication). Below 55 bpm as the reduction
             // trigger and no up-titration below 60 are ENGINE POLICY, matched to the other two beta-blockers.
-            hr_continuation: { reduce_below: 55, no_uptitration_below: 60, basis: 'bisoprolol US label gives no heart-rate number; below 55 and no up-titration below 60 are this tool\'s policy' },
+            hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'bisoprolol US label gives no heart-rate number; below 55 and no up-titration below 60 are this tool\'s policy' },
             regimen_warnings: [
                 { text: 'Drug note: the US bisoprolol label is for hypertension only and lists overt cardiac failure as a contraindication, so heart-failure use is off-label (guideline-supported: CIBIS-II, target 10 mg daily). US single-agent tablets are 5 mg and 10 mg; 2.5 mg is half of a scored 5 mg tablet, and the CIBIS-II 1.25 mg starting dose is not obtainable (a quarter tablet is impractical).' },
             ],
@@ -644,6 +647,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // applied here BY ANALOGY (flagged). The code's old removal threshold was K+ > 5.5; the label rule
             // starts at 5.5 inclusive, which is the stricter, so it is used.
             k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Eplerenone/finerenone label rule applied to spironolactone by analogy (the Aldactone label gives no numeric rule)' },
+            // ENGINE POLICY (class rule by analogy): do not raise the dose while K+ is 5.0 or above. The Aldactone label gives no up-titration potassium number;
+            // the Inspra and Kerendia labels both say increase only when K+ is below 5.0.
+            k_uptitration_max: { below: 5.0, basis: 'Engine policy: class rule from the eplerenone and finerenone labels applied to spironolactone (the Aldactone label gives no number)' },
             monitoring_items: [{
                 test: 'Spironolactone starting dose (eGFR 30-50)',
                 timing: 'At initiation',
@@ -707,7 +713,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         start_dose_for: () => 25,
         // Inspra label (HF): K+ 5.5-5.9 decrease dose (withhold if already at the lowest dose), >= 6.0 withhold.
         // The old code removed at K+ > 5.5; the label rule starts at 5.5 inclusive (stricter), so it is used.
-        facts: { k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Inspra label' } },
+        facts: {
+            k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Inspra label' },
+            // Inspra label (HF dose adjustment by K+): below 5.0 increase (25 mg every other day -> 25 mg daily -> 50 mg daily); 5.0-5.4 maintain.
+            k_uptitration_max: { below: 5.0, basis: 'Inspra label: increase the dose only when potassium is below 5.0; 5.0-5.4 maintain' },
+        },
         // Inspra label: with a moderate CYP3A inhibitor do not exceed 25 mg once daily (HF).
         interaction_dose_cap: (p) => moderateCyp3aInhibitor(p)
             ? { max_dose: 25, reason: 'moderate CYP3A inhibitor (label maximum 25 mg daily)' } : null,
@@ -766,6 +776,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // Kerendia label (HF), by K+: 10 mg: 5.5-5.9 withhold; >= 6.0 withhold. 20/40 mg: 5.5-5.9 decrease one step
             // (40 -> 20, 20 -> 10); >= 6.0 withhold. Restart 10 mg once K+ is below 5.5 (below 5.0 if recurrent).
             k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Kerendia label' },
+            // Kerendia label (HF): 10 -> 20 mg and 20 -> 40 mg only if K+ is below 5.0.
+            k_uptitration_max: { below: 5.0, basis: 'Kerendia label: increase the dose only if potassium is below 5.0' },
             regimen_warnings: [{
                 text: 'Drug note: a moderate CYP3A4 inhibitor (verapamil, diltiazem, erythromycin, fluconazole) raises finerenone exposure (erythromycin +248%, verapamil +170%). No fixed dose cap: check potassium and adjust the dose. Avoid grapefruit juice.',
                 when: moderateCyp3aInhibitor,
@@ -1094,6 +1106,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             effects_on_daily_dose: true,
             raises_uric_acid: true, // label: asymptomatic hyperuricemia can occur; gout may rarely be precipitated
             loop_furosemide_equivalent_per_mg: 1,
+            verified_furosemide_equivalent_per_mg: 1, // reference loop
             monitoring_items: [LOOP_LOW_EGFR_ITEM],
         },
         available_doses: [
@@ -1238,6 +1251,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
             effects_on_daily_dose: true,
             raises_uric_acid: true, // label: gout may rarely be precipitated
             loop_furosemide_equivalent_per_mg: 2, // engine calibration, NOT VERIFIED (only used to credit a Furoscix add-on above the oral loop)
+            // No verified_furosemide_equivalent_per_mg: the torsemide label (DailyMed SPL 09305350, opened 2026-11-10) states no furosemide equivalence, so loop swaps to or from
+            // torsemide keep the lowest tier and tell the prescriber to convert the dose.
             monitoring_items: [LOOP_LOW_EGFR_ITEM],
         },
         // No "best in class" badge: TRANSFORM-HF (n=2859) showed no mortality difference vs furosemide (26.1% vs 26.2%, HR 1.02, 95% CI 0.89-1.18).
@@ -1285,6 +1300,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             effects_on_daily_dose: true,
             raises_uric_acid: true, // the bumetanide label names asymptomatic hyperuricemia only (gout not mentioned); kept at the loop-class caution it already carried
             loop_furosemide_equivalent_per_mg: 40,
+            verified_furosemide_equivalent_per_mg: 40, // Bumex label: 1 mg bumetanide is about 40 mg furosemide (verified-diuretics.md)
             monitoring_items: [LOOP_LOW_EGFR_ITEM],
         },
         available_doses: [
@@ -1744,7 +1760,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // (p.potassium > 0 guard: blank/unentered K+ is stored as 0 and must not read as
             // hypokalemia; the engine's POTASSIUM UNKNOWN pathway governs that case.) Hypokalemia potentiates toxicity; the label's
             // advice is to correct it first, so this stays a conservative block (verified-rate-control.md row 21).
-            { reason: 'Potassium below 3.5 mEq/L', when: p => (p.potassium > 0 && p.potassium < 3.5) },
+            { reason: `Potassium below ${HYPOKALEMIA_K_BELOW} mEq/L`, when: p => (p.potassium > 0 && p.potassium < HYPOKALEMIA_K_BELOW) },
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
         ]),

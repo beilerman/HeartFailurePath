@@ -7,7 +7,8 @@ import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold } from '../clini
 import { PDE5_INHIBITORS } from './contraindications';
 import { taggedDiscontinuedMeds } from './eligibility';
 import { buildMissingDataNotices, computeGdmtGaps } from './explain';
-import { dailyDose, dedupeCurrentRegimen, hrContinuationAction, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { dailyDose, dedupeCurrentRegimen, hrContinuationAction, kContinuationAction, kUptitrationBlock, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { HYPOTENSION_SBP_BELOW } from './thresholds';
 
 export interface CriticalDataAudit {
     alerts: string[];
@@ -227,6 +228,17 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
         );
     });
 
+    // --- Potassium hold on INCREASING an MRA the patient already takes (facts.k_uptitration_max): no up-titration candidate is offered; say why.
+    // At K+ >= the continuation reduce level the reduction/withhold reason is stated instead.
+    (patient.current_regimen || []).forEach(r => {
+        const hold = kUptitrationBlock(r.med, patient);
+        if (!hold || kContinuationAction(r.med, patient) || r.med.contraindications?.(patient)) return;
+        clinicalAlerts.push(
+            `POTASSIUM HOLD ON ${r.med.name.toUpperCase()}: ${hold.reason}. ${r.med.name} ${r.dose.strength}${r.dose.unit} stays at the current dose; ` +
+            `recheck potassium before any increase. Basis: ${hold.basis}.`
+        );
+    });
+
     // --- S2: Hemodynamic instability — block pharmacologic optimization ---
     // Threshold raised to SBP < 90 (MAP ~65 mmHg): oral GDMT initiation requires adequate perfusion
     const lowOutput = isLowOutputState(patient);
@@ -237,7 +249,7 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
         );
     }
 
-    if (patient.sbp < 90) {
+    if (patient.sbp < HYPOTENSION_SBP_BELOW) {
         clinicalAlerts.push(
             'HEMODYNAMIC INSTABILITY: SBP < 90 mmHg. Oral GDMT optimization is unsafe at current blood pressure. ' +
             'Stabilize hemodynamics first. Consider: IV inotropes (dobutamine/milrinone), hemodynamic monitoring (PA catheter), ' +
@@ -353,7 +365,7 @@ export function checkSafetyHardStops(
     gdmtGaps: string[],
     missingDataNotices: string[]
 ): SimulationOutput | null {
-    if (patient.sbp < 90 || patient.potassium >= 6.5) {
+    if (patient.sbp < HYPOTENSION_SBP_BELOW || patient.potassium >= 6.5) {
         return {
             scoredRegimens: [],
             excludedMedications: taggedDiscontinuedMeds(patient),

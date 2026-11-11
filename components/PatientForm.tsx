@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import type { Patient, TestScenario } from '../types';
 import { Label, Select, REQUIRED_FIELDS } from './patient-form/Common';
+import { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_BINDER_ABOVE, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from '../services/simulationService';
 import { DemographicsSection } from './patient-form/DemographicsSection';
 import { SymptomsSection } from './patient-form/SymptomsSection';
 import { PhysicalExamSection } from './patient-form/PhysicalExamSection';
@@ -154,30 +155,29 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         const bunCrRatio = patientData.creatinine > 0 ? patientData.bun / patientData.creatinine : 0;
         const pulsePressure = patientData.sbp - patientData.dbp;
         const hasInvalidBP = patientData.sbp <= patientData.dbp;
-        const hasLowOutputMarker = !hasInvalidBP && (patientData.volume_status.exam_findings.has('Cool Extremities') || pulsePressure <= 25 || bunCrRatio > 20);
+        const hasLowOutputMarker = !hasInvalidBP && (patientData.volume_status.exam_findings.has('Cool Extremities') || pulsePressure <= LOW_OUTPUT.pulsePressureMax || bunCrRatio > LOW_OUTPUT.bunCrAbove);
 
         if (hasInvalidBP) warnings.sbp = 'Invalid BP entry: SBP must exceed DBP';
-        else if (patientData.sbp < 90) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
+        else if (patientData.sbp < HYPOTENSION_SBP_BELOW) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
         // Potassium 0 / blank means "not entered" (the engine withholds K+-dependent conclusions).
         if (!(patientData.potassium > 0)) warnings.potassium = 'Not entered: RAAS inhibitor and MRA decisions will be withheld until a potassium is available';
-        else if (patientData.potassium > 5.5) warnings.potassium = 'High K+: a new MRA is not started; an MRA already on board is reduced or withheld';
-        else if (patientData.potassium < 3.5) warnings.potassium = 'K+ < 3.5 increases digoxin/arrhythmia risk';
-        else if (patientData.potassium < 4.0) warnings.potassium = 'K+ 3.5-4.0: monitor closely with loop diuretics/digoxin';
-        else if (patientData.potassium > 5.0) warnings.potassium = 'Borderline K+: a new MRA needs a potassium binder in the same plan';
+        else if (patientData.potassium > MRA_START_K_MAX) warnings.potassium = 'High K+: a new MRA is not started; an MRA already on board is reduced or withheld';
+        else if (patientData.potassium < HYPOKALEMIA_K_BELOW) warnings.potassium = `K+ < ${HYPOKALEMIA_K_BELOW} increases digoxin/arrhythmia risk`;
+        else if (patientData.potassium > MRA_START_K_BINDER_ABOVE) warnings.potassium = 'Borderline K+: a new MRA needs a potassium binder in the same plan';
         if (patientData.is_pregnant) warnings.pregnancy = 'RAAS inhibitors, MRAs, SGLT2 inhibitors, vericiguat, ivabradine and GLP-1 therapies are excluded';
         if (patientData.nyha_class === 'IV') warnings.nyha = 'BB initiation blocked';
-        if (patientData.pulse < 55) warnings.pulse = 'Low heart rate: a new beta-blocker is not started; an established one is reduced a step';
+        if (patientData.pulse < BB_HR_BELOW) warnings.pulse = 'Low heart rate: a new beta-blocker is not started; an established one is reduced a step';
         if (patientData.rhythm === '2nd Degree AV Block' || patientData.rhythm === '3rd Degree AV Block') {
             warnings.av_block = 'AV block present: beta blockers and digoxin are contraindicated unless paced/specialist-directed.';
         }
         // Low or unknown eGFR changes which drugs are offered and at what dose; the exact cut-offs differ by
         // drug (and are shown with the reason after the analysis runs), so this hint does not restate them.
-        if (patientData.egfr > 0 && patientData.egfr < 30) {
+        if (patientData.egfr > 0 && patientData.egfr < SEVERE_CKD_EGFR_BELOW) {
             warnings.egfr = 'Severe CKD: several drugs are withheld or dose-limited (MRAs, RAAS inhibitors, SGLT2 inhibitors). Run the analysis to see which, and why.';
         } else if (!(patientData.egfr > 0)) {
             warnings.egfr = 'Creatinine not entered: renal-dependent decisions will be withheld until a creatinine is available.';
         }
-        if (patientData.lvef < 20 && hasLowOutputMarker) warnings.low_output = 'Low-output profile detected (LVEF < 20 with hypoperfusion markers)';
+        if (patientData.lvef < LOW_OUTPUT.lvefBelow && hasLowOutputMarker) warnings.low_output = `Low-output profile detected (LVEF < ${LOW_OUTPUT.lvefBelow} with hypoperfusion markers)`;
         return warnings;
     }, [patientData]);
 

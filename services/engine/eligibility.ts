@@ -26,6 +26,7 @@ import {
 } from './intolerance';
 import { drugFacts } from './drugFacts';
 import { contraindicationReasons } from './contraindications';
+import { MRA_START_K_BINDER_ABOVE } from './thresholds';
 
 /** Everything the rules need, computed once per patient (not per drug). */
 export interface EligibilityContext {
@@ -205,7 +206,7 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         // continuation rule). Placed after E13 so potassium above 5.5 is reported as a contraindication.
         evaluate: (ctx, med) => MRA_POOL_CLASSES.has(med.drug_class)
             && ctx.kBinderAvailable === false
-            && ctx.patient.potassium > 5.0
+            && ctx.patient.potassium > MRA_START_K_BINDER_ABOVE
             && !(ctx.patient.current_regimen ?? []).some(r => MRA_POOL_CLASSES.has(r.med.drug_class))
             ? 'MRA start above potassium 5.0 needs a potassium binder, and none can be offered' : null,
         details: (ctx) => [

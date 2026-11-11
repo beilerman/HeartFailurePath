@@ -7,6 +7,7 @@ import { RAAS_CLASSES, getDbpRatio, getMedicationClassGroup } from './registry';
 import { clonePatient, dailyDose, effectDose, isTargetDoseForPatient } from './regimenUtils';
 import { URIC_ACID_GOUT_POINTS } from './scoreModel';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
+import { HYPOKALEMIA_K_BELOW } from './thresholds';
 
 /** A drug's heart-rate lowering as credited for THIS patient: digoxin's only counts in the rhythm its label data cover (AFib). */
 function hrDropFor(med: Medication, hrDrop: number, patient: Patient): number {
@@ -584,8 +585,8 @@ export function simulateModificationEffect(
             warnings.push('Caution: Elevated Potassium (K+ > 5.2). Monitor closely.');
         } else if (proj.potassium > 5.0 && hasMRA) {
             warnings.push('Monitor: K+ > 5.0 with MRA. Check potassium within 1 week; consider Patiromer if rising.');
-        } else if (proj.potassium < 3.5) {
-            warnings.push('Risk of Hypokalemia (K+ < 3.5)');
+        } else if (proj.potassium < HYPOKALEMIA_K_BELOW) {
+            warnings.push(`Risk of Hypokalemia (K+ < ${HYPOKALEMIA_K_BELOW})`);
         }
     }
 

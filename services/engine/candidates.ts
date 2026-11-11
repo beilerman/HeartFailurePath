@@ -3,7 +3,7 @@ import { Patient, Medication, RegimenMed, ModificationAction, RegimenModificatio
 import { drugFacts } from './drugFacts';
 import { valueUnknown, hasHistoricalHFrEF, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
-import { computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { adjacentTiers, dailyCapFor, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication } from './intolerance';
 import { regimenSatisfiesPillar } from './domains';
 
@@ -187,12 +187,26 @@ export function analyzeCurrentRegimen(
         const currentIdx = doseOrder.findIndex(d => d.strength === current.dose.strength);
         const tierIdx = (t: RegimenMed) => doseOrder.findIndex(d => d.strength === t.dose.strength);
 
-        if (!isContraindicated && !isBBBlockedUp && reduceReason === undefined && !hrRule?.blockUp) {
+        const adjacent = adjacentTiers(current, patient);
+        // Add the immediate neighbour tiers to the sampled ones (never skip the next step); ascending by ladder index.
+        const withNeighbour = (sampled: RegimenMed[], extra: RegimenMed | undefined) => {
+            const have = new Set(sampled.map(t => String(t.dose.strength)));
+            return extra && !have.has(String(extra.dose.strength)) ? [...sampled, extra] : sampled;
+        };
+        // A "higher" / "lower" tier must change the TOTAL daily dose in that direction (ramipril 5 mg twice daily -> 10 mg once daily is no change).
+        const changesDaily = (t: RegimenMed, dir: 1 | -1) => {
+            const a = dailyDose(t), b = dailyDose(current);
+            return Number.isNaN(a) || Number.isNaN(b) || (dir === 1 ? a > b : a < b);
+        };
+        // MRA potassium gate on INCREASING the dose (facts.k_uptitration_max): the dose is held, the alert states why.
+        const kUpBlock = kUptitrationBlock(current.med, patient);
+
+        if (!isContraindicated && !isBBBlockedUp && reduceReason === undefined && !hrRule?.blockUp && !kUpBlock) {
             // Sorted ASCENDING by dose index so consumers can rely on options[last] being the
             // highest tier (getDoseTiers construction order is [lowest, highest, middle, target],
             // which is NOT ascending — the compound add+titrate candidate previously picked a
             // middle/target tier while labeling it the maximal step).
-            let higherDoses = allTiers.filter(t => tierIdx(t) > currentIdx).sort((a, b) => tierIdx(a) - tierIdx(b)).map(t => carryFrequency(t, current));
+            let higherDoses = withNeighbour(allTiers.filter(t => tierIdx(t) > currentIdx).map(t => carryFrequency(t, current, dailyCapFor(current.med, patient))), adjacent.up).filter(t => changesDaily(t, 1)).sort((a, b) => tierIdx(a) - tierIdx(b));
             // facts.titrate_one_step (weekly GLP-1 / GLP-1-GIP): only the NEXT labeled tier, never a jump past a step.
             if (drugFacts(current.med).titrate_one_step) higherDoses = higherDoses.slice(0, 1);
             if (higherDoses.length > 0 && !drugFacts(current.med).single_course_dose) {
@@ -200,7 +214,7 @@ export function analyzeCurrentRegimen(
             }
         }
 
-        const lowerDoses = allTiers.filter(t => tierIdx(t) < currentIdx).sort((a, b) => tierIdx(a) - tierIdx(b)).map(t => carryFrequency(t, current));
+        const lowerDoses = withNeighbour(allTiers.filter(t => tierIdx(t) < currentIdx).map(t => carryFrequency(t, current, dailyCapFor(current.med, patient))), adjacent.down).filter(t => changesDaily(t, -1)).sort((a, b) => tierIdx(a) - tierIdx(b));
         // A one-time label course (facts.single_course_dose: ferric carboxymaltose) is not a titratable dose: no up/down candidates.
         if (lowerDoses.length > 0 && !drugFacts(current.med).single_course_dose) {
             titratableDown.push({ current, options: lowerDoses });
@@ -261,6 +275,21 @@ export function analyzeCurrentRegimen(
         // alternative.)
         if (group === 'RAAS Inhibitor' && !sourceContraindicated) {
             candidates = candidates.filter(t => t.med.drug_class === 'ARNI' && current.med.drug_class !== 'ARNI');
+        }
+        // Loop-to-loop swap at an EQUIVALENT total daily dose (facts.verified_furosemide_equivalent_per_mg on both agents): the swap-in is the nearest
+        // tier at or just above the equivalent daily dose, not the new loop's lowest tier. An agent without a verified equivalence keeps its lowest tier.
+        const fromEquivalent = drugFacts(current.med).verified_furosemide_equivalent_per_mg;
+        if (fromEquivalent !== undefined) {
+            const equivalent = new Map<string, RegimenMed | null>();
+            const emitted = new Set<string>();
+            candidates = candidates.flatMap(t => {
+                if (!equivalent.has(t.med.name)) equivalent.set(t.med.name, equivalentSwapTier(current, t.med, patient, fromEquivalent));
+                const eq = equivalent.get(t.med.name);
+                if (!eq) return [t];
+                if (emitted.has(t.med.name)) return [];
+                emitted.add(t.med.name);
+                return [eq];
+            });
         }
         if (candidates.length > 0) {
             // AGENT DIVERSITY: tiersByGroup lists every dose tier in formulary order, so the
@@ -483,6 +512,31 @@ export function analyzeCurrentRegimen(
     };
 }
 
+/**
+ * The tier of `to` nearest at or just above the furosemide-equivalent TOTAL DAILY dose of `from` (both agents declare
+ * facts.verified_furosemide_equivalent_per_mg), at the current dosing frequency where the tier allows it and never above the declared daily
+ * maximum. If no tier reaches the equivalent dose, the highest eligible one. Null when `to` has no verified equivalence.
+ */
+export function equivalentSwapTier(from: RegimenMed, to: Medication, patient: Patient, fromEquivalent: number): RegimenMed | null {
+    const toEquivalent = drugFacts(to).verified_furosemide_equivalent_per_mg;
+    const fromDaily = dailyDose(from);
+    if (toEquivalent === undefined || Number.isNaN(fromDaily)) return null;
+    const wantDaily = fromDaily * fromEquivalent / toEquivalent;
+    const wantFreq = dosesPerDay(from.selected_frequency);
+    const options: RegimenMed[] = [];
+    eligibleDoses(to, patient).forEach(dose => {
+        const allowed = frequenciesWithinMax(to, dose.frequency_options, dose.strength);
+        if (allowed.length === 0) return;
+        const notAbove = allowed.filter(f => dosesPerDay(f) <= wantFreq);
+        const f = notAbove.length > 0 ? notAbove.sort((a, b) => dosesPerDay(b) - dosesPerDay(a))[0] : allowed.sort((a, b) => dosesPerDay(a) - dosesPerDay(b))[0];
+        options.push({ med: to, dose, selected_frequency: f });
+    });
+    if (options.length === 0) return null;
+    const daily = (r: RegimenMed) => dailyDose(r);
+    const atOrAbove = options.filter(r => daily(r) >= wantDaily - 1e-9).sort((a, b) => daily(a) - daily(b));
+    return atOrAbove[0] ?? options.sort((a, b) => daily(b) - daily(a))[0];
+}
+
 export const safeSlice = (arr: RegimenMed[], n = 2) => arr.slice(0, n);
 
 export function buildResultingRegimen(
@@ -534,6 +588,13 @@ export function formatSwapSummary(from: RegimenMed, to: RegimenMed): string {
     if (from.med.drug_class === 'ARNI' && to.med.drug_class === 'ACEi') {
         // Mirror rule (Zestril label 4): no ACEi within 36 hours of the last ARNI dose.
         return `STOP ${from.med.name}. WAIT 36 hours. THEN start ${to.med.name} ${formatDose(to)}`;
+    }
+    if (from.med.drug_class === 'Loop Diuretic' && to.med.drug_class === 'Loop Diuretic') {
+        const fe = drugFacts(from.med).verified_furosemide_equivalent_per_mg, te = drugFacts(to.med).verified_furosemide_equivalent_per_mg;
+        if (fe !== undefined && te !== undefined) {
+            return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (equivalent total daily dose: ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name} is about ${dailyDose(from) * fe / te} ${to.dose.unit}/day ${to.med.name}; nearest tier at or above)`;
+        }
+        return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (no verified dose equivalence for this pair: the prescriber must convert the dose from ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name}; the lowest tier is shown)`;
     }
     return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)}`;
 }

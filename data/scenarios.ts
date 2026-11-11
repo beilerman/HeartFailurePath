@@ -3223,6 +3223,43 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'Diuretic-Source Formulary Strengths And Badges', patient: { ...base, volume_status: euvolemic, current_regimen: buildCurrentRegimen(gdmt) } },
         ];
     })(),
+
+    // ===== Final engine gaps (docs/medication-review-2026-11-10/README.md): daily target, one-step titration, MRA K+ up-titration gate, equivalent loop swaps =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 62, sex: 'Male' as const, sbp: 126, dbp: 78, pulse: 74, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 62, nt_pro_bnp: 1400, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 70, creatinine: 1.1, bun: 18, potassium: 4.4,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            current_regimen: [] as RegimenMed[],
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const rest = [
+            { name: 'Carvedilol', strength: 25, freq: 'bid' },
+            { name: 'Spironolactone', strength: 25, freq: 'qd' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ];
+        const loopPatient = { ...base, volume_status: { dry_weight_kg: 80, current_weight_kg: 83, exam_findings: new Set(['Edema (2+)']) } };
+        return [
+            { title: 'Final-Gaps Ramipril 5 mg bid Counts As Target', patient: { ...base,
+                current_regimen: buildCurrentRegimen([{ name: 'Ramipril', strength: 5, freq: 'bid' }, ...rest]) } },
+            { title: 'Final-Gaps Lisinopril 5 mg Offers 10 mg Next', patient: { ...base,
+                current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 5, freq: 'qd' }, ...rest]) } },
+            { title: 'Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased', patient: { ...base, potassium: 5.2,
+                current_regimen: buildCurrentRegimen([{ name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }]) } },
+            { title: 'Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased', patient: { ...base, lvef: 55, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFpEF']), potassium: 5.1,
+                current_regimen: buildCurrentRegimen([{ name: 'Finerenone (Kerendia)', strength: 20, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose', patient: { ...loopPatient,
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
+            { title: 'Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts', patient: { ...loopPatient,
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
+        ];
+    })(),
 ];
 
 // The single clonePatient implementation lives in the engine (services/simulationService.ts)

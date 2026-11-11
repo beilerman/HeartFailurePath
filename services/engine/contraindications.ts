@@ -11,6 +11,7 @@
  * No engine imports here: constants.ts (the formulary) imports this module.
  */
 import type { Patient, Medication, ContraindicationCheck } from '../../types';
+import { BB_HR_BELOW, MRA_START_K_MAX } from './thresholds';
 
 /** Spread into a formulary entry: `...ci([...])` sets both `contraindication_checks` and `contraindications`. */
 export const ci = (checks: ContraindicationCheck[]) => ({
@@ -76,7 +77,7 @@ export const alreadyOnMed = (p: Patient, name: string): boolean =>
  */
 export const bbStartBradycardiaCheck = (name: string): ContraindicationCheck => ({
     reason: 'Heart rate below 55 bpm: do not START a beta-blocker (the labels say "severe bradycardia" without a number; below 55 bpm is this tool\'s start threshold, and an established beta-blocker is dose-reduced, not stopped)',
-    when: p => !alreadyOnMed(p, name) && p.rhythm !== 'Paced' && p.pulse < 55,
+    when: p => !alreadyOnMed(p, name) && p.rhythm !== 'Paced' && p.pulse < BB_HR_BELOW,
 });
 export const SICK_SINUS = 'Sick Sinus Syndrome / Sinoatrial Block';
 /**
@@ -152,7 +153,7 @@ export const CI_ADRENAL_INSUFFICIENCY: ContraindicationCheck = {
  */
 export const mraStartPotassiumCheck = (name: string): ContraindicationCheck => ({
     reason: 'Potassium above 5.5 mEq/L (new start)',
-    when: p => !alreadyOnMed(p, name) && p.potassium > 5.5,
+    when: p => !alreadyOnMed(p, name) && p.potassium > MRA_START_K_MAX,
 });
 /** Withhold an MRA already on board at K+ 6.0 or above (eplerenone and finerenone labels; spironolactone by analogy). */
 export const CI_MRA_WITHHOLD_K6: ContraindicationCheck = {

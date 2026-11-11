@@ -217,6 +217,24 @@ export interface MedFacts {
      */
     k_continuation?: { reduce_at: number; withhold_at: number; basis: string };
     /**
+     * Potassium rule for INCREASING the dose of an MRA the patient is already on: the dose is not raised while known K+ is at or
+     * above `below` (finerenone and eplerenone labels: increase only when K+ is below 5.0). `basis` states whether the number is
+     * the drug's own label or engine policy (class rule applied by analogy).
+     */
+    k_uptitration_max?: { below: number; basis: string };
+    /**
+     * GDMT target as a TOTAL DAILY dose (entry's dose unit), declared by an entry whose doses can be given at more than one
+     * frequency (ramipril 5 mg twice daily = 10 mg/day). When set, `isTargetDoseForPatient` compares strength x doses per day with it
+     * (at or above) instead of reading the per-strength `is_target_dose` flag.
+     */
+    target_daily_dose?: number;
+    /**
+     * VERIFIED oral furosemide-equivalent mg per mg of this loop (furosemide 1; bumetanide 40, label). A swap between two loops that both
+     * declare it lands on the nearest tier at or above the equivalent TOTAL DAILY dose. A loop without it (torsemide: no source opened states
+     * an equivalence) keeps the conservative lowest-tier swap, and the summary says the prescriber must convert the dose.
+     */
+    verified_furosemide_equivalent_per_mg?: number;
+    /**
      * Heart-rate rule for an agent the patient is ALREADY on (beta-blockers, ivabradine); initiation gates are separate
      * contraindication checks. Resting pulse below `reduce_below`: forced ONE-STEP dose reduction (withhold if already at the
      * lowest dose), never removal at a higher dose. Pulse below `no_uptitration_below`: no up-titration offered. Does not apply
