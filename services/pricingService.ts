@@ -67,9 +67,9 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
         notes: 'Generic available since 2015'
     },
     'Finerenone (Kerendia)': {
-        cash: 550, commercial_copay: 10, medicare_copay: 125,
+        cash: 900, commercial_copay: 10, medicare_copay: 125,
         generic_available: false, has_copay_card: true, tier: 'preferred_brand',
-        notes: 'Bayer copay card; FDA approved for HF with LVEF≥40 (July 2025)'
+        notes: 'Bayer copay card; FDA approved for HF with LVEF≥40 (July 2025). Cash ~$900/30 tablets (2026 aggregator prices $670-950; the old $550 was the 2021 list price)'
     },
     'Furosemide': {
         cash: 3, commercial_copay: 3, medicare_copay: 3,
@@ -137,9 +137,9 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
         notes: 'Vifor free drug program for commercial; specialty tier Medicare'
     },
     'Sodium Zirconium Cyclosilicate (Lokelma)': {
-        cash: 750, commercial_copay: 35, medicare_copay: 150,
+        cash: 900, commercial_copay: 35, medicare_copay: 150,
         generic_available: false, has_copay_card: true, tier: 'specialty',
-        notes: 'AZ copay card; faster onset than Patiromer (1hr vs 7hr)'
+        notes: 'AZ copay card; faster onset than Patiromer (1hr vs 7hr). Cash ~$900/30 packets (2026 aggregator prices: NADAC ~$850, retail $1,027-1,043)'
     },
     'Semaglutide (Wegovy)': {
         cash: 349, commercial_copay: 25, medicare_copay: 350,

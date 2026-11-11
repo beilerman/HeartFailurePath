@@ -321,10 +321,11 @@ export function simulateModificationEffect(
     resultingRegimen.forEach(r => {
         if (r.med.special_features) {
             r.med.special_features.forEach(sf => {
-                if (sf.criteria(currentPatient)) {
+                if (sf.criteria(currentPatient, resultingRegimen)) {
+                    const sfPoints = sf.points_for_dose ? sf.points_for_dose(r.dose.strength) : sf.points;
                     rationale.push(`+ ${r.med.name}: ${sf.feature}`);
-                    specialFeatureBonus += sf.points;
-                    specialFeatureItems.push({ med: r.med.name, feature: sf.feature, points: sf.points });
+                    specialFeatureBonus += sfPoints;
+                    specialFeatureItems.push({ med: r.med.name, feature: sf.feature, points: sfPoints });
                 }
             });
         }
@@ -531,20 +532,33 @@ export function simulateModificationEffect(
     );
     if (isMraInitiation && currentPatient.potassium >= 5.0 && currentPatient.potassium <= 5.5) {
         const hasBinder = resultingRegimen.some(r => r.med.drug_class === 'K+ Binder');
+        // Above 5.0 the label/guideline threshold for STARTING an MRA is not met: sequence the binder first.
+        // (The eplerenone label allows a start up to 5.5; spironolactone and finerenone say 5.0.) This is the
+        // existing penalized residual-risk warning, extended rather than duplicated.
+        const sequencing = currentPatient.potassium > 5.0
+            ? ' The label/guideline threshold for STARTING an MRA is K+ 5.0 or below: start the binder first and begin the MRA once a repeat potassium is 5.0 or below.'
+            : '';
         if (hasBinder) {
             warnings.push(
                 'MRA INITIATION AT BORDERLINE K+: Baseline potassium is ' + currentPatient.potassium.toFixed(1) +
-                ' mEq/L. Concurrent K+ binder included per DIAMOND trial protocol. ' +
-                'Check BMP in 48-72 hours. Discontinue MRA if K+ rises above 5.5 despite binder therapy.'
+                ' mEq/L. Concurrent K+ binder included per DIAMOND trial protocol.' + sequencing +
+                ' Check BMP in 48-72 hours. Discontinue MRA if K+ rises above 5.5 despite binder therapy.'
             );
         } else {
             warnings.push(
                 'MRA INITIATION AT BORDERLINE K+: Baseline potassium is ' + currentPatient.potassium.toFixed(1) +
-                ' mEq/L. Consider concurrent K+ binder per DIAMOND protocol. ' +
-                'Check BMP in 48-72 hours. Discontinue MRA if K+ rises above 5.5.'
+                ' mEq/L. Consider concurrent K+ binder per DIAMOND protocol.' + sequencing +
+                ' Check BMP in 48-72 hours. Discontinue MRA if K+ rises above 5.5.'
             );
         }
     }
+
+    // Drug-specific regimen warnings declared as data on the formulary entry (facts.regimen_warnings).
+    resultingRegimen.forEach(r => {
+        drugFacts(r.med).regimen_warnings?.forEach(w => {
+            if (!w.when || w.when(currentPatient)) warnings.push(w.text);
+        });
+    });
 
     if (raasCount > 1) {
         warnings.push("CONTRAINDICATION: Dual RAAS blockade (ACEi + ARB/ARNI) increases renal risk without benefit.");

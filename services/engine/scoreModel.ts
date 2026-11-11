@@ -234,6 +234,10 @@ export const NON_PENALIZED_WARNING_MARKERS: readonly string[] = [
     // residual-hyperkalemia-risk marker for the DIAMOND proactive-binder path, parallel to
     // 'Binder Required' on the reactive rescue path.)
     'MANDATORY: 36-hour washout', 'BETA-BLOCKER DISCONTINUATION', 'FUROSCIX SAFETY:',
+    // Drug-data warnings (facts.regimen_warnings: dose-spacing, GI caution, interaction monitoring, Lokelma
+    // sodium load in HF). Informational by design: the real risk is already priced by the dose-scaled Lokelma
+    // sodium special feature, the projected-K+ gates and the borderline-K+ MRA warning, which stay penalized.
+    'Drug note',
 ];
 
 export interface ScoreBreakdownDomainLine {

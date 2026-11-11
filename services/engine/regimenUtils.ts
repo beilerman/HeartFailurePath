@@ -18,9 +18,13 @@ export function pickPreferredFrequency(med: Medication, options: string[], patie
 
 export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
     const adjustment = med.renal_adjustment ? med.renal_adjustment(patient.egfr, patient) : {};
+    const interactionCap = med.interaction_dose_cap?.(patient)?.max_dose;
+    const maxDose = interactionCap !== undefined
+        ? Math.min(adjustment.max_dose ?? Infinity, interactionCap)
+        : adjustment.max_dose;
     const validDoses = med.available_doses.filter(dose => {
         if (typeof dose.strength === 'number') {
-            return !(adjustment.max_dose && dose.strength > adjustment.max_dose);
+            return !(maxDose && dose.strength > maxDose);
         }
         return true;
     });
@@ -54,6 +58,50 @@ export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
         dose,
         selected_frequency: pickPreferredFrequency(med, dose.frequency_options, patient)
     }));
+}
+
+/**
+ * Opt-in "new starts never begin above the start dose" (Medication.start_dose_for). For a drug that declares it,
+ * keep only the offered tiers at or below the start strength (a LOWER start is always allowed: start low, go slow);
+ * if none qualifies, the lowest offered tier. Other drugs pass through. Apply to NEW-START candidates only;
+ * titration of a drug already on board uses the full tier list.
+ */
+export function restrictToStartTiers(tiers: RegimenMed[], patient: Patient): RegimenMed[] {
+    const byMed = new Map<string, RegimenMed[]>();
+    tiers.forEach(t => {
+        if (!byMed.has(t.med.name)) byMed.set(t.med.name, []);
+        byMed.get(t.med.name)!.push(t);
+    });
+    const keep = new Set<RegimenMed>();
+    byMed.forEach(medTiers => {
+        const med = medTiers[0].med;
+        if (!med.start_dose_for) { medTiers.forEach(t => keep.add(t)); return; }
+        const order = med.available_doses;
+        const idx = (t: RegimenMed) => order.findIndex(d => d.strength === t.dose.strength);
+        const startIdx = order.findIndex(d => String(d.strength) === String(med.start_dose_for!(patient)));
+        const allowed = startIdx < 0 ? [] : medTiers.filter(t => idx(t) <= startIdx);
+        if (allowed.length > 0) { allowed.forEach(t => keep.add(t)); return; }
+        keep.add([...medTiers].sort((a, b) => idx(a) - idx(b))[0]);
+    });
+    return tiers.filter(t => keep.has(t));
+}
+
+/**
+ * Potassium rule for a drug the patient is already on (facts.k_continuation): 'reduce' at K+ >= reduce_at and
+ * < withhold_at (one dose step; withhold if already at the lowest tier), 'withhold' at K+ >= withhold_at.
+ * Blank potassium (0) never triggers. Returns the plain-language reason the clinician sees.
+ */
+export function kContinuationAction(med: Medication, patient: Patient): { action: 'reduce' | 'withhold'; reason: string } | null {
+    const rule = med.facts?.k_continuation;
+    if (!rule || !(patient.potassium > 0)) return null;
+    const k = patient.potassium.toFixed(1);
+    if (patient.potassium >= rule.withhold_at) {
+        return { action: 'withhold', reason: `potassium ${k} mEq/L is ${rule.withhold_at.toFixed(1)} or above: withhold; restart at a low dose once potassium is below 5.5 (${rule.basis})` };
+    }
+    if (patient.potassium >= rule.reduce_at) {
+        return { action: 'reduce', reason: `potassium ${k} mEq/L is 5.5-5.9: reduce one dose step (withhold if already at the lowest dose); restart/titrate only once potassium is below 5.0 (${rule.basis})` };
+    }
+    return null;
 }
 
 export function shouldPreserveQuadForUnknownHistory(patient: Patient): boolean {

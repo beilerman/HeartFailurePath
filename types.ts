@@ -135,7 +135,8 @@ export interface Medication {
     contraindications?: (patient: Patient) => boolean;
     /** Human-readable "not offered when" checks; `contraindications` is exactly `checks.some(c => c.when(p))`. */
     contraindication_checks?: ContraindicationCheck[];
-    special_features?: { feature: string; points: number; criteria: (p: Patient) => boolean }[];
+    /** `points_for_dose`, when present, replaces `points` for the dose actually in the regimen (dose-related effects, e.g. Lokelma edema). */
+    special_features?: { feature: string; points: number; criteria: (p: Patient, regimen?: RegimenMed[]) => boolean; points_for_dose?: (dose: number | string) => number }[];
     is_best_in_class?: boolean;
 
     /**
@@ -145,6 +146,18 @@ export interface Medication {
     facts?: MedFacts;
     /** Patient-dependent GDMT target-dose check (when the static `is_target_dose` flag is not enough). */
     is_target_dose_for?: (strength: number, patient: Patient) => boolean;
+    /**
+     * Opt-in per drug: the HIGHEST strength a NEW START (add or swap-in) may begin at for this patient. Candidate
+     * generation offers only tiers at or below it for a new start (a lower start is allowed); titration of a drug
+     * already on board is unaffected. Falls back to the lowest allowed tier if nothing qualifies.
+     */
+    start_dose_for?: (patient: Patient) => number | string;
+    /**
+     * Patient-dependent MAXIMUM dose from a drug interaction (e.g. eplerenone with a moderate CYP3A
+     * inhibitor). Caps the dose tiers like `renal_adjustment.max_dose`, and a current dose above the cap
+     * is reduced to the highest allowed tier.
+     */
+    interaction_dose_cap?: (patient: Patient) => { max_dose: number; reason: string } | null;
 }
 
 export interface MedFacts {
@@ -170,6 +183,16 @@ export interface MedFacts {
     rescue_role?: { kind: 'k_binder'; preferred?: boolean };
     /** Two regimens differing in presence of this key are always "distinct" in top-pick selection. */
     pick_distinctness_key?: string;
+    /**
+     * Potassium rule for an MRA the patient is ALREADY on (initiation gates are separate contraindication
+     * checks). K+ at or above `reduce_at` and below `withhold_at`: forced ONE-STEP dose reduction (withhold
+     * if already at the lowest tier). K+ at or above `withhold_at`: withhold (remove). `basis` states the rule.
+     */
+    k_continuation?: { reduce_at: number; withhold_at: number; basis: string };
+    /** Plain-language warnings shown whenever this drug is in a recommended regimen (optionally only when `when(patient)`); informational, not score-penalized (text starts 'Drug note:'). */
+    regimen_warnings?: { text: string; when?: (p: Patient) => boolean }[];
+    /** Monitoring-plan items added whenever this drug is in a recommended regimen. */
+    monitoring_items?: (MonitoringPlanItem & { when?: (p: Patient) => boolean })[];
 }
 
 export interface RegimenMed {

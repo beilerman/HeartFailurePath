@@ -1,6 +1,7 @@
 
 import { Medication, Patient } from './types';
-import { ci, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_LIVER_CHILD_PUGH_BC, CI_PULSE_LT_55, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck } from './services/engine/contraindications';
+import { ci, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_LIVER_CHILD_PUGH_BC, CI_PULSE_LT_55, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
+    STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, moderateCyp3aInhibitor } from './services/engine/contraindications';
 import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace } from './services/clinicalPredicates';
 
 // Helper for logarithmic calculations (dose-response curves)
@@ -57,7 +58,8 @@ export const RELEVANT_COMORBIDITIES = [
     "Obesity (BMI > 30)",
     "Pulmonary Hypertension",
     "Chronic NSAID Use",
-    "Bilateral Renal Artery Stenosis"
+    "Bilateral Renal Artery Stenosis",
+    "Adrenal Insufficiency (Addison's disease)"
 ];
 
 export const RELEVANT_EXTERNAL_MEDICATIONS = [
@@ -66,8 +68,23 @@ export const RELEVANT_EXTERNAL_MEDICATIONS = [
     'Diltiazem',
     'Lithium',
     'Sildenafil',
-    'Tadalafil'
+    'Tadalafil',
+    // CYP3A inhibitors that gate eplerenone / finerenone (single-sourced in services/engine/contraindications.ts).
+    // Verapamil and Diltiazem are already listed above; Erythromycin and Fluconazole are the other moderate agents.
+    ...STRONG_CYP3A_INHIBITORS,
+    ...MODERATE_CYP3A_INHIBITORS.filter(n => n !== 'Verapamil' && n !== 'Diltiazem'),
 ];
+
+// Lokelma label: edema 4.4% / 5.9% / 16.1% at 5 / 10 / 15 g in placebo-controlled trials.
+const LOKELMA_EDEMA_RATE = (dose: number | string): number => {
+    const d = Number(dose);
+    return d >= 15 ? 0.161 : d >= 10 ? 0.059 : 0.044;
+};
+
+// A potassium binder's "enables RAAS/MRA optimization" credit only applies when a RAAS inhibitor or MRA is
+// actually in the resulting regimen (DIAMOND enrolled patients on RAASi; it showed enabling, not outcomes).
+const hasRaasOrMra = (regimen?: { med: { drug_class: string } }[]): boolean =>
+    (regimen ?? []).some(r => ['ARNI', 'ACEi', 'ARB', 'MRA', 'nsMRA'].includes(r.med.drug_class));
 
 export const MEDICATION_FORMULARY: Medication[] = [
     // ========================================
@@ -461,7 +478,23 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Spironolactone',
         drug_class: 'MRA',
-        facts: { antiandrogenic: true },
+        facts: {
+            antiandrogenic: true,
+            // Aldactone label: no numeric potassium rule for a patient already on it beyond "decrease the dose or
+            // discontinue". The eplerenone and finerenone labels give 5.5-5.9 = reduce one step, >= 6.0 = withhold;
+            // applied here BY ANALOGY (flagged). The code's old removal threshold was K+ > 5.5; the label rule
+            // starts at 5.5 inclusive, which is the stricter, so it is used.
+            k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Eplerenone/finerenone label rule applied to spironolactone by analogy (the Aldactone label gives no numeric rule)' },
+            monitoring_items: [{
+                test: 'Spironolactone starting dose (eGFR 30-50)',
+                timing: 'At initiation',
+                details: 'Label: start 25 mg daily only if eGFR is above 50. For eGFR 30-50 the label suggests 25 mg every other day; this tool models that as the 12.5 mg daily tier. If hyperkalemia develops on 25 mg daily, go to 25 mg every other day.',
+                when: p => p.egfr >= 30 && p.egfr <= 50,
+            }],
+        },
+        // Aldactone label (HF): start 25 mg daily if K+ <= 5.0 and eGFR > 50; eGFR 30-50 -> 25 mg every other day,
+        // modeled as the 12.5 mg daily tier. New starts never begin above it; titration of an existing dose is unaffected.
+        start_dose_for: (p) => (p.egfr > 50 ? 25 : 12.5),
         is_best_in_class: true,
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
@@ -481,11 +514,19 @@ export const MEDICATION_FORMULARY: Medication[] = [
             };
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/10, hr_drop: 0, potassium_change: 0.4 + (Number(dose)/50 * 0.4) }),
-        side_effects: () => ({ hyperkalemia: 0.15, gynecomastia: 0.10, renal_worsening: 0.05 }),
+        // Gynecomastia ~10% of men at the RALES mean dose of 26 mg (label ~9%), dose-related (Aldactone label).
+        // The label gives no slope: square-root scaling about the 25 mg anchor is a modeling choice (~7% at 12.5, ~14% at 50).
+        side_effects: (dose) => ({ hyperkalemia: 0.15, gynecomastia: 0.10 * Math.sqrt(Number(dose) / 25), renal_worsening: 0.05 }),
         ...ci([
-            { reason: 'Potassium above 5.5 mEq/L', when: p => p.potassium > 5.5 }, // Relaxed from 5.2 → 5.5 to allow Patiromer rescue (DIAMOND)
+            // New starts above 5.5 are never offered; 5.0-5.5 only with a binder (E15 + DIAMOND pathway). Continuation is
+            // handled by facts.k_continuation (reduce 5.5-5.9) and the withhold check below (>= 6.0).
+            mraStartPotassiumCheck('Spironolactone'),
+            CI_MRA_WITHHOLD_K6,
             { reason: 'eGFR below 30', when: p => p.egfr < 30 },
-            pregnancyCheck('Category X'), // pregnancy Category X
+            CI_ADRENAL_INSUFFICIENCY, // Aldactone label contraindication: Addison's disease
+            // The Aldactone label gives no letter pregnancy category (the old "Category X" comment was unsupported):
+            // it says spironolactone may affect male sex differentiation and advises avoiding it in pregnancy.
+            pregnancyCheck('label advises avoiding it in pregnancy; may affect male sex differentiation'),
         ]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { contraindicated: true };
@@ -503,6 +544,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Eplerenone',
         drug_class: 'MRA',
+        // Inspra label (HF): K+ 5.5-5.9 decrease dose (withhold if already at the lowest dose), >= 6.0 withhold.
+        // The old code removed at K+ > 5.5; the label rule starts at 5.5 inclusive (stricter), so it is used.
+        facts: { k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Inspra label' } },
+        // Inspra label: with a moderate CYP3A inhibitor do not exceed 25 mg once daily (HF).
+        interaction_dose_cap: (p) => moderateCyp3aInhibitor(p)
+            ? { max_dose: 25, reason: 'moderate CYP3A inhibitor (label maximum 25 mg daily)' } : null,
         available_doses: [
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
@@ -529,13 +576,18 @@ export const MEDICATION_FORMULARY: Medication[] = [
             { feature: 'Fewer endocrine side effects (No gynecomastia risk)', points: 3, criteria: (p) => p.sex === 'Male' }
         ],
         ...ci([
-            { reason: 'Potassium above 5.5 mEq/L', when: p => p.potassium > 5.5 }, // Relaxed from 5.2 → 5.5
-            { reason: 'eGFR below 30', when: p => p.egfr < 30 },
+            // Inspra label: K+ > 5.5 at initiation is a contraindication (label allows a start up to 5.5; the guideline
+            // says 5.0, so the engine adds a binder from 5.0). Continuation: facts.k_continuation + the >= 6.0 check.
+            mraStartPotassiumCheck('Eplerenone'),
+            CI_MRA_WITHHOLD_K6,
+            // Inspra label: contraindicated at CrCl <= 30 mL/min (boundary inclusive; eGFR used as the proxy).
+            { reason: 'eGFR 30 or below (label: CrCl 30 mL/min or less)', when: p => p.egfr <= 30 },
+            CI_STRONG_CYP3A,
             pregnancyCheck('Category X'), // pregnancy Category X
         ]),
         renal_adjustment: (egfr) => {
-            if (egfr < 30) return { contraindicated: true };
-            if (egfr <= 45) return { max_dose: 25, caution: true };
+            if (egfr <= 30) return { contraindicated: true };
+            if (egfr <= 45) return { max_dose: 25, caution: true }; // 45/50 cap not source-verified; left unchanged
             return {};
         },
     },
@@ -548,11 +600,24 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Finerenone (Kerendia)',
         drug_class: 'nsMRA', // Distinct from 'MRA' to prevent HFrEF pillar credit
-        facts: { cirrhosis_cyp3a4_caution: true },
+        facts: {
+            cirrhosis_cyp3a4_caution: true,
+            // Kerendia label (HF), by K+: 10 mg: 5.5-5.9 withhold; >= 6.0 withhold. 20/40 mg: 5.5-5.9 decrease one step
+            // (40 -> 20, 20 -> 10); >= 6.0 withhold. Restart 10 mg once K+ is below 5.5 (below 5.0 if recurrent).
+            k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Kerendia label' },
+            regimen_warnings: [{
+                text: 'Drug note: a moderate CYP3A4 inhibitor (verapamil, diltiazem, erythromycin, fluconazole) raises finerenone exposure (erythromycin +248%, verapamil +170%). No fixed dose cap: check potassium and adjust the dose. Avoid grapefruit juice.',
+                when: moderateCyp3aInhibitor,
+            }],
+        },
+        // Kerendia HF label: start 20 mg if eGFR >= 60, 10 mg if eGFR 25 to < 60; target 40 mg (eGFR >= 60) or 20 mg
+        // (eGFR 25 to < 60); do not start below eGFR 25. No static is_target_dose flag: the target depends on eGFR.
+        is_target_dose_for: (strength, patient) => strength === (patient.egfr >= 60 ? 40 : 20),
+        start_dose_for: (patient) => (patient.egfr >= 60 ? 20 : 10),
         available_doses: [
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Starting dose; eGFR-dependent
             { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
-            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true }, // HF target dose (new 40mg tablet with HF approval)
+            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // HF target only when eGFR >= 60 (see is_target_dose_for)
         ],
         chf_effects: (dose) => {
             // FINEARTS-HF: 16% RRR in CV death/HF events in LVEF ≥ 40
@@ -596,15 +661,19 @@ export const MEDICATION_FORMULARY: Medication[] = [
             return !alreadyOnFinerenone && p.lvef > 40 && shouldPreserveHFrEFTherapyForUnknownHistory(p);
                 },
             },
-            { reason: 'Potassium above 5.5 mEq/L', when: p => p.potassium > 5.5 },
+            // New starts above 5.5 are never offered (label: do not initiate above 5.0; the engine starts at 5.0-5.5 only
+            // with a binder, E15). Continuation: facts.k_continuation + the >= 6.0 withhold check.
+            mraStartPotassiumCheck('Finerenone (Kerendia)'),
+            CI_MRA_WITHHOLD_K6,
             { reason: 'eGFR below 25', when: p => p.egfr < 25 },
+            CI_STRONG_CYP3A, // Kerendia label contraindication (strong CYP3A4 inhibitors)
+            CI_ADRENAL_INSUFFICIENCY, // Kerendia label contraindication
             pregnancyCheck(),
             { reason: 'Liver disease, Child-Pugh B/C (CYP3A4 substrate; reduced clearance in cirrhosis)', when: p => p.comorbidities.has('Liver Disease (Child-Pugh B/C)') },
         ]),
         renal_adjustment: (egfr) => {
-            // Kerendia HF dosing (FINEARTS-HF): target/max 20mg qd if eGFR 25-59, 40mg qd if
-            // eGFR >= 60; contraindicated below 25. (The PI's 10mg/20mg START-dose
-            // stratification is not modeled — adds always begin at the lowest tier.)
+            // Kerendia HF dosing: maximum 20 mg qd if eGFR 25-59, 40 mg qd if eGFR >= 60; contraindicated below 25.
+            // The start tier (10 / 20 mg) comes from start_dose_for.
             if (egfr < 25) return { contraindicated: true };
             if (egfr < 60) return { max_dose: 20, caution: true };
             return {};
@@ -1105,9 +1174,25 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Patiromer',
         drug_class: 'K+ Binder',
-        facts: { rescue_role: { kind: 'k_binder', preferred: true } },
+        facts: {
+            rescue_role: { kind: 'k_binder', preferred: true },
+            // Veltassa label: take other oral drugs at least 3 hours before or after; avoid in severe constipation,
+            // bowel obstruction or impaction; hypomagnesemia 5.3% (monitor magnesium).
+            regimen_warnings: [
+                { text: 'Drug note: take other oral medicines at least 3 hours before or after patiromer (it can bind them and reduce absorption).' },
+                { text: 'Drug note: avoid patiromer in severe constipation, bowel obstruction or impaction; it can slow bowel motility.' },
+            ],
+            monitoring_items: [{
+                test: 'Serum magnesium',
+                timing: 'Periodically while on patiromer',
+                details: 'Hypomagnesemia occurred in 5.3% in the label trials (about 9% had Mg below 1.4 mg/dL). Check magnesium and replace if low.',
+            }],
+        },
+        // Veltassa label: start 8.4 g once daily, titrate in 8.4 g steps at intervals of a week or more, maximum 25.2 g daily.
         available_doses: [
             { strength: 8.4, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
+            { strength: 16.8, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
+            { strength: 25.2, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
         ],
         chf_effects: () => ({
             lvef_improvement_absolute: 0,
@@ -1118,19 +1203,43 @@ export const MEDICATION_FORMULARY: Medication[] = [
             lavi_reduction_percent: 0,
             lvedd_reduction_percent: 0
         }),
-        hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 0, potassium_change: -0.8 }), // Reliable reduction
-        side_effects: () => ({ hypomagnesemia: 0.05, constipation: 0.05 }),
+        // The engine only adds a binder to PREVENT a potassium rise on RAAS/MRA therapy (DIAMOND). DIAMOND's
+        // primary endpoint: K+ change +0.03 (patiromer) vs +0.13 (placebo), a between-group difference of -0.10 mmol/L.
+        // The older -0.8 was a treatment-of-established-hyperkalemia figure (OPAL-HK ~ -1.0, not source-verified).
+        // No dose-response is sourced, so the prevention effect is flat across the 8.4 / 16.8 / 25.2 g tiers.
+        hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 0, potassium_change: -0.1 }),
+        side_effects: () => ({ hypomagnesemia: 0.053, constipation: 0.072 }), // Veltassa label (N=666): 5.3%, 7.2%
         special_features: [
-            { feature: 'Enables RAAS Optimization in Hyperkalemia (DIAMOND trial)', points: 50, criteria: (p) => p.potassium > 5.0 }
+            // DIAMOND supports "enables MRA/RAAS dosing", not outcome benefit; only meaningful with RAASi/MRA in the regimen.
+            // The 50 points are a calibration choice with no sourced basis (left unchanged).
+            { feature: 'Enables RAAS Optimization in Hyperkalemia (DIAMOND trial)', points: 50, criteria: (p, regimen) => p.potassium > 5.0 && hasRaasOrMra(regimen) }
         ]
     },
     {
         name: 'Sodium Zirconium Cyclosilicate (Lokelma)',
         drug_class: 'K+ Binder',
-        facts: { rescue_role: { kind: 'k_binder' } },
+        facts: {
+            rescue_role: { kind: 'k_binder' },
+            // Lokelma label: about 400 mg sodium per 5 g; monitor for edema in HF, adjust dietary sodium and increase
+            // diuretics as needed. Separate other oral drugs by at least 2 hours. Avoid in severe constipation,
+            // bowel obstruction/impaction or abnormal post-operative bowel motility (not studied).
+            regimen_warnings: [
+                { text: 'Drug note (heart failure): Lokelma carries about 400 mg of sodium per 5 g (800 mg per 10 g) and causes dose-related edema (4.4% at 5 g, 5.9% at 10 g, 16.1% at 15 g; placebo 2.4%). Watch weight and edema, limit dietary sodium, and be ready to increase the diuretic.' },
+                { text: 'Drug note: take other oral medicines at least 2 hours before or after Lokelma (its effect on gastric pH changes absorption of some drugs, e.g. furosemide, atorvastatin, dabigatran, tacrolimus).' },
+                { text: 'Drug note: avoid Lokelma in severe constipation, bowel obstruction or impaction, or abnormal post-operative bowel motility (not studied).' },
+            ],
+            monitoring_items: [{
+                test: 'Weight and edema (heart failure)',
+                timing: 'Daily weights; review at 1 week',
+                details: 'Lokelma sodium load can cause fluid retention. Check weight, edema and diuretic need after starting or raising the dose.',
+            }],
+        },
+        // Lokelma label: 10 g three times daily for up to 48 h (correction phase, NOT modeled), then 10 g once daily;
+        // maintenance 5 g every other day to 15 g daily, adjusted in 5 g steps at intervals of a week or more.
         available_doses: [
             { strength: 5, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
-            { strength: 10, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] }, // Acute correction phase
+            { strength: 10, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
+            { strength: 15, unit: 'g', formulation: 'powder packet', frequency_options: ['qd'] },
         ],
         chf_effects: () => ({
             lvef_improvement_absolute: 0,
@@ -1141,11 +1250,23 @@ export const MEDICATION_FORMULARY: Medication[] = [
             lavi_reduction_percent: 0,
             lvedd_reduction_percent: 0
         }),
-        hemodynamic_effects: (dose) => ({ sbp_drop: 0, hr_drop: 0, potassium_change: Number(dose) >= 10 ? -1.1 : -0.7 }), // Faster onset than Patiromer (1hr vs 7hr)
-        side_effects: () => ({ edema: 0.06 }), // ~400mg sodium per 10g dose can worsen HF congestion
+        // PREVENTION / maintenance effect (placebo-adjusted, label Study 2 days 8-29: K+ 4.8 / 4.5 / 4.4 at 5 / 10 / 15 g vs
+        // 5.1 placebo): about -0.3, -0.6, -0.7. The earlier -0.7 / -1.1 are the drop from a hyperkalemic ~5.6 baseline
+        // (HARMONIZE, 10 g three times daily for 48 h) and overstate what a once-daily dose prevents in a patient whose K+ is
+        // already near 5. The engine only adds a binder to prevent a rise, so the prevention figures apply.
+        // The 15 g value (-0.7) is the label's placebo-adjusted maintenance figure, not an extrapolation.
+        hemodynamic_effects: (dose) => ({ sbp_drop: 0, hr_drop: 0, potassium_change: Number(dose) >= 15 ? -0.7 : Number(dose) >= 10 ? -0.6 : -0.3 }),
+        // Dose-related edema from the label's placebo-controlled trials (placebo 2.4%); long-term uncontrolled 8-11%.
+        side_effects: (dose) => ({ edema: LOKELMA_EDEMA_RATE(dose) }),
         special_features: [
-            { feature: 'Enables RAAS/MRA Optimization in Hyperkalemia (HARMONIZE)', points: 50, criteria: (p) => p.potassium > 5.0 },
-            { feature: 'Sodium load risk in congested HF (400mg Na/dose)', points: -10, criteria: (p) => (p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg) > 2.0 }
+            { feature: 'Enables RAAS/MRA Optimization in Hyperkalemia (HARMONIZE)', points: 50, criteria: (p, regimen) => p.potassium > 5.0 && hasRaasOrMra(regimen) },
+            // Sodium load in congested HF: -10 at the 10 g reference, scaled by the dose-related edema rate.
+            {
+                feature: 'Sodium load risk in congested HF (about 400 mg sodium per 5 g; dose-related edema)',
+                points: -10,
+                points_for_dose: (dose) => -Math.round(10 * LOKELMA_EDEMA_RATE(dose) / LOKELMA_EDEMA_RATE(10)),
+                criteria: (p) => (p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg) > 2.0
+            }
         ]
     },
     {

@@ -44,6 +44,7 @@ exclusion carries that rule's id and name.
 | E12 | Renal data required (blank eGFR/creatinine, renal-gated start) |
 | E13 | Clinical contraindication (the drug's own `contraindications(patient)`) |
 | E14 | Renal dosing contraindication |
+| E15 | New MRA start above K+ 5.0 needs a K+ binder (withheld if none can be offered; initiation only) |
 
 Explanations: a rule may carry an optional `details(ctx, med)` that returns specifics; the filter
 stores them in the additive `ExcludedMedication.why` (E13 lists each contraindication check that fired,

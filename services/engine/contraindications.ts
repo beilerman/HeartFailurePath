@@ -61,3 +61,55 @@ export const CI_MTC_MEN2: ContraindicationCheck = {
 export const pregnancyCheck = (why?: string): ContraindicationCheck => ({
     reason: why ? `Pregnancy (${why})` : 'Pregnancy', when: p => p.is_pregnant === true,
 });
+
+// --- CYP3A interaction lists (shared by eplerenone and finerenone) ---------------------------------
+// Matched by name in `patient.external_medications` (the form's "Other medications" list).
+// Strong CYP3A inhibitors: the eplerenone (Inspra) label names ketoconazole, itraconazole, nefazodone,
+// troleandomycin, clarithromycin, ritonavir and nelfinavir as examples and contraindicates them; the
+// finerenone (Kerendia) label contraindicates strong CYP3A4 inhibitors generally (ketoconazole,
+// itraconazole, clarithromycin, ritonavir among them). Cobicistat is a strong CYP3A inhibitor that the
+// label text read for the 2026-11-10 review did not name: included as a class-effect extra (flagged).
+export const STRONG_CYP3A_INHIBITORS: readonly string[] = [
+    'Ketoconazole', 'Itraconazole', 'Nefazodone', 'Troleandomycin', 'Clarithromycin', 'Ritonavir', 'Nelfinavir',
+    'Cobicistat',
+];
+// Moderate CYP3A inhibitors: eplerenone in HF must not exceed 25 mg daily with one (Inspra label);
+// finerenone only needs potassium monitoring (Kerendia: erythromycin AUC +248%, verapamil +170%).
+// The label text read named no moderate agents for eplerenone; this is the standard list used in the review.
+export const MODERATE_CYP3A_INHIBITORS: readonly string[] = ['Verapamil', 'Diltiazem', 'Erythromycin', 'Fluconazole'];
+
+const onAny = (p: Patient, names: readonly string[]): boolean =>
+    names.some(n => p.external_medications?.has(n) ?? false);
+export const strongCyp3a4Inhibitor = (p: Patient): boolean => onAny(p, STRONG_CYP3A_INHIBITORS);
+export const moderateCyp3aInhibitor = (p: Patient): boolean =>
+    onAny(p, MODERATE_CYP3A_INHIBITORS) || p.comorbidities.has('On Verapamil/Diltiazem');
+
+export const CI_STRONG_CYP3A: ContraindicationCheck = {
+    reason: 'Taking a strong CYP3A4 inhibitor (ketoconazole, itraconazole, clarithromycin, ritonavir, nelfinavir, nefazodone, troleandomycin, cobicistat)',
+    when: strongCyp3a4Inhibitor,
+};
+export const CI_ADRENAL_INSUFFICIENCY: ContraindicationCheck = {
+    reason: "Adrenal insufficiency (Addison's disease)",
+    when: p => p.comorbidities.has("Adrenal Insufficiency (Addison's disease)"),
+};
+
+// --- MRA potassium gates ----------------------------------------------------------------------------
+/** True when the patient is already taking this exact drug (initiation-vs-continuation carve-out). */
+export const alreadyOnMed = (p: Patient, name: string): boolean =>
+    p.current_regimen?.some(r => r.med.name === name) ?? false;
+
+/**
+ * NEW-START potassium ceiling for an MRA: above 5.5 mEq/L is never started. The labels and guideline say
+ * to start only at K+ 5.0 or below (eplerenone's label allows up to 5.5); the engine deliberately allows a
+ * start at 5.0-5.5 ONLY together with a potassium binder, with a sequencing warning (see the DIAMOND
+ * pathway in scoring.ts and eligibility rule E15). Blank potassium (0) is never a value.
+ */
+export const mraStartPotassiumCheck = (name: string): ContraindicationCheck => ({
+    reason: 'Potassium above 5.5 mEq/L (new start)',
+    when: p => !alreadyOnMed(p, name) && p.potassium > 5.5,
+});
+/** Withhold an MRA already on board at K+ 6.0 or above (eplerenone and finerenone labels; spironolactone by analogy). */
+export const CI_MRA_WITHHOLD_K6: ContraindicationCheck = {
+    reason: 'Potassium 6.0 mEq/L or above: withhold the MRA (label rule; restart at a low dose once potassium is below 5.5)',
+    when: p => p.potassium >= 6.0,
+};

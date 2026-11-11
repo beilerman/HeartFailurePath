@@ -27,7 +27,9 @@ facts, adding it is a data change and no engine edit. Written 2026-11-10 (alignm
      `preferred_for_congestion` (moved first in worsening-congestion swaps/adds),
      `high_dose_threshold` (loop over-treatment alert), `rescue_role` (K+ binder rescue;
      `preferred: true` is tried first), `pick_distinctness_key` (top-pick distinctness).
-   - `is_target_dose_for(strength, patient)` for patient-dependent targets (carvedilol by weight).
+   - `is_target_dose_for(strength, patient)` for patient-dependent targets (carvedilol by weight, finerenone by eGFR).
+   - `start_dose_for(patient)` (opt-in): the highest strength a NEW START may begin at; `interaction_dose_cap(patient)`: a patient-dependent maximum dose from an interaction (eplerenone + moderate CYP3A inhibitor).
+   - `facts.k_continuation` (MRA potassium rule for a drug already on board), `facts.regimen_warnings` / `facts.monitoring_items` (warnings and monitoring shown whenever the drug is in a regimen; warning text starts "Drug note").
    - Combination products must declare their component classes the way existing combos do.
 3. **Class registry**: if `drug_class` is new, add a row to `DRUG_CLASS_REGISTRY` in
    `services/simulationService.ts` (group, `dbpRatio`, flags). An existing class needs nothing.

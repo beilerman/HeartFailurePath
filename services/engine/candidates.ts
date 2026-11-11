@@ -3,7 +3,7 @@ import { Patient, Medication, RegimenMed, ModificationAction, RegimenModificatio
 import { drugFacts } from './drugFacts';
 import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
-import { computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hasRecentWorseningHF, isTargetDoseForPatient, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hasRecentWorseningHF, isTargetDoseForPatient, kContinuationAction, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication } from './intolerance';
 import { regimenSatisfiesPillar } from './domains';
 
@@ -20,6 +20,10 @@ export interface RegimenAnalysis {
     intolerableCurrentMeds: Map<string, string>; // current meds violating documented-intolerance policy → reason
     forcedBbDownTitrateNames: Set<string>;       // existing BBs that must be down-titrated in acute decomp
     redundantCurrentMeds: Set<string>;           // names of duplicate-class agents to deprescribe (dual RAAS/MRA)
+    /** Current meds that must drop ONE dose step (potassium 5.5-5.9 on an MRA; dose above an interaction cap) -> reason. */
+    forcedReduceNames: Map<string, string>;
+    /** Current meds withheld because of the potassium continuation rule (K+ >= 6.0, or 5.5-5.9 at the lowest dose) -> reason. */
+    kWithholdReasons: Map<string, string>;
 }
 
 export function analyzeCurrentRegimen(
@@ -76,6 +80,10 @@ export function analyzeCurrentRegimen(
     const forceDownBB = isAcutelyDecompensated && currentClassMap.has('Beta Blocker') && hasHypoperfusion;
 
     // Build a map of all available meds by class group for lookup
+    // NEW-START tiers: a drug that declares start_dose_for never begins above its start dose. Applied where a new
+    // start is built (pillar adds, swap-ins, MRA adjuncts), AFTER the existing candidate truncation, so it only
+    // removes too-high starts and never reshuffles which agents are offered.
+    const startTiers = restrictToStartTiers(medTiers, patient);
     const tiersByGroup = new Map<string, RegimenMed[]>();
     medTiers.forEach(r => {
         const group = getMedicationClassGroup(r.med.drug_class);
@@ -88,8 +96,14 @@ export function analyzeCurrentRegimen(
     const intolerancePolicy = deriveIntolerancePolicy(patient);
     const contraindicatedCurrentMeds = new Set<string>();
     const intolerableCurrentMeds = new Map<string, string>();
+    const forcedReduceNames = new Map<string, string>();
+    const kWithholdReasons = new Map<string, string>();
     const renalDataUnknown = valueUnknown(patient.egfr) || valueUnknown(patient.creatinine);
     currentRegimen.forEach(r => {
+        // Potassium continuation rule (facts.k_continuation): >= withhold_at withholds the drug; the reduce band
+        // is resolved with the dose tiers in the titration pass below.
+        const kRule = kContinuationAction(r.med, patient);
+        if (kRule?.action === 'withhold') kWithholdReasons.set(r.med.name, kRule.reason);
         if (r.med.contraindications && r.med.contraindications(patient)) {
             // Blank renal data (0 sentinel) trips every `egfr < X` gate. Never force-remove
             // WORKING therapy on missing data — the DATA REQUIRED alert + the renal-unknown
@@ -152,6 +166,12 @@ export function analyzeCurrentRegimen(
         //     warm-and-wet patients keep their current BB dose.
         const isBBBlockedUp = isAcutelyDecompensated && current.med.drug_class === 'Beta Blocker';
         const isBBForcedDown = forceDownBB && current.med.drug_class === 'Beta Blocker';
+        // Forced ONE-STEP reduction: potassium 5.5-5.9 on an MRA (label rule), or a dose above an interaction cap.
+        const kRule = kContinuationAction(current.med, patient);
+        const cap = current.med.interaction_dose_cap?.(patient) ?? null;
+        const aboveCap = cap !== null && Number(current.dose.strength) > cap.max_dose;
+        const reduceReason = (kRule?.action === 'reduce' ? kRule.reason : undefined)
+            ?? (aboveCap ? `${cap!.reason}: current dose is above the maximum` : undefined);
 
         const allTiers = getDoseTiers(current.med, patient);
         // Compare by dose-ORDER INDEX (available_doses are listed low→high), not Number(strength).
@@ -162,7 +182,7 @@ export function analyzeCurrentRegimen(
         const currentIdx = doseOrder.findIndex(d => d.strength === current.dose.strength);
         const tierIdx = (t: RegimenMed) => doseOrder.findIndex(d => d.strength === t.dose.strength);
 
-        if (!isContraindicated && !isBBBlockedUp) {
+        if (!isContraindicated && !isBBBlockedUp && reduceReason === undefined) {
             // Sorted ASCENDING by dose index so consumers can rely on options[last] being the
             // highest tier (getDoseTiers construction order is [lowest, highest, middle, target],
             // which is NOT ascending — the compound add+titrate candidate previously picked a
@@ -178,6 +198,15 @@ export function analyzeCurrentRegimen(
             titratableDown.push({ current, options: lowerDoses });
             if (isBBForcedDown) {
                 forcedBbDownTitrateNames.add(current.med.name);
+            }
+        }
+        if (reduceReason !== undefined && !isContraindicated) {
+            if (lowerDoses.length > 0) {
+                forcedReduceNames.set(current.med.name, reduceReason);
+            } else if (kRule?.action === 'reduce') {
+                // Already at the lowest dose: the label says withhold.
+                kWithholdReasons.set(current.med.name, kRule.reason);
+                contraindicatedCurrentMeds.add(current.med.name);
             }
         }
     });
@@ -203,7 +232,7 @@ export function analyzeCurrentRegimen(
         const TITRATE_NOT_SWAP_GROUPS = new Set(['Beta Blocker', 'MRA', 'SGLT2i']);
         if (TITRATE_NOT_SWAP_GROUPS.has(group) && !contraindicatedCurrentMeds.has(current.med.name)) return;
         const sourceContraindicated = contraindicatedCurrentMeds.has(current.med.name);
-        const groupTiers = tiersByGroup.get(group) || [];
+        const groupTiers = (tiersByGroup.get(group) || []).filter(t => startTiers.includes(t));
         let candidates = groupTiers.filter(t =>
             t.med.name !== current.med.name &&
             !contraindicatedCurrentMeds.has(t.med.name) // Don't swap TO a contraindicated med
@@ -263,8 +292,9 @@ export function analyzeCurrentRegimen(
     const addablePillars = new Map<string, RegimenMed[]>();
     missingPillars.forEach(pillar => {
         const candidates = tiersByGroup.get(pillar) || [];
-        if (candidates.length > 0) {
-            addablePillars.set(pillar, safeSlice(candidates, 4));
+        const offered = safeSlice(candidates, 4).filter(t => startTiers.includes(t));
+        if (offered.length > 0) {
+            addablePillars.set(pillar, offered);
         }
     });
 
@@ -366,9 +396,11 @@ export function analyzeCurrentRegimen(
     // In HFmrEF, nsMRA is already offered as a pillar option (grouped with MRA)
     // In HFpEF, MRA is NOT a pillar, so nsMRA must be added as adjunct
     if (isHFpEF && patient.lvef >= 40 && !currentClasses.has('MRA') && !currentClasses.has('nsMRA')) {
-        const nsmraTiers = medTiers.filter(r => r.med.drug_class === 'nsMRA');
+        const nsmraTiers = startTiers.filter(r => r.med.drug_class === 'nsMRA');
         if (nsmraTiers.length > 0) {
-            addableAdjuncts.push(nsmraTiers[0]);
+            // Begin at the drug's declared start tier (finerenone: 20 mg if eGFR >= 60, else 10 mg) when it has one.
+            const startStrength = nsmraTiers[0].med.start_dose_for?.(patient);
+            addableAdjuncts.push(nsmraTiers.find(t => String(t.dose.strength) === String(startStrength)) ?? nsmraTiers[0]);
         }
     }
 
@@ -376,7 +408,7 @@ export function analyzeCurrentRegimen(
     // Cost-effective alternative to Finerenone; offered alongside nsMRA as separate candidate
     // getMedicationClassGroup groups nsMRA→MRA, preventing dual MRA in same regimen
     if (isHFpEF && !currentClasses.has('MRA') && !currentClasses.has('nsMRA')) {
-        const steroidalMraTiers = medTiers.filter(r => r.med.drug_class === 'MRA');
+        const steroidalMraTiers = startTiers.filter(r => r.med.drug_class === 'MRA');
         if (steroidalMraTiers.length > 0) {
             addableAdjuncts.push(steroidalMraTiers[0]);
         }
@@ -407,7 +439,9 @@ export function analyzeCurrentRegimen(
         contraindicatedCurrentMeds,
         intolerableCurrentMeds,
         forcedBbDownTitrateNames,
-        redundantCurrentMeds
+        redundantCurrentMeds,
+        forcedReduceNames,
+        kWithholdReasons
     };
 }
 
@@ -699,7 +733,7 @@ export function generateCandidateModifications(
     }
 
     // --- c) "No change" baseline for comparison when current regimen exists ---
-    if (currentRegimen.length > 0 && analysis.forcedBbDownTitrateNames.size === 0) {
+    if (currentRegimen.length > 0 && analysis.forcedBbDownTitrateNames.size === 0 && analysis.forcedReduceNames.size === 0) {
         candidates.push({
             modifications: currentRegimen.map(r => ({
                 action: 'keep' as ModificationAction,
@@ -741,7 +775,8 @@ export function generateCandidateModifications(
                     summary: `${formatSwapSummary(r, swapTarget)} (${intoleranceReason})`
                 });
             } else if (contraindicated.has(r.med.name)) {
-                const label = hardContraindicated ? 'contraindicated' : intoleranceReason ?? 'contraindicated';
+                const label = analysis.kWithholdReasons.get(r.med.name)
+                    ?? (hardContraindicated ? 'contraindicated' : intoleranceReason ?? 'contraindicated');
                 forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (${label})` });
             } else if (redundant.has(r.med.name)) {
                 forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (redundant — deprescribe duplicate ${getMedicationClassGroup(r.med.drug_class)} therapy)` });
@@ -814,6 +849,35 @@ export function generateCandidateModifications(
         });
     }
 
+    // --- f2) Force-inject the ONE-STEP dose reduction required by the potassium continuation rule (MRA at
+    // K+ 5.5-5.9) or by an interaction dose cap, into every candidate that does not already reduce/remove/swap
+    // that drug. Same pattern as the beta-blocker reduction above: the drug steps down one tier (the HIGHEST
+    // lower tier), and safe additions survive alongside it.
+    if (analysis.forcedReduceNames.size > 0) {
+        analysis.forcedReduceNames.forEach((reason, medName) => {
+            const td = analysis.titratableDown.find(t => t.current.med.name === medName);
+            if (!td || td.options.length === 0) return;
+            const lower = td.options[td.options.length - 1];
+            candidates.forEach(c => {
+                const alreadyHandled = c.modifications.some(m =>
+                    (m.action === 'titrate_down' || m.action === 'remove' || m.action === 'swap')
+                    && m.source?.med.name === medName
+                );
+                if (alreadyHandled) return;
+                c.modifications = c.modifications.filter(m =>
+                    !((m.action === 'titrate_up' || m.action === 'keep') && m.source?.med.name === medName)
+                );
+                c.modifications.push({
+                    action: 'titrate_down',
+                    source: td.current,
+                    target: lower,
+                    summary: `Reduce ${medName} ${td.current.dose.strength}→${lower.dose.strength}${lower.dose.unit} ${lower.selected_frequency} (${reason})`
+                });
+                c.resulting_regimen = c.resulting_regimen.map(r => (r.med.name === medName ? lower : r));
+            });
+        });
+    }
+
     // Filter by max_new_classes_per_visit
     return candidates.filter(c => {
         // A forced BB dose-reduction (acute decompensation) is satisfied by EITHER a down-titration
@@ -827,6 +891,11 @@ export function generateCandidateModifications(
                     (m.action === 'titrate_down' || m.action === 'remove') && m.source?.med.name === bbName
                 )
             );
+        const satisfiesForcedReduction = Array.from(analysis.forcedReduceNames.keys()).every(name =>
+            c.modifications.some(m =>
+                (m.action === 'titrate_down' || m.action === 'remove' || m.action === 'swap') && m.source?.med.name === name
+            )
+        );
         const newClassCount = countNewClassGroups(c.resulting_regimen, currentRegimen);
         const hasSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'MRA');
         const hasNonSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'nsMRA');
@@ -834,7 +903,7 @@ export function generateCandidateModifications(
         // M4: Structural block for dual RAAS (ACEi+ARB, ACEi+ARNI, etc.) — not just warning
         const raasInRegimen = c.resulting_regimen.filter(r => RAAS_CLASSES.has(r.med.drug_class));
         const hasDualRAAS = raasInRegimen.length > 1;
-        return satisfiesForcedBbDownTitration && newClassCount <= maxNewPerVisit && !hasDualMRA && !hasDualRAAS;
+        return satisfiesForcedBbDownTitration && satisfiesForcedReduction && newClassCount <= maxNewPerVisit && !hasDualMRA && !hasDualRAAS;
     });
 }
 

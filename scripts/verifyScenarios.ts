@@ -115,7 +115,8 @@ const ASSERTION_TITLE_MARKERS = [
     'Hyperkalemic Emergency K+ 6.8 (Alerts Only)',
     'HFpEF Previous LVEF Zero Sentinel',
     'HFpEF LVEF 60 No Fabricated Decline',
-    'Dual MRA Unknown History Keeps nsMRA'
+    'Dual MRA Unknown History Keeps nsMRA',
+    'MRA-Source'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -148,6 +149,15 @@ async function runVerification() {
     const formularyNames = MEDICATION_FORMULARY.map(m => m.name);
     const availableMedNames = new Set(formularyNames);
     const betaBlockerMeds = new Set(['Carvedilol', 'Metoprolol Succinate', 'Bisoprolol']);
+    // Scenario titles can remove drugs from the offered formulary (the title is the switch).
+    const availableFor = (title: string): Set<string> => {
+        let out = new Set(availableMedNames);
+        if (title.includes('No BB Available')) out = new Set([...out].filter(n => !betaBlockerMeds.has(n)));
+        if (title.includes('No Binder Available')) out = new Set([...out].filter(n => n !== 'Patiromer' && n !== 'Sodium Zirconium Cyclosilicate (Lokelma)'));
+        if (title.includes('No Patiromer Available')) out.delete('Patiromer');
+        if (title.includes('No Lokelma Available')) out.delete('Sodium Zirconium Cyclosilicate (Lokelma)');
+        return out;
+    };
 
     // GLOBAL STRUCTURAL INVARIANT (pricing completeness): every formulary medication must have
     // an explicit DRUG_PRICES entry. A missing entry silently falls back to generic-level
@@ -170,9 +180,7 @@ async function runVerification() {
 
         try {
             const scenarioPrices = await getDrugPrices(formularyNames, scenario.patient.insurance_tier);
-            const scenarioAvailableMedNames = scenario.title.includes('No BB Available')
-                ? new Set([...availableMedNames].filter(name => !betaBlockerMeds.has(name)))
-                : availableMedNames;
+            const scenarioAvailableMedNames = availableFor(scenario.title);
             const { scoredRegimens, excludedMedications, clinicalAlerts, monitoringPlan, eligibleAdjuncts } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
             const topRegimen = scoredRegimens[0];
 
@@ -245,6 +253,33 @@ async function runVerification() {
             const failures: string[] = [];
             const hasScenarioSpecificCoverage = ASSERTION_TITLE_MARKERS.some(marker => scenario.title.includes(marker));
             const externalMeds = scenario.patient.external_medications || new Set<string>();
+
+            // Global safety invariant (every scenario): an MRA is never STARTED above K+ 5.0 without a K+ binder in the same
+            // option (label/guideline start threshold is 5.0; the binder-sequenced pathway is the only exception).
+            const mraStartedWithoutBinder = scoredRegimens.some(r =>
+                (r.modification_set?.modifications ?? []).some(m => m.action === 'add' && m.target && (m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA'))
+                && scenario.patient.potassium > 5.0
+                && !r.regimen.some(m => m.med.drug_class === 'K+ Binder'));
+            if (mraStartedWithoutBinder) {
+                failures.push('MRA started above K+ 5.0 without a K+ binder in the same option');
+                scenarioPassed = false;
+            }
+            // Global invariant: Lokelma in any displayed regimen carries the heart-failure sodium/edema warning.
+            const lokelmaWithoutWarning = scoredRegimens.some(r =>
+                r.regimen.some(m => m.med.name === 'Sodium Zirconium Cyclosilicate (Lokelma)')
+                && !(r.warnings ?? []).some(w => w.includes('400 mg of sodium')));
+            if (lokelmaWithoutWarning) {
+                failures.push('Lokelma recommended without the heart-failure sodium/edema warning');
+                scenarioPassed = false;
+            }
+            // Global invariant: the binder "enables RAAS/MRA" bonus never fires when no RAAS inhibitor or MRA is in the regimen.
+            const binderBonusWithoutRaasMra = scoredRegimens.some(r =>
+                !r.regimen.some(m => RAAS_CLASSES.has(m.med.drug_class) || m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA')
+                && (r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.startsWith('Enables RAAS'))));
+            if (binderBonusWithoutRaasMra) {
+                failures.push('Binder "enables RAAS/MRA" bonus credited with no RAAS inhibitor or MRA in the regimen');
+                scenarioPassed = false;
+            }
 
             // Global safety invariant: never allow dual MRA (steroidal + nsMRA) in the same regimen
             const anyDualMRA = scoredRegimens.some(r => {
@@ -2114,7 +2149,7 @@ async function runVerification() {
                 // The offending MRA/ACEi are hard-contraindicated (K+ > 5.5 / > 5.4) — no
                 // displayed regimen may retain them.
                 if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) {
-                    failures.push('MRA retained in a displayed regimen at K+ 6.2 (hard CI at K+ > 5.5)');
+                    failures.push('MRA retained in a displayed regimen at K+ 6.2 (withheld at K+ 6.0 or above)');
                     scenarioPassed = false;
                 }
                 if (anyRegimenHasRaas()) {
@@ -2133,6 +2168,107 @@ async function runVerification() {
                 if (scoredRegimens.length !== 0) {
                     failures.push(`Drug recommendations generated at K+ 6.8 (expected alerts-only at K+ >= 6.5; got ${scoredRegimens.length})`);
                     scenarioPassed = false;
+                }
+            }
+
+
+            // ===== MRA / K+ binder source-verified corrections (verified-mra-binders.md; labels: Inspra, Kerendia, Aldactone, Veltassa, Lokelma) =====
+            if (scenario.title.includes('MRA-Source')) {
+                const excl = (name: string) => excludedMedications.find(e => e.name === name);
+                const whyText = (name: string) => (excl(name)?.why ?? []).join(' | ');
+                const regimenHas = (name: string) => anyRegimenHasMed(name);
+                const strengthsOf = (name: string) => scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.name === name).map(m => Number(m.dose.strength)));
+                const allSummaries = scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => m.summary));
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+
+                if (t.includes('Eplerenone With Strong CYP3A4 Inhibitor')) {
+                    if (!excl('Eplerenone') || !/strong CYP3A4/i.test(whyText('Eplerenone'))) fail('Eplerenone not excluded with a strong CYP3A4 inhibitor reason (Inspra label contraindication)');
+                    if (regimenHas('Eplerenone')) fail('Eplerenone offered despite clarithromycin (strong CYP3A inhibitor)');
+                    if (excl('Spironolactone')) fail('Spironolactone wrongly excluded by the CYP3A rule');
+                }
+                if (t.includes('Finerenone With Strong CYP3A4 Inhibitor')) {
+                    const f = excl('Finerenone (Kerendia)');
+                    if (!f || f.rule_id !== 'E13' || !/strong CYP3A4/i.test(whyText('Finerenone (Kerendia)'))) fail('Finerenone not excluded (E13) with a strong CYP3A4 inhibitor reason (Kerendia label contraindication)');
+                    if (anyRegimenHasClass('nsMRA')) fail('Finerenone offered despite itraconazole (strong CYP3A4 inhibitor)');
+                }
+                if (t.includes('Adrenal Insufficiency Excludes')) {
+                    for (const n of ['Finerenone (Kerendia)', 'Spironolactone']) {
+                        if (!excl(n) || !/Addison/i.test(whyText(n))) fail(`${n} not excluded with the Addison's disease reason (label contraindication)`);
+                    }
+                    if (regimenHas('Finerenone (Kerendia)') || regimenHas('Spironolactone')) fail("Finerenone or spironolactone offered in adrenal insufficiency");
+                    if (excl('Eplerenone')) fail("Eplerenone wrongly excluded for adrenal insufficiency (not on the Inspra contraindication list)");
+                }
+                if (t.includes('Eplerenone eGFR 30 Boundary')) {
+                    if (!excl('Eplerenone')) fail('Eplerenone offered at eGFR 30 (Inspra: contraindicated at CrCl 30 mL/min or less, boundary inclusive)');
+                    if (regimenHas('Eplerenone')) fail('Eplerenone in a displayed regimen at eGFR 30');
+                }
+                if (t.includes('Eplerenone Moderate CYP3A Inhibitor Cap')) {
+                    const s = strengthsOf('Eplerenone');
+                    if (s.length === 0 || s.some(x => x > 25)) fail(`Eplerenone above 25 mg with a moderate CYP3A inhibitor (found ${s.join(', ')}); label maximum is 25 mg daily`);
+                    if (!allSummaries.some(x => /moderate CYP3A inhibitor/.test(x))) fail('Forced eplerenone reduction does not state the moderate CYP3A inhibitor reason');
+                }
+                if (t.includes('Current MRA K+ 5.6 One-Step Reduction')) {
+                    if (scoredRegimens.length === 0) fail('No regimens at K+ 5.6 on spironolactone');
+                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Spironolactone' && Number(m.dose.strength) === 12.5))) fail('Spironolactone 25 mg at K+ 5.6 must drop ONE step to 12.5 mg in every option (not be removed, not kept at 25/50)');
+                    if (!allSummaries.some(x => x.startsWith('Reduce Spironolactone') && x.includes('potassium 5.6'))) fail('Reduction does not state the potassium and the label rule');
+                    if (allSummaries.some(x => x.startsWith('Remove Spironolactone'))) fail('Spironolactone removed at K+ 5.6 (continuation rule is a one-step reduction)');
+                }
+                if (t.includes('Current MRA K+ 5.7 Lowest Dose Withheld')) {
+                    if (regimenHas('Eplerenone')) fail('Eplerenone 25 mg (lowest dose) kept at K+ 5.7 (label: withhold)');
+                    if (!allSummaries.some(x => x.startsWith('Remove Eplerenone') && x.includes('potassium 5.7'))) fail('Withhold does not state the potassium rule');
+                }
+                if (t.includes('Current MRA K+ 6.1 Withheld')) {
+                    if (regimenHas('Spironolactone')) fail('Spironolactone kept at K+ 6.1 (withhold at 6.0 or above)');
+                    if (!clinicalAlerts.some(a => a.includes('HYPERKALEMIC EMERGENCY'))) fail('Emergency alert missing at K+ 6.1');
+                    if (!allSummaries.some(x => x.startsWith('Remove Spironolactone') && x.includes('6.0 or above'))) fail('Withhold at K+ 6.1 does not state the rule');
+                }
+                if (t.includes('Finerenone eGFR 40 Targets 20 mg')) {
+                    const s = strengthsOf('Finerenone (Kerendia)');
+                    if (s.some(x => x === 40)) fail('Finerenone 40 mg offered at eGFR 40 (label maximum is 20 mg below eGFR 60)');
+                    const onFin = scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.name === 'Finerenone (Kerendia)' && Number(m.dose.strength) === 20));
+                    if (onFin.length === 0) fail('Finerenone 20 mg not retained at eGFR 40');
+                    if (onFin.some(m => !isTargetDoseForPatient(m, scenario.patient))) fail('Finerenone 20 mg at eGFR 40 not recognized as the target dose');
+                }
+                if (t.includes('Finerenone eGFR 70 Targets 40 mg')) {
+                    if (!strengthsOf('Finerenone (Kerendia)').includes(40)) fail('Finerenone 40 mg (target at eGFR 60 or above) not offered as a titration at eGFR 70');
+                    const twenty = scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.name === 'Finerenone (Kerendia)' && Number(m.dose.strength) === 20))[0];
+                    if (twenty && isTargetDoseForPatient(twenty, scenario.patient)) fail('Finerenone 20 mg wrongly counted as target at eGFR 70');
+                }
+                if (t.includes('Finerenone New Start Tier')) {
+                    const limit = scenario.patient.egfr >= 60 ? 20 : 10;
+                    const s = strengthsOf('Finerenone (Kerendia)');
+                    if (s.length === 0) fail('Finerenone not offered as a new start (check is vacuous)');
+                    if (s.some(x => x > limit)) fail(`Finerenone new start above the label start dose ${limit} mg at eGFR ${scenario.patient.egfr} (found ${s.join(', ')})`);
+                }
+                if (t.includes('Spironolactone Start Dose')) {
+                    const limit = scenario.patient.egfr > 50 ? 25 : 12.5;
+                    const s = strengthsOf('Spironolactone');
+                    if (s.length === 0) fail('Spironolactone not offered as a new start (check is vacuous)');
+                    if (s.some(x => x > limit)) fail(`Spironolactone new start above ${limit} mg at eGFR ${scenario.patient.egfr} (found ${s.join(', ')})`);
+                }
+                if (t.includes('MRA Start K+ 5.3 Needs Binder And Sequencing')) {
+                    const withMra = scoredRegimens.filter(r => r.regimen.some(m => m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA'));
+                    if (withMra.length === 0) fail('No MRA start offered at K+ 5.3 (the binder-sequenced pathway should remain)');
+                    if (withMra.some(r => !r.regimen.some(m => m.med.drug_class === 'K+ Binder'))) fail('MRA started above K+ 5.0 without a binder in the same option');
+                    if (withMra.some(r => !(r.warnings ?? []).some(w => w.includes('BORDERLINE K+') && w.includes('start the binder first')))) fail('MRA start above K+ 5.0 lacks the sequencing warning (label start threshold 5.0)');
+                }
+                if (t.includes('MRA Start K+ 5.3 No Binder Available')) {
+                    const noBinderExcl = ['Spironolactone', 'Eplerenone'].filter(n => excl(n)?.rule_id === 'E15');
+                    if (noBinderExcl.length !== 2) fail('MRA not excluded by E15 when no binder can be offered at K+ 5.3');
+                    if (anyRegimenContainsAnyClass('MRA', 'nsMRA', 'K+ Binder')) fail('MRA or binder appears although none may be offered');
+                }
+                if (t.includes('Lokelma HF Warning')) {
+                    const withLok = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === 'Sodium Zirconium Cyclosilicate (Lokelma)'));
+                    if (withLok.length === 0) fail('Lokelma not used (check is vacuous)');
+                    if (withLok.some(r => !(r.warnings ?? []).some(w => w.includes('400 mg of sodium') && w.includes('edema')))) fail('Lokelma regimen without the heart-failure sodium/edema warning');
+                    if (withLok.some(r => !(r.warnings ?? []).some(w => w.includes('2 hours')) || !(r.warnings ?? []).some(w => w.includes('bowel obstruction')))) fail('Lokelma regimen without the 2-hour spacing or bowel-obstruction caution');
+                }
+                if (t.includes('Patiromer Warnings')) {
+                    const withPat = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === 'Patiromer'));
+                    if (withPat.length === 0) fail('Patiromer not used (check is vacuous)');
+                    if (withPat.some(r => !(r.warnings ?? []).some(w => w.includes('3 hours')) || !(r.warnings ?? []).some(w => w.includes('bowel obstruction')))) fail('Patiromer regimen without the 3-hour spacing or GI caution');
+                    if (withPat.some(r => !(r.monitoring_plan ?? []).some(m => m.test.includes('magnesium')))) fail('Patiromer regimen without the magnesium monitoring item');
                 }
             }
 
@@ -2217,9 +2353,7 @@ async function runVerification() {
         for (const profile of WEIGHT_PROFILE_NAMES) profileTops[profile] = new Map();
         for (const scenario of SCENARIOS) {
             const prices = await getDrugPrices(formularyNames, scenario.patient.insurance_tier);
-            const avail = scenario.title.includes('No BB Available')
-                ? new Set([...availableMedNames].filter(name => !betaBlockerMeds.has(name)))
-                : availableMedNames;
+            const avail = availableFor(scenario.title);
             const runWith = (profile: WeightProfileName) => {
                 const pt = clonePatient(scenario.patient);
                 pt.care_priority = profile;
@@ -2465,6 +2599,24 @@ async function runVerification() {
             console.log(`  [PASS] all ${e13Count} E13 exclusions across scenarios have details.`);
             passed++;
         }
+    }
+
+    console.log('Checking structural invariant: binder "enables RAAS/MRA" bonus requires a RAAS inhibitor or MRA in the regimen...');
+    {
+        const lok = MEDICATION_FORMULARY.find(m => m.name === 'Sodium Zirconium Cyclosilicate (Lokelma)')!;
+        const pat = MEDICATION_FORMULARY.find(m => m.name === 'Patiromer')!;
+        const lis = MEDICATION_FORMULARY.find(m => m.name === 'Lisinopril')!;
+        const carv = MEDICATION_FORMULARY.find(m => m.name === 'Carvedilol')!;
+        const mk = (med: typeof lok): { med: typeof lok; dose: typeof lok.available_doses[number]; selected_frequency: string } => ({ med, dose: med.available_doses[0], selected_frequency: 'qd' });
+        const hyperK = { ...SCENARIOS[0].patient, potassium: 5.4 };
+        let ok = true;
+        for (const binder of [lok, pat]) {
+            const f = binder.special_features!.find(x => x.feature.startsWith('Enables RAAS'))!;
+            if (f.criteria(hyperK, [mk(binder), mk(carv)])) ok = false;     // binder + beta-blocker only: no credit
+            if (!f.criteria(hyperK, [mk(binder), mk(lis)])) ok = false;     // binder + RAAS inhibitor: credit
+        }
+        if (!ok) { console.error('  [FAIL] binder bonus criterion does not depend on a RAAS inhibitor / MRA in the regimen'); failed++; }
+        else { console.log('  [PASS] binder bonus requires RAAS/MRA in the resulting regimen.'); passed++; }
     }
 
     console.log(`\nVerification Complete.`);

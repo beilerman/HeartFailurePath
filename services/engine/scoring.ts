@@ -35,7 +35,8 @@ export interface ScoringContext {
     phenotype: Phenotype;
     isVolumeDepleted: boolean;
     hasDiureticInCurrent: boolean;
-    rescueBinder: RegimenMed | undefined;
+    /** K+ binder tiers in trial order: the preferred agent's tiers (low to high) first, then the others'. */
+    rescueBinders: RegimenMed[];
     ivIron: RegimenMed | undefined;
     ironDeficient: boolean;
     maxNewPerVisit: number;
@@ -54,8 +55,12 @@ export function buildScoringContext(
 ): ScoringContext {
     const { isVolumeDepleted, hasDiureticInCurrent } = flags;
     const binders = medTiers.filter(r => r.med.drug_class === 'K+ Binder');
-    // H7: Binder rescue — prefer Patiromer, fallback to any available K+ binder (Lokelma)
-    const rescueBinder = binders.find(b => drugFacts(b.med).rescue_role?.preferred) || binders[0];
+    // H7: Binder rescue — preferred agent first (Patiromer), then any other available K+ binder (Lokelma), each
+    // from its lowest dose tier up, so the engine can reach a binder/dose that actually prevents the rise.
+    const doseIdx = (r: RegimenMed) => r.med.available_doses.findIndex(d => d.strength === r.dose.strength);
+    const isPreferred = (r: RegimenMed) => drugFacts(r.med).rescue_role?.preferred ? 0 : 1;
+    const rescueBinders = [...binders].sort((a, b) =>
+        isPreferred(a) - isPreferred(b) || (a.med.name === b.med.name ? doseIdx(a) - doseIdx(b) : a.med.name.localeCompare(b.med.name)));
     const ivIron = medTiers.find(r => r.med.drug_class === 'IV Iron');
     const ironDeficient = isIronDeficient(patient);
     const maxNewPerVisit = Math.max(0, Math.round(patient.max_new_classes_per_visit ?? 2));
@@ -105,13 +110,13 @@ export function buildScoringContext(
 
     return {
         patient, prices, intolerancePolicy, dataAudit, phenotype, isVolumeDepleted, hasDiureticInCurrent,
-        rescueBinder, ivIron, ironDeficient, maxNewPerVisit, achievableSlots,
+        rescueBinders, ivIron, ironDeficient, maxNewPerVisit, achievableSlots,
     };
 }
 
 /** Pre-simulation rescue appends (iron, DIAMOND binder) -> simulate once -> reactive K+ binder rescue. */
 export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContext): { activeModSet: ModificationSet; sim: Simulation } {
-    const { patient, prices, intolerancePolicy, rescueBinder, ivIron, ironDeficient } = ctx;
+    const { patient, prices, intolerancePolicy, rescueBinders, ivIron, ironDeficient } = ctx;
     // Pre-simulation rescue appends are built FIRST, then the candidate is simulated ONCE.
     // Iron rescue depends only on patient-level invariants and the candidate's contents;
     // DIAMOND depends on BASELINE potassium — neither needs a prior simulation (previously
@@ -140,38 +145,44 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
     const alreadyHasBinder = activeModSet.resulting_regimen.some(r =>
         r.med.drug_class === 'K+ Binder'
     );
-    if (isMraAdd && patient.potassium > 5.0 && rescueBinder && !alreadyHasBinder) {
-        const diamondMod: RegimenModification = {
-            action: 'add',
-            target: rescueBinder,
-            summary: `Add ${rescueBinder.med.name} ${formatDose(rescueBinder)} (DIAMOND protocol)`
-        };
-        activeModSet = {
-            modifications: [...activeModSet.modifications, diamondMod],
-            resulting_regimen: [...activeModSet.resulting_regimen, rescueBinder]
-        };
+    // Try each binder tier in order and keep the first whose simulation brings projected K+ into 3.5-5.3 (the
+    // lowest effective dose). `fallbackToStrongest`: if none does, still add the tier with the lowest projected K+.
+    const withBinder = (base: ModificationSet, binder: RegimenMed, suffix: string): ModificationSet => ({
+        modifications: [...base.modifications, {
+            action: 'add' as const, target: binder,
+            summary: `Add ${binder.med.name} ${formatDose(binder)}${suffix}`,
+        }],
+        resulting_regimen: [...base.resulting_regimen, binder],
+    });
+    const tryBinders = (base: ModificationSet, suffix: string, fallbackToStrongest: boolean) => {
+        let best: { set: ModificationSet; sim: Simulation } | undefined;
+        for (const binder of rescueBinders) {
+            const set = withBinder(base, binder, suffix);
+            const trial = simulateModificationEffect(patient, set, prices, intolerancePolicy);
+            const k = trial.projectedPatient.potassium;
+            if (k < 5.3 && k > 3.5) return { set, sim: trial, rescued: true };
+            if (!best || k < best.sim.projectedPatient.potassium) best = { set, sim: trial };
+        }
+        return fallbackToStrongest && best ? { ...best, rescued: false } : undefined;
+    };
+
+    let sim: Simulation | undefined;
+    // An MRA start above K+ 5.0 never appears without a binder: eligibility rule E15 withholds the MRA when no
+    // binder can be offered, so rescueBinders is non-empty here whenever an MRA is being added.
+    if (isMraAdd && patient.potassium > 5.0 && rescueBinders.length > 0 && !alreadyHasBinder) {
+        const chosen = tryBinders(activeModSet, ' (DIAMOND protocol)', true);
+        if (chosen) { activeModSet = chosen.set; sim = chosen.sim; }
     }
+    if (!sim) sim = simulateModificationEffect(patient, activeModSet, prices, intolerancePolicy);
 
-    let sim = simulateModificationEffect(patient, activeModSet, prices, intolerancePolicy);
-
-    // H7+H8: Binder rescue: if K+ > 5.3, try adding K+ binder (Patiromer preferred, Lokelma fallback)
+    // H7+H8: Binder rescue: if K+ > 5.3, try adding a K+ binder (Patiromer preferred, then Lokelma, lowest effective dose)
     // H8 fix: Use activeModSet (which includes iron if appended) not original modSet
-    if (sim.projectedPatient.potassium > 5.3 && rescueBinder && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder')) {
-        const rescueMod: RegimenModification = {
-            action: 'add',
-            target: rescueBinder,
-            summary: `Add ${rescueBinder.med.name} ${formatDose(rescueBinder)}`
-        };
-        const rescuedModSet: ModificationSet = {
-            modifications: [...activeModSet.modifications, rescueMod],
-            resulting_regimen: [...activeModSet.resulting_regimen, rescueBinder]
-        };
-        const rescuedSim = simulateModificationEffect(patient, rescuedModSet, prices, intolerancePolicy);
-
-        if (rescuedSim.projectedPatient.potassium < 5.3 && rescuedSim.projectedPatient.potassium > 3.5) {
-            sim = rescuedSim;
-            sim.warnings.push(`Binder Required: ${rescueBinder.med.name} added to manage Hyperkalemia.`);
-            activeModSet = rescuedModSet;
+    if (sim.projectedPatient.potassium > 5.3 && rescueBinders.length > 0 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder')) {
+        const rescued = tryBinders(activeModSet, '', false);
+        if (rescued) {
+            sim = rescued.sim;
+            sim.warnings.push(`Binder Required: ${rescued.set.resulting_regimen[rescued.set.resulting_regimen.length - 1].med.name} added to manage Hyperkalemia.`);
+            activeModSet = rescued.set;
         }
     }
 
@@ -207,7 +218,10 @@ export function gdmtCompletenessFraction(activeModSet: ModificationSet, ctx: Sco
             const atTarget = isTargetDoseForPatient(r, patient);
             const strengths = doses.map(d => Number(d.strength)).filter(n => !Number.isNaN(n));
             const atMax = strengths.length > 0 && Number(r.dose.strength) >= Math.max(...strengths);
-            return atTarget || atMax;
+            // A dose held at an interaction cap (e.g. eplerenone 25 mg with a moderate CYP3A inhibitor) is at its maximum.
+            const cap = r.med.interaction_dose_cap?.(patient);
+            const atCap = !!cap && Number(r.dose.strength) >= cap.max_dose;
+            return atTarget || atMax || atCap;
         });
         return optimal ? 1.0 : SUBTARGET_CREDIT;
     };

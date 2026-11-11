@@ -4,6 +4,7 @@ import { valueUnknown, hasHistoricalHFrEF, hasUnknownHistoricalHFrEF } from '../
 import { DISEASE_MODIFYING_CLASSES, DIURETIC_CLASSES, RAAS_CLASSES } from './registry';
 import { hasRelevantIntensification, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { regimenSatisfiesPillar } from './domains';
+import { drugFacts } from './drugFacts';
 import { SCORE_ADJUSTMENTS } from './scoreModel';
 
 export function buildMonitoringPlan(
@@ -67,6 +68,15 @@ export function buildMonitoringPlan(
             details: 'Screen for pre-renal AKI, hypokalemia, and hyponatremia after dose escalation.'
         });
     }
+
+    // Drug-data monitoring items (facts.monitoring_items), once per distinct item whenever the drug is in the regimen.
+    modificationSet.resulting_regimen.forEach(r => {
+        drugFacts(r.med).monitoring_items?.forEach(item => {
+            if (item.when && !item.when(currentPatient)) return;
+            if (plan.some(x => x.test === item.test)) return;
+            plan.push({ test: item.test, timing: item.timing, details: item.details });
+        });
+    });
 
     // Honor the renal_adjustment `caution` / `start_dose_modifier` contract: surfaced as
     // MONITORING guidance (dose-adjustment context), not as ranking-penalized warnings.

@@ -1,0 +1,47 @@
+# Ranking diff of the MRA / K+ binder source-verified corrections vs the previous golden snapshot.
+# Run against the original 315 golden runs (the 18 new MRA-Source scenarios x 3 insurance tiers were not in the old snapshot and are excluded here).
+# Eligibility and alerts are identical on these 315 runs because no existing scenario carries a CYP3A inhibitor, adrenal insufficiency, or a current MRA at K+ 5.5-5.9; the new scenarios exercise those rules.
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 315 runs
+  (a) top pick identical:        307 / 315
+  (b) displayed pick set same:   295 / 315
+  (c) pick order identical:      294 / 315
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: NO (4 regimens)
+  top-pick overall_score  old: min 0 / median 67 / max 100
+  top-pick overall_score  new: min 0 / median 67 / max 100
+
+Top pick changed in 8 runs:
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial
+     old: Dapagliflozin 10mg qd + Patiromer 8.4g qd [overall 57, raw 57.20]
+     new: Dapagliflozin 10mg qd + Furosemide 20mg qd [overall 45, raw 44.90]
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: commercial
+     old: Carvedilol 25mg bid + Lisinopril 20mg qd + Patiromer 8.4g qd [overall 68, raw 67.53]
+     new: Carvedilol 25mg bid + Furosemide 20mg qd + Lisinopril 20mg qd [overall 67, raw 66.59]
+  Critical Renal (eGFR 25, K+ 5.2) :: commercial
+     old: Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 55, raw 55.00]
+     new: Sacubitril/Valsartan (Entresto) 24/26mg bid + Sodium Zirconium Cyclosilicate (Lokelma) 5g qd [overall 54, raw 54.47]
+  MRA Boundary (eGFR 31, K+ 5.4) :: cash
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 58, raw 57.76]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Sodium Zirconium Cyclosilicate (Lokelma) 5g qd [overall 58, raw 57.76]
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: cash
+     old: Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Spironolactone 25mg qd [overall 56, raw 56.34]
+     new: Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd [overall 55, raw 54.84]
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: cash
+     old: Carvedilol 12.5mg bid + Digoxin 125mcg qd + Furosemide 40mg qd + Spironolactone 25mg qd [overall 35, raw 35.26]
+     new: Carvedilol 12.5mg bid + Digoxin 125mcg qd + Eplerenone 25mg qd + Furosemide 40mg qd [overall 34, raw 34.21]
+  Nitrate + PDE5 Exposure (Hard Exclusion) :: cash
+     old: Carvedilol 12.5mg bid + Spironolactone 50mg qd [overall 55, raw 54.61]
+     new: Carvedilol 12.5mg bid + Spironolactone 25mg qd [overall 54, raw 53.62]
+  MRA + DIAMOND Binder (K+ 5.1) :: commercial
+     old: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 12.5mg qd [overall 83, raw 83.20]
+     new: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd + Spironolactone 12.5mg qd [overall 83, raw 83.03]
+
+Warning differences:
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: commercial: Carvedilol 25mg bid + Lisinopril 20mg qd + Patiromer 8.4g qd
+  Dual MRA With Steroidal Intolerance :: cash: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd
+  Gynecomastia From Eplerenone on Spironolactone :: cash: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd
+  Dual MRA Unknown History Keeps nsMRA :: cash: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd

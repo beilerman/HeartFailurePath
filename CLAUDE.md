@@ -59,7 +59,7 @@ HeartFailurePath/
   services/
     simulationService.ts          # public facade: 45-line staged orchestrator + re-exports
     engine/                       # the engine, one module per stage (see docs/scoring-architecture.md):
-                                  #   gates, eligibility (rules E01-E14), candidates, effects, domains,
+                                  #   gates, eligibility (rules E01-E15), candidates, effects, domains,
                                   #   scoreModel (weights + adjustments as data), scoring, selection,
                                   #   explain, registry, intolerance, regimenUtils, drugFacts
     clinicalPredicates.ts         # shared predicates (valueUnknown, hasHistoricalHFrEF,
@@ -183,6 +183,12 @@ Implemented high-priority safeguards include:
   - defers beta-blocker UP-TITRATION in ANY acute decompensation (warm or cold) — continue the current dose and diurese; up-titrate after euvolemia
   - forces existing beta-blocker dose REDUCTION only with hypoperfusion ("cold-and-wet": cool extremities, SBP < 90, or pulse pressure ≤ 25) — the cut is ONE dose step down (~50%, e.g. carvedilol 25 → 12.5), not a jump to the lowest tier; warm-and-wet continues the beta-blocker and diureses
   - safe guideline ADDITIONS (esp. SGLT2i — beneficial in acute HF, EMPULSE/SOLOIST) are force-injected alongside any mandated BB reduction so decompensation never suppresses gap-closing therapy
+- MRA potassium and interaction rules (2026-11-10, `docs/medication-review-2026-11-10/verified-mra-binders.md`):
+  - new MRA starts: K+ > 5.5 is a contraindication (initiation only, `mraStartPotassiumCheck`); K+ 5.0-5.5 only with a K+ binder in the same option (DIAMOND pathway) plus the "start the binder first" sequencing warning; rule E15 withholds a new MRA above K+ 5.0 when no binder can be offered
+  - continuation: `facts.k_continuation` on spironolactone/eplerenone/finerenone: K+ 5.5-5.9 forces a ONE-STEP reduction (withhold at the lowest dose), K+ >= 6.0 withholds (removal); restart low once K+ < 5.5
+  - eplerenone/finerenone contraindicated with strong CYP3A inhibitors (`STRONG_CYP3A_INHIBITORS`); eplerenone capped at 25 mg with a moderate inhibitor (`interaction_dose_cap`) and contraindicated at eGFR <= 30; finerenone/spironolactone contraindicated in adrenal insufficiency
+  - `Medication.start_dose_for(patient)` is the opt-in per-drug cap on the dose a NEW START may begin at (finerenone 10/20 mg by eGFR, spironolactone 12.5/25 mg by eGFR); finerenone's target comes from `is_target_dose_for` (20 mg if eGFR < 60, else 40 mg)
+  - binders: prevention potassium effects (patiromer -0.1; Lokelma -0.3/-0.6/-0.7 at 5/10/15 g), tried lowest dose first across binders; the "+50 enables RAAS/MRA" bonus needs a RAASi/MRA in the regimen; drug-data warnings/monitoring come from `facts.regimen_warnings` / `facts.monitoring_items` (warning text starts "Drug note" and is not score-penalized)
 - Structural regimen safety:
   - blocks dual RAAS combinations
   - blocks dual MRA combinations

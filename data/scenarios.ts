@@ -2769,7 +2769,7 @@ export const SCENARIOS: TestScenario[] = [
             allergies: new Set<string>(),
             discontinued_meds: [],
             current_regimen: buildCurrentRegimen([
-                { name: 'Spironolactone', strength: 25, freq: 'qd' }, // K+ > 5.5 → hard CI, force-removed
+                { name: 'Spironolactone', strength: 25, freq: 'qd' }, // K+ >= 6.0 → withheld (removed); 5.5-5.9 would be a one-step reduction
                 { name: 'Lisinopril', strength: 10, freq: 'qd' }, // K+ > 5.4 → hard CI, force-removed
                 { name: 'Carvedilol', strength: 12.5, freq: 'bid' }
             ]),
@@ -2887,6 +2887,56 @@ export const SCENARIOS: TestScenario[] = [
             max_new_classes_per_visit: 2
         }
     },
+
+    // ===== MRA / K+ binder source-verified corrections (docs/medication-review-2026-11-10/verified-mra-binders.md) =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 62, sex: 'Male' as const, sbp: 124, dbp: 76, pulse: 74, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 62, nt_pro_bnp: 1400, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 60, creatinine: 1.2, bun: 20, potassium: 4.5,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            current_regimen: [] as RegimenMed[],
+            max_affordable_cost: 400, cost_sensitivity: 3, insurance_tier: 'commercial' as const,
+            complexity_tolerance: 8, max_new_classes_per_visit: 2,
+        };
+        // Quad minus the MRA: the MRA is the one missing pillar, so a new MRA start is what the engine weighs.
+        const noMra = buildCurrentRegimen([
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+            { name: 'Carvedilol', strength: 25, freq: 'bid' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        const hfpef = { ...base, lvef: 55, nt_pro_bnp: 700, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFpEF']) };
+        return [
+            { title: 'MRA-Source Eplerenone With Strong CYP3A4 Inhibitor Excluded', patient: { ...base, external_medications: new Set(['Clarithromycin']) } },
+            { title: 'MRA-Source Finerenone With Strong CYP3A4 Inhibitor Excluded', patient: { ...hfpef, external_medications: new Set(['Itraconazole']) } },
+            { title: 'MRA-Source Adrenal Insufficiency Excludes Finerenone And Spironolactone', patient: { ...hfpef, comorbidities: new Set(['HFpEF', "Adrenal Insufficiency (Addison's disease)"]) } },
+            { title: 'MRA-Source Eplerenone eGFR 30 Boundary', patient: { ...base, egfr: 30, creatinine: 2.2 } },
+            { title: 'MRA-Source Eplerenone Moderate CYP3A Inhibitor Cap 25 mg', patient: { ...base, external_medications: new Set(['Diltiazem']),
+                current_regimen: buildCurrentRegimen([{ name: 'Eplerenone', strength: 50, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'MRA-Source Current MRA K+ 5.6 One-Step Reduction', patient: { ...base, potassium: 5.6,
+                current_regimen: buildCurrentRegimen([{ name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'MRA-Source Current MRA K+ 5.7 Lowest Dose Withheld', patient: { ...base, potassium: 5.7,
+                current_regimen: buildCurrentRegimen([{ name: 'Eplerenone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'MRA-Source Current MRA K+ 6.1 Withheld', patient: { ...base, potassium: 6.1,
+                current_regimen: buildCurrentRegimen([{ name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'MRA-Source Finerenone eGFR 40 Targets 20 mg', patient: { ...hfpef, egfr: 40, creatinine: 1.8,
+                current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }, { name: 'Finerenone (Kerendia)', strength: 20, freq: 'qd' }]) } },
+            { title: 'MRA-Source Finerenone eGFR 70 Targets 40 mg', patient: { ...hfpef, egfr: 70, creatinine: 1.0,
+                current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }, { name: 'Finerenone (Kerendia)', strength: 20, freq: 'qd' }]) } },
+            { title: 'MRA-Source Finerenone New Start Tier eGFR 70', patient: { ...hfpef, egfr: 70, creatinine: 1.0 } },
+            { title: 'MRA-Source Finerenone New Start Tier eGFR 40', patient: { ...hfpef, egfr: 40, creatinine: 1.8 } },
+            { title: 'MRA-Source Spironolactone Start Dose eGFR 40', patient: { ...base, egfr: 40, creatinine: 1.7, current_regimen: noMra } },
+            { title: 'MRA-Source Spironolactone Start Dose eGFR 70', patient: { ...base, egfr: 70, creatinine: 1.0, current_regimen: noMra } },
+            { title: 'MRA-Source MRA Start K+ 5.3 Needs Binder And Sequencing', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
+            { title: 'MRA-Source MRA Start K+ 5.3 No Binder Available', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
+            { title: 'MRA-Source Lokelma HF Warning (No Patiromer Available)', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
+            { title: 'MRA-Source Patiromer Warnings (No Lokelma Available)', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
+        ];
+    })(),
 ];
 
 // The single clonePatient implementation lives in the engine (services/simulationService.ts)

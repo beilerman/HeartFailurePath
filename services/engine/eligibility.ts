@@ -45,6 +45,11 @@ export interface EligibilityContext {
     hasHyperkalemiaHistory: boolean;
     currentHasSteroidalMRA: boolean;
     currentHasNsMRA: boolean;
+    /**
+     * Whether any K+ binder can actually be offered (formulary-available, not allergic/discontinued). Set when the
+     * formulary filter runs (it needs `availableMedNames`); undefined before that. Rule E15 reads it.
+     */
+    kBinderAvailable?: boolean;
 }
 
 export interface EligibilityRule {
@@ -193,6 +198,20 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             `eGFR ${ctx.patient.egfr}: the renal dosing table for ${med.name} marks this level as contraindicated`,
         ],
     },
+    {
+        id: 'E15', name: 'MRA start above potassium 5.0 needs a binder',
+        summary: 'A NEW MRA start at potassium above 5.0 is only offered together with a potassium binder (the label/guideline start threshold is 5.0). If no binder can be offered, the MRA is not started.',
+        // Initiation only: a patient already on any MRA is not affected (continuation is governed by the potassium
+        // continuation rule). Placed after E13 so potassium above 5.5 is reported as a contraindication.
+        evaluate: (ctx, med) => MRA_POOL_CLASSES.has(med.drug_class)
+            && ctx.kBinderAvailable === false
+            && ctx.patient.potassium > 5.0
+            && !(ctx.patient.current_regimen ?? []).some(r => MRA_POOL_CLASSES.has(r.med.drug_class))
+            ? 'MRA start above potassium 5.0 needs a potassium binder, and none can be offered' : null,
+        details: (ctx) => [
+            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above the 5.0 start threshold; the tool only starts an MRA at 5.0-5.5 together with a binder, and no binder is available for this patient`,
+        ],
+    },
 ];
 
 export const ELIGIBILITY_RULE_IDS: ReadonlySet<string> = new Set(ELIGIBILITY_RULES.map(r => r.id));
@@ -214,6 +233,12 @@ export function filterEligibleMedications(
     ctx: EligibilityContext, availableMedNames: Set<string>,
 ): EligibilityResult {
     const excludedMeds = taggedDiscontinuedMeds(ctx.patient);
+    ctx = {
+        ...ctx,
+        kBinderAvailable: MEDICATION_FORMULARY.some(m =>
+            drugFacts(m).rescue_role?.kind === 'k_binder' && availableMedNames.has(m.name)
+            && !ctx.patient.allergies.has(m.name) && !ctx.discontinuedByName.has(m.name)),
+    };
     const formulary = MEDICATION_FORMULARY.filter(m => {
         if (!availableMedNames.has(m.name)) return false;
         for (const rule of ELIGIBILITY_RULES) {
