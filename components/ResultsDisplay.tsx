@@ -2,6 +2,13 @@
 import React, { useState } from 'react';
 import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem } from '../types';
 import { RecommendationCard } from './RecommendationCard';
+import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
+
+// Exclusions read best in rule order (the engine's precedence); entries without a rule go last.
+const ruleOrder = (id?: string) => {
+    const i = id ? ELIGIBILITY_RULES.findIndex(r => r.id === id) : -1;
+    return i < 0 ? ELIGIBILITY_RULES.length : i;
+};
 import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 
 interface Props {
@@ -295,7 +302,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                     {results.map((regimen, idx) => (
                         // runId in the key remounts cards on each analysis run so per-card UI
                         // state (details expansion, open modal) never carries onto a different regimen.
-                        <RecommendationCard key={`${runId}-${idx}`} regimen={regimen} rank={idx + 1} />
+                        <RecommendationCard key={`${runId}-${idx}`} regimen={regimen} rank={idx + 1} leader={idx > 0 ? results[0] : undefined} />
                     ))}
                 </div>
             )}
@@ -304,13 +311,19 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                 <div className="mt-12 p-6 bg-slate-100/50 rounded-2xl border border-slate-200">
                     <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 tracking-wider">Clinical Exclusions & Contraindications</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {excludedMedications.map((med, i) => (
+                        {[...excludedMedications].sort((a, b) => ruleOrder(a.rule_id) - ruleOrder(b.rule_id)).map((med, i) => (
                             <div key={i} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
                                 <div className="flex justify-between items-start mb-1">
                                     <span className="font-bold text-slate-900 text-sm">{med.name}</span>
                                     <span className="text-[10px] font-bold text-slate-400 uppercase">{med.drug_class}</span>
                                 </div>
-                                <p className="text-xs text-slate-500 italic leading-snug">{med.reason}</p>
+                                {(med.rule_id || med.rule_name) && (
+                                    <p className="text-[11px] font-semibold text-slate-700 mb-1">
+                                        {med.rule_id && <span className="inline-block mr-1.5 px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-bold tracking-wide">{med.rule_id}</span>}
+                                        {med.rule_name}
+                                    </p>
+                                )}
+                                {med.reason.trim().toLowerCase() !== (med.rule_name ?? "").trim().toLowerCase() && <p className="text-xs text-slate-600 italic leading-snug">{med.reason}</p>}
                             </div>
                         ))}
                     </div>

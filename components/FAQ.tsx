@@ -1,53 +1,76 @@
 import React from 'react';
-import { DOMAIN_WEIGHTS, SCORE_ADJUSTMENTS } from '../services/engine/scoreModel';
-import { VOLUME_SCORING, STRUCTURE_BLEND_WEIGHTS, DISPLAY_FLOORS } from '../services/simulationService';
+import {
+    DOMAIN_GROUPS, DOMAIN_LABELS, WEIGHT_PROFILES, WEIGHT_PROFILE_META, DEFAULT_WEIGHT_PROFILE, SCORE_ADJUSTMENTS, DOMAIN_KEYS,
+    type ScoreDomainKey,
+} from '../services/engine/scoreModel';
+import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
+import { VOLUME_SCORING, STRUCTURE_BLEND_WEIGHTS, DISPLAY_FLOORS, DOMAIN_GOALS, BNP_SCORE_TARGET, BNP_SCORE_CRITICAL } from '../services/simulationService';
+import { TIE_RULE_TEXT, goalAfterEquals } from './scoreExplain';
 import { QuestionMarkCircleIcon, LightBulbIcon, CalculationIcon, HeartIcon } from './icons';
 
 const w = (x: number) => `${Math.round(x * 1000) / 10}%`;
+const signedPts = (n: number) => `${n >= 0 ? '+' : '\u2212'}${Math.abs(n)}`;
+const SHORT_NAMES: Record<ScoreDomainKey, string> = {
+    neurohormonal: 'Neuro', functional: 'Function', volume: 'Volume', structure: 'Structure',
+    guideline: 'Guideline', completeness: 'Complete', cost: 'Cost', adherence: 'Adherence',
+};
+const defaultWeights = WEIGHT_PROFILES[DEFAULT_WEIGHT_PROFILE];
 
-const domainCards = [
-    {
-        title: '1. Neurohormonal',
+const domainDetails: Record<ScoreDomainKey, { color: string; description: string; bullets: string[] }> = {
+    neurohormonal: {
         color: 'text-indigo-700',
         description: 'Uses NT-proBNP as a congestion and neurohormonal burden signal.',
-        bullets: ['100 points at <= 125 pg/mL', '0 points at >= 4000 pg/mL', 'Linear interpolation between thresholds']
+        bullets: [`Full score at or below ${BNP_SCORE_TARGET} pg/mL`, `Zero at or above ${BNP_SCORE_CRITICAL.toLocaleString('en-US')} pg/mL`, 'Straight-line interpolation in between'],
     },
-    {
-        title: '2. Functional',
+    functional: {
         color: 'text-blue-700',
         description: 'Combines NYHA class, KCCQ score, and optional daily step count.',
-        bullets: ['NYHA mapped I->IV', 'KCCQ contributes directly (0-100)', 'Steps included when available']
+        bullets: ['NYHA class I to IV mapped to points', 'KCCQ contributes directly (0-100)', 'Steps included when entered'],
     },
-    {
-        title: '3. Volume',
+    volume: {
         color: 'text-emerald-700',
-        description: 'Measures fluid status using weight delta, exam findings, and oxygenation.',
-        bullets: ['Weight penalty beyond +1.0 kg', `-${VOLUME_SCORING.findingPenalty} points per exam finding`, 'Additional SpO2 penalty if < 94%']
+        description: 'Measures fluid status using weight change, exam findings, and oxygenation.',
+        bullets: ['Penalty for weight more than 1 kg above dry weight', `-${VOLUME_SCORING.findingPenalty} points per congestion finding on exam`, 'Additional penalty for low oxygen saturation'],
     },
-    {
-        title: '4. Structure',
+    structure: {
         color: 'text-amber-700',
         description: 'Blends current remodeling state with trajectory and chamber geometry.',
-        bullets: [`${w(STRUCTURE_BLEND_WEIGHTS.absolute)} absolute LVEF state`, `${w(STRUCTURE_BLEND_WEIGHTS.improvement)} LVEF improvement trajectory`, `${w(STRUCTURE_BLEND_WEIGHTS.chamber)} LVEDD/LAVI chamber component`]
+        bullets: [`${w(STRUCTURE_BLEND_WEIGHTS.absolute)} current LVEF`, `${w(STRUCTURE_BLEND_WEIGHTS.improvement)} LVEF improvement from baseline`, `${w(STRUCTURE_BLEND_WEIGHTS.chamber)} chamber size (LVEDD, LAVI)`],
     },
-    {
-        title: '5. Cost',
-        color: 'text-slate-700',
-        description: 'Compares regimen cost to patient budget with sensitivity weighting.',
-        bullets: ['Budget-aware penalty curve', 'Sensitivity modifies under-budget sting', 'Zero-budget mode supported']
-    },
-    {
-        title: '6. Adherence',
-        color: 'text-teal-700',
-        description: 'Scores regimen complexity against patient complexity tolerance.',
-        bullets: ['Complexity from dose frequency/formulation', 'Tolerance input scales threshold', 'Score decays when complexity exceeds threshold']
-    },
-    {
-        title: '7. Guideline Concordance',
+    guideline: {
         color: 'text-rose-700',
-        description: 'Phenotype-specific alignment with major HF guideline pathways.',
-        bullets: ['HFrEF: RAAS + BB + MRA + SGLT2i', 'HFmrEF: weighted hybrid pillar model', 'HFpEF: SGLT2i-first with adjunct logic']
-    }
+        description: 'Phenotype-specific alignment with major HF guideline pathways, with extra credit for target doses.',
+        bullets: ['HFrEF: RAAS inhibitor + beta-blocker + MRA + SGLT2 inhibitor', 'HFmrEF: weighted hybrid of the pillars', 'HFpEF: SGLT2 inhibitor first, with adjuncts'],
+    },
+    completeness: {
+        color: 'text-purple-700',
+        description: 'The share of the indicated therapies this patient can take that the regimen covers.',
+        bullets: ['Each indicated, achievable therapy counts once (pillars plus qualifying add-ons)', 'Therapies the patient cannot take are never counted against the regimen', 'A drug below its target dose earns partial credit, so up-titration raises the score'],
+    },
+    cost: {
+        color: 'text-slate-700',
+        description: 'Compares monthly out-of-pocket cost with the patient budget, adjusted for how cost-sensitive the patient is.',
+        bullets: ['Rewards regimens that stay well inside the budget', 'Heavy penalty when over budget', 'Zero-budget mode supported'],
+    },
+    adherence: {
+        color: 'text-teal-700',
+        description: "Scores regimen complexity against the patient's complexity tolerance.",
+        bullets: ['Complexity comes from dosing frequency and formulation', 'The tolerance setting moves the threshold', 'Score falls when complexity exceeds the threshold'],
+    },
+};
+
+const adjustmentRows: { name: string; effect: string }[] = [
+    { name: 'Patient-specific evidence bonus', effect: `Credit for medication features with trial evidence that applies to this patient, scaled to regimen size and limited to between ${signedPts(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.min)} and ${signedPts(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.max)} points.` },
+    { name: 'Reducing diuretics in volume depletion', effect: `${signedPts(SCORE_ADJUSTMENTS.VOLUME_DEPLETION_DEESCALATION.points)} points when the option lowers diuretic exposure in a volume-depleted patient.` },
+    { name: `Projected systolic BP below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.threshold}`, effect: `${signedPts(SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.points)} points.` },
+    { name: `Projected systolic BP below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.threshold}`, effect: `${signedPts(SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.points)} points (instead of the line above).` },
+    { name: `Projected systolic BP below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.threshold}`, effect: 'Score set to zero, and the option is not shown.' },
+    { name: `Projected heart rate below ${SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.threshold}`, effect: `${signedPts(SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.points)} points.` },
+    { name: `Projected potassium above ${SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.threshold}`, effect: `${signedPts(SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.points)} points.` },
+    { name: 'Unresolved safety warnings', effect: `${signedPts(SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.perUnit)} points for each warning that reflects real residual patient risk. Procedural reminders do not count.` },
+    { name: 'Potassium not entered', effect: `${signedPts(SCORE_ADJUSTMENTS.UNKNOWN_POTASSIUM.points)} points when the option starts or increases a RAAS inhibitor or MRA.` },
+    { name: 'Kidney function not entered', effect: `${signedPts(SCORE_ADJUSTMENTS.UNKNOWN_RENAL.points)} points when the option starts or increases a RAAS inhibitor, MRA or SGLT2 inhibitor.` },
+    { name: 'Low-output state', effect: `The displayed score is capped at ${SCORE_ADJUSTMENTS.LOW_OUTPUT_CAP.max}.` },
 ];
 
 const safetyChecks = [
@@ -68,8 +91,8 @@ const safetyChecks = [
     'Dual RAAS and dual MRA combinations are structurally blocked.',
     'Documented intolerances (prior discontinued medications) apply to the CURRENT regimen, not just new starts: an arriving medication that violates the intolerance history is swapped to a tolerated same-group agent when one exists (ACEi cough → ARB/ARNI; spironolactone gynecomastia → eplerenone/finerenone) or removed. Changing CURRENT therapy requires the structured side-effect reason (dropdown); free-text details only block new starts — so negated notes like "no cough" can never strip working therapy. Gynecomastia is treated as agent-specific (spironolactone and the named offender avoided, non-offending agents preserved); MRA hyperkalemia intolerance applies to all MRA types; angioedema excludes ACEi and ARNI with ARB allowed under caution.',
     'Monitoring plans are auto-generated for high-risk RAAS/MRA/diuretic/SGLT2i intensification.',
-    'GDMT-completeness ranking: among safe options, the regimen closing the most indicated, achievable therapies (pillars + eligible disease-modifying adjuncts such as GLP-1 in obesity) ranks first — the tool favors complete guideline therapy over the smallest change. Safety gates still override.',
-    'Cost-effectiveness: cost is the FINAL ranking tiebreaker — applied only after clinical benefit (overall score, GDMT completeness, uncapped raw score) is otherwise tied. The tool never trades away health benefit to save money, but among clinically-equivalent regimens it recommends the cheaper one (e.g. generic spironolactone over an equally-beneficial brand). When nothing fits the budget, the cheapest near-affordable options are shown ordered by clinical value (best benefit first) with a budget-exceeded warning.'
+    'Therapy completeness: the share of indicated, achievable therapies (pillars + eligible disease-modifying adjuncts such as GLP-1 in obesity) is itself one of the eight weighted factors, and it also breaks ties between options with the same displayed score — the tool favors complete guideline therapy over the smallest change. Safety gates still override.',
+    'Cost-effectiveness: cost is the FINAL ranking tiebreaker — applied only after clinical benefit (displayed score, therapy completeness, unrounded score) is otherwise tied. The tool never trades away health benefit to save money, but among clinically-equivalent regimens it recommends the cheaper one (e.g. generic spironolactone over an equally-beneficial brand). When nothing fits the budget, the cheapest near-affordable options are shown ordered by clinical value (best benefit first) with a budget-exceeded warning.'
 ];
 
 const evidenceRows = [
@@ -119,26 +142,119 @@ export const FAQ: React.FC = () => {
                     <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
                         <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                             <HeartIcon className="w-6 h-6 text-indigo-600" />
-                            Eight-Domain Scoring Framework
+                            How the Score Works
                         </h3>
                     </div>
                     <div className="p-6 space-y-4 text-slate-700">
                         <p>
-                            Each projected regimen receives eight domain scores (0-100), then a weighted overall score:
-                            {`Neuro ${w(DOMAIN_WEIGHTS.neurohormonal)}, Functional ${w(DOMAIN_WEIGHTS.functional)}, Volume ${w(DOMAIN_WEIGHTS.volume)}, Structure ${w(DOMAIN_WEIGHTS.structure)}, Cost ${w(DOMAIN_WEIGHTS.cost)}, Adherence ${w(DOMAIN_WEIGHTS.adherence)}, Guideline ${w(DOMAIN_WEIGHTS.guideline)}, Therapy completeness ${w(DOMAIN_WEIGHTS.completeness)}.`}
-                            {` Adjustments are then added: projected SBP below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.threshold} ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.points}, below ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.threshold} ${SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.points}; ${SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.perUnit} per safety warning. Open "How this score was calculated" on any recommendation to see the exact lines.`}
-                            These weights are heuristic prioritization aids, not individualized outcome-probability estimates.
+                            Each option is scored on eight factors, each from 0 to 100. Every factor has a weight, the weights add up to 100%, and the option&apos;s score is the weighted sum. An option that scored 100 on every factor would score 100. A few named adjustments, listed below, are then added or subtracted. Open &quot;How this score was calculated&quot; under any recommendation to see every line for that option.
                         </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            {domainCards.map(card => (
-                                <div key={card.title} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                    <h4 className={`font-bold mb-2 ${card.color}`}>{card.title}</h4>
-                                    <p className="text-sm">{card.description}</p>
-                                    <ul className="text-xs mt-2 list-disc list-inside text-slate-500">
-                                        {card.bullets.map(bullet => <li key={bullet}>{bullet}</li>)}
-                                    </ul>
+                        <p className="text-sm text-slate-600">
+                            These scores order options for review; they are not predictions of an individual patient&apos;s outcome.
+                        </p>
+                        <div className="space-y-5 mt-4">
+                            {DOMAIN_GROUPS.map(g => (
+                                <div key={g.key}>
+                                    <h4 className="font-bold text-slate-800 mb-2">
+                                        {g.label} <span className="font-normal text-slate-500">({w(g.domains.reduce((sum, k) => sum + defaultWeights[k], 0))} of the score under the {WEIGHT_PROFILE_META[DEFAULT_WEIGHT_PROFILE].label} weighting)</span>
+                                    </h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {g.domains.map(k => {
+                                            const d = domainDetails[k];
+                                            return (
+                                                <div key={k} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                                    <h5 className={`font-bold mb-1 ${d.color}`}>{DOMAIN_LABELS[k]} <span className="text-slate-500 font-normal text-sm">&middot; {w(defaultWeights[k])}</span></h5>
+                                                    <p className="text-sm">{d.description}</p>
+                                                    <p className="text-xs mt-1 text-slate-600"><span className="font-bold">100 =</span> {goalAfterEquals(DOMAIN_GOALS[k])}</p>
+                                                    <ul className="text-xs mt-2 list-disc list-inside text-slate-500">
+                                                        {d.bullets.map(bullet => <li key={bullet}>{bullet}</li>)}
+                                                    </ul>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
                             ))}
+                        </div>
+
+                        <div className="mt-6">
+                            <h4 className="font-bold text-lg mb-1">Weighting profiles</h4>
+                            <p className="text-sm text-slate-600 mb-3">
+                                The clinician&apos;s choice of &quot;what matters most&quot; selects one row below. It changes only how much each factor counts toward the ranking. Safety checks and exclusions never depend on it: a drug that is unsafe for the patient is withheld under every profile.
+                            </p>
+                            <div className="overflow-x-auto rounded border border-slate-200">
+                                <table className="min-w-full text-sm text-left">
+                                    <caption className="sr-only">Factor weights for each weighting profile</caption>
+                                    <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                        <tr>
+                                            <th scope="col" className="px-3 py-2">Profile</th>
+                                            {DOMAIN_KEYS.map(k => <th key={k} scope="col" className="px-3 py-2 text-right" title={DOMAIN_LABELS[k]}>{SHORT_NAMES[k]}</th>)}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {(Object.keys(WEIGHT_PROFILES) as (keyof typeof WEIGHT_PROFILES)[]).map(name => (
+                                            <tr key={name}>
+                                                <th scope="row" className="px-3 py-2 align-top font-bold text-slate-800 min-w-[10rem]">
+                                                    {WEIGHT_PROFILE_META[name].label}
+                                                    <div className="text-xs font-normal text-slate-500">{WEIGHT_PROFILE_META[name].description}</div>
+                                                </th>
+                                                {DOMAIN_KEYS.map(k => <td key={k} className="px-3 py-2 text-right tabular-nums">{w(WEIGHT_PROFILES[name][k])}</td>)}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div className="mt-6">
+                            <h4 className="font-bold text-lg mb-1">Adjustments</h4>
+                            <p className="text-sm text-slate-600 mb-3">Applied on top of the weighted sum, in points on the 0-100 scale. Each one appears as its own line in the score ledger.</p>
+                            <div className="overflow-x-auto rounded border border-slate-200">
+                                <table className="min-w-full text-sm text-left">
+                                    <caption className="sr-only">Score adjustments and their sizes</caption>
+                                    <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                        <tr><th scope="col" className="px-3 py-2">Adjustment</th><th scope="col" className="px-3 py-2">Effect</th></tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {adjustmentRows.map(r => (
+                                            <tr key={r.name}>
+                                                <th scope="row" className="px-3 py-2 align-top font-medium text-slate-800 min-w-[12rem]">{r.name}</th>
+                                                <td className="px-3 py-2 text-slate-600">{r.effect}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">The final score is limited to the {SCORE_ADJUSTMENTS.SCORE_CLAMP.min}-{SCORE_ADJUSTMENTS.SCORE_CLAMP.max} range and rounded to a whole number.</p>
+                        </div>
+
+                        <div className="mt-6">
+                            <h4 className="font-bold text-lg mb-1">How options are ranked</h4>
+                            <p className="text-sm text-slate-600">
+                                Options are listed from the highest score down. {TIE_RULE_TEXT} Under each option, &quot;Compared with option 1&quot; shows which factors and adjustments account for the difference.
+                            </p>
+                        </div>
+
+                        <div className="mt-6">
+                            <h4 className="font-bold text-lg mb-1">Eligibility rules</h4>
+                            <p className="text-sm text-slate-600 mb-3">Before any scoring, each drug is checked against these rules in order. The first rule that applies withholds the drug and is shown beside it under &quot;Clinical Exclusions &amp; Contraindications&quot;.</p>
+                            <div className="overflow-x-auto rounded border border-slate-200">
+                                <table className="min-w-full text-sm text-left">
+                                    <caption className="sr-only">Numbered eligibility rules</caption>
+                                    <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                        <tr><th scope="col" className="px-3 py-2">Rule</th><th scope="col" className="px-3 py-2">Name</th><th scope="col" className="px-3 py-2">What it does</th></tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {ELIGIBILITY_RULES.map(r => (
+                                            <tr key={r.id}>
+                                                <th scope="row" className="px-3 py-2 align-top font-bold text-slate-700 whitespace-nowrap">{r.id}</th>
+                                                <td className="px-3 py-2 align-top font-medium text-slate-800 min-w-[10rem]">{r.name}</td>
+                                                <td className="px-3 py-2 text-slate-600">{r.summary}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </section>

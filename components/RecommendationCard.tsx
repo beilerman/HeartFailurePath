@@ -2,18 +2,22 @@
 import React, { useState } from 'react';
 import type { Patient, ScoredRegimen, RegimenMed, RegimenModification, QualitativeProjection, TradeOffLabel, DomainScores } from '../types';
 import { ScoreDetailModal } from './ScoreDetailModal';
+import { ScoreComparisonLine } from './ScoreComparison';
+import { DOMAIN_LABELS, DOMAIN_GROUPS, type ScoreDomainKey } from '../services/engine/scoreModel';
 import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 
 interface Props {
     regimen: ScoredRegimen;
     rank: number;
+    /** Option 1, so options 2 and 3 can say why they ranked lower. Omit for option 1. */
+    leader?: ScoredRegimen;
 }
 
-const ScorePill = ({ label, score, color, onClick }: { label: string, score: number, color: string, onClick: () => void }) => (
+const ScorePill = ({ label, fullLabel, score, color, onClick }: { label: string, fullLabel: string, score: number, color: string, onClick: () => void }) => (
     <button
         onClick={onClick}
         className="flex flex-col items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded-lg"
-        aria-label={`${label} sub-score: ${score} out of 100. Click for details.`}
+        aria-label={`${fullLabel} sub-score: ${score} out of 100. Click for details.`}
     >
         <div className={`h-11 w-11 rounded-full flex items-center justify-center text-sm font-bold border-2 ${color} bg-white shadow-sm group-hover:shadow-md group-hover:scale-105 transition-all cursor-pointer`}>
             {score}
@@ -115,23 +119,35 @@ const modActionIcon: Record<string, string> = {
     remove: '−',
 };
 
-// Display labels keyed by DomainScores keys — indexing domain_scores through this map keeps
-// domain names compiler-checked (no .toLowerCase() cast, no silent '|| 0' fallback).
-const DOMAIN_LABELS = {
-    neurohormonal: 'Neurohormonal',
-    functional: 'Functional',
+// Short pill labels and colours, keyed by the engine's domain keys. Full names come from the
+// engine's DOMAIN_LABELS; the compiler checks both maps cover every domain.
+const PILL_SHORT_LABELS = {
+    neurohormonal: 'Neuro',
+    functional: 'Function',
     volume: 'Volume',
     structure: 'Structure',
+    guideline: 'Guideline',
+    completeness: 'Complete',
     cost: 'Cost',
     adherence: 'Adherence',
-    guideline: 'Guideline',
-    completeness: 'Completeness',
-} as const satisfies Record<keyof DomainScores, string>;
-type DomainKey = keyof typeof DOMAIN_LABELS;
+} as const satisfies Record<ScoreDomainKey, string>;
+const PILL_COLORS = {
+    neurohormonal: 'border-indigo-500 text-indigo-600',
+    functional: 'border-blue-500 text-blue-600',
+    volume: 'border-emerald-500 text-emerald-600',
+    structure: 'border-amber-500 text-amber-600',
+    guideline: 'border-rose-500 text-rose-600',
+    completeness: 'border-purple-500 text-purple-600',
+    cost: 'border-slate-500 text-slate-600',
+    adherence: 'border-teal-500 text-teal-600',
+} as const satisfies Record<ScoreDomainKey, string>;
+// Compile-time guard that DomainScores and the engine's keys stay in step.
+const _domainKeysMatch: Record<keyof DomainScores, true> = { neurohormonal: true, functional: true, volume: true, structure: true, cost: true, adherence: true, guideline: true, completeness: true };
+void _domainKeysMatch;
 
-export const RecommendationCard = React.memo(function RecommendationCard({ regimen, rank }: Props) {
+export const RecommendationCard = React.memo(function RecommendationCard({ regimen, rank, leader }: Props) {
     const { domain_scores } = regimen;
-    const [selectedDomain, setSelectedDomain] = useState<DomainKey | null>(null);
+    const [selectedDomain, setSelectedDomain] = useState<ScoreDomainKey | null>(null);
     const [showLedger, setShowLedger] = useState(false);
     const targetDoseContext = getTargetDosePatientContext(regimen);
 
@@ -318,16 +334,20 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                                     How this score was calculated
                                 </button>
                             )}
+                            {leader && <ScoreComparisonLine regimen={regimen} leader={leader} rank={rank} />}
                         </div>
                         <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2">Domain sub-scores — tap for detail</p>
-                        <div className="grid grid-cols-4 gap-y-4 gap-x-3">
-                            <ScorePill label="Neuro" score={domain_scores.neurohormonal} color="border-indigo-500 text-indigo-600" onClick={() => setSelectedDomain('neurohormonal')} />
-                            <ScorePill label="Function" score={domain_scores.functional} color="border-blue-500 text-blue-600" onClick={() => setSelectedDomain('functional')} />
-                            <ScorePill label="Volume" score={domain_scores.volume} color="border-emerald-500 text-emerald-600" onClick={() => setSelectedDomain('volume')} />
-                            <ScorePill label="Structure" score={domain_scores.structure} color="border-amber-500 text-amber-600" onClick={() => setSelectedDomain('structure')} />
-                            <ScorePill label="Guideline" score={domain_scores.guideline} color="border-rose-500 text-rose-600" onClick={() => setSelectedDomain('guideline')} />
-                            <ScorePill label="Cost" score={domain_scores.cost} color="border-slate-500 text-slate-600" onClick={() => setSelectedDomain('cost')} />
-                            <ScorePill label="Adherence" score={domain_scores.adherence} color="border-teal-500 text-teal-600" onClick={() => setSelectedDomain('adherence')} />
+                        <div className="space-y-3">
+                            {DOMAIN_GROUPS.map(g => (
+                                <div key={g.key} role="group" aria-label={g.label}>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">{g.label}</p>
+                                    <div className="grid grid-cols-4 gap-y-3 gap-x-3">
+                                        {g.domains.map(k => (
+                                            <ScorePill key={k} label={PILL_SHORT_LABELS[k]} fullLabel={DOMAIN_LABELS[k]} score={domain_scores[k]} color={PILL_COLORS[k]} onClick={() => setSelectedDomain(k)} />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </details>
@@ -335,15 +355,17 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
 
             {showLedger && regimen.score_breakdown && (
                 <ScoreDetailModal
-                    domain="Overall"
+                    domain="overall"
                     score={regimen.overall_score}
                     regimen={regimen}
+                    leader={leader}
+                    rank={rank}
                     onClose={() => setShowLedger(false)}
                 />
             )}
             {selectedDomain && (
                 <ScoreDetailModal
-                    domain={DOMAIN_LABELS[selectedDomain]}
+                    domain={selectedDomain}
                     score={regimen.domain_scores[selectedDomain]}
                     regimen={regimen}
                     onClose={() => setSelectedDomain(null)}
