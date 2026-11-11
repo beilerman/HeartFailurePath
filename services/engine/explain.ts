@@ -1,6 +1,6 @@
 /** Display/explanation builders: monitoring plan, qualitative projections, trade-offs, follow-up calendar. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, ScoredRegimen, ExcludedMedication, SimulationOutput, RegimenMed, ModificationSet, MonitoringPlanItem, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores } from '../../types';
-import { valueUnknown, hasHistoricalHFrEF, hasUnknownHistoricalHFrEF } from '../clinicalPredicates';
+import { valueUnknown, hasHistoricalHFrEF, hasUnknownHistoricalHFrEF, isIronDeficient, ivIronCreditTier } from '../clinicalPredicates';
 import { DISEASE_MODIFYING_CLASSES, DIURETIC_CLASSES, RAAS_CLASSES } from './registry';
 import { hasRelevantIntensification, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { regimenSatisfiesPillar } from './domains';
@@ -150,6 +150,16 @@ export function buildMissingDataNotices(patient: Patient): string[] {
     } else if (patient.ferritin !== undefined && patient.ferritin >= 100 && patient.ferritin <= 300 && patient.tsat === undefined) {
         notices.push('Ferritin 100-300 with TSAT not entered — functional iron deficiency cannot be confirmed or excluded. Obtain TSAT.');
     }
+    // IV iron (ferric carboxymaltose) evidence population: say why iron is not added automatically, and what the dose needs.
+    if (isIronDeficient(patient)) {
+        if (patient.hemoglobin !== undefined && patient.hemoglobin >= 15) {
+            notices.push('Iron deficiency present but hemoglobin is 15 g/dL or higher: ferric carboxymaltose is held (the label has no data in that range).');
+        } else if (ivIronCreditTier(patient) === null) {
+            notices.push('Iron deficiency present, but IV iron is not added automatically: the evidence is in HFrEF/HFmrEF (LVEF below 50) with NYHA II-III. A clinician may still choose it (the label HF indication, NYHA II/III, has no LVEF limit).');
+        } else if (patient.hemoglobin === undefined) {
+            notices.push('Hemoglobin not entered: the ferric carboxymaltose dose (label table by weight and hemoglobin) is shown for both hemoglobin bands. Enter hemoglobin to fix the dose.');
+        }
+    }
     if (patient.daily_step_count === undefined) {
         notices.push('No activity / step data entered — functional status is based on NYHA and KCCQ only.');
     }
@@ -212,13 +222,13 @@ export function buildQualitativeProjections(baseline: Patient, projected: Patien
 // even when they do not rank inside the top display picks (e.g. A-HeFT H/ISDN, SHIFT ivabradine).
 export function describeAdjunct(m: Medication): string {
     switch (m.drug_class) {
-        case 'Vasodilator': return 'Hydralazine + isosorbide dinitrate (H/ISDN) — A-HeFT: Class I add-on for Black patients NYHA III–IV on GDMT, or the alternative when RAAS inhibitors cannot be used (all contraindicated/intolerable).';
+        case 'Vasodilator': return 'Hydralazine + isosorbide dinitrate (H/ISDN) — A-HeFT: Class 1 add-on for self-identified Black patients with NYHA III–IV HFrEF who are on a RAAS inhibitor and a beta-blocker (or cannot take them), or (Class 2b) the alternative in HFrEF when RAAS inhibitors cannot be used (all contraindicated/intolerable).';
         case 'If Inhibitor': return 'Ivabradine — SHIFT: sinus rhythm, LVEF ≤ 35, HR ≥ 70 on maximally tolerated beta-blocker (or beta-blocker contraindicated); AHA/ACC 2022 Class 2a, ESC 2021 IIa.';
-        case 'sGC Stimulator': return 'Vericiguat — VICTORIA: worsening HFrEF (recent hospitalization / IV diuretics), NT-proBNP ≥ 1600.';
+        case 'sGC Stimulator': return 'Vericiguat — VICTORIA: LVEF < 45 with a recent worsening event (HF hospitalization within 6 months or outpatient IV diuretics within 3 months) and NT-proBNP ≥ 1000 in sinus rhythm (≥ 1600 in atrial fibrillation); AHA/ACC 2022 Class 2b.';
         case 'Inotrope': return 'Digoxin — AF rate control, or (AHA/ACC 2022 Class 2b) HFrEF symptoms persisting on maximally tolerated GDMT (narrow therapeutic index — monitor levels).';
         case 'GLP-1 RA':
-        case 'GLP-1/GIP RA': return 'GLP-1 / GIP receptor agonist — obesity with HFpEF/HFmrEF (STEP-HFpEF, SUMMIT).';
-        case 'IV Iron': return 'IV iron — iron deficiency in symptomatic HF (AFFIRM-AHF / IRONMAN): improves symptoms and reduces hospitalization.';
+        case 'GLP-1/GIP RA': return 'GLP-1 / GIP receptor agonist for symptoms in obesity (BMI ≥ 30) with HFpEF: semaglutide at LVEF ≥ 45 (STEP-HFpEF), tirzepatide at LVEF ≥ 50 (SUMMIT). No guideline recommendation; start at the lowest dose and titrate one step at a time.';
+        case 'IV Iron': return 'IV iron (ferric carboxymaltose) — iron deficiency in symptomatic HFrEF/HFmrEF (LVEF below 50), NYHA II-III (AHA/ACC 2022 Class 2a; CONFIRM-HF, AFFIRM-AHF, IRONMAN, HEART-FID): improves exercise capacity and symptoms; dose by weight and hemoglobin.';
         case 'nsMRA': return 'Finerenone (nsMRA) — FINEARTS-HF: HFmrEF / HFpEF (LVEF ≥ 40).';
         case 'MRA': return 'Mineralocorticoid receptor antagonist — adjunct per phenotype (TOPCAT in HFpEF).';
         case 'Loop Diuretic': return 'Loop diuretic — symptomatic volume management; titrate to daily weights.';

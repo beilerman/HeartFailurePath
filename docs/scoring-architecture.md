@@ -141,8 +141,7 @@ warning is identical. Median top-pick score moved from 87 to 67 because the scal
 `facts` (for example `beta1_selective`, `antiandrogenic`, `high_dose_threshold`, `rescue_role`). The
 engine reads `drugFacts(med)` and never compares drug names. See `HOW_TO_ADD_A_MEDICATION.md`.
 
-Still in engine code: adjunct initiation criteria (ivabradine, vericiguat, digoxin, H/ISDN, GLP-1,
-IV iron) in `candidates.ts`, and drug-interaction warning text in `effects.ts`.
+Still in engine code: adjunct initiation criteria for ivabradine, digoxin and H/ISDN in `candidates.ts` (vericiguat, GLP-1 and IV iron criteria are now the entries' own `ci` checks), and drug-interaction warning text in `effects.ts`.
 
 ## Tests that hold the shape
 

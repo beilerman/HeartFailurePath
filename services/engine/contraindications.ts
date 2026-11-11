@@ -92,7 +92,9 @@ export const CI_SEVERE_ASTHMA: ContraindicationCheck = {
     reason: 'Severe asthma / bronchospasm', when: p => p.comorbidities.has("Severe Asthma / Bronchospasm"),
 };
 export const CI_TYPE1_OR_DKA: ContraindicationCheck = {
-    reason: 'Type 1 diabetes or prior DKA / euglycemic DKA',
+    // ENGINE-CONSERVATIVE, not a label contraindication: the Farxiga and Jardiance labels contraindicate only serious hypersensitivity
+    // (type 1 diabetes is a limitation of use for glycemic control; ketoacidosis is a warning). verified-sglt2-glp1-adjuncts.md row 7.
+    reason: 'Type 1 diabetes or prior DKA / euglycemic DKA (engine-conservative choice: the label contraindicates only hypersensitivity)',
     when: p => p.comorbidities.has("Type 1 Diabetes Mellitus") || p.comorbidities.has("Prior DKA / Euglycemic DKA"),
 };
 export const CI_MTC_MEN2: ContraindicationCheck = {
@@ -177,3 +179,14 @@ export const CI_SEVERE_HEPATIC_UNSPECIFIED = (drug: string): ContraindicationChe
     reason: `Liver disease, Child-Pugh B/C with severity not specified: ${drug} is contraindicated in severe hepatic impairment; if the patient is Child-Pugh B, select "Child-Pugh B confirmed (not C)" to allow it with caution`,
     when: p => hasChildPughBorC(p) && !hasChildPughBConfirmed(p),
 });
+
+// --- PDE5 inhibitors, sGC stimulators, long-acting nitrates (verified-sglt2-glp1-adjuncts.md rows 22, 42) ---------------------------
+/** PDE-5 inhibitors named in the BiDil label contraindication (avanafil, sildenafil, tadalafil, vardenafil). Matched by name in `external_medications`. */
+export const PDE5_INHIBITORS: readonly string[] = ['Sildenafil', 'Tadalafil', 'Avanafil', 'Vardenafil'];
+export const onPde5Inhibitor = (p: Patient): boolean => onAny(p, PDE5_INHIBITORS);
+/** Soluble guanylate cyclase stimulators other than vericiguat: contraindicated with vericiguat (Verquvo label) and with H/ISDN (BiDil label). */
+export const OTHER_SGC_STIMULATORS: readonly string[] = ['Riociguat'];
+export const onOtherSgcStimulator = (p: Patient): boolean => onAny(p, OTHER_SGC_STIMULATORS);
+/** Long-acting nitrates taken outside the formulary: VICTORIA excluded them (the label does not prohibit the combination). */
+export const LONG_ACTING_NITRATES: readonly string[] = ['Isosorbide Mononitrate', 'Isosorbide Dinitrate'];
+export const onLongActingNitrate = (p: Patient): boolean => onAny(p, LONG_ACTING_NITRATES);

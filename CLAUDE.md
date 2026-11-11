@@ -132,8 +132,8 @@ Full description: `docs/scoring-architecture.md`. All numbers live in `services/
 - Therapy completeness = achievable indicated therapies present / achievable total (pillars +
   eligible adjuncts; 60% credit below target dose). "Achievable" excludes therapies filtered out
   of the formulary — never penalize a contraindicated therapy.
-- Special-feature `points` calibration: outcome-level benefits are large (A-HeFT 30, FINEARTS 45,
-  obesity 50-60, iron 40, binders 50, TOPCAT HFpEF 18); intra-class tolerability tiebreakers are
+- Special-feature `points` calibration: outcome-level benefits are large (A-HeFT 60, FINEARTS 45,
+  GLP-1 40 (both agents), iron 40 (20 at LVEF 41-49), binders 50, TOPCAT HFpEF 18); intra-class tolerability tiebreakers are
   small (eplerenone "no gynecomastia" 3). The `/regimenLength` normalization amplifies a lone
   special drug, so a tolerability footnote must stay small.
 - Scores before and after 2026-11-10 are not comparable (the old scale had 30 points of headroom
@@ -167,14 +167,14 @@ Implemented high-priority safeguards include:
   - blank renal data: current renal-gated meds are RETAINED (not force-removed); renal-gated new starts are excluded with reason "Renal data required — cannot assess renal safety (obtain BMP before initiation)"; candidates intensifying RAAS/MRA/SGLT2i carry a RENAL FUNCTION UNKNOWN warning + -15 penalty; renal-threshold warnings (eGFR<20 loop alert, Furoscix CKD caution, digoxin renal note) are suppressed
   - blank potassium: projected K+ preserves the unknown sentinel; hypo-/hyperkalemia warning bands, the digoxin K-band warning, and DDI-3's interpolated K+ are suppressed (prompts for a BMP instead); digoxin's K+ < 3.5 contraindication has a > 0 guard
 - Drug-interaction hard gates:
-  - nitrate (H/ISDN) is contraindicated with confirmed PDE5 inhibitor exposure (Sildenafil/Tadalafil in external medications) — excluded from formulary and force-removed from arriving regimens
+  - nitrate (H/ISDN) is contraindicated with confirmed PDE5 inhibitor exposure (Sildenafil/Tadalafil/Vardenafil/Avanafil in external medications) or riociguat — excluded from formulary and force-removed from arriving regimens
 - Pregnancy safety:
   - excludes RAAS classes, MRAs/nsMRA, SGLT2i, Vericiguat (FDA boxed warning — embryo-fetal toxicity), Ivabradine (fetal harm), and GLP-1 therapy
   - H/ISDN deliberately remains pregnancy-appropriate (the RAAS alternative for pregnant HFrEF)
 - Initiation-vs-continuation carve-outs (the `alreadyOn*` pattern):
-  - Vericiguat: VICTORIA enrollment criteria (NT-proBNP >= 1600, NYHA II-IV, recent worsening, LVEF < 45) gate INITIATION only — a patient already on vericiguat is never force-removed for improved markers; pregnancy still forces removal
-  - GLP-1: `BMI >= 30` gates INITIATION only; continuation is blocked only by true safety CIs (pregnancy, MTC/MEN2) — weight-loss success never forces removal
-  - SGLT2i eGFR floor and ivabradine HR thresholds follow the same pattern (initiation HR >= 70; continuation: HR below 50 reduces one step, withheld at the lowest dose)
+  - Vericiguat: VICTORIA enrollment criteria (NT-proBNP >= 1000 sinus / >= 1600 AFib, NYHA II-IV, recent worsening, LVEF < 45) gate INITIATION only — a patient already on vericiguat is never force-removed for improved markers; pregnancy still forces removal
+  - GLP-1: `BMI >= 30` (both agents), LVEF >= 45 (semaglutide) / >= 50 (tirzepatide) gate INITIATION only; continuation is blocked only by true safety CIs (pregnancy, MTC/MEN2) — weight-loss success never forces removal
+  - SGLT2i eGFR floor (dapagliflozin 25, empagliflozin 20) and ivabradine HR thresholds follow the same pattern (initiation HR >= 70; continuation: HR below 50 reduces one step, withheld at the lowest dose)
 - Current-regimen history checks:
   - a current med matching a documented ALLERGY by name is flagged and force-swapped to a tolerated same-group agent (else removed) — it is never kept or up-titrated
   - a current med appearing in the discontinued list raises a MEDICATION HISTORY CONFLICT alert (verify deliberate restart) rather than forced removal
@@ -201,6 +201,13 @@ Implemented high-priority safeguards include:
   - carvedilol effect ratio capped at 25 mg bid; carvedilol/metoprolol/bisoprolol equal at target (lvef 9, NT-proBNP -22%, KCCQ 6, LVEDD -10%, structure 35); carvedilol hepatic CI only for unspecified B/C (B confirmed = caution); metoprolol has no hepatic CI; bisoprolol tiers 2.5/5/10 (1.25 dropped, US strengths)
   - ivabradine: label contraindications in `constants.ts`, exact start tier via `start_dose_for` (2.5 mg for conduction defect / amiodarone / digoxin, else 5), "maximally tolerated" beta-blocker in `candidates.ts` (`bbMaxTolerated`), HR >= 70 is initiation only (bonus kept while on the drug)
   - digoxin: indication gate in `candidates.ts` (sinus: LVEF <= 40, NYHA III-IV, no addable/below-target pillar; AFib: beta-blocker optimized); VF is the CI; WPW, K+ > 5.5, eGFR < 15 are penalized warnings; `facts.hr_effect_only_in_rhythm: 'AFib'`; NT-proBNP effect 0
+- SGLT2i / GLP-1 / vericiguat / IV iron / H-ISDN rules (2026-11-10, `docs/medication-review-2026-11-10/verified-sglt2-glp1-adjuncts.md`; numbers marked engine policy or interpolated are listed in `docs/evidence-matrix.md`):
+  - effects are PLACEBO-ADJUSTED: semaglutide KCCQ 7.8 (7.3 in type 2 diabetes), tirzepatide 6.9; GLP-1 weight is `weight_reduction_percent` of the patient's weight (`patientChfEffects` in `effects.ts`, `facts.t2dm_scale`); SGLT2i KCCQ 2.5 / 2.0; vericiguat KCCQ 0.5
+  - GLP-1 doses: every labeled tier is offered (`facts.titrate_one_step`: the tier sampler returns all tiers and `titratableUp` offers only the next one); a new start is the exact lowest tier (`start_dose_for` + `start_dose_exact`); GLP-1 Therapy is in `TITRATE_NOT_SWAP_GROUPS`; tirzepatide uses a saturating dose map, semaglutide keeps the linear one; both agents are offered (no cross-trial "best" pick)
+  - initiation criteria that live on the entry: GLP-1 BMI/LVEF, vericiguat NYHA/LVEF/NT-proBNP by rhythm/worsening/riociguat, ferric carboxymaltose Hb >= 15 hold; `candidates.ts` only picks the exact start tier of the entries that survive eligibility
+  - H/ISDN Class 1 needs a RAAS inhibitor AND a beta-blocker on board (or documented inability: `allRAASExcluded` / `allBBExcluded`), LVEF <= 40; Class 2b is the separate RAAS-unavailable path
+  - IV iron: `ivIronCreditTier` (clinicalPredicates.ts) gates the bonus, the candidate and the auto-rescue (iron deficient, NYHA II-III, Hb < 15, LVEF < 50; half bonus at 41-49); the dose is the label table by weight and `patient.hemoglobin` (`facts.single_course_dose`: never titrated); price is a per-course cost amortized over 6 months
+  - `facts.regimen_warnings` entries may be a function of the patient and take `(patient, regimen)` for `when`; `facts.cash_price_by_dose` overrides the flat price in the cash tier (Zepbound)
 - Structural regimen safety:
   - blocks dual RAAS combinations
   - blocks dual MRA combinations
@@ -250,7 +257,7 @@ Major class groups include RAAS, beta blockers, MRAs/nsMRA, SGLT2i, loop/thiazid
 
 Formulary modeling notes (2026-07-05 audit):
 
-- GLP-1 `chf_effects` are dose-scaled like every other titratable class (ratio to target dose, floor 0.25): semaglutide `d/2.4`, tirzepatide `d/15` — a starting-dose add is no longer credited the full STEP-HFpEF/SUMMIT steady-state benefit. Eplerenone is similarly dose-scaled (`d/50`), matching spironolactone.
+- GLP-1 `chf_effects` are dose-scaled (semaglutide ratio `d/2.4`, floor 0.25; tirzepatide a saturating map 0.25/0.70/0.81/0.925/0.96/1 over 2.5-15 mg, see 2026-11-10 rules above) — a starting-dose add is no longer credited the full STEP-HFpEF/SUMMIT steady-state benefit. Eplerenone is similarly dose-scaled (`d/50`), matching spironolactone.
 - Loop diuretic weight-loss curves are calibrated to documented dose-response anchors via `log2` ceiling curves: furosemide `1.5 + 0.9*log2(d/20)` (~1.5/2.4/3.3/4.2 kg at 20/40/80/160 mg); torsemide `1.8 + 0.96*log2(d/10)` (~1.8/2.8/4.0/5.0 kg at 10/20/50/100 mg); bumetanide inherits the furosemide curve via 40:1 equivalence; Furoscix uses the calibrated curve on a bioavailability-adjusted oral equivalent (~15% above oral at the labeled 80 mg).
 - The `renal_adjustment` contract is fully honored by the engine: `contraindicated: true` excludes exactly like `contraindications()` (formulary filter + current-med audit); `caution: true` surfaces as a "Renal dosing review" monitoring-plan item (not a ranking-penalized warning); `start_dose_modifier` surfaces as a "Reduced starting dose (renal)" monitoring item for adds.
 

@@ -69,6 +69,8 @@ export interface Patient {
 
     ferritin?: number;
     tsat?: number;
+    /** Hemoglobin g/dL (optional): sets the ferric carboxymaltose label dose and holds it at >= 15 (no label data). */
+    hemoglobin?: number;
 
     comorbidities: Set<string>;
     // Active non-formulary/concurrent medications relevant to DDI checks.
@@ -114,6 +116,12 @@ export interface ChfEffects {
     lvef_improvement_absolute: number; // e.g., +5%
     bnp_reduction_percent: number; // e.g., 0.20 (20% reduction)
     weight_reduction_kg: number; // e.g., 2.0 kg
+    /**
+     * Optional, GLP-1 class: PLACEBO-ADJUSTED weight change as a percent of the patient's current body weight. When set, the engine
+     * (effects.ts `patientChfEffects`) converts it to kg for THIS patient and ignores `weight_reduction_kg` (which is then only a
+     * display figure at a 100 kg reference weight).
+     */
+    weight_reduction_percent?: number;
     kccq_improvement: number; // points
     structure_benefit_points: number; // Bonus for reverse remodeling evidence
     lavi_reduction_percent: number; // e.g., 0.10 (10% reduction in LA volume)
@@ -209,8 +217,22 @@ export interface MedFacts {
      * 24/26 or 49/51 mg, never the other). Default false: lower tiers are also allowed ("start low, go slow").
      */
     start_dose_exact?: boolean;
+    /**
+     * Weekly GLP-1 / GLP-1-GIP agents: titration moves exactly ONE labeled tier at a time (the dose-tier sampler offers every tier, and
+     * `titratableUp` offers only the next one), never skipping the label's escalation steps.
+     */
+    titrate_one_step?: boolean;
+    /** The dose is a one-time course chosen by a label table (ferric carboxymaltose), not a titratable dose: no titrate up/down candidates. */
+    single_course_dose?: boolean;
+    /**
+     * Multipliers applied to the drug's effect when the patient has type 2 diabetes (a smaller treatment effect in the diabetes trial
+     * than in the non-diabetes trial): `weight` scales the placebo-adjusted weight percent, `kccq` the KCCQ effect.
+     */
+    t2dm_scale?: { weight: number; kccq: number; basis: string };
+    /** Cash-pay monthly price by dose strength (used instead of the flat price when `patient.insurance_tier` is 'cash'). */
+    cash_price_by_dose?: Record<string, number>;
     /** Plain-language warnings shown whenever this drug is in a recommended regimen (optionally only when `when(patient)`); informational, not score-penalized (text starts 'Drug note:'). */
-    regimen_warnings?: { text: string; when?: (p: Patient) => boolean }[];
+    regimen_warnings?: { text: string | ((p: Patient) => string); when?: (p: Patient, regimen: RegimenMed[]) => boolean }[];
     /** Monitoring-plan items added whenever this drug is in a recommended regimen. */
     monitoring_items?: (MonitoringPlanItem & { when?: (p: Patient) => boolean })[];
 }

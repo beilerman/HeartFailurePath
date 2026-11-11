@@ -12,9 +12,9 @@ import {
     COMPLETENESS_SUBTARGET_CREDIT,
 } from './scoreModel';
 import { drugFacts } from './drugFacts';
-import { isIronDeficient } from '../clinicalPredicates';
+import { ivIronCreditTier } from '../clinicalPredicates';
 import { RAAS_CLASSES, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES } from './registry';
-import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, isTargetDoseForPatient } from './regimenUtils';
+import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, isTargetDoseForPatient, restrictToStartTiers } from './regimenUtils';
 import { calculateAdherenceScore, calculateCostScore, calculateFunctionalScore, calculateGuidelineConcordanceScore, calculateNeurohormonalScore, calculateStructureScore, calculateVolumeScore, classifyPhenotype, describeConcordance, Phenotype } from './domains';
 import { simulateModificationEffect } from './effects';
 import { IntolerancePolicy } from './intolerance';
@@ -62,8 +62,10 @@ export function buildScoringContext(
     const isPreferred = (r: RegimenMed) => drugFacts(r.med).rescue_role?.preferred ? 0 : 1;
     const rescueBinders = [...binders].sort((a, b) =>
         isPreferred(a) - isPreferred(b) || (a.med.name === b.med.name ? doseIdx(a) - doseIdx(b) : a.med.name.localeCompare(b.med.name)));
-    const ivIron = medTiers.find(r => r.med.drug_class === 'IV Iron');
-    const ironDeficient = isIronDeficient(patient);
+    // The automatic iron rescue uses the entry's exact label start tier (day-1 dose by hemoglobin) and only fires in the evidence population:
+    // iron deficient AND LVEF < 50, NYHA II/III, Hb < 15 (ivIronCreditTier; a clinician may still choose iron outside it).
+    const ivIron = restrictToStartTiers(medTiers, patient).find(r => r.med.drug_class === 'IV Iron');
+    const ironDeficient = ivIronCreditTier(patient) !== null;
     const maxNewPerVisit = Math.max(0, Math.round(patient.max_new_classes_per_visit ?? 2));
 
     // --- GDMT completeness slots (the `completeness` domain, see gdmtCompletenessFraction) ----

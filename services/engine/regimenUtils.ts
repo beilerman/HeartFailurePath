@@ -39,6 +39,14 @@ export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
         dosesForTiering = validDoses.slice(0, Math.max(2, Math.ceil(validDoses.length / 2)));
     }
 
+    // One-step titration drugs (facts.titrate_one_step: weekly GLP-1 / GLP-1-GIP agents) offer EVERY labeled tier, so the next
+    // step is always available and titratableUp can offer exactly one step; the sampler below would skip steps.
+    if (drugFacts(med).titrate_one_step) {
+        return dosesForTiering.map(dose => ({
+            med, dose, selected_frequency: pickPreferredFrequency(med, dose.frequency_options, patient)
+        }));
+    }
+
     // Return lowest, middle, and highest dose for simulation efficiency
     let tiers = [dosesForTiering[0]];
     if (dosesForTiering.length > 1) tiers.push(dosesForTiering[dosesForTiering.length - 1]);

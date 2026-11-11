@@ -87,6 +87,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         bun: { min: 2, max: 200, label: 'BUN' },
         ferritin: { min: 1, max: 2000, label: 'Ferritin' },
         tsat: { min: 1, max: 100, label: 'TSAT' },
+        hemoglobin: { min: 3, max: 25, label: 'Hemoglobin' },
         oxygen_saturation: { min: 50, max: 100, label: 'SpO2' },
         lvedd: { min: 20, max: 100, label: 'LVEDD' },
         lavi: { min: 10, max: 80, label: 'LAVI' },
@@ -100,7 +101,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
     // Fields the engine requires — clearing one must disable Run Analysis rather than
     // silently feeding undefined/NaN into the scoring math. Genuinely optional fields
-    // (SpO2, ferritin, TSAT, LVEDD, LAVI, prior LVEF, steps, peak flow) skip when blank.
+    // (SpO2, ferritin, TSAT, hemoglobin, LVEDD, LAVI, prior LVEF, steps, peak flow) skip when blank.
     const REQUIRED_FIELDS = new Set([
         'age', 'height_cm', 'sbp', 'dbp', 'pulse', 'lvef', 'nt_pro_bnp', 'kccq_score',
         'potassium', 'creatinine', 'bun', 'dry_weight_kg', 'current_weight_kg', 'max_affordable_cost',
@@ -133,6 +134,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         check('bun', patientData.bun);
         check('ferritin', patientData.ferritin);
         check('tsat', patientData.tsat);
+        check('hemoglobin', patientData.hemoglobin);
         check('oxygen_saturation', patientData.oxygen_saturation);
         check('lvedd', patientData.lvedd);
         check('lavi', patientData.lavi);

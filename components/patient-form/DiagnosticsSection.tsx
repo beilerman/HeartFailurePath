@@ -62,7 +62,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
 
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="col-span-2">
-                    <Label htmlFor="recent_hf_worsening_within_6mo">Recent worsening HF (hospitalization or IV diuretics within 6 months)?</Label>
+                    <Label htmlFor="recent_hf_worsening_within_6mo">Recent worsening HF (HF hospitalization within 6 months, or outpatient IV diuretics within 3 months)?</Label>
                     <Select
                         name="recent_hf_worsening_within_6mo"
                         value={patientData.recent_hf_worsening_within_6mo ?? 'unknown'}
@@ -128,6 +128,11 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 <div>
                     <Label htmlFor="tsat">TSAT (%)</Label>
                     <Input type="number" name="tsat" value={patientData.tsat ?? ''} onChange={onChange} error={validationErrors.tsat} />
+                </div>
+                <div>
+                    <Label htmlFor="hemoglobin">Hemoglobin (g/dL)</Label>
+                    <Input type="number" step="0.1" name="hemoglobin" value={patientData.hemoglobin ?? ''} onChange={onChange} placeholder="e.g. 12.5" error={validationErrors.hemoglobin} />
+                    <p className="text-[10px] text-slate-400 mt-0.5">Sets the IV iron label dose; held at 15 or higher</p>
                 </div>
                 <div>
                     <Label htmlFor="peak_flow_lpm">Peak Flow (L/min)</Label>

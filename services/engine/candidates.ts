@@ -1,9 +1,9 @@
 /** Current-regimen analysis and candidate-modification generation. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, RegimenMed, ModificationAction, RegimenModification, ModificationSet } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
+import { valueUnknown, hasHistoricalHFrEF, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
-import { computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hasRecentWorseningHF, hrContinuationAction, isTargetDoseForPatient, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication } from './intolerance';
 import { regimenSatisfiesPillar } from './domains';
 
@@ -192,14 +192,17 @@ export function analyzeCurrentRegimen(
             // highest tier (getDoseTiers construction order is [lowest, highest, middle, target],
             // which is NOT ascending — the compound add+titrate candidate previously picked a
             // middle/target tier while labeling it the maximal step).
-            const higherDoses = allTiers.filter(t => tierIdx(t) > currentIdx).sort((a, b) => tierIdx(a) - tierIdx(b));
-            if (higherDoses.length > 0) {
+            let higherDoses = allTiers.filter(t => tierIdx(t) > currentIdx).sort((a, b) => tierIdx(a) - tierIdx(b));
+            // facts.titrate_one_step (weekly GLP-1 / GLP-1-GIP): only the NEXT labeled tier, never a jump past a step.
+            if (drugFacts(current.med).titrate_one_step) higherDoses = higherDoses.slice(0, 1);
+            if (higherDoses.length > 0 && !drugFacts(current.med).single_course_dose) {
                 titratableUp.push({ current, options: higherDoses });
             }
         }
 
         const lowerDoses = allTiers.filter(t => tierIdx(t) < currentIdx).sort((a, b) => tierIdx(a) - tierIdx(b));
-        if (lowerDoses.length > 0) {
+        // A one-time label course (facts.single_course_dose: ferric carboxymaltose) is not a titratable dose: no up/down candidates.
+        if (lowerDoses.length > 0 && !drugFacts(current.med).single_course_dose) {
             titratableDown.push({ current, options: lowerDoses });
             if (isBBForcedDown) {
                 forcedBbDownTitrateNames.add(current.med.name);
@@ -240,7 +243,9 @@ export function analyzeCurrentRegimen(
         // skip the swap so dose escalation happens via titrate_up of the current agent. (RAAS keeps
         // swaps for the ACEi/ARB→ARNI guideline upgrade; loop diuretics keep swaps for diuretic
         // resistance / Furoscix.)
-        const TITRATE_NOT_SWAP_GROUPS = new Set(['Beta Blocker', 'MRA', 'SGLT2i']);
+        // GLP-1 Therapy joins the set (verified-sglt2-glp1-adjuncts.md): a new GLP-1 start begins at its lowest labeled tier, so a lateral swap to the
+        // other agent mid-escalation (e.g. semaglutide 1.7 mg -> tirzepatide 2.5 mg) is not how therapy is escalated; swap only when the current agent must go.
+        const TITRATE_NOT_SWAP_GROUPS = new Set(['Beta Blocker', 'MRA', 'SGLT2i', 'GLP-1 Therapy']);
         if (TITRATE_NOT_SWAP_GROUPS.has(group) && !contraindicatedCurrentMeds.has(current.med.name)) return;
         const sourceContraindicated = contraindicatedCurrentMeds.has(current.med.name);
         const groupTiers = (tiersByGroup.get(group) || []).filter(t => startTiers.includes(t));
@@ -317,14 +322,19 @@ export function analyzeCurrentRegimen(
     const isSinusRhythm = patient.rhythm === 'Sinus';
     const hasRAASInCurrent = currentClasses.has('ARNI') || currentClasses.has('ACEi') || currentClasses.has('ARB');
 
-    // H/ISDN: A-HeFT evidence is HFrEF-only — offer ONLY in reduced-EF phenotypes, never HFpEF.
-    // Within reduced EF: Black + NYHA III-IV (A-HeFT Class I add-on, combinable with RAAS), or as
-    // the RAAS ALTERNATIVE when RAAS is genuinely unattainable (every ARNI/ACEi/ARB filtered from
-    // the formulary by contraindication/intolerance/allergy — ACC/AHA 2022 Class IIb). Merely "not
-    // currently on RAAS" is NOT enough: a treatment-naive patient should get RAAS first, not have
-    // H/ISDN offered while ARNI is simultaneously proposed as the missing pillar.
+    // H/ISDN (verified-sglt2-glp1-adjuncts.md row 37): A-HeFT evidence is HFrEF-only (LVEF <= 40).
+    //  - Class 1 (LOE A): self-identified Black patients, NYHA III-IV, who are receiving OPTIMAL therapy: a RAAS inhibitor AND a beta-blocker on
+    //    board, or documented inability to take them (every agent of the class excluded from the formulary).
+    //  - Class 2b (LOE C-LD): any race, when RAAS inhibitors cannot be taken (every ARNI/ACEi/ARB filtered from the formulary by
+    //    contraindication/intolerance/allergy: intolerance, hypotension or renal insufficiency). Merely "not currently on RAAS" is NOT enough:
+    //    a treatment-naive patient should get RAAS first, not have H/ISDN offered while ARNI is proposed as the missing pillar.
     const allRAASExcluded = !formulary.some(m => RAAS_CLASSES.has(m.drug_class));
-    if (!isHFpEF && ((isBlack && isNyhaIIIorIV) || (!hasRAASInCurrent && allRAASExcluded))) {
+    const raasOrUnable = hasRAASInCurrent || allRAASExcluded;
+    const bbOrUnable = currentClasses.has('Beta Blocker') || allBBExcluded === true;
+    const isHFrEFByEf = patient.lvef <= 40;
+    const hisdnClass1 = isBlack && isNyhaIIIorIV && raasOrUnable && bbOrUnable;
+    const hisdnClass2b = !hasRAASInCurrent && allRAASExcluded;
+    if (isHFrEFByEf && (hisdnClass1 || hisdnClass2b)) {
         const hidralazineTiers = medTiers.filter(r => r.med.drug_class === 'Vasodilator');
         if (hidralazineTiers.length > 0 && !currentClasses.has('Vasodilator')) {
             addableAdjuncts.push(hidralazineTiers[0]);
@@ -357,14 +367,12 @@ export function analyzeCurrentRegimen(
         if (ivabStart) addableAdjuncts.push(ivabStart);
     }
 
-    // Vericiguat: NYHA II-IV + NT-proBNP >= 1600 + LVEF < 45 (VICTORIA trial enrolled NYHA II-IV)
-    const isNyhaIIorHigher = patient.nyha_class === 'II' || patient.nyha_class === 'III' || patient.nyha_class === 'IV';
-    const hasWorseningHf = hasRecentWorseningHF(patient);
-    if (isNyhaIIorHigher && patient.nt_pro_bnp >= 1600 && patient.lvef < 45 && hasWorseningHf) {
-        const verTiers = medTiers.filter(r => r.med.drug_class === 'sGC Stimulator');
-        if (verTiers.length > 0 && !currentClasses.has('sGC Stimulator')) {
-            addableAdjuncts.push(verTiers[0]);
-        }
+    // Vericiguat: the VICTORIA initiation criteria (NYHA II-IV, LVEF < 45, NT-proBNP >= 1000 sinus / >= 1600 AFib, qualifying worsening event)
+    // and the riociguat contraindication are the drug's own initiation checks on its formulary entry: a drug that fails them is already out of
+    // `formulary`, so every tier here is offerable. The new start is the entry's exact label start tier (5 mg, or 2.5 mg when at risk of hypotension).
+    if (!currentClasses.has('sGC Stimulator')) {
+        const verStart = startTiers.find(r => r.med.drug_class === 'sGC Stimulator');
+        if (verStart) addableAdjuncts.push(verStart);
     }
 
     // Digoxin (verified-rate-control.md rows 18-19; Lanoxin label; 2022 AHA/ACC/HFSA Class 2b, LOE B-R):
@@ -414,13 +422,11 @@ export function analyzeCurrentRegimen(
         }
     }
 
-    // Iron if iron-deficient (ESC 2021 / IRONMAN / AFFIRM-AHF — see isIronDeficient)
-    const needsIron = isIronDeficient(patient);
-    if (needsIron && !currentClasses.has('IV Iron')) {
-        const ironTiers = medTiers.filter(r => r.med.drug_class === 'IV Iron');
-        if (ironTiers.length > 0) {
-            addableAdjuncts.push(ironTiers[0]);
-        }
+    // Iron if iron-deficient (ESC 2021 / IRONMAN / AFFIRM-AHF — see isIronDeficient) AND in the evidence population (ivIronCreditTier: LVEF < 50,
+    // NYHA II/III, Hb < 15). New start = the label day-1 dose from the entry's exact start tier (500 mg when Hb > 14, else 1000 mg).
+    if (ivIronCreditTier(patient) !== null && !currentClasses.has('IV Iron')) {
+        const ironStart = startTiers.find(r => r.med.drug_class === 'IV Iron');
+        if (ironStart) addableAdjuncts.push(ironStart);
     }
 
     // nsMRA (Finerenone) for HFpEF as adjunct — FINEARTS-HF, LVEF ≥ 40, FDA approved
@@ -449,13 +455,12 @@ export function analyzeCurrentRegimen(
     // HFimpEF is managed as HFrEF — GLP-1 not appropriate despite LVEF >= 40.
     // Boundary matches classifyPhenotype: LVEF exactly 40 is HFrEF (quad pathway), so the gate is
     // strictly > 40 — not >= 40, which wrongly made an LVEF-40 HFrEF patient GLP-1 eligible.
-    if (patient.bmi >= 30 && patient.lvef > 40 && !isHFimpEF && !currentClasses.has('GLP-1 RA') && !currentClasses.has('GLP-1/GIP RA')) {
-        const glpTiers = medTiers.filter(r => r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA');
-        if (glpTiers.length > 0) {
-            // Pick best GLP-1 by KCCQ improvement
-            const sorted = glpTiers.sort((a, b) => b.med.chf_effects(0).kccq_improvement - a.med.chf_effects(0).kccq_improvement);
-            addableAdjuncts.push(sorted[0]);
-        }
+    // The trial-enrollment gates (BMI >= 30 for both; LVEF >= 45 semaglutide, >= 50 tirzepatide) are each drug's own initiation checks on its
+    // formulary entry, so a drug that fails them is already out of `formulary`. Every remaining agent is offered at its exact label start tier
+    // (the lowest: 0.25 mg / 2.5 mg), one candidate per agent: no cross-trial "best" pick (the KCCQ effects are now placebo-adjusted and similar).
+    if (patient.lvef > 40 && !isHFimpEF && !currentClasses.has('GLP-1 RA') && !currentClasses.has('GLP-1/GIP RA')) {
+        startTiers.filter(r => r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA')
+            .forEach(r => addableAdjuncts.push(r));
     }
 
     return {

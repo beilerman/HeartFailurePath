@@ -1,8 +1,8 @@
 /** Delta simulation: the marginal effect of a modification set on the observed patient. Moved verbatim from simulationService.ts (phase 4). */
-import { Patient, Medication, ModificationSet } from '../../types';
+import { Patient, Medication, ModificationSet, ChfEffects } from '../../types';
 import { drugFacts } from './drugFacts';
 import { valueUnknown } from '../clinicalPredicates';
-import { hasChildPughBorC, hasChildPughBConfirmed } from './contraindications';
+import { hasChildPughBorC, hasChildPughBConfirmed, onPde5Inhibitor as onPde5InhibitorPatient } from './contraindications';
 import { RAAS_CLASSES, getDbpRatio, getMedicationClassGroup } from './registry';
 import { clonePatient, isTargetDoseForPatient } from './regimenUtils';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
@@ -11,6 +11,29 @@ import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy
 function hrDropFor(med: Medication, hrDrop: number, patient: Patient): number {
     const only = drugFacts(med).hr_effect_only_in_rhythm;
     return only !== undefined && patient.rhythm !== only ? 0 : hrDrop;
+}
+
+/**
+ * A drug's `chf_effects(dose)` as credited for THIS patient. Two patient-dependent adjustments, both data on the entry:
+ *  - `weight_reduction_percent` (GLP-1 agents, placebo-adjusted percent of body weight) becomes kg of the patient's actual weight (100 kg when
+ *    no weight is entered), so a lighter or heavier patient is not credited a fixed kg;
+ *  - `facts.t2dm_scale` multiplies the weight and KCCQ effects for type 2 diabetes (smaller effects in the diabetes trials).
+ * Drugs with neither return `chf_effects(dose)` unchanged.
+ */
+export function patientChfEffects(med: Medication, dose: number | string, patient: Patient): ChfEffects {
+    const base = med.chf_effects(dose);
+    const scale = drugFacts(med).t2dm_scale;
+    const diabetic = scale !== undefined && patient.comorbidities.has('Diabetes Mellitus Type 2');
+    if (base.weight_reduction_percent === undefined && !diabetic) return base;
+    const out: ChfEffects = { ...base };
+    if (base.weight_reduction_percent !== undefined) {
+        const pct = base.weight_reduction_percent * (diabetic ? scale!.weight : 1);
+        const wt = patient.volume_status.current_weight_kg > 0 ? patient.volume_status.current_weight_kg : 100;
+        out.weight_reduction_percent = pct;
+        out.weight_reduction_kg = pct / 100 * wt;
+    }
+    if (diabetic) out.kccq_improvement = base.kccq_improvement * scale!.kccq;
+    return out;
 }
 
 export function simulateModificationEffect(
@@ -97,7 +120,9 @@ export function simulateModificationEffect(
         if (['ARNI', 'ACEi', 'ARB'].includes(cls)) { hasRAAS = true; raasCount++; }
 
         // Cost and complexity for FULL resulting regimen
-        const monthlyCost = prices[r.med.name];
+        // Cash-pay price by dose (facts.cash_price_by_dose: Zepbound self-pay differs by strength); every other tier uses the flat price.
+        const cashByDose = currentPatient.insurance_tier === 'cash' ? drugFacts(r.med).cash_price_by_dose?.[String(r.dose.strength)] : undefined;
+        const monthlyCost = cashByDose ?? prices[r.med.name];
         if (monthlyCost === undefined || !Number.isFinite(monthlyCost)) {
             totalCost += Number.POSITIVE_INFINITY;
             warnings.push(`PRICE UNKNOWN: ${r.med.name} has no loaded cost data. Re-run after pricing loads before comparing affordability.`);
@@ -122,7 +147,7 @@ export function simulateModificationEffect(
 
         if (mod.action === 'add' && mod.target) {
             const dose = mod.target.dose.strength;
-            const chf = mod.target.med.chf_effects(dose);
+            const chf = patientChfEffects(mod.target.med, dose, currentPatient);
             const hemo = mod.target.med.hemodynamic_effects(dose);
 
             // Starting dose hemodynamic attenuation for RAAS/BB (factor = 0.35):
@@ -165,7 +190,7 @@ export function simulateModificationEffect(
 
         if (mod.action === 'remove' && mod.source) {
             const dose = mod.source.dose.strength;
-            const chf = mod.source.med.chf_effects(dose);
+            const chf = patientChfEffects(mod.source.med, dose, currentPatient);
             const hemo = mod.source.med.hemodynamic_effects(dose);
 
             // Reverse the removed drug's effects
@@ -201,8 +226,8 @@ export function simulateModificationEffect(
         if ((mod.action === 'titrate_up' || mod.action === 'titrate_down') && mod.source && mod.target) {
             const oldDose = mod.source.dose.strength;
             const newDose = mod.target.dose.strength;
-            const oldChf = mod.source.med.chf_effects(oldDose);
-            const newChf = mod.target.med.chf_effects(newDose);
+            const oldChf = patientChfEffects(mod.source.med, oldDose, currentPatient);
+            const newChf = patientChfEffects(mod.target.med, newDose, currentPatient);
             const oldHemo = mod.source.med.hemodynamic_effects(oldDose);
             const newHemo = mod.target.med.hemodynamic_effects(newDose);
 
@@ -258,8 +283,8 @@ export function simulateModificationEffect(
 
             const oldDose = mod.source.dose.strength;
             const newDose = mod.target.dose.strength;
-            const oldChf = mod.source.med.chf_effects(oldDose);
-            const newChf = mod.target.med.chf_effects(newDose);
+            const oldChf = patientChfEffects(mod.source.med, oldDose, currentPatient);
+            const newChf = patientChfEffects(mod.target.med, newDose, currentPatient);
             const oldHemo = mod.source.med.hemodynamic_effects(oldDose);
             const newHemo = mod.target.med.hemodynamic_effects(newDose);
 
@@ -558,7 +583,7 @@ export function simulateModificationEffect(
     // Drug-specific regimen warnings declared as data on the formulary entry (facts.regimen_warnings).
     resultingRegimen.forEach(r => {
         drugFacts(r.med).regimen_warnings?.forEach(w => {
-            if (!w.when || w.when(currentPatient)) warnings.push(w.text);
+            if (!w.when || w.when(currentPatient, resultingRegimen)) warnings.push(typeof w.text === 'function' ? w.text(currentPatient) : w.text);
         });
     });
 
@@ -719,11 +744,11 @@ export function simulateModificationEffect(
         hasExternalMedication('Verapamil', 'Diltiazem') ||
         currentPatient.comorbidities.has('On Verapamil/Diltiazem');
     const onLithium = hasExternalMedication('Lithium') || currentPatient.comorbidities.has('On Lithium');
-    const onPde5Inhibitor = hasExternalMedication('Sildenafil', 'Tadalafil');
+    const onPde5Inhibitor = onPde5InhibitorPatient(currentPatient);
 
     // DDI-1: Nitrate (H/ISDN) + PDE5 inhibitor → fatal hypotension
     if (hasNitrate && onPde5Inhibitor) {
-        warnings.push('DDI WARNING: Nitrate (Isosorbide Dinitrate) is CONTRAINDICATED with PDE5 inhibitors (sildenafil/tadalafil). Risk of profound or fatal hypotension. Avoid co-administration.');
+        warnings.push('DDI WARNING: Nitrate (Isosorbide Dinitrate) is CONTRAINDICATED with PDE5 inhibitors (sildenafil/tadalafil/vardenafil/avanafil). Risk of profound or fatal hypotension. Avoid co-administration.');
     } else if (hasNitrate && currentPatient.comorbidities.has('Pulmonary Hypertension')) {
         warnings.push('DDI CAUTION: Pulmonary hypertension may imply PDE5 inhibitor use. Confirm sildenafil/tadalafil exposure before initiating nitrate therapy.');
     }

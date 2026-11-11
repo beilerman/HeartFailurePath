@@ -1,7 +1,8 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS } from '../services/simulationService';
 import { getDoseTiers } from '../services/engine/regimenUtils';
-import { simulateModificationEffect } from '../services/engine/effects';
+import { analyzeCurrentRegimen } from '../services/engine/candidates';
+import { simulateModificationEffect, patientChfEffects } from '../services/engine/effects';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
@@ -120,7 +121,8 @@ const ASSERTION_TITLE_MARKERS = [
     'Dual MRA Unknown History Keeps nsMRA',
     'MRA-Source',
     'RAAS-Source',
-    'Rate-Source'
+    'Rate-Source',
+    'Adjunct-Source'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -190,7 +192,7 @@ async function runVerification() {
         try {
             const scenarioPrices = await getDrugPrices(formularyNames, scenario.patient.insurance_tier);
             const scenarioAvailableMedNames = availableFor(scenario.title);
-            const { scoredRegimens, excludedMedications, clinicalAlerts, monitoringPlan, eligibleAdjuncts } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
+            const { scoredRegimens, excludedMedications, clinicalAlerts, monitoringPlan, eligibleAdjuncts, missingDataNotices } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
             const topRegimen = scoredRegimens[0];
 
             // GLOBAL STRUCTURAL INVARIANT (every exclusion has a known rule): see services/engine/eligibility.ts.
@@ -1390,19 +1392,23 @@ async function runVerification() {
                 }
             }
 
-            // 60. HFmrEF + Obese -> GLP-1 eligible (BMI ≥ 30 + LVEF ≥ 40), may not rank top-3
+            // 60. HFmrEF + Obese at LVEF 42 -> NO GLP-1 initiation: semaglutide needs LVEF >= 45 (STEP-HFpEF), tirzepatide >= 50 (SUMMIT)
+            // (verified-sglt2-glp1-adjuncts.md row 18; this scenario previously asserted eligibility at LVEF >= 40, which the trials contradict).
             if (scenario.title.includes('HFmrEF Obese')) {
                 if (!topRegimen) {
                     failures.push('HFmrEF Obese: no regimen generated');
                     scenarioPassed = false;
                 }
-                // GLP-1 should be eligible (not excluded) — BMI 33 + LVEF 42 + not HFimpEF
-                // distinctPicks limits to 3 regimens so GLP-1 may not appear in output
-                const glp1Excluded = excludedMedications.some(e =>
-                    e.name.includes('Semaglutide') || e.name.includes('Tirzepatide')
-                );
-                if (glp1Excluded) {
-                    failures.push('GLP-1 excluded in HFmrEF with BMI 33 (should be eligible: BMI ≥ 30 + LVEF ≥ 40)');
+                // Both GLP-1 agents are excluded at LVEF 42 with the LVEF reason, and neither is offered or surfaced
+                for (const n of ['Semaglutide', 'Tirzepatide']) {
+                    const ex = excludedMedications.find(e => e.name.includes(n));
+                    if (!ex || !(ex.why ?? []).some(w => w.includes('LVEF below'))) {
+                        failures.push(`${n} not excluded with the LVEF reason at LVEF 42 (STEP-HFpEF >= 45, SUMMIT >= 50)`);
+                        scenarioPassed = false;
+                    }
+                }
+                if (anyRegimenHasClass('GLP-1 RA') || anyRegimenHasClass('GLP-1/GIP RA')) {
+                    failures.push('A GLP-1 agent is offered at LVEF 42');
                     scenarioPassed = false;
                 }
                 // SGLT2i should be present in displayed regimens
@@ -2297,6 +2303,291 @@ async function runVerification() {
                 }
             }
 
+            // ===== SGLT2i / GLP-1 / vericiguat / IV iron / H-ISDN source-verified corrections (verified-sglt2-glp1-adjuncts.md; labels: Farxiga, Jardiance, Wegovy, Zepbound, Verquvo, Injectafer, BiDil; STEP-HFpEF, SUMMIT, VICTORIA, A-HeFT) =====
+            if (scenario.title.includes('Adjunct-Source')) {
+                const excl = (name: string) => excludedMedications.find(e => e.name === name);
+                const whyText = (name: string) => (excl(name)?.why ?? []).join(' | ');
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const med = (n: string) => MEDICATION_FORMULARY.find(m => m.name === n)!;
+                const SEMA = 'Semaglutide (Wegovy)', TIRZ = 'Tirzepatide (Zepbound)', VER = 'Vericiguat', FCM = 'Ferric Carboxymaltose', HISDN = 'Hydralazine/Isosorbide Dinitrate';
+                const mods = scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => ({ r, m })));
+                const targetsOf = (action: string, name: string) => mods.filter(x => x.m.action === action && x.m.target?.med.name === name).map(x => String(x.m.target!.dose.strength));
+                const warnTexts = (name: string) => scoredRegimens.filter(r => r.regimen.some(m => m.med.name === name)).map(r => (r.warnings ?? []).join(' | '));
+                const adjunctSurfaced = (frag: string) => (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(frag));
+                const featureFired = (r: typeof scoredRegimens[number], frag: string) => (r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.includes(frag)));
+                const near = (a: number, b: number, tol = 1e-9) => Math.abs(a - b) <= tol;
+                const P = scenario.patient;
+
+                // --- GLP-1: placebo-adjusted effects (STEP-HFpEF 7.8, STEP-HFpEF DM 7.3, SUMMIT 6.9) ---
+                if (t.includes('GLP-1 KCCQ And Weight Placebo-Adjusted')) {
+                    const nonDm = clonePatient(P);
+                    if (!near(med(SEMA).chf_effects(2.4).kccq_improvement, 7.8)) fail('Semaglutide 2.4 mg KCCQ must be the placebo-adjusted 7.8 (STEP-HFpEF: +16.6 vs +8.7)');
+                    if (!near(med(TIRZ).chf_effects(15).kccq_improvement, 6.9)) fail('Tirzepatide 15 mg KCCQ must be the placebo-adjusted 6.9 (SUMMIT: +19.5 vs +12.7)');
+                    if (!near(patientChfEffects(med(SEMA), 2.4, nonDm).kccq_improvement, 7.8)) fail('Modeled semaglutide KCCQ at maintenance (no diabetes) is not 7.8');
+                    const dm = clonePatient(P); dm.comorbidities.add('Diabetes Mellitus Type 2');
+                    if (!near(patientChfEffects(med(SEMA), 2.4, dm).kccq_improvement, 7.3, 1e-6)) fail('Modeled semaglutide KCCQ with type 2 diabetes is not 7.3 (STEP-HFpEF DM)');
+                    if (!near(patientChfEffects(med(TIRZ), 15, nonDm).kccq_improvement, 6.9)) fail('Modeled tirzepatide KCCQ at maintenance is not 6.9');
+                    if (med(SEMA).chf_effects(1.0).kccq_improvement >= 7.8 || med(SEMA).chf_effects(0.25).kccq_improvement >= med(SEMA).chf_effects(1.0).kccq_improvement) fail('Semaglutide KCCQ is not scaled down at lower doses');
+                    // Weight is a placebo-adjusted percent of THIS patient's weight (100.5 kg here)
+                    const wt = patientChfEffects(med(SEMA), 2.4, nonDm).weight_reduction_kg;
+                    if (!near(wt, 0.107 * nonDm.volume_status.current_weight_kg, 1e-6)) fail(`Semaglutide weight effect ${wt} is not -10.7% of body weight`);
+                    if (!near(patientChfEffects(med(SEMA), 2.4, dm).weight_reduction_kg, 0.064 * dm.volume_status.current_weight_kg, 1e-6)) fail('Semaglutide weight effect with type 2 diabetes is not -6.4% of body weight');
+                }
+                if (t.includes('GLP-1 New Start Is Lowest Tier')) {
+                    const adds = [...targetsOf('add', SEMA).map(x => ['sema', x]), ...targetsOf('add', TIRZ).map(x => ['tirz', x])];
+                    if (adds.length === 0) fail('No GLP-1 add was produced (check is vacuous)');
+                    if (adds.some(([k, d]) => (k === 'sema' && d !== '0.25') || (k === 'tirz' && d !== '2.5'))) fail(`A GLP-1 new start is above the lowest tier: ${adds.map(a => a.join(' ')).join(', ')}`);
+                    if (!adjunctSurfaced('glp-1')) fail('GLP-1 not surfaced in eligible adjuncts');
+                }
+                // --- GLP-1: one-step titration (label tiers, never a skipped step) ---
+                const oneStep = (name: string, from: string, to: string) => {
+                    // Direct check of the engine's titration options (the displayed top picks need not include a titration)
+                    const formularyNow = MEDICATION_FORMULARY.filter(m => !(m.contraindications?.(P)));
+                    const analysis = analyzeCurrentRegimen(P, formularyNow, formularyNow.flatMap(m => getDoseTiers(m, P)));
+                    const up = analysis.titratableUp.find(x => x.current.med.name === name);
+                    if (!up) fail(`${name} at ${from} has no titration option (check is vacuous)`);
+                    else if (up.options.length !== 1 || String(up.options[0].dose.strength) !== to) fail(`${name} titration from ${from} must offer exactly ${to}; offered ${up.options.map(o => o.dose.strength).join(', ')}`);
+                    // Anything displayed is also one step
+                    const ups = mods.filter(x => x.m.action === 'titrate_up' && x.m.source?.med.name === name);
+                    if (ups.some(x => String(x.m.target!.dose.strength) !== to)) fail(`${name} titration from ${from} displayed a jump: ${ups.map(x => x.m.target!.dose.strength).join(', ')}`);
+                };
+                if (t.includes('Semaglutide Titration One Step 0.25 To 0.5')) oneStep(SEMA, '0.25', '0.5');
+                if (t.includes('Semaglutide Titration One Step 1.7 To 2.4')) oneStep(SEMA, '1.7', '2.4');
+                if (t.includes('Tirzepatide Titration One Step 2.5 To 5')) oneStep(TIRZ, '2.5', '5');
+                if (t.includes('Tirzepatide Titration One Step 10 To 12.5')) oneStep(TIRZ, '10', '12.5');
+                if (t.includes('Titration One Step')) {
+                    // Tier sets are complete (label steps) for the dose-tier sampler
+                    if (getDoseTiers(med(SEMA), P).map(x => x.dose.strength).join(',') !== '0.25,0.5,1,1.7,2.4') fail('Semaglutide tiers are not 0.25/0.5/1.0/1.7/2.4');
+                    if (getDoseTiers(med(TIRZ), P).map(x => x.dose.strength).join(',') !== '2.5,5,7.5,10,12.5,15') fail('Tirzepatide tiers are not 2.5/5/7.5/10/12.5/15');
+                }
+                // --- GLP-1: LVEF initiation gates (semaglutide >= 45, tirzepatide >= 50, BMI >= 30; continuation ungated) ---
+                if (t.includes('Semaglutide Not Started At LVEF 43')) {
+                    for (const n of [SEMA, TIRZ]) if (excl(n)?.rule_id !== 'E13' || !/LVEF below/.test(whyText(n))) fail(`${n} not excluded with the LVEF reason at LVEF 43`);
+                    if (anyRegimenContainsAnyClass('GLP-1 RA', 'GLP-1/GIP RA')) fail('A GLP-1 is offered at LVEF 43');
+                }
+                if (t.includes('Semaglutide Started At LVEF 46 Tirzepatide Not')) {
+                    if (excl(SEMA)) fail('Semaglutide excluded at LVEF 46 (STEP-HFpEF enrolled LVEF >= 45)');
+                    if (excl(TIRZ)?.rule_id !== 'E13' || !/LVEF below 50/.test(whyText(TIRZ))) fail('Tirzepatide not excluded at LVEF 46 (SUMMIT enrolled LVEF >= 50)');
+                    if (!adjunctSurfaced('glp-1')) fail('Semaglutide not surfaced at LVEF 46');
+                    if (anyRegimenHasMed(TIRZ)) fail('Tirzepatide offered at LVEF 46');
+                }
+                if (t.includes('Tirzepatide Not Started At LVEF 47')) {
+                    if (excl(TIRZ)?.rule_id !== 'E13') fail('Tirzepatide not excluded at LVEF 47');
+                    if (anyRegimenHasMed(TIRZ)) fail('Tirzepatide offered at LVEF 47');
+                    if (excl(SEMA)) fail('Semaglutide excluded at LVEF 47');
+                }
+                if (t.includes('GLP-1 Continuation Below Initiation Gates')) {
+                    if (excl(SEMA)) fail('Semaglutide on board at LVEF 42 / BMI 28 was excluded: the BMI and LVEF gates are initiation-only');
+                    if (!scoredRegimens.some(r => r.regimen.some(m => m.med.name === SEMA))) fail('Semaglutide on board was dropped from every option');
+                }
+                if (t.includes('GLP-1 BMI 28 Not Started')) {
+                    for (const n of [SEMA, TIRZ]) if (!/BMI below 30/.test(whyText(n))) fail(`${n} not excluded for BMI 28`);
+                }
+                if (t.includes('GLP-1 Cautions Pancreatitis')) {
+                    const w = warnTexts(SEMA).join(' || ');
+                    if (!/pancreatitis/i.test(w) || !/gastroparesis/i.test(w) || !/retinopathy/i.test(w)) fail('Semaglutide regimen lacks the pancreatitis / gastroparesis / retinopathy cautions');
+                    if (excl(SEMA)) fail('A caution-level history excluded semaglutide (these are warnings, not contraindications)');
+                    if (warnTexts(SEMA).some(x => !x.includes('Drug note'))) fail('GLP-1 caution is not a Drug note');
+                }
+                if (t.includes('GLP-1 Type 2 Diabetes Reduces Effect')) {
+                    const plain = clonePatient(P); plain.comorbidities.delete('Diabetes Mellitus Type 2');
+                    if (!(patientChfEffects(med(SEMA), 2.4, P).weight_reduction_percent! < patientChfEffects(med(SEMA), 2.4, plain).weight_reduction_percent!)) fail('Type 2 diabetes does not reduce the semaglutide weight effect');
+                    if (!(patientChfEffects(med(TIRZ), 15, P).weight_reduction_percent! < patientChfEffects(med(TIRZ), 15, plain).weight_reduction_percent!)) fail('Type 2 diabetes does not reduce the tirzepatide weight effect');
+                }
+                if (t.includes('GLP-1 Evidence Bonus Equal No Superior Claim')) {
+                    const pts = (n: string) => med(n).special_features!.map(f => f.points);
+                    if (pts(SEMA).join() !== pts(TIRZ).join()) fail('Semaglutide and tirzepatide evidence-bonus points differ');
+                    if ([SEMA, TIRZ].some(n => med(n).special_features!.some(f => /superior/i.test(f.feature)))) fail('A GLP-1 feature still claims "Superior"');
+                }
+                if (t.includes('Tirzepatide Dose Map And NT-proBNP')) {
+                    const w = (d: number) => med(TIRZ).chf_effects(d).weight_reduction_percent!;
+                    const f = (d: number) => w(d) / w(15);
+                    if (!(f(5) >= 0.67 && f(5) <= 0.72)) fail(`Tirzepatide 5 mg weight fraction ${f(5)} is outside the SURMOUNT-1 range 0.67-0.72`);
+                    if (!(f(10) >= 0.92 && f(10) <= 0.93)) fail(`Tirzepatide 10 mg weight fraction ${f(10)} is outside the SURMOUNT-1 range 0.92-0.93`);
+                    const ladder = [2.5, 5, 7.5, 10, 12.5, 15].map(w);
+                    if (ladder.some((v, i) => i > 0 && v < ladder[i - 1])) fail('Tirzepatide dose-weight map is not monotone');
+                    if (med(TIRZ).chf_effects(15).bnp_reduction_percent > 0.10 + 1e-12) fail('Tirzepatide NT-proBNP reduction exceeds 0.10 (SUMMIT: -10.5%, CI crosses 0)');
+                }
+                if (t.includes('Tirzepatide Cash Price By Dose')) {
+                    const prices = await getDrugPrices(undefined, 'cash');
+                    const cost = (strength: number) => simulateModificationEffect(P, { modifications: [], resulting_regimen: [{ med: med(TIRZ), dose: med(TIRZ).available_doses.find(d => d.strength === strength)!, selected_frequency: 'weekly' }] }, prices).cost;
+                    if (!near(cost(2.5), 299) || !near(cost(5), 399) || !near(cost(7.5), 499) || !near(cost(15), 699)) fail(`Zepbound cash by dose is not 299 / 399 / 499 / 699 (saw ${cost(2.5)} / ${cost(5)} / ${cost(7.5)} / ${cost(15)})`);
+                    const commercial = await getDrugPrices(undefined, 'commercial');
+                    const cc = simulateModificationEffect({ ...P, insurance_tier: 'commercial' }, { modifications: [], resulting_regimen: [{ med: med(TIRZ), dose: med(TIRZ).available_doses[0], selected_frequency: 'weekly' }] }, commercial).cost;
+                    if (!near(cc, DRUG_PRICES[TIRZ].commercial_copay)) fail('The cash-by-dose price leaked into a non-cash tier');
+                    if (DRUG_PRICES[SEMA].medicare_copay !== 50 || DRUG_PRICES[TIRZ].medicare_copay !== 50) fail('Wegovy / Zepbound Medicare copay is not $50 (GLP-1 Bridge)');
+                    if (!/PRIOR AUTHORIZATION/i.test(DRUG_PRICES[SEMA].notes ?? '') || !/PRIOR AUTHORIZATION/i.test(DRUG_PRICES[TIRZ].notes ?? '')) fail('GLP-1 Medicare price notes omit the prior-authorization requirement');
+                }
+                // --- SGLT2i ---
+                if (t.includes('Empagliflozin Started At eGFR 22')) {
+                    if (excl('Empagliflozin')) fail('Empagliflozin excluded at eGFR 22 (initiation is blocked only below 20)');
+                    if (excl('Dapagliflozin')?.rule_id !== 'E13' || !/eGFR below 25/.test(whyText('Dapagliflozin'))) fail('Dapagliflozin not excluded at eGFR 22 (label: initiation not recommended below 25)');
+                    if (!anyRegimenHasMed('Empagliflozin')) fail('Empagliflozin not offered at eGFR 22');
+                }
+                if (t.includes('SGLT2i Not Started At eGFR 18')) {
+                    for (const n of ['Empagliflozin', 'Dapagliflozin']) if (excl(n)?.rule_id !== 'E13') fail(`${n} not excluded at eGFR 18`);
+                    if (!/eGFR below 20/.test(whyText('Empagliflozin'))) fail('Empagliflozin exclusion at eGFR 18 does not state the eGFR 20 floor');
+                }
+                if (t.includes('SGLT2i Continuation At eGFR 18')) {
+                    if (excl('Dapagliflozin')) fail('Dapagliflozin on board at eGFR 18 was excluded (continuation is allowed below the initiation floor)');
+                    if (!scoredRegimens.some(r => r.regimen.some(m => m.med.name === 'Dapagliflozin'))) fail('Dapagliflozin on board was dropped at eGFR 18');
+                }
+                if (t.includes('SGLT2i KCCQ Placebo-Adjusted And Generic Price')) {
+                    if (med('Dapagliflozin').chf_effects(10).kccq_improvement !== 2.5) fail('Dapagliflozin KCCQ must be the placebo-adjusted 2.5');
+                    if (med('Empagliflozin').chf_effects(10).kccq_improvement !== 2.0) fail('Empagliflozin KCCQ must be the placebo-adjusted 2.0');
+                    if (!('volume_depletion' in med('Empagliflozin').side_effects(10))) fail('Empagliflozin lacks the volume-depletion side-effect entry');
+                    if (DRUG_PRICES['Dapagliflozin'].generic_available !== true || DRUG_PRICES['Dapagliflozin'].cash !== 50) fail('Dapagliflozin must be flagged generic with cash about $50');
+                    if (!/178\.50/.test(DRUG_PRICES['Dapagliflozin'].notes ?? '') || !/197/.test(DRUG_PRICES['Empagliflozin'].notes ?? '')) fail('Medicare negotiated Farxiga / Jardiance prices are not recorded');
+                    if (!/conservative/.test(med('Dapagliflozin').contraindication_checks!.map(c => c.reason).join(' '))) fail('The T1DM / DKA SGLT2i gate is not labeled as an engine-conservative choice');
+                }
+                // --- Vericiguat ---
+                if (t.includes('Vericiguat Offered At NT-proBNP 1200 Sinus')) {
+                    if (excl(VER)) fail(`Vericiguat excluded at NT-proBNP 1200 in sinus rhythm (VICTORIA >= 1000): ${whyText(VER)}`);
+                    if (!adjunctSurfaced('vericiguat')) fail('Vericiguat not surfaced at NT-proBNP 1200 in sinus rhythm');
+                }
+                if (t.includes('Vericiguat Not Offered At NT-proBNP 1200 AFib')) {
+                    if (excl(VER)?.rule_id !== 'E13' || !/1600/.test(whyText(VER))) fail('Vericiguat not excluded at NT-proBNP 1200 in atrial fibrillation (VICTORIA >= 1600)');
+                    if (anyRegimenHasMed(VER)) fail('Vericiguat offered at NT-proBNP 1200 in atrial fibrillation');
+                }
+                if (t.includes('Vericiguat Offered At NT-proBNP 1700 AFib')) {
+                    if (excl(VER)) fail('Vericiguat excluded at NT-proBNP 1700 in atrial fibrillation');
+                }
+                if (t.includes('Vericiguat Starts At 5 mg')) {
+                    const adds = targetsOf('add', VER);
+                    if (adds.length === 0) fail('No vericiguat add produced (check is vacuous)');
+                    if (adds.some(d => d !== '5')) fail(`Vericiguat new start is not the label default 5 mg: ${adds.join(', ')}`);
+                }
+                if (t.includes('Vericiguat Starts At 2.5 mg When SBP Low')) {
+                    const adds = targetsOf('add', VER);
+                    if (adds.length === 0) fail('No vericiguat add produced (check is vacuous)');
+                    if (adds.some(d => d !== '2.5')) fail(`Vericiguat start at SBP 104 is not 2.5 mg: ${adds.join(', ')}`);
+                }
+                if (t.includes('Vericiguat Riociguat Excluded')) {
+                    if (excl(VER)?.rule_id !== 'E13' || !/riociguat/i.test(whyText(VER))) fail('Vericiguat not excluded with riociguat (labeled contraindication)');
+                    if (anyRegimenHasMed(VER)) fail('Vericiguat offered with riociguat');
+                }
+                if (t.includes('Vericiguat PDE5 Inhibitor Warned Not Excluded')) {
+                    if (excl(VER)) fail('A PDE-5 inhibitor excluded vericiguat (label wording is "not recommended": warning, not a hard exclusion)');
+                    const w = warnTexts(VER);
+                    if (w.length === 0) fail('Vericiguat not kept (check is vacuous)');
+                    if (w.some(x => !/PDE-5 inhibitor/.test(x) || !/not recommended/.test(x))) fail('Vericiguat + PDE-5 inhibitor lacks the "not recommended" warning');
+                }
+                if (t.includes('Vericiguat With H/ISDN Warned')) {
+                    const w = warnTexts(VER);
+                    if (w.length === 0) fail('Vericiguat not kept (check is vacuous)');
+                    if (w.some(x => !/long-acting nitrates/.test(x) || !/excluded from VICTORIA/.test(x))) fail('Vericiguat + H/ISDN lacks the long-acting-nitrate (VICTORIA exclusion) warning');
+                }
+                if (t.includes('Vericiguat NT-proBNP Above 8000 Advisory')) {
+                    if (excl(VER)) fail('NT-proBNP above 8000 excluded vericiguat (advisory only; the label has no upper limit)');
+                    const w = warnTexts(VER);
+                    if (w.length === 0) fail('Vericiguat not kept (check is vacuous)');
+                    if (w.some(x => !/above 8,000/.test(x))) fail('No NT-proBNP > 8000 advisory on a vericiguat regimen');
+                }
+                if (t.includes('Vericiguat KCCQ And Side Effects')) {
+                    const k = med(VER).chf_effects(10).kccq_improvement;
+                    if (k < 0 || k > 1) fail(`Vericiguat KCCQ ${k} is outside 0-1 (VICTORIA: no significant effect)`);
+                    const se = med(VER).side_effects(10);
+                    if (se.hypotension !== 0.16 || se.anemia !== 0.10) fail('Vericiguat display side effects are not hypotension 16% / anemia 10% (label)');
+                }
+                // --- H/ISDN ---
+                if (t.includes('A-HeFT Offered On RAAS And Beta-Blocker')) {
+                    if (!adjunctSurfaced('hydralazine')) fail('H/ISDN not surfaced for a Black NYHA III HFrEF patient on RAAS + beta-blocker');
+                }
+                if (t.includes('A-HeFT Not Offered Without RAAS And Beta-Blocker')) {
+                    if (adjunctSurfaced('hydralazine') || anyRegimenHasClass('Vasodilator')) fail('H/ISDN offered under the Class 1 indication with no RAAS inhibitor and no beta-blocker on board');
+                }
+                if (t.includes('A-HeFT Bonus Absent Without RAAS And Beta-Blocker')) {
+                    const hasBoth = (r: typeof scoredRegimens[number]) => r.regimen.some(m => RAAS_CLASSES.has(m.med.drug_class)) && r.regimen.some(m => m.med.drug_class === 'Beta Blocker');
+                    const withH = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === HISDN));
+                    if (withH.length === 0) fail('H/ISDN not kept (check is vacuous)');
+                    if (withH.some(r => !hasBoth(r) && featureFired(r, 'A-HeFT'))) fail('A-HeFT evidence bonus credited without a RAAS inhibitor and a beta-blocker on board');
+                }
+                if (t.includes('A-HeFT Bonus Present On RAAS And Beta-Blocker')) {
+                    const withH = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === HISDN));
+                    if (withH.length === 0) fail('H/ISDN not kept (check is vacuous)');
+                    if (withH.some(r => !featureFired(r, 'A-HeFT'))) fail('A-HeFT bonus missing for a Black NYHA III HFrEF patient on RAAS + beta-blocker');
+                    const pts = med(HISDN).special_features![0].points;
+                    if (pts !== 60) fail(`A-HeFT bonus is ${pts}, expected 60 (top of the scale)`);
+                    if (!(pts > med(FCM).special_features![0].points) || !(pts > med(SEMA).special_features![0].points)) fail('A-HeFT mortality bonus is not above the iron and GLP-1 symptom bonuses');
+                }
+                if (t.includes('H/ISDN Class 2b When RAAS Cannot Be Taken')) {
+                    if (!adjunctSurfaced('hydralazine')) fail('H/ISDN not surfaced under the Class 2b path (every RAAS inhibitor excluded by K+ 5.6)');
+                }
+                if (t.includes('H/ISDN Riociguat And Vardenafil Excluded')) {
+                    if (excl(HISDN)?.rule_id !== 'E13') fail('H/ISDN not excluded with riociguat / vardenafil');
+                    if (!/riociguat/i.test(whyText(HISDN)) || !/vardenafil/i.test(whyText(HISDN))) fail('H/ISDN exclusion does not name riociguat and the PDE-5 inhibitor');
+                    if (anyRegimenHasMed(HISDN)) fail('H/ISDN offered with riociguat / vardenafil');
+                }
+                if (t.includes('H/ISDN Side Effects Tachycardia Lupus Warning')) {
+                    const se = med(HISDN).side_effects('75/40');
+                    if (se.headache !== 0.50 || se.dizziness !== 0.32) fail('H/ISDN display headache / dizziness are not 50% / 32% (BiDil label)');
+                    if (!(med(HISDN).hemodynamic_effects('75/40').hr_drop < 0)) fail('H/ISDN heart-rate effect is not a rise (reflex tachycardia)');
+                    const w = warnTexts(HISDN);
+                    if (w.length === 0) fail('H/ISDN not kept (check is vacuous)');
+                    if (w.some(x => !/lupus/.test(x) || !/peripheral neuritis/.test(x))) fail('H/ISDN regimen lacks the lupus-like syndrome / peripheral neuritis warning');
+                }
+                // --- IV iron ---
+                const ironWarn = (r: typeof scoredRegimens[number]) => (r.warnings ?? []).filter(x => x.includes('label dosing')).join(' | ');
+                const withFcm = () => scoredRegimens.filter(r => r.regimen.some(m => m.med.name === FCM));
+                if (t.includes('IV Iron Not Added At LVEF 55')) {
+                    if (anyRegimenHasMed(FCM)) fail('IV iron auto-added at LVEF 55 (evidence is LVEF < 50)');
+                    if (adjunctSurfaced('iron')) fail('IV iron surfaced as an eligible adjunct at LVEF 55');
+                    if (!(missingDataNotices ?? []).some(n => n.includes('not added automatically'))) fail('No notice explaining why IV iron is not added at LVEF 55');
+                }
+                if (t.includes('IV Iron Added At LVEF 30 Dose 85 kg Hb 12')) {
+                    if (withFcm().length === 0) fail('IV iron not added at LVEF 30 with iron deficiency');
+                    if (withFcm().some(r => !r.regimen.some(m => m.med.name === FCM && Number(m.dose.strength) === 1000))) fail('Day-1 dose at Hb 12 is not 1000 mg');
+                    // label table: 70 kg or more, Hb 10-14 -> 1000 mg day 1, 500 mg week 6
+                    if (withFcm().some(r => !/70 kg or more/.test(ironWarn(r)) || !/day 1 1000 mg; week 6 500 mg/.test(ironWarn(r)))) fail(`85 kg / Hb 12 dosing note is not 1000 mg then 500 mg at week 6: ${withFcm().map(ironWarn)[0]}`);
+                    if (withFcm().some(r => !/weeks 12, 24 and 36/.test(ironWarn(r)))) fail('Dosing note lacks the 500 mg maintenance schedule');
+                    if (withFcm().some(r => !(r.warnings ?? []).some(x => /BOXED WARNING/.test(x) && /hypophosphatemia/.test(x)))) fail('Boxed-warning hypophosphatemia text missing');
+                    if (withFcm().some(r => !(r.monitoring_plan ?? []).some(m => /phosphate/i.test(m.test)))) fail('Phosphate monitoring item missing');
+                    if (withFcm().some(r => !(r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.includes('Treats iron deficiency in HFrEF'))))) fail('Full-credit iron bonus missing at LVEF 30');
+                }
+                if (t.includes('IV Iron Dose 65 kg Hb 12')) {
+                    if (withFcm().length === 0) fail('IV iron not added (check is vacuous)');
+                    if (withFcm().some(r => !/below 70 kg/.test(ironWarn(r)) || !/day 1 1000 mg; week 6 none/.test(ironWarn(r)))) fail(`65 kg / Hb 12 dosing note is not 1000 mg then none: ${withFcm().map(ironWarn)[0]}`);
+                }
+                if (t.includes('IV Iron Dose 65 kg Hb 9')) {
+                    if (withFcm().length === 0) fail('IV iron not added (check is vacuous)');
+                    if (withFcm().some(r => !/day 1 1000 mg; week 6 500 mg/.test(ironWarn(r)))) fail(`65 kg / Hb 9 dosing note is not 1000 mg then 500 mg: ${withFcm().map(ironWarn)[0]}`);
+                }
+                if (t.includes('IV Iron Dose 85 kg Hb 9')) {
+                    if (withFcm().length === 0) fail('IV iron not added (check is vacuous)');
+                    if (withFcm().some(r => !/day 1 1000 mg; week 6 1000 mg/.test(ironWarn(r)))) fail(`85 kg / Hb 9 dosing note is not 1000 mg then 1000 mg: ${withFcm().map(ironWarn)[0]}`);
+                }
+                if (t.includes('IV Iron Dose Hb 14.5 Is 500 mg')) {
+                    if (withFcm().length === 0) fail('IV iron not added (check is vacuous)');
+                    if (withFcm().some(r => !r.regimen.some(m => m.med.name === FCM && Number(m.dose.strength) === 500))) fail('Day-1 dose at Hb 14.5 is not 500 mg');
+                    if (withFcm().some(r => !/day 1 500 mg; week 6 none/.test(ironWarn(r)))) fail('Hb 14.5 dosing note is not 500 mg then none');
+                }
+                if (t.includes('IV Iron Held At Hb 15.5')) {
+                    if (excl(FCM)?.rule_id !== 'E13' || !/15 g\/dL/.test(whyText(FCM))) fail('Ferric carboxymaltose not held at Hb 15.5');
+                    if (anyRegimenHasMed(FCM)) fail('IV iron offered at Hb 15.5');
+                }
+                if (t.includes('IV Iron Hemoglobin Not Entered Both Bands')) {
+                    if (withFcm().length === 0) fail('IV iron not added (check is vacuous)');
+                    if (withFcm().some(r => !/hemoglobin not entered/.test(ironWarn(r)) || !/Hb < 10/.test(ironWarn(r)) || !/Hb 10-14/.test(ironWarn(r)))) fail('Dosing note without hemoglobin does not state both bands');
+                    if (!(missingDataNotices ?? []).some(n => n.includes('Hemoglobin not entered'))) fail('No missing-hemoglobin notice');
+                }
+                if (t.includes('IV Iron Limited Evidence LVEF 45')) {
+                    if (withFcm().length === 0) fail('IV iron not added at LVEF 45 (limited-evidence tier still adds it)');
+                    if (withFcm().some(r => !(r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.includes('limited evidence') && i.points === 20)))) fail('Limited-evidence iron bonus (20 points) missing at LVEF 45');
+                    if (withFcm().some(r => (r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.includes('Treats iron deficiency in HFrEF'))))) fail('Full iron credit given at LVEF 45');
+                }
+                if (t.includes('IV Iron Price Amortized Per Course')) {
+                    const fcm = DRUG_PRICES[FCM];
+                    // 1500 mg course x $1.121/mg amortized over 6 months; Medicare 20% coinsurance
+                    if (fcm.cash !== Math.round(1500 * 1.121 / 6)) fail(`FCM cash ${fcm.cash} is not the amortized course (1500 mg x $1.121 / 6 = ${Math.round(1500 * 1.121 / 6)})`);
+                    if (fcm.medicare_copay !== Math.round(0.2 * 1500 * 1.121 / 6)) fail(`FCM Medicare ${fcm.medicare_copay} is not the amortized 20% coinsurance`);
+                    if (!/amortized/i.test(fcm.notes ?? '') || !/6 months/.test(fcm.notes ?? '')) fail('FCM price note does not state the amortization rule');
+                    const ft = med(FCM);
+                    if (ft.chf_effects(1000).kccq_improvement !== 8) fail('FCM KCCQ changed (NOT VERIFIED in the source file: must stay 8)');
+                    if (ft.side_effects(1000).hypophosphatemia !== 0.27) fail('FCM hypophosphatemia rate is not the label 27%');
+                }
+            }
+
             // ===== Rate control source-verified corrections (verified-rate-control.md; labels: Coreg, metoprolol succinate ER, bisoprolol, Corlanor, Lanoxin; MOCHA, COMET, SHIFT, DIG) =====
             if (scenario.title.includes('Rate-Source')) {
                 const excl = (name: string) => excludedMedications.find(e => e.name === name);
@@ -2396,7 +2687,7 @@ async function runVerification() {
                     if (d.some(x => x.strength === 1.25)) fail('Bisoprolol 1.25 mg tier present (not a US single-agent tablet; a quarter tablet is impractical)');
                     if (d.map(x => x.strength).join(',') !== '2.5,5,10') fail('Bisoprolol tiers must be 2.5 (half of a scored 5 mg tablet), 5, 10');
                     if (!d.find(x => x.strength === 2.5)?.formulation.includes('half')) fail('Bisoprolol 2.5 mg not labelled as half of a scored 5 mg tablet');
-                    if (!(med('Bisoprolol').facts?.regimen_warnings ?? []).some(w => /off-label/.test(w.text))) fail('Bisoprolol lacks the off-label heart-failure note');
+                    if (!(med('Bisoprolol').facts?.regimen_warnings ?? []).some(w => typeof w.text === 'string' && /off-label/.test(w.text))) fail('Bisoprolol lacks the off-label heart-failure note');
                 }
 
                 // --- Ivabradine ---

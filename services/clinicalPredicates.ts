@@ -62,3 +62,23 @@ export function isAcutelyDecompensated(patient: Patient): boolean {
     return patient.nyha_class === 'IV' ||
         (patient.nyha_class === 'III' && excess > 2.0 && patient.volume_status.exam_findings.size >= 2);
 }
+
+// Vericiguat initiation NT-proBNP threshold (VICTORIA inclusion, NCT02861534): >= 1000 pg/mL in sinus rhythm, >= 1600 in atrial
+// fibrillation. The label has no NT-proBNP criterion, so this is an evidence-tier gate for INITIATION only. Any rhythm other than
+// sinus (AFib, paced) uses the higher threshold (the trial's non-sinus value; the conservative reading).
+export function vericiguatNtProBnpThreshold(patient: Patient): number {
+    return patient.rhythm === 'Sinus' ? 1000 : 1600;
+}
+
+// IV iron (ferric carboxymaltose) credit tier. 2022 AHA/ACC/HFSA: Class 2a, B-R, in HFrEF with iron deficiency. Trial LVEF: CONFIRM-HF <= 45,
+// AFFIRM-AHF < 50, IRONMAN <= 45, HEART-FID <= 40. The Injectafer HF indication is NYHA II/III with no LVEF limit; its label has no data with
+// hemoglobin >= 15 g/dL. Full credit at LVEF <= 40, a limited-evidence tier at 41-49, none at >= 50 (HFpEF), none at NYHA I or IV, held at Hb >= 15.
+// Returns null when the engine should neither credit nor automatically add IV iron (a clinician may still choose it).
+export function ivIronCreditTier(patient: Patient): 'full' | 'limited' | null {
+    if (!isIronDeficient(patient)) return null;
+    if (patient.nyha_class !== 'II' && patient.nyha_class !== 'III') return null;
+    if (patient.hemoglobin !== undefined && patient.hemoglobin >= 15) return null;
+    if (patient.lvef <= 40) return 'full';
+    if (patient.lvef < 50) return 'limited';
+    return null;
+}

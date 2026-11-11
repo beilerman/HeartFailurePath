@@ -3,7 +3,8 @@ import { Patient, RegimenMed, SimulationOutput } from '../../types';
 import { drugFacts } from './drugFacts';
 import { valueUnknown } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
-import { hasUnknownHistoricalHFrEF } from '../clinicalPredicates';
+import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold } from '../clinicalPredicates';
+import { PDE5_INHIBITORS } from './contraindications';
 import { taggedDiscontinuedMeds } from './eligibility';
 import { buildMissingDataNotices, computeGdmtGaps } from './explain';
 import { dedupeCurrentRegimen, hrContinuationAction, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
@@ -101,7 +102,7 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
         alerts.push('AVOID: Chronic NSAID use is discouraged in heart failure — sodium / fluid retention, blunted diuretic response, and AKI risk (amplified with RAAS / MRA). Deprescribe or substitute acetaminophen / topical analgesia where feasible.');
     }
 
-    const onPde5i = ext.has('Sildenafil') || ext.has('Tadalafil');
+    const onPde5i = PDE5_INHIBITORS.some(n => ext.has(n));
     const onNitrate = current.some(r => r.med.drug_class === 'Vasodilator');
     if (onPde5i && onNitrate) {
         alerts.push('INAPPROPRIATE THERAPY: Nitrate (Isosorbide Dinitrate) with a PDE5 inhibitor (sildenafil/tadalafil) is an absolute contraindication — risk of profound or fatal hypotension (FDA label). The nitrate has been removed from all recommendations; deprescribe one agent immediately.');
@@ -326,14 +327,14 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
     }
 
     const vericiguatCoreEligible = (patient.nyha_class === 'II' || patient.nyha_class === 'III' || patient.nyha_class === 'IV') &&
-        patient.nt_pro_bnp >= 1600 &&
+        patient.nt_pro_bnp >= vericiguatNtProBnpThreshold(patient) &&
         patient.lvef < 45;
     // M5: Only alert when worsening status is unknown — suppress when explicitly 'no' (patient
     // definitively ineligible). Coalesce: an absent field means the same as 'unknown' — both block
     // vericiguat via hasRecentWorseningHF, so both must prompt for documentation.
     if (vericiguatCoreEligible && (patient.recent_hf_worsening_within_6mo ?? 'unknown') === 'unknown') {
         clinicalAlerts.push(
-            'VERICIGUAT ELIGIBILITY WARNING: Recent HF worsening status unknown. Document if hospitalization or IV diuretics occurred within 6 months — required before Vericiguat use.'
+            'VERICIGUAT ELIGIBILITY WARNING: Recent HF worsening status unknown. Document whether an HF hospitalization occurred within 6 months or outpatient IV diuretics within 3 months — required before Vericiguat use.'
         );
     }
 

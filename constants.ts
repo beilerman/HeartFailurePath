@@ -1,9 +1,10 @@
 
 import { Medication, Patient } from './types';
 import { ci, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
-    STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, moderateCyp3aInhibitor } from './services/engine/contraindications';
+    STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, moderateCyp3aInhibitor,
+    PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
-import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace, isAcutelyDecompensated } from './services/clinicalPredicates';
+import { valueUnknown, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
 
 // Helper for logarithmic calculations (dose-response curves)
 const logBase = (base: number, x: number) => Math.log(x) / Math.log(base);
@@ -21,6 +22,36 @@ const shouldPreserveHFrEFTherapyForUnknownHistory = (patient: Patient): boolean 
         const cls = r.med.drug_class;
         return cls === 'ARNI' || cls === 'ACEi' || cls === 'ARB' || cls === 'Beta Blocker' || cls === 'MRA';
     });
+};
+
+// True when EVERY formulary agent in the given classes is unavailable to the patient (contraindicated, or named in the allergy list):
+// the A-HeFT Class 1 rule needs a RAAS inhibitor and a beta-blocker on board "or documented inability to take them". Lazy: reads
+// MEDICATION_FORMULARY at call time. Documented intolerance that leaves a class member usable (ACEi cough, ARB allowed) is NOT inability.
+const unableToTakeClasses = (p: Patient, classes: readonly string[]): boolean => {
+    const members = MEDICATION_FORMULARY.filter(m => classes.includes(m.drug_class));
+    return members.length > 0 && members.every(m => m.contraindications?.(p) === true || p.allergies.has(m.name));
+};
+const RAAS_DRUG_CLASSES = ['ARNI', 'ACEi', 'ARB'] as const;
+
+// Ferric carboxymaltose label dosing (Injectafer label Table 1, HF with iron deficiency; verified-sglt2-glp1-adjuncts.md row 30):
+//   weight < 70 kg:  Hb < 10 -> 1000 mg day 1 + 500 mg week 6;  Hb 10-14 -> 1000 mg, no week-6 dose;  Hb > 14 to < 15 -> 500 mg, none.
+//   weight >= 70 kg: Hb < 10 -> 1000 + 1000;                    Hb 10-14 -> 1000 + 500;               Hb > 14 to < 15 -> 500, none.
+//   Maintenance: 500 mg at weeks 12, 24, 36 if ferritin < 100, or 100-300 with TSAT < 20%. No data beyond 36 weeks or with Hb >= 15.
+// Weight is the ACTUAL (current) weight. Weight or Hb not entered is stated, never defaulted silently.
+const fcmDayOneDose = (p: Patient): number => (p.hemoglobin !== undefined && p.hemoglobin > 14) ? 500 : 1000;
+const fcmDosingNote = (p: Patient): string => {
+    const wt = p.volume_status.current_weight_kg;
+    const hb = p.hemoglobin;
+    const maint = 'Then 500 mg at weeks 12, 24 and 36 only if ferritin is below 100 ng/mL, or 100-300 ng/mL with TSAT below 20% (no data beyond 36 weeks).';
+    const heavy = wt >= 70;
+    const week6 = (h: number) => h < 10 ? (heavy ? '1000 mg' : '500 mg') : h <= 14 ? (heavy ? '500 mg' : 'none') : 'none';
+    if (hb !== undefined && hb >= 15) return 'ferric carboxymaltose is held: hemoglobin is 15 g/dL or higher and the label has no data in that range.';
+    if (!(wt > 0)) return `ferric carboxymaltose dosing needs the patient's weight (label: below 70 kg vs 70 kg or more) and hemoglobin; the weight was not entered. Day 1: 1000 mg (500 mg if Hb is above 14); week 6: below 70 kg 500 mg if Hb < 10 else none; 70 kg or more 1000 mg if Hb < 10, 500 mg if Hb 10-14, none if Hb above 14. ${maint}`;
+    const who = `${wt.toFixed(0)} kg (${heavy ? '70 kg or more' : 'below 70 kg'})`;
+    if (hb === undefined) {
+        return `ferric carboxymaltose label dosing for ${who}, hemoglobin not entered (enter it to fix the dose): day 1 is 1000 mg (500 mg if Hb is above 14 to below 15); week 6 is ${week6(9)} if Hb < 10, ${week6(12)} if Hb 10-14, none if Hb above 14. ${maint}`;
+    }
+    return `ferric carboxymaltose label dosing for ${who}, Hb ${hb} g/dL: day 1 ${fcmDayOneDose(p)} mg; week 6 ${week6(hb)}. ${maint}`;
 };
 
 export const COMMON_SIDE_EFFECTS = [
@@ -60,6 +91,10 @@ export const RELEVANT_COMORBIDITIES = [
     "Obesity (BMI > 30)",
     "Pulmonary Hypertension",
     "Chronic NSAID Use",
+    // GLP-1 / GIP label warnings (Wegovy and Zepbound W&P): caution-level notes, not contraindications.
+    "History of Pancreatitis",
+    "Severe Gastroparesis",
+    "Diabetic Retinopathy",
     "Bilateral Renal Artery Stenosis",
     "Adrenal Insufficiency (Addison's disease)",
     // Rate-control drugs (verified-rate-control.md): beta-blocker / ivabradine / digoxin label contraindications and warnings.
@@ -74,8 +109,12 @@ export const RELEVANT_EXTERNAL_MEDICATIONS = [
     'Verapamil',
     'Diltiazem',
     'Lithium',
-    'Sildenafil',
-    'Tadalafil',
+    // PDE-5 inhibitors (BiDil label: avanafil, sildenafil, tadalafil, vardenafil contraindicated with H/ISDN; Verquvo label: not recommended).
+    ...PDE5_INHIBITORS,
+    // Riociguat: contraindicated with vericiguat (Verquvo label) and with H/ISDN (BiDil label).
+    ...OTHER_SGC_STIMULATORS,
+    // Long-acting nitrates taken outside the formulary: excluded from VICTORIA, so vericiguat carries a warning.
+    ...LONG_ACTING_NITRATES,
     // Aliskiren: contraindicated with ARNI / ACEi / ARB in diabetes (Entresto and Zestril labels).
     'Aliskiren',
     // CYP3A inhibitors that gate eplerenone / finerenone (single-sourced in services/engine/contraindications.ts).
@@ -792,9 +831,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
             lvef_improvement_absolute: 2.0, // Modest direct effect
             bnp_reduction_percent: 0.13,
             weight_reduction_kg: 1.5, // Osmotic diuresis ~1-2kg
-            kccq_improvement: 6, // High symptom relief
+            // PLACEBO-ADJUSTED KCCQ: DAPA-HF TSS +2.8, CSS +2.5, OSS +2.3; DELIVER OSS +2.1; DETERMINE TSS 4.2 / 3.2; 2.5 is the verified
+            // midpoint (range 2.1-2.8; never above 3). Was 6, a 2-3x overstatement (verified-sglt2-glp1-adjuncts.md row 1). HFrEF figure applied
+            // to every phenotype (chf_effects has no patient; the HFmrEF/HFpEF value of about 1.5 is not modeled).
+            kccq_improvement: 2.5,
             structure_benefit_points: 15,
-            lavi_reduction_percent: 0.15, // Significant volume unloading of LA
+            lavi_reduction_percent: 0.15, // Significant volume unloading of LA (NOT VERIFIED: no echo source opened; unchanged)
             lvedd_reduction_percent: 0.03 // 3% (DAPA-HF)
         }),
         hemodynamic_effects: () => ({ sbp_drop: 3, hr_drop: 0, potassium_change: 0 }),
@@ -804,8 +846,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         ],
         ...ci([
             // eGFR threshold applies to INITIATION only — continuation allowed (DAPA-CKD)
+            // Farxiga label 2.3: initiation not recommended below eGFR 25 for the HF/CKD indications; may continue 10 mg if eGFR falls below 25.
             {
-                reason: 'eGFR below 25 — initiation not recommended',
+                reason: 'eGFR below 25: initiation not recommended (Farxiga label); continuation is allowed',
                 when: p => !p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i') && p.egfr < 25,
             },
             pregnancyCheck(),
@@ -823,21 +866,27 @@ export const MEDICATION_FORMULARY: Medication[] = [
             lvef_improvement_absolute: 2.0,
             bnp_reduction_percent: 0.13,
             weight_reduction_kg: 1.5,
-            kccq_improvement: 6,
+            // PLACEBO-ADJUSTED KCCQ-CSS: EMPEROR-Reduced +1.2 to +2.9 by tertile/time point; EMPEROR-Preserved +1.0/+1.2/+1.5 at 12/32/52 wk.
+            // 2.0 for HFrEF per verified-sglt2-glp1-adjuncts.md row 2 (HFmrEF/HFpEF about 1.5 is not modeled). Dapagliflozin carries 2.5 from
+            // its own trials; the 0.5 gap is two different trials' figures, not evidence that one drug is better.
+            kccq_improvement: 2.0,
             structure_benefit_points: 15,
             lavi_reduction_percent: 0.15,
             lvedd_reduction_percent: 0.03 // 3% (EMPEROR-Reduced)
         }),
         hemodynamic_effects: () => ({ sbp_drop: 3, hr_drop: 0, potassium_change: 0 }),
-        side_effects: () => ({ genital_infection: 0.05, uti: 0.03 }),
+        // The Jardiance label carries the same volume-depletion warning as Farxiga (row 6), so the entry lists it too.
+        side_effects: () => ({ genital_infection: 0.05, uti: 0.03, volume_depletion: 0.02 }),
         special_features: [
             { feature: 'Preferred in Diabetics', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
         ],
         ...ci([
-            // eGFR threshold applies to INITIATION only — continuation allowed (EMPA-KIDNEY)
+            // eGFR threshold applies to INITIATION only — continuation allowed (EMPA-KIDNEY). The Jardiance HF dose (10 mg) has no eGFR
+            // condition in the label; EMPEROR-Reduced, EMPEROR-Preserved and EMPA-KIDNEY enrolled eGFR >= 20 and no patient with eGFR < 20
+            // or on dialysis was studied, so initiation is blocked below 20 (dapagliflozin stays at 25: its label says so).
             {
-                reason: 'eGFR below 25 — initiation not recommended',
-                when: p => !p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i') && p.egfr < 25, // Harmonized with Dapagliflozin (ACC/AHA uniform eGFR >= 25 initiation)
+                reason: 'eGFR below 20: initiation not studied (EMPEROR and EMPA-KIDNEY enrolled eGFR 20 or higher); continuation is allowed',
+                when: p => !p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i') && p.egfr < 20,
             },
             pregnancyCheck(),
             CI_TYPE1_OR_DKA,
@@ -846,29 +895,49 @@ export const MEDICATION_FORMULARY: Medication[] = [
 
     // ========================================
     // PHENOTYPE: OBESITY / METABOLIC (GLP-1 / GIP)
-    // Evidence: STEP-HFpEF, SUMMIT
-    // Impact: Massive Functional (KCCQ) & Weight Loss.
+    // Evidence: STEP-HFpEF, STEP-HFpEF DM, SUMMIT (verified-sglt2-glp1-adjuncts.md, 2026-11-10).
+    // Every effect below is the PLACEBO-ADJUSTED treatment effect at the maintenance dose, not the within-arm change.
     // ========================================
     {
         name: 'Semaglutide (Wegovy)',
         drug_class: 'GLP-1 RA',
+        facts: {
+            // Wegovy label Table 1: 0.25 mg weeks 1-4, 0.5 mg weeks 5-8, 1 mg weeks 9-12, 1.7 mg weeks 13-16, then maintenance 2.4 mg (1.7 mg is
+            // also a labeled maintenance dose). New starts begin at 0.25 mg; titration moves ONE tier, at least 4 weeks per step.
+            titrate_one_step: true,
+            start_dose_exact: true,
+            // STEP-HFpEF DM vs STEP-HFpEF: KCCQ-CSS difference 7.3 vs 7.8 (ratio 0.936); weight difference -6.4 vs -10.7 points (ratio 0.598).
+            t2dm_scale: { weight: 6.4 / 10.7, kccq: 7.3 / 7.8, basis: 'STEP-HFpEF DM (PMID 38587233) versus STEP-HFpEF (PMID 37622681)' },
+            regimen_warnings: [
+                { text: 'Drug note: semaglutide titration is one labeled step at a time (0.25, 0.5, 1.0, 1.7, then 2.4 mg weekly), at least 4 weeks per step; escalation can be delayed 4 weeks for tolerability. 1.7 mg is a labeled maintenance dose, 2.4 mg is the dose studied in STEP-HFpEF (injection only; the oral tablets have no heart-failure data).' },
+                { text: 'Drug note: Wegovy warnings: acute pancreatitis (not recommended to restart after pancreatitis; ask about history), gallbladder disease, and worsening of diabetic retinopathy (a larger absolute risk when retinopathy is present at baseline: 8.2% vs 5.2%).',
+                  when: p => p.comorbidities.has('History of Pancreatitis') || p.comorbidities.has('Diabetic Retinopathy') },
+                { text: 'Drug note: severe gastroparesis: GLP-1 receptor agonists slow gastric emptying and are not recommended in severe gastroparesis (Zepbound label; class caution).',
+                  when: p => p.comorbidities.has('Severe Gastroparesis') },
+                { text: 'Drug note: GI losses (nausea, vomiting, diarrhea) on a GLP-1 can cause volume depletion and acute kidney injury; with an SGLT2 inhibitor and a loop diuretic on board, counsel on fluids and consider reducing the diuretic if intake falls (Zepbound label; class caution).',
+                  when: (_p, regimen) => regimen.some(r => r.med.drug_class === 'SGLT2i') && regimen.some(r => r.med.drug_class === 'Loop Diuretic') },
+            ],
+        },
+        // The start tier: lowest labeled step (exact: a new start never begins higher).
+        start_dose_for: () => 0.25,
         available_doses: [
-             { strength: 0.25, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Mandatory starting dose (16-week escalation)
-             { strength: 1.0, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Mid-titration
+             { strength: 0.25, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Weeks 1-4 (start)
+             { strength: 0.5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] },  // Weeks 5-8
+             { strength: 1.0, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] },  // Weeks 9-12
+             { strength: 1.7, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] },  // Weeks 13-16; a labeled maintenance dose
              { strength: 2.4, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], is_target_dose: true }
         ],
         chf_effects: (dose) => {
-             // Dose-scaled like every other titratable class (trial-level effects are the
-             // 2.4mg steady-state figures from STEP-HFpEF; a starting-dose add must not be
-             // credited the full benefit). Floor 0.25 reflects early sub-maximal benefit
-             // during the mandated escalation schedule.
+             // Dose scaling is the EXISTING linear ratio d/2.4 with a 0.25 floor, kept for the intermediate tiers: the semaglutide 1.0 mg
+             // fraction of the 2.4 mg effect was NOT verified (STEP 2 gives no 1.0 mg figure; verified row 11), so no saturating map is adopted.
              const ratio = Math.max(0.25, Math.min(1, Number(dose) / 2.4));
              return {
-                 lvef_improvement_absolute: 1.0 * ratio, // Indirect benefit
-                 bnp_reduction_percent: 0.20 * ratio,
-                 weight_reduction_kg: 8.0 * ratio, // ~10% weight loss at 2.4mg (STEP-HFpEF)
-                 kccq_improvement: 16.6 * ratio, // Massive functional gain at target
-                 structure_benefit_points: Math.round(10 * ratio), // Metabolic/Epicardial fat reduction
+                 lvef_improvement_absolute: 1.0 * ratio, // Indirect benefit (not verified; unchanged)
+                 bnp_reduction_percent: 0.20 * ratio, // NOT VERIFIED (STEP-HFpEF NT-proBNP ratio not in the abstract); unchanged
+                 weight_reduction_kg: 10.7 * ratio, // display only: percent x 1 kg at a 100 kg reference weight
+                 weight_reduction_percent: 10.7 * ratio, // placebo-adjusted: STEP-HFpEF -13.3% vs -2.6% (-6.4 points in type 2 diabetes, t2dm_scale)
+                 kccq_improvement: 7.8 * ratio, // placebo-adjusted: STEP-HFpEF KCCQ-CSS +16.6 vs +8.7 (7.3 in type 2 diabetes, t2dm_scale)
+                 structure_benefit_points: Math.round(10 * ratio), // Metabolic/Epicardial fat reduction (not verified; unchanged)
                  lavi_reduction_percent: 0.05 * ratio,
                  lvedd_reduction_percent: 0.01 * ratio // Indirect
              };
@@ -876,18 +945,26 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: () => ({ sbp_drop: 4, hr_drop: -2, potassium_change: 0 }), // HR can increase slightly
         side_effects: () => ({ nausea: 0.30, diarrhea: 0.20, constipation: 0.15 }),
         special_features: [
-             { feature: 'Indicated for Obesity Phenotype (BMI > 30)', points: 50, criteria: (p) => p.bmi >= 30 }
+             // 40 points for BOTH GLP-1 agents (scale policy: symptom-level benefit with no guideline class sits below a Class 1A mortality
+             // benefit; the old 50 / 60 split rested on a cross-trial "superior" claim). Phenotype text matches the initiation gate (LVEF >= 45).
+             { feature: 'STEP-HFpEF: improves symptoms and function in obesity-phenotype HFpEF (LVEF 45 or higher, BMI 30 or higher)', points: 40, criteria: (p) => p.bmi >= 30 && p.lvef >= 45 }
         ],
         ...ci([
             // True safety gates — apply to initiation AND continuation:
             pregnancyCheck(),
             CI_MTC_MEN2, // FDA boxed warning: MTC/MEN2
-            // BMI >= 30 is a STEP-HFpEF/SUMMIT enrollment (INITIATION) gate only — weight-loss
-            // success on a GLP-1 must not force its removal (mirrors the SGLT2i alreadyOn* pattern).
+            // BMI >= 30 and LVEF >= 45 are STEP-HFpEF / STEP-HFpEF DM enrollment (INITIATION) gates only — weight-loss or an EF change on a GLP-1
+            // must not force its removal (mirrors the SGLT2i alreadyOn* pattern). The Wegovy label has no heart-failure indication and no
+            // guideline recommends a GLP-1 in HFpEF (2022 AHA/ACC/HFSA), so these are evidence-tier gates.
             {
-                reason: 'BMI below 30 — initiation only (STEP-HFpEF/SUMMIT enrollment criterion)',
+                reason: 'BMI below 30 — initiation only (STEP-HFpEF enrollment criterion)',
                 when: p => !p.current_regimen?.some(r =>
                     r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.bmi < 30,
+            },
+            {
+                reason: 'LVEF below 45 — initiation only (STEP-HFpEF and STEP-HFpEF DM enrolled LVEF 45 or higher; no semaglutide HF trial below 45)',
+                when: p => !p.current_regimen?.some(r =>
+                    r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.lvef < 45,
             },
         ]),
     },
@@ -895,23 +972,57 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Tirzepatide (Zepbound)',
         drug_class: 'GLP-1/GIP RA',
         is_best_in_class: true,
+        facts: {
+            // Zepbound label: start 2.5 mg weekly x 4 weeks (initiation only, not a maintenance dose), increase in 2.5 mg steps after at least 4
+            // weeks; maintenance 5, 10 or 15 mg; maximum 15 mg.
+            titrate_one_step: true,
+            start_dose_exact: true,
+            // T2DM: SUMMIT arm-level weight change -10.4% (with diabetes) vs -12.9% (without): ratio 0.806. These are arm-level figures, not
+            // placebo-adjusted, so the ratio is an approximation. No tirzepatide KCCQ figure by diabetes status was opened (scale 1).
+            t2dm_scale: { weight: 10.4 / 12.9, kccq: 1, basis: 'SUMMIT (PMID 40701669 / 40903131); arm-level, ratio is an approximation' },
+            // Zepbound KwikPen regular self-pay (Lilly savings page, verified 2026-11-10): 2.5 mg $299, 5 mg $399, 7.5 mg $499, 10/12.5/15 mg $699.
+            // (The $449 figure is a savings-card price for 7.5 mg and above, requires a refill within 45 days and expires 12/31/2026; not used.)
+            cash_price_by_dose: { '2.5': 299, '5': 399, '7.5': 499, '10': 699, '12.5': 699, '15': 699 },
+            regimen_warnings: [
+                { text: 'Drug note: tirzepatide titration is one labeled step at a time (2.5 mg increments, at least 4 weeks per step). 2.5 mg is the starting dose only, not a maintenance dose; maintenance is 5, 10 or 15 mg weekly.' },
+                { text: 'Drug note: tirzepatide 2.5 mg is an initiation dose, not a maintenance dose (Zepbound label): plan the next step after 4 weeks.',
+                  when: (_p, regimen) => regimen.some(r => r.med.drug_class === 'GLP-1/GIP RA' && Number(r.dose.strength) === 2.5) },
+                { text: 'Drug note: acute pancreatitis warning (ask about history) and gallbladder disease (Zepbound label).',
+                  when: p => p.comorbidities.has('History of Pancreatitis') },
+                { text: 'Drug note: severe gastroparesis: tirzepatide is not recommended in severe gastroparesis (Zepbound label).',
+                  when: p => p.comorbidities.has('Severe Gastroparesis') },
+                { text: 'Drug note: GI losses (nausea, vomiting, diarrhea) on a GLP-1/GIP agonist can cause volume depletion and acute kidney injury (Zepbound label warning); with an SGLT2 inhibitor and a loop diuretic on board, counsel on fluids and consider reducing the diuretic if intake falls.',
+                  when: (_p, regimen) => regimen.some(r => r.med.drug_class === 'SGLT2i') && regimen.some(r => r.med.drug_class === 'Loop Diuretic') },
+            ],
+        },
+        start_dose_for: () => 2.5,
         available_doses: [
-             { strength: 2.5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Mandatory starting dose (4-week escalation schedule)
-             { strength: 5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Week 4
+             { strength: 2.5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] }, // Weeks 1-4 (start; not a maintenance dose)
+             { strength: 5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] },
+             { strength: 7.5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] },
              { strength: 10, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] },
+             { strength: 12.5, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'] },
              { strength: 15, unit: 'mg', formulation: 'SQ Weekly', frequency_options: ['weekly'], is_target_dose: true }
         ],
         chf_effects: (dose) => {
-             // Dose-scaled like every other titratable class (trial-level effects are the
-             // 15mg steady-state figures from SUMMIT). Floor 0.25 reflects early sub-maximal
-             // benefit during the mandated escalation schedule.
-             const ratio = Math.max(0.25, Math.min(1, Number(dose) / 15));
+             // SATURATING dose map (fraction of the 15 mg effect), anchored on SURMOUNT-1 weight change (72 weeks): -15.0% (5 mg), -19.5% (10 mg),
+             // -20.9% (15 mg), placebo -3.1%: placebo-adjusted 5 mg = 0.67, 10 mg = 0.92 (raw 0.72 / 0.93). SOURCED anchors: 5 mg = 0.70 (inside
+             // 0.67-0.72), 10 mg = 0.925 (inside 0.92-0.93), 15 mg = 1. ASSUMPTIONS (no trial value): 7.5 mg 0.81 (monotone midpoint of 5 and 10),
+             // 12.5 mg 0.96 (monotone midpoint of 10 and 15), 2.5 mg 0.25 (the previous engine floor; a start dose with no trial value).
+             // The same fraction scales every effect field (HF-outcome dose-response is unknown) - also an assumption.
+             const FRACTION: Record<string, number> = { '2.5': 0.25, '5': 0.70, '7.5': 0.81, '10': 0.925, '12.5': 0.96, '15': 1 };
+             const ratio = FRACTION[String(Number(dose))] ?? Math.max(0.25, Math.min(1, Number(dose) / 15));
              return {
-                 lvef_improvement_absolute: 1.5 * ratio,
-                 bnp_reduction_percent: 0.25 * ratio, // Reduces hsCRP significantly
-                 weight_reduction_kg: 12.0 * ratio, // ~15-20% weight loss at 15mg (SUMMIT)
-                 kccq_improvement: 19.5 * ratio, // Unmatched symptom relief at target
-                 structure_benefit_points: Math.round(15 * ratio),
+                 lvef_improvement_absolute: 1.5 * ratio, // not verified; unchanged
+                 // SUMMIT secondary analysis: NT-proBNP treatment difference at 52 weeks -10.5% (95% CI -20.7 to +1.0, P=0.07): at most 0.10.
+                 // (The old 0.25 rested on an hsCRP rationale, which is a non-sequitur for natriuretic peptide.)
+                 bnp_reduction_percent: 0.10 * ratio,
+                 weight_reduction_kg: 12 * ratio, // display only: percent x 1 kg at a 100 kg reference weight
+                 // Placebo-adjusted weight change in SUMMIT by BMI tertile -10.7%, -11.8%, -14.4% (verified): 12 points is the rounded mean (about
+                 // -11 to -14). The old comment "15-20% (SUMMIT)" was the SURMOUNT-1 number.
+                 weight_reduction_percent: 12 * ratio,
+                 kccq_improvement: 6.9 * ratio, // placebo-adjusted: SUMMIT KCCQ-CSS +19.5 vs +12.7, difference 6.9 (95% CI 3.3-10.6)
+                 structure_benefit_points: Math.round(15 * ratio), // not verified; unchanged
                  lavi_reduction_percent: 0.08 * ratio,
                  lvedd_reduction_percent: 0.02 * ratio // SUMMIT
              };
@@ -919,18 +1030,24 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: () => ({ sbp_drop: 6, hr_drop: -2, potassium_change: 0 }),
         side_effects: () => ({ nausea: 0.30, diarrhea: 0.20 }),
         special_features: [
-             { feature: 'Superior Weight Loss & KCCQ Benefit (SUMMIT)', points: 60, criteria: (p) => p.bmi >= 30 }
+             // 40 points, equal to semaglutide. SUMMIT alone reports an event result (CV death or worsening HF 9.9% vs 15.3%, HR 0.62, 0.41-0.95;
+             // worsening-HF events HR 0.54; CV death numerically higher, 8 vs 5), but there is no head-to-head HF trial, so no "superior" claim.
+             { feature: 'SUMMIT: fewer HF events and better symptoms in obesity-phenotype HFpEF (LVEF 50 or higher, BMI 30 or higher)', points: 40, criteria: (p) => p.bmi >= 30 && p.lvef >= 50 }
         ],
         ...ci([
             // True safety gates — apply to initiation AND continuation:
             pregnancyCheck(),
             CI_MTC_MEN2, // FDA boxed warning: MTC/MEN2
-            // BMI >= 30 is a STEP-HFpEF/SUMMIT enrollment (INITIATION) gate only — weight-loss
-            // success on a GLP-1 must not force its removal (mirrors the SGLT2i alreadyOn* pattern).
+            // BMI >= 30 and LVEF >= 50 are SUMMIT enrollment (INITIATION) gates only (no tirzepatide trial at LVEF 41-49).
             {
-                reason: 'BMI below 30 — initiation only (STEP-HFpEF/SUMMIT enrollment criterion)',
+                reason: 'BMI below 30 — initiation only (SUMMIT enrollment criterion)',
                 when: p => !p.current_regimen?.some(r =>
                     r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.bmi < 30,
+            },
+            {
+                reason: 'LVEF below 50 — initiation only (SUMMIT enrolled LVEF 50 or higher; no tirzepatide trial at LVEF 41-49)',
+                when: p => !p.current_regimen?.some(r =>
+                    r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.lvef < 50,
             },
         ]),
     },
@@ -1136,6 +1253,16 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Hydralazine/Isosorbide Dinitrate',
         drug_class: 'Vasodilator',
+        facts: {
+            regimen_warnings: [
+                { text: 'Drug note: hydralazine can cause a drug-induced lupus-like syndrome (dose- and acetylator-dependent) and peripheral neuritis (pyridoxine / vitamin B6 is used for prevention or treatment) (BiDil label). Ask about joint pain, fever, rash and numbness or tingling at each visit.' },
+                { text: 'Drug note: hydralazine can cause tachycardia and hypotension that may worsen ischemia (BiDil label; hypotension 8% vs 4% in A-HeFT). Titrate from one tablet three times daily to two tablets three times daily over several days as tolerated.' },
+            ],
+            monitoring_items: [
+                { test: 'Lupus-like symptoms and neuropathy screen', timing: 'Each visit while on hydralazine',
+                  details: 'Ask about arthralgia, fever, rash, pleuritic pain, numbness or tingling; check an ANA and CBC if symptoms appear; give pyridoxine if neuropathy develops (BiDil label).' },
+            ],
+        },
         available_doses: [
             { strength: '37.5/20', unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] },
             { strength: '75/40', unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], is_target_dose: true },
@@ -1143,8 +1270,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         chf_effects: (dose) => {
             const level = dose === '75/40' ? 2 : 1;
             return {
-                lvef_improvement_absolute: 2 + level, // A-HeFT showed remodeling
-                bnp_reduction_percent: 0.10 + (level * 0.05),
+                lvef_improvement_absolute: 2 + level, // A-HeFT showed remodeling (NOT VERIFIED: no A-HeFT echo data opened; unchanged)
+                bnp_reduction_percent: 0.10 + (level * 0.05), // NOT VERIFIED; unchanged
                 weight_reduction_kg: 0,
                 kccq_improvement: 3 + level,
                 structure_benefit_points: 15,
@@ -1152,23 +1279,38 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 lvedd_reduction_percent: 0.03 // A-HeFT
             };
         },
-        hemodynamic_effects: () => ({ sbp_drop: 10, hr_drop: 0, potassium_change: 0 }),
+        // HR effect is a RISE (hydralazine reflex tachycardia; BiDil label). The +3 bpm magnitude is NOT VERIFIED (the label gives no figure;
+        // the review's memory range was +3 to +5, the low end used). SBP -10 magnitude is NOT VERIFIED either; unchanged.
+        hemodynamic_effects: () => ({ sbp_drop: 10, hr_drop: -3, potassium_change: 0 }),
         ...ci([
-            // Absolute CI: nitrate + PDE5 inhibitor → profound/potentially fatal hypotension (FDA label).
+            // Absolute CI: nitrate + PDE5 inhibitor → profound/potentially fatal hypotension (BiDil label lists avanafil, sildenafil, tadalafil, vardenafil).
             // Confirmed exposure is a hard gate; suspected exposure (pulmonary HTN without a
             // documented PDE5i) remains a caution warning in the engine.
             {
-                reason: 'Concurrent PDE5 inhibitor (sildenafil / tadalafil) — nitrate co-use risks profound, potentially fatal hypotension',
-                when: p => {
-                    const ext = p.external_medications || new Set<string>();
-                    return ext.has('Sildenafil') || ext.has('Tadalafil');
-                },
+                reason: 'Concurrent PDE5 inhibitor (sildenafil / tadalafil / vardenafil / avanafil) — nitrate co-use risks profound, potentially fatal hypotension',
+                when: onPde5Inhibitor,
+            },
+            // BiDil label contraindication: riociguat (soluble guanylate cyclase stimulator) with a nitrate.
+            {
+                reason: 'Concurrent riociguat (soluble guanylate cyclase stimulator) — labeled contraindication with nitrates',
+                when: onOtherSgcStimulator,
             },
         ]),
         special_features: [
-            { feature: 'Significant benefit in African American patients (A-HeFT)', points: 30, criteria: isBlackRace }
+            // A-HeFT (self-identified Black patients, NYHA III-IV, HFrEF): 2022 AHA/ACC/HFSA Class 1, LOE A "receiving optimal medical therapy"
+            // (A-HeFT background: ACEi/ARB 93%, beta-blocker 87%). Credit needs a RAAS inhibitor and a beta-blocker on board, or documented inability
+            // to take them. 60 points = the top of the evidence scale: a mortality benefit (10.2% vs 6.2%, HR 0.57) must not sit below a symptom
+            // benefit (verified row 38; the exact value is engine policy, was 30).
+            {
+                feature: 'A-HeFT: mortality and HF-hospitalization benefit in self-identified Black patients, NYHA III-IV HFrEF, on a RAAS inhibitor and a beta-blocker (Class 1)',
+                points: 60,
+                criteria: (p, regimen) => isBlackRace(p) && (p.nyha_class === 'III' || p.nyha_class === 'IV') && p.lvef <= 40
+                    && ((regimen ?? []).some(r => RAAS_DRUG_CLASSES.includes(r.med.drug_class as typeof RAAS_DRUG_CLASSES[number])) || unableToTakeClasses(p, RAAS_DRUG_CLASSES))
+                    && ((regimen ?? []).some(r => r.med.drug_class === 'Beta Blocker') || unableToTakeClasses(p, ['Beta Blocker']))
+            }
         ],
-        side_effects: () => ({ headache: 0.30, dizziness: 0.15 }),
+        // A-HeFT adverse events (BiDil label Table 1, BiDil vs placebo): headache 50% vs 21%, dizziness 32% vs 14%, hypotension 8% vs 4%.
+        side_effects: () => ({ headache: 0.50, dizziness: 0.32, hypotension: 0.08 }),
     },
     {
         name: 'Ivabradine',
@@ -1248,34 +1390,65 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Vericiguat',
         drug_class: 'sGC Stimulator',
+        facts: {
+            // Verquvo label 2.2: start 5 mg once daily with food; start 2.5 mg only for a patient at risk of symptomatic hypotension; double about every
+            // 2 weeks to the 10 mg target. VICTORIA itself started 2.5 mg. The start tier is exact (never both).
+            start_dose_exact: true,
+            regimen_warnings: [
+                { text: 'Drug note: vericiguat label dosing: start 5 mg once daily with food (2.5 mg if at risk of symptomatic hypotension), double about every 2 weeks as tolerated to the 10 mg target. VICTORIA started 2.5 mg.' },
+                { text: 'Drug note: vericiguat with riociguat or another soluble guanylate cyclase stimulator is contraindicated (Verquvo label).',
+                  when: p => onOtherSgcStimulator(p) },
+                { text: 'Drug note: PDE-5 inhibitor (sildenafil, tadalafil, vardenafil, avanafil) with vericiguat: concomitant use is not recommended (Verquvo label; sildenafil added up to a 5.4 mmHg additional blood pressure drop). VICTORIA excluded PDE-5 inhibitors. Not a hard exclusion: weigh the indication and stop one agent where possible.',
+                  when: p => onPde5Inhibitor(p) },
+                { text: 'Drug note: long-acting nitrates (isosorbide dinitrate or mononitrate, including hydralazine/isosorbide dinitrate) were excluded from VICTORIA; the label does not prohibit the combination. Watch for additive hypotension and monitor blood pressure closely if both are used.',
+                  when: (p, regimen) => onLongActingNitrate(p) || regimen.some(r => r.med.drug_class === 'Vasodilator') },
+                { text: 'Drug note: NT-proBNP above 8,000 pg/mL: in VICTORIA no benefit was seen in the highest NT-proBNP group (about 14% of the cohort, 672 of 4,805; primary outcome HR 1.16, 95% CI 0.94-1.41; at or below 8,000 HR 0.85). The label has no upper limit; this is an advisory, not an exclusion.',
+                  when: p => p.nt_pro_bnp > 8000 },
+                { text: 'Drug note: systolic pressure below 100 mmHg: VICTORIA excluded SBP below 100 or symptomatic hypotension (a trial criterion; the label has no SBP threshold). Start at 2.5 mg, titrate only if blood pressure is tolerated, and recheck blood pressure after each step.',
+                  when: p => p.sbp > 0 && p.sbp < 100 },
+                { text: 'Drug note: eGFR below 15 mL/min or dialysis: vericiguat was studied only with eGFR 15 or higher (Verquvo label; VICTORIA excluded eGFR below 15). No data support use here; this is a caution, not a label contraindication.',
+                  when: p => p.egfr > 0 && p.egfr < 15 },
+            ],
+        },
+        // Label rule: 5 mg unless the patient is at risk of symptomatic hypotension (then 2.5 mg). ENGINE POLICY for "at risk": SBP below 110 or
+        // chronic hypotension (the label gives no threshold; the conservative reading starts low whenever blood pressure is near the trial floor of 100).
+        start_dose_for: (p) => ((p.sbp > 0 && p.sbp < 110) || p.comorbidities.has('Hypotension (Chronic)')) ? 2.5 : 5,
         available_doses: [
-            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Mandatory starting dose (VICTORIA protocol)
-            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Week 2 titration
-            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true }, // Target dose (Week 4+)
+            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Start when at risk of symptomatic hypotension (VICTORIA protocol)
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Label default start; second titration step
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true }, // Target dose
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
             const ratio = d / 10;
             return {
                 lvef_improvement_absolute: 0.5 + ratio * 0.5,
-                bnp_reduction_percent: 0.05 + ratio * 0.10,
+                bnp_reduction_percent: 0.05 + ratio * 0.10, // label: dose-dependent NT-proBNP reduction at 12 weeks, no magnitude; kept small, no source gives a number
                 weight_reduction_kg: 0,
-                kccq_improvement: 1.5 + ratio * 2.5,
+                // VICTORIA KCCQ analysis (PMID 35656822): vericiguat did NOT significantly improve KCCQ vs placebo (both arms improved). 0-1 per the
+                // verified file; 0.5 at the target dose (the midpoint), scaled by dose. Was 1.5 + ratio * 2.5 (up to 4.0).
+                kccq_improvement: 0.5 * ratio,
                 structure_benefit_points: Math.round(2 + ratio * 3),
                 lavi_reduction_percent: 0.01 + ratio * 0.01,
                 lvedd_reduction_percent: ratio * 0.01 // VICTORIA
             };
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 1.5 + Number(dose) / 10 * 2.5, hr_drop: 0, potassium_change: 0 }),
-        side_effects: () => ({ hypotension: 0.10, anemia: 0.05 }),
+        // Verquvo label (VICTORIA): hypotension 16% (placebo 15%), anemia 10% (placebo 7%). (The engine had 10% and 5%.)
+        side_effects: () => ({ hypotension: 0.16, anemia: 0.10 }),
         ...ci([
             // Pregnancy: FDA BOXED WARNING — embryo-fetal toxicity ("Do not administer to a
             // pregnant female"); applies to initiation AND continuation.
             pregnancyCheck('FDA boxed warning, embryo-fetal toxicity'),
-            // Continuation carve-out: the VICTORIA criteria below (NT-proBNP >= 1600, NYHA II-IV,
-            // recent worsening, LVEF < 45) are trial ENROLLMENT gates for INITIATION only.
+            // Verquvo label contraindication (initiation AND continuation): concomitant riociguat or another sGC stimulator.
+            {
+                reason: 'Concurrent riociguat or another soluble guanylate cyclase stimulator — labeled contraindication',
+                when: onOtherSgcStimulator,
+            },
+            // Continuation carve-out: the VICTORIA criteria below (NT-proBNP by rhythm, NYHA II-IV,
+            // recent worsening, LVEF < 45) are trial ENROLLMENT gates for INITIATION only (the label has no NT-proBNP criterion).
             // A patient already on vericiguat whose NT-proBNP improved or whose worsening event
-            // aged past 6 months is showing treatment response — that must not force removal
+            // aged past the window is showing treatment response — that must not force removal
             // (mirrors the SGLT2i alreadyOn* continuation pattern).
             {
                 reason: 'NYHA class not II-IV — initiation criterion (VICTORIA)',
@@ -1287,12 +1460,14 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 when: p => !p.current_regimen?.some(r => r.med.drug_class === 'sGC Stimulator') && p.lvef >= 45,
             },
             {
-                reason: 'NT-proBNP missing or below 1600 pg/mL — initiation criterion (VICTORIA)',
+                // VICTORIA inclusion: NT-proBNP >= 1000 pg/mL in sinus rhythm, >= 1600 in atrial fibrillation (BNP >= 300 / >= 500 is not entered by this tool).
+                reason: 'NT-proBNP missing or below the VICTORIA threshold (1000 pg/mL in sinus rhythm, 1600 pg/mL in atrial fibrillation or other rhythms) — initiation criterion',
                 when: p => !p.current_regimen?.some(r => r.med.drug_class === 'sGC Stimulator')
-                    && (!p.nt_pro_bnp || p.nt_pro_bnp < 1600),
+                    && (!p.nt_pro_bnp || p.nt_pro_bnp < vericiguatNtProBnpThreshold(p)),
             },
             {
-                reason: 'No recent worsening-HF event within 6 months — initiation criterion (VICTORIA)',
+                // The single answer covers both qualifying events: HF hospitalization within 6 months OR outpatient IV diuretic within 3 months.
+                reason: 'No qualifying worsening-HF event (HF hospitalization within 6 months, or outpatient IV diuretic within 3 months) — initiation criterion (VICTORIA)',
                 when: p => !p.current_regimen?.some(r => r.med.drug_class === 'sGC Stimulator')
                     && !(p.recent_hf_worsening_within_6mo === 'yes'),
             },
@@ -1404,23 +1579,54 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Ferric Carboxymaltose',
         drug_class: 'IV Iron',
+        facts: {
+            // The dose is a one-time label course (Injectafer label Table 1), not a titratable dose.
+            single_course_dose: true,
+            start_dose_exact: true,
+            regimen_warnings: [
+                // Patient-specific dosing note (label table by weight and hemoglobin).
+                { text: (p) => `Drug note: ${fcmDosingNote(p)}` },
+                { text: 'Drug note: BOXED WARNING (Injectafer label, 08/2026): symptomatic, severe and prolonged hypophosphatemia, including osteomalacia and fractures, has occurred, also in patients with a normal baseline phosphate. Correct pre-existing hypophosphatemia first; check serum phosphate before any repeat course within 3 months and in patients at risk (malabsorption, inflammatory bowel disease, vitamin D deficiency, hyperparathyroidism).' },
+            ],
+            monitoring_items: [
+                { test: 'Serum phosphate (ferric carboxymaltose boxed warning)', timing: 'Before any repeat course within 3 months, and when symptoms of bone pain or weakness occur',
+                  details: 'Hypophosphatemia can be severe and prolonged and cause osteomalacia and fractures, even with a normal baseline. Check phosphate before repeat dosing, especially with malabsorption, IBD, vitamin D deficiency or hyperparathyroidism (Injectafer label).' },
+                { test: 'Ferritin and transferrin saturation', timing: 'Before each 500 mg maintenance dose (weeks 12, 24, 36)',
+                  details: 'Maintenance 500 mg is given only if ferritin is below 100 ng/mL, or 100-300 ng/mL with TSAT below 20% (Injectafer label). No data beyond 36 weeks.' },
+            ],
+        },
+        // Day-1 dose from the label table: 1000 mg, except 500 mg when Hb is above 14 to below 15 g/dL. Hb >= 15 holds the drug (contraindication
+        // check below). An unknown Hb takes the 1000 mg day-1 dose (the dosing note states both bands).
+        start_dose_for: (p) => fcmDayOneDose(p),
+        is_target_dose_for: (strength, p) => strength === fcmDayOneDose(p),
         available_doses: [
-             { strength: 1000, unit: 'mg', formulation: 'IV', frequency_options: ['once'] },
+             { strength: 500, unit: 'mg', formulation: 'IV', frequency_options: ['once'] },  // Day-1 dose when Hb is above 14; week-6 / maintenance dose
+             { strength: 1000, unit: 'mg', formulation: 'IV', frequency_options: ['once'] }, // Day-1 dose otherwise
         ],
         chf_effects: () => ({
              lvef_improvement_absolute: 0,
-             bnp_reduction_percent: 0.05,
+             bnp_reduction_percent: 0.05, // NOT VERIFIED (no NT-proBNP magnitude opened); unchanged
              weight_reduction_kg: 0,
-             kccq_improvement: 8, // AFFIRM-AHF
+             kccq_improvement: 8, // AFFIRM-AHF; NOT VERIFIED (no KCCQ source opened; the review suggested 3-5): unchanged until a source is opened
              structure_benefit_points: 0,
              lavi_reduction_percent: 0,
              lvedd_reduction_percent: 0
         }),
         hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 0, potassium_change: 0 }),
-        side_effects: () => ({ hypophosphatemia: 0.15 }),
+        // Injectafer label: transient serum phosphorus below 2 mg/dL in 27% (440/1,638) of patients in the clinical trials (iron-deficiency-anemia pool).
+        side_effects: () => ({ hypophosphatemia: 0.27 }),
         special_features: [
-            { feature: 'Treats Iron Deficiency in HF', points: 40, criteria: isIronDeficient }
-        ]
+            // 2022 AHA/ACC/HFSA: IV iron Class 2a (B-R) in HFrEF with iron deficiency. Full credit at LVEF <= 40; a limited-evidence tier (half the
+            // points: engine policy) at 41-49; none at >= 50, at NYHA I or IV, or at Hb >= 15 (ivIronCreditTier). Symptom / hospitalization-level
+            // benefit (CONFIRM-HF 6MWT +33 m, AFFIRM-AHF HF hospitalizations RR 0.74, HEART-FID win ratio 1.10 NS-borderline): 40 sits below the
+            // A-HeFT mortality benefit (60) and equal to the GLP-1 symptom benefit (40).
+            { feature: 'Treats iron deficiency in HFrEF (LVEF 40 or lower; Class 2a)', points: 40, criteria: p => ivIronCreditTier(p) === 'full' },
+            { feature: 'Treats iron deficiency, limited evidence at LVEF 41-49 (trials enrolled LVEF below 50)', points: 20, criteria: p => ivIronCreditTier(p) === 'limited' },
+        ],
+        ...ci([
+            // The label has no data with hemoglobin >= 15 g/dL (HEART-FID required Hb < 15 in men, < 13.5 in women; AFFIRM-AHF excluded Hb > 15).
+            { reason: 'Hemoglobin 15 g/dL or higher — no label data (hold ferric carboxymaltose)', when: p => p.hemoglobin !== undefined && p.hemoglobin >= 15 },
+        ]),
     },
     {
         name: 'Digoxin',

@@ -114,14 +114,20 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
         notes: 'Generic cash ~$30-75/30 d with a discount card; brand or no-card cash is $600-750 (SingleCare 2026-11: ~$751 per 60 x 24/26). Medicare negotiated price for brand Entresto is $295 per 30 days from 1 Jan 2026 (list WAC $628, CMS): a plan ceiling, the patient copay is set by the plan tier and the Part D cap, so medicare_copay is a plan-tier estimate. Re-check against GoodRx when updating.'
     },
     'Dapagliflozin': {
-        cash: 290, commercial_copay: 35, medicare_copay: 45,
-        generic_available: false, has_copay_card: true, tier: 'preferred_brand',
-        notes: 'AZ copay card; Medicare Part D preferred brand tier'
+        // First generic dapagliflozin approved April 2026 (Network Health, 2026-05): 90-day cost at preferred pharmacies generic $150 (about $50/mo),
+        // brand Farxiga $585 (about $195/mo); Cost Plus Drugs generic $15. The cash figure is the GENERIC price at a preferred pharmacy (floor $5).
+        // Medicare negotiated price for Farxiga effective 1 Jan 2026: $178.50 per 30 days (list $556, CMS fact sheet): a plan ceiling, not a copay, so
+        // medicare_copay stays a plan-tier estimate. Commercial copay unchanged (generic copay not verified).
+        cash: 50, commercial_copay: 35, medicare_copay: 45,
+        generic_available: true, has_copay_card: true, tier: 'generic',
+        notes: 'Generic cash about $50/30 d at a preferred pharmacy (brand Farxiga about $195). Medicare negotiated Farxiga $178.50 (2026). verified-sglt2-glp1-adjuncts.md row 8.'
     },
     'Empagliflozin': {
-        cash: 310, commercial_copay: 35, medicare_copay: 50,
+        // Brand Jardiance: $645 per 90 days at preferred pharmacies (about $215/mo, Network Health 2026-05). Medicare negotiated price effective
+        // 1 Jan 2026: $197 per 30 days (list $573, CMS fact sheet): a plan ceiling, so medicare_copay stays a plan-tier estimate.
+        cash: 215, commercial_copay: 35, medicare_copay: 50,
         generic_available: false, has_copay_card: true, tier: 'preferred_brand',
-        notes: 'Lilly/BI copay card; Medicare Part D preferred brand tier'
+        notes: 'Lilly/BI copay card; Medicare Part D preferred brand tier; Medicare negotiated Jardiance $197 (2026). verified-sglt2-glp1-adjuncts.md row 8.'
     },
     'Ivabradine': {
         cash: 58, commercial_copay: 30, medicare_copay: 45,
@@ -144,19 +150,33 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
         notes: 'AZ copay card; faster onset than Patiromer (1hr vs 7hr). Cash ~$900/30 packets (2026 aggregator prices: NADAC ~$850, retail $1,027-1,043)'
     },
     'Semaglutide (Wegovy)': {
-        cash: 349, commercial_copay: 25, medicare_copay: 350,
+        // Cash $349/month standard (NovoCare, 0.25-2.4 mg; intro $199 for the first two fills of 0.25 and 0.5 mg; offer through 12/31/2026): unchanged.
+        // Medicare: the GLP-1 Bridge (1 Jul 2026 to 31 Dec 2027) is a flat $50/month copay, with PRIOR AUTHORIZATION, for BMI 35 or higher, or BMI 27 or
+        // higher with a condition such as heart disease; it does not count toward the Part D deductible or the out-of-pocket cap and Extra Help cannot be
+        // applied (KFF Health News). Heart failure is not named but the engine's initiation gate is BMI 30 or higher with HF. The program ends 12/31/2027.
+        cash: 349, commercial_copay: 25, medicare_copay: 50,
         generic_available: false, has_copay_card: true, tier: 'specialty',
-        notes: 'Novo Nordisk savings card; Medicare coverage limited (anti-obesity med exclusion)'
+        notes: 'Novo Nordisk savings card. Medicare $50/month under the GLP-1 Bridge (7/1/2026-12/31/2027) with PRIOR AUTHORIZATION (BMI >= 35, or >= 27 with a condition such as heart disease); ends 12/31/2027. verified-sglt2-glp1-adjuncts.md row 45.'
     },
     'Tirzepatide (Zepbound)': {
-        cash: 449, commercial_copay: 25, medicare_copay: 450,
+        // Cash is dose-dependent (Lilly, KwikPen regular self-pay): 2.5 mg $299, 5 mg $399, 7.5 mg $499, 10/12.5/15 mg $699, applied through
+        // facts.cash_price_by_dose; `cash` here is the 10-15 mg figure. The $449 figure is a savings-card price for 7.5 mg and above (refill within 45 days,
+        // card expires 12/31/2026), not the list self-pay price. Medicare: $50/month under the GLP-1 Bridge for the KwikPen (single-dose pens and
+        // vials are not covered), 7/1/2026-12/31/2027, prior authorization, same BMI criteria as Wegovy.
+        cash: 699, commercial_copay: 25, medicare_copay: 50,
         generic_available: false, has_copay_card: true, tier: 'specialty',
-        notes: 'Lilly savings card; Medicare generally not covered for weight management'
+        notes: 'Cash by dose: 2.5 mg $299, 5 mg $399, 7.5 mg $499, 10-15 mg $699 (savings card $449 for 7.5 mg and above, expires 12/31/2026). Medicare $50/month under the GLP-1 Bridge (KwikPen only, 7/1/2026-12/31/2027, PRIOR AUTHORIZATION, BMI criteria). verified-sglt2-glp1-adjuncts.md rows 45-46.'
     },
     'Ferric Carboxymaltose': {
-        cash: 315, commercial_copay: 50, medicare_copay: 60,
+        // PER-COURSE cost amortized to a MONTHLY figure. Unit price: Medicare Part B payment limit J1439 $1.121 per mg (Q4 2026; BuyAndBill, a secondary billing
+        // site), so 1000 mg = $1,121 and the modal label course (1000 mg day 1 + 500 mg week 6 = 1500 mg) = $1,681.50. AMORTIZATION RULE (engine policy):
+        // the 1500 mg initial course is spread over 6 months (the course plus the week-12 maintenance decision): cash $1,681.50 / 6 = $280.
+        // Medicare pays 80%: the 20% coinsurance on the course is $336.30 / 6 = $56 (no supplemental coverage assumed). Maintenance 500 mg doses
+        // (weeks 12, 24, 36, only if still iron deficient, $560.50 each) are NOT included. Commercial copay unchanged and not verified (plan-specific).
+        // Billed as a physician-administered medical-benefit drug (buy-and-bill), not Part D.
+        cash: 280, commercial_copay: 50, medicare_copay: 56,
         generic_available: false, has_copay_card: false, tier: 'specialty',
-        notes: 'IV infusion; often covered under medical benefit (Part B) not Part D'
+        notes: 'Per-course cost amortized monthly: 1500 mg course x $1.121/mg (Medicare J1439, Q4 2026) = $1,681.50 over 6 months = $280/mo cash; Medicare 20% coinsurance $336.30 / 6 = $56/mo. Excludes 500 mg maintenance doses ($560.50 each). Medical benefit (buy-and-bill), not Part D. verified-sglt2-glp1-adjuncts.md row 31.'
     },
     'Furoscix (SC Furosemide)': {
         cash: 900, commercial_copay: 100, medicare_copay: 200,

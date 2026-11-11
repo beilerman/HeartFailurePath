@@ -33,6 +33,11 @@ facts, adding it is a data change and no engine edit. Written 2026-11-10 (alignm
      Every ACEi/ARB/ARNI entry declares one (new RAAS starts begin at the lowest tier; a verify invariant fails any RAAS add or
      swap-in above its declared tier, and any RAAS entry without the hook). `facts.low_dose_max_daily_mg` (ACEi/ARB): the total
      daily dose at or below which the Entresto label's "low dose" conversion rule applies (see `services/engine/raasStart.ts`); `interaction_dose_cap(patient)`: a patient-dependent maximum dose from an interaction (eplerenone + moderate CYP3A inhibitor).
+   - `facts.titrate_one_step` (weekly GLP-1 / GLP-1-GIP: every labeled tier is offered and titration moves one tier at a time),
+     `facts.single_course_dose` (a one-time label course such as ferric carboxymaltose: never titrated),
+     `facts.t2dm_scale` (multipliers on the weight and KCCQ effects with type 2 diabetes), `facts.cash_price_by_dose` (cash-tier price by strength).
+     `ChfEffects.weight_reduction_percent` (placebo-adjusted percent of the patient's weight) replaces the fixed kg for a drug that sets it.
+   - `facts.regimen_warnings[].text` may be a function of the patient, and `when` receives `(patient, resultingRegimen)`.
    - `facts.k_continuation` (MRA potassium rule for a drug already on board), `facts.regimen_warnings` / `facts.monitoring_items` (warnings and monitoring shown whenever the drug is in a regimen; warning text starts "Drug note").
    - Combination products must declare their component classes the way existing combos do.
 3. **Class registry**: if `drug_class` is new, add a row to `DRUG_CLASS_REGISTRY` in
@@ -55,8 +60,9 @@ facts, adding it is a data change and no engine edit. Written 2026-11-10 (alignm
 
 ## Still requires engine edits
 
-- **Adjunct eligibility criteria** (ivabradine, vericiguat, digoxin, H/ISDN, GLP-1, IV iron
-  blocks in `analyzeCurrentRegimen`) are keyed on class and live in the engine.
+- **Adjunct eligibility criteria** (ivabradine, digoxin, H/ISDN blocks in `analyzeCurrentRegimen`) are keyed on class and live in the engine.
+  Vericiguat, GLP-1 and ferric carboxymaltose initiation criteria are the drugs' own `ci` checks (with an initiation-only carve-out when the patient is
+  already on the class); `candidates.ts` only offers the exact start tier of an entry that survives eligibility.
 - **A new class** with its own pillar or adjunct logic (concordance table, GDMT-completeness
   slots, class literals in rules).
 - **Drug-specific warning text.** A new fact reuses an existing warning. New wording means a new

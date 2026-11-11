@@ -143,7 +143,11 @@ export const SCENARIOS: TestScenario[] = [
             race: 'Black',
             nyha_class: 'III',
             sbp: 135, // Tolerates vasodilators
-            current_regimen: []
+            // A-HeFT Class 1 applies to patients on optimal therapy: a RAAS inhibitor and a beta-blocker on board (verified-sglt2-glp1-adjuncts.md row 37).
+            current_regimen: buildCurrentRegimen([
+                { name: 'Lisinopril', strength: 20, freq: 'qd' },
+                { name: 'Carvedilol', strength: 25, freq: 'bid' }
+            ])
         }
     },
     {
@@ -1679,7 +1683,7 @@ export const SCENARIOS: TestScenario[] = [
     },
     // --- HFmrEF + Obese (GLP-1 eligible) — BMI ≥ 30 + LVEF 42 ---
     {
-        title: 'HFmrEF Obese (BMI 33, LVEF 42, GLP-1 Eligible)',
+        title: 'HFmrEF Obese (BMI 33, LVEF 42, GLP-1 Not Eligible Below LVEF 45)',
         patient: {
             ...INITIAL_PATIENT,
             sbp: 134,
@@ -3070,6 +3074,101 @@ export const SCENARIOS: TestScenario[] = [
                 current_regimen: buildCurrentRegimen([{ name: 'Digoxin', strength: 125, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
             { title: 'Rate-Source Digoxin Heart-Rate Effect Only In AFib', patient: { ...base, current_regimen: quad } },
             { title: 'Rate-Source Ivabradine Metadata', patient: { ...base, current_regimen: quad } },
+        ];
+    })(),
+    // --- SGLT2i / GLP-1 / vericiguat / IV iron / H-ISDN source-verified corrections (docs/medication-review-2026-11-10/verified-sglt2-glp1-adjuncts.md) ---
+    ...((): TestScenario[] => {
+        const hfref = {
+            ...INITIAL_PATIENT,
+            age: 62, sex: 'Male' as const, race: 'White' as const, bmi: 27, sbp: 124, dbp: 76, pulse: 74, rhythm: 'Sinus' as const,
+            nyha_class: 'III' as const, kccq_score: 52, nt_pro_bnp: 1200, lvef: 30, recent_hf_worsening_within_6mo: 'yes' as const,
+            volume_status: { dry_weight_kg: 85, current_weight_kg: 85.5, exam_findings: new Set<string>() },
+            egfr: 60, creatinine: 1.2, bun: 20, potassium: 4.5,
+            comorbidities: new Set(['HFrEF']), external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [], ever_lvef_le_40: 'yes' as const,
+            ferritin: undefined, tsat: undefined, hemoglobin: undefined,
+            max_affordable_cost: 5000, cost_sensitivity: 2, insurance_tier: 'commercial' as const,
+            complexity_tolerance: 9, max_new_classes_per_visit: 2,
+        };
+        const quad = buildCurrentRegimen([
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+            { name: 'Carvedilol', strength: 25, freq: 'bid' },
+            { name: 'Spironolactone', strength: 25, freq: 'qd' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        const hfpef = {
+            ...hfref,
+            age: 60, sex: 'Female' as const, bmi: 36, height_cm: 165, nyha_class: 'II' as const, kccq_score: 55, nt_pro_bnp: 900, lvef: 58,
+            volume_status: { dry_weight_kg: 100, current_weight_kg: 100.5, exam_findings: new Set<string>() },
+            egfr: 70, comorbidities: new Set(['HFpEF', 'Obesity (BMI > 30)']), ever_lvef_le_40: 'no' as const,
+            current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]),
+        };
+        const sglt = buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]);
+        const onGlp = (name: string, strength: number) => buildCurrentRegimen([{ name, strength, freq: 'weekly' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]);
+        const iron = { ...hfref, ferritin: 60, tsat: 15, current_regimen: quad };
+        return [
+            // GLP-1
+            { title: 'Adjunct-Source GLP-1 KCCQ And Weight Placebo-Adjusted', patient: hfpef },
+            { title: 'Adjunct-Source GLP-1 New Start Is Lowest Tier', patient: hfpef },
+            { title: 'Adjunct-Source Semaglutide Titration One Step 0.25 To 0.5', patient: { ...hfpef, current_regimen: onGlp('Semaglutide (Wegovy)', 0.25) } },
+            { title: 'Adjunct-Source Semaglutide Titration One Step 1.7 To 2.4', patient: { ...hfpef, current_regimen: onGlp('Semaglutide (Wegovy)', 1.7) } },
+            { title: 'Adjunct-Source Tirzepatide Titration One Step 2.5 To 5', patient: { ...hfpef, current_regimen: onGlp('Tirzepatide (Zepbound)', 2.5) } },
+            { title: 'Adjunct-Source Tirzepatide Titration One Step 10 To 12.5', patient: { ...hfpef, current_regimen: onGlp('Tirzepatide (Zepbound)', 10) } },
+            { title: 'Adjunct-Source Semaglutide Not Started At LVEF 43', patient: { ...hfpef, lvef: 43, ever_lvef_le_40: 'no' as const } },
+            { title: 'Adjunct-Source Semaglutide Started At LVEF 46 Tirzepatide Not', patient: { ...hfpef, lvef: 46, ever_lvef_le_40: 'no' as const } },
+            { title: 'Adjunct-Source Tirzepatide Not Started At LVEF 47', patient: { ...hfpef, lvef: 47, ever_lvef_le_40: 'no' as const } },
+            { title: 'Adjunct-Source GLP-1 Continuation Below Initiation Gates', patient: { ...hfpef, lvef: 42, bmi: 28, ever_lvef_le_40: 'no' as const, current_regimen: onGlp('Semaglutide (Wegovy)', 1.0) } },
+            { title: 'Adjunct-Source GLP-1 BMI 28 Not Started', patient: { ...hfpef, bmi: 28 } },
+            { title: 'Adjunct-Source GLP-1 Cautions Pancreatitis Gastroparesis Retinopathy', patient: { ...hfpef,
+                comorbidities: new Set(['HFpEF', 'Obesity (BMI > 30)', 'History of Pancreatitis', 'Severe Gastroparesis', 'Diabetic Retinopathy']),
+                current_regimen: onGlp('Semaglutide (Wegovy)', 0.5) } },
+            { title: 'Adjunct-Source GLP-1 Type 2 Diabetes Reduces Effect', patient: { ...hfpef, comorbidities: new Set(['HFpEF', 'Obesity (BMI > 30)', 'Diabetes Mellitus Type 2']) } },
+            { title: 'Adjunct-Source GLP-1 Evidence Bonus Equal No Superior Claim', patient: hfpef },
+            { title: 'Adjunct-Source Tirzepatide Dose Map And NT-proBNP', patient: hfpef },
+            { title: 'Adjunct-Source Tirzepatide Cash Price By Dose', patient: { ...hfpef, insurance_tier: 'cash' as const } },
+            // SGLT2i
+            { title: 'Adjunct-Source Empagliflozin Started At eGFR 22 Dapagliflozin Not', patient: { ...hfref, egfr: 22, creatinine: 3.0, current_regimen: [] } },
+            { title: 'Adjunct-Source SGLT2i Not Started At eGFR 18', patient: { ...hfref, egfr: 18, creatinine: 3.6, current_regimen: [] } },
+            { title: 'Adjunct-Source SGLT2i Continuation At eGFR 18', patient: { ...hfref, egfr: 18, creatinine: 3.6, current_regimen: sglt } },
+            { title: 'Adjunct-Source SGLT2i KCCQ Placebo-Adjusted And Generic Price', patient: hfref },
+            // Vericiguat
+            { title: 'Adjunct-Source Vericiguat Offered At NT-proBNP 1200 Sinus', patient: { ...hfref, nt_pro_bnp: 1200, current_regimen: quad } },
+            { title: 'Adjunct-Source Vericiguat Not Offered At NT-proBNP 1200 AFib', patient: { ...hfref, rhythm: 'AFib' as const, nt_pro_bnp: 1200, current_regimen: quad } },
+            { title: 'Adjunct-Source Vericiguat Offered At NT-proBNP 1700 AFib', patient: { ...hfref, rhythm: 'AFib' as const, nt_pro_bnp: 1700, current_regimen: quad } },
+            { title: 'Adjunct-Source Vericiguat Starts At 5 mg', patient: { ...hfref, current_regimen: quad } },
+            { title: 'Adjunct-Source Vericiguat Starts At 2.5 mg When SBP Low', patient: { ...hfref, sbp: 104, dbp: 66, current_regimen: quad } },
+            { title: 'Adjunct-Source Vericiguat Riociguat Excluded', patient: { ...hfref, external_medications: new Set(['Riociguat']), current_regimen: quad } },
+            { title: 'Adjunct-Source Vericiguat PDE5 Inhibitor Warned Not Excluded', patient: { ...hfref, external_medications: new Set(['Sildenafil']),
+                current_regimen: [...quad, ...buildCurrentRegimen([{ name: 'Vericiguat', strength: 5, freq: 'qd' }])] } },
+            { title: 'Adjunct-Source Vericiguat With H/ISDN Warned', patient: { ...hfref, race: 'Black' as const,
+                current_regimen: [...quad, ...buildCurrentRegimen([{ name: 'Vericiguat', strength: 5, freq: 'qd' }, { name: 'Hydralazine/Isosorbide Dinitrate', strength: '37.5/20', freq: 'tid' }])] } },
+            { title: 'Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory', patient: { ...hfref, nt_pro_bnp: 9000,
+                current_regimen: [...quad, ...buildCurrentRegimen([{ name: 'Vericiguat', strength: 10, freq: 'qd' }])] } },
+            { title: 'Adjunct-Source Vericiguat KCCQ And Side Effects', patient: hfref },
+            // H/ISDN
+            { title: 'Adjunct-Source A-HeFT Offered On RAAS And Beta-Blocker', patient: { ...hfref, race: 'Black' as const,
+                current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 20, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }]) } },
+            { title: 'Adjunct-Source A-HeFT Not Offered Without RAAS And Beta-Blocker', patient: { ...hfref, race: 'Black' as const, current_regimen: sglt } },
+            { title: 'Adjunct-Source A-HeFT Bonus Absent Without RAAS And Beta-Blocker', patient: { ...hfref, race: 'Black' as const, max_new_classes_per_visit: 0,
+                current_regimen: buildCurrentRegimen([{ name: 'Hydralazine/Isosorbide Dinitrate', strength: '37.5/20', freq: 'tid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Adjunct-Source A-HeFT Bonus Present On RAAS And Beta-Blocker', patient: { ...hfref, race: 'Black' as const, max_new_classes_per_visit: 0,
+                current_regimen: [...quad, ...buildCurrentRegimen([{ name: 'Hydralazine/Isosorbide Dinitrate', strength: '37.5/20', freq: 'tid' }])] } },
+            { title: 'Adjunct-Source H/ISDN Class 2b When RAAS Cannot Be Taken', patient: { ...hfref, potassium: 5.6, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Adjunct-Source H/ISDN Riociguat And Vardenafil Excluded', patient: { ...hfref, external_medications: new Set(['Riociguat', 'Vardenafil']), race: 'Black' as const,
+                current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 20, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }]) } },
+            { title: 'Adjunct-Source H/ISDN Side Effects Tachycardia Lupus Warning', patient: { ...hfref, race: 'Black' as const,
+                current_regimen: [...quad, ...buildCurrentRegimen([{ name: 'Hydralazine/Isosorbide Dinitrate', strength: '75/40', freq: 'tid' }])] } },
+            // IV iron
+            { title: 'Adjunct-Source IV Iron Not Added At LVEF 55', patient: { ...hfpef, bmi: 28, nyha_class: 'II' as const, ferritin: 60, tsat: 15, hemoglobin: 12 } },
+            { title: 'Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12', patient: { ...iron, hemoglobin: 12, volume_status: { dry_weight_kg: 85, current_weight_kg: 85.5, exam_findings: new Set<string>() } } },
+            { title: 'Adjunct-Source IV Iron Dose 65 kg Hb 12', patient: { ...iron, hemoglobin: 12, volume_status: { dry_weight_kg: 65, current_weight_kg: 65.5, exam_findings: new Set<string>() } } },
+            { title: 'Adjunct-Source IV Iron Dose 65 kg Hb 9', patient: { ...iron, hemoglobin: 9, volume_status: { dry_weight_kg: 65, current_weight_kg: 65.5, exam_findings: new Set<string>() } } },
+            { title: 'Adjunct-Source IV Iron Dose 85 kg Hb 9', patient: { ...iron, hemoglobin: 9, volume_status: { dry_weight_kg: 85, current_weight_kg: 85.5, exam_findings: new Set<string>() } } },
+            { title: 'Adjunct-Source IV Iron Dose Hb 14.5 Is 500 mg', patient: { ...iron, hemoglobin: 14.5 } },
+            { title: 'Adjunct-Source IV Iron Held At Hb 15.5', patient: { ...iron, hemoglobin: 15.5 } },
+            { title: 'Adjunct-Source IV Iron Hemoglobin Not Entered Both Bands', patient: iron },
+            { title: 'Adjunct-Source IV Iron Limited Evidence LVEF 45', patient: { ...iron, lvef: 45, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFmrEF']) } },
+            { title: 'Adjunct-Source IV Iron Price Amortized Per Course', patient: iron },
         ];
     })(),
 ];
