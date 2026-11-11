@@ -22,7 +22,7 @@ import { getDrugPrices } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
 
-const ADDITIVE_KEYS = new Set<string>(['score_breakdown', 'rule_id', 'rule_name', 'facts', 'care_priority']);
+const ADDITIVE_KEYS = new Set<string>(['score_breakdown', 'rule_id', 'rule_name', 'facts', 'care_priority', 'why', 'contraindication_checks']);
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const SNAPSHOT = join(here, '..', 'data', 'golden', 'engine-output.json.gz');

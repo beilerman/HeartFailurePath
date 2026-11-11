@@ -2419,6 +2419,54 @@ async function runVerification() {
         }
     }
 
+    console.log('Checking structural invariant: contraindication checks are the single source of each drug\'s boolean...');
+    {
+        const ciViolations: string[] = [];
+        const withCi = MEDICATION_FORMULARY.filter(m => m.contraindications);
+        for (const m of withCi) {
+            const checks = m.contraindication_checks;
+            if (!checks || checks.length === 0) { ciViolations.push(`${m.name}: contraindications without contraindication_checks`); continue; }
+            const reasons = checks.map(c => c.reason);
+            if (reasons.some(r => !r || !r.trim())) ciViolations.push(`${m.name}: empty reason`);
+            if (new Set(reasons).size !== reasons.length) ciViolations.push(`${m.name}: duplicate reason within entry`);
+            for (const s of SCENARIOS) {
+                if (m.contraindications!(s.patient) !== checks.some(c => c.when(s.patient))) {
+                    ciViolations.push(`${m.name}: boolean differs from checks for scenario "${s.title}"`);
+                }
+            }
+        }
+        if (ciViolations.length > 0) {
+            ciViolations.forEach(v => console.error(`  [FAIL] ${v}`));
+            failed++;
+        } else {
+            console.log(`  [PASS] ${withCi.length} entries: checks non-empty, reasons unique, boolean === checks.some over ${SCENARIOS.length} scenarios.`);
+            passed++;
+        }
+    }
+
+    console.log('Checking structural invariant: every E13 exclusion carries at least one why-detail...');
+    {
+        const e13Missing: string[] = [];
+        let e13Count = 0;
+        for (const s of SCENARIOS) {
+            const prices = await getDrugPrices(formularyNames, s.patient.insurance_tier);
+            const { excludedMedications } = generateAndScoreModifications(s.patient, availableMedNames, prices);
+            for (const e of excludedMedications) {
+                if (e.rule_id !== 'E13') continue;
+                e13Count++;
+                if (!e.why || e.why.length === 0) e13Missing.push(`${s.title}: ${e.name}`);
+            }
+        }
+        if (e13Missing.length > 0 || e13Count === 0) {
+            e13Missing.forEach(v => console.error(`  [FAIL] E13 without details: ${v}`));
+            if (e13Count === 0) console.error('  [FAIL] no E13 exclusions found across scenarios (check is vacuous)');
+            failed++;
+        } else {
+            console.log(`  [PASS] all ${e13Count} E13 exclusions across scenarios have details.`);
+            passed++;
+        }
+    }
+
     console.log(`\nVerification Complete.`);
     console.log(`Passed: ${passed}`);
     console.log(`Failed: ${failed}`);

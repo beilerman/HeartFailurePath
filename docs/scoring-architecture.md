@@ -45,6 +45,11 @@ exclusion carries that rule's id and name.
 | E13 | Clinical contraindication (the drug's own `contraindications(patient)`) |
 | E14 | Renal dosing contraindication |
 
+Explanations: a rule may carry an optional `details(ctx, med)` that returns specifics; the filter
+stores them in the additive `ExcludedMedication.why` (E13 lists each contraindication check that fired,
+via `contraindicationReasons`; E12 names the blank renal value; E14 gives the eGFR). They never affect
+the decision and are in `ADDITIVE_KEYS` for the golden master.
+
 Order matters in two places: E12 must precede E13 (a blank-renal trip is labelled "renal data
 required", not "contraindicated"), and E10/E11 ignore a current MRA that is being forced off.
 

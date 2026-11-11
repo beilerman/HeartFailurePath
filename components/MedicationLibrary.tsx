@@ -108,6 +108,16 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                         {Object.keys(sideEffects).length === 0 && <span className="text-xs text-slate-400 italic">Generally well tolerated</span>}
                     </div>
                 </div>
+
+                {/* Not offered when (contraindication checks) */}
+                {med.contraindication_checks && med.contraindication_checks.length > 0 && (
+                    <div>
+                        <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Not offered when</h4>
+                        <ul className="list-disc pl-4 text-xs text-slate-600 space-y-0.5">
+                            {med.contraindication_checks.map((c, i) => <li key={i}>{c.reason}</li>)}
+                        </ul>
+                    </div>
+                )}
             </div>
         </div>
     );

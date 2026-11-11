@@ -9,7 +9,15 @@ facts, adding it is a data change and no engine edit. Written 2026-11-10 (alignm
    `name` (exact string; scenarios and allergies match on it), `drug_class`, `available_doses`
    (mark the guideline target with `is_target_dose: true`), `chf_effects(dose)`,
    `hemodynamic_effects(dose)`, `side_effects(dose)`.
-   Optional: `renal_adjustment`, `contraindications(patient)`, `special_features`.
+   Optional: `renal_adjustment`, `contraindications`, `special_features`.
+   Contraindications are a LIST OF CHECKS, each with a plain-clinical `reason`:
+   `...ci([ { reason: 'Potassium above 5.5 mEq/L', when: p => p.potassium > 5.5 }, ... ])`
+   (helper and shared checks such as `CI_ANGIOEDEMA` / `pregnancyCheck()` in
+   `services/engine/contraindications.ts`). The boolean the engine calls is derived from the checks
+   (`some(c => c.when(p))`), so reasons cannot drift from the decision. One check per OR-term, in
+   order; state only what the code or its comment supports. The reasons feed the E13 "Why:" list
+   (`ExcludedMedication.why`) and the formulary tab's "Not offered when" list. verify enforces
+   non-empty, unique reasons and boolean parity.
 2. **Facts the engine asks about** (all optional):
    - `facts: { ... }` (plain data) holds:
      `nonselective_beta_blocker` (withheld after bronchospasm), `beta1_selective` and

@@ -25,6 +25,7 @@ import {
     type IntolerancePolicy,
 } from './intolerance';
 import { drugFacts } from './drugFacts';
+import { contraindicationReasons } from './contraindications';
 
 /** Everything the rules need, computed once per patient (not per drug). */
 export interface EligibilityContext {
@@ -53,6 +54,8 @@ export interface EligibilityRule {
     summary: string;
     /** Returns the exclusion reason string, or null when the rule does not exclude this drug. */
     evaluate(ctx: EligibilityContext, med: Medication): string | null;
+    /** Optional explanation-only specifics (which findings tripped the rule). Never affects the decision. */
+    details?(ctx: EligibilityContext, med: Medication): string[];
     /** Entry is already in the seeded exclusion list; the filter must not push it again. */
     seeded?: true;
 }
@@ -169,12 +172,16 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         evaluate: (ctx, med) => med.contraindications && med.contraindications(ctx.patient)
             && ctx.renalDataUnknown && isRenalOnlyContraindication(med, ctx.patient)
             ? 'Renal data required — cannot assess renal safety (obtain BMP before initiation)' : null,
+        details: (_ctx, med) => [
+            `eGFR is blank (not entered): ${med.name} has a renal-gated contraindication that cannot be assessed without it — obtain a BMP first`,
+        ],
     },
     {
         id: 'E13', name: 'Clinical contraindication',
         summary: 'The drug\'s own contraindication check (pregnancy, potassium, heart rate, interactions, renal cutoffs...) fails for this patient.',
         evaluate: (ctx, med) => med.contraindications && med.contraindications(ctx.patient)
             ? 'Clinical Contraindication' : null,
+        details: (ctx, med) => contraindicationReasons(med, ctx.patient),
     },
     {
         id: 'E14', name: 'Renal dose-adjustment contraindication',
@@ -182,6 +189,9 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         evaluate: (ctx, med) => !ctx.renalDataUnknown && med.renal_adjustment
             && med.renal_adjustment(ctx.patient.egfr, ctx.patient).contraindicated === true
             ? 'Renal Contraindication (eGFR below labeled threshold)' : null,
+        details: (ctx, med) => [
+            `eGFR ${ctx.patient.egfr}: the renal dosing table for ${med.name} marks this level as contraindicated`,
+        ],
     },
 ];
 
@@ -210,7 +220,11 @@ export function filterEligibleMedications(
             const reason = rule.evaluate(ctx, m);
             if (reason === null) continue;
             if (!rule.seeded) {
-                excludedMeds.push({ name: m.name, drug_class: m.drug_class, reason, rule_id: rule.id, rule_name: rule.name });
+                const details = rule.details?.(ctx, m);
+                excludedMeds.push({
+                    name: m.name, drug_class: m.drug_class, reason, rule_id: rule.id, rule_name: rule.name,
+                    ...(details && details.length > 0 ? { why: details } : {}),
+                });
             }
             return false;
         }

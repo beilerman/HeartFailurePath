@@ -1,5 +1,6 @@
 
 import { Medication, Patient } from './types';
+import { ci, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_LIVER_CHILD_PUGH_BC, CI_PULSE_LT_55, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck } from './services/engine/contraindications';
 import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace } from './services/clinicalPredicates';
 
 // Helper for logarithmic calculations (dose-response curves)
@@ -102,7 +103,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
             return { sbp_drop: 6 + (level * 2), hr_drop: 0, potassium_change: 0.15 };
         },
         side_effects: () => ({ hypotension: 0.15, angioedema: 0.005, hyperkalemia: 0.05 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || (p.potassium > 5.4) || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis") || p.comorbidities.has("Liver Disease (Child-Pugh B/C)"), // Higher cutoff due to binder logic; Category X; bilateral RAS = absolute CI; sacubitril AUC ~1.5-2x in Child-Pugh B/C (Entresto PI)
+        ...ci([
+            CI_ANGIOEDEMA,
+            CI_POTASSIUM_GT_5_4, // Higher cutoff due to binder logic
+            pregnancyCheck('Category X'), // Category X
+            CI_BILATERAL_RAS, // bilateral RAS = absolute CI
+            { reason: 'Liver disease, Child-Pugh B/C (sacubitril exposure roughly 1.5-2x)', when: p => p.comorbidities.has("Liver Disease (Child-Pugh B/C)") }, // sacubitril AUC ~1.5-2x in Child-Pugh B/C (Entresto PI)
+        ]),
         renal_adjustment: (egfr) => egfr < 30 ? { start_dose_modifier: 0.5, caution: true } : {},
     },
     {
@@ -130,7 +137,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose)/5, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
+        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 10, caution: true };
             if (egfr < 45) return { max_dose: 20, caution: true };
@@ -161,7 +168,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 5, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
+        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 5, caution: true }; // More conservative than Lisinopril (BID dosing)
             if (egfr < 45) return { max_dose: 10, caution: true };
@@ -192,7 +199,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 2, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.10, hypotension: 0.08, hyperkalemia: 0.06, angioedema: 0.01 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
+        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 2.5, caution: true };
             if (egfr < 45) return { max_dose: 5, caution: true };
@@ -222,7 +229,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose) / 10, hr_drop: 0, potassium_change: 0.20 }),
         side_effects: () => ({ cough: 0.12, hypotension: 0.10, hyperkalemia: 0.06, angioedema: 0.01, taste_disturbance: 0.05 }),
-        contraindications: (p) => p.comorbidities.has("History of Angioedema") || p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
+        ...ci([CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 6.25, caution: true };
             if (egfr < 45) return { max_dose: 25, caution: true };
@@ -253,7 +260,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 30, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.06, hyperkalemia: 0.04, dizziness: 0.05 }),
-        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
+        ...ci([CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 80, caution: true };
             return {};
@@ -284,7 +291,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 6, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.05, hyperkalemia: 0.04 }),
-        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
+        ...ci([CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 8, caution: true };
             return {};
@@ -315,7 +322,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose)/25, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.05, hyperkalemia: 0.04 }),
-        contraindications: (p) => p.potassium > 5.4 || (p.is_pregnant === true) || p.comorbidities.has("Bilateral Renal Artery Stenosis"),
+        ...ci([CI_POTASSIUM_GT_5_4, pregnancyCheck(), CI_BILATERAL_RAS]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 50, caution: true };
             return {};
@@ -356,13 +363,14 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose)/5, hr_drop: 8 + Number(dose)/3, potassium_change: 0.05 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.15, hypotension: 0.10, fluid_retention_transient: 0.05 }),
-        contraindications: (p) =>
-            p.pulse < 55 ||
-            p.rhythm === '2nd Degree AV Block' ||
-            p.rhythm === '3rd Degree AV Block' ||
-            p.comorbidities.has("Severe Asthma / Bronchospasm") ||
-            p.comorbidities.has("Asthma (Mild/Moderate)") || // Non-selective β: avoid in ANY asthma; use β1-selective instead
-            p.comorbidities.has("Liver Disease (Child-Pugh B/C)"),
+        ...ci([
+            CI_PULSE_LT_55,
+            CI_AV_BLOCK_2,
+            CI_AV_BLOCK_3,
+            CI_SEVERE_ASTHMA,
+            { reason: 'Mild/moderate asthma (non-selective beta-blocker; use a beta-1-selective agent instead)', when: p => p.comorbidities.has("Asthma (Mild/Moderate)") }, // Non-selective β: avoid in ANY asthma; use β1-selective instead
+            CI_LIVER_CHILD_PUGH_BC,
+        ]),
         // COPERNICUS: 50mg BID target only for patients > 85kg; standard target is 25mg BID
         renal_adjustment: (_egfr, patient) => {
             const dryWeight = patient?.volume_status?.dry_weight_kg ?? 85;
@@ -398,12 +406,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/50, hr_drop: 8 + Number(dose)/20, potassium_change: 0 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.10 }),
-        contraindications: (p) =>
-            p.pulse < 55 ||
-            p.rhythm === '2nd Degree AV Block' ||
-            p.rhythm === '3rd Degree AV Block' ||
-            p.comorbidities.has("Severe Asthma / Bronchospasm") ||
-            p.comorbidities.has("Liver Disease (Child-Pugh B/C)"), // CYP2D6 metabolized; increased exposure in cirrhosis
+        ...ci([
+            CI_PULSE_LT_55,
+            CI_AV_BLOCK_2,
+            CI_AV_BLOCK_3,
+            CI_SEVERE_ASTHMA,
+            { reason: 'Liver disease, Child-Pugh B/C (CYP2D6 metabolized; increased exposure in cirrhosis)', when: p => p.comorbidities.has("Liver Disease (Child-Pugh B/C)") }, // CYP2D6 metabolized; increased exposure in cirrhosis
+        ]),
     },
 
     {
@@ -432,11 +441,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/5, hr_drop: 8 + Number(dose)/1.5, potassium_change: 0 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.08 }),
-        contraindications: (p) =>
-            p.pulse < 55 ||
-            p.rhythm === '2nd Degree AV Block' ||
-            p.rhythm === '3rd Degree AV Block' ||
-            p.comorbidities.has("Severe Asthma / Bronchospasm"), // All BBs CI in severe asthma (ACC/AHA); cardioselectivity lost at higher doses
+        ...ci([
+            CI_PULSE_LT_55,
+            CI_AV_BLOCK_2,
+            CI_AV_BLOCK_3,
+            { reason: 'Severe asthma / bronchospasm (all beta-blockers; cardioselectivity lost at higher doses)', when: p => p.comorbidities.has("Severe Asthma / Bronchospasm") }, // All BBs CI in severe asthma (ACC/AHA); cardioselectivity lost at higher doses
+        ]),
         // Most beta-1 selective — preferred BB in COPD and mild/moderate asthma (SEVERE asthma remains an absolute CI for all BBs)
         special_features: [
             { feature: 'Preferred in COPD / mild-moderate asthma (most beta-1 selective)', points: 10, criteria: (p) => p.comorbidities.has("COPD") || p.comorbidities.has("Asthma (Mild/Moderate)") }
@@ -472,7 +482,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/10, hr_drop: 0, potassium_change: 0.4 + (Number(dose)/50 * 0.4) }),
         side_effects: () => ({ hyperkalemia: 0.15, gynecomastia: 0.10, renal_worsening: 0.05 }),
-        contraindications: (p) => p.potassium > 5.5 || p.egfr < 30 || (p.is_pregnant === true), // Relaxed from 5.2 → 5.5 to allow Patiromer rescue (DIAMOND); pregnancy Category X
+        ...ci([
+            { reason: 'Potassium above 5.5 mEq/L', when: p => p.potassium > 5.5 }, // Relaxed from 5.2 → 5.5 to allow Patiromer rescue (DIAMOND)
+            { reason: 'eGFR below 30', when: p => p.egfr < 30 },
+            pregnancyCheck('Category X'), // pregnancy Category X
+        ]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { contraindicated: true };
             if (egfr <= 45) return { max_dose: 25, caution: true };
@@ -514,7 +528,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // MRA above multi-pillar GDMT. (Cf. spironolactone's TOPCAT outcome feature at 18 pts.)
             { feature: 'Fewer endocrine side effects (No gynecomastia risk)', points: 3, criteria: (p) => p.sex === 'Male' }
         ],
-        contraindications: (p) => p.potassium > 5.5 || p.egfr < 30 || (p.is_pregnant === true), // Relaxed from 5.2 → 5.5; pregnancy Category X
+        ...ci([
+            { reason: 'Potassium above 5.5 mEq/L', when: p => p.potassium > 5.5 }, // Relaxed from 5.2 → 5.5
+            { reason: 'eGFR below 30', when: p => p.egfr < 30 },
+            pregnancyCheck('Category X'), // pregnancy Category X
+        ]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { contraindicated: true };
             if (egfr <= 45) return { max_dose: 25, caution: true };
@@ -559,11 +577,15 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 criteria: (p) => p.lvef >= 40
             }
         ],
-        contraindications: (p) => {
+        ...ci([
             // FINEARTS-HF enrolled LVEF ≥ 40 only; no evidence for HFrEF
             // HFimpEF (previous LVEF ≤ 40) is managed as HFrEF — use steroidal MRA instead
             // Liver Disease (Child-Pugh B/C): CYP3A4 substrate, reduced clearance in cirrhosis
-            const isHFimpEF = p.lvef > 40 && hasHistoricalHFrEF(p);
+            { reason: 'LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)', when: p => p.lvef < 40 },
+            { reason: 'HFimpEF (previous LVEF 40 or lower) is managed as HFrEF; use a steroidal MRA instead', when: p => p.lvef > 40 && hasHistoricalHFrEF(p) },
+            {
+                reason: 'On HFrEF therapy with no documented prior EF; managed as possible HFimpEF (initiation only)',
+                when: p => {
             // The UNKNOWN-history HFimpEF presumption (conservative: on RAAS/BB/MRA with no
             // documented prior EF → manage as possible HFimpEF) gates INITIATION only. A patient
             // already ON and tolerating finerenone must not have it force-removed on a mere
@@ -571,10 +593,14 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // steroidal alternatives (red-team probe 2). DOCUMENTED prior LVEF ≤ 40 (isHFimpEF)
             // still applies to continuation; K+/eGFR/pregnancy/hepatic safety gates always apply.
             const alreadyOnFinerenone = p.current_regimen?.some(r => r.med.drug_class === 'nsMRA');
-            const preserveHFrEF = !alreadyOnFinerenone && p.lvef > 40 && shouldPreserveHFrEFTherapyForUnknownHistory(p);
-            return p.lvef < 40 || isHFimpEF || preserveHFrEF || p.potassium > 5.5 || p.egfr < 25 || (p.is_pregnant === true)
-                || p.comorbidities.has('Liver Disease (Child-Pugh B/C)');
-        },
+            return !alreadyOnFinerenone && p.lvef > 40 && shouldPreserveHFrEFTherapyForUnknownHistory(p);
+                },
+            },
+            { reason: 'Potassium above 5.5 mEq/L', when: p => p.potassium > 5.5 },
+            { reason: 'eGFR below 25', when: p => p.egfr < 25 },
+            pregnancyCheck(),
+            { reason: 'Liver disease, Child-Pugh B/C (CYP3A4 substrate; reduced clearance in cirrhosis)', when: p => p.comorbidities.has('Liver Disease (Child-Pugh B/C)') },
+        ]),
         renal_adjustment: (egfr) => {
             // Kerendia HF dosing (FINEARTS-HF): target/max 20mg qd if eGFR 25-59, 40mg qd if
             // eGFR >= 60; contraindicated below 25. (The PI's 10mg/20mg START-dose
@@ -611,13 +637,15 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
             { feature: 'Preferred in Diabetics', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
         ],
-        contraindications: (p) => {
+        ...ci([
             // eGFR threshold applies to INITIATION only — continuation allowed (DAPA-CKD)
-            const alreadyOnSGLT2i = p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i');
-            const hasT1orDkaRisk = p.comorbidities.has("Type 1 Diabetes Mellitus") || p.comorbidities.has("Prior DKA / Euglycemic DKA");
-            if (alreadyOnSGLT2i) return p.is_pregnant === true || hasT1orDkaRisk;
-            return p.egfr < 25 || p.is_pregnant === true || hasT1orDkaRisk;
-        },
+            {
+                reason: 'eGFR below 25 — initiation not recommended',
+                when: p => !p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i') && p.egfr < 25,
+            },
+            pregnancyCheck(),
+            CI_TYPE1_OR_DKA,
+        ]),
     },
     {
         name: 'Empagliflozin',
@@ -640,13 +668,15 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
             { feature: 'Preferred in Diabetics', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
         ],
-        contraindications: (p) => {
+        ...ci([
             // eGFR threshold applies to INITIATION only — continuation allowed (EMPA-KIDNEY)
-            const alreadyOnSGLT2i = p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i');
-            const hasT1orDkaRisk = p.comorbidities.has("Type 1 Diabetes Mellitus") || p.comorbidities.has("Prior DKA / Euglycemic DKA");
-            if (alreadyOnSGLT2i) return p.is_pregnant === true || hasT1orDkaRisk;
-            return p.egfr < 25 || p.is_pregnant === true || hasT1orDkaRisk; // Harmonized with Dapagliflozin (ACC/AHA uniform eGFR >= 25 initiation)
-        },
+            {
+                reason: 'eGFR below 25 — initiation not recommended',
+                when: p => !p.current_regimen?.some(r => r.med.drug_class === 'SGLT2i') && p.egfr < 25, // Harmonized with Dapagliflozin (ACC/AHA uniform eGFR >= 25 initiation)
+            },
+            pregnancyCheck(),
+            CI_TYPE1_OR_DKA,
+        ]),
     },
 
     // ========================================
@@ -683,18 +713,18 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              { feature: 'Indicated for Obesity Phenotype (BMI > 30)', points: 50, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) => {
+        ...ci([
             // True safety gates — apply to initiation AND continuation:
-            const safetyCI = p.is_pregnant === true ||
-                p.comorbidities.has('Medullary Thyroid Carcinoma') ||
-                p.comorbidities.has('MEN2 Syndrome'); // FDA boxed warning: MTC/MEN2
+            pregnancyCheck(),
+            CI_MTC_MEN2, // FDA boxed warning: MTC/MEN2
             // BMI >= 30 is a STEP-HFpEF/SUMMIT enrollment (INITIATION) gate only — weight-loss
             // success on a GLP-1 must not force its removal (mirrors the SGLT2i alreadyOn* pattern).
-            const alreadyOnGlp1 = p.current_regimen?.some(r =>
-                r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA');
-            if (alreadyOnGlp1) return safetyCI;
-            return safetyCI || p.bmi < 30;
-        }
+            {
+                reason: 'BMI below 30 — initiation only (STEP-HFpEF/SUMMIT enrollment criterion)',
+                when: p => !p.current_regimen?.some(r =>
+                    r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.bmi < 30,
+            },
+        ]),
     },
     {
         name: 'Tirzepatide (Zepbound)',
@@ -726,18 +756,18 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              { feature: 'Superior Weight Loss & KCCQ Benefit (SUMMIT)', points: 60, criteria: (p) => p.bmi >= 30 }
         ],
-        contraindications: (p) => {
+        ...ci([
             // True safety gates — apply to initiation AND continuation:
-            const safetyCI = p.is_pregnant === true ||
-                p.comorbidities.has('Medullary Thyroid Carcinoma') ||
-                p.comorbidities.has('MEN2 Syndrome'); // FDA boxed warning: MTC/MEN2
+            pregnancyCheck(),
+            CI_MTC_MEN2, // FDA boxed warning: MTC/MEN2
             // BMI >= 30 is a STEP-HFpEF/SUMMIT enrollment (INITIATION) gate only — weight-loss
             // success on a GLP-1 must not force its removal (mirrors the SGLT2i alreadyOn* pattern).
-            const alreadyOnGlp1 = p.current_regimen?.some(r =>
-                r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA');
-            if (alreadyOnGlp1) return safetyCI;
-            return safetyCI || p.bmi < 30;
-        }
+            {
+                reason: 'BMI below 30 — initiation only (STEP-HFpEF/SUMMIT enrollment criterion)',
+                when: p => !p.current_regimen?.some(r =>
+                    r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.bmi < 30,
+            },
+        ]),
     },
 
     // ========================================
@@ -827,20 +857,34 @@ export const MEDICATION_FORMULARY: Medication[] = [
             { feature: 'On-body infusor complexity burden', points: -8, criteria: (p) => p.complexity_tolerance <= 4 }
         ],
         side_effects: () => ({ hypokalemia: 0.22, renal_worsening: 0.12, hypotension: 0.06, infusion_site_reaction: 0.12 }),
-        contraindications: (p) => {
-            const fluidExcess = p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg;
-            const hasBaselineLoop = (p.current_regimen || []).some(r => r.med.drug_class === 'Loop Diuretic');
-            const hasEscalationContext = hasBaselineLoop || fluidExcess >= 3.0;
-            const allergyTerms = Array.from(p.allergies || []).map(a => a.toLowerCase());
-            const hasFurosemideHypersensitivity = allergyTerms.some(term =>
-                term.includes('furosemide') || term.includes('furoscix') || term.includes('loop diuretic')
-            );
-            const hasAdhesiveHypersensitivity = allergyTerms.some(term =>
-                term.includes('adhesive') || term.includes('acrylate')
-            );
+        ...ci([
             // Reserve for active congestion episodes, reflecting outpatient worsening-HF evidence and label contraindications.
-            return fluidExcess < 1.0 || !hasEscalationContext || p.egfr < 15 || hasFurosemideHypersensitivity || hasAdhesiveHypersensitivity;
-        },
+            {
+                reason: 'Less than 1 kg above dry weight (reserved for active congestion)',
+                when: p => (p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg) < 1.0,
+            },
+            {
+                reason: 'No escalation context (no baseline loop diuretic and under 3 kg above dry weight)',
+                when: p => {
+                    const fluidExcess = p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg;
+                    const hasBaselineLoop = (p.current_regimen || []).some(r => r.med.drug_class === 'Loop Diuretic');
+                    return !(hasBaselineLoop || fluidExcess >= 3.0);
+                },
+            },
+            { reason: 'eGFR below 15', when: p => p.egfr < 15 },
+            {
+                reason: 'Documented furosemide / loop diuretic hypersensitivity',
+                when: p => Array.from(p.allergies || []).map(a => a.toLowerCase()).some(term =>
+                    term.includes('furosemide') || term.includes('furoscix') || term.includes('loop diuretic')
+                ),
+            },
+            {
+                reason: 'Documented adhesive / acrylate hypersensitivity',
+                when: p => Array.from(p.allergies || []).map(a => a.toLowerCase()).some(term =>
+                    term.includes('adhesive') || term.includes('acrylate')
+                ),
+            },
+        ]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { caution: true };
             return {};
@@ -944,13 +988,18 @@ export const MEDICATION_FORMULARY: Medication[] = [
             };
         },
         hemodynamic_effects: () => ({ sbp_drop: 10, hr_drop: 0, potassium_change: 0 }),
-        contraindications: (p) => {
+        ...ci([
             // Absolute CI: nitrate + PDE5 inhibitor → profound/potentially fatal hypotension (FDA label).
             // Confirmed exposure is a hard gate; suspected exposure (pulmonary HTN without a
             // documented PDE5i) remains a caution warning in the engine.
-            const ext = p.external_medications || new Set<string>();
-            return ext.has('Sildenafil') || ext.has('Tadalafil');
-        },
+            {
+                reason: 'Concurrent PDE5 inhibitor (sildenafil / tadalafil) — nitrate co-use risks profound, potentially fatal hypotension',
+                when: p => {
+                    const ext = p.external_medications || new Set<string>();
+                    return ext.has('Sildenafil') || ext.has('Tadalafil');
+                },
+            },
+        ]),
         special_features: [
             { feature: 'Significant benefit in African American patients (A-HeFT)', points: 30, criteria: isBlackRace }
         ],
@@ -973,17 +1022,24 @@ export const MEDICATION_FORMULARY: Medication[] = [
             lvedd_reduction_percent: 0.02 // SHIFT
         }),
         hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 12, potassium_change: 0 }),
-        contraindications: (p) => {
+        ...ci([
             // Pregnancy: Corlanor labeling — may cause fetal harm (animal embryo-fetal toxicity);
             // applies to initiation AND continuation.
-            if (p.is_pregnant === true) return true;
+            pregnancyCheck('may cause fetal harm'),
             // Initiation gate: HR >= 70 required (SHIFT trial enrollment)
             // Continuation: only discontinue if HR < 50 (actual safety threshold)
-            const alreadyOnIvabradine = p.current_regimen?.some(r => r.med.drug_class === 'If Inhibitor');
-            const hasAvBlock = p.rhythm === '2nd Degree AV Block' || p.rhythm === '3rd Degree AV Block';
-            if (alreadyOnIvabradine) return p.pulse < 50 || p.rhythm === 'AFib' || hasAvBlock;
-            return p.pulse < 70 || p.rhythm === 'AFib' || hasAvBlock;
-        },
+            {
+                reason: 'Heart rate below 70 bpm — initiation requires HR 70 or higher (SHIFT)',
+                when: p => !p.current_regimen?.some(r => r.med.drug_class === 'If Inhibitor') && p.pulse < 70,
+            },
+            {
+                reason: 'Heart rate below 50 bpm on ivabradine',
+                when: p => !!p.current_regimen?.some(r => r.med.drug_class === 'If Inhibitor') && p.pulse < 50,
+            },
+            { reason: 'Atrial fibrillation', when: p => p.rhythm === 'AFib' },
+            CI_AV_BLOCK_2,
+            CI_AV_BLOCK_3,
+        ]),
         special_features: [
             {
                 feature: 'SHIFT: Reduces HF hospitalization (HR >= 70 on max BB, Class IIa)',
@@ -1016,21 +1072,35 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 1.5 + Number(dose) / 10 * 2.5, hr_drop: 0, potassium_change: 0 }),
         side_effects: () => ({ hypotension: 0.10, anemia: 0.05 }),
-        contraindications: (p) => {
+        ...ci([
             // Pregnancy: FDA BOXED WARNING — embryo-fetal toxicity ("Do not administer to a
             // pregnant female"); applies to initiation AND continuation.
-            if (p.is_pregnant === true) return true;
+            pregnancyCheck('FDA boxed warning, embryo-fetal toxicity'),
             // Continuation carve-out: the VICTORIA criteria below (NT-proBNP >= 1600, NYHA II-IV,
             // recent worsening, LVEF < 45) are trial ENROLLMENT gates for INITIATION only.
             // A patient already on vericiguat whose NT-proBNP improved or whose worsening event
             // aged past 6 months is showing treatment response — that must not force removal
             // (mirrors the SGLT2i alreadyOn* continuation pattern).
-            const alreadyOnVericiguat = p.current_regimen?.some(r => r.med.drug_class === 'sGC Stimulator');
-            if (alreadyOnVericiguat) return false;
-            const nyhaEligible = p.nyha_class === 'II' || p.nyha_class === 'III' || p.nyha_class === 'IV';
-            const hasRequiredWorseningEvent = p.recent_hf_worsening_within_6mo === 'yes';
-            return !nyhaEligible || p.lvef >= 45 || !p.nt_pro_bnp || p.nt_pro_bnp < 1600 || !hasRequiredWorseningEvent;
-        },
+            {
+                reason: 'NYHA class not II-IV — initiation criterion (VICTORIA)',
+                when: p => !p.current_regimen?.some(r => r.med.drug_class === 'sGC Stimulator')
+                    && !(p.nyha_class === 'II' || p.nyha_class === 'III' || p.nyha_class === 'IV'),
+            },
+            {
+                reason: 'LVEF 45 or higher — initiation criterion (VICTORIA)',
+                when: p => !p.current_regimen?.some(r => r.med.drug_class === 'sGC Stimulator') && p.lvef >= 45,
+            },
+            {
+                reason: 'NT-proBNP missing or below 1600 pg/mL — initiation criterion (VICTORIA)',
+                when: p => !p.current_regimen?.some(r => r.med.drug_class === 'sGC Stimulator')
+                    && (!p.nt_pro_bnp || p.nt_pro_bnp < 1600),
+            },
+            {
+                reason: 'No recent worsening-HF event within 6 months — initiation criterion (VICTORIA)',
+                when: p => !p.current_regimen?.some(r => r.med.drug_class === 'sGC Stimulator')
+                    && !(p.recent_hf_worsening_within_6mo === 'yes'),
+            },
+        ]),
     },
     {
         name: 'Patiromer',
@@ -1117,15 +1187,18 @@ export const MEDICATION_FORMULARY: Medication[] = [
         }),
         hemodynamic_effects: (dose) => ({ sbp_drop: 0, hr_drop: Number(dose) >= 125 ? 8 : 4, potassium_change: 0 }),
         side_effects: () => ({ nausea: 0.10, visual_disturbances: 0.05, arrhythmia: 0.05 }),
-        contraindications: (p) => {
+        ...ci([
             // K+ > 5.5: Hyperkalemia potentiates digitalis toxicity (shifts binding, arrhythmia risk)
             // eGFR < 15: End-stage renal without dialysis monitoring — accumulation risk too high
             // (eGFR 15-30 handled by renal_adjustment dose cap to 62.5mcg)
-            const hasAvBlock = p.rhythm === '2nd Degree AV Block' || p.rhythm === '3rd Degree AV Block';
+            { reason: 'Potassium above 5.5 mEq/L (hyperkalemia potentiates digitalis toxicity)', when: p => p.potassium > 5.5 },
             // (p.potassium > 0 guard: blank/unentered K+ is stored as 0 and must not read as
             // hypokalemia — the engine's POTASSIUM UNKNOWN pathway governs that case.)
-            return p.potassium > 5.5 || (p.potassium > 0 && p.potassium < 3.5) || p.egfr < 15 || hasAvBlock;
-        },
+            { reason: 'Potassium below 3.5 mEq/L', when: p => (p.potassium > 0 && p.potassium < 3.5) },
+            { reason: 'eGFR below 15 (end-stage renal without dialysis monitoring; accumulation risk)', when: p => p.egfr < 15 },
+            CI_AV_BLOCK_2,
+            CI_AV_BLOCK_3,
+        ]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { max_dose: 62.5, caution: true }; // Half-dose; target level 0.5-0.9 ng/mL
             return {};
@@ -1151,7 +1224,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         }),
         hemodynamic_effects: () => ({ sbp_drop: 5, hr_drop: 0, potassium_change: -0.5 }),
         side_effects: () => ({ severe_hypokalemia: 0.30, dehydration: 0.20 }),
-        contraindications: (p) => p.egfr < 15, // Anuria/ESRD — no tubular function for thiazide mechanism
+        ...ci([{ reason: 'eGFR below 15 (anuria/ESRD; no tubular function for the thiazide mechanism)', when: p => p.egfr < 15 }]), // Anuria/ESRD — no tubular function for thiazide mechanism
     },
     {
         name: 'Chlorthalidone',
@@ -1175,7 +1248,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 10, hr_drop: 0, potassium_change: -0.4 - (Number(dose) / 25 * 0.1) }),
         side_effects: () => ({ severe_hypokalemia: 0.25, dehydration: 0.15, hyponatremia: 0.10 }),
-        contraindications: (p) => p.egfr < 15, // Anuria/ESRD
+        ...ci([{ reason: 'eGFR below 15 (anuria/ESRD)', when: p => p.egfr < 15 }]), // Anuria/ESRD
     },
     {
         name: 'Hydrochlorothiazide',
@@ -1199,7 +1272,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose) / 15, hr_drop: 0, potassium_change: -0.3 - (Number(dose) / 50 * 0.1) }),
         side_effects: () => ({ hypokalemia: 0.20, dehydration: 0.10, hyponatremia: 0.08 }),
-        contraindications: (p) => p.egfr < 30, // Ineffective at eGFR < 30 (unlike metolazone/chlorthalidone)
+        ...ci([{ reason: 'eGFR below 30 (ineffective at this level, unlike metolazone/chlorthalidone)', when: p => p.egfr < 30 }]), // Ineffective at eGFR < 30 (unlike metolazone/chlorthalidone)
     }
 ];
 

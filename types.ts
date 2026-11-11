@@ -1,6 +1,12 @@
 import type { ScoreBreakdown, WeightProfileName } from './services/engine/scoreModel';
 export type InsuranceTier = 'cash' | 'commercial' | 'medicare';
 
+/** One disqualifying condition for a formulary drug: a plain-clinical reason and the predicate that decides it. */
+export interface ContraindicationCheck {
+    reason: string;
+    when: (patient: Patient) => boolean;
+}
+
 export interface ExcludedMedication {
     name: string;
     drug_class: string;
@@ -10,6 +16,8 @@ export interface ExcludedMedication {
     /** Eligibility rule that withheld this drug (services/engine/eligibility.ts); set by the engine. */
     rule_id?: string;
     rule_name?: string;
+    /** Explanation-only (the `details` name is taken by followUpCalendar): which specific findings tripped the rule (e.g. each E13 contraindication that fired). */
+    why?: string[];
 }
 
 export interface VolumeStatus {
@@ -123,7 +131,10 @@ export interface Medication {
 
     side_effects: (dose: number | string) => { [key: string]: number }; // Risk probability 0-1
     renal_adjustment?: (egfr: number, patient?: Patient) => { start_dose_modifier?: number; max_dose?: number; caution?: boolean, contraindicated?: boolean };
+    /** The function the engine calls. Derived from `contraindication_checks` via `ci()` (services/engine/contraindications.ts). */
     contraindications?: (patient: Patient) => boolean;
+    /** Human-readable "not offered when" checks; `contraindications` is exactly `checks.some(c => c.when(p))`. */
+    contraindication_checks?: ContraindicationCheck[];
     special_features?: { feature: string; points: number; criteria: (p: Patient) => boolean }[];
     is_best_in_class?: boolean;
 

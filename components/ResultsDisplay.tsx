@@ -324,6 +324,14 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                                     </p>
                                 )}
                                 {med.reason.trim().toLowerCase() !== (med.rule_name ?? "").trim().toLowerCase() && <p className="text-xs text-slate-600 italic leading-snug">{med.reason}</p>}
+                                {med.why && med.why.length > 0 && (
+                                    <div className="mt-1.5 text-xs text-slate-700 leading-snug">
+                                        <span className="font-semibold">Why:</span>
+                                        <ul className="list-disc pl-4 mt-0.5">
+                                            {med.why.map((d, j) => <li key={j}>{d}</li>)}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>
