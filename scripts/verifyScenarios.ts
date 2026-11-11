@@ -208,12 +208,17 @@ async function runVerification() {
                 }
             }
 
-            // GLOBAL STRUCTURAL INVARIANT (no RAAS new start above its starting tier): every add or swap-in of an
+            // GLOBAL STRUCTURAL INVARIANT (no new start above its starting tier; beta-blockers must declare one): every add or swap-in of an
             // ARNI / ACEi / ARB in any displayed option must be at or below the start dose its entry declares
             // (verified-raas.md S1: "never add at 97/103"; label start doses for the ACEi/ARB).
             for (const r of scoredRegimens) {
                 for (const m of r.modification_set?.modifications ?? []) {
-                    if (!(m.action === 'add' || m.action === 'swap') || !m.target || !RAAS_CLASSES.has(m.target.med.drug_class)) continue;
+                    if (!m.target) continue;
+                    const isRaas = RAAS_CLASSES.has(m.target.med.drug_class);
+                    // RAAS: adds and swap-ins. Every other drug that declares a start dose (beta-blockers, MRAs,
+                    // H/ISDN, GLP-1, ...): new adds only — a within-class swap may carry an equivalent dose across.
+                    const checked = isRaas ? (m.action === 'add' || m.action === 'swap') : (m.action === 'add' && (!!m.target.med.start_dose_for || m.target.med.drug_class === 'Beta Blocker'));
+                    if (!checked) continue;
                     raasStartsChecked++;
                     const med = m.target.med;
                     if (!med.start_dose_for) { raasStartViolations.push(`${med.name} declares no start_dose_for`); continue; }

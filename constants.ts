@@ -475,6 +475,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Carvedilol',
         drug_class: 'Beta Blocker',
+        // Label (heart failure): start 3.125 mg twice daily; double no sooner than every 2 weeks.
+        start_dose_for: () => 3.125,
         facts: {
             nonselective_beta_blocker: true, hepatically_metabolized: true,
             // Coreg label sec 2.1 and 5.2: "reduce the dose if heart rate is less than 55 beats per minute" (sourced). No
@@ -534,6 +536,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Metoprolol Succinate',
         drug_class: 'Beta Blocker',
+        // Label (heart failure): start 25 mg daily in NYHA class II, 12.5 mg daily in more severe heart failure.
+        start_dose_for: (p) => (p.nyha_class === 'III' || p.nyha_class === 'IV' ? 12.5 : 25),
         facts: {
             beta1_selective: true, hepatically_metabolized: true,
             // Toprol-XL/generic label: "if patients experience symptomatic bradycardia, reduce the dose" (no number). Below 55 bpm as the
@@ -578,6 +582,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Bisoprolol',
         drug_class: 'Beta Blocker',
+        // CIBIS-II started at 1.25 mg; the lowest US tablet-derived tier here is 2.5 mg (half a scored 5 mg tablet).
+        start_dose_for: () => 2.5,
         facts: {
             beta1_selective: true, most_cardioselective: true,
             // The US label gives no heart-rate number ("marked sinus bradycardia" is a contraindication). Below 55 bpm as the reduction
@@ -697,6 +703,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Eplerenone',
         drug_class: 'MRA',
+        // Label (heart failure): start 25 mg daily.
+        start_dose_for: () => 25,
         // Inspra label (HF): K+ 5.5-5.9 decrease dose (withhold if already at the lowest dose), >= 6.0 withhold.
         // The old code removed at K+ > 5.5; the label rule starts at 5.5 inclusive (stricter), so it is used.
         facts: { k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Inspra label' } },
@@ -1317,6 +1325,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Hydralazine/Isosorbide Dinitrate',
         drug_class: 'Vasodilator',
+        // Label (BiDil): start one tablet (37.5/20 mg) three times daily.
+        start_dose_for: () => '37.5/20',
         facts: {
             regimen_warnings: [
                 { text: 'Drug note: hydralazine can cause a drug-induced lupus-like syndrome (dose- and acetylator-dependent) and peripheral neuritis (pyridoxine / vitamin B6 is used for prevention or treatment) (BiDil label). Ask about joint pain, fever, rash and numbness or tingling at each visit.' },
