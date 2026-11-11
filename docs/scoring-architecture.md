@@ -66,9 +66,23 @@ patient values. What a score of 100 means for each is in `DOMAIN_GOALS` (`domain
 | Patient values | Cost | 12% | Monthly out-of-pocket cost against the budget | `max_affordable_cost`, `cost_sensitivity` |
 | Patient values | Adherence | 7% | Regimen complexity against tolerance | `complexity_tolerance` |
 
-The weights are `WEIGHT_PROFILES.default` ("Balanced", `WEIGHT_PROFILE_META`) in `scoreModel.ts`;
-a structural invariant in `npm run verify` asserts every profile row covers all domains and sums
-to 1. Therapy completeness is a domain, not a bonus: its score is the fraction of achievable
+The weights above are the Balanced row of `WEIGHT_PROFILES` in `scoreModel.ts`. The clinician's
+answer to "What matters most to this patient?" (`patient.care_priority`) selects the row:
+
+| Profile | Neuro | Func | Vol | Struct | Guideline | Completeness | Cost | Adherence |
+|---|---|---|---|---|---|---|---|---|
+| Balanced (`default`) | 15 | 12 | 12 | 8 | 12 | 22 | 12 | 7 |
+| Maximize outcomes | 17 | 13 | 13 | 9 | 13 | 25 | 6 | 4 |
+| Keep cost low | 13 | 10 | 10 | 7 | 11 | 20 | 24 | 5 |
+| Keep the regimen simple | 13 | 10 | 10 | 7 | 11 | 20 | 10 | 19 |
+
+The profile changes only these eight weights. Exclusions, alerts, safety deductions, display floors
+and the budget filter are identical under every profile; `npm run verify` checks this for every
+scenario under every profile, and checks that each row sums to 100%. The non-default rows are a
+first calibration and have not been clinically reviewed. On the 105 scenarios they change the top
+pick in 2 (outcomes), 4 (cost) and 6 (simplicity) cases; "simple" can lead with SGLT2i alone.
+
+Therapy completeness is a domain, not a bonus: its score is the fraction of achievable
 indicated slots attained x 100. If a patient had no achievable slots the domain scores 0 (the
 breakdown line carries a note); across the 315 golden runs no scored candidate hit that case.
 
@@ -96,9 +110,12 @@ raw_score         = weighted_subtotal + Σ adjustment points + Σ raw-score over
 overall_score     = raw_score, clamped to 0-100 and rounded (then capped at 25 if low output)
 ```
 
-**Ranking** (`byScoreThenCost` in `selection.ts`): `raw_score` (unrounded, higher first), then
-cost (cheaper first). The same comparator orders the over-budget fallback. There is no rounded-score
-or completeness key; the old cascade existed only because good regimens piled up at the 100 clamp.
+**Ranking** (`byScoreThenCost` in `selection.ts`), also used for the over-budget fallback:
+
+1. Higher displayed score first.
+2. Same displayed whole-number score: the regimen covering more of the indicated therapy first, so
+   a fraction of a point never drops a guideline pillar from the lead regimen.
+3. Still tied: higher unrounded score, then the cheaper regimen.
 
 The UI shows this ledger under "How this score was calculated" on each recommendation card.
 
@@ -108,6 +125,9 @@ that are hidden by the display floor anyway.
 
 History: until 2026-11-10 the weights summed to 130% (completeness was a +30 bonus) and the result
 was clamped to 100. The model was rescaled by exactly 1/1.3, then rounded to the clean values above.
+Against the pre-change baseline, 309 of 315 top picks are unchanged and every exclusion, alert and
+warning is identical. Median top-pick score moved from 87 to 67 because the scale no longer has
+30 points of headroom; scores from before and after are not comparable.
 
 ## Drug knowledge lives on the formulary entry
 
