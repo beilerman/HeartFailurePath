@@ -125,8 +125,8 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
     },
     'Ivabradine': {
         cash: 58, commercial_copay: 30, medicare_copay: 45,
-        generic_available: false, has_copay_card: true, tier: 'preferred_brand',
-        notes: 'Amgen copay card; authorized generic available in some markets'
+        generic_available: true, has_copay_card: false, tier: 'generic',
+        notes: 'Generic ivabradine is on DailyMed from at least ten labelers (Novadoz, Northstar, Zydus, Alembic, Camber and others) besides brand Corlanor (Amgen, copay card). Figures unchanged: cash and launch prices were not verified.'
     },
     'Vericiguat': {
         cash: 650, commercial_copay: 10, medicare_copay: 170,

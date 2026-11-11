@@ -1,6 +1,7 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS } from '../services/simulationService';
 import { getDoseTiers } from '../services/engine/regimenUtils';
+import { simulateModificationEffect } from '../services/engine/effects';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
@@ -118,7 +119,8 @@ const ASSERTION_TITLE_MARKERS = [
     'HFpEF LVEF 60 No Fabricated Decline',
     'Dual MRA Unknown History Keeps nsMRA',
     'MRA-Source',
-    'RAAS-Source'
+    'RAAS-Source',
+    'Rate-Source'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -2292,6 +2294,216 @@ async function runVerification() {
                     if (withPat.length === 0) fail('Patiromer not used (check is vacuous)');
                     if (withPat.some(r => !(r.warnings ?? []).some(w => w.includes('3 hours')) || !(r.warnings ?? []).some(w => w.includes('bowel obstruction')))) fail('Patiromer regimen without the 3-hour spacing or GI caution');
                     if (withPat.some(r => !(r.monitoring_plan ?? []).some(m => m.test.includes('magnesium')))) fail('Patiromer regimen without the magnesium monitoring item');
+                }
+            }
+
+            // ===== Rate control source-verified corrections (verified-rate-control.md; labels: Coreg, metoprolol succinate ER, bisoprolol, Corlanor, Lanoxin; MOCHA, COMET, SHIFT, DIG) =====
+            if (scenario.title.includes('Rate-Source')) {
+                const excl = (name: string) => excludedMedications.find(e => e.name === name);
+                const whyText = (name: string) => (excl(name)?.why ?? []).join(' | ');
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const mods = scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => ({ r, m })));
+                const summaries = mods.map(x => x.m.summary);
+                const strengthsOf = (name: string) => scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.name === name).map(m => Number(m.dose.strength)));
+                const warningsOf = (name: string) => scoredRegimens.filter(r => r.regimen.some(m => m.med.name === name)).map(r => (r.warnings ?? []).join(' | '));
+                const adjunctSurfaced = (frag: string) => (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(frag));
+                const med = (n: string) => MEDICATION_FORMULARY.find(m => m.name === n)!;
+                const BETA_BLOCKERS = ['Carvedilol', 'Metoprolol Succinate', 'Bisoprolol'];
+                const anyBb = () => scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Beta Blocker'));
+                const bradyAlert = (name: string) => clinicalAlerts.find(a => a.startsWith(`BRADYCARDIA ON ${name}`));
+
+                // --- Beta-blockers: heart rate on established therapy is dose reduction, not removal ---
+                const oneStep = (name: string, from: number, to: number, hr: number) => {
+                    if (scoredRegimens.length === 0) fail(`No regimens at HR ${hr} on ${name} ${from} (check is vacuous)`);
+                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === name && Number(m.dose.strength) === to))) fail(`${name} ${from} at HR ${hr} must drop ONE step to ${to} in every option (not be removed, kept, or cut further)`);
+                    if (!summaries.some(x => x.startsWith(`Reduce ${name} ${from}→${to}`) && x.includes(`${hr} bpm`))) fail(`Reduction of ${name} does not state the heart rate ${hr}`);
+                    if (summaries.some(x => x.startsWith(`Remove ${name}`))) fail(`${name} removed at HR ${hr} (verified-rate-control.md: bradycardia on established therapy is a dose reduction, not removal)`);
+                    const al = bradyAlert(name.toUpperCase());
+                    if (!al || !al.includes(`${hr} bpm`)) fail(`No bradycardia alert naming the heart rate ${hr} for ${name}`);
+                    if (!scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Beta Blocker'))) fail('Beta-blocker pillar lost');
+                };
+                if (t.includes('Carvedilol 25 mg HR 54 One-Step Reduction')) {
+                    oneStep('Carvedilol', 25, 12.5, 54);
+                    for (const n of ['Metoprolol Succinate', 'Bisoprolol']) {
+                        if (excl(n)?.rule_id !== 'E13' || !/START/.test(whyText(n))) fail(`${n} (a NEW start) not blocked at HR 54 with the initiation reason`);
+                    }
+                }
+                if (t.includes('Metoprolol Succinate 100 mg HR 52')) oneStep('Metoprolol Succinate', 100, 50, 52);
+                if (t.includes('Bisoprolol 10 mg HR 53')) oneStep('Bisoprolol', 10, 5, 53);
+                if (t.includes('Carvedilol 3.125 mg HR 50 Withheld')) {
+                    if (strengthsOf('Carvedilol').length > 0) fail('Carvedilol 3.125 mg (lowest dose) kept at HR 50: it must be withheld');
+                    if (!summaries.some(x => x.startsWith('Remove Carvedilol') && x.includes('50 bpm') && x.includes('lowest'))) fail('Withhold at the lowest dose does not state the heart rate and the reason');
+                    if (!bradyAlert('CARVEDILOL')) fail('No bradycardia alert for the withheld beta-blocker');
+                }
+                if (t.includes('Third-Degree AV Block Beta-Blocker Removed')) {
+                    if (anyBb()) fail('Beta-blocker kept with third-degree AV block and no pacemaker');
+                    if (!summaries.some(x => x.startsWith('Remove Carvedilol') && x.includes('contraindicated'))) fail('Carvedilol not removed as contraindicated in third-degree AV block');
+                    if (!/Third-degree/.test(whyText('Carvedilol'))) fail('Carvedilol exclusion does not state third-degree AV block');
+                    if (bradyAlert('CARVEDILOL')) fail('Bradycardia dose-reduction alert shown for a beta-blocker that is being removed for AV block');
+                }
+                if (t.includes('Sick Sinus Syndrome Without Pacemaker')) {
+                    if (anyBb()) fail('Beta-blocker kept with sick sinus syndrome and no pacemaker (labeled contraindication)');
+                    if (!summaries.some(x => x.startsWith('Remove Metoprolol Succinate') && x.includes('contraindicated'))) fail('Metoprolol succinate not removed for sick sinus syndrome');
+                    for (const n of BETA_BLOCKERS) if (!/Sick sinus/.test(whyText(n))) fail(`${n} exclusion does not state sick sinus syndrome`);
+                }
+                if (t.includes('Paced Rhythm HR 52 Beta-Blocker Kept')) {
+                    if (scoredRegimens.length === 0) fail('No regimens (check is vacuous)');
+                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Carvedilol' && Number(m.dose.strength) === 12.5))) fail('Carvedilol 12.5 not kept in a paced rhythm at HR 52 (a pacemaker sets a floor; the intrinsic-rate rules do not apply)');
+                    if (bradyAlert('CARVEDILOL')) fail('Bradycardia alert shown in a paced rhythm');
+                    if (excl('Carvedilol')) fail('Carvedilol excluded in a paced rhythm with sick sinus syndrome');
+                }
+                if (t.includes('No Up-Titration At HR 56')) {
+                    if (scoredRegimens.length === 0) fail('No regimens (check is vacuous)');
+                    if (summaries.some(x => x.startsWith('Titrate Carvedilol'))) fail('Carvedilol up-titration offered at HR 56 (policy: none below 60)');
+                    if (strengthsOf('Carvedilol').some(x => x > 12.5)) fail('A carvedilol dose above the current 12.5 mg appears at HR 56');
+                    if (!anyRegimenHasMed('Carvedilol')) fail('Carvedilol not retained at HR 56 (above the 55 reduction threshold)');
+                }
+                if (t.includes('Up-Titration Offered At HR 66')) {
+                    if (!summaries.some(x => x.startsWith('Titrate Carvedilol'))) fail('Carvedilol up-titration not offered at HR 66 (positive control for the HR 56 rule)');
+                }
+                if (t.includes('New Beta-Blocker Start Blocked At HR 52')) {
+                    for (const n of BETA_BLOCKERS) {
+                        if (excl(n)?.rule_id !== 'E13' || !/START/.test(whyText(n))) fail(`${n} new start not blocked at HR 52 with the initiation reason`);
+                    }
+                    if (anyBb()) fail('A beta-blocker START offered at HR 52');
+                }
+                if (t.includes('Beta-Blocker Dose Effects Equalized')) {
+                    const c = med('Carvedilol'), m = med('Metoprolol Succinate'), b = med('Bisoprolol');
+                    const eq = (a: number | undefined, x: number | undefined) => Math.abs((a ?? 0) - (x ?? 0)) < 1e-9;
+                    const c25 = c.chf_effects(25), c50 = c.chf_effects(50);
+                    for (const k of Object.keys(c25) as (keyof typeof c25)[]) {
+                        if (!eq(c25[k], c50[k])) fail(`Carvedilol 50 mg modeled ${k} differs from 25 mg (MOCHA tested up to 25 mg BID; no extra efficacy above it)`);
+                    }
+                    const h25 = c.hemodynamic_effects(25), h50 = c.hemodynamic_effects(50);
+                    if (!(h50.sbp_drop > h25.sbp_drop && h50.hr_drop > h25.hr_drop)) fail('Carvedilol 50 mg must still lower BP and heart rate more than 25 mg (dose-related hemodynamics)');
+                    const tc = c.chf_effects(25), tm = m.chf_effects(200), tb = b.chf_effects(10);
+                    for (const k of Object.keys(tc) as (keyof typeof tc)[]) {
+                        if (!eq(tc[k], tm[k]) || !eq(tc[k], tb[k])) fail(`Beta-blockers differ in modeled ${k} at target dose (carvedilol ${tc[k]}, metoprolol ${tm[k]}, bisoprolol ${tb[k]}): no evidence of superiority (COMET used metoprolol tartrate)`);
+                    }
+                }
+                if (t.includes('Carvedilol Child-Pugh B Confirmed Allowed')) {
+                    if (excl('Carvedilol')) fail('Carvedilol excluded with Child-Pugh B confirmed (label contraindicates only severe hepatic impairment)');
+                    if (warningsOf('Carvedilol').some(w => !w.includes('Hepatic Impairment'))) fail('Carvedilol regimen at Child-Pugh B lacks the hepatic caution warning');
+                }
+                if (t.includes('Child-Pugh B/C Unspecified Excluded Metoprolol Allowed')) {
+                    if (excl('Carvedilol')?.rule_id !== 'E13' || !/Child-Pugh/.test(whyText('Carvedilol'))) fail('Carvedilol not excluded when liver severity is unspecified');
+                    if (excl('Metoprolol Succinate')) fail('Metoprolol succinate excluded for liver disease (the label has no hepatic contraindication; caution only)');
+                    if (warningsOf('Metoprolol Succinate').some(w => !w.includes('Hepatic Impairment'))) fail('Metoprolol regimen with liver disease lacks the hepatic caution');
+                }
+                if (t.includes('Bisoprolol US Tiers')) {
+                    const d = med('Bisoprolol').available_doses;
+                    if (d.some(x => x.strength === 1.25)) fail('Bisoprolol 1.25 mg tier present (not a US single-agent tablet; a quarter tablet is impractical)');
+                    if (d.map(x => x.strength).join(',') !== '2.5,5,10') fail('Bisoprolol tiers must be 2.5 (half of a scored 5 mg tablet), 5, 10');
+                    if (!d.find(x => x.strength === 2.5)?.formulation.includes('half')) fail('Bisoprolol 2.5 mg not labelled as half of a scored 5 mg tablet');
+                    if (!(med('Bisoprolol').facts?.regimen_warnings ?? []).some(w => /off-label/.test(w.text))) fail('Bisoprolol lacks the off-label heart-failure note');
+                }
+
+                // --- Ivabradine ---
+                if (t.includes('Ivabradine Strong CYP3A4 Inhibitor Excluded') || t.includes('Ivabradine Telithromycin Excluded')) {
+                    if (excl('Ivabradine')?.rule_id !== 'E13' || !/strong CYP3A4/i.test(whyText('Ivabradine'))) fail('Ivabradine not excluded (E13) with a strong CYP3A4 inhibitor reason (Corlanor contraindication)');
+                    if (anyRegimenHasMed('Ivabradine') || adjunctSurfaced('ivabradine')) fail('Ivabradine offered or surfaced despite a strong CYP3A4 inhibitor');
+                }
+                if (t.includes('Ivabradine With Diltiazem Warned')) {
+                    const w = warningsOf('Ivabradine');
+                    if (w.length === 0) fail('No regimen with ivabradine (check is vacuous)');
+                    if (w.some(x => !/Ivabradine with verapamil or diltiazem/.test(x))) fail('Ivabradine with diltiazem lacks the "avoid" warning (Corlanor label)');
+                }
+                if (t.includes('Ivabradine Inducer Warned')) {
+                    const w = warningsOf('Ivabradine');
+                    if (w.length === 0) fail('No regimen with ivabradine (check is vacuous)');
+                    if (w.some(x => !/CYP3A4 inducer/.test(x))) fail('Ivabradine with rifampin lacks the CYP3A4-inducer "avoid" warning');
+                }
+                if (t.includes('Ivabradine Continuation HR 58 Keeps Drug And Bonus')) {
+                    if (scoredRegimens.length === 0) fail('No regimens (check is vacuous)');
+                    if (excl('Ivabradine')) fail('Ivabradine excluded at HR 58 although already on it (HR >= 70 gates initiation only)');
+                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Ivabradine'))) fail('Ivabradine dropped at HR 58 (the label target is 50-60 bpm)');
+                    if (summaries.some(x => x.includes('Ivabradine') && (x.startsWith('Remove') || x.startsWith('Reduce') || x.startsWith('Titrate')))) fail('Ivabradine changed at HR 58 (hold at 50-60 per label)');
+                    const bonus = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === 'Ivabradine')).every(r => (r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.startsWith('SHIFT'))));
+                    if (!bonus) fail('Ivabradine evidence bonus missing for a patient already on it at HR 58');
+                }
+                if (t.includes('Ivabradine HR 48 On 5 mg Reduced To 2.5 mg')) {
+                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Ivabradine' && Number(m.dose.strength) === 2.5))) fail('Ivabradine 5 mg at HR 48 must drop to 2.5 mg in every option (label: reduce by 2.5 mg bid below 50)');
+                    if (!summaries.some(x => x.startsWith('Reduce Ivabradine 5→2.5') && x.includes('48 bpm'))) fail('Ivabradine reduction does not state the heart rate');
+                    if (!bradyAlert('IVABRADINE')) fail('No bradycardia alert for ivabradine');
+                }
+                if (t.includes('Ivabradine HR 48 On 2.5 mg Withheld')) {
+                    if (anyRegimenHasMed('Ivabradine')) fail('Ivabradine 2.5 mg kept at HR 48 (label: stop if already at 2.5 mg bid)');
+                    if (!summaries.some(x => x.startsWith('Remove Ivabradine') && x.includes('lowest'))) fail('Ivabradine withhold does not state the reason');
+                }
+                if (t.includes('Ivabradine Start Tier 5 mg') || t.includes('Ivabradine Start Tier 2.5 mg')) {
+                    const want = t.includes('2.5 mg') ? 2.5 : 5;
+                    const starts = mods.filter(x => x.m.action === 'add' && x.m.target?.med.name === 'Ivabradine').map(x => Number(x.m.target!.dose.strength));
+                    if (starts.length === 0) fail('Ivabradine not offered as a new start (check is vacuous)');
+                    if (starts.some(x => x !== want)) fail(`Ivabradine start must be ${want} mg bid (found ${starts.join(', ')}); label: 2.5 mg bid only for conduction defects / bradycardia risk`);
+                }
+                if (t.includes('Ivabradine Beta-Blocker Limited By Hypotension')) {
+                    if (excl('Ivabradine')) fail('Ivabradine excluded for a patient whose beta-blocker is limited by hypotension');
+                    if (!anyRegimenHasMed('Ivabradine') && !adjunctSurfaced('ivabradine')) fail('Ivabradine not offered when the beta-blocker cannot be increased (maximally tolerated, not necessarily target)');
+                }
+                if (t.includes('Ivabradine Beta-Blocker Not Maximized Not Offered')) {
+                    if (anyRegimenHasMed('Ivabradine') || adjunctSurfaced('ivabradine')) fail('Ivabradine offered while the beta-blocker can still be up-titrated (carvedilol 6.25)');
+                }
+                if (t.includes('Ivabradine Sick Sinus Syndrome Excluded') && !/Sick sinus/.test(whyText('Ivabradine'))) fail('Ivabradine exclusion does not state sick sinus syndrome');
+                if (t.includes('Ivabradine Acute Decompensation Excluded') && !/Acute decompensated/.test(whyText('Ivabradine'))) fail('Ivabradine exclusion does not state acute decompensated HF');
+                if (t.includes('Ivabradine Hepatic') && !/ivabradine.*Child-Pugh C/.test(whyText('Ivabradine'))) fail('Ivabradine exclusion does not state the hepatic contraindication');
+                if (t.includes('Ivabradine Paced Rhythm Excluded') && !/Paced/.test(whyText('Ivabradine'))) fail('Ivabradine exclusion does not state the paced rhythm (pacemaker dependence)');
+                if (t.includes('Ivabradine Metadata')) {
+                    const iv = med('Ivabradine');
+                    if (iv.chf_effects(5).kccq_improvement !== 2) fail('Ivabradine KCCQ must be 2 (SHIFT QoL +1.8 / +2.4)');
+                    if (iv.hemodynamic_effects(5).hr_drop !== 10) fail('Ivabradine heart-rate effect must be about 10 bpm (SHIFT placebo-corrected)');
+                    if (iv.available_doses.map(d => d.strength).join(',') !== '2.5,5,7.5') fail('Ivabradine tiers must be 2.5, 5, 7.5 mg bid');
+                    if (!iv.available_doses.filter(d => d.strength !== 2.5).every(d => d.is_target_dose)) fail('Ivabradine 5 and 7.5 mg bid must both be acceptable maintenance doses (heart-rate guided)');
+                    if (DRUG_PRICES['Ivabradine'].generic_available !== true || DRUG_PRICES['Ivabradine'].tier !== 'generic') fail('Ivabradine must be flagged generic (DailyMed lists generic labelers)');
+                    if (!(iv.special_features ?? []).every(f => f.feature.includes('2a') && !f.feature.includes('IIb'))) fail('Ivabradine guideline class must read AHA/ACC 2022 Class 2a (not IIb)');
+                }
+
+                // --- Digoxin ---
+                if (t.includes('Digoxin Sinus Rhythm Not Offered While Pillars Remain Addable')) {
+                    if (anyRegimenHasMed('Digoxin') || adjunctSurfaced('digoxin')) fail('Digoxin offered in sinus rhythm while an MRA pillar is still addable (Class 2b only after maximal GDMT)');
+                    if (excl('Digoxin')) fail('Digoxin wrongly excluded (it is an indication gate, not a contraindication)');
+                }
+                if (t.includes('Digoxin Sinus Rhythm Offered After Maximal GDMT') && !adjunctSurfaced('digoxin')) fail('Digoxin not surfaced for symptomatic HFrEF (NYHA III) in sinus rhythm on maximal GDMT (Class 2b)');
+                if (t.includes('Digoxin Sinus Rhythm Preserved EF Not Offered') && (anyRegimenHasMed('Digoxin') || adjunctSurfaced('digoxin'))) fail('Digoxin offered at LVEF 58 in sinus rhythm');
+                if (t.includes('Digoxin Ventricular Fibrillation Excluded')) {
+                    if (excl('Digoxin')?.rule_id !== 'E13' || !/Ventricular fibrillation/.test(whyText('Digoxin'))) fail('Digoxin not excluded for ventricular fibrillation (labeled contraindication)');
+                    if (anyRegimenHasMed('Digoxin')) fail('Digoxin offered with ventricular fibrillation');
+                }
+                if (t.includes('Digoxin WPW Warning')) {
+                    const w = warningsOf('Digoxin');
+                    if (w.length === 0) fail('No regimen with digoxin (check is vacuous)');
+                    if (w.some(x => !/accessory pathway/i.test(x))) fail('Digoxin with Wolff-Parkinson-White lacks the accessory-pathway warning (Lanoxin 5.1)');
+                    if (excl('Digoxin')) fail('Digoxin excluded for WPW (the label lists a warning, not a contraindication)');
+                }
+                if (t.includes('Digoxin Potassium 5.8')) {
+                    if (excl('Digoxin')) fail('Digoxin excluded at K+ 5.8 (the label has no potassium contraindication; now a warning)');
+                    const w = warningsOf('Digoxin');
+                    if (w.length === 0) fail('No regimen with digoxin (check is vacuous)');
+                    if (w.some(x => !x.includes('Potassium above 5.5'))) fail('Digoxin at K+ 5.8 lacks the potassium warning');
+                }
+                if (t.includes('Digoxin eGFR 12')) {
+                    if (excl('Digoxin')) fail('Digoxin excluded at eGFR 12 (the label dosing table includes CrCl 10; now a dosing warning)');
+                    if (strengthsOf('Digoxin').some(x => x > 62.5)) fail('Digoxin above 62.5 mcg at eGFR 12');
+                    const w = warningsOf('Digoxin');
+                    if (w.length === 0) fail('No regimen with digoxin (check is vacuous)');
+                    if (w.some(x => !x.includes('eGFR below 15'))) fail('Digoxin at eGFR 12 lacks the renal dosing warning');
+                }
+                if (t.includes('Digoxin Amiodarone Dose Reduction Text')) {
+                    const w = warningsOf('Digoxin');
+                    if (w.length === 0) fail('No regimen with digoxin (check is vacuous)');
+                    if (w.some(x => !x.includes('30-50%'))) fail('Digoxin + amiodarone warning must say to reduce the digoxin dose by about 30-50% (Lanoxin label)');
+                }
+                if (t.includes('Digoxin Heart-Rate Effect Only In AFib')) {
+                    const dig = med('Digoxin');
+                    if (dig.chf_effects(125).bnp_reduction_percent !== 0) fail('Digoxin NT-proBNP effect must be 0 (no source)');
+                    const target = { med: dig, dose: dig.available_doses[1], selected_frequency: 'qd' };
+                    const pulseAfter = (rhythm: 'Sinus' | 'AFib') => {
+                        const p = clonePatient(scenario.patient); p.rhythm = rhythm; p.pulse = 90;
+                        const ms = { modifications: [{ action: 'add' as const, target, summary: 'Add Digoxin' }], resulting_regimen: [...(p.current_regimen ?? []), target] };
+                        return simulateModificationEffect(p, ms, scenarioPrices).projectedPatient.pulse;
+                    };
+                    if (pulseAfter('Sinus') !== 90) fail('Digoxin lowers heart rate in sinus rhythm in the model (credited only in AFib)');
+                    if (!(pulseAfter('AFib') < 90)) fail('Digoxin does not lower heart rate in AFib in the model');
                 }
             }
 

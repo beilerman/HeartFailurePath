@@ -174,7 +174,7 @@ Implemented high-priority safeguards include:
 - Initiation-vs-continuation carve-outs (the `alreadyOn*` pattern):
   - Vericiguat: VICTORIA enrollment criteria (NT-proBNP >= 1600, NYHA II-IV, recent worsening, LVEF < 45) gate INITIATION only — a patient already on vericiguat is never force-removed for improved markers; pregnancy still forces removal
   - GLP-1: `BMI >= 30` gates INITIATION only; continuation is blocked only by true safety CIs (pregnancy, MTC/MEN2) — weight-loss success never forces removal
-  - SGLT2i eGFR floor and ivabradine HR thresholds follow the same pattern (initiation HR >= 70; continuation stopped only below 50)
+  - SGLT2i eGFR floor and ivabradine HR thresholds follow the same pattern (initiation HR >= 70; continuation: HR below 50 reduces one step, withheld at the lowest dose)
 - Current-regimen history checks:
   - a current med matching a documented ALLERGY by name is flagged and force-swapped to a tolerated same-group agent (else removed) — it is never kept or up-titrated
   - a current med appearing in the discontinued list raises a MEDICATION HISTORY CONFLICT alert (verify deliberate restart) rather than forced removal
@@ -195,6 +195,12 @@ Implemented high-priority safeguards include:
   - aliskiren + diabetes contraindicates ARNI/ACEi/ARB (`CI_ALISKIREN_DIABETES`); 36-hour washout warns in both directions (ACEi<->ARNI); ARNI start at SBP < 100 carries a score-penalized caution
   - lisinopril/enalapril/losartan/candesartan have no renal max-dose caps (valsartan 80 mg and ramipril caps kept); losartan 100 and 150 mg are targets
   - generic sacubitril/valsartan pricing (cash ~$60 with a discount card)
+- Rate-control rules (2026-11-10, `docs/medication-review-2026-11-10/verified-rate-control.md`):
+  - `facts.hr_continuation` (`hrContinuationAction` in `regimenUtils.ts`): HR below `reduce_below` on an established beta-blocker/ivabradine forces a ONE-STEP reduction via `forcedReduceNames` (exact next-lower strength on the full ladder, `forcedReduceExactStep`), withhold at the lowest dose; no up-titration below `no_uptitration_below`; skipped in a "Paced" rhythm; alert `BRADYCARDIA ON <DRUG>` from `gates.ts`. Beta-blockers: 55/60 (carvedilol 55 is the label's; the rest is engine policy). Ivabradine: 50/61 (label)
+  - beta-blocker NEW-start block below HR 55 is initiation-only (`bbStartBradycardiaCheck`, engine policy); AV block 2/3 and sick sinus syndrome without a pacemaker (`SICK_SINUS` comorbidity) still force removal
+  - carvedilol effect ratio capped at 25 mg bid; carvedilol/metoprolol/bisoprolol equal at target (lvef 9, NT-proBNP -22%, KCCQ 6, LVEDD -10%, structure 35); carvedilol hepatic CI only for unspecified B/C (B confirmed = caution); metoprolol has no hepatic CI; bisoprolol tiers 2.5/5/10 (1.25 dropped, US strengths)
+  - ivabradine: label contraindications in `constants.ts`, exact start tier via `start_dose_for` (2.5 mg for conduction defect / amiodarone / digoxin, else 5), "maximally tolerated" beta-blocker in `candidates.ts` (`bbMaxTolerated`), HR >= 70 is initiation only (bonus kept while on the drug)
+  - digoxin: indication gate in `candidates.ts` (sinus: LVEF <= 40, NYHA III-IV, no addable/below-target pillar; AFib: beta-blocker optimized); VF is the CI; WPW, K+ > 5.5, eGFR < 15 are penalized warnings; `facts.hr_effect_only_in_rhythm: 'AFib'`; NT-proBNP effect 0
 - Structural regimen safety:
   - blocks dual RAAS combinations
   - blocks dual MRA combinations

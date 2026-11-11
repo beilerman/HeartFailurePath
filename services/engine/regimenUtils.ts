@@ -107,6 +107,25 @@ export function kContinuationAction(med: Medication, patient: Patient): { action
     return null;
 }
 
+/**
+ * Heart-rate rule for a drug the patient is already on (facts.hr_continuation): resting pulse below `reduce_below` forces a
+ * ONE-STEP dose reduction (withhold if already at the lowest dose); below `no_uptitration_below` no up-titration is offered.
+ * Not applied in a paced rhythm (the pacemaker sets a floor) or to a blank pulse (0). Returns the plain-language reasons.
+ */
+export function hrContinuationAction(med: Medication, patient: Patient): { reduce: boolean; blockUp: boolean; reduceReason: string; withholdReason: string; basis: string } | null {
+    const rule = med.facts?.hr_continuation;
+    if (!rule || !(patient.pulse > 0) || patient.rhythm === 'Paced') return null;
+    const reduce = patient.pulse < rule.reduce_below;
+    const blockUp = patient.pulse < rule.no_uptitration_below;
+    if (!reduce && !blockUp) return null;
+    return {
+        reduce, blockUp,
+        reduceReason: `heart rate ${patient.pulse} bpm is below ${rule.reduce_below}: one step down, not stopped`,
+        withholdReason: `heart rate ${patient.pulse} bpm is below ${rule.reduce_below} and the dose is already the lowest: withhold`,
+        basis: rule.basis,
+    };
+}
+
 export function shouldPreserveQuadForUnknownHistory(patient: Patient): boolean {
     if (patient.lvef <= 40 || !hasUnknownHistoricalHFrEF(patient)) return false;
     const current = patient.current_regimen || [];

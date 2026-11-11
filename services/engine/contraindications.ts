@@ -53,8 +53,34 @@ export const CI_ALISKIREN_DIABETES: ContraindicationCheck = {
     when: p => (p.external_medications?.has(ALISKIREN) ?? false)
         && (p.comorbidities.has('Diabetes Mellitus Type 2') || p.comorbidities.has('Type 1 Diabetes Mellitus')),
 };
-export const CI_PULSE_LT_55: ContraindicationCheck = {
-    reason: 'Heart rate below 55 bpm', when: p => p.pulse < 55,
+/**
+ * True when the patient is already taking this exact drug (initiation-vs-continuation carve-out). Declared here (before
+ * its first use) and re-used by the MRA potassium gates below.
+ */
+export const alreadyOnMed = (p: Patient, name: string): boolean =>
+    p.current_regimen?.some(r => r.med.name === name) ?? false;
+
+/**
+ * Beta-blocker NEW-START heart-rate block (initiation only). The labels give no number: carvedilol and metoprolol
+ * succinate contraindicate "severe bradycardia" and bisoprolol "marked sinus bradycardia". Below 55 bpm as the start
+ * threshold is ENGINE POLICY (carvedilol's label uses 55 only as the dose-reduction trigger). A patient already on the
+ * drug is never blocked here: bradycardia on established therapy is handled by `facts.hr_continuation` (one-step dose
+ * reduction), not removal (verified-rate-control.md finding A). A paced rhythm sets a floor under the rate, so the
+ * intrinsic-rate block does not apply (carvedilol label: severe bradycardia is a contraindication "unless a permanent
+ * pacemaker is in place"). A blank pulse (0) still blocks a new start, as before.
+ */
+export const bbStartBradycardiaCheck = (name: string): ContraindicationCheck => ({
+    reason: 'Heart rate below 55 bpm: do not START a beta-blocker (the labels say "severe bradycardia" without a number; below 55 bpm is this tool\'s start threshold, and an established beta-blocker is dose-reduced, not stopped)',
+    when: p => !alreadyOnMed(p, name) && p.rhythm !== 'Paced' && p.pulse < 55,
+});
+export const SICK_SINUS = 'Sick Sinus Syndrome / Sinoatrial Block';
+/**
+ * Sick sinus syndrome or sinoatrial block without a pacemaker: contraindication on the carvedilol and metoprolol
+ * succinate labels. The form's rhythm "Paced" is read as a functioning pacemaker.
+ */
+export const CI_SICK_SINUS_NO_PACEMAKER: ContraindicationCheck = {
+    reason: 'Sick sinus syndrome / sinoatrial block without a pacemaker (labeled beta-blocker contraindication)',
+    when: p => p.comorbidities.has(SICK_SINUS) && p.rhythm !== 'Paced',
 };
 export const CI_AV_BLOCK_2: ContraindicationCheck = {
     reason: 'Second-degree AV block', when: p => p.rhythm === '2nd Degree AV Block',
@@ -95,7 +121,7 @@ export const STRONG_CYP3A_INHIBITORS: readonly string[] = [
 // The label text read named no moderate agents for eplerenone; this is the standard list used in the review.
 export const MODERATE_CYP3A_INHIBITORS: readonly string[] = ['Verapamil', 'Diltiazem', 'Erythromycin', 'Fluconazole'];
 
-const onAny = (p: Patient, names: readonly string[]): boolean =>
+export const onAny = (p: Patient, names: readonly string[]): boolean =>
     names.some(n => p.external_medications?.has(n) ?? false);
 export const strongCyp3a4Inhibitor = (p: Patient): boolean => onAny(p, STRONG_CYP3A_INHIBITORS);
 export const moderateCyp3aInhibitor = (p: Patient): boolean =>
@@ -111,10 +137,6 @@ export const CI_ADRENAL_INSUFFICIENCY: ContraindicationCheck = {
 };
 
 // --- MRA potassium gates ----------------------------------------------------------------------------
-/** True when the patient is already taking this exact drug (initiation-vs-continuation carve-out). */
-export const alreadyOnMed = (p: Patient, name: string): boolean =>
-    p.current_regimen?.some(r => r.med.name === name) ?? false;
-
 /**
  * NEW-START potassium ceiling for an MRA: above 5.5 mEq/L is never started. The labels and guideline say
  * to start only at K+ 5.0 or below (eplerenone's label allows up to 5.5); the engine deliberately allows a
@@ -130,3 +152,28 @@ export const CI_MRA_WITHHOLD_K6: ContraindicationCheck = {
     reason: 'Potassium 6.0 mEq/L or above: withhold the MRA (label rule; restart at a low dose once potassium is below 5.5)',
     when: p => p.potassium >= 6.0,
 };
+
+// --- Ivabradine, digoxin, carvedilol label checks (verified-rate-control.md) ----------------------------------
+export const VENTRICULAR_FIBRILLATION = 'Ventricular Fibrillation (active)';
+export const WPW = 'Wolff-Parkinson-White / Accessory Pathway';
+export const CONDUCTION_DEFECT = 'Conduction Defect (history)';
+
+/** Strong CYP3A4 inhibitors named on the Corlanor label (adds telithromycin to the shared eplerenone/finerenone list). */
+export const IVABRADINE_STRONG_CYP3A4 = [...STRONG_CYP3A_INHIBITORS, 'Telithromycin'] as const;
+/** CYP3A4 inducers the Corlanor label says to avoid (reduce ivabradine exposure): St John's wort, rifampin, barbiturates, phenytoin. */
+export const CYP3A4_INDUCERS: readonly string[] = ["St John's Wort", 'Rifampin', 'Phenobarbital', 'Phenytoin'];
+export const strongIvabradineCyp3a4 = (p: Patient): boolean => onAny(p, IVABRADINE_STRONG_CYP3A4);
+export const onCyp3a4Inducer = (p: Patient): boolean => onAny(p, CYP3A4_INDUCERS);
+export const onVerapamilOrDiltiazem = (p: Patient): boolean =>
+    onAny(p, ['Verapamil', 'Diltiazem']) || p.comorbidities.has('On Verapamil/Diltiazem');
+export const onAmiodarone = (p: Patient): boolean => onAny(p, ['Amiodarone']) || p.comorbidities.has('On Amiodarone');
+
+/**
+ * "Severe hepatic impairment" (carvedilol and ivabradine labels: contraindicated; the labels name no Child-Pugh class, ivabradine says
+ * Child-Pugh C). The general "Child-Pugh B/C" option cannot say which, so it stays excluded; "Child-Pugh B confirmed (not C)" lifts the
+ * exclusion (the drug is then used with the hepatic caution warning). Same pattern as the ARNI.
+ */
+export const CI_SEVERE_HEPATIC_UNSPECIFIED = (drug: string): ContraindicationCheck => ({
+    reason: `Liver disease, Child-Pugh B/C with severity not specified: ${drug} is contraindicated in severe hepatic impairment; if the patient is Child-Pugh B, select "Child-Pugh B confirmed (not C)" to allow it with caution`,
+    when: p => hasChildPughBorC(p) && !hasChildPughBConfirmed(p),
+});

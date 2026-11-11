@@ -1,11 +1,17 @@
 /** Delta simulation: the marginal effect of a modification set on the observed patient. Moved verbatim from simulationService.ts (phase 4). */
-import { Patient, ModificationSet } from '../../types';
+import { Patient, Medication, ModificationSet } from '../../types';
 import { drugFacts } from './drugFacts';
 import { valueUnknown } from '../clinicalPredicates';
 import { hasChildPughBorC, hasChildPughBConfirmed } from './contraindications';
 import { RAAS_CLASSES, getDbpRatio, getMedicationClassGroup } from './registry';
 import { clonePatient, isTargetDoseForPatient } from './regimenUtils';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
+
+/** A drug's heart-rate lowering as credited for THIS patient: digoxin's only counts in the rhythm its label data cover (AFib). */
+function hrDropFor(med: Medication, hrDrop: number, patient: Patient): number {
+    const only = drugFacts(med).hr_effect_only_in_rhythm;
+    return only !== undefined && patient.rhythm !== only ? 0 : hrDrop;
+}
 
 export function simulateModificationEffect(
     currentPatient: Patient,
@@ -147,7 +153,7 @@ export function simulateModificationEffect(
 
             sbpDelta += hemo.sbp_drop * hemoFactor;
             dbpDelta += hemo.sbp_drop * hemoFactor * getDbpRatio(mod.target.med.drug_class);
-            hrDelta += hemo.hr_drop;
+            hrDelta += hrDropFor(mod.target.med, hemo.hr_drop, currentPatient);
             if (hemo.potassium_change > 0) {
                 kDelta += (hemo.potassium_change * renalRiskFactor);
             } else {
@@ -174,7 +180,7 @@ export function simulateModificationEffect(
 
             sbpDelta -= hemo.sbp_drop;
             dbpDelta -= hemo.sbp_drop * getDbpRatio(mod.source.med.drug_class);
-            hrDelta -= hemo.hr_drop;
+            hrDelta -= hrDropFor(mod.source.med, hemo.hr_drop, currentPatient);
             if (hemo.potassium_change > 0) {
                 kDelta -= (hemo.potassium_change * renalRiskFactor);
             } else {
@@ -223,7 +229,7 @@ export function simulateModificationEffect(
 
             sbpDelta += (newHemo.sbp_drop - oldHemo.sbp_drop);
             dbpDelta += (newHemo.sbp_drop - oldHemo.sbp_drop) * getDbpRatio(mod.target.med.drug_class);
-            hrDelta += (newHemo.hr_drop - oldHemo.hr_drop);
+            hrDelta += hrDropFor(mod.target.med, newHemo.hr_drop, currentPatient) - hrDropFor(mod.source.med, oldHemo.hr_drop, currentPatient);
 
             const oldK = oldHemo.potassium_change > 0 ? oldHemo.potassium_change * renalRiskFactor : oldHemo.potassium_change;
             const newK = newHemo.potassium_change > 0 ? newHemo.potassium_change * renalRiskFactor : newHemo.potassium_change;
@@ -283,7 +289,7 @@ export function simulateModificationEffect(
             dbpDelta -= oldHemo.sbp_drop * getDbpRatio(mod.source.med.drug_class);
             dbpDelta += newHemo.sbp_drop * getDbpRatio(mod.target.med.drug_class);
             sbpDelta += (newHemo.sbp_drop - oldHemo.sbp_drop);
-            hrDelta += (newHemo.hr_drop - oldHemo.hr_drop);
+            hrDelta += hrDropFor(mod.target.med, newHemo.hr_drop, currentPatient) - hrDropFor(mod.source.med, oldHemo.hr_drop, currentPatient);
 
             const oldK = oldHemo.potassium_change > 0 ? oldHemo.potassium_change * renalRiskFactor : oldHemo.potassium_change;
             const newK = newHemo.potassium_change > 0 ? newHemo.potassium_change * renalRiskFactor : newHemo.potassium_change;
@@ -658,7 +664,7 @@ export function simulateModificationEffect(
         }
     }
 
-    // Digoxin narrow therapeutic index monitoring (DIG trial: target 0.5-0.9 ng/mL)
+    // Digoxin narrow therapeutic index monitoring (DIG post hoc: best 0.5-0.8 ng/mL; avoid 1.2 or above)
     // (renalUnknown: blank eGFR is stored as the 0 sentinel — it must prompt for a BMP, not
     // read as end-stage CKD in the renal-threshold warnings below.)
     const renalUnknown = valueUnknown(currentPatient.egfr);
@@ -666,7 +672,7 @@ export function simulateModificationEffect(
     if (hasDigoxin) {
         const renalNote = !renalUnknown && currentPatient.egfr < 45 ? ' Renal impairment increases toxicity risk — recheck level after any eGFR change.' : '';
         const kNote = (hasDiuretic && !hasMRA) ? ' Concurrent diuretic without MRA increases hypokalemia-mediated toxicity risk.' : '';
-        warnings.push(`Digoxin Monitoring: Check serum digoxin level in 5-7 days (target 0.5-0.9 ng/mL). Monitor for toxicity (nausea, visual changes, arrhythmia).${renalNote}${kNote}`);
+        warnings.push(`Digoxin Monitoring: Check serum digoxin level in 5-7 days (HF target about 0.5-0.8 ng/mL in the DIG analyses, up to 0.9-1.1 acceptable, avoid 1.2 or above; the label calls below 0.5 diminished efficacy and above 2.0 toxicity without benefit). Monitor for toxicity (nausea, visual changes, arrhythmia).${renalNote}${kNote}`);
         if (!kUnknown && proj.potassium >= 3.5 && proj.potassium < 4.0) {
             warnings.push('Digoxin Safety: Potassium 3.5-4.0 increases toxicity risk. Monitor K+ closely with concurrent diuretic therapy and replete to >4.0 when feasible.');
         }
@@ -741,7 +747,7 @@ export function simulateModificationEffect(
 
     // DDI-4: Digoxin + amiodarone markedly raises digoxin exposure.
     if (hasDigoxin && onAmiodarone) {
-        warnings.push('DDI WARNING: Amiodarone can raise digoxin levels ~70-100%. Reduce digoxin dose and recheck serum level within 3-5 days.');
+        warnings.push('DDI WARNING: Amiodarone raises serum digoxin concentrations (Lanoxin label: about 70%). Reduce the digoxin dose by about 30-50% (or change the dosing frequency) and keep monitoring serum digoxin levels.');
     }
 
     // DDI-5: Non-DHP CCB + beta blocker/digoxin increases bradycardia and AV block risk.

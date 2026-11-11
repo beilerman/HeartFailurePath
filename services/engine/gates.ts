@@ -6,7 +6,7 @@ import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
 import { hasUnknownHistoricalHFrEF } from '../clinicalPredicates';
 import { taggedDiscontinuedMeds } from './eligibility';
 import { buildMissingDataNotices, computeGdmtGaps } from './explain';
-import { dedupeCurrentRegimen, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { dedupeCurrentRegimen, hrContinuationAction, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 
 export interface CriticalDataAudit {
     alerts: string[];
@@ -207,6 +207,22 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
     if (patient.is_pregnant === true) {
         clinicalAlerts.push('PREGNANCY ALERT: ACEi, ARB, ARNI, MRA, and nsMRA (Finerenone) are contraindicated (Category X). SGLT2i excluded (Category C — insufficient human safety data). Vericiguat excluded (FDA BOXED WARNING — embryo-fetal toxicity) and Ivabradine excluded (fetal harm in animal studies). GLP-1 therapy excluded. These agents have been excluded from all recommendations.');
     }
+
+    // --- Heart-rate rule on an established beta-blocker / ivabradine (facts.hr_continuation): the dose is reduced one step,
+    // not stopped; the alert names the heart rate and the action. (Candidate generation applies the reduction.)
+    (patient.current_regimen || []).forEach(r => {
+        const hr = hrContinuationAction(r.med, patient);
+        if (!hr?.reduce) return;
+        if (r.med.contraindications?.(patient)) return; // already being removed for a contraindication (AV block, sick sinus); that reason is stated instead
+        const atLowest = r.med.available_doses.findIndex(d => d.strength === r.dose.strength) <= 0;
+        clinicalAlerts.push(
+            `BRADYCARDIA ON ${r.med.name.toUpperCase()}: resting heart rate ${patient.pulse} bpm on ${r.med.name} ${r.dose.strength}${r.dose.unit}. ` +
+            (atLowest
+                ? `The dose is already the lowest, so the plan withholds it (for a beta-blocker, taper over 1-2 weeks; do not stop abruptly). `
+                : `The plan reduces it ONE dose step; it is not removed. `) +
+            `Basis: ${hr.basis}. Reassess symptoms and the ECG for sick sinus syndrome or AV block and review other rate-slowing drugs; no up-titration while the rate is low.`
+        );
+    });
 
     // --- S2: Hemodynamic instability — block pharmacologic optimization ---
     // Threshold raised to SBP < 90 (MAP ~65 mmHg): oral GDMT initiation requires adequate perfusion

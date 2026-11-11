@@ -1,9 +1,9 @@
 
 import { Medication, Patient } from './types';
-import { ci, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, CI_LIVER_CHILD_PUGH_BC, CI_PULSE_LT_55, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
+import { ci, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
     STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, moderateCyp3aInhibitor } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
-import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace } from './services/clinicalPredicates';
+import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace, isAcutelyDecompensated } from './services/clinicalPredicates';
 
 // Helper for logarithmic calculations (dose-response curves)
 const logBase = (base: number, x: number) => Math.log(x) / Math.log(base);
@@ -61,7 +61,12 @@ export const RELEVANT_COMORBIDITIES = [
     "Pulmonary Hypertension",
     "Chronic NSAID Use",
     "Bilateral Renal Artery Stenosis",
-    "Adrenal Insufficiency (Addison's disease)"
+    "Adrenal Insufficiency (Addison's disease)",
+    // Rate-control drugs (verified-rate-control.md): beta-blocker / ivabradine / digoxin label contraindications and warnings.
+    SICK_SINUS,
+    CONDUCTION_DEFECT,
+    VENTRICULAR_FIBRILLATION,
+    WPW
 ];
 
 export const RELEVANT_EXTERNAL_MEDICATIONS = [
@@ -77,6 +82,9 @@ export const RELEVANT_EXTERNAL_MEDICATIONS = [
     // Verapamil and Diltiazem are already listed above; Erythromycin and Fluconazole are the other moderate agents.
     ...STRONG_CYP3A_INHIBITORS,
     ...MODERATE_CYP3A_INHIBITORS.filter(n => n !== 'Verapamil' && n !== 'Diltiazem'),
+    // Corlanor label: telithromycin is a named strong CYP3A4 inhibitor (contraindicated); CYP3A4 inducers are to be avoided.
+    ...IVABRADINE_STRONG_CYP3A4.filter(n => !STRONG_CYP3A_INHIBITORS.includes(n)),
+    ...CYP3A4_INDUCERS,
 ];
 
 // Lokelma label: edema 4.4% / 5.9% / 16.1% at 5 / 10 / 15 g in placebo-controlled trials.
@@ -410,8 +418,14 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Carvedilol',
         drug_class: 'Beta Blocker',
-        facts: { nonselective_beta_blocker: true, hepatically_metabolized: true },
-        // ACC/AHA target: 25 mg BID for <= 85 kg dry weight, 50 mg BID above.
+        facts: {
+            nonselective_beta_blocker: true, hepatically_metabolized: true,
+            // Coreg label sec 2.1 and 5.2: "reduce the dose if heart rate is less than 55 beats per minute" (sourced). No
+            // up-titration below 60 bpm is ENGINE POLICY (no label number). Established therapy is reduced one step, never stopped at a rate.
+            hr_continuation: { reduce_below: 55, no_uptitration_below: 60, basis: 'Coreg label: reduce the dose if heart rate is below 55; no up-titration below 60 is this tool\'s policy' },
+        },
+        // ACC/AHA target: 25 mg BID for <= 85 kg dry weight, 50 mg BID above (the label calls 50 mg BID the maximum
+        // ADMINISTERED to patients over 85 kg; the weight-based target is from the guideline, secondary source).
         is_target_dose_for: (strength, patient) => patient.volume_status.dry_weight_kg > 85 ? strength >= 50 : strength >= 25,
         is_best_in_class: true,
         available_doses: [
@@ -422,27 +436,36 @@ export const MEDICATION_FORMULARY: Medication[] = [
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true },
         ],
         chf_effects: (dose) => {
+            // Efficacy is credited up to 25 mg BID only: MOCHA (6.25/12.5/25 mg BID) is the dose-response data and 25 mg BID was
+            // its top dose; nothing supports extra benefit at 50 mg BID (still the label maximum for > 85 kg), so the ratio is
+            // clamped at 1. The BP and heart-rate effects below stay dose-related.
+            // EQUALIZED with metoprolol succinate and bisoprolol at the target dose (verified-rate-control.md row 5: COMET
+            // compared carvedilol with metoprolol TARTRATE and found no benefit over succinate or bisoprolol): LVEF +9, NT-proBNP
+            // -22%, KCCQ +6, LVEDD -10%, structure 35. The MOCHA-fitted dose shape (62% of the target effect at 6.25 mg BID) is kept.
             const d = Number(dose);
-            const ratio = d / 25;
+            const ratio = Math.min(d / 25, 1);
+            const shape = (floor: number) => floor + (1 - floor) * ratio;
             return {
-                lvef_improvement_absolute: 5 + (ratio * 5), // 5% to 10% (Highest structural impact)
-                bnp_reduction_percent: 0.10 + (ratio * 0.15),
+                lvef_improvement_absolute: 9 * shape(0.5),
+                bnp_reduction_percent: 0.22 * shape(0.4),
                 weight_reduction_kg: 0, // Neutral volume effect
                 kccq_improvement: 2 + (ratio * 4),
-                structure_benefit_points: 40, // Major anti-remodeling/anti-arrhythmic
+                structure_benefit_points: 35,
                 lavi_reduction_percent: 0.02,
-                lvedd_reduction_percent: 0.08 + (ratio * 0.04) // 8-12% (COPERNICUS)
+                lvedd_reduction_percent: 0.10 * shape(2 / 3)
             };
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose)/5, hr_drop: 8 + Number(dose)/3, potassium_change: 0.05 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.15, hypotension: 0.10, fluid_retention_transient: 0.05 }),
         ...ci([
-            CI_PULSE_LT_55,
+            bbStartBradycardiaCheck('Carvedilol'),
+            CI_SICK_SINUS_NO_PACEMAKER,
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
             CI_SEVERE_ASTHMA,
             { reason: 'Mild/moderate asthma (non-selective beta-blocker; use a beta-1-selective agent instead)', when: p => p.comorbidities.has("Asthma (Mild/Moderate)") }, // Non-selective β: avoid in ANY asthma; use β1-selective instead
-            CI_LIVER_CHILD_PUGH_BC,
+            // Coreg label: contraindicated in SEVERE hepatic impairment (no Child-Pugh class named); Child-Pugh B confirmed is allowed with a caution.
+            CI_SEVERE_HEPATIC_UNSPECIFIED('carvedilol'),
         ]),
         // COPERNICUS: 50mg BID target only for patients > 85kg; standard target is 25mg BID
         renal_adjustment: (_egfr, patient) => {
@@ -454,7 +477,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Metoprolol Succinate',
         drug_class: 'Beta Blocker',
-        facts: { beta1_selective: true, hepatically_metabolized: true },
+        facts: {
+            beta1_selective: true, hepatically_metabolized: true,
+            // Toprol-XL/generic label: "if patients experience symptomatic bradycardia, reduce the dose" (no number). Below 55 bpm as the
+            // trigger (same as carvedilol's labeled number) and no up-titration below 60 are ENGINE POLICY.
+            hr_continuation: { reduce_below: 55, no_uptitration_below: 60, basis: 'metoprolol label: reduce the dose for symptomatic bradycardia (no number); below 55 and no up-titration below 60 are this tool\'s policy' },
+        },
         is_best_in_class: true,
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] }, // Starting dose for NYHA III-IV (MERIT-HF)
@@ -469,7 +497,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             const ratio = d / 200;
             return {
                 lvef_improvement_absolute: 5 + (ratio * 4), // ~9% at top dose
-                bnp_reduction_percent: 0.10 + (ratio * 0.10),
+                bnp_reduction_percent: 0.10 + (ratio * 0.12), // -22% at target: equalized with carvedilol and bisoprolol (was -20%; no head-to-head superiority evidence)
                 weight_reduction_kg: 0,
                 kccq_improvement: 3 + (ratio * 3),
                 structure_benefit_points: 35,
@@ -479,22 +507,33 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/50, hr_drop: 8 + Number(dose)/20, potassium_change: 0 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.10 }),
+        // No hepatic contraindication: the label (8.6) has no hepatic-impairment studies and says to consider a low initial dose and
+        // increase gradually. The hepatic caution warning (effects.ts, via facts.hepatically_metabolized) covers it.
         ...ci([
-            CI_PULSE_LT_55,
+            bbStartBradycardiaCheck('Metoprolol Succinate'),
+            CI_SICK_SINUS_NO_PACEMAKER,
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
             CI_SEVERE_ASTHMA,
-            { reason: 'Liver disease, Child-Pugh B/C (CYP2D6 metabolized; increased exposure in cirrhosis)', when: hasChildPughBorC }, // CYP2D6 metabolized; increased exposure in cirrhosis
         ]),
     },
 
     {
         name: 'Bisoprolol',
         drug_class: 'Beta Blocker',
-        facts: { beta1_selective: true, most_cardioselective: true },
+        facts: {
+            beta1_selective: true, most_cardioselective: true,
+            // The US label gives no heart-rate number ("marked sinus bradycardia" is a contraindication). Below 55 bpm as the reduction
+            // trigger and no up-titration below 60 are ENGINE POLICY, matched to the other two beta-blockers.
+            hr_continuation: { reduce_below: 55, no_uptitration_below: 60, basis: 'bisoprolol US label gives no heart-rate number; below 55 and no up-titration below 60 are this tool\'s policy' },
+            regimen_warnings: [
+                { text: 'Drug note: the US bisoprolol label is for hypertension only and lists overt cardiac failure as a contraindication, so heart-failure use is off-label (guideline-supported: CIBIS-II, target 10 mg daily). US single-agent tablets are 5 mg and 10 mg; 2.5 mg is half of a scored 5 mg tablet, and the CIBIS-II 1.25 mg starting dose is not obtainable (a quarter tablet is impractical).' },
+            ],
+        },
+        // US single-agent strengths are 5 mg and 10 mg (Sun label; PD-Rx repackages 10 mg). 2.5 mg is kept as half of the scored 5 mg
+        // tablet; the CIBIS-II 1.25 mg start (a quarter tablet, a non-US strength) is dropped (verified-rate-control.md row 9).
         available_doses: [
-            { strength: 1.25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
-            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 2.5, unit: 'mg', formulation: 'half of a scored 5 mg tablet', frequency_options: ['qd'] },
             { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
@@ -515,7 +554,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/5, hr_drop: 8 + Number(dose)/1.5, potassium_change: 0 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.08 }),
         ...ci([
-            CI_PULSE_LT_55,
+            bbStartBradycardiaCheck('Bisoprolol'),
+            CI_SICK_SINUS_NO_PACEMAKER, // label: "marked sinus bradycardia" is a contraindication; extended to sick sinus syndrome like the other two (conservative)
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
             { reason: 'Severe asthma / bronchospasm (all beta-blockers; cardioselectivity lost at higher doses)', when: p => p.comorbidities.has("Severe Asthma / Bronchospasm") }, // All BBs CI in severe asthma (ACC/AHA); cardioselectivity lost at higher doses
@@ -1133,43 +1173,74 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Ivabradine',
         drug_class: 'If Inhibitor',
+        facts: {
+            // Starting dose (Corlanor label 2.2): 5 mg bid; 2.5 mg bid for a history of conduction defects or others in whom
+            // bradycardia could cause hemodynamic compromise (the label does not name the elderly). The start tier is exact.
+            start_dose_exact: true,
+            // Titration (label): HR above 60 -> up 2.5 mg bid (max 7.5 mg bid); 50-60 -> hold; below 50 or symptoms -> reduce one
+            // step, and stop if already at 2.5 mg bid. All three numbers are the label's (pulse is whole bpm, so "above 60" is 61+).
+            hr_continuation: { reduce_below: 50, no_uptitration_below: 61, basis: 'Corlanor label: reduce 2.5 mg bid if heart rate is below 50 or symptomatic, stop at 2.5 mg bid; increase only if heart rate is above 60' },
+            regimen_warnings: [
+                { text: 'DDI WARNING: Ivabradine with verapamil or diltiazem (moderate CYP3A4 inhibitors and negative chronotropes): the Corlanor label says to avoid the combination (higher ivabradine exposure, additive heart-rate lowering).', when: onVerapamilOrDiltiazem },
+                { text: 'DDI WARNING: Ivabradine with a CYP3A4 inducer (St John\'s wort, rifampin, barbiturates, phenytoin): the Corlanor label says to avoid it (lower ivabradine exposure, possible loss of effect).', when: onCyp3a4Inducer },
+            ],
+        },
+        start_dose_for: (p) => (p.comorbidities.has(CONDUCTION_DEFECT) || onAmiodarone(p) || (p.current_regimen ?? []).some(r => r.med.drug_class === 'Inotrope')) ? 2.5 : 5,
+        // 2.5 mg is half of the scored 5 mg tablet. The label titrates by heart rate, so both 5 and 7.5 mg bid are acceptable
+        // maintenance doses (flagged target); 2.5 mg bid is a start/reduction tier. Starting rule above: conduction defect, plus
+        // co-therapy with amiodarone or digoxin as ENGINE POLICY for "others in whom bradycardia could cause hemodynamic compromise".
         available_doses: [
-            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
+            { strength: 2.5, unit: 'mg', formulation: 'half of a scored 5 mg tablet', frequency_options: ['bid'] },
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true },
             { strength: 7.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true },
         ],
+        // Effects are dose-independent: no source gives a per-dose split (the dose is titrated to heart rate), so none is invented.
+        // KCCQ +2 = SHIFT QoL substudy, placebo-corrected +1.8 (clinical summary) / +2.4 (overall summary); heart-rate reduction about
+        // 10 bpm placebo-corrected at 12 months (PMID 21875859). LVEF +2, NT-proBNP -10% and LVEDD -2% were not verified and are unchanged.
         chf_effects: () => ({
             lvef_improvement_absolute: 2.0, // SHIFT Trial
             bnp_reduction_percent: 0.10,
             weight_reduction_kg: 0,
-            kccq_improvement: 5,
+            kccq_improvement: 2,
             structure_benefit_points: 10,
             lavi_reduction_percent: 0.02,
             lvedd_reduction_percent: 0.02 // SHIFT
         }),
-        hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 12, potassium_change: 0 }),
+        hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 10, potassium_change: 0 }),
         ...ci([
-            // Pregnancy: Corlanor labeling — may cause fetal harm (animal embryo-fetal toxicity);
+            // Pregnancy: Corlanor labeling: may cause fetal harm (animal embryo-fetal toxicity);
             // applies to initiation AND continuation.
             pregnancyCheck('may cause fetal harm'),
-            // Initiation gate: HR >= 70 required (SHIFT trial enrollment)
-            // Continuation: only discontinue if HR < 50 (actual safety threshold)
+            // Initiation gate: HR >= 70 required (SHIFT enrollment; label indication). Continuation: the heart-rate rule is
+            // facts.hr_continuation (reduce below 50, withhold at the lowest dose), not removal.
             {
-                reason: 'Heart rate below 70 bpm — initiation requires HR 70 or higher (SHIFT)',
+                reason: 'Heart rate below 70 bpm: initiation requires HR 70 or higher (SHIFT)',
                 when: p => !p.current_regimen?.some(r => r.med.drug_class === 'If Inhibitor') && p.pulse < 70,
-            },
-            {
-                reason: 'Heart rate below 50 bpm on ivabradine',
-                when: p => !!p.current_regimen?.some(r => r.med.drug_class === 'If Inhibitor') && p.pulse < 50,
             },
             { reason: 'Atrial fibrillation', when: p => p.rhythm === 'AFib' },
             CI_AV_BLOCK_2,
-            CI_AV_BLOCK_3,
+            CI_AV_BLOCK_3, // label: 3rd-degree AV block unless a functioning pacemaker (a paced rhythm is excluded below anyway)
+            // Corlanor label section 4 (verified-rate-control.md row 12):
+            { reason: 'Taking a strong CYP3A4 inhibitor (azole antifungals, clarithromycin, telithromycin, nelfinavir, ritonavir, nefazodone; labeled contraindication)', when: strongIvabradineCyp3a4 },
+            CI_SEVERE_HEPATIC_UNSPECIFIED('ivabradine (label: Child-Pugh C)'),
+            { reason: 'Sick sinus syndrome / sinoatrial block (labeled contraindication unless a demand pacemaker; a paced rhythm is excluded below)', when: p => p.comorbidities.has(SICK_SINUS) },
+            // The label contraindicates pacemaker dependence; the form cannot tell dependence from a demand pacemaker, so any paced
+            // rhythm is excluded (conservative; the heart-rate effect also cannot be assessed when the rate is paced).
+            { reason: 'Paced rhythm: pacemaker dependence cannot be excluded (labeled contraindication)', when: p => p.rhythm === 'Paced' },
+            { reason: 'Acute decompensated heart failure (labeled contraindication; the tool reads NYHA IV, or NYHA III with congestion above dry weight, as acute decompensation)', when: isAcutelyDecompensated },
+            // The label gives no number for "clinically significant hypotension". SBP below 90 is this tool's existing hypotension stop
+            // (no drug recommendations at all). Chronic asymptomatic low blood pressure is deliberately NOT read as a contraindication, so a
+            // patient whose beta-blocker is limited by hypotension can still be offered ivabradine (verified-rate-control.md row 17b).
+            { reason: 'Clinically significant hypotension (SBP below 90; labeled contraindication)', when: p => p.sbp < 90 },
         ]),
         special_features: [
             {
-                feature: 'SHIFT: Reduces HF hospitalization (HR >= 70 on max BB, Class IIa)',
+                // The HR >= 70 criterion belongs to INITIATION (in the checks above): a patient already on ivabradine is meant to be at
+                // 50-60 bpm and keeps the evidence bonus (Corlanor label; 2022 AHA/ACC/HFSA Class 2a, ESC 2021 IIa).
+                feature: 'SHIFT: Reduces HF hospitalization (sinus rhythm, LVEF <= 35; started at HR >= 70 on maximally tolerated beta-blocker; AHA/ACC 2022 Class 2a)',
                 points: 15,
-                criteria: (p) => p.rhythm === 'Sinus' && p.pulse >= 70 && p.lvef <= 35
+                criteria: (p) => p.rhythm === 'Sinus' && p.lvef <= 35
+                    && (p.pulse >= 70 || (p.current_regimen ?? []).some(r => r.med.drug_class === 'If Inhibitor'))
             }
         ],
         side_effects: () => ({ phosphenes: 0.05, bradycardia: 0.10 }),
@@ -1354,13 +1425,27 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Digoxin',
         drug_class: 'Inotrope',
+        facts: {
+            // The label's heart-rate lowering data are in atrial fibrillation (it "does not significantly reduce heart rate during
+            // exercise"; a sinus-rhythm bpm figure is not verified), so the rate effect is only credited in AFib (effects.ts).
+            hr_effect_only_in_rhythm: 'AFib',
+            // Converted from hard contraindications (the Lanoxin label contraindicates only ventricular fibrillation and
+            // hypersensitivity): these now carry a penalized warning and dosing guidance instead of excluding the drug.
+            regimen_warnings: [
+                { text: 'DIGOXIN SAFETY: Wolff-Parkinson-White / accessory pathway (Lanoxin label warning 5.1): in atrial fibrillation with an accessory pathway digoxin can accelerate conduction over the pathway and cause ventricular fibrillation. Avoid unless the pathway has been treated or a specialist directs it.', when: p => p.comorbidities.has(WPW) },
+                { text: 'DIGOXIN SAFETY: Potassium above 5.5 mEq/L. The label has no potassium contraindication (hypokalemia, hypomagnesemia and hypercalcemia are the toxicity predisposers); correct the hyperkalemia, check an ECG, and recheck the digoxin level before relying on this regimen.', when: p => p.potassium > 5.5 },
+                { text: 'DIGOXIN SAFETY: eGFR below 15. The label has no renal contraindication; dosing follows its table by lean body weight and creatinine clearance (the 62.5 mcg tier is the lowest offered). Expect accumulation: check a level in 5-7 days and after any renal change.', when: p => p.egfr > 0 && p.egfr < 15 },
+            ],
+        },
         available_doses: [
             { strength: 62.5, unit: 'mcg', formulation: 'tablet (half of 125mcg)', frequency_options: ['qd'] },
             { strength: 125, unit: 'mcg', formulation: 'tablet', frequency_options: ['qd'] },
         ],
+        // NT-proBNP effect 0: no source gives one (DIG: no mortality effect, fewer HF hospitalizations). KCCQ and the LVEF credit are
+        // unchanged: the label says digoxin raises LVEF and improves symptoms but no source opened gives a number, so LVEF stays 0.
         chf_effects: (dose) => ({
             lvef_improvement_absolute: 0,
-            bnp_reduction_percent: Number(dose) >= 125 ? 0.05 : 0.03,
+            bnp_reduction_percent: 0,
             weight_reduction_kg: 0,
             kccq_improvement: Number(dose) >= 125 ? 4 : 2, // DIG Trial (Hospitalization reduction)
             structure_benefit_points: 0,
@@ -1370,19 +1455,24 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => ({ sbp_drop: 0, hr_drop: Number(dose) >= 125 ? 8 : 4, potassium_change: 0 }),
         side_effects: () => ({ nausea: 0.10, visual_disturbances: 0.05, arrhythmia: 0.05 }),
         ...ci([
-            // K+ > 5.5: Hyperkalemia potentiates digitalis toxicity (shifts binding, arrhythmia risk)
-            // eGFR < 15: End-stage renal without dialysis monitoring — accumulation risk too high
-            // (eGFR 15-30 handled by renal_adjustment dose cap to 62.5mcg)
-            { reason: 'Potassium above 5.5 mEq/L (hyperkalemia potentiates digitalis toxicity)', when: p => p.potassium > 5.5 },
+            // Lanoxin label contraindications: ventricular fibrillation and hypersensitivity (hypersensitivity is the allergy rule).
+            { reason: 'Ventricular fibrillation (labeled contraindication)', when: p => p.comorbidities.has(VENTRICULAR_FIBRILLATION) },
+            // Renal data are needed to START digoxin (it is renally cleared and its label dosing is by creatinine clearance). Blank eGFR is the
+            // 0 sentinel: this is reported as "renal data required" (E12) and never forces removal of digoxin already taken. It replaces the
+            // old "eGFR below 15" block, which also caught a blank eGFR.
+            { reason: 'Renal function not entered (digoxin is renally cleared; obtain a BMP before starting)', when: p => valueUnknown(p.egfr) },
             // (p.potassium > 0 guard: blank/unentered K+ is stored as 0 and must not read as
-            // hypokalemia — the engine's POTASSIUM UNKNOWN pathway governs that case.)
+            // hypokalemia; the engine's POTASSIUM UNKNOWN pathway governs that case.) Hypokalemia potentiates toxicity; the label's
+            // advice is to correct it first, so this stays a conservative block (verified-rate-control.md row 21).
             { reason: 'Potassium below 3.5 mEq/L', when: p => (p.potassium > 0 && p.potassium < 3.5) },
-            { reason: 'eGFR below 15 (end-stage renal without dialysis monitoring; accumulation risk)', when: p => p.egfr < 15 },
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
         ]),
+        // The label doses by lean body weight and CrCl (not age or eGFR bands), and no source supports a flat 62.5 mcg cap at eGFR
+        // 30-50. The 62.5 mcg cap below eGFR 30 is a CONSERVATIVE ENGINE CHOICE (the label's table gives larger doses at some
+        // weights), kept because it only restricts the dose.
         renal_adjustment: (egfr) => {
-            if (egfr < 30) return { max_dose: 62.5, caution: true }; // Half-dose; target level 0.5-0.9 ng/mL
+            if (egfr < 30) return { max_dose: 62.5, caution: true };
             return {};
         },
         special_features: [

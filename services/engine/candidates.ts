@@ -1,9 +1,9 @@
 /** Current-regimen analysis and candidate-modification generation. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, RegimenMed, ModificationAction, RegimenModification, ModificationSet } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace } from '../clinicalPredicates';
+import { valueUnknown, hasHistoricalHFrEF, isIronDeficient, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
-import { computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hasRecentWorseningHF, isTargetDoseForPatient, kContinuationAction, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hasRecentWorseningHF, hrContinuationAction, isTargetDoseForPatient, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication } from './intolerance';
 import { regimenSatisfiesPillar } from './domains';
 
@@ -22,6 +22,8 @@ export interface RegimenAnalysis {
     redundantCurrentMeds: Set<string>;           // names of duplicate-class agents to deprescribe (dual RAAS/MRA)
     /** Current meds that must drop ONE dose step (potassium 5.5-5.9 on an MRA; dose above an interaction cap) -> reason. */
     forcedReduceNames: Map<string, string>;
+    /** Subset of `forcedReduceNames` whose reduction is the EXACT next-lower strength on the drug's full dose ladder (heart-rate rule), not the highest sampled lower tier. */
+    forcedReduceExactStep: Set<string>;
     /** Current meds withheld because of the potassium continuation rule (K+ >= 6.0, or 5.5-5.9 at the lowest dose) -> reason. */
     kWithholdReasons: Map<string, string>;
 }
@@ -54,9 +56,7 @@ export function analyzeCurrentRegimen(
 
     // Acute decompensation gating: do NOT initiate BB (Class III harm — ACC/AHA 2022)
     // NYHA IV, or NYHA III with significant volume overload = acutely decompensated
-    const acuteFluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
-    const isAcutelyDecompensated = patient.nyha_class === 'IV' ||
-        (patient.nyha_class === 'III' && acuteFluidExcess > 2.0 && patient.volume_status.exam_findings.size >= 2);
+    const isAcutelyDecompensated = isAcutelyDecompensatedPatient(patient);
     if (isAcutelyDecompensated && !currentClassMap.has('Beta Blocker')) {
         missingPillars = missingPillars.filter(p => p !== 'Beta Blocker');
     }
@@ -98,6 +98,7 @@ export function analyzeCurrentRegimen(
     const intolerableCurrentMeds = new Map<string, string>();
     const forcedReduceNames = new Map<string, string>();
     const kWithholdReasons = new Map<string, string>();
+    const forcedReduceExactStep = new Set<string>();
     const renalDataUnknown = valueUnknown(patient.egfr) || valueUnknown(patient.creatinine);
     currentRegimen.forEach(r => {
         // Potassium continuation rule (facts.k_continuation): >= withhold_at withholds the drug; the reduce band
@@ -170,8 +171,12 @@ export function analyzeCurrentRegimen(
         const kRule = kContinuationAction(current.med, patient);
         const cap = current.med.interaction_dose_cap?.(patient) ?? null;
         const aboveCap = cap !== null && Number(current.dose.strength) > cap.max_dose;
+        // Heart-rate rule (beta-blockers, ivabradine): below facts.hr_continuation.reduce_below the drug drops ONE step
+        // (withheld at the lowest dose); below no_uptitration_below it is not up-titrated. Never a removal at a higher dose.
+        const hrRule = hrContinuationAction(current.med, patient);
         const reduceReason = (kRule?.action === 'reduce' ? kRule.reason : undefined)
-            ?? (aboveCap ? `${cap!.reason}: current dose is above the maximum` : undefined);
+            ?? (aboveCap ? `${cap!.reason}: current dose is above the maximum` : undefined)
+            ?? (hrRule?.reduce ? hrRule.reduceReason : undefined);
 
         const allTiers = getDoseTiers(current.med, patient);
         // Compare by dose-ORDER INDEX (available_doses are listed low→high), not Number(strength).
@@ -182,7 +187,7 @@ export function analyzeCurrentRegimen(
         const currentIdx = doseOrder.findIndex(d => d.strength === current.dose.strength);
         const tierIdx = (t: RegimenMed) => doseOrder.findIndex(d => d.strength === t.dose.strength);
 
-        if (!isContraindicated && !isBBBlockedUp && reduceReason === undefined) {
+        if (!isContraindicated && !isBBBlockedUp && reduceReason === undefined && !hrRule?.blockUp) {
             // Sorted ASCENDING by dose index so consumers can rely on options[last] being the
             // highest tier (getDoseTiers construction order is [lowest, highest, middle, target],
             // which is NOT ascending — the compound add+titrate candidate previously picked a
@@ -203,9 +208,15 @@ export function analyzeCurrentRegimen(
         if (reduceReason !== undefined && !isContraindicated) {
             if (lowerDoses.length > 0) {
                 forcedReduceNames.set(current.med.name, reduceReason);
+                if (hrRule?.reduce && kRule?.action !== 'reduce' && !aboveCap) forcedReduceExactStep.add(current.med.name);
             } else if (kRule?.action === 'reduce') {
                 // Already at the lowest dose: the label says withhold.
                 kWithholdReasons.set(current.med.name, kRule.reason);
+                contraindicatedCurrentMeds.add(current.med.name);
+            } else if (hrRule?.reduce) {
+                // Already at the lowest dose and still bradycardic: withhold (carvedilol/metoprolol/ivabradine labels: reduce, and
+                // for ivabradine stop at the lowest dose). The summary states the heart rate.
+                kWithholdReasons.set(current.med.name, hrRule.withholdReason);
                 contraindicatedCurrentMeds.add(current.med.name);
             }
         }
@@ -320,23 +331,30 @@ export function analyzeCurrentRegimen(
         }
     }
 
-    // Ivabradine: Sinus + HR >= 70 + LVEF <= 35 on a MAXIMALLY-TOLERATED beta-blocker (SHIFT;
-    // ESC 2021 Class IIb). The "max tolerated" criterion matters: ivabradine is added only after
-    // the beta-blocker is optimized — offering it to a patient on a starting BB dose (e.g.
-    // carvedilol 3.125) is wrong and crowds out the indicated BB up-titration. Proxy for
-    // "maximally tolerated": BB at its target dose, OR beta-blockers cannot be used at all
-    // (allBBExcluded — the SHIFT-eligible "BB-intolerant" fallback).
-    const bbAtTarget = currentRegimen.some(r =>
-        r.med.drug_class === 'Beta Blocker' &&
-        isTargetDoseForPatient(r, patient)
+    // Ivabradine: Sinus + HR >= 70 + LVEF <= 35 on a MAXIMALLY-TOLERATED beta-blocker, or with beta-blockers
+    // contraindicated (SHIFT; Corlanor label; 2022 AHA/ACC/HFSA Class 2a, ESC 2021 IIa). The "max tolerated"
+    // criterion matters: ivabradine is added only after the beta-blocker is optimized, never to a patient on a
+    // starting BB dose that could still go up (it would crowd out the indicated BB up-titration). The label asks for
+    // the maximally TOLERATED dose, not necessarily the target, so a beta-blocker counts when it is at target OR it
+    // cannot be increased (no up-titration offered: heart rate below 60, a documented limiting intolerance such as
+    // prior bradycardia or chronic hypotension, no higher tier, or it is being withdrawn), OR no beta-blocker can be
+    // used at all (allBBExcluded). Initiation only: the HR >= 70 criterion is in the drug's contraindication checks.
+    const bbMaxTolerated = currentRegimen.some(r =>
+        r.med.drug_class === 'Beta Blocker' && (
+            isTargetDoseForPatient(r, patient)
+            || contraindicatedCurrentMeds.has(r.med.name)
+            || !titratableUp.some(t => t.current.med.name === r.med.name)
+            || intolerancePolicy.hasBbBradycardia
+            || patient.comorbidities.has('Hypotension (Chronic)')
+        )
     );
     const ivabradineEligible = isSinusRhythm && patient.pulse >= 70 && patient.lvef <= 35 &&
-        (bbAtTarget || allBBExcluded === true);
-    if (ivabradineEligible) {
-        const ivabTiers = medTiers.filter(r => r.med.drug_class === 'If Inhibitor');
-        if (ivabTiers.length > 0 && !currentClasses.has('If Inhibitor')) {
-            addableAdjuncts.push(ivabTiers[0]);
-        }
+        (bbMaxTolerated || allBBExcluded === true);
+    if (ivabradineEligible && !currentClasses.has('If Inhibitor')) {
+        // New start at the label's starting tier (5 mg bid; 2.5 mg bid for conduction defects or bradycardia risk): the
+        // ivabradine entry declares an EXACT start tier, so the start tiers hold exactly one.
+        const ivabStart = startTiers.find(r => r.med.drug_class === 'If Inhibitor');
+        if (ivabStart) addableAdjuncts.push(ivabStart);
     }
 
     // Vericiguat: NYHA II-IV + NT-proBNP >= 1600 + LVEF < 45 (VICTORIA trial enrolled NYHA II-IV)
@@ -349,10 +367,23 @@ export function analyzeCurrentRegimen(
         }
     }
 
-    // Digoxin: AFib rate control (with or without BB) OR HFrEF symptom reduction (DIG trial)
+    // Digoxin (verified-rate-control.md rows 18-19; Lanoxin label; 2022 AHA/ACC/HFSA Class 2b, LOE B-R):
+    //  - Sinus rhythm: only for symptomatic HFrEF (LVEF <= 40, NYHA III-IV: engine policy for "symptomatic") that persists
+    //    on maximally tolerated GDMT, defined from the engine's own concepts: no pillar is still addable and no pillar can
+    //    still be titrated up (blocked or contraindicated pillars count as exhausted). A weak recommendation never competes
+    //    with an open guideline pillar. Not offered at LVEF >= 50.
+    //  - Atrial fibrillation: rate control is a labeled indication, offered once the beta-blocker is optimized (none
+    //    addable, none titratable up). Offered for any LVEF.
+    const GDMT_GROUPS = new Set(['RAAS Inhibitor', 'Beta Blocker', 'MRA', 'SGLT2i']);
+    // "Titratable" means below the patient's target dose with a higher tier on offer (a drug at target is not unfinished GDMT).
+    const belowTargetAndTitratable = (t: { current: RegimenMed }) => !isTargetDoseForPatient(t.current, patient);
+    const pillarTitratable = titratableUp.some(t => GDMT_GROUPS.has(getMedicationClassGroup(t.current.med.drug_class)) && belowTargetAndTitratable(t));
+    const bbOptimized = !addablePillars.has('Beta Blocker')
+        && !titratableUp.some(t => t.current.med.drug_class === 'Beta Blocker' && belowTargetAndTitratable(t));
+    const gdmtExhausted = addablePillars.size === 0 && !pillarTitratable;
     const digoxinIndicated =
-        patient.rhythm === 'AFib' ||  // Rate control adjunct
-        (patient.lvef <= 45 && isNyhaIIIorIV);  // DIG trial: symptomatic HFrEF
+        (patient.rhythm === 'AFib' && bbOptimized) ||
+        (patient.rhythm !== 'AFib' && patient.lvef <= 40 && isNyhaIIIorIV && gdmtExhausted);
     if (digoxinIndicated) {
         const digTiers = medTiers.filter(r => r.med.drug_class === 'Inotrope');
         if (digTiers.length > 0 && !currentClasses.has('Inotrope')) {
@@ -441,6 +472,7 @@ export function analyzeCurrentRegimen(
         forcedBbDownTitrateNames,
         redundantCurrentMeds,
         forcedReduceNames,
+        forcedReduceExactStep,
         kWithholdReasons
     };
 }
@@ -861,7 +893,13 @@ export function generateCandidateModifications(
         analysis.forcedReduceNames.forEach((reason, medName) => {
             const td = analysis.titratableDown.find(t => t.current.med.name === medName);
             if (!td || td.options.length === 0) return;
-            const lower = td.options[td.options.length - 1];
+            let lower = td.options[td.options.length - 1];
+            if (analysis.forcedReduceExactStep.has(medName)) {
+                // Heart-rate rule: the EXACT next-lower strength on the full ladder (carvedilol 12.5 -> 6.25, not the sampled 3.125).
+                const ladder = td.current.med.available_doses;
+                const idx = ladder.findIndex(d => d.strength === td.current.dose.strength);
+                if (idx > 0) lower = { med: td.current.med, dose: ladder[idx - 1], selected_frequency: pickPreferredFrequency(td.current.med, ladder[idx - 1].frequency_options, patient) };
+            }
             candidates.forEach(c => {
                 const alreadyHandled = c.modifications.some(m =>
                     (m.action === 'titrate_down' || m.action === 'remove' || m.action === 'swap')

@@ -190,6 +190,15 @@ export interface MedFacts {
      */
     k_continuation?: { reduce_at: number; withhold_at: number; basis: string };
     /**
+     * Heart-rate rule for an agent the patient is ALREADY on (beta-blockers, ivabradine); initiation gates are separate
+     * contraindication checks. Resting pulse below `reduce_below`: forced ONE-STEP dose reduction (withhold if already at the
+     * lowest dose), never removal at a higher dose. Pulse below `no_uptitration_below`: no up-titration offered. Does not apply
+     * in a paced rhythm or when the pulse is blank. `basis` states the source and which numbers are engine policy.
+     */
+    hr_continuation?: { reduce_below: number; no_uptitration_below: number; basis: string };
+    /** The drug's heart-rate lowering is only credited in this rhythm (digoxin: AFib; the label's rate-control data are in atrial fibrillation). */
+    hr_effect_only_in_rhythm?: Patient['rhythm'];
+    /**
      * ACEi/ARB only: the TOTAL DAILY dose (mg) at or below which the Entresto label treats the agent as a "low dose"
      * when converting to sacubitril/valsartan (start 24/26 mg bid instead of 49/51 mg bid). Read by the ARNI's
      * `start_dose_for` through `services/engine/raasStart.ts`.

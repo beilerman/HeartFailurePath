@@ -213,9 +213,9 @@ export function buildQualitativeProjections(baseline: Patient, projected: Patien
 export function describeAdjunct(m: Medication): string {
     switch (m.drug_class) {
         case 'Vasodilator': return 'Hydralazine + isosorbide dinitrate (H/ISDN) — A-HeFT: Class I add-on for Black patients NYHA III–IV on GDMT, or the alternative when RAAS inhibitors cannot be used (all contraindicated/intolerable).';
-        case 'If Inhibitor': return 'Ivabradine — SHIFT: sinus rhythm with HR ≥ 70 on maximally-tolerated beta-blocker.';
+        case 'If Inhibitor': return 'Ivabradine — SHIFT: sinus rhythm, LVEF ≤ 35, HR ≥ 70 on maximally tolerated beta-blocker (or beta-blocker contraindicated); AHA/ACC 2022 Class 2a, ESC 2021 IIa.';
         case 'sGC Stimulator': return 'Vericiguat — VICTORIA: worsening HFrEF (recent hospitalization / IV diuretics), NT-proBNP ≥ 1600.';
-        case 'Inotrope': return 'Digoxin — rate control in AF and/or symptom reduction in HFrEF (narrow therapeutic index — monitor levels).';
+        case 'Inotrope': return 'Digoxin — AF rate control, or (AHA/ACC 2022 Class 2b) HFrEF symptoms persisting on maximally tolerated GDMT (narrow therapeutic index — monitor levels).';
         case 'GLP-1 RA':
         case 'GLP-1/GIP RA': return 'GLP-1 / GIP receptor agonist — obesity with HFpEF/HFmrEF (STEP-HFpEF, SUMMIT).';
         case 'IV Iron': return 'IV iron — iron deficiency in symptomatic HF (AFFIRM-AHF / IRONMAN): improves symptoms and reduces hospitalization.';

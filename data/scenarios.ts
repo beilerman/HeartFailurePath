@@ -2983,6 +2983,95 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'RAAS-Source ACEi Add Starts At Lowest Tier No ARNI Available', patient: { ...base, current_regimen: onBbSglt } },
         ];
     })(),
+
+    // ===== Rate control source-verified corrections (docs/medication-review-2026-11-10/verified-rate-control.md) =====
+    // Beta-blockers (carvedilol, metoprolol succinate, bisoprolol), ivabradine and digoxin: labels Coreg, metoprolol succinate ER,
+    // bisoprolol, Corlanor, Lanoxin; MOCHA, COMET, SHIFT, DIG.
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 62, sex: 'Male' as const, sbp: 124, dbp: 76, pulse: 74, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 62, nt_pro_bnp: 1400, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 60, creatinine: 1.2, bun: 20, potassium: 4.5,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            current_regimen: [] as RegimenMed[],
+            max_affordable_cost: 3000, cost_sensitivity: 3, insurance_tier: 'commercial' as const,
+            complexity_tolerance: 8, max_new_classes_per_visit: 2,
+        };
+        const withBb = (name: string, strength: number | string, freq = 'bid') => buildCurrentRegimen([
+            { name, strength, freq },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        // All four pillars at target: nothing left to add or titrate, so only adjuncts remain.
+        const quad = buildCurrentRegimen([
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+            { name: 'Carvedilol', strength: 25, freq: 'bid' },
+            { name: 'Spironolactone', strength: 25, freq: 'qd' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        return [
+            { title: 'Rate-Source Carvedilol 25 mg HR 54 One-Step Reduction', patient: { ...base, pulse: 54, current_regimen: withBb('Carvedilol', 25) } },
+            { title: 'Rate-Source Carvedilol 3.125 mg HR 50 Withheld', patient: { ...base, pulse: 50, current_regimen: withBb('Carvedilol', 3.125) } },
+            { title: 'Rate-Source Metoprolol Succinate 100 mg HR 52 One-Step Reduction', patient: { ...base, pulse: 52, current_regimen: withBb('Metoprolol Succinate', 100, 'qd') } },
+            { title: 'Rate-Source Bisoprolol 10 mg HR 53 One-Step Reduction', patient: { ...base, pulse: 53, current_regimen: withBb('Bisoprolol', 10, 'qd') } },
+            { title: 'Rate-Source Third-Degree AV Block Beta-Blocker Removed', patient: { ...base, pulse: 52, rhythm: '3rd Degree AV Block' as const, current_regimen: withBb('Carvedilol', 12.5) } },
+            { title: 'Rate-Source Sick Sinus Syndrome Without Pacemaker Beta-Blocker Removed', patient: { ...base, pulse: 66, comorbidities: new Set(['HFrEF', 'Sick Sinus Syndrome / Sinoatrial Block']), current_regimen: withBb('Metoprolol Succinate', 50, 'qd') } },
+            { title: 'Rate-Source Paced Rhythm HR 52 Beta-Blocker Kept', patient: { ...base, pulse: 52, rhythm: 'Paced' as const, comorbidities: new Set(['HFrEF', 'Sick Sinus Syndrome / Sinoatrial Block']), current_regimen: withBb('Carvedilol', 12.5) } },
+            { title: 'Rate-Source No Up-Titration At HR 56', patient: { ...base, pulse: 56, current_regimen: withBb('Carvedilol', 12.5) } },
+            { title: 'Rate-Source Up-Titration Offered At HR 66', patient: { ...base, pulse: 66, current_regimen: withBb('Carvedilol', 12.5) } },
+            { title: 'Rate-Source New Beta-Blocker Start Blocked At HR 52', patient: { ...base, pulse: 52, current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Beta-Blocker Dose Effects Equalized', patient: { ...base, current_regimen: withBb('Carvedilol', 25) } },
+            { title: 'Rate-Source Carvedilol Child-Pugh B Confirmed Allowed', patient: { ...base, comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)', 'Liver Disease: Child-Pugh B confirmed (not C)']), current_regimen: [] } },
+            { title: 'Rate-Source Carvedilol Child-Pugh B/C Unspecified Excluded Metoprolol Allowed', patient: { ...base, comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: [] } },
+            { title: 'Rate-Source Bisoprolol US Tiers', patient: { ...base, comorbidities: new Set(['HFrEF', 'Asthma (Mild/Moderate)']), current_regimen: [] } },
+            { title: 'Rate-Source Ivabradine Strong CYP3A4 Inhibitor Excluded', patient: { ...base, pulse: 78, external_medications: new Set(['Clarithromycin']), current_regimen: quad } },
+            { title: 'Rate-Source Ivabradine Telithromycin Excluded', patient: { ...base, pulse: 78, external_medications: new Set(['Telithromycin']), current_regimen: quad } },
+            { title: 'Rate-Source Ivabradine With Diltiazem Warned', patient: { ...base, pulse: 66, external_medications: new Set(['Diltiazem']),
+                current_regimen: buildCurrentRegimen([{ name: 'Ivabradine', strength: 5, freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Ivabradine Inducer Warned', patient: { ...base, pulse: 66, external_medications: new Set(['Rifampin']),
+                current_regimen: buildCurrentRegimen([{ name: 'Ivabradine', strength: 5, freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Ivabradine Continuation HR 58 Keeps Drug And Bonus', patient: { ...base, pulse: 58, current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }, { name: 'Ivabradine', strength: 5, freq: 'bid' }]) } },
+            { title: 'Rate-Source Ivabradine HR 48 On 5 mg Reduced To 2.5 mg', patient: { ...base, pulse: 48, current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }, { name: 'Ivabradine', strength: 5, freq: 'bid' }]) } },
+            { title: 'Rate-Source Ivabradine HR 48 On 2.5 mg Withheld', patient: { ...base, pulse: 48, current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }, { name: 'Ivabradine', strength: 2.5, freq: 'bid' }]) } },
+            { title: 'Rate-Source Ivabradine Start Tier 5 mg', patient: { ...base, pulse: 78, current_regimen: quad } },
+            { title: 'Rate-Source Ivabradine Start Tier 2.5 mg Conduction Defect', patient: { ...base, pulse: 78, comorbidities: new Set(['HFrEF', 'Conduction Defect (history)']), current_regimen: quad } },
+            { title: 'Rate-Source Ivabradine Beta-Blocker Limited By Hypotension', patient: { ...base, pulse: 78, sbp: 98, dbp: 62, comorbidities: new Set(['HFrEF', 'Hypotension (Chronic)']),
+                current_regimen: buildCurrentRegimen([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '24/26', freq: 'bid' }, { name: 'Carvedilol', strength: 6.25, freq: 'bid' },
+                    { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Ivabradine Beta-Blocker Not Maximized Not Offered', patient: { ...base, pulse: 78, current_regimen: buildCurrentRegimen([
+                { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 6.25, freq: 'bid' },
+                { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Ivabradine Sick Sinus Syndrome Excluded', patient: { ...base, pulse: 78, comorbidities: new Set(['HFrEF', 'Sick Sinus Syndrome / Sinoatrial Block']), current_regimen: quad } },
+            { title: 'Rate-Source Ivabradine Acute Decompensation Excluded', patient: { ...base, pulse: 78, nyha_class: 'IV' as const, current_regimen: quad } },
+            { title: 'Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded', patient: { ...base, pulse: 78, comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: quad } },
+            { title: 'Rate-Source Ivabradine Paced Rhythm Excluded', patient: { ...base, pulse: 78, rhythm: 'Paced' as const, current_regimen: quad } },
+            { title: 'Rate-Source Digoxin Sinus Rhythm Not Offered While Pillars Remain Addable', patient: { ...base, nyha_class: 'III' as const, lvef: 25,
+                current_regimen: buildCurrentRegimen([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Digoxin Sinus Rhythm Offered After Maximal GDMT', patient: { ...base, nyha_class: 'III' as const, lvef: 25, current_regimen: quad } },
+            { title: 'Rate-Source Digoxin Sinus Rhythm Preserved EF Not Offered', patient: { ...base, nyha_class: 'III' as const, lvef: 58, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFpEF']),
+                current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Digoxin Ventricular Fibrillation Excluded', patient: { ...base, rhythm: 'AFib' as const, pulse: 96, comorbidities: new Set(['HFrEF', 'Ventricular Fibrillation (active)']), current_regimen: withBb('Carvedilol', 25) } },
+            { title: 'Rate-Source Digoxin WPW Warning', patient: { ...base, rhythm: 'AFib' as const, pulse: 96, comorbidities: new Set(['HFrEF', 'Wolff-Parkinson-White / Accessory Pathway']),
+                current_regimen: buildCurrentRegimen([{ name: 'Digoxin', strength: 125, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Digoxin Potassium 5.8 Not Excluded Warned', patient: { ...base, rhythm: 'AFib' as const, pulse: 96, potassium: 5.8,
+                current_regimen: buildCurrentRegimen([{ name: 'Digoxin', strength: 125, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Digoxin eGFR 12 Not Excluded Warned', patient: { ...base, rhythm: 'AFib' as const, pulse: 96, egfr: 12, creatinine: 4.6,
+                current_regimen: buildCurrentRegimen([{ name: 'Digoxin', strength: 62.5, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }]) } },
+            { title: 'Rate-Source Digoxin Amiodarone Dose Reduction Text', patient: { ...base, rhythm: 'AFib' as const, pulse: 96, external_medications: new Set(['Amiodarone']),
+                current_regimen: buildCurrentRegimen([{ name: 'Digoxin', strength: 125, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Digoxin Heart-Rate Effect Only In AFib', patient: { ...base, current_regimen: quad } },
+            { title: 'Rate-Source Ivabradine Metadata', patient: { ...base, current_regimen: quad } },
+        ];
+    })(),
 ];
 
 // The single clonePatient implementation lives in the engine (services/simulationService.ts)

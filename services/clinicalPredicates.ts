@@ -54,3 +54,11 @@ export function isIronDeficient(patient: Patient): boolean {
     if (ferritin < 100) return true;                                       // absolute
     return ferritin <= 300 && tsat !== undefined && tsat < 20;             // functional
 }
+
+// Acutely decompensated heart failure, as the engine defines it everywhere (beta-blocker initiation block, ivabradine
+// contraindication): NYHA IV, or NYHA III with more than 2 kg above dry weight and at least two congestion exam findings.
+export function isAcutelyDecompensated(patient: Patient): boolean {
+    const excess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    return patient.nyha_class === 'IV' ||
+        (patient.nyha_class === 'III' && excess > 2.0 && patient.volume_status.exam_findings.size >= 2);
+}
