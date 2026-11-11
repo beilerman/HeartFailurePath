@@ -5,16 +5,64 @@ import { getMedicationClassGroup, isDiureticClass } from './registry';
 import { drugFacts } from './drugFacts';
 
 // --- Helper Functions ---
-export function pickPreferredFrequency(med: Medication, options: string[], patient: Patient): string {
+const DOSES_PER_DAY: Record<string, number> = { qd: 1, bid: 2, tid: 3 };
+
+/** Doses per day for a frequency code (unknown codes count as once daily). */
+export function dosesPerDay(frequency: string): number {
+    return DOSES_PER_DAY[frequency] ?? 1;
+}
+
+/**
+ * TOTAL DAILY dose (strength x doses per day) of a regimen entry, in the entry's dose unit; NaN for a combination strength
+ * ("24/26"). Loop-diuretic effects, the high-dose alert and the declared daily maximum (`facts.max_daily_dose`) all use this,
+ * never the per-dose strength (a loop is dosed and labeled in mg per day: furosemide label "up to 600 mg/day").
+ */
+export function dailyDose(r: RegimenMed): number {
+    return Number(r.dose.strength) * dosesPerDay(r.selected_frequency);
+}
+
+/** The dose the entry's effect functions are evaluated at: the daily dose when `facts.effects_on_daily_dose`, else the strength. */
+export function effectDose(r: RegimenMed): number | string {
+    return drugFacts(r.med).effects_on_daily_dose ? dailyDose(r) : r.dose.strength;
+}
+
+/** Frequencies of `options` whose daily dose at `strength` stays within the entry's declared `facts.max_daily_dose` (all when none declared). */
+export function frequenciesWithinMax(med: Medication, options: string[], strength: number | string): string[] {
+    const max = drugFacts(med).max_daily_dose;
+    const s = Number(strength);
+    if (max === undefined || Number.isNaN(s)) return options;
+    return options.filter(f => s * dosesPerDay(f) <= max);
+}
+
+export function pickPreferredFrequency(med: Medication, options: string[], patient: Patient, strength?: number | string): string {
     if (options.length === 0) return 'qd';
+    // Never offer a dose x frequency above the label's maximum total daily dose (bumetanide 10 mg/day: 4 mg tid would be 12).
+    const allowed = strength === undefined ? options : frequenciesWithinMax(med, options, strength);
+    const usable = allowed.length > 0 ? allowed : [options[0]];
 
     // Severe CKD reduces loop delivery to the nephron. Prefer split dosing at low eGFR.
     if (med.drug_class === 'Loop Diuretic' && patient.egfr < 20) {
-        if (options.includes('tid')) return 'tid';
-        if (options.includes('bid')) return 'bid';
+        if (usable.includes('tid')) return 'tid';
+        if (usable.includes('bid')) return 'bid';
     }
 
-    return options[0];
+    return usable[0];
+}
+
+/**
+ * Titration of a drug dosed by TOTAL DAILY dose (`facts.effects_on_daily_dose`) keeps the patient's current dosing frequency when it moves to
+ * another strength (80 mg bid -> 160 mg bid, not 160 mg once daily, which would credit no change). Never above the declared daily maximum
+ * or the tier's own frequency options. Other drugs keep the tier's preferred frequency.
+ */
+export function carryFrequency(tier: RegimenMed, current: RegimenMed): RegimenMed {
+    if (!drugFacts(tier.med).effects_on_daily_dose) return tier;
+    const want = dosesPerDay(current.selected_frequency);
+    const have = dosesPerDay(tier.selected_frequency);
+    if (want <= have) return tier;
+    const best = frequenciesWithinMax(tier.med, tier.dose.frequency_options, tier.dose.strength)
+        .filter(f => dosesPerDay(f) <= want && dosesPerDay(f) > have)
+        .sort((x, y) => dosesPerDay(y) - dosesPerDay(x))[0];
+    return best ? { ...tier, selected_frequency: best } : tier;
 }
 
 export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
@@ -24,6 +72,8 @@ export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
         ? Math.min(adjustment.max_dose ?? Infinity, interactionCap)
         : adjustment.max_dose;
     const validDoses = med.available_doses.filter(dose => {
+        // A strength whose every allowed frequency exceeds the declared maximum total daily dose is never offered.
+        if (frequenciesWithinMax(med, dose.frequency_options, dose.strength).length === 0) return false;
         if (typeof dose.strength === 'number') {
             return !(maxDose && dose.strength > maxDose);
         }
@@ -43,7 +93,7 @@ export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
     // step is always available and titratableUp can offer exactly one step; the sampler below would skip steps.
     if (drugFacts(med).titrate_one_step) {
         return dosesForTiering.map(dose => ({
-            med, dose, selected_frequency: pickPreferredFrequency(med, dose.frequency_options, patient)
+            med, dose, selected_frequency: pickPreferredFrequency(med, dose.frequency_options, patient, dose.strength)
         }));
     }
 
@@ -65,7 +115,7 @@ export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
     return tiers.map(dose => ({
         med,
         dose,
-        selected_frequency: pickPreferredFrequency(med, dose.frequency_options, patient)
+        selected_frequency: pickPreferredFrequency(med, dose.frequency_options, patient, dose.strength)
     }));
 }
 
@@ -170,6 +220,8 @@ export function computeRedundantCurrentMeds(
 
     const byGroup = new Map<string, RegimenMed[]>();
     currentRegimen.forEach(r => {
+        // A short-course add-on (facts.short_course_addon, Furoscix) is MEANT to sit beside an oral agent of its group: not a duplicate.
+        if (drugFacts(r.med).short_course_addon) return;
         const g = getMedicationClassGroup(r.med.drug_class);
         if (!byGroup.has(g)) byGroup.set(g, []);
         byGroup.get(g)!.push(r);

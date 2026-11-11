@@ -7,7 +7,7 @@ import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold } from '../clini
 import { PDE5_INHIBITORS } from './contraindications';
 import { taggedDiscontinuedMeds } from './eligibility';
 import { buildMissingDataNotices, computeGdmtGaps } from './explain';
-import { dedupeCurrentRegimen, hrContinuationAction, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { dailyDose, dedupeCurrentRegimen, hrContinuationAction, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 
 export interface CriticalDataAudit {
     alerts: string[];
@@ -71,6 +71,7 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     // etc.) — never appropriate; deprescribe to a single agent. RAAS and MRA are reported above.
     const groupCounts = new Map<string, RegimenMed[]>();
     current.forEach(r => {
+        if (drugFacts(r.med).short_course_addon) return; // a short-course add-on beside an oral agent is intended, not a duplicate
         const g = getMedicationClassGroup(r.med.drug_class);
         if (!groupCounts.has(g)) groupCounts.set(g, []);
         groupCounts.get(g)!.push(r);
@@ -116,10 +117,11 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     const euvolemic = Math.abs(fluidExcess) <= 1.0;
     const highDoseLoop = current.find(r => {
         const t = drugFacts(r.med).high_dose_threshold;
-        return r.med.drug_class === 'Loop Diuretic' && t !== undefined && Number(r.dose.strength) >= t;
+        // facts.high_dose_threshold is a TOTAL DAILY dose (strength x doses per day), not the per-dose strength.
+        return r.med.drug_class === 'Loop Diuretic' && t !== undefined && dailyDose(r) >= t;
     });
     if (euvolemic && highDoseLoop) {
-        alerts.push(`LOOP DIURETIC OVER-TREATMENT: Patient appears euvolemic on a high-dose loop diuretic (${highDoseLoop.med.name} ${highDoseLoop.dose.strength}${highDoseLoop.dose.unit}). Down-titrate to the lowest effective dose to avoid over-diuresis, hypovolemia, and prerenal AKI — particularly when initiating an SGLT2i (additive natriuresis).`);
+        alerts.push(`LOOP DIURETIC OVER-TREATMENT: Patient appears euvolemic on a high-dose loop diuretic (${highDoseLoop.med.name} ${highDoseLoop.dose.strength}${highDoseLoop.dose.unit} ${highDoseLoop.selected_frequency} = ${dailyDose(highDoseLoop)} ${highDoseLoop.dose.unit}/day). Down-titrate to the lowest effective dose to avoid over-diuresis, hypovolemia, and prerenal AKI — particularly when initiating an SGLT2i (additive natriuresis).`);
     }
 
     return alerts;

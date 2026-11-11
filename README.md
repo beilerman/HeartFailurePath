@@ -75,13 +75,17 @@ options, not proof that complete GDMT is financially reachable.
 
 ### 5) Furoscix implementation
 
-`Furoscix (SC Furosemide)` is modeled as a loop-diuretic option for worsening congestion contexts.
+`Furoscix (SC Furosemide)` is modeled as a SHORT-COURSE ADD-ON beside an oral loop diuretic (label: "not for chronic use"), never a swap or standing replacement (2026-11-10, `docs/medication-review-2026-11-10/verified-diuretics.md`).
 
-- Preferred in severe congestion loop-swap/add pathways.
-- Contraindicated when escalation context is absent, with severe renal impairment (`eGFR < 15`), or with furosemide/device-material hypersensitivity.
+- Offered only with at least 2 kg above dry weight and an oral loop on board; the modification summary says short course and return to the oral diuretic; a monitoring item reassesses volume status and resumes or adjusts the oral loop.
+- Credited as 160 mg oral furosemide (80 mg SC, multiplier 2.0) and, beside an oral loop, only the increment above that loop.
+- Contraindicated with anuria (comorbidity option), no oral loop on board, under 1 kg above dry weight, or furosemide/device-material hypersensitivity. CKD is an indication: the old `eGFR < 15` exclusion is gone and a low-eGFR caution remains.
+- Priced per course of 4 single-use kits (assumption).
 - Adds mandatory regimen warning:
   - `FUROSCIX SAFETY: On-body SQ infusor delivers 80mg over ~5 hours...`
 - Additional triage warning appears when hypoxemia suggests possible acute pulmonary edema.
+
+Other loop/thiazide rules from the same review: loop effects and the high-dose alert use the TOTAL DAILY dose (strength x doses per day); each loop declares a label maximum total daily dose (furosemide 600, torsemide 200, bumetanide 10 mg) that candidate generation never exceeds; thiazide-type add-on credit is 1.1 kg (CLOROTIC); gout caution applies to every loop and thiazide-type drug.
 
 ## Verification Strategy
 
@@ -111,7 +115,7 @@ Global invariants covered include:
 
 Furoscix-specific checks include:
 
-- eligible candidate is not incorrectly excluded
+- offered only as a short-course add-on beside an oral loop, never as a swap
 - mandatory Furoscix safety warning appears when selected
 - furosemide hypersensitivity excludes Furoscix while preserving other loop options
 

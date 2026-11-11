@@ -3171,6 +3171,58 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'Adjunct-Source IV Iron Price Amortized Per Course', patient: iron },
         ];
     })(),
+
+    // ===== Diuretic source-verified corrections (docs/medication-review-2026-11-10/verified-diuretics.md) =====
+    // Labels: furosemide, bumetanide, torsemide, metolazone, chlorthalidone, hydrochlorothiazide, Furoscix; TRANSFORM-HF, CLOROTIC.
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 66, sex: 'Male' as const, sbp: 122, dbp: 74, pulse: 76, rhythm: 'Sinus' as const,
+            nyha_class: 'III' as const, kccq_score: 50, nt_pro_bnp: 2000, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 84, exam_findings: new Set(['Edema (2+)']) },
+            egfr: 50, creatinine: 1.4, bun: 24, potassium: 4.3,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            current_regimen: [] as RegimenMed[],
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const euvolemic = { dry_weight_kg: 80, current_weight_kg: 80.2, exam_findings: new Set<string>() };
+        const gdmt = [
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+            { name: 'Carvedilol', strength: 25, freq: 'bid' },
+            { name: 'Spironolactone', strength: 25, freq: 'qd' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ];
+        return [
+            { title: 'Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily', patient: { ...base, egfr: 15, creatinine: 3.8,
+                current_regimen: buildCurrentRegimen([{ name: 'Bumetanide', strength: 2, freq: 'bid' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Furosemide 80 mg tid High-Dose Alert', patient: { ...base, volume_status: euvolemic,
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'tid' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Furosemide 40 mg bid Below High-Dose Alert', patient: { ...base, volume_status: euvolemic,
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 40, freq: 'bid' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Daily Dose Credit', patient: { ...base,
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 40, freq: 'qd' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Furoscix Short-Course Add-On Not Swap', patient: { ...base, volume_status: { dry_weight_kg: 80, current_weight_kg: 85, exam_findings: new Set(['Edema (2+)', 'JVP Elevated']) },
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 40, freq: 'qd' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Furoscix Not Offered Without Oral Loop', patient: { ...base, volume_status: { dry_weight_kg: 80, current_weight_kg: 85, exam_findings: new Set(['Edema (2+)']) },
+                current_regimen: buildCurrentRegimen(gdmt) } },
+            { title: 'Diuretic-Source Furoscix CKD Allowed Anuria Excluded', patient: { ...base, egfr: 12, creatinine: 5, comorbidities: new Set(['HFrEF', 'Anuria']), volume_status: { dry_weight_kg: 80, current_weight_kg: 85, exam_findings: new Set(['Edema (2+)']) },
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Furoscix CKD Without Anuria Offered With Caution', patient: { ...base, egfr: 12, creatinine: 5, volume_status: { dry_weight_kg: 80, current_weight_kg: 85, exam_findings: new Set(['Edema (2+)']) },
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Thiazide Add-On Credit And Gout Caution', patient: { ...base, comorbidities: new Set(['HFrEF', 'Gout']), volume_status: { dry_weight_kg: 80, current_weight_kg: 86, exam_findings: new Set(['Edema (3+)']) },
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, ...gdmt]) } },
+            { title: 'Diuretic-Source HCTZ eGFR 25 Cautioned Not Excluded', patient: { ...base, egfr: 25, creatinine: 2.6, volume_status: { dry_weight_kg: 80, current_weight_kg: 86, exam_findings: new Set(['Edema (3+)']) },
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Metolazone Electrolyte Monitoring', patient: { ...base, potassium: 3.4, volume_status: { dry_weight_kg: 80, current_weight_kg: 86, exam_findings: new Set(['Edema (3+)']) },
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Metolazone', strength: 5, freq: 'qd' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Low eGFR Loop Response Note And Titration', patient: { ...base, egfr: 24, creatinine: 2.7, volume_status: { dry_weight_kg: 80, current_weight_kg: 85, exam_findings: new Set(['Edema (2+)']) },
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 40, freq: 'qd' }, ...gdmt]) } },
+            { title: 'Diuretic-Source Formulary Strengths And Badges', patient: { ...base, volume_status: euvolemic, current_regimen: buildCurrentRegimen(gdmt) } },
+        ];
+    })(),
 ];
 
 // The single clonePatient implementation lives in the engine (services/simulationService.ts)

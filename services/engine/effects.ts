@@ -1,10 +1,11 @@
 /** Delta simulation: the marginal effect of a modification set on the observed patient. Moved verbatim from simulationService.ts (phase 4). */
-import { Patient, Medication, ModificationSet, ChfEffects } from '../../types';
+import { Patient, Medication, ModificationSet, ChfEffects, RegimenMed } from '../../types';
 import { drugFacts } from './drugFacts';
 import { valueUnknown } from '../clinicalPredicates';
 import { hasChildPughBorC, hasChildPughBConfirmed, onPde5Inhibitor as onPde5InhibitorPatient } from './contraindications';
 import { RAAS_CLASSES, getDbpRatio, getMedicationClassGroup } from './registry';
-import { clonePatient, isTargetDoseForPatient } from './regimenUtils';
+import { clonePatient, dailyDose, effectDose, isTargetDoseForPatient } from './regimenUtils';
+import { URIC_ACID_GOUT_POINTS } from './scoreModel';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
 
 /** A drug's heart-rate lowering as credited for THIS patient: digoxin's only counts in the rhythm its label data cover (AFib). */
@@ -34,6 +35,45 @@ export function patientChfEffects(med: Medication, dose: number | string, patien
     }
     if (diabetic) out.kccq_improvement = base.kccq_improvement * scale!.kccq;
     return out;
+}
+
+type HemoEffects = ReturnType<Medication['hemodynamic_effects']>;
+
+/**
+ * The effects of one regimen entry as credited for THIS patient: `chf_effects` and `hemodynamic_effects` evaluated at the entry's effect dose
+ * (the TOTAL DAILY dose for a loop, `facts.effects_on_daily_dose`: 40 mg bid is 80 mg/day, not 40).
+ * A short-course add-on (`facts.short_course_addon`, Furoscix) beside an oral loop is credited only ABOVE that loop on the same log ceiling:
+ * effect(oral loop + add-on) - effect(oral loop), with the loops converted to oral furosemide-equivalents (`loop_furosemide_equivalent_per_mg`,
+ * `oral_equivalent_multiplier`). Adding its full steady-state effect on top of a full oral loop would double count a ceiling-limited drug class.
+ */
+function effectsFor(rm: RegimenMed, patient: Patient): { chf: ChfEffects; hemo: HemoEffects } {
+    const med = rm.med;
+    const f = drugFacts(med);
+    const dose = effectDose(rm);
+    if (f.short_course_addon) {
+        const mult = f.oral_equivalent_multiplier ?? 1;
+        const baseOralEq = (patient.current_regimen || [])
+            .filter(r => r.med.drug_class === med.drug_class && !drugFacts(r.med).short_course_addon)
+            .reduce((sum, r) => sum + dailyDose(r) * (drugFacts(r.med).loop_furosemide_equivalent_per_mg ?? 1), 0);
+        if (baseOralEq > 0) {
+            const base = baseOralEq / mult;           // the oral loop(s) in this drug's own mg
+            const total = base + Number(dose);
+            const cT = patientChfEffects(med, total, patient), cB = patientChfEffects(med, base, patient);
+            const hT = med.hemodynamic_effects(total), hB = med.hemodynamic_effects(base);
+            const chf: ChfEffects = {
+                ...cT,
+                lvef_improvement_absolute: 0,
+                weight_reduction_kg: Math.max(0, cT.weight_reduction_kg - cB.weight_reduction_kg),
+                bnp_reduction_percent: Math.max(0, 1 - (1 - cT.bnp_reduction_percent) / (1 - cB.bnp_reduction_percent)),
+                kccq_improvement: Math.max(0, cT.kccq_improvement - cB.kccq_improvement),
+                lavi_reduction_percent: 0,
+                lvedd_reduction_percent: 0,
+                structure_benefit_points: 0,
+            };
+            return { chf, hemo: { sbp_drop: Math.max(0, hT.sbp_drop - hB.sbp_drop), hr_drop: 0, potassium_change: Math.min(0, hT.potassium_change - hB.potassium_change) } };
+        }
+    }
+    return { chf: patientChfEffects(med, dose, patient), hemo: med.hemodynamic_effects(dose) };
 }
 
 export function simulateModificationEffect(
@@ -147,8 +187,7 @@ export function simulateModificationEffect(
 
         if (mod.action === 'add' && mod.target) {
             const dose = mod.target.dose.strength;
-            const chf = patientChfEffects(mod.target.med, dose, currentPatient);
-            const hemo = mod.target.med.hemodynamic_effects(dose);
+            const { chf, hemo } = effectsFor(mod.target, currentPatient);
 
             // Starting dose hemodynamic attenuation for RAAS/BB (factor = 0.35):
             // Clinical trials show acute SBP drops at initiating doses are ~30-40% of the
@@ -189,9 +228,7 @@ export function simulateModificationEffect(
         }
 
         if (mod.action === 'remove' && mod.source) {
-            const dose = mod.source.dose.strength;
-            const chf = patientChfEffects(mod.source.med, dose, currentPatient);
-            const hemo = mod.source.med.hemodynamic_effects(dose);
+            const { chf, hemo } = effectsFor(mod.source, currentPatient);
 
             // Reverse the removed drug's effects
             lvefDelta -= chf.lvef_improvement_absolute;
@@ -224,12 +261,8 @@ export function simulateModificationEffect(
         }
 
         if ((mod.action === 'titrate_up' || mod.action === 'titrate_down') && mod.source && mod.target) {
-            const oldDose = mod.source.dose.strength;
-            const newDose = mod.target.dose.strength;
-            const oldChf = patientChfEffects(mod.source.med, oldDose, currentPatient);
-            const newChf = patientChfEffects(mod.target.med, newDose, currentPatient);
-            const oldHemo = mod.source.med.hemodynamic_effects(oldDose);
-            const newHemo = mod.target.med.hemodynamic_effects(newDose);
+            const { chf: oldChf, hemo: oldHemo } = effectsFor(mod.source, currentPatient);
+            const { chf: newChf, hemo: newHemo } = effectsFor(mod.target, currentPatient);
 
             lvefDelta += (newChf.lvef_improvement_absolute - oldChf.lvef_improvement_absolute);
 
@@ -281,12 +314,8 @@ export function simulateModificationEffect(
                 rationale.push(`+ SAFETY: Mandatory swap from ${cause} ${mod.source.med.name} preserves ${getMedicationClassGroup(mod.source.med.drug_class)} coverage`);
             }
 
-            const oldDose = mod.source.dose.strength;
-            const newDose = mod.target.dose.strength;
-            const oldChf = patientChfEffects(mod.source.med, oldDose, currentPatient);
-            const newChf = patientChfEffects(mod.target.med, newDose, currentPatient);
-            const oldHemo = mod.source.med.hemodynamic_effects(oldDose);
-            const newHemo = mod.target.med.hemodynamic_effects(newDose);
+            const { chf: oldChf, hemo: oldHemo } = effectsFor(mod.source, currentPatient);
+            const { chf: newChf, hemo: newHemo } = effectsFor(mod.target, currentPatient);
 
             lvefDelta += (newChf.lvef_improvement_absolute - oldChf.lvef_improvement_absolute);
 
@@ -357,8 +386,16 @@ export function simulateModificationEffect(
             });
         }
 
+        // Uric-acid caution as data: any drug declaring facts.raises_uric_acid (loops and thiazide-type diuretics; labels: may precipitate gout).
+        if (drugFacts(r.med).raises_uric_acid && currentPatient.comorbidities.has('Gout')) {
+            const feature = 'Caution in Gout (uric acid retention)';
+            rationale.push(`+ ${r.med.name}: ${feature}`);
+            specialFeatureBonus += URIC_ACID_GOUT_POINTS;
+            specialFeatureItems.push({ med: r.med.name, feature, points: URIC_ACID_GOUT_POINTS });
+        }
+
         // Rationale for target dose and clinical effects
-        const chf = r.med.chf_effects(r.dose.strength);
+        const chf = effectsFor(r, currentPatient).chf;
         const isTarget = isTargetDoseForPatient(r, currentPatient);
         if (isTarget) rationale.push(`+ ${r.med.name}: Achieves GDMT Target Dose`);
         if (chf.lvef_improvement_absolute >= 3) rationale.push(`+ ${r.med.name}: Significant Reverse Remodeling`);
@@ -720,6 +757,17 @@ export function simulateModificationEffect(
 
     if (!renalUnknown && currentPatient.egfr < 20 && hasDiuretic) {
         warnings.push('Severe CKD Loop Strategy: eGFR < 20 may blunt loop response. Consider split dosing (BID/TID), torsemide/bumetanide conversion, and close urine output + daily weight tracking.');
+    }
+
+    // Penalized caution when a drug declaring facts.hypokalemia_caution_below_k is ADDED (or swapped in) with a known baseline K+ below its level.
+    if (!kUnknown) {
+        modificationSet.modifications.forEach(mod => {
+            const tgt = (mod.action === 'add' || mod.action === 'swap') ? mod.target : undefined;
+            const rule = tgt ? drugFacts(tgt.med).hypokalemia_caution_below_k : undefined;
+            if (tgt && rule && currentPatient.potassium < rule.k) {
+                warnings.push(`HYPOKALEMIA CAUTION: ${tgt.med.name} lowers potassium and the baseline K+ is ${currentPatient.potassium} (below ${rule.k}). Replete potassium first or monitor closely; check electrolytes within days of starting (${rule.basis}).`);
+            }
+        });
     }
 
     const hasFuroscix = resultingRegimen.some(r => drugFacts(r.med).delivery === 'on_body_infusor');

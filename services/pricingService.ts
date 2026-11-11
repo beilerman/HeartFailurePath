@@ -179,9 +179,13 @@ export const DRUG_PRICES: Record<string, DrugPriceEntry> = {
         notes: 'Per-course cost amortized monthly: 1500 mg course x $1.121/mg (Medicare J1439, Q4 2026) = $1,681.50 over 6 months = $280/mo cash; Medicare 20% coinsurance $336.30 / 6 = $56/mo. Excludes 500 mg maintenance doses ($560.50 each). Medical benefit (buy-and-bill), not Part D. verified-sglt2-glp1-adjuncts.md row 31.'
     },
     'Furoscix (SC Furosemide)': {
-        cash: 900, commercial_copay: 100, medicare_copay: 200,
+        // PER-COURSE cost, shown in the monthly slot (one course a month). Furoscix is a SHORT-COURSE add-on ("not for chronic use"), one single-use 80 mg kit
+        // per day. ASSUMPTION (engine policy): 4 kits per course (the label sets no course length). Cash: SingleCare retail 11/11/2026, $14,520.94 per box of
+        // 10 = about $1,450 per kit, x 4 = $5,800 (the 2023 wholesale acquisition cost was about $822 per kit, Medical Letter). Commercial $100 and Medicare $200
+        // per course are the old copay estimates: NOT sourced (plan-specific).
+        cash: 5800, commercial_copay: 100, medicare_copay: 200,
         generic_available: false, has_copay_card: true, tier: 'specialty',
-        notes: 'scPharmaceuticals copay program for commercial. ~$900 WAC per 80mg on-body infusor dose — episodic use; figures are a monthly-equivalent for the modeled outpatient decongestion burst. Was previously MISSING from this table, silently falling back to generic-level pricing and flattening its core cost trade-off vs oral loops.'
+        notes: 'Per COURSE of 4 single-use kits (assumption; label sets no course length): cash about $1,450 per kit retail (SingleCare 2026-11) = $5,800; WAC about $822 per kit (Medical Letter, Jan 2023). Commercial/Medicare per-course copays are unsourced estimates. scPharmaceuticals copay program for commercial.'
     }
 };
 

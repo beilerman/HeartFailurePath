@@ -54,7 +54,7 @@ const A = (o: SimulationOutput) => {
     const alert = (kw: string) => o.clinicalAlerts.some(a => a.toLowerCase().includes(kw.toLowerCase()));
     const anyWarn = (kw: string) => regs.some(r => r.warnings.some(w => w.toLowerCase().includes(kw.toLowerCase())));
     const adjunct = (kw: string) => (o.eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(kw.toLowerCase()));
-    const dualClass = (pred: (c: string) => boolean) => regs.some(r => r.regimen.filter(m => pred(m.med.drug_class)).length > 1);
+    const dualClass = (pred: (c: string) => boolean) => regs.some(r => r.regimen.filter(m => !m.med.facts?.short_course_addon && pred(m.med.drug_class)).length > 1);
     const removesMed = (n: string) => regs.length > 0 && regs.every(r => (r.modification_set?.modifications ?? []).some(m => (m.action === 'remove' || m.action === 'swap') && m.source?.med.name === n));
     return { regs, hasClassInAny, hasMedInAny, excludedClass, alert, anyWarn, adjunct, dualClass, removesMed };
 };

@@ -154,6 +154,9 @@ export interface ScoreAdjustmentSpec {
 /** Therapy-completeness credit for a therapy that is on board but below its target dose (full credit = 1). */
 export const COMPLETENESS_SUBTARGET_CREDIT = 0.6;
 
+/** Special-feature points for a drug that raises uric acid (facts.raises_uric_acid) in a patient with gout. Engine policy, unchanged from the loop-diuretic value (-5). */
+export const URIC_ACID_GOUT_POINTS = -5;
+
 export const SCORE_ADJUSTMENTS = {
     SPECIAL_FEATURES: {
         code: 'SPECIAL_FEATURES',

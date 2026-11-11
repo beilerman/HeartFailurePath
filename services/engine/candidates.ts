@@ -3,7 +3,7 @@ import { Patient, Medication, RegimenMed, ModificationAction, RegimenModificatio
 import { drugFacts } from './drugFacts';
 import { valueUnknown, hasHistoricalHFrEF, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
-import { computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication } from './intolerance';
 import { regimenSatisfiesPillar } from './domains';
 
@@ -192,7 +192,7 @@ export function analyzeCurrentRegimen(
             // highest tier (getDoseTiers construction order is [lowest, highest, middle, target],
             // which is NOT ascending — the compound add+titrate candidate previously picked a
             // middle/target tier while labeling it the maximal step).
-            let higherDoses = allTiers.filter(t => tierIdx(t) > currentIdx).sort((a, b) => tierIdx(a) - tierIdx(b));
+            let higherDoses = allTiers.filter(t => tierIdx(t) > currentIdx).sort((a, b) => tierIdx(a) - tierIdx(b)).map(t => carryFrequency(t, current));
             // facts.titrate_one_step (weekly GLP-1 / GLP-1-GIP): only the NEXT labeled tier, never a jump past a step.
             if (drugFacts(current.med).titrate_one_step) higherDoses = higherDoses.slice(0, 1);
             if (higherDoses.length > 0 && !drugFacts(current.med).single_course_dose) {
@@ -200,7 +200,7 @@ export function analyzeCurrentRegimen(
             }
         }
 
-        const lowerDoses = allTiers.filter(t => tierIdx(t) < currentIdx).sort((a, b) => tierIdx(a) - tierIdx(b));
+        const lowerDoses = allTiers.filter(t => tierIdx(t) < currentIdx).sort((a, b) => tierIdx(a) - tierIdx(b)).map(t => carryFrequency(t, current));
         // A one-time label course (facts.single_course_dose: ferric carboxymaltose) is not a titratable dose: no up/down candidates.
         if (lowerDoses.length > 0 && !drugFacts(current.med).single_course_dose) {
             titratableDown.push({ current, options: lowerDoses });
@@ -251,7 +251,8 @@ export function analyzeCurrentRegimen(
         const groupTiers = (tiersByGroup.get(group) || []).filter(t => startTiers.includes(t));
         let candidates = groupTiers.filter(t =>
             t.med.name !== current.med.name &&
-            !contraindicatedCurrentMeds.has(t.med.name) // Don't swap TO a contraindicated med
+            !contraindicatedCurrentMeds.has(t.med.name) && // Don't swap TO a contraindicated med
+            !drugFacts(t.med).short_course_addon           // A short-course add-on (Furoscix, "not for chronic use") is never a standing replacement
         );
         // Within the RAAS group, a non-forced swap may only UPGRADE (ACEi/ARB → ARNI, the
         // guideline-preferred agent — PARADIGM-HF). Never recommend the reverse downgrade
@@ -270,14 +271,7 @@ export function analyzeCurrentRegimen(
             const firstTierByMed = new Map<string, RegimenMed>();
             candidates.forEach(t => { if (!firstTierByMed.has(t.med.name)) firstTierByMed.set(t.med.name, t); });
             const firstTiers = [...firstTierByMed.values()];
-            let prioritizedCandidates = [...firstTiers, ...candidates.filter(t => !firstTiers.includes(t))];
-            // Ensure FUROSCIX is considered in worsening-congestion loop swaps instead of being truncated by safeSlice.
-            if (current.med.drug_class === 'Loop Diuretic' && fluidExcess >= 2.0) {
-                const furoscix = prioritizedCandidates.find(t => drugFacts(t.med).preferred_for_congestion);
-                if (furoscix) {
-                    prioritizedCandidates = [furoscix, ...prioritizedCandidates.filter(t => t !== furoscix)];
-                }
-            }
+            const prioritizedCandidates = [...firstTiers, ...candidates.filter(t => !firstTiers.includes(t))];
             swappable.push({ from: current, candidates: prioritizedCandidates });
         }
     });
@@ -399,19 +393,26 @@ export function analyzeCurrentRegimen(
         }
     }
 
-    // Diuretics if congested and not already on one
+    // Diuretics if congested and not already on one (an oral loop is started; a short-course add-on is never the first loop)
     if (fluidExcess > 1.0 && !currentClasses.has('Loop Diuretic')) {
-        const loopTiers = medTiers.filter(r => r.med.drug_class === 'Loop Diuretic');
+        const loopTiers = medTiers.filter(r => r.med.drug_class === 'Loop Diuretic' && !drugFacts(r.med).short_course_addon);
+        // New loop start: the LOWEST tier of the first loop agent (start low, titrate to the weight response). The sampled tier list is
+        // [lowest, highest, ...], and its "highest" tier is a titration step, not a start (furosemide 160 mg, i.e. 2 x 80 mg twice daily).
         if (loopTiers.length > 0) {
-            let prioritizedLoopTiers = loopTiers;
-            if (fluidExcess >= 3.0) {
-                const furoscix = loopTiers.find(r => drugFacts(r.med).preferred_for_congestion);
-                if (furoscix) {
-                    prioritizedLoopTiers = [furoscix, ...loopTiers.filter(r => r !== furoscix)];
-                }
-            }
-            addableAdjuncts.push(...safeSlice(prioritizedLoopTiers, 2));
+            const first = loopTiers[0].med;
+            const ladder = first.available_doses;
+            const lowFirst = loopTiers.filter(r => r.med === first)
+                .sort((a, b) => ladder.findIndex(d => d.strength === a.dose.strength) - ladder.findIndex(d => d.strength === b.dose.strength));
+            addableAdjuncts.push(...safeSlice(lowFirst, 1));
         }
+    }
+
+    // Short-course add-on (Furoscix label: "not for chronic use"): worsening congestion (>= 2 kg above dry weight) on an ORAL loop already on board.
+    // It is added beside the oral loop for a course and the oral loop is resumed/adjusted afterwards; never a swap.
+    const onOralLoop = (patient.current_regimen || []).some(r => r.med.drug_class === 'Loop Diuretic' && !drugFacts(r.med).short_course_addon);
+    if (fluidExcess >= 2.0 && onOralLoop && !(patient.current_regimen || []).some(r => drugFacts(r.med).short_course_addon)) {
+        const addon = medTiers.find(r => drugFacts(r.med).short_course_addon);
+        if (addon) addableAdjuncts.push(addon);
     }
 
     // Thiazide if severe congestion + already on loop
@@ -519,6 +520,13 @@ export function buildResultingRegimen(
     return result;
 }
 
+/** Summary for adding an adjunct. A short-course add-on (facts.short_course_addon) says so: label "not for chronic use", back to the oral loop afterwards. */
+export function addSummary(adj: RegimenMed): string {
+    return drugFacts(adj.med).short_course_addon
+        ? `Add ${adj.med.name} ${formatDose(adj)} as a SHORT COURSE beside the oral loop diuretic (label: not for chronic use); return to the oral diuretic when congestion resolves`
+        : `Add ${adj.med.name} ${formatDose(adj)}`;
+}
+
 export function formatSwapSummary(from: RegimenMed, to: RegimenMed): string {
     if (from.med.drug_class === 'ACEi' && to.med.drug_class === 'ARNI') {
         return `STOP ${from.med.name}. WAIT 36 hours. THEN start ${to.med.name} ${formatDose(to)}`;
@@ -620,7 +628,7 @@ export function generateCandidateModifications(
         const mods: RegimenModification[] = [{
             action: 'add',
             target: adj,
-            summary: `Add ${adj.med.name} ${formatDose(adj)}`
+            summary: addSummary(adj)
         }];
         candidates.push({
             modifications: mods,
@@ -744,7 +752,7 @@ export function generateCandidateModifications(
             if (topPillarMed) {
                 const mods: RegimenModification[] = [
                     { action: 'add', target: topPillarMed, summary: `Add ${topPillarMed.med.name} ${formatDose(topPillarMed)}` },
-                    { action: 'add', target: adj, summary: `Add ${adj.med.name} ${formatDose(adj)}` }
+                    { action: 'add', target: adj, summary: addSummary(adj) }
                 ];
                 candidates.push({
                     modifications: mods,
@@ -762,7 +770,7 @@ export function generateCandidateModifications(
                 if (bestSwap) {
                     const mods: RegimenModification[] = [
                         { action: 'swap', source: from, target: bestSwap, summary: formatSwapSummary(from, bestSwap) },
-                        { action: 'add', target: adj, summary: `Add ${adj.med.name} ${formatDose(adj)}` }
+                        { action: 'add', target: adj, summary: addSummary(adj) }
                     ];
                     candidates.push({
                         modifications: mods,
@@ -903,7 +911,7 @@ export function generateCandidateModifications(
                 // Heart-rate rule: the EXACT next-lower strength on the full ladder (carvedilol 12.5 -> 6.25, not the sampled 3.125).
                 const ladder = td.current.med.available_doses;
                 const idx = ladder.findIndex(d => d.strength === td.current.dose.strength);
-                if (idx > 0) lower = { med: td.current.med, dose: ladder[idx - 1], selected_frequency: pickPreferredFrequency(td.current.med, ladder[idx - 1].frequency_options, patient) };
+                if (idx > 0) lower = { med: td.current.med, dose: ladder[idx - 1], selected_frequency: pickPreferredFrequency(td.current.med, ladder[idx - 1].frequency_options, patient, ladder[idx - 1].strength) };
             }
             candidates.forEach(c => {
                 const alreadyHandled = c.modifications.some(m =>

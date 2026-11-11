@@ -1,6 +1,6 @@
 
 import { Medication, Patient } from './types';
-import { ci, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
+import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, CI_POTASSIUM_GT_5_4, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
     STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, moderateCyp3aInhibitor,
     PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
@@ -82,6 +82,7 @@ export const RELEVANT_COMORBIDITIES = [
     "Asthma (Mild/Moderate)",
     "COPD",
     "Gout",
+    ANURIA, // diuretic label contraindication (Furoscix, metolazone, hydrochlorothiazide)
     "History of Angioedema",
     "Medullary Thyroid Carcinoma",
     "MEN2 Syndrome",
@@ -139,6 +140,23 @@ const BOXED_FETAL_TOXICITY = 'boxed warning: fetal toxicity';
 // actually in the resulting regimen (DIAMOND enrolled patients on RAASi; it showed enabling, not outcomes).
 const hasRaasOrMra = (regimen?: { med: { drug_class: string } }[]): boolean =>
     (regimen ?? []).some(r => ['ARNI', 'ACEi', 'ARB', 'MRA', 'nsMRA'].includes(r.med.drug_class));
+
+/** Furoscix oral-furosemide-equivalent multiplier (verified-diuretics.md): infusor 99.6% of IV vs oral about 50-64% -> 2:1. */
+const FUROSCIX_ORAL_EQUIVALENT = 2.0;
+
+/** Incremental weight loss (kg) of a thiazide-type add-on on top of a loop: CLOROTIC adjusted difference at 72 h, 1.14 kg (95% CI 0.42-1.84), HCTZ added to IV furosemide
+ *  in acute HF (Eur Heart J 2023;44:411, PMID 36423214). Used for chlorthalidone and metolazone too: ASSUMPTION, no drug-specific figure is sourced. */
+const THIAZIDE_ADDON_WEIGHT_KG = 1.1;
+/** CLOROTIC: worsening renal function 46.5% vs 17.2% (P < 0.001): absolute excess 0.29. */
+const THIAZIDE_WRF_EXCESS = 0.29;
+
+/** Added to every loop entry: loop response falls at low eGFR (direction supported by labels and reviews; no multiplier is sourced, so none is applied). */
+const LOOP_LOW_EGFR_ITEM = {
+    test: 'Loop diuretic response in advanced CKD',
+    timing: 'Daily weights and urine output; reassess within days of a dose change',
+    details: 'With eGFR below 30 less loop diuretic reaches the nephron, so higher doses are usually needed to reach the effective dose (torsemide and Furoscix labels; open-access reviews). This tool does not scale the effect by eGFR (no sourced multiplier): a dose that looks adequate on paper may under-diurese, so up-titrate to the observed weight response.',
+    when: (p: Patient) => p.egfr > 0 && p.egfr < 30,
+};
 
 export const MEDICATION_FORMULARY: Medication[] = [
     // ========================================
@@ -466,7 +484,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // ACC/AHA target: 25 mg BID for <= 85 kg dry weight, 50 mg BID above (the label calls 50 mg BID the maximum
         // ADMINISTERED to patients over 85 kg; the weight-based target is from the guideline, secondary source).
         is_target_dose_for: (strength, patient) => patient.volume_status.dry_weight_kg > 85 ? strength >= 50 : strength >= 25,
-        is_best_in_class: true,
+        // is_best_in_class removed: the three beta-blockers are modeled as equal at target (verified-rate-control.md); no verified source ranks one above the others.
         available_doses: [
             { strength: 3.125, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
             { strength: 6.25, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
@@ -522,7 +540,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // trigger (same as carvedilol's labeled number) and no up-titration below 60 are ENGINE POLICY.
             hr_continuation: { reduce_below: 55, no_uptitration_below: 60, basis: 'metoprolol label: reduce the dose for symptomatic bradycardia (no number); below 55 and no up-titration below 60 are this tool\'s policy' },
         },
-        is_best_in_class: true,
+        // is_best_in_class removed: the three beta-blockers are modeled as equal at target (verified-rate-control.md); no verified source ranks one above the others.
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] }, // Starting dose for NYHA III-IV (MERIT-HF)
             { strength: 25, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] },
@@ -971,7 +989,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Tirzepatide (Zepbound)',
         drug_class: 'GLP-1/GIP RA',
-        is_best_in_class: true,
+        // is_best_in_class removed: no head-to-head HF trial of tirzepatide vs semaglutide exists (verified-sglt2-glp1-adjuncts.md row 20); both GLP-1 agents are treated alike.
         facts: {
             // Zepbound label: start 2.5 mg weekly x 4 weeks (initiation only, not a maintenance dose), increase in 2.5 mg steps after at least 4
             // weeks; maintenance 5, 10 or 15 mg; maximum 15 mg.
@@ -1060,18 +1078,30 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Furosemide',
         drug_class: 'Loop Diuretic',
-        facts: { high_dose_threshold: 120 },
+        facts: {
+            // TOTAL DAILY dose. 120 mg/day is ENGINE POLICY (no source gives a "high-dose" level; the label only says doses over 80 mg/day for long
+            // periods need close monitoring). The label ceiling is 600 mg/day (Furosemide tablets label, DailyMed) = max_daily_dose.
+            high_dose_threshold: 120,
+            max_daily_dose: 600,
+            effects_on_daily_dose: true,
+            raises_uric_acid: true, // label: asymptomatic hyperuricemia can occur; gout may rarely be precipitated
+            loop_furosemide_equivalent_per_mg: 1,
+            monitoring_items: [LOOP_LOW_EGFR_ITEM],
+        },
         available_doses: [
             { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
             { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
             { strength: 80, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid', 'tid'] },
-            { strength: 160, unit: 'mg', formulation: 'tablet', frequency_options: ['bid', 'tid'] },
+            // 160 mg is not a marketed strength (tablets are 20/40/80): this tier is TWO 80 mg tablets (verified-diuretics.md).
+            { strength: 160, unit: 'mg', formulation: '2 x 80 mg tablets', frequency_options: ['bid', 'tid'] },
         ],
         chf_effects: (dose) => {
-            const d = Number(dose);
+            // `dose` is the TOTAL DAILY dose (strength x doses per day; effects_on_daily_dose): 40 mg bid is credited as 80 mg/day.
+            // Calibrated range tops out at 160 mg/day; a higher daily dose is credited as that ceiling (engine policy: nothing above it is calibrated,
+            // and loop natriuresis plateaus), so frequent dosing never inflates the effect past the old top tier.
+            const d = Math.min(Number(dose), 160);
             // Log-based ceiling effect calibrated to the documented dose-response anchors:
             // Furosemide: ~1.5kg at 20mg, ~2.4kg at 40mg, ~3.3kg at 80mg, ~4.2kg at 160mg
-            // (curve produces exactly these values; the previous sqrt form drifted 40-70% above)
             const weightLoss = 1.5 + 0.9 * Math.log2(d / 20);
             return {
                 lvef_improvement_absolute: 0, // No evidence of remodeling
@@ -1083,10 +1113,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 lvedd_reduction_percent: 0 // No remodeling
             };
         },
-        hemodynamic_effects: (dose) => ({ sbp_drop: 2 + Number(dose)/40, hr_drop: 0, potassium_change: -0.3 - (Number(dose)/80 * 0.3) }),
-        special_features: [
-            { feature: 'Caution in Gout (Uric Acid retention)', points: -5, criteria: (p) => p.comorbidities.has("Gout") }
-        ],
+        hemodynamic_effects: (dose) => { const d = Math.min(Number(dose), 160); return { sbp_drop: 2 + d/40, hr_drop: 0, potassium_change: -0.3 - (d/80 * 0.3) }; },
+        // Uric-acid caution comes from facts.raises_uric_acid (read by the engine).
         side_effects: () => ({ hypokalemia: 0.20, renal_worsening: 0.10, hypotension: 0.05 }),
         renal_adjustment: (egfr) => {
             if (egfr < 20) return { caution: true };
@@ -1096,17 +1124,39 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Furoscix (SC Furosemide)',
         drug_class: 'Loop Diuretic',
-        facts: { high_dose_threshold: 80, delivery: 'on_body_infusor', preferred_for_congestion: true },
+        facts: {
+            high_dose_threshold: 80, // mg/day, engine policy (one infusor a day is the label dose)
+            max_daily_dose: 80,
+            effects_on_daily_dose: true,
+            delivery: 'on_body_infusor',
+            // Label: "not for chronic use", replace with an oral diuretic as soon as practical. Modeled as a SHORT-COURSE ADD-ON beside an
+            // oral loop (never a swap, never a standing replacement); its effect is credited only above the oral loop (effects.ts effectsFor).
+            short_course_addon: true,
+            // Label bioavailability: on-body infusor 99.6% of IV 80 mg (90% CI 94.8-104.8). Oral furosemide is about 50-64% bioavailable (tablet
+            // label 64%; reviews about 50%), so SC/IV is about twice an oral dose (standard 2:1 IV-to-oral conversion): multiplier 2.0
+            // (1.56 is the label-derived lower bound). Applied to weight, BNP, KCCQ, SBP and K effects alike. Source: verified-diuretics.md.
+            oral_equivalent_multiplier: FUROSCIX_ORAL_EQUIVALENT,
+            raises_uric_acid: true,
+            monitoring_items: [
+                {
+                    test: 'Volume status after the Furoscix course',
+                    timing: 'Daily weights during the course; reassess at the end of the course (a few days)',
+                    details: 'Furoscix is labeled "not for chronic use". Reassess weight, edema and symptoms at the end of the course, then resume or adjust the oral loop diuretic (replace Furoscix with an oral diuretic as soon as practical). Number of days in a course is not set by the label (this tool prices 4 kits per course as an assumption).',
+                },
+                LOOP_LOW_EGFR_ITEM,
+            ],
+            regimen_warnings: [
+                { text: 'Drug note: Furoscix is a short course beside the oral loop diuretic, not a replacement; the label says "not for chronic use". Plan the return to the oral diuretic when congestion resolves. In significantly reduced renal function the fixed 80 mg dose may be insufficient and additional diuretic may be needed (Furoscix label).' },
+            ],
+        },
         available_doses: [
             { strength: 80, unit: 'mg/10mL', formulation: 'SQ on-body infusor (5h)', frequency_options: ['qd'] }, // FDA-labeled single dose delivered over 5 hours
         ],
         chf_effects: (dose) => {
             const d = Number(dose);
-            // FUROSCIX provides more reliable exposure than oral furosemide (bioavailability ~99.6% vs IV).
-            // Same calibrated furosemide curve, applied to the bioavailability-adjusted oral
-            // equivalent, keeping Furoscix ~15% above oral furosemide at the same labeled dose
-            // (80mg -> ~3.5kg vs oral 80mg ~3.3kg).
-            const oralEquivalent = d * 1.15;
+            // Same calibrated furosemide curve applied to the ORAL-EQUIVALENT dose (80 mg SC = 160 mg oral). Calibration ceiling 320 mg oral
+            // equivalent (engine policy) so the add-on increment above an oral loop can be credited (effects.ts effectsFor).
+            const oralEquivalent = Math.min(d * FUROSCIX_ORAL_EQUIVALENT, 320);
             const weightLoss = 1.5 + 0.9 * Math.log2(oralEquivalent / 20);
             return {
                 lvef_improvement_absolute: 0,
@@ -1119,7 +1169,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             };
         },
         hemodynamic_effects: (dose) => {
-            const oralEquivalent = Number(dose) * 1.15;
+            const oralEquivalent = Math.min(Number(dose) * FUROSCIX_ORAL_EQUIVALENT, 320);
             return {
                 sbp_drop: 2.5 + oralEquivalent / 35,
                 hr_drop: 0,
@@ -1140,20 +1190,17 @@ export const MEDICATION_FORMULARY: Medication[] = [
         ],
         side_effects: () => ({ hypokalemia: 0.22, renal_worsening: 0.12, hypotension: 0.06, infusion_site_reaction: 0.12 }),
         ...ci([
-            // Reserve for active congestion episodes, reflecting outpatient worsening-HF evidence and label contraindications.
+            // Reserve for active congestion episodes on an oral loop (label: not for chronic use; contraindications are anuria, furosemide
+            // hypersensitivity, and adhesive hypersensitivity for the on-body infusor). CKD is an INDICATION, so there is no eGFR exclusion.
             {
                 reason: 'Less than 1 kg above dry weight (reserved for active congestion)',
                 when: p => (p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg) < 1.0,
             },
             {
-                reason: 'No escalation context (no baseline loop diuretic and under 3 kg above dry weight)',
-                when: p => {
-                    const fluidExcess = p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg;
-                    const hasBaselineLoop = (p.current_regimen || []).some(r => r.med.drug_class === 'Loop Diuretic');
-                    return !(hasBaselineLoop || fluidExcess >= 3.0);
-                },
+                reason: 'No oral loop diuretic on board (Furoscix is a short-course add-on to an oral loop, labeled "not for chronic use", not a replacement)',
+                when: p => !(p.current_regimen || []).some(r => r.med.drug_class === 'Loop Diuretic' && r.med.name !== 'Furoscix (SC Furosemide)'),
             },
-            { reason: 'eGFR below 15', when: p => p.egfr < 15 },
+            CI_ANURIA,
             {
                 reason: 'Documented furosemide / loop diuretic hypersensitivity',
                 when: p => Array.from(p.allergies || []).map(a => a.toLowerCase()).some(term =>
@@ -1175,19 +1222,31 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Torsemide',
         drug_class: 'Loop Diuretic',
-        facts: { high_dose_threshold: 50 },
-        is_best_in_class: true,
+        facts: {
+            // TOTAL DAILY dose. 60 mg/day is ENGINE POLICY: it keeps the old furosemide-120 alert level through the code's torsemide:furosemide
+            // calibration of about 1:2, which is NOT VERIFIED (the torsemide label states no equivalence). Label: doses above 200 mg/day not studied.
+            high_dose_threshold: 60,
+            max_daily_dose: 200,
+            effects_on_daily_dose: true,
+            raises_uric_acid: true, // label: gout may rarely be precipitated
+            loop_furosemide_equivalent_per_mg: 2, // engine calibration, NOT VERIFIED (only used to credit a Furoscix add-on above the oral loop)
+            monitoring_items: [LOOP_LOW_EGFR_ITEM],
+        },
+        // No "best in class" badge: TRANSFORM-HF (n=2859) showed no mortality difference vs furosemide (26.1% vs 26.2%, HR 1.02, 95% CI 0.89-1.18).
         available_doses: [
+            // Marketed strengths: generic 5/10/20/100 mg; Soaanz 20/40/60 mg (the 50 mg tier was not a US strength). 40 mg is the Soaanz tablet.
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
             { strength: 20, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
+            { strength: 40, unit: 'mg', formulation: 'tablet (Soaanz)', frequency_options: ['qd', 'bid'] },
             { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
         ],
         chf_effects: (dose) => {
-            const d = Number(dose);
+            // `dose` is the TOTAL DAILY dose; the calibrated range tops out at 100 mg/day (ceiling beyond it, engine policy).
+            const d = Math.min(Number(dose), 100);
             // Log-based ceiling calibrated to the documented anchors: better bioavailability
             // than furosemide but same ceiling pharmacology.
-            // Torsemide: ~1.8kg at 10mg, ~2.8kg at 20mg, ~4.0kg at 50mg, ~5.0kg at 100mg
+            // Torsemide: ~1.8kg at 10mg, ~2.8kg at 20mg, ~3.6kg at 40mg, ~5.0kg at 100mg (the old 50 mg anchor, 4.0 kg, was not a US strength)
             const weightLoss = 1.8 + 0.96 * Math.log2(d / 10);
             return {
                 lvef_improvement_absolute: 0,
@@ -1199,11 +1258,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 lvedd_reduction_percent: 0 // No remodeling
             };
         },
-        hemodynamic_effects: (dose) => ({ sbp_drop: 2 + Number(dose)/20, hr_drop: 0, potassium_change: -0.3 - (Number(dose)/50 * 0.2) }),
-        special_features: [
-            { feature: 'Caution in Gout', points: -5, criteria: (p) => p.comorbidities.has("Gout") }
-        ],
-        side_effects: () => ({ hypokalemia: 0.15, hypotension: 0.05 }),
+        hemodynamic_effects: (dose) => { const d = Math.min(Number(dose), 100); return { sbp_drop: 2 + d/20, hr_drop: 0, potassium_change: -0.3 - (d/50 * 0.2) }; },
+        // Renal-worsening display risk equalized with furosemide (no source compares the drugs; TRANSFORM-HF showed no outcome difference).
+        side_effects: () => ({ hypokalemia: 0.15, renal_worsening: 0.10, hypotension: 0.05 }),
         renal_adjustment: (egfr) => {
             if (egfr < 20) return { caution: true };
             return {};
@@ -1212,17 +1269,27 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Bumetanide',
         drug_class: 'Loop Diuretic',
-        facts: { high_dose_threshold: 2 },
+        facts: {
+            // TOTAL DAILY dose. 3 mg/day = 120 mg furosemide-equivalent (label: 1 mg bumetanide is about 40 mg furosemide); the alert level itself is
+            // ENGINE POLICY mirroring furosemide. Label maximum total daily dose 10 mg.
+            high_dose_threshold: 3,
+            max_daily_dose: 10,
+            effects_on_daily_dose: true,
+            raises_uric_acid: true, // the bumetanide label names asymptomatic hyperuricemia only (gout not mentioned); kept at the loop-class caution it already carried
+            loop_furosemide_equivalent_per_mg: 40,
+            monitoring_items: [LOOP_LOW_EGFR_ITEM],
+        },
         available_doses: [
+            // Tablets are 0.5, 1 and 2 mg. The old 4 mg "tablet" does not exist (4 mg tid would be 12 mg/day, above the label maximum of 10).
             { strength: 0.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
             { strength: 1, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid'] },
             { strength: 2, unit: 'mg', formulation: 'tablet', frequency_options: ['qd', 'bid', 'tid'] },
-            { strength: 4, unit: 'mg', formulation: 'tablet', frequency_options: ['bid', 'tid'] }, // Max dose for diuretic resistance
         ],
         chf_effects: (dose) => {
-            const d = Number(dose);
-            // 1mg bumetanide ≈ 40mg furosemide; same calibrated log ceiling as furosemide
-            // applied to the equivalent dose (0.5/1/2/4mg -> ~1.5/2.4/3.3/4.2kg)
+            // `dose` is the TOTAL DAILY dose; calibrated range tops out at 4 mg/day (= 160 mg furosemide-equivalent), a ceiling beyond it.
+            const d = Math.min(Number(dose), 4);
+            // 1mg bumetanide ≈ 40mg furosemide (label); same calibrated log ceiling as furosemide
+            // applied to the equivalent dose (0.5/1/2/4 mg/day -> ~1.5/2.4/3.3/4.2kg)
             const furoEquiv = d * 40; // Convert to furosemide equivalents
             const weightLoss = 1.5 + 0.9 * Math.log2(furoEquiv / 20);
             return {
@@ -1235,10 +1302,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 lvedd_reduction_percent: 0
             };
         },
-        hemodynamic_effects: (dose) => ({ sbp_drop: 2 + Number(dose) * 2, hr_drop: 0, potassium_change: -0.3 - (Number(dose) / 2 * 0.3) }),
-        special_features: [
-            { feature: 'Caution in Gout (Uric Acid retention)', points: -5, criteria: (p) => p.comorbidities.has("Gout") }
-        ],
+        hemodynamic_effects: (dose) => { const d = Math.min(Number(dose), 4); return { sbp_drop: 2 + d * 2, hr_drop: 0, potassium_change: -0.3 - (d / 2 * 0.3) }; },
         side_effects: () => ({ hypokalemia: 0.20, renal_worsening: 0.10, hypotension: 0.05 }),
         renal_adjustment: (egfr) => {
             if (egfr < 20) return { caution: true };
@@ -1688,36 +1752,60 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Metolazone',
         drug_class: 'Thiazide-like Diuretic',
+        facts: {
+            raises_uric_acid: true, // label: regularly raises uric acid, can occasionally precipitate gout
+            // Penalized caution, NOT a label contraindication (the label's contraindications are anuria, hepatic coma/precoma and allergy). The label warns
+            // of rapid-onset severe hyponatremia and/or hypokalemia (dose-related). The K+ 3.5 level is ENGINE POLICY.
+            hypokalemia_caution_below_k: { k: 3.5, basis: 'engine policy; the label warns of rapid severe hypokalemia, dose-related, and has no potassium contraindication' },
+            monitoring_items: [{
+                test: 'Basic metabolic panel (sodium, potassium) after starting metolazone',
+                timing: 'Within about 3-5 days of starting, then at regular intervals (the day count is practice-based, not label text)',
+                details: 'Label: rapid-onset severe hyponatremia and/or hypokalemia can occur, rarely even after the initial doses, and hyponatremia can occur at any time during long-term therapy; check potassium at regular intervals. Hypokalemia is dose-related and is a hazard with digoxin; adding it to a loop diuretic can cause large fluid and electrolyte losses.',
+            }],
+            regimen_warnings: [
+                { text: 'Drug note: metolazone can cause severe hyponatremia and hypokalemia, sometimes within the first doses, especially added to a loop diuretic. Check sodium and potassium soon after starting and at regular intervals (Zaroxolyn label).' },
+            ],
+        },
+        // Label (HF edema): 5-20 mg once daily, titrated to the minimal effective dose; tablets 2.5 and 5 mg (10 mg named in the description). The 2.5 mg tier is in
+        // common use but is BELOW the labeled HF range. No intermittent-dosing schedule is modeled (the label describes none; it is practice-based).
         available_doses: [
-            { strength: 2.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 2.5, unit: 'mg', formulation: 'tablet (below the labeled HF range of 5-20 mg)', frequency_options: ['qd'] },
+            { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
         ],
         chf_effects: () => ({
             lvef_improvement_absolute: 0,
             bnp_reduction_percent: 0.10,
-            weight_reduction_kg: 2.0, // Sequential blockade synergy
+            weight_reduction_kg: THIAZIDE_ADDON_WEIGHT_KG, // add-on above the loop; flat across doses (no dose-response is sourced)
             kccq_improvement: 3,
             structure_benefit_points: 0,
             lavi_reduction_percent: 0.05,
             lvedd_reduction_percent: 0
         }),
         hemodynamic_effects: () => ({ sbp_drop: 5, hr_drop: 0, potassium_change: -0.5 }),
-        side_effects: () => ({ severe_hypokalemia: 0.30, dehydration: 0.20 }),
-        ...ci([{ reason: 'eGFR below 15 (anuria/ESRD; no tubular function for the thiazide mechanism)', when: p => p.egfr < 15 }]), // Anuria/ESRD — no tubular function for thiazide mechanism
+        side_effects: () => ({ severe_hypokalemia: 0.30, dehydration: 0.20, hyponatremia: 0.10, worsening_renal_function: THIAZIDE_WRF_EXCESS }),
+        ...ci([
+            { reason: 'eGFR below 15 (anuria/ESRD; no tubular function for the thiazide mechanism)', when: p => p.egfr < 15 }, // kept (verified-diuretics.md: no change)
+            CI_ANURIA,
+        ]),
     },
     {
         name: 'Chlorthalidone',
         drug_class: 'Thiazide-like Diuretic',
+        facts: { raises_uric_acid: true }, // label: hyperuricemia, frank gout may be precipitated, dose-related uric acid rise
+        // 12.5 mg is half of a 25 mg tablet (label tablets 25 and 50 mg; the edema dose on the label is 30-100 mg daily).
         available_doses: [
-            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 12.5, unit: 'mg', formulation: 'half of a 25 mg tablet', frequency_options: ['qd'] },
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
         ],
         chf_effects: (dose) => {
-            // CLOROTIC: Improved decongestion when added to loop diuretics
+            // The add-on trial is CLOROTIC (Eur Heart J 2023;44:411), which tested HYDROCHLOROTHIAZIDE (not chlorthalidone) added to IV furosemide
+            // in acute HF. Its weight benefit is applied to every thiazide-type add-on (ASSUMPTION: no chlorthalidone-specific figure is sourced).
             const d = Number(dose);
             return {
                 lvef_improvement_absolute: 0,
                 bnp_reduction_percent: 0.08 + (d / 25 * 0.07),
-                weight_reduction_kg: 1.5 + (d / 25 * 0.5), // Sequential nephron blockade
+                weight_reduction_kg: THIAZIDE_ADDON_WEIGHT_KG, // sequential nephron blockade, flat across doses
                 kccq_improvement: 2 + (d / 25),
                 structure_benefit_points: 0,
                 lavi_reduction_percent: 0.04,
@@ -1725,23 +1813,26 @@ export const MEDICATION_FORMULARY: Medication[] = [
             };
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 10, hr_drop: 0, potassium_change: -0.4 - (Number(dose) / 25 * 0.1) }),
-        side_effects: () => ({ severe_hypokalemia: 0.25, dehydration: 0.15, hyponatremia: 0.10 }),
+        side_effects: () => ({ severe_hypokalemia: 0.25, dehydration: 0.15, hyponatremia: 0.10, worsening_renal_function: THIAZIDE_WRF_EXCESS }),
         ...ci([{ reason: 'eGFR below 15 (anuria/ESRD)', when: p => p.egfr < 15 }]), // Anuria/ESRD
     },
     {
         name: 'Hydrochlorothiazide',
         drug_class: 'Thiazide-like Diuretic',
+        facts: { raises_uric_acid: true }, // label: acute gout may be precipitated
         available_doses: [
+            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // label strengths 12.5, 25, 50 mg
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
         ],
         chf_effects: (dose) => {
-            // Less potent than chlorthalidone/metolazone for sequential nephron blockade
+            // CLOROTIC (the trial drug is HCTZ): weight benefit applied to every thiazide-type add-on, flat across doses.
+            // (CLOROTIC dosed HCTZ by creatinine clearance, MORE at lower clearance; its weight benefit shrank below eGFR 45: -2.1, -1.3, -0.1 kg; not modeled.)
             const d = Number(dose);
             return {
                 lvef_improvement_absolute: 0,
                 bnp_reduction_percent: 0.06 + (d / 50 * 0.06),
-                weight_reduction_kg: 1.0 + (d / 50 * 0.5), // Weaker than chlorthalidone
+                weight_reduction_kg: THIAZIDE_ADDON_WEIGHT_KG,
                 kccq_improvement: 2 + (d / 50),
                 structure_benefit_points: 0,
                 lavi_reduction_percent: 0.03,
@@ -1749,8 +1840,17 @@ export const MEDICATION_FORMULARY: Medication[] = [
             };
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose) / 15, hr_drop: 0, potassium_change: -0.3 - (Number(dose) / 50 * 0.1) }),
-        side_effects: () => ({ hypokalemia: 0.20, dehydration: 0.10, hyponatremia: 0.08 }),
-        ...ci([{ reason: 'eGFR below 30 (ineffective at this level, unlike metolazone/chlorthalidone)', when: p => p.egfr < 30 }]), // Ineffective at eGFR < 30 (unlike metolazone/chlorthalidone)
+        // Hypokalemia: CLOROTIC post hoc K+ < 3.5 was more frequent with HCTZ (OR 4.90, 95% CI 2.50-9.90), worst with baseline K+ 4.3 or lower and no MRA.
+        side_effects: () => ({ hypokalemia: 0.20, dehydration: 0.10, hyponatremia: 0.08, worsening_renal_function: THIAZIDE_WRF_EXCESS }),
+        // The HCTZ label has no eGFR statement (anuria is the contraindication) and CLOROTIC enrolled eGFR 14-109, so eGFR below 30 is a CAUTION (reduced
+        // efficacy), not a contraindication. eGFR below 15 stays excluded for consistency with metolazone/chlorthalidone (judgment: no source below 14).
+        ...ci([
+            { reason: 'eGFR below 15 (below the range studied in CLOROTIC, which enrolled eGFR 14-109)', when: p => p.egfr < 15 },
+            CI_ANURIA,
+        ]),
+        renal_adjustment: (egfr) => {
+            if (egfr < 30) return { caution: true };
+            return {};
+        },
     }
 ];
-

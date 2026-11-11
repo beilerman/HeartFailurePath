@@ -13,7 +13,7 @@ npm run dev              # start Vite dev server (default 3000)
 npm run build            # production build
 npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
-                         #   (currently: Passed 115 = 105 clinical scenarios + 10 structural invariants)
+                         #   (currently: Passed 248 (scenario count + structural invariants; the printed count is authoritative))
 npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
@@ -208,6 +208,12 @@ Implemented high-priority safeguards include:
   - H/ISDN Class 1 needs a RAAS inhibitor AND a beta-blocker on board (or documented inability: `allRAASExcluded` / `allBBExcluded`), LVEF <= 40; Class 2b is the separate RAAS-unavailable path
   - IV iron: `ivIronCreditTier` (clinicalPredicates.ts) gates the bonus, the candidate and the auto-rescue (iron deficient, NYHA II-III, Hb < 15, LVEF < 50; half bonus at 41-49); the dose is the label table by weight and `patient.hemoglobin` (`facts.single_course_dose`: never titrated); price is a per-course cost amortized over 6 months
   - `facts.regimen_warnings` entries may be a function of the patient and take `(patient, regimen)` for `when`; `facts.cash_price_by_dose` overrides the flat price in the cash tier (Zepbound)
+- Diuretic rules (2026-11-10, `docs/medication-review-2026-11-10/verified-diuretics.md`; numbers marked engine policy or assumption are in `docs/evidence-matrix.md` HF-DIU-001..013):
+  - loop effects and `facts.high_dose_threshold` use the TOTAL DAILY dose (`dailyDose`/`effectDose` in `regimenUtils.ts`, `facts.effects_on_daily_dose`); the calibrated curve is unchanged and a daily dose above the calibrated top is a ceiling; titration keeps the current frequency (`carryFrequency`)
+  - `facts.max_daily_dose` (furosemide 600, torsemide 200, bumetanide 10 mg): never exceeded by candidate generation or frequency selection; verify checks every displayed regimen
+  - strengths are marketed ones only (bumetanide 4 mg removed; torsemide 5/10/20/40/100; furosemide 160 = 2 x 80 mg; HCTZ 12.5; metolazone 2.5 (below the labeled HF range)/5/10)
+  - thiazide-type add-on credit 1.1 kg (CLOROTIC, HCTZ; same for chlorthalidone and metolazone as an assumption); `facts.raises_uric_acid` gives every loop and thiazide-type drug the gout caution; metolazone: BMP monitoring item and a penalized hypokalemia caution below K+ 3.5 (`facts.hypokalemia_caution_below_k`, not a contraindication); HCTZ eGFR < 30 is a caution (< 15 and anuria excluded)
+  - loop response at low eGFR: monitoring note only (no sourced multiplier); torsemide has no best-in-class badge
 - Structural regimen safety:
   - blocks dual RAAS combinations
   - blocks dual MRA combinations
@@ -227,19 +233,21 @@ Additional safety support:
 
 ## Furoscix Implementation
 
-Furoscix is modeled as:
+Furoscix is modeled as (2026-11-10, `docs/medication-review-2026-11-10/verified-diuretics.md`):
 
 - medication name: `Furoscix (SC Furosemide)`
 - class: `Loop Diuretic`
-- dose: `80 mg/10mL SQ on-body infusor (5h)` (single modeled tier)
+- dose: `80 mg/10mL SQ on-body infusor (5h)` (single modeled tier), `facts.short_course_addon`: a SHORT-COURSE ADD-ON beside an oral loop (label: not for chronic use), never a swap or standing replacement (swap candidates exclude it; it is not counted as a duplicate loop)
+- credited as 160 mg oral furosemide (`facts.oral_equivalent_multiplier` 2.0) and, beside an oral loop, only the increment above that loop (`effectsFor` in `effects.ts`)
+- priced per course of 4 kits (assumption)
 
 Behavioral integration:
 
-- prioritized in worsening-congestion loop escalation pathways
-- eligibility tied to active congestion/escalation context
+- offered (`candidates.ts`) only at >= 2 kg above dry weight with an oral loop on board; summary says SHORT COURSE; monitoring item resumes/adjusts the oral loop
 - contraindication checks include:
-  - insufficient congestion context
-  - `eGFR < 15`
+  - under 1 kg above dry weight
+  - no oral loop on board
+  - anuria (comorbidity option `Anuria`; there is NO eGFR exclusion: CKD is an indication, eGFR < 30 is a caution)
   - furosemide hypersensitivity
   - adhesive/acrylate hypersensitivity
 - mandatory regimen warning when included:
@@ -258,14 +266,14 @@ Major class groups include RAAS, beta blockers, MRAs/nsMRA, SGLT2i, loop/thiazid
 Formulary modeling notes (2026-07-05 audit):
 
 - GLP-1 `chf_effects` are dose-scaled (semaglutide ratio `d/2.4`, floor 0.25; tirzepatide a saturating map 0.25/0.70/0.81/0.925/0.96/1 over 2.5-15 mg, see 2026-11-10 rules above) — a starting-dose add is no longer credited the full STEP-HFpEF/SUMMIT steady-state benefit. Eplerenone is similarly dose-scaled (`d/50`), matching spironolactone.
-- Loop diuretic weight-loss curves are calibrated to documented dose-response anchors via `log2` ceiling curves: furosemide `1.5 + 0.9*log2(d/20)` (~1.5/2.4/3.3/4.2 kg at 20/40/80/160 mg); torsemide `1.8 + 0.96*log2(d/10)` (~1.8/2.8/4.0/5.0 kg at 10/20/50/100 mg); bumetanide inherits the furosemide curve via 40:1 equivalence; Furoscix uses the calibrated curve on a bioavailability-adjusted oral equivalent (~15% above oral at the labeled 80 mg).
+- Loop diuretic weight-loss curves are calibrated to documented dose-response anchors via `log2` ceiling curves: furosemide `1.5 + 0.9*log2(d/20)` (~1.5/2.4/3.3/4.2 kg at 20/40/80/160 mg/day); torsemide `1.8 + 0.96*log2(d/10)` (~1.8/2.8/3.6/5.0 kg at 10/20/40/100 mg/day); bumetanide inherits the furosemide curve via 40:1 equivalence; Furoscix uses the calibrated curve on its oral equivalent (80 mg SC = 160 mg oral, multiplier 2.0); `d` is the TOTAL DAILY dose.
 - The `renal_adjustment` contract is fully honored by the engine: `contraindicated: true` excludes exactly like `contraindications()` (formulary filter + current-med audit); `caution: true` surfaces as a "Renal dosing review" monitoring-plan item (not a ranking-penalized warning); `start_dose_modifier` surfaces as a "Reduced starting dose (renal)" monitoring item for adds.
 
 ## Verification Harness
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — currently `Passed: 115`):
+Current regression scope (the harness's printed count is authoritative — currently `Passed: 248`):
 
 - 105 clinical scenarios + 10 structural invariants (every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why)
 - safety invariants (dual-class prevention, score bounds, display floors)

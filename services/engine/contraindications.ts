@@ -27,6 +27,11 @@ export function contraindicationReasons(med: Medication, patient: Patient): stri
 export const CI_ANGIOEDEMA: ContraindicationCheck = {
     reason: 'History of angioedema', when: p => p.comorbidities.has("History of Angioedema"),
 };
+/** Anuria: a label contraindication of furosemide (incl. Furoscix), metolazone and hydrochlorothiazide (verified-diuretics.md). The app has no urine-output field; the comorbidity option "Anuria" records it. */
+export const ANURIA = 'Anuria';
+export const CI_ANURIA: ContraindicationCheck = {
+    reason: 'Anuria (label contraindication)', when: p => p.comorbidities.has(ANURIA),
+};
 export const CI_POTASSIUM_GT_5_4: ContraindicationCheck = {
     reason: 'Potassium above 5.4 mEq/L', when: p => p.potassium > 5.4,
 };

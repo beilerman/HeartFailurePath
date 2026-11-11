@@ -252,6 +252,13 @@ function expectBinderWithMraWhenKHigh(): Check {
     };
 }
 
+/** verified-diuretics.md: CKD is a Furoscix INDICATION (contraindications: anuria, hypersensitivity, adhesive), so eGFR 12 no longer excludes it; it may show only with the CKD caution. */
+function expectFuroscixOnlyWithCkdCaution(): Check {
+    return output => output.scoredRegimens
+        .filter(r => r.regimen.some(m => m.med.facts?.short_course_addon) && !r.warnings.some(w => w.includes('FUROSCIX CKD CAUTION')))
+        .map(() => 'Furoscix displayed at eGFR 12 without the CKD caution');
+}
+
 function expectNoDuplicateClassGroups(): Check {
     const blocked = new Set(['RAAS Inhibitor', 'MRA', 'Beta Blocker', 'SGLT2i', 'Loop Diuretic', 'GLP-1 Therapy']);
     return output => {
@@ -259,6 +266,7 @@ function expectNoDuplicateClassGroups(): Check {
         output.scoredRegimens.forEach((r, index) => {
             const counts = new Map<string, number>();
             r.regimen.forEach(m => {
+                if (m.med.facts?.short_course_addon) return; // a short-course add-on (Furoscix) beside an oral loop is intended, not a duplicate
                 const group = classGroup(m.med.drug_class);
                 counts.set(group, (counts.get(group) ?? 0) + 1);
             });
@@ -369,7 +377,7 @@ const S: Scenario[] = [
     { title: '047 Furoscix candidate, persistent congestion on oral loop', tags: ['volume', 'Furoscix'], patient: base({ volume_status: { dry_weight_kg: 78, current_weight_kg: 83, exam_findings: new Set(['Edema (2+)', 'JVP Elevated', 'Orthopnea']) }, current_regimen: reg([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Lisinopril', strength: 10 }]) }), expect: [expectRegimen(), output => output.excludedMedications.some(e => e.name === 'Furoscix (SC Furosemide)') ? ['Furoscix incorrectly excluded in eligible persistent-congestion scenario'] : [], output => output.scoredRegimens.some(r => r.regimen.some(m => m.med.name === 'Furoscix (SC Furosemide)') && !r.warnings.some(w => w.includes('FUROSCIX SAFETY'))) ? ['Furoscix regimen missing device safety warning'] : []] },
     { title: '048 Furoscix blocked by furosemide allergy', tags: ['volume', 'Furoscix'], patient: base({ allergies: new Set(['Furosemide']), volume_status: { dry_weight_kg: 78, current_weight_kg: 83, exam_findings: new Set(['Edema (2+)', 'JVP Elevated']) }, current_regimen: reg([{ name: 'Torsemide', strength: 20, freq: 'bid' }]) }), expect: [expectRegimen(), expectNoMed('Furoscix (SC Furosemide)', 'Furoscix displayed despite furosemide allergy')] },
     { title: '049 Furoscix blocked by adhesive allergy', tags: ['volume', 'Furoscix'], patient: base({ allergies: new Set(['Adhesive acrylate allergy']), volume_status: { dry_weight_kg: 78, current_weight_kg: 83, exam_findings: new Set(['Edema (2+)', 'JVP Elevated']) }, current_regimen: reg([{ name: 'Furosemide', strength: 80, freq: 'bid' }]) }), expect: [expectRegimen(), expectNoMed('Furoscix (SC Furosemide)', 'Furoscix displayed despite adhesive/acrylate allergy')] },
-    { title: '050 eGFR 12 with congestion, avoid Furoscix and thiazide-like add-ons', tags: ['volume', 'renal'], patient: base({ egfr: 12, creatinine: 5.2, volume_status: { dry_weight_kg: 80, current_weight_kg: 86, exam_findings: new Set(['Edema (3+)', 'JVP Elevated']) }, current_regimen: reg([{ name: 'Furosemide', strength: 80, freq: 'bid' }]) }), expect: [expectRegimen(), expectNoMed('Furoscix (SC Furosemide)', 'Furoscix displayed at eGFR 12'), expectNoClass(c => c === 'Thiazide-like Diuretic', 'thiazide-like diuretic displayed at eGFR 12')] },
+    { title: '050 eGFR 12 with congestion, avoid Furoscix and thiazide-like add-ons', tags: ['volume', 'renal'], patient: base({ egfr: 12, creatinine: 5.2, volume_status: { dry_weight_kg: 80, current_weight_kg: 86, exam_findings: new Set(['Edema (3+)', 'JVP Elevated']) }, current_regimen: reg([{ name: 'Furosemide', strength: 80, freq: 'bid' }]) }), expect: [expectRegimen(), expectFuroscixOnlyWithCkdCaution(), expectNoClass(c => c === 'Thiazide-like Diuretic', 'thiazide-like diuretic displayed at eGFR 12')] },
     { title: '051 Volume depleted on loop diuretic', tags: ['volume', 'depletion'], patient: base({ volume_status: { dry_weight_kg: 80, current_weight_kg: 77, exam_findings: new Set<string>() }, bun: 44, creatinine: 1.6, current_regimen: reg([{ name: 'Furosemide', strength: 80 }, { name: 'Lisinopril', strength: 10 }]) }), expect: [expectRegimen(), expectAlert('volume depletion'), expectModification(s => /furosemide/i.test(s) && /remove|down|titrate/i.test(s), 'loop de-escalation not offered in volume depletion')] },
     { title: '052 Euvolemic patient on very high-dose loop', tags: ['volume', 'deprescribe'], patient: base({ volume_status: { dry_weight_kg: 80, current_weight_kg: 80, exam_findings: new Set<string>() }, current_regimen: reg([{ name: 'Furosemide', strength: 160, freq: 'bid' }, { name: 'Lisinopril', strength: 10 }]) }), expect: [expectRegimen(), (output) => hasAlert(output, 'loop diuretic over-treatment') || output.scoredRegimens.some(r => nonKeepMods(r).some(s => /furosemide/i.test(s) && /remove|reduce|down|titrate/i.test(s))) ? [] : ['high-dose loop not reduced, removed, or flagged in euvolemia']] },
     { title: '053 Severe CKD loop resistance', tags: ['volume', 'renal'], patient: base({ egfr: 18, creatinine: 3.4, volume_status: { dry_weight_kg: 80, current_weight_kg: 84, exam_findings: new Set(['Edema (2+)']) }, current_regimen: reg([{ name: 'Furosemide', strength: 80 }]) }), expect: [expectRegimen(), expectAlert('ckd')] },

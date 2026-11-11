@@ -1,6 +1,7 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS } from '../services/simulationService';
-import { getDoseTiers } from '../services/engine/regimenUtils';
+import { getDoseTiers, dailyDose } from '../services/engine/regimenUtils';
+import type { RegimenMed } from '../types';
 import { analyzeCurrentRegimen } from '../services/engine/candidates';
 import { simulateModificationEffect, patientChfEffects } from '../services/engine/effects';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
@@ -122,7 +123,8 @@ const ASSERTION_TITLE_MARKERS = [
     'MRA-Source',
     'RAAS-Source',
     'Rate-Source',
-    'Adjunct-Source'
+    'Adjunct-Source',
+    'Diuretic-Source'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -154,6 +156,9 @@ async function runVerification() {
     // New-start dose invariant for the RAAS classes (see services/engine/raasStart.ts, HOW_TO_ADD_A_MEDICATION.md).
     let raasStartsChecked = 0;
     const raasStartViolations: string[] = [];
+    // Declared-maximum invariant (facts.max_daily_dose): no displayed regimen exceeds a drug's label maximum total daily dose.
+    let dailyMaxChecked = 0;
+    const dailyMaxViolations: string[] = [];
 
     const formularyNames = MEDICATION_FORMULARY.map(m => m.name);
     const availableMedNames = new Set(formularyNames);
@@ -216,6 +221,20 @@ async function runVerification() {
                     const startIdx = order.indexOf(String(med.start_dose_for(scenario.patient)));
                     const idx = order.indexOf(String(m.target.dose.strength));
                     if (startIdx < 0 || idx > startIdx) raasStartViolations.push(`"${scenario.title}": ${m.summary} is above the ${med.name} starting tier ${med.start_dose_for(scenario.patient)}`);
+                }
+            }
+
+            // GLOBAL STRUCTURAL INVARIANT (declared daily maximum): no displayed regimen carries a drug above the maximum TOTAL DAILY dose
+            // its entry declares (facts.max_daily_dose: bumetanide 10 mg, torsemide 200 mg, furosemide 600 mg). A med the patient arrived on
+            // and the engine leaves unchanged is excluded (the engine does not rewrite an out-of-label current dose it did not touch).
+            for (const r of scoredRegimens) {
+                for (const m of r.regimen) {
+                    const max = m.med.facts?.max_daily_dose;
+                    if (max === undefined) continue;
+                    const arrived = (scenario.patient.current_regimen ?? []).some(c => c.med.name === m.med.name && c.dose.strength === m.dose.strength && c.selected_frequency === m.selected_frequency);
+                    if (arrived) continue;
+                    dailyMaxChecked++;
+                    if (dailyDose(m) > max) dailyMaxViolations.push(`"${scenario.title}": ${m.med.name} ${m.dose.strength} ${m.selected_frequency} = ${dailyDose(m)}/day exceeds the declared maximum ${max}`);
                 }
             }
 
@@ -2588,6 +2607,145 @@ async function runVerification() {
                 }
             }
 
+
+            // ===== Diuretic source-verified corrections (verified-diuretics.md; labels: furosemide, bumetanide, torsemide, metolazone, chlorthalidone, HCTZ, Furoscix; TRANSFORM-HF, CLOROTIC) =====
+            if (scenario.title.includes('Diuretic-Source')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const P = scenario.patient;
+                const med = (n: string) => MEDICATION_FORMULARY.find(m => m.name === n)!;
+                const rmed = (name: string, strength: number | string, freq: string): RegimenMed => {
+                    const m = med(name);
+                    return { med: m, dose: m.available_doses.find(d => String(d.strength) === String(strength))!, selected_frequency: freq };
+                };
+                const excl = (name: string) => excludedMedications.find(e => e.name === name);
+                const FSX = 'Furoscix (SC Furosemide)';
+                const mods = scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => ({ r, m })));
+                const kgLost = (modifications: import('../types').RegimenModification[]) => {
+                    const resulting = [...(P.current_regimen ?? [])];
+                    modifications.forEach(m => {
+                        if (m.action === 'add' && m.target) resulting.push(m.target);
+                        if ((m.action === 'titrate_up' || m.action === 'titrate_down') && m.source && m.target) {
+                            const i = resulting.findIndex(r => r.med.name === m.source!.med.name);
+                            if (i >= 0) resulting[i] = m.target;
+                        }
+                    });
+                    const sim = simulateModificationEffect(P, { modifications, resulting_regimen: resulting }, scenarioPrices);
+                    return { kg: P.volume_status.current_weight_kg - sim.projectedPatient.volume_status.current_weight_kg, sim };
+                };
+                const noSgltSynergy = (x: number) => x; // current regimens carry the SGLT2i already, so the synergy factor is not applied to these deltas
+
+                if (t.includes('Bumetanide eGFR 15 Never Above 10 mg Daily')) {
+                    if (med('Bumetanide').available_doses.some(d => Number(d.strength) === 4)) fail('Bumetanide still has a 4 mg tier (tablets are 0.5, 1 and 2 mg)');
+                    const tiers = getDoseTiers(med('Bumetanide'), P);
+                    if (tiers.length === 0) fail('No bumetanide tiers at eGFR 15 (check is vacuous)');
+                    if (tiers.some(x => dailyDose(x) > 10)) fail('A bumetanide tier exceeds 10 mg/day at eGFR 15');
+                    if (!tiers.some(x => x.selected_frequency === 'tid')) fail('eGFR < 20 no longer prefers split (tid) loop dosing where the maximum allows it');
+                    if (scoredRegimens.some(r => r.regimen.some(m => m.med.name === 'Bumetanide' && dailyDose(m) > 10))) fail('Bumetanide offered above 10 mg/day');
+                }
+                if (t.includes('Furosemide 80 mg tid High-Dose Alert')) {
+                    if (dailyDose(P.current_regimen.find(r => r.med.name === 'Furosemide')!) !== 240) fail('Fixture furosemide 80 tid is not 240 mg/day');
+                    if (!clinicalAlerts.some(a => a.startsWith('LOOP DIURETIC OVER-TREATMENT') && a.includes('240'))) fail('Furosemide 80 mg tid (240 mg/day) in a euvolemic patient did not trigger the high-dose loop alert stating the daily dose');
+                }
+                if (t.includes('Furosemide 40 mg bid Below High-Dose Alert')) {
+                    if (clinicalAlerts.some(a => a.startsWith('LOOP DIURETIC OVER-TREATMENT'))) fail('Furosemide 40 mg bid (80 mg/day, below the 120 mg/day policy level) triggered the high-dose alert');
+                }
+                if (t.includes('Daily Dose Credit')) {
+                    const qd = kgLost([{ action: 'titrate_up', source: rmed('Furosemide', 20, 'qd'), target: rmed('Furosemide', 40, 'qd'), summary: 'x' }]).kg;
+                    const bid = kgLost([{ action: 'titrate_up', source: rmed('Furosemide', 40, 'qd'), target: rmed('Furosemide', 40, 'bid'), summary: 'x' }]).kg;
+                    const eq = kgLost([{ action: 'titrate_up', source: rmed('Furosemide', 40, 'qd'), target: rmed('Furosemide', 80, 'qd'), summary: 'x' }]).kg;
+                    if (!(bid > 0.5)) fail(`40 mg bid is not credited more decongestion than 40 mg daily (gain ${bid.toFixed(2)} kg)`);
+                    if (Math.abs(bid - eq) > 1e-9) fail(`40 mg bid (${bid.toFixed(3)} kg) is not credited like 80 mg daily (${eq.toFixed(3)} kg): effects must use total daily dose`);
+                    if (!(qd > 0)) fail('20 to 40 mg daily credits no decongestion (check is vacuous)');
+                    const f = med('Furosemide').chf_effects;
+                    if (Math.abs(f(160).weight_reduction_kg - 4.2) > 1e-9 || Math.abs(f(40).weight_reduction_kg - 2.4) > 0.01) fail('Furosemide dose-response curve moved (must stay the calibrated 1.5/2.4/3.3/4.2 kg anchors)');
+                    // titration keeps the patient's frequency: from 40 bid the next tier is 80 bid (not 80 daily, which would credit nothing)
+                    const bidPatient = { ...P, current_regimen: [rmed('Furosemide', 40, 'bid')] };
+                    const up = analyzeCurrentRegimen(bidPatient, MEDICATION_FORMULARY, MEDICATION_FORMULARY.flatMap(m => getDoseTiers(m, bidPatient)));
+                    const opts = (up.titratableUp ?? []).find((x: any) => x.current.med.name === 'Furosemide')?.options ?? [];
+                    if (opts.length === 0 || opts.some((o: RegimenMed) => o.selected_frequency !== 'bid')) fail('Loop titration from 40 mg bid does not keep the twice-daily frequency');
+                }
+                if (t.includes('Furoscix Short-Course Add-On Not Swap')) {
+                    if (mods.some(x => x.m.action === 'swap' && x.m.target?.med.name === FSX)) fail('Furoscix offered as a SWAP (a standing replacement; the label says not for chronic use)');
+                    const withFsx = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === FSX));
+                    if (withFsx.length === 0) fail('Furoscix short-course add-on not offered with worsening congestion on an oral loop (check is vacuous)');
+                    if (withFsx.some(r => !r.regimen.some(m => m.med.drug_class === 'Loop Diuretic' && m.med.name !== FSX))) fail('Furoscix offered without an oral loop beside it');
+                    if (mods.some(x => x.m.target?.med.name === FSX && !/SHORT COURSE/.test(x.m.summary))) fail('Furoscix modification summary does not say short course');
+                    if (!monitoringPlan.some(m => /Volume status after the Furoscix course/.test(m.test) && /resume or adjust the oral loop/.test(m.details))) fail('No monitoring item to reassess volume and resume/adjust the oral loop after Furoscix');
+                    // credited ABOVE the oral loop: oral 40 mg/day = 2.4 kg, plus Furoscix 80 mg SC (= 160 mg oral) -> furosemide curve at 40 + 160 = 200 mg oral-equivalent, capped at 320
+                    const inc = kgLost([{ action: 'add', target: rmed(FSX, 80, 'qd'), summary: 'x' }]).kg;
+                    const curve = (e: number) => 1.5 + 0.9 * Math.log2(e / 20);
+                    if (Math.abs(inc - (curve(200) - curve(40))) > 1e-6) fail(`Furoscix add-on credit ${inc.toFixed(3)} kg is not the increment above the oral loop (${(curve(200) - curve(40)).toFixed(3)} kg)`);
+                    if (!(inc < med(FSX).chf_effects(80).weight_reduction_kg)) fail('Furoscix add-on credit is not below its standalone effect (double counting)');
+                    if (!(DRUG_PRICES[FSX].cash >= 4 * 800) || !/4 single-use kits|COURSE of 4/.test(DRUG_PRICES[FSX].notes ?? '')) fail('Furoscix price is not stated per course of kits');
+                }
+                if (t.includes('Furoscix Not Offered Without Oral Loop')) {
+                    if (excl(FSX)?.rule_id !== 'E13' || !/oral loop/.test((excl(FSX)?.why ?? []).join(' '))) fail('Furoscix not withheld (E13, oral-loop reason) without an oral loop on board');
+                    if (anyRegimenHasMed(FSX)) fail('Furoscix offered as a standalone loop');
+                }
+                if (t.includes('Furoscix CKD Allowed Anuria Excluded')) {
+                    if (excl(FSX)?.rule_id !== 'E13' || !/Anuria/.test((excl(FSX)?.why ?? []).join(' '))) fail('Furoscix not excluded for anuria');
+                    for (const n of ['Hydrochlorothiazide', 'Metolazone']) if (!/Anuria/.test((excl(n)?.why ?? []).join(' '))) fail(`${n} not excluded for anuria`);
+                }
+                if (t.includes('Furoscix CKD Without Anuria Offered With Caution')) {
+                    const why = (excl(FSX)?.why ?? []).join(' ');
+                    if (excl(FSX) && /eGFR/.test(why)) fail('Furoscix still excluded by an eGFR rule (CKD is an indication; the label contraindication is anuria)');
+                    if (med(FSX).renal_adjustment?.(12, P)?.caution !== true) fail('Furoscix low-eGFR caution lost');
+                }
+                if (t.includes('Thiazide Add-On Credit And Gout Caution')) {
+                    for (const [name, dose] of [['Metolazone', 2.5], ['Chlorthalidone', 25], ['Hydrochlorothiazide', 25]] as const) {
+                        const add = rmed(name, dose, 'qd');
+                        const { kg, sim } = kgLost([{ action: 'add', target: add, summary: 'x' }]);
+                        if (Math.abs(kg - 1.1) > 1e-6) fail(`${name} add-on credit is ${kg.toFixed(3)} kg, not the CLOROTIC 1.1 kg`);
+                        const withDrug = { ...P, current_regimen: [...P.current_regimen, add] };
+                        const kept = simulateModificationEffect(withDrug, { modifications: withDrug.current_regimen.map(r => ({ action: 'keep' as const, source: r, summary: 'k' })), resulting_regimen: withDrug.current_regimen }, scenarioPrices);
+                        if (!kept.specialFeatureItems.some(i => i.med === name && /Gout/.test(i.feature) && i.points === -5)) fail(`${name} carries no gout caution (-5) for a patient with gout`);
+                        if (!med(name).facts?.raises_uric_acid) fail(`${name} does not declare facts.raises_uric_acid`);
+                        void sim;
+                    }
+                    for (const n of ['Chlorthalidone', 'Hydrochlorothiazide', 'Metolazone']) {
+                        if (!(med(n).side_effects(25).worsening_renal_function > 0.28)) fail(`${n} side effects lack worsening renal function (CLOROTIC 46.5% vs 17.2%)`);
+                    }
+                    if (!(med('Metolazone').side_effects(5).hyponatremia > 0)) fail('Metolazone side effects lack hyponatremia');
+                }
+                if (t.includes('HCTZ eGFR 25 Cautioned Not Excluded')) {
+                    if (excl('Hydrochlorothiazide')) fail('HCTZ excluded at eGFR 25 (verified-diuretics.md: a caution, not a contraindication)');
+                    if (med('Hydrochlorothiazide').renal_adjustment?.(25, P)?.caution !== true) fail('HCTZ at eGFR 25 carries no renal caution');
+                    const low = { ...P, egfr: 12 };
+                    if (!med('Hydrochlorothiazide').contraindications?.(low)) fail('HCTZ at eGFR 12 not excluded (below the range CLOROTIC studied; engine-conservative)');
+                }
+                if (t.includes('Metolazone Electrolyte Monitoring')) {
+                    if (!monitoringPlan.some(m => /Basic metabolic panel/.test(m.test) && /hyponatremia and\/or hypokalemia/.test(m.details) && /practice-based/.test(m.timing))) fail('Metolazone carries no electrolyte (BMP) monitoring item that labels its day count practice-based');
+                    const add = rmed('Metolazone', 2.5, 'qd');
+                    const lowK = simulateModificationEffect(P, { modifications: [{ action: 'add', target: add, summary: 'x' }], resulting_regimen: [...P.current_regimen, add] }, scenarioPrices);
+                    if (!lowK.warnings.some(w => w.startsWith('HYPOKALEMIA CAUTION'))) fail('Adding metolazone at K+ 3.4 raised no hypokalemia caution');
+                    const okK = simulateModificationEffect({ ...P, potassium: 4.3 }, { modifications: [{ action: 'add', target: add, summary: 'x' }], resulting_regimen: [...P.current_regimen, add] }, scenarioPrices);
+                    if (okK.warnings.some(w => w.startsWith('HYPOKALEMIA CAUTION'))) fail('Hypokalemia caution fired at K+ 4.3');
+                    if (med('Metolazone').contraindications?.({ ...P, potassium: 3.0 })) fail('Metolazone excluded by potassium (the label has no potassium contraindication; this is a penalized caution)');
+                }
+                if (t.includes('Low eGFR Loop Response Note And Titration')) {
+                    if (!monitoringPlan.some(m => /Loop diuretic response in advanced CKD/.test(m.test) && /higher doses are usually needed/.test(m.details))) fail('No low-eGFR higher-dose note for the loop');
+                    if (!mods.some(x => x.m.action === 'titrate_up' && x.m.source?.med.drug_class === 'Loop Diuretic')) fail('No loop up-titration candidate at eGFR 24');
+                }
+                if (t.includes('Formulary Strengths And Badges')) {
+                    const strengths = (n: string) => med(n).available_doses.map(d => Number(d.strength));
+                    if (JSON.stringify(strengths('Torsemide')) !== JSON.stringify([5, 10, 20, 40, 100])) fail(`Torsemide strengths are ${strengths('Torsemide')} (expected 5/10/20/40/100)`);
+                    if (!strengths('Hydrochlorothiazide').includes(12.5)) fail('HCTZ lacks 12.5 mg');
+                    if (JSON.stringify(strengths('Metolazone')) !== JSON.stringify([2.5, 5, 10])) fail(`Metolazone strengths are ${strengths('Metolazone')}`);
+                    if (!/below the labeled HF range/.test(med('Metolazone').available_doses[0].formulation)) fail('Metolazone 2.5 mg is not labeled below the labeled HF range');
+                    if (!/2 x 80/.test(med('Furosemide').available_doses.find(d => d.strength === 160)!.formulation)) fail('Furosemide 160 mg is not shown as 2 x 80 mg tablets');
+                    if (med('Torsemide').is_best_in_class) fail('Torsemide still carries the best-in-class badge (TRANSFORM-HF: no mortality difference)');
+                    for (const n of ['Carvedilol', 'Metoprolol Succinate', 'Tirzepatide (Zepbound)']) if (med(n).is_best_in_class) fail(`${n} still carries a best-in-class badge no verified source supports`);
+                    if (!('renal_worsening' in med('Torsemide').side_effects(20))) fail('Torsemide side effects lack renal worsening');
+                    const fsx = med(FSX);
+                    if (fsx.facts?.oral_equivalent_multiplier !== 2) fail('Furoscix oral-equivalent multiplier is not 2.0');
+                    if (Math.abs(fsx.chf_effects(80).weight_reduction_kg - med('Furosemide').chf_effects(160).weight_reduction_kg) > 1e-9) fail('Furoscix 80 mg SC is not credited as 160 mg oral furosemide');
+                    for (const n of ['Furosemide', 'Torsemide', 'Bumetanide']) if (!med(n).facts?.max_daily_dose) fail(`${n} declares no max_daily_dose`);
+                    if (med('Furosemide').facts!.max_daily_dose !== 600 || med('Torsemide').facts!.max_daily_dose !== 200 || med('Bumetanide').facts!.max_daily_dose !== 10) fail('Declared maximum daily doses are not furosemide 600 / torsemide 200 / bumetanide 10 mg');
+                }
+                void noSgltSynergy;
+            }
+
             // ===== Rate control source-verified corrections (verified-rate-control.md; labels: Coreg, metoprolol succinate ER, bisoprolol, Corlanor, Lanoxin; MOCHA, COMET, SHIFT, DIG) =====
             if (scenario.title.includes('Rate-Source')) {
                 const excl = (name: string) => excludedMedications.find(e => e.name === name);
@@ -3083,6 +3241,26 @@ async function runVerification() {
         failed++;
     } else {
         console.log(`  [PASS] ${raasStartsChecked} RAAS add/swap options across all scenarios, none above the declared starting tier.`);
+        passed++;
+    }
+
+    console.log('Checking structural invariant: no displayed regimen exceeds a declared maximum total daily dose...');
+    // Plus every ladder: no strength x frequency of any tier getDoseTiers offers exceeds the declared maximum, for a CKD patient (tid preferred).
+    for (const m of MEDICATION_FORMULARY) {
+        const max = m.facts?.max_daily_dose;
+        if (max === undefined) continue;
+        const ckd = { ...SCENARIOS[0].patient, egfr: 15 };
+        for (const tier of getDoseTiers(m, ckd)) {
+            dailyMaxChecked++;
+            if (dailyDose(tier) > max) dailyMaxViolations.push(`${m.name} tier ${tier.dose.strength} ${tier.selected_frequency} = ${dailyDose(tier)}/day exceeds the declared maximum ${max}`);
+        }
+    }
+    if (dailyMaxViolations.length > 0 || dailyMaxChecked === 0) {
+        dailyMaxViolations.slice(0, 10).forEach(v => console.error(`  [FAIL] ${v}`));
+        if (dailyMaxChecked === 0) console.error('  [FAIL] no daily-maximum check ran (vacuous)');
+        failed++;
+    } else {
+        console.log(`  [PASS] ${dailyMaxChecked} drug x regimen/tier checks, none above a declared maximum daily dose.`);
         passed++;
     }
 

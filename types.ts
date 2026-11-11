@@ -183,10 +183,29 @@ export interface MedFacts {
     antiandrogenic?: boolean;
     /** Delivered by a single-use on-body subcutaneous infusor (Furoscix): device, CKD and SpO2 safety warnings apply. */
     delivery?: 'on_body_infusor';
-    /** Moved to the front of the candidate list when congestion is worsening (loop diuretic swaps / new adds). */
-    preferred_for_congestion?: boolean;
-    /** Dose (in the entry's dose unit) at or above which a euvolemic patient is flagged for loop over-treatment. */
+    /**
+     * TOTAL DAILY dose (strength x doses per day, in the entry's dose unit) at or above which a euvolemic patient is flagged for loop
+     * over-treatment. Engine policy (no source gives a "high-dose" level); the label ceiling is `max_daily_dose`.
+     */
     high_dose_threshold?: number;
+    /** Label MAXIMUM total daily dose (entry's dose unit). Candidate generation never offers a strength x frequency above it; verify checks every regimen. */
+    max_daily_dose?: number;
+    /** `chf_effects` / `hemodynamic_effects` are evaluated at the TOTAL DAILY dose (strength x doses per day), not the per-dose strength (loop diuretics). */
+    effects_on_daily_dose?: boolean;
+    /**
+     * Short-course add-on to an oral agent of the same class group (Furoscix: label "not for chronic use"): never offered as a swap or a standing
+     * replacement, needs an oral loop on board, is not counted as a duplicate loop, and its effect is credited only ABOVE the oral loop already
+     * on board (log ceiling), not on top of it.
+     */
+    short_course_addon?: boolean;
+    /** Factor converting this route's mg to ORAL furosemide-equivalent mg (Furoscix 2.0: SC/IV furosemide is about twice an oral dose). */
+    oral_equivalent_multiplier?: number;
+    /** Oral furosemide-equivalent mg per mg of this loop at the same daily dose (furosemide 1; bumetanide 40 per its label; torsemide 2 is engine calibration, NOT VERIFIED). Used only to credit a short-course add-on above the oral loop. */
+    loop_furosemide_equivalent_per_mg?: number;
+    /** Raises serum uric acid / may precipitate gout (label): a patient with Gout carries the uric-acid caution while this drug is in the regimen. */
+    raises_uric_acid?: boolean;
+    /** Warn (penalized caution) when this drug is ADDED and the known baseline K+ is below this value. Engine policy, not a label contraindication; `basis` states it. */
+    hypokalemia_caution_below_k?: { k: number; basis: string };
     /** Role when the engine must append a rescue agent (K+ binder): `preferred` is tried first, else the first available. */
     rescue_role?: { kind: 'k_binder'; preferred?: boolean; /** Highest dose the engine may add automatically as a rescue (higher tiers stay prescribable). */ max_rescue_dose?: number };
     /** Two regimens differing in presence of this key are always "distinct" in top-pick selection. */
