@@ -1,0 +1,14 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 744 runs
+  (a) top pick identical:        744 / 744
+  (b) displayed pick set same:   744 / 744
+  (c) pick order identical:      744 / 744
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+(node:36822) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)

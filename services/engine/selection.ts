@@ -46,21 +46,27 @@ export function resolveRankingMode(patient: { ranking_mode?: string }): RankingM
     return patient.ranking_mode === 'foundational_first' ? 'foundational_first' : 'balanced';
 }
 
-/** Projected-safety adjustment codes that put a regimen in the second ("not clean") group in foundational mode. */
-export const PROJECTED_SAFETY_ADJUSTMENT_CODES: ReadonlySet<string> = new Set([
-    SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.code,
-    SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.code,
-    SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.code,
-    SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.code,
-    SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.code,
-]);
+/**
+ * Severe projected-safety adjustment codes that can demote a regimen in foundational mode, each with the parameter it concerns.
+ * The mild projected SBP < 95 tier does not demote (it still costs score points, which feeds the final tie-break).
+ */
+export const SEVERE_PROJECTED_SAFETY: ReadonlyArray<{ code: string; harmful: (r: ScoredRegimen, baseline: Patient) => boolean }> = [
+    { code: SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.code, harmful: (r, b) => r.projected_patient.sbp < b.sbp },
+    { code: SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.code, harmful: (r, b) => r.projected_patient.sbp < b.sbp },
+    { code: SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.code, harmful: (r, b) => r.projected_patient.pulse < b.pulse },
+    { code: SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.code, harmful: (r, b) => r.projected_patient.potassium > b.potassium },
+];
 
-/** True when the regimen's projected state tripped none of the projected-safety adjustments (read from score_breakdown). */
-export function isProjectedSafetyClean(r: ScoredRegimen): boolean {
+/**
+ * True unless the regimen CAUSES severe projected harm: it trips a severe projected-safety adjustment AND moves that parameter in the
+ * harmful direction versus the entered baseline (SBP lower, HR lower, K+ higher). A baseline-hyperkalemic patient whose regimen does
+ * not raise K+ is clean. Engine policy (owner decision 2026-11-11: demote only harm the regimen causes).
+ */
+export function isProjectedSafetyClean(r: ScoredRegimen, baseline: Patient): boolean {
     const bd = r.score_breakdown;
     if (!bd) return true;
-    return !bd.adjustments.some(a => PROJECTED_SAFETY_ADJUSTMENT_CODES.has(a.code))
-        && !(bd.overrides ?? []).some(o => PROJECTED_SAFETY_ADJUSTMENT_CODES.has(o.code));
+    const codes = new Set([...bd.adjustments.map(a => a.code), ...(bd.overrides ?? []).map(o => o.code)]);
+    return !SEVERE_PROJECTED_SAFETY.some(x => codes.has(x.code) && x.harmful(r, baseline));
 }
 
 /** Whether the foundational mode has any effect for this patient (HFrEF / HFimpEF only). */
@@ -69,14 +75,14 @@ export function foundationalModeApplies(patient: Patient): boolean {
 }
 
 /**
- * Comparator for a mode. Foundational: (a) regimens with no projected-safety adjustment first, (b) higher
- * gdmt_completeness, (c) byScoreThenCost. Balanced (and any non-applicable phenotype) is byScoreThenCost itself.
+ * Comparator for a mode. Foundational: (a) regimens that do not cause severe projected harm first, (b) higher
+ * foundational_coverage (pillar slots only), (c) byScoreThenCost. Balanced (and any non-applicable phenotype) is byScoreThenCost itself.
  */
 export function rankingComparator(mode: RankingMode, patient: Patient): (a: ScoredRegimen, b: ScoredRegimen) => number {
     if (mode !== 'foundational_first' || !foundationalModeApplies(patient)) return byScoreThenCost;
     return (a, b) =>
-        (Number(isProjectedSafetyClean(b)) - Number(isProjectedSafetyClean(a))) ||
-        ((b.gdmt_completeness ?? 0) - (a.gdmt_completeness ?? 0)) ||
+        (Number(isProjectedSafetyClean(b, patient)) - Number(isProjectedSafetyClean(a, patient))) ||
+        ((b.foundational_coverage ?? 0) - (a.foundational_coverage ?? 0)) ||
         byScoreThenCost(a, b);
 }
 
@@ -171,7 +177,7 @@ const regimenSignature = (r: ScoredRegimen | undefined): string =>
 /** One plain line describing a regimen: drugs and doses, score, completeness and monthly cost. */
 function describeLead(r: ScoredRegimen): string {
     const drugs = r.regimen.map(x => `${x.med.name} ${formatDose(x)}`).join(' + ');
-    return `${drugs} (score ${r.overall_score}, therapy completeness ${Math.round((r.gdmt_completeness ?? 0) * 100)}%, $${r.cost}/month)`;
+    return `${drugs} (score ${r.overall_score}, foundational coverage ${Math.round(r.foundational_coverage ?? 0)}%, $${r.cost}/month)`;
 }
 
 /**

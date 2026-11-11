@@ -1,40 +1,48 @@
-Ranking mode: foundational_first vs balanced (from npm run verify), 2026-11-11
+Ranking mode: foundational_first vs balanced (from npm run verify), revised 2026-11-11: foundational_coverage + harm-only demotion
 
-  RANKING MODE EFFECT: foundational_first changes the lead pick in 127 of 624 HFrEF/HFimpEF runs (738 runs total).
-  Foundational lead covers LESS therapy than the balanced lead (balanced lead trips a projected-safety adjustment, foundational lead does not): 14 runs.
-    "Jane Smith (Dry & Cold)" [cash]
-      Balanced lead:     Lisinopril 2.5mg qd [score 25, completeness 15%, $4]
-      Foundational lead: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [score 25, completeness 40%, $54]
-    "Hyperkalemia (K+ 5.6) - Avoid MRA" [cash]
-      Balanced lead:     Dapagliflozin 10mg qd + Furosemide 20mg qd [score 45, completeness 33%, $53]
-      Foundational lead: Furosemide 20mg qd [score 34, completeness 0%, $3]
+  RANKING MODE EFFECT: foundational_first changes the lead pick in 99 of 630 HFrEF/HFimpEF runs (744 runs total).
+  Foundational lead has LOWER foundational coverage than the balanced lead only where the balanced lead is demoted by rule (a): 2 runs.
+    "Jane Smith (Dry & Cold)" [commercial]: balanced lead Carvedilol 3.125mg bid + Dapagliflozin 10mg qd (coverage 40%) is demoted by rule (a); foundational lead Lisinopril 2.5mg qd (15%)
+    "Jane Smith (Dry & Cold)" [medicare]: balanced lead Carvedilol 3.125mg bid + Dapagliflozin 10mg qd (coverage 40%) is demoted by rule (a); foundational lead Lisinopril 2.5mg qd (15%)
+  SPOT "Hyperkalemia (K+ 5.6) - Avoid MRA" [cash]: foundational lead Dapagliflozin 10mg qd + Furosemide 20mg qd coverage 50%, clean regimen with a pillar displayed: true
+  SPOT "Hyperkalemia (K+ 5.6) - Avoid MRA" [commercial]: foundational lead Dapagliflozin 10mg qd + Patiromer 25.2g qd coverage 50%, clean regimen with a pillar displayed: true
+  SPOT "Hyperkalemia (K+ 5.6) - Avoid MRA" [medicare]: foundational lead Dapagliflozin 10mg qd + Furosemide 20mg qd coverage 50%, clean regimen with a pillar displayed: true
+  SPOT "Severe Dilation (LVEF 20%, LVEDD 72)" [cash]: foundational lead Dapagliflozin 10mg qd coverage 25%, clean regimen with a pillar displayed: true
+  SPOT "Severe Dilation (LVEF 20%, LVEDD 72)" [commercial]: foundational lead Dapagliflozin 10mg qd coverage 25%, clean regimen with a pillar displayed: true
+  SPOT "Severe Dilation (LVEF 20%, LVEDD 72)" [medicare]: foundational lead Dapagliflozin 10mg qd coverage 25%, clean regimen with a pillar displayed: true
+    "Jane Smith (Dry & Cold)" [commercial]
+      Balanced lead:     Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [score 25, foundational coverage 40%, $38]
+      Foundational lead: Lisinopril 2.5mg qd [score 25, foundational coverage 15%, $3]
     "Severe Asthma - Selective BB Only" [cash]
-      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Digoxin 62.5mcg qd [score 54, completeness 20%, $72]
-      Foundational lead: Dapagliflozin 10mg qd [score 53, completeness 33%, $50]
+      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Digoxin 62.5mcg qd [score 54, foundational coverage 20%, $72]
+      Foundational lead: Dapagliflozin 10mg qd [score 53, foundational coverage 33%, $50]
     "Critical Renal (eGFR 25, K+ 5.2)" [commercial]
-      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Patiromer 16.8g qd [score 55, completeness 20%, $10]
-      Foundational lead: Dapagliflozin 10mg qd [score 53, completeness 33%, $35]
-    "Borderline Renal (eGFR 22) - Avoid Dapagliflozin Initiation" [commercial]
-      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Empagliflozin 10mg qd [score 59, completeness 53%, $45]
-      Foundational lead: Empagliflozin 10mg qd [score 53, completeness 33%, $35]
-    "Non-Compliant (Tolerance 0)" [commercial]
-      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Dapagliflozin 10mg qd [score 54, completeness 40%, $45]
-      Foundational lead: Dapagliflozin 10mg qd [score 51, completeness 25%, $35]
-    "Severe Dilation (LVEF 20%, LVEDD 72)" [cash]
-      Balanced lead:     Dapagliflozin 10mg qd [score 28, completeness 25%, $50]
-      Foundational lead: Digoxin 62.5mcg qd [score 27, completeness 0%, $12]
-    "African American NYHA III (A-HeFT)" [commercial]
-      Balanced lead:     Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Carvedilol 25mg bid + Spironolactone 25mg qd + Dapagliflozin 10mg qd [score 86, completeness 77%, $66]
-      Foundational lead: Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Carvedilol 25mg bid + Spironolactone 25mg qd + Dapagliflozin 10mg qd [score 73, completeness 83%, $81]
+      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Patiromer 16.8g qd [score 55, foundational coverage 20%, $10]
+      Foundational lead: Dapagliflozin 10mg qd [score 53, foundational coverage 33%, $35]
+    "Borderline Renal (eGFR 22) - Avoid Dapagliflozin Initiation" [medicare]
+      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Digoxin 62.5mcg qd [score 54, foundational coverage 20%, $79]
+      Foundational lead: Empagliflozin 10mg qd [score 53, foundational coverage 33%, $50]
     "Euvolemic Asthma (BB Selection)" [cash]
-      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Ivabradine 5mg bid [score 77, completeness 40%, $118]
-      Foundational lead: Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd + Dapagliflozin 10mg qd [score 75, completeness 55%, $114]
+      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Ivabradine 5mg bid [score 77, foundational coverage 20%, $118]
+      Foundational lead: Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd + Dapagliflozin 10mg qd [score 75, foundational coverage 73%, $114]
     "Budget-Constrained ($25)" [commercial]
-      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Furosemide 20mg qd [score 51, completeness 15%, $13]
-      Foundational lead: Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd + Patiromer 16.8g qd [score 47, completeness 30%, $13]
+      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Furosemide 20mg qd [score 51, foundational coverage 15%, $13]
+      Foundational lead: Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd + Patiromer 16.8g qd [score 47, foundational coverage 30%, $13]
     "MRA Boundary (eGFR 31, K+ 5.4)" [commercial]
-      Balanced lead:     Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Carvedilol 12.5mg bid + Dapagliflozin 10mg qd [score 65, completeness 55%, $51]
-      Foundational lead: Sacubitril/Valsartan (Entresto) 97/103mg bid + Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd [score 61, completeness 65%, $48]
-    "Projected SBP Safety (SBP 100, No Meds)" [cash]
-      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Dapagliflozin 10mg qd [score 56, completeness 40%, $110]
-      Foundational lead: Dapagliflozin 10mg qd [score 51, completeness 25%, $50]
+      Balanced lead:     Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Carvedilol 12.5mg bid + Dapagliflozin 10mg qd [score 65, foundational coverage 55%, $51]
+      Foundational lead: Sacubitril/Valsartan (Entresto) 97/103mg bid + Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd [score 61, foundational coverage 65%, $48]
+    "NYHA III Acute Decompensation (BB Initiation Blocked)" [commercial]
+      Balanced lead:     Spironolactone 12.5mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg qd + Lisinopril 5mg qd [score 55, foundational coverage 30%, $109]
+      Foundational lead: Spironolactone 12.5mg qd + Dapagliflozin 10mg qd + Furosemide 80mg qd + Lisinopril 5mg qd [score 49, foundational coverage 55%, $44]
+    "MRA + DIAMOND Binder (K+ 5.1)" [commercial]
+      Balanced lead:     Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Patiromer 16.8g qd [score 78, foundational coverage 70%, $60]
+      Foundational lead: Spironolactone 12.5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Patiromer 25.2g qd [score 75, foundational coverage 80%, $53]
+    "Mild Asthma BB Selection (Beta-1 Selective)" [cash]
+      Balanced lead:     Sacubitril/Valsartan (Entresto) 24/26mg bid + Digoxin 62.5mcg qd [score 54, foundational coverage 15%, $72]
+      Foundational lead: Dapagliflozin 10mg qd [score 52, foundational coverage 25%, $50]
+    "Gynecomastia on Current Spironolactone" [cash]
+      Balanced lead:     Dapagliflozin 10mg qd + Furosemide 20mg qd + Lisinopril 10mg qd + Eplerenone 25mg qd [score 79, foundational coverage 55%, $74]
+      Foundational lead: Dapagliflozin 10mg qd + Lisinopril 40mg qd + Eplerenone 25mg qd [score 71, foundational coverage 65%, $71]
+    "Pregnant on GLP-1 (Force Removal)" [cash]
+      Balanced lead:     Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Carvedilol 12.5mg bid [score 59, foundational coverage 60%, $24]
+      Foundational lead: Carvedilol 50mg bid [score 56, foundational coverage 100%, $4]

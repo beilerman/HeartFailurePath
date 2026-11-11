@@ -355,6 +355,8 @@ export interface ScoredRegimen {
     overall_score: number;
     domain_scores: DomainScores;
     special_feature_bonus?: number; // Bonus from guideline-specific special features
+    /** 0-100: share of the achievable FOUNDATIONAL (pillar) slots on board, same credit rule as gdmt_completeness (1.0 at target/max/cap, 0.6 below). Used only by the foundational ranking mode; never scored. */
+    foundational_coverage?: number;
     gdmt_completeness?: number; // Fraction (0-1) of indicated, achievable GDMT therapies present — display tiebreaker
     score_breakdown?: ScoreBreakdown; // Reconciling arithmetic behind overall_score/raw_score (see services/engine/scoreModel.ts)
     raw_score?: number; // Uncapped pre-clamp score — preserves differentiation lost to the 100 cap (display tiebreaker)

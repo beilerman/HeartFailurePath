@@ -3380,10 +3380,12 @@ async function runVerification() {
     {
         const violations: string[] = [];
         const examples: { tag: string; bal: string; fnd: string; balR: ScoredRegimenLike; fndR: ScoredRegimenLike }[] = [];
-        type ScoredRegimenLike = { overall_score: number; gdmt_completeness?: number; cost: number };
+        type ScoredRegimenLike = { overall_score: number; foundational_coverage?: number; cost: number };
         const label = (r: { regimen: { med: { name: string }; dose: { strength: number | string; unit: string }; selected_frequency: string }[] }) =>
             r.regimen.map(m => `${m.med.name} ${m.dose.strength}${m.dose.unit} ${m.selected_frequency}`).join(' + ');
-        let runs = 0, applicableRuns = 0, leadChanged = 0, lowerCompletenessLeads = 0;
+        let runs = 0, applicableRuns = 0, leadChanged = 0;
+        const demotedBalancedCases: string[] = [];
+        const spotChecks: string[] = [];
         for (const scenario of SCENARIOS) {
             for (const tier of ['cash', 'commercial', 'medicare'] as const) {
                 const pt = clonePatient(scenario.patient);
@@ -3426,13 +3428,24 @@ async function runVerification() {
                 } else {
                     applicableRuns++;
                     const b0 = bal.scoredRegimens[0], f0 = fnd.scoredRegimens[0];
-                    // Both leads clean: the foundational lead can never cover less therapy than the balanced lead. (If the balanced
-                    // lead trips a projected-safety adjustment and the foundational lead does not, the safe-first rule legitimately
-                    // allows lower completeness - that case is counted and reported below, not failed.)
-                    if (b0 && f0 && isProjectedSafetyClean(f0) && isProjectedSafetyClean(b0) && (f0.gdmt_completeness ?? 0) < (b0.gdmt_completeness ?? 0) - 1e-12) {
-                        violations.push(`${tag}: foundational lead completeness ${f0.gdmt_completeness} < balanced lead ${b0.gdmt_completeness} although both leads are clean`);
+                    const cov = (r: { foundational_coverage?: number }) => r.foundational_coverage ?? 0;
+                    const clean = (r: Parameters<typeof isProjectedSafetyClean>[0]) => isProjectedSafetyClean(r, pt);
+                    // The foundational lead, when clean, has the highest foundational coverage among every clean displayed candidate.
+                    if (f0 && clean(f0)) {
+                        for (const o of fnd.scoredRegimens) if (clean(o) && cov(o) > cov(f0) + 1e-9) violations.push(`${tag}: clean foundational lead coverage ${cov(f0)} < clean displayed regimen ${label(o)} (${cov(o)})`);
                     }
-                    if (b0 && f0 && isProjectedSafetyClean(f0) && !isProjectedSafetyClean(b0) && (f0.gdmt_completeness ?? 0) < (b0.gdmt_completeness ?? 0) - 1e-12) lowerCompletenessLeads++;
+                    // A clean lead must come before every demoted regimen.
+                    if (f0 && !clean(f0) && fnd.scoredRegimens.some(clean)) violations.push(`${tag}: a demoted regimen leads although a clean one is displayed`);
+                    // Foundational lead never covers fewer pillars than the balanced lead unless the balanced lead is demoted by rule (a).
+                    if (b0 && f0 && cov(f0) < cov(b0) - 1e-9) {
+                        if (clean(b0)) violations.push(`${tag}: foundational lead coverage ${cov(f0)} < balanced lead ${cov(b0)} although the balanced lead is clean`);
+                        else demotedBalancedCases.push(`${tag}: balanced lead ${label(b0)} (coverage ${Math.round(cov(b0))}%) is demoted by rule (a); foundational lead ${label(f0)} (${Math.round(cov(f0))}%)`);
+                    }
+                    if (/Hyperkalemia \(K\+ 5\.6\)|Severe Dilation \(LVEF 20%/.test(scenario.title)) {
+                        const cleanWithPillar = fnd.scoredRegimens.some(o => clean(o) && cov(o) > 0);
+                        spotChecks.push(`${tag}: foundational lead ${f0 ? label(f0) : '(none)'} coverage ${f0 ? Math.round(cov(f0)) : '-'}%, clean regimen with a pillar displayed: ${cleanWithPillar}`);
+                        if (f0 && cov(f0) === 0 && cleanWithPillar) violations.push(`${tag}: foundational mode leads with a zero-pillar regimen although a clean regimen with a pillar exists`);
+                    }
                     const differs = !!b0 && !!f0 && label(b0) !== label(f0);
                     if (differs !== !!rk?.balanced_lead_differs) violations.push(`${tag}: balanced_lead_differs=${rk?.balanced_lead_differs} but leads ${differs ? 'differ' : 'match'}`);
                     if (differs && !rk?.balanced_lead_summary) violations.push(`${tag}: balanced_lead_differs without a summary`);
@@ -3453,14 +3466,16 @@ async function runVerification() {
             passed++;
         }
         console.log(`  RANKING MODE EFFECT: foundational_first changes the lead pick in ${leadChanged} of ${applicableRuns} HFrEF/HFimpEF runs (${runs} runs total).`);
-        console.log(`  Foundational lead covers LESS therapy than the balanced lead (balanced lead trips a projected-safety adjustment, foundational lead does not): ${lowerCompletenessLeads} runs.`);
+        console.log(`  Foundational lead has LOWER foundational coverage than the balanced lead only where the balanced lead is demoted by rule (a): ${demotedBalancedCases.length} runs.`);
+        demotedBalancedCases.forEach(c => console.log(`    ${c}`));
+        spotChecks.forEach(c => console.log(`  SPOT ${c}`));
         const seen = new Set<string>();
         for (const e of examples) {
             const title = e.tag.replace(/ \[[a-z]+\]$/, '');
             if (seen.has(title)) continue;
             seen.add(title);
             if (seen.size > 12) break;
-            console.log(`    ${e.tag}\n      Balanced lead:     ${e.bal} [score ${e.balR.overall_score}, completeness ${Math.round((e.balR.gdmt_completeness ?? 0) * 100)}%, $${e.balR.cost}]\n      Foundational lead: ${e.fnd} [score ${e.fndR.overall_score}, completeness ${Math.round((e.fndR.gdmt_completeness ?? 0) * 100)}%, $${e.fndR.cost}]`);
+            console.log(`    ${e.tag}\n      Balanced lead:     ${e.bal} [score ${e.balR.overall_score}, foundational coverage ${Math.round(e.balR.foundational_coverage ?? 0)}%, $${e.balR.cost}]\n      Foundational lead: ${e.fnd} [score ${e.fndR.overall_score}, foundational coverage ${Math.round(e.fndR.foundational_coverage ?? 0)}%, $${e.fndR.cost}]`);
         }
     }
 

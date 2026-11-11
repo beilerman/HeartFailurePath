@@ -25,7 +25,8 @@ import { MRA_START_K_BINDER_ABOVE } from './thresholds';
 type Simulation = ReturnType<typeof simulateModificationEffect>;
 
 /** One indicated, achievable therapy slot counted by the GDMT-completeness adjustment. */
-export interface GdmtSlot { match: (cls: string) => boolean; }
+/** `foundational` marks the guideline pillar slots (RAAS, beta-blocker, MRA, SGLT2i for HFrEF); adjunct slots are not foundational. */
+export interface GdmtSlot { match: (cls: string) => boolean; foundational?: boolean; }
 
 /** Everything the per-candidate steps read, computed once per patient (not per candidate). */
 export interface ScoringContext {
@@ -80,15 +81,15 @@ export function buildScoringContext(
     const completenessSlots: GdmtSlot[] = [];
     if (isReducedPhenotype) {
         completenessSlots.push(
-            { match: (c) => RAAS_CLASSES.has(c) },
-            { match: (c) => c === 'Beta Blocker' },
-            { match: (c) => c === 'MRA' || (c === 'nsMRA' && phenotype === 'HFmrEF') },
-            { match: (c) => c === 'SGLT2i' }
+            { match: (c) => RAAS_CLASSES.has(c), foundational: true },
+            { match: (c) => c === 'Beta Blocker', foundational: true },
+            { match: (c) => c === 'MRA' || (c === 'nsMRA' && phenotype === 'HFmrEF'), foundational: true },
+            { match: (c) => c === 'SGLT2i', foundational: true }
         );
     } else { // HFpEF
         completenessSlots.push(
-            { match: (c) => c === 'SGLT2i' },
-            { match: (c) => c === 'MRA' || c === 'nsMRA' } // TOPCAT / FINEARTS-HF adjunct
+            { match: (c) => c === 'SGLT2i', foundational: true },
+            { match: (c) => c === 'MRA' || c === 'nsMRA', foundational: true } // TOPCAT / FINEARTS-HF adjunct
         );
     }
     // Eligible DISEASE-MODIFYING adjuncts also count toward completeness, sourced from the engine's
@@ -214,8 +215,9 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
  * With NO achievable slots the fraction is 0 (this reproduces the pre-rescale behavior, where no
  * completeness bonus was added in that case).
  */
-export function gdmtCompletenessFraction(activeModSet: ModificationSet, ctx: ScoringContext): { fraction: number; slots: number } {
-    const { patient, achievableSlots } = ctx;
+export function gdmtCompletenessFraction(activeModSet: ModificationSet, ctx: ScoringContext, slots: GdmtSlot[] = ctx.achievableSlots): { fraction: number; slots: number } {
+    const { patient } = ctx;
+    const achievableSlots = slots;
     const SUBTARGET_CREDIT = COMPLETENESS_SUBTARGET_CREDIT;
     const slotValue = (s: GdmtSlot): number => {
         const meds = activeModSet.resulting_regimen.filter(r => s.match(r.med.drug_class));
@@ -481,6 +483,8 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
             domain_scores: domains.rounded,
             special_feature_bonus: Math.round(agg.normalizedSFBonus),
             gdmt_completeness: agg.gdmtCompleteness,
+            // Same per-slot credit rule, over the foundational (pillar) slots only; explanation/ranking-mode only, never scored.
+            foundational_coverage: gdmtCompletenessFraction(activeModSet, ctx, ctx.achievableSlots.filter(sl => sl.foundational)).fraction * 100,
             cost: sim.cost,
             complexity: sim.complexity,
             rationale: sim.rationale,
