@@ -180,7 +180,7 @@ export interface MedFacts {
     /** Dose (in the entry's dose unit) at or above which a euvolemic patient is flagged for loop over-treatment. */
     high_dose_threshold?: number;
     /** Role when the engine must append a rescue agent (K+ binder): `preferred` is tried first, else the first available. */
-    rescue_role?: { kind: 'k_binder'; preferred?: boolean };
+    rescue_role?: { kind: 'k_binder'; preferred?: boolean; /** Highest dose the engine may add automatically as a rescue (higher tiers stay prescribable). */ max_rescue_dose?: number };
     /** Two regimens differing in presence of this key are always "distinct" in top-pick selection. */
     pick_distinctness_key?: string;
     /**

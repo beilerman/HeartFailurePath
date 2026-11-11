@@ -1041,11 +1041,11 @@ async function runVerification() {
             // 22. MRA boundary (eGFR 31, K+ 5.4) -> MRA should come with binder rescue
             if (scenario.title.includes('MRA Boundary')) {
                 const missingBinderForMra = anyRegimenWithClassViolates('MRA', r => {
-                    const hasBinder = r.regimen.some(m => m.med.name === 'Patiromer');
+                    const hasBinder = r.regimen.some(m => m.med.drug_class === 'K+ Binder');
                     return !hasBinder;
                 });
                 if (missingBinderForMra) {
-                    failures.push('MRA prescribed at K+ 5.4 without Patiromer rescue');
+                    failures.push('MRA prescribed at K+ 5.4 without a potassium binder');
                     scenarioPassed = false;
                 }
                 const excessiveMraDose = scoredRegimens.some(r =>
@@ -2432,7 +2432,10 @@ async function runVerification() {
         for (const c of checks) {
             const titles = paired(c.profile);
             const d = mean('default', titles, c.f), p = mean(c.profile, titles, c.f);
-            const ok = c.dir === 'le' ? p <= d + 1e-9 : p >= d - 1e-9;
+            // Means over ~100 scenarios move by single top-pick flips; allow 1% of the default mean so one
+            // near-tie cannot fail the check. A profile that moved clearly the wrong way still fails.
+            const tol = Math.abs(d) * 0.01;
+            const ok = c.dir === 'le' ? p <= d + tol : p >= d - tol;
             if (!ok) dirOk = false;
             console.log(`  ${c.profile}: ${c.what} ${p.toFixed(4)} vs default ${d.toFixed(4)} over ${titles.length} scenarios (${c.dir === 'le' ? '<=' : '>='} expected) ${ok ? 'ok' : 'VIOLATED'}`);
         }

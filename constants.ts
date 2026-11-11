@@ -1203,11 +1203,15 @@ export const MEDICATION_FORMULARY: Medication[] = [
             lavi_reduction_percent: 0,
             lvedd_reduction_percent: 0
         }),
-        // The engine only adds a binder to PREVENT a potassium rise on RAAS/MRA therapy (DIAMOND). DIAMOND's
-        // primary endpoint: K+ change +0.03 (patiromer) vs +0.13 (placebo), a between-group difference of -0.10 mmol/L.
-        // The older -0.8 was a treatment-of-established-hyperkalemia figure (OPAL-HK ~ -1.0, not source-verified).
-        // No dose-response is sourced, so the prevention effect is flat across the 8.4 / 16.8 / 25.2 g tiers.
-        hemodynamic_effects: () => ({ sbp_drop: 0, hr_drop: 0, potassium_change: -0.1 }),
+        // The engine only adds a binder to PREVENT a potassium rise on RAAS/MRA therapy. The sourced figure for
+        // that setting is PEARL-HF (Pitt, Eur Heart J 2011; PMC3069389): heart-failure patients starting
+        // spironolactone, RLY5016 (patiromer) 30 g/day vs placebo, between-group serum K+ difference -0.45 mEq/L
+        // at 4 weeks (-0.52 with CKD). That is assigned to the top (25.2 g) tier; the 8.4 g and 16.8 g values are a
+        // linear interpolation (an assumption — no prevention dose-response is sourced).
+        // DIAMOND's -0.10 mmol/L is NOT used: both DIAMOND arms had RAAS therapy adjusted to potassium by protocol,
+        // so its difference understates the binder's effect. OPAL-HK (~ -1.0) is correction of established
+        // hyperkalemia, a different setting.
+        hemodynamic_effects: (d) => ({ sbp_drop: 0, hr_drop: 0, potassium_change: -0.45 * Math.min(1, (typeof d === 'number' ? d : 8.4) / 25.2) }),
         side_effects: () => ({ hypomagnesemia: 0.053, constipation: 0.072 }), // Veltassa label (N=666): 5.3%, 7.2%
         special_features: [
             // DIAMOND supports "enables MRA/RAAS dosing", not outcome benefit; only meaningful with RAASi/MRA in the regimen.
@@ -1219,7 +1223,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Sodium Zirconium Cyclosilicate (Lokelma)',
         drug_class: 'K+ Binder',
         facts: {
-            rescue_role: { kind: 'k_binder' },
+            // Label: edema 4.4% / 5.9% / 16.1% at 5 / 10 / 15 g. In heart failure the engine does not add 15 g on its own.
+            rescue_role: { kind: 'k_binder', max_rescue_dose: 10 },
             // Lokelma label: about 400 mg sodium per 5 g; monitor for edema in HF, adjust dietary sodium and increase
             // diuretics as needed. Separate other oral drugs by at least 2 hours. Avoid in severe constipation,
             // bowel obstruction/impaction or abnormal post-operative bowel motility (not studied).

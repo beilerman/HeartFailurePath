@@ -54,7 +54,8 @@ export function buildScoringContext(
     flags: ClinicalFlags
 ): ScoringContext {
     const { isVolumeDepleted, hasDiureticInCurrent } = flags;
-    const binders = medTiers.filter(r => r.med.drug_class === 'K+ Binder');
+    const binders = medTiers.filter(r => r.med.drug_class === 'K+ Binder')
+        .filter(r => { const cap = drugFacts(r.med).rescue_role?.max_rescue_dose; return cap === undefined || typeof r.dose.strength !== 'number' || r.dose.strength <= cap; });
     // H7: Binder rescue — preferred agent first (Patiromer), then any other available K+ binder (Lokelma), each
     // from its lowest dose tier up, so the engine can reach a binder/dose that actually prevents the rise.
     const doseIdx = (r: RegimenMed) => r.med.available_doses.findIndex(d => d.strength === r.dose.strength);
@@ -115,7 +116,7 @@ export function buildScoringContext(
 }
 
 /** Pre-simulation rescue appends (iron, DIAMOND binder) -> simulate once -> reactive K+ binder rescue. */
-export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContext): { activeModSet: ModificationSet; sim: Simulation } {
+export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContext): { activeModSet: ModificationSet; sim: Simulation; unsafeMraStart?: boolean } {
     const { patient, prices, intolerancePolicy, rescueBinders, ivIron, ironDeficient } = ctx;
     // Pre-simulation rescue appends are built FIRST, then the candidate is simulated ONCE.
     // Iron rescue depends only on patient-level invariants and the candidate's contents;
@@ -170,8 +171,12 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
     // An MRA start above K+ 5.0 never appears without a binder: eligibility rule E15 withholds the MRA when no
     // binder can be offered, so rescueBinders is non-empty here whenever an MRA is being added.
     if (isMraAdd && patient.potassium > 5.0 && rescueBinders.length > 0 && !alreadyHasBinder) {
-        const chosen = tryBinders(activeModSet, ' (DIAMOND protocol)', true);
-        if (chosen) { activeModSet = chosen.set; sim = chosen.sim; }
+        // The labels say do not START an MRA above 5.0 (spironolactone, finerenone). The binder-enabled start
+        // is offered only when a binder tier is projected to hold potassium inside 3.5-5.3; if none does, the
+        // candidate is dropped (treat the potassium first) rather than starting the MRA anyway.
+        const chosen = tryBinders(activeModSet, ' (DIAMOND protocol)', false);
+        if (!chosen) return { activeModSet, sim: simulateModificationEffect(patient, activeModSet, prices, intolerancePolicy), unsafeMraStart: true };
+        activeModSet = chosen.set; sim = chosen.sim;
     }
     if (!sim) sim = simulateModificationEffect(patient, activeModSet, prices, intolerancePolicy);
 
@@ -445,7 +450,8 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
         }
 
         // Rescue appends + the single simulation (+ reactive K+ binder re-simulation), then the new-class cap.
-        const { activeModSet, sim } = applyRescueAdditions(modSet, ctx);
+        const { activeModSet, sim, unsafeMraStart } = applyRescueAdditions(modSet, ctx);
+        if (unsafeMraStart) return;
 
         if (countNewClassGroups(activeModSet.resulting_regimen, patient.current_regimen || []) > maxNewPerVisit) {
             return;
