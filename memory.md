@@ -2,6 +2,21 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### Outpatient scope, laboratory prerequisites and ranking toggle (2026-11-11)
+Brad's exact reply, the questions it answers, and a proposed implementation plan are recorded in
+`docs/clinical-decisions-2026-11-11.md`. This is a documentation-only checkpoint; no code or deployment changed.
+- **Scope:** outpatient only, but not restricted to stable patients. Acute escalation boundaries remain to be defined; do not infer new exclusions or relax existing safety gates.
+- **Labs:** clinically appropriate prerequisites are supported. No freshness window, numerical threshold or exception rule was supplied. The combined question does not establish an independent decision to machine-enforce binder/MRA sequencing; clarify that separately.
+- **Ranking:** add a balance-versus-foundational-priority toggle. Balanced is the proposed default. Affordability and actual ability to execute a regimen matter in both modes; distinguish confirmed impossibility from a preference for lower cost or less burden.
+- The four existing `care_priority` weight profiles are not this new toggle. Define its interaction with them, feasibility states and phenotype-specific ordering before coding. Safety, indication, contraindications and required prerequisites must not become optional under either ranking mode.
+- **Implemented 2026-11-11** (engine commits `8713147`..`2b39ba6`, UI `656a5e8`, docs after; golden 744 runs, verify Passed 263; local only, not pushed):
+  - **E16 laboratory prerequisite:** blank potassium or renal function withholds new starts (eligibility E16) and dose increases/switches (dropped in `scoreCandidates`) of RAAS inhibitors and MRAs; one `LABS REQUIRED` alert per run. `UNKNOWN_POTASSIUM` (-12) removed; `UNKNOWN_RENAL` stays for SGLT2i only. No freshness window (no lab dates).
+  - **Ranking mode:** `Patient.ranking_mode` (`balanced` default / `foundational_first`), HFrEF/HFimpEF only; order = no severe projected harm vs baseline, then `foundational_coverage` (pillar slots, 1.0/0.6), then Balanced. Changes the lead in 99 of 630 HFrEF/HFimpEF golden runs. Only known fewer-pillar cases: `Jane Smith (Dry & Cold)` commercial and Medicare, where the balanced lead is demoted by rule (a). UI: "Ranking approach" select, results note, "Foundational coverage N%" on cards, mode in the copy-to-chart text; `components/rankingModeMeta.ts` holds the labels.
+  - **Over budget:** fallback warning reworded ("BUDGET EXCEEDED ... shown for discussion"); UI banner, card badge and "REGIMEN FOR DISCUSSION ONLY" chart heading.
+  - **Ramipril renal cap** judged on total daily dose (`facts.renal_cap_is_daily`); arriving above any renal cap is force-reduced one step. Captopril and valsartan caps remain per dose (undecided).
+  - **Scope sentence** in the footer and Evidence tab, worded to the gates (hard stops: SBP < 90, K+ >= 6.5, implausible values; K+ 6.0-6.4, low output and pregnancy alert and still list options).
+  - **Still open (do not claim otherwise):** binder-then-MRA staged sequencing (offered together); no lab-freshness window; no "cannot do" feasibility states beyond the budget (complexity tolerance is a preference); outpatient escalation boundaries unchanged; foundational mode undefined for HFmrEF/HFpEF; a fully dosed single pillar outranks a starting-dose different pillar.
+
 ### Medication review + source-verified corrections (2026-11-10)
 Full record: `docs/medication-review-2026-11-10/` (README = outcome + open items; `verified-*.md` =
 sources with URLs; `changes-*.txt` = which recommendations each pass changed). Non-obvious points:
@@ -19,8 +34,8 @@ sources with URLs; `changes-*.txt` = which recommendations each pass changed). N
 - **Scores are not comparable across this date** (scale change, then pricing/effect corrections).
 - **UI:** blank potassium/creatinine map to the engine's 0 = "not entered" sentinel (the form used
   to reject 0, so the missing-potassium sample could not run). Evidence tab renders
-  `docs/evidence-matrix.md` via `?raw` — keep its table structure; rule IDs in its core and
-  2026-11-10 sections collide (HF-ADJ-001..006 appear twice) and should be renumbered.
+  `docs/evidence-matrix.md` via `?raw` — keep its table structure (8 cells per row). The colliding
+  HF-ADJ-001..006 in the 2026-11-10 GLP-1 rows were renumbered to HF-ADJ-015..020 on 2026-11-11.
 - **Not verified by anyone:** a real print preview, screen-reader behavior.
 
 ### GlucosePATH alignment refactor (2026-11-10, behavior-preserving)

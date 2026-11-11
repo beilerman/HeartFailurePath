@@ -85,8 +85,11 @@ sourced, and findings left unchanged because no source could be opened.
 **Known gaps**
 - Restart-after-withhold rules for MRAs and Lokelma's 48-hour correction phase are not modeled.
 - Swaps to or from torsemide keep the lowest tier and tell the prescriber to convert the dose (no verified equivalence).
-- Ramipril effects are still evaluated at the per-dose strength (only the target judgment uses the daily dose).
-- A ramipril regimen that arrives above the label renal cap as a total daily dose (5 mg twice daily at eGFR below 45) is not flagged; the cap compares the per-dose strength.
+- Captopril (three times daily) and valsartan (twice daily) renal caps are still compared with the per-dose strength, not the total daily dose, and an arriving regimen above them is not yet checked the way ramipril's is. Found 2026-11-11 while closing the ramipril items; undecided whether either label cap is a daily total.
+
+**Closed 2026-11-11 (commit `e671e93`, golden regenerated in `d75b5cc`; changes: `changes-ramipril-daily-dose.txt`)**
+- Ramipril effects now use the total daily dose (`facts.effects_on_daily_dose`), so 5 mg twice daily and 10 mg once daily are credited alike.
+- A regimen arriving above a renal dose cap is force-reduced one ladder step with the reason shown, and no increase is offered while above it. The cap is compared with the total daily dose where the entry declares `facts.renal_cap_is_daily` (ramipril: 5 mg twice daily at eGFR 40 becomes 2.5 mg twice daily). Blank renal data never trips it. This applies to every drug with a renal cap, not only ramipril: before this commit no regimen arriving above any renal cap was flagged.
 
 **Closed in the final engine pass (changes: `changes-final-gaps.txt`)**
 - Target dose is judged on the total daily dose where an entry declares `facts.target_daily_dose` (ramipril only: 5 mg twice daily is the 10 mg/day target).

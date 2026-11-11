@@ -24,7 +24,8 @@ facts, adding it is a data change and no engine edit. Written 2026-11-10 (alignm
      `most_cardioselective` (asthma warning), `hepatically_metabolized` (BB cirrhosis warning),
      `cirrhosis_cyp3a4_caution`, `antiandrogenic` (avoided after any MRA gynecomastia),
      `delivery: 'on_body_infusor'` (device, CKD and SpO2 warnings),
-     `short_course_addon` (Furoscix: short-course add-on beside an oral loop, never a swap), `max_daily_dose`, `effects_on_daily_dose` (effects use strength x doses per day), `raises_uric_acid`, `hypokalemia_caution_below_k`,
+     `short_course_addon` (Furoscix: short-course add-on beside an oral loop, never a swap), `max_daily_dose`, `effects_on_daily_dose` (effects use strength x doses per day),
+     `target_daily_dose` (target judged on strength x doses per day; ramipril 10 mg/day), `renal_cap_is_daily` (the `renal_adjustment` `max_dose` is a TOTAL DAILY dose: a regimen arriving above it is compared on strength x doses per day, force-reduced one step and offered no increase; without the flag the cap is compared with the per-dose strength, as for captopril and valsartan today), `raises_uric_acid`, `hypokalemia_caution_below_k`,
      `high_dose_threshold` (loop over-treatment alert, a TOTAL DAILY dose), `rescue_role` (K+ binder rescue;
      `preferred: true` is tried first), `pick_distinctness_key` (top-pick distinctness).
    - `is_target_dose_for(strength, patient)` for patient-dependent targets (carvedilol by weight, finerenone by eGFR).

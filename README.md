@@ -94,7 +94,7 @@ the three audit harnesses are standalone (not part of CI) but constitute the ful
 
 | Harness | Command | Pass criteria |
 |---------|---------|---------------|
-| Scenario assertions (`scripts/verifyScenarios.ts`) | `npm run verify` | All pass — `255` on 2026-11-10 (241 clinical scenarios + 14 structural invariants); the harness output is authoritative |
+| Scenario assertions (`scripts/verifyScenarios.ts`) | `npm run verify` | All pass — `263` on 2026-11-11 (248 clinical scenarios + 15 structural invariants); the harness output is authoritative |
 | Adversarial red team (`scripts/redTeam.ts`) | `npm run audit:red` | 0 CRITICAL / HIGH / MEDIUM findings |
 | Treatment-error audit (`scripts/mistakeAudit.ts`) | `npm run audit:mistakes` | 51/51 clean |
 | Broad clinical audit (`scripts/hundredScenarioAudit.ts`) | `npm run audit:hundred` | 100/100 clean |

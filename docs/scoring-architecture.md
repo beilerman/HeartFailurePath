@@ -1,10 +1,10 @@
 # How HeartFailurePath reaches a recommendation
 
-Written 2026-11-10. The engine follows the same five-step shape as GlucosePATH: describe the
+Written 2026-11-10; updated 2026-11-11 (rule E16, ranking mode, current counts). The engine follows the same five-step shape as GlucosePATH: describe the
 patient and the drugs, exclude what cannot be used, generate options, score them against clinical
 goals and patient values, and show the arithmetic.
 
-`generateAndScoreModifications` in `services/simulationService.ts` is a 45-line orchestrator. Each
+`generateAndScoreModifications` in `services/simulationService.ts` is a 52-line orchestrator (signature to closing brace, comments included). Each
 numbered comment in it is one stage below.
 
 ## The pipeline
@@ -45,11 +45,14 @@ exclusion carries that rule's id and name.
 | E13 | Clinical contraindication (the drug's own `contraindications(patient)`) |
 | E14 | Renal dosing contraindication |
 | E15 | New MRA start above K+ 5.0 needs a K+ binder (withheld if none can be offered; initiation only) |
+| E16 | Potassium and renal function required: a NEW ACE inhibitor, ARB, ARNI or MRA is not started while potassium or renal function is blank |
 
 Explanations: a rule may carry an optional `details(ctx, med)` that returns specifics; the filter
 stores them in the additive `ExcludedMedication.why` (E13 lists each contraindication check that fired,
 via `contraindicationReasons`; E12 names the blank renal value; E14 gives the eGFR). They never affect
 the decision and are in `ADDITIVE_KEYS` for the golden master.
+
+E16 (owner decision 2026-11-11) is the last rule, so a real contraindication (E13/E14) or the renal-gated start (E12) keeps its own label. It covers new starts only. Dose increases and switches to a RAAS inhibitor or MRA are dropped one level up, in `scoreCandidates` (`intensifiesRaasOrMra`), and a single `LABS REQUIRED: ...` clinical alert is raised once per run in the orchestrator. A drug the patient already takes is not affected. There is no freshness window (the form records no lab dates) and no new numeric threshold: "blank" is the existing not-entered value (0).
 
 Order matters in two places: E12 must precede E13 (a blank-renal trip is labelled "renal data
 required", not "contraindicated"), and E10/E11 ignore a current MRA that is being forced off.
@@ -85,12 +88,12 @@ answer to "What matters most to this patient?" (`patient.care_priority`) selects
 The profile changes only these eight weights. Exclusions, alerts, safety deductions, display floors
 and the budget filter are identical under every profile; `npm run verify` checks this for every
 scenario under every profile, and checks that each row sums to 100%. The non-default rows are a
-first calibration and have not been clinically reviewed. On the 105 scenarios they change the top
-pick in 2 (outcomes), 4 (cost) and 6 (simplicity) cases; "simple" can lead with SGLT2i alone.
+first calibration and have not been clinically reviewed. On the 241 scenarios that produce a top pick under the default weights (248 scenarios in all, per `npm run verify`),
+they change the top pick in 11 (outcomes), 12 (cost) and 13 (simplicity) cases; "simple" can lead with SGLT2i alone.
 
 Therapy completeness is a domain, not a bonus: its score is the fraction of achievable
 indicated slots attained x 100. If a patient had no achievable slots the domain scores 0 (the
-breakdown line carries a note); across the 315 golden runs no scored candidate hit that case.
+breakdown line carries a note); across the 744 golden runs (248 scenarios x 3 insurance tiers) no displayed regimen hit that case.
 
 Only named adjustments sit on top of the weighted sum. Every magnitude is in `SCORE_ADJUSTMENTS`
 and each is a visible line item in the breakdown, in this order.
@@ -104,7 +107,7 @@ and each is a visible line item in the breakdown, in this order.
 | `PROJECTED_HR_LT_50` | -40 |
 | `PROJECTED_K_GT_5_5` | -40 |
 | `DANGEROUS_WARNINGS` | -8 per residual-risk warning |
-| `UNKNOWN_POTASSIUM` / `UNKNOWN_RENAL` | -12 each when intensifying without the lab |
+| `UNKNOWN_RENAL` | -12 when the option starts or increases an SGLT2 inhibitor with kidney function blank. This is the only remaining unknown-lab deduction: `UNKNOWN_POTASSIUM` was removed on 2026-11-11 because a RAAS/MRA start or increase can no longer reach scoring with potassium or renal function blank (E16 and the candidate drop) |
 | `SCORE_CLAMP`, `LOW_OUTPUT_CAP` | Overrides on the displayed score: guard clamp to 0-100 (listed only when it changes the value); cap at 25 in low output |
 
 Every `ScoredRegimen` carries `score_breakdown` with these lines. The contract, checked for every
@@ -125,13 +128,44 @@ overall_score     = raw_score, clamped to 0-100 and rounded (then capped at 25 i
 
 The UI shows this ledger under "How this score was calculated" on each recommendation card.
 
+### Ranking mode
+
+`Patient.ranking_mode` (`'balanced' | 'foundational_first'`; missing means balanced) is a physician-owner decision of
+2026-11-11, separate from `care_priority`: the weight profile changes the eight weights, the ranking mode changes only the
+**order** of regimens that already passed eligibility, the budget filter and the display floors. Scores, exclusions, alerts,
+gaps, adjuncts, notices, the budget filter and the display floors are identical in both modes (a verify invariant checks this for
+every scenario and tier). Balanced is exactly `byScoreThenCost` above.
+
+`foundational_first` applies only to HFrEF and HFimpEF (`classifyPhenotype` reports both as HFrEF). For HFmrEF and HFpEF it is
+a no-op and `SimulationOutput.ranking.reason_not_applied` says so. When it applies, regimens are ordered:
+
+1. Regimens that do not cause a severe projected-safety problem first. A regimen is set aside only if it trips
+   `PROJECTED_SBP_LT_85`, `PROJECTED_SBP_LT_90`, `PROJECTED_HR_LT_50` or `PROJECTED_K_GT_5_5` **and** moves that value the
+   harmful way from the entered baseline (SBP or HR lower, K+ higher). A hyperkalemic patient whose regimen does not raise
+   potassium is not demoted. The mild SBP < 95 tier does not demote; it still costs score points (step 3).
+2. Higher `foundational_coverage` (0-100): the share of achievable pillar slots (RAAS inhibitor, beta-blocker, MRA, SGLT2
+   inhibitor) on board, credit 1.0 at target, maximum, cap or single dose and 0.6 below. This is the same per-slot rule as
+   `gdmt_completeness` but over pillar slots only, so an adjunct (ivabradine, H/ISDN, GLP-1, iron) cannot outrank or tie a pillar.
+3. The Balanced order.
+
+`SimulationOutput.ranking` = `{ mode, applied, reason_not_applied?, balanced_lead_differs, balanced_lead_summary? }`;
+`ScoredRegimen.foundational_coverage` is explanation-only and never scored. Both are additive keys in the golden master.
+
+Effect (from `docs/medication-review-2026-11-10/changes-ranking-mode.txt`): the mode changes the lead regimen in 99 of 630
+HFrEF/HFimpEF runs (744 runs in all). In 2 runs the foundational lead has lower pillar coverage than the balanced lead, both
+because the balanced lead is set aside by step 1: `Jane Smith (Dry & Cold)` under commercial and Medicare pricing (balanced lead
+carvedilol 3.125 mg bid + dapagliflozin, 40% coverage; foundational lead lisinopril 2.5 mg, 15%).
+
+Known limit: under the 1.0 / 0.6 credit rule, one fully dosed pillar can outrank a different pillar at its starting dose.
+Over-budget fallback regimens are ordered the same way, and the UI marks them as not affordable at the stated budget.
+
 One quirk is preserved from before the refactor: after a projected SBP < 85 zeroes the score, later
 penalties still apply, so `raw_score` can be negative. It only affects tie-breaking among regimens
 that are hidden by the display floor anyway.
 
 History: until 2026-11-10 the weights summed to 130% (completeness was a +30 bonus) and the result
 was clamped to 100. The model was rescaled by exactly 1/1.3, then rounded to the clean values above.
-Against the pre-change baseline, 309 of 315 top picks are unchanged and every exclusion, alert and
+Against the pre-change baseline (315 golden runs at the time), 309 of 315 top picks are unchanged and every exclusion, alert and
 warning is identical. Median top-pick score moved from 87 to 67 because the scale no longer has
 30 points of headroom; scores from before and after are not comparable.
 
@@ -147,14 +181,18 @@ Still in engine code: adjunct initiation criteria for ivabradine, digoxin and H/
 
 | Check | Command | Guards |
 |---|---|---|
-| Golden master | `npm run golden` | Every scenario under three insurance tiers (723 runs) is byte-identical |
-| Scenarios | `npm run verify` | 241 clinical scenarios plus 14 structural invariants |
+| Golden master | `npm run golden` | Every scenario under three insurance tiers (744 runs) is byte-identical |
+| Scenarios | `npm run verify` | 248 clinical scenarios plus 15 structural invariants (263 checks pass) |
 | Audits | `npm run audit:hundred`, `audit:mistakes`, `audit:red` | Broad, treatment-error and adversarial sweeps |
 | All of the above | `npm run gate` | |
 
-The structural invariants: every drug has a price; every score breakdown reconciles; every exclusion
-has a known rule id; no drug name appears as a literal in engine code; no engine module imports the
-facade.
+The 15 structural invariants: every drug has a price; every score breakdown reconciles; weight profiles never change
+safety output; weight profiles move the top pick in the stated direction; the ranking mode changes order only; every weight
+profile covers every domain and sums to 100%; titration never skips the next step; every RAAS new start is at or below its
+starting tier; no displayed regimen exceeds a declared maximum total daily dose; eligibility rule ids are unique and ascending
+and every exclusion carries one; no drug name appears as a literal in engine code; no engine module imports the facade;
+contraindication checks are the single source of each drug's boolean; every E13 exclusion carries a why-detail; the binder
+"enables RAAS/MRA" bonus requires a RAAS inhibitor or MRA in the regimen.
 
 Update the golden snapshot (`npm run golden:update`) only for an intended clinical change, in its
 own commit that says why.

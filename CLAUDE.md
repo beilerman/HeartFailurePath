@@ -13,12 +13,12 @@ npm run dev              # start Vite dev server (default 3000)
 npm run build            # production build
 npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
-                         #   (currently: Passed 248 (scenario count + structural invariants; the printed count is authoritative))
+                         #   (currently: Passed 263 on 2026-11-11 = 248 scenarios + 15 structural invariants; the printed count is authoritative)
 npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone QA, not in CI)
-npm run golden           # golden master: every scenario x 3 insurance tiers (723 runs) must be byte-identical
+npm run golden           # golden master: every scenario x 3 insurance tiers (744 runs) must be byte-identical
 npm run gate             # typecheck + golden + verify + all three audits (full pre-release gate)
 npm run ci               # typecheck + build + golden + verify
 npm run preview          # preview production build
@@ -57,9 +57,9 @@ HeartFailurePath/
     RecommendationCard.tsx        # regimen card rendering
     patient-form/                 # form subsections
   services/
-    simulationService.ts          # public facade: 45-line staged orchestrator + re-exports
+    simulationService.ts          # public facade: 52-line staged orchestrator + re-exports
     engine/                       # the engine, one module per stage (see docs/scoring-architecture.md):
-                                  #   gates, eligibility (rules E01-E15), candidates, effects, domains,
+                                  #   gates, eligibility (rules E01-E16), candidates, effects, domains,
                                   #   scoreModel (weights + adjustments as data), scoring, selection,
                                   #   explain, registry, intolerance, regimenUtils, drugFacts
     clinicalPredicates.ts         # shared predicates (valueUnknown, hasHistoricalHFrEF,
@@ -125,10 +125,26 @@ Full description: `docs/scoring-architecture.md`. All numbers live in `services/
   yet clinically reviewed.
 - Adjustments (visible ledger lines): patient-specific evidence bonus `clamp(sum/len × 2.3, −8, +12)`;
   volume-depletion de-escalation +15; projected SBP < 90 −20, < 95 −6, < 85 sets the score to 0;
-  projected HR < 50 −40; projected K+ > 5.5 −40; −8 per residual-risk warning; unknown K+ / eGFR
-  −12 each; low-output cap 25.
-- Ranking: displayed score → therapy completeness → unrounded score → cost. The completeness
+  projected HR < 50 −40; projected K+ > 5.5 −40; −8 per residual-risk warning; unknown eGFR −12
+  (`UNKNOWN_RENAL`, only when an SGLT2 inhibitor is started or increased); low-output cap 25.
+  There is NO unknown-potassium deduction (`UNKNOWN_POTASSIUM` removed 2026-11-11): see rule E16 below.
+- Ranking (Balanced, the default): displayed score → therapy completeness → unrounded score → cost. The completeness
   tie-break is deliberate (anti-softness): a fraction of a point must not drop a guideline pillar.
+- **Ranking mode** (`patient.ranking_mode`, owner decision 2026-11-11; missing = `balanced`; the form's "Ranking approach"):
+  `foundational_first` applies to HFrEF/HFimpEF only and changes ONLY the order, never scores, exclusions, alerts, the
+  budget filter or display floors (verify enforces it). Order: (a) regimens that do not push SBP, HR or K+ into a severe
+  projected range the harmful way from baseline first (`PROJECTED_SBP_LT_85/_LT_90`, `_HR_LT_50`, `_K_GT_5_5`);
+  (b) higher `foundational_coverage` (RAAS, beta-blocker, MRA, SGLT2i slots; 1.0 at target, 0.6 below; explanation-only,
+  never scored); (c) the Balanced order. `SimulationOutput.ranking` reports mode, whether it applied and what Balanced would
+  have led with. It is separate from `care_priority`, which changes the weights. Known limit: a fully dosed single pillar
+  outranks a different pillar at starting dose.
+- **Laboratory prerequisite (rule E16, owner decision 2026-11-11):** with potassium or renal function blank, new starts
+  (E16) and dose increases/switches (dropped in `scoreCandidates`) of RAAS inhibitors and MRAs are withheld and one
+  `LABS REQUIRED` alert is raised. No freshness window (no lab dates in the form) and no new numeric threshold.
+- **Over budget:** the fallback warning is `BUDGET EXCEEDED: ... shown for discussion, not as a plan the patient can carry out`;
+  the UI marks such a regimen not affordable (`isOverBudgetFallback` in `components/resultsModel.ts` matches the prefix).
+- Renal dose caps: an arriving dose above a cap is force-reduced one step; `facts.renal_cap_is_daily` (ramipril) compares the
+  total daily dose, otherwise the per-dose strength (captopril, valsartan: undecided, see the medication-review README).
 - Therapy completeness = achievable indicated therapies present / achievable total (pillars +
   eligible adjuncts; 60% credit below target dose). "Achievable" excludes therapies filtered out
   of the formulary — never penalize a contraindicated therapy.
@@ -279,9 +295,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — on 2026-11-10 `Passed: 255`):
+Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 263`):
 
-- 241 clinical scenarios + 14 structural invariants (every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no MRA start above potassium 5.0 without a binder; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
+- 248 clinical scenarios + 15 structural invariants (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no MRA start above potassium 5.0 without a binder; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
