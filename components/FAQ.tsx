@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     DOMAIN_GROUPS, DOMAIN_LABELS, WEIGHT_PROFILES, WEIGHT_PROFILE_META, DEFAULT_WEIGHT_PROFILE, SCORE_ADJUSTMENTS, DOMAIN_KEYS,
     type ScoreDomainKey,
@@ -7,6 +7,97 @@ import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
 import { VOLUME_SCORING, STRUCTURE_BLEND_WEIGHTS, DISPLAY_FLOORS, DOMAIN_GOALS, BNP_SCORE_TARGET, BNP_SCORE_CRITICAL } from '../services/simulationService';
 import { TIE_RULE_TEXT, goalAfterEquals } from './scoreExplain';
 import { QuestionMarkCircleIcon, LightBulbIcon, CalculationIcon, HeartIcon } from './icons';
+import { EVIDENCE_MATRIX, ALL_EVIDENCE_ROWS, rowMatches } from './evidenceMatrix';
+import { Disclosure } from './Disclosure';
+
+// Render any web address in the matrix text as a link that opens in a new tab.
+const linkify = (text: string): React.ReactNode[] =>
+    text.split(/(https?:\/\/[^\s)]+)/g).map((part, i) =>
+        /^https?:\/\//.test(part)
+            ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-indigo-700 underline">{part}</a>
+            : <React.Fragment key={i}>{part}</React.Fragment>);
+
+const EvidenceMatrixSection: React.FC<{ query: string; onQueryChange: (q: string) => void }> = ({ query, onQueryChange }) => {
+    const sections = EVIDENCE_MATRIX.sections
+        .map(sec => ({ ...sec, rows: sec.rows.filter(r => !query.trim() || rowMatches(r, query)) }))
+        .filter(sec => sec.rows.length > 0);
+    const shown = sections.reduce((n, sec) => n + sec.rows.length, 0);
+    return (
+        <>
+            <div className="p-6 space-y-4 text-slate-700">
+                {EVIDENCE_MATRIX.intro.map((t, i) => <p key={i} className="text-sm text-slate-600">{linkify(t)}</p>)}
+                <div className="flex flex-wrap items-end gap-3">
+                    <div className="flex-1 min-w-[14rem]">
+                        <label htmlFor="evidence-filter" className="block text-sm font-semibold text-slate-700 mb-1">Filter by drug, trial or rule</label>
+                        <input
+                            id="evidence-filter"
+                            type="search"
+                            value={query}
+                            onChange={e => onQueryChange(e.target.value)}
+                            placeholder="e.g. eplerenone, DAPA-HF, potassium"
+                            className="block w-full rounded-md border border-slate-300 bg-white py-2 px-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                        />
+                    </div>
+                    <p className="text-sm text-slate-600 pb-2" role="status" aria-live="polite">
+                        Showing {shown} of {ALL_EVIDENCE_ROWS.length} rows
+                        {query.trim() && <> <button type="button" onClick={() => onQueryChange('')} className="ml-2 font-bold text-indigo-700 underline">Clear filter</button></>}
+                    </p>
+                </div>
+                {sections.length === 0 && <p className="text-sm text-slate-600">No rows match. Try a drug name or a shorter term.</p>}
+                {sections.map(sec => (
+                    <div key={sec.title}>
+                        <h4 className="font-bold text-slate-800 mb-1">{sec.title}</h4>
+                        {sec.notes.map((n, i) => <p key={i} className="text-xs text-slate-600 mb-2 [overflow-wrap:anywhere]">{linkify(n)}</p>)}
+                        <div className="overflow-x-auto rounded border border-slate-200">
+                            <table className="min-w-[56rem] w-full text-xs text-left">
+                                <caption className="sr-only">{sec.title}: rule, what the tool does, why, evidence, strength and calibration, risk if wrong</caption>
+                                <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
+                                    <tr>
+                                        <th scope="col" className="px-3 py-2">Rule</th>
+                                        <th scope="col" className="px-3 py-2">What the tool does</th>
+                                        <th scope="col" className="px-3 py-2">Why</th>
+                                        <th scope="col" className="px-3 py-2">Evidence</th>
+                                        <th scope="col" className="px-3 py-2">Strength and calibration</th>
+                                        <th scope="col" className="px-3 py-2">Risk if wrong</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 align-top">
+                                    {sec.rows.map(r => (
+                                        <tr key={r.id} id={`ev-${r.id}`}>
+                                            <th scope="row" className="px-3 py-2 font-bold text-slate-700 whitespace-nowrap">{r.id}</th>
+                                            <td className="px-3 py-2 text-slate-800 min-w-[16rem] [overflow-wrap:anywhere]">{linkify(r.behavior)}</td>
+                                            <td className="px-3 py-2 text-slate-600 min-w-[12rem]">{r.rationale}</td>
+                                            <td className="px-3 py-2 text-slate-600 min-w-[14rem] [overflow-wrap:anywhere]">{linkify(r.anchor)}</td>
+                                            <td className="px-3 py-2 text-slate-600 min-w-[12rem]"><span className="font-semibold">{r.strength}.</span> {r.calibration}</td>
+                                            <td className="px-3 py-2 text-slate-600 min-w-[10rem]">{r.risk}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </>
+    );
+};
+
+/** A long safety statement: its lead-in (text before the first colon) is the clickable summary, the rest opens on demand. */
+const SafetyCheckItem: React.FC<{ text: string }> = ({ text }) => {
+    const i = text.indexOf(': ');
+    if (i < 0 || i > 140) return <li className="list-none">{text}</li>;
+    return (
+        <li className="list-none">
+            <Disclosure
+                className="rounded border border-slate-200 bg-white"
+                buttonClassName="px-3 py-2 font-semibold text-slate-800 hover:bg-slate-50"
+                title={text.slice(0, i)}
+            >
+                <p className="px-3 pb-3 pt-1 text-slate-700 leading-relaxed">{text.slice(i + 2)}</p>
+            </Disclosure>
+        </li>
+    );
+};
 
 const w = (x: number) => `${Math.round(x * 1000) / 10}%`;
 const signedPts = (n: number) => `${n >= 0 ? '+' : '\u2212'}${Math.abs(n)}`;
@@ -93,7 +184,7 @@ const safetyChecks = [
     'Hydralazine/isosorbide dinitrate (A-HeFT): the Class 1 indication (self-identified Black patients, NYHA III-IV, LVEF <= 40) is offered, and its evidence bonus credited, only with a RAAS inhibitor and a beta-blocker on board or documented inability to take them. The Class 2b path (HFrEF, any race, when RAAS inhibitors cannot be taken) is separate. Riociguat and PDE-5 inhibitors (sildenafil, tadalafil, vardenafil, avanafil) exclude it. Headache 50% and dizziness 32% (label); lupus-like syndrome and peripheral neuritis are warned about.',
     'IV iron (ferric carboxymaltose): added automatically only for iron deficiency with LVEF < 50, NYHA II-III and hemoglobin < 15 (full evidence credit at LVEF <= 40, limited at 41-49, none at >= 50; a clinician may still choose it). The dose follows the label table by weight (below / at least 70 kg) and hemoglobin (day 1 1000 mg, or 500 mg if Hb is above 14; week 6 per the table; then 500 mg at weeks 12, 24, 36 only if still iron deficient). Hemoglobin 15 or higher holds it. A boxed warning for hypophosphatemia adds a phosphate monitoring item. The monthly cost is a per-course amount amortized over 6 months.',
     'MRA potassium and interaction rules (source-verified 2026-11-10): a NEW MRA start above K+ 5.5 is never offered. For an MRA the patient is ALREADY taking, K+ 5.5-5.9 forces a one-step dose reduction (withhold if already at the lowest dose) and K+ 6.0 or above withholds it, with the reason shown; restart low once K+ is below 5.5. Eplerenone and finerenone are contraindicated with strong CYP3A4 inhibitors; eplerenone is capped at 25 mg with a moderate CYP3A inhibitor and is contraindicated at eGFR 30 or below; finerenone and spironolactone are contraindicated in adrenal insufficiency (Addison disease). Finerenone starts at 10 mg (eGFR 25 to below 60) or 20 mg (eGFR 60 or above), with a target of 20 mg or 40 mg respectively; spironolactone starts at 25 mg (eGFR above 50) or 12.5 mg (eGFR 30-50; the label suggests 25 mg every other day).',
-    'Warning penalties dock ranking only for genuine residual patient risk: purely procedural instructions (the mandatory ACEi-to-ARNI 36-hour washout, beta-blocker taper guidance, the Furoscix device instruction) are exempt from the ranking penalty, while residual-risk markers (binder rescue, MRA initiation at borderline K+, Furoscix CKD caution/triage) remain penalized.',
+    'Warning penalties dock ranking only for genuine residual patient risk: purely procedural instructions (the mandatory ACEi-to-ARNI 36-hour washout, beta-blocker taper guidance, the Furoscix device instruction) are exempt from the ranking penalty, while residual-risk markers (binder rescue, MRA initiation at borderline K+, Furoscix CKD caution/triage) remain penalized. Drug-specific prescribing notes (dose spacing, sodium load, tablet strengths, off-label use) are informational and are never penalized; they appear under "Prescribing notes" on each option.',
     'RAAS new-start doses (source-verified 2026-11-10): a new ACE inhibitor or ARB always begins at its lowest tier. Sacubitril/valsartan starts at 24/26 mg twice daily if the patient is not on an ACE inhibitor or ARB (or takes only a low dose), eGFR is below 30, or liver disease is Child-Pugh B; otherwise at 49/51 mg; 97/103 mg is reached only by up-titration. Child-Pugh C is not recommended. Aliskiren with diabetes excludes all three classes. A 36-hour gap is required when switching between an ACE inhibitor and sacubitril/valsartan in either direction. Starting sacubitril/valsartan below SBP 100 carries a caution (PARADIGM-HF excluded SBP < 100); it is not a block.',
     'Loop and thiazide-type diuretics (source-verified 2026-11-10): loop effects and the high-dose alert use the TOTAL DAILY dose (40 mg twice daily counts as 80 mg/day); no regimen exceeds a label maximum total daily dose (furosemide 600 mg, torsemide 200 mg, bumetanide 10 mg, which has 0.5/1/2 mg tablets only); a thiazide-type add-on on top of a loop is credited 1.1 kg (CLOROTIC, hydrochlorothiazide) with more worsening renal function and electrolyte loss; the gout caution applies to every loop and thiazide-type diuretic; hydrochlorothiazide below eGFR 30 is a caution, not a contraindication; metolazone carries an electrolyte (BMP) monitoring item; loop response is reduced at low eGFR (higher doses usually needed, not auto-scaled). Torsemide shows no best-in-class badge (TRANSFORM-HF).',
     'Dual RAAS and dual MRA combinations are structurally blocked.',
@@ -131,9 +222,27 @@ const evidenceRows = [
     }
 ];
 
-export const FAQ: React.FC = () => {
+interface FAQProps {
+    /** Evidence-matrix filter, owned by App so a link from a result can open the tab already filtered. */
+    evidenceQuery?: string;
+    onEvidenceQueryChange?: (q: string) => void;
+    /** Changes each time a link from a result asks to jump to the matrix. */
+    jumpNonce?: number;
+}
+
+export const FAQ: React.FC<FAQProps> = ({ evidenceQuery, onEvidenceQueryChange, jumpNonce = 0 }) => {
+    const [localQuery, setLocalQuery] = useState('');
+    const query = evidenceQuery ?? localQuery;
+    const setQuery = onEvidenceQueryChange ?? setLocalQuery;
+    const matrixRef = useRef<HTMLElement>(null);
+    useEffect(() => {
+        if (jumpNonce > 0) {
+            matrixRef.current?.scrollIntoView({ block: 'start' });
+            matrixRef.current?.focus({ preventScroll: true });
+        }
+    }, [jumpNonce]);
     return (
-        <div className="h-full overflow-y-auto bg-slate-50 custom-scrollbar p-8">
+        <div className="h-full overflow-y-auto bg-slate-50 custom-scrollbar p-4 sm:p-8">
             <div className="max-w-5xl mx-auto space-y-8 pb-16">
 
                 <div className="border-b border-slate-200 pb-6">
@@ -144,9 +253,14 @@ export const FAQ: React.FC = () => {
                     <p className="text-slate-500 mt-2 text-lg leading-relaxed">
                         HeartFailurePATH uses a deterministic eight-domain simulation engine for regimen optimization across HFrEF, HFmrEF, HFpEF, and HFimpEF-preservation pathways.
                     </p>
+                    <nav aria-label="On this page" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm font-semibold">
+                        <a href="#faq-score" className="text-indigo-700 underline">How the score works</a>
+                        <a href="#faq-safety" className="text-indigo-700 underline">Safety and eligibility checks</a>
+                        <a href="#faq-evidence-matrix" className="text-indigo-700 underline">Evidence matrix (rule to source)</a>
+                    </nav>
                 </div>
 
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <section id="faq-score" className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden scroll-mt-4">
                     <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
                         <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                             <HeartIcon className="w-6 h-6 text-indigo-600" />
@@ -267,7 +381,7 @@ export const FAQ: React.FC = () => {
                     </div>
                 </section>
 
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <section id="faq-safety" className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden scroll-mt-4">
                     <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
                         <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                             <CalculationIcon className="w-5 h-5 text-indigo-600" />
@@ -287,8 +401,9 @@ export const FAQ: React.FC = () => {
                         </div>
                         <div>
                             <h4 className="font-bold text-lg mb-2">Safety and Eligibility Checks</h4>
-                            <ul className="list-disc list-inside text-sm space-y-2 pl-2">
-                                {safetyChecks.map(check => <li key={check}>{check}</li>)}
+                            <p className="text-xs text-slate-600 mb-2">Select a heading to read the full rule.</p>
+                            <ul className="text-sm space-y-2">
+                                {safetyChecks.map(check => <SafetyCheckItem key={check} text={check} />)}
                             </ul>
                         </div>
                     </div>
@@ -303,7 +418,7 @@ export const FAQ: React.FC = () => {
                     </div>
                     <div className="p-6 space-y-4">
                         <p className="text-sm text-slate-700">
-                            Trial alignment informs effect sizes and class-level priorities. Stable rule IDs and rule-to-evidence traceability are documented in <code>docs/evidence-matrix.md</code>. Furoscix is implemented as a short-course add-on beside an oral loop for worsening congestion (label: not for chronic use), with explicit contraindication checks and mandatory device-use warnings when selected.
+                            Trial alignment informs effect sizes and class-level priorities. Stable rule IDs and rule-to-evidence traceability are in the evidence matrix below. Furoscix is implemented as a short-course add-on beside an oral loop for worsening congestion (label: not for chronic use), with explicit contraindication checks and mandatory device-use warnings when selected.
                         </p>
                         <div className="overflow-x-auto">
                             <table className="min-w-full text-sm text-left">
@@ -328,13 +443,20 @@ export const FAQ: React.FC = () => {
                         <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-700">
                             <p className="font-semibold text-slate-800 mb-1">Furoscix-specific implementation summary</p>
                             <ul className="list-disc list-inside space-y-1">
-                                <li>Modeled as `Furoscix (SC Furosemide)` in Loop Diuretic class.</li>
+                                <li>Modeled as Furoscix (SC Furosemide) in the loop diuretic class.</li>
                                 <li>Short-course add-on beside an oral loop for worsening congestion (at least 2 kg above dry weight); never a swap or standing replacement. Credited as 160 mg oral furosemide, and beside an oral loop only the increment above that loop.</li>
                                 <li>Blocked for anuria, hypersensitivity (furosemide or adhesive/acrylate), no oral loop on board, or under 1 kg above dry weight. CKD is an indication; eGFR below 30 carries a caution.</li>
-                                <li>When selected, the regimen includes mandatory `FUROSCIX SAFETY` warning text.</li>
+                                <li>When selected, the option carries a mandatory FUROSCIX SAFETY warning.</li>
                             </ul>
                         </div>
                     </div>
+                </section>
+
+                <section id="faq-evidence-matrix" ref={matrixRef} tabIndex={-1} aria-labelledby="faq-evidence-matrix-title" className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden scroll-mt-4 focus:outline-none">
+                    <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
+                        <h3 id="faq-evidence-matrix-title" className="text-xl font-bold text-slate-900">Evidence matrix: which rule rests on which source</h3>
+                    </div>
+                    <EvidenceMatrixSection query={query} onQueryChange={setQuery} />
                 </section>
 
                 <div className="bg-slate-100 p-4 rounded-lg text-xs text-slate-500 leading-relaxed border border-slate-200">

@@ -3,6 +3,10 @@ import React, { useState } from 'react';
 import type { Patient, ScoredRegimen, RegimenMed, RegimenModification, QualitativeProjection, TradeOffLabel, DomainScores } from '../types';
 import { ScoreDetailModal } from './ScoreDetailModal';
 import { ScoreComparisonLine } from './ScoreComparison';
+import { Disclosure } from './Disclosure';
+import { useEvidenceLink } from './EvidenceContext';
+import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
+import { partitionWarnings, stripDrugNotePrefix } from './resultsModel';
 import { DOMAIN_LABELS, DOMAIN_GROUPS, type ScoreDomainKey } from '../services/engine/scoreModel';
 import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 
@@ -150,6 +154,8 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
     const [selectedDomain, setSelectedDomain] = useState<ScoreDomainKey | null>(null);
     const [showLedger, setShowLedger] = useState(false);
     const targetDoseContext = getTargetDosePatientContext(regimen);
+    const { openEvidence } = useEvidenceLink();
+    const { safety: safetyWarnings, notes: prescribingNotes } = partitionWarnings(regimen.warnings);
 
     const projections = regimen.qualitative_projections ?? [];
     const tradeOffs = regimen.trade_offs ?? [];
@@ -168,7 +174,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                 <div className="p-6 border-b border-slate-100">
                     <div className="flex items-center gap-2.5 mb-3">
                         <span className="bg-slate-200 text-slate-700 text-xs font-bold px-2 py-0.5 rounded" aria-label={`Option ${rank}`}>Option {rank}</span>
-                        <h3 className="font-bold text-slate-900 text-lg">Guideline-Directed Regimen</h3>
+                        <h3 className="font-bold text-slate-900 text-lg">{rank === 1 ? 'Top-ordered regimen' : 'Alternative regimen'}</h3>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {regimen.regimen.map((r, i) => {
@@ -208,11 +214,42 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                     </div>
                 )}
 
+                {/* Safety warnings stay prominent; procedural "Drug note" strings are grouped and collapsed */}
+                {safetyWarnings.length > 0 && (
+                    <div className="px-6 py-4 border-b border-amber-200 bg-amber-50">
+                        <h4 className="text-xs font-bold text-amber-900 uppercase mb-1.5 tracking-wide">Safety warnings ({safetyWarnings.length})</h4>
+                        <ul className="space-y-1.5">
+                            {safetyWarnings.map(w => (
+                                <li key={w} className="text-sm text-amber-950 leading-relaxed flex items-start gap-2">
+                                    <svg className="w-4 h-4 mt-0.5 text-amber-700 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-2.5L13.73 4c-.77-.83-1.96-.83-2.73 0L3.34 16.5C2.57 17.33 3.53 19 5.07 19z" /></svg>
+                                    <span><span className="sr-only">Warning: </span>{w}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+                {prescribingNotes.length > 0 && (
+                    <Disclosure
+                        className="border-b border-slate-100 bg-slate-50/60"
+                        buttonClassName="px-6 py-3 text-xs font-bold text-slate-700 uppercase tracking-wide hover:bg-slate-100"
+                        title={`Prescribing notes (${prescribingNotes.length})`}
+                    >
+                        <ul className="px-6 pb-4 space-y-1.5">
+                            {prescribingNotes.map(n => (
+                                <li key={n} className="text-sm text-slate-700 leading-relaxed flex items-start gap-2">
+                                    <span className="mt-2 h-1.5 w-1.5 rounded-full bg-slate-400 flex-shrink-0" aria-hidden="true"></span>
+                                    {stripDrugNotePrefix(n)}
+                                </li>
+                            ))}
+                        </ul>
+                    </Disclosure>
+                )}
+
                 {/* Expected Direction (qualitative — replaces false-precision projected numbers) */}
                 {projections.length > 0 && (
                     <div className="p-6 border-b border-slate-100">
                         <h4 className="text-sm font-bold text-slate-500 uppercase mb-1 tracking-wide">Expected Direction</h4>
-                        <p className="text-[11px] text-slate-400 mb-3">Directional guidance only — not an individual prediction.</p>
+                        <p className="text-xs text-slate-600 mb-3">Directional guidance only — not an individual prediction.</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {projections.map((p, i) => <ProjectionRow key={i} p={p} />)}
                         </div>
@@ -235,7 +272,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
 
                 {/* Dosing Rationale & Evidence Section */}
                 <div className="p-6 border-t border-slate-100 bg-slate-50/30">
-                    <h4 className="text-sm font-bold text-slate-500 uppercase mb-4 tracking-wide">Dosing Strategy & Evidence</h4>
+                    <h4 className="text-sm font-bold text-slate-600 uppercase mb-4 tracking-wide">Dosing Strategy & Evidence</h4>
                     <div className="space-y-4">
                         {regimen.regimen.map((item, idx) => {
                             const isTarget = isTargetDoseForPatient(item, targetDoseContext);
@@ -258,6 +295,11 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                                         <p className="text-xs text-slate-700 font-medium leading-relaxed mb-1.5">
                                             {getDosingRationale(item, targetDoseContext)}
                                         </p>
+                                        {evidenceRowsForDrug(item.med.name).length > 0 && (
+                                            <button type="button" onClick={() => openEvidence(drugSearchTerm(item.med.name))} className="mb-1.5 text-xs font-bold text-indigo-700 underline hover:text-indigo-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">
+                                                Evidence for {drugSearchTerm(item.med.name)} ({evidenceRowsForDrug(item.med.name).length})
+                                            </button>
+                                        )}
                                         {specificBenefits.length > 0 && (
                                             <ul className="space-y-0.5">
                                                 {specificBenefits.map((b, i) => (
@@ -275,29 +317,14 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                     </div>
                 </div>
 
-                {/* General Warnings */}
-                {regimen.warnings.length > 0 && (
-                    <div className="p-6 border-t border-slate-100 bg-amber-50">
-                        <h4 className="text-xs font-bold text-amber-700 uppercase mb-1.5">Safety & Adherence Alerts</h4>
-                        <ul className="space-y-1">
-                            {regimen.warnings.map(w => (
-                                <li key={w} className="text-sm text-amber-900 leading-relaxed flex items-start gap-2">
-                                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" aria-hidden="true"></span>
-                                    {w}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                )}
-
                 {/* Modeled estimates — behind explicit disclosure, with caveat */}
-                <details className="group border-t border-slate-100">
-                    <summary className="cursor-pointer list-none px-6 py-3 flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wide hover:text-slate-600">
-                        <span>Modeled estimates &amp; domain sub-scores</span>
-                        <span className="text-slate-300 group-open:rotate-180 transition-transform" aria-hidden="true">▾</span>
-                    </summary>
+                <Disclosure
+                    className="border-t border-slate-100"
+                    buttonClassName="px-6 py-3 text-xs font-bold text-slate-600 uppercase tracking-wide hover:text-slate-800"
+                    title="Modeled estimates &amp; domain sub-scores"
+                >
                     <div className="px-6 pb-6">
-                        <p className="text-[11px] text-slate-400 mb-4 leading-snug">
+                        <p className="text-xs text-slate-600 mb-4 leading-snug">
                             These are population-average effect sizes run through uncalibrated models — <span className="font-bold">not</span> a prediction for this patient. Shown for transparency only. The composite score is an internal ordering heuristic, not a clinical grade.
                         </p>
                         <div className="grid grid-cols-2 gap-y-2 gap-x-8 mb-5">
@@ -336,7 +363,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                             )}
                             {leader && <ScoreComparisonLine regimen={regimen} leader={leader} rank={rank} />}
                         </div>
-                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider mb-2">Domain sub-scores — tap for detail</p>
+                        <p className="text-[11px] text-slate-600 font-medium uppercase tracking-wider mb-2">Domain sub-scores — tap for detail</p>
                         <div className="space-y-3">
                             {DOMAIN_GROUPS.map(g => (
                                 <div key={g.key} role="group" aria-label={g.label}>
@@ -350,7 +377,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                             ))}
                         </div>
                     </div>
-                </details>
+                </Disclosure>
             </div>
 
             {showLedger && regimen.score_breakdown && (

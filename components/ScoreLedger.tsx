@@ -5,6 +5,7 @@ import {
 } from '../services/engine/scoreModel';
 import { DOMAIN_GOALS } from '../services/simulationService';
 import { pct, num, signed, describeAdjustment, describeOverride, goalAfterEquals } from './scoreExplain';
+import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
 
 // Renders ScoreBreakdown as a reconciling ledger, grouped like the engine's DOMAIN_GROUPS. Every
 // number comes from the engine's breakdown (weights, points, adjustments) - nothing is restated here.
@@ -20,7 +21,7 @@ const ScoreBar: React.FC<{ score: number }> = ({ score }) => (
     </div>
 );
 
-export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown }> = ({ breakdown }) => {
+export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (drugTerm: string) => void }> = ({ breakdown, onEvidence }) => {
     if (!breakdown) return null;
     const meta = WEIGHT_PROFILE_META[breakdown.weight_profile];
     const rawOverrides = (breakdown.overrides ?? []).filter(o => o.applies_to === 'raw_score');
@@ -41,7 +42,12 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown }> = ({ breakdow
                     {a.items && a.items.length > 0 && (
                         <ul className="mt-1 list-disc list-inside text-xs font-normal text-slate-600 space-y-0.5">
                             {a.items.map((it, j) => (
-                                <li key={j}>{it.med} — {it.feature} — {signed(it.points)} before scaling</li>
+                                <li key={j}>
+                                    {it.med} — {it.feature} — {signed(it.points)} before scaling
+                                    {onEvidence && evidenceRowsForDrug(it.med).length > 0 && (
+                                        <> <button type="button" onClick={() => onEvidence(drugSearchTerm(it.med))} className="font-bold text-indigo-700 underline hover:text-indigo-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">See evidence</button></>
+                                    )}
+                                </li>
                             ))}
                         </ul>
                     )}

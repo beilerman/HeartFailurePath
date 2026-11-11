@@ -13,6 +13,7 @@ import { STRUCTURE_BLEND_WEIGHTS, DOMAIN_GOALS } from '../services/simulationSer
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 import { ScoreLedger } from './ScoreLedger';
+import { useEvidenceLink } from './EvidenceContext';
 import { ScoreComparisonDetail } from './ScoreComparison';
 import { goalAfterEquals } from './scoreExplain';
 import type { Phenotype, PillarKey, PillarConcordance } from '../services/simulationService';
@@ -39,6 +40,7 @@ const COMPLETENESS_SUBTARGET_CREDIT_PCT = Math.round(COMPLETENESS_SUBTARGET_CRED
 
 export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onClose, leader, rank = 1 }) => {
     const p = regimen.projected_patient;
+    const { openEvidence } = useEvidenceLink();
     const title = domain === 'overall' ? 'Overall' : DOMAIN_LABELS[domain];
     const domainLine = domain === 'overall' ? undefined : regimen.score_breakdown?.domains.find(d => d.key === domain);
     const weight = domainLine?.weight ?? (domain === 'overall' ? undefined : DOMAIN_WEIGHTS[domain]);
@@ -336,7 +338,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
             case 'overall':
                 return (
                     <>
-                        <ScoreLedger breakdown={regimen.score_breakdown} />
+                        <ScoreLedger breakdown={regimen.score_breakdown} onEvidence={(term) => { onClose(); openEvidence(term); }} />
                         {leader && leader !== regimen && <ScoreComparisonDetail regimen={regimen} leader={leader} rank={rank} />}
                     </>
                 );

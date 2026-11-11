@@ -3,6 +3,45 @@ import { WarningIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import { MEDICATION_FORMULARY, COMMON_SIDE_EFFECTS, RELEVANT_COMORBIDITIES, RELEVANT_EXTERNAL_MEDICATIONS } from '../../constants';
 import type { Patient } from '../../types';
+import {
+    ANURIA, LIVER_BC, LIVER_B_CONFIRMED, SICK_SINUS, CONDUCTION_DEFECT, VENTRICULAR_FIBRILLATION, WPW,
+    PDE5_INHIBITORS, OTHER_SGC_STIMULATORS, LONG_ACTING_NITRATES, STRONG_CYP3A_INHIBITORS, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS,
+} from '../../services/engine/contraindications';
+
+interface OptionGroup { label: string; members: readonly string[] }
+
+/** Split a flat option list into labelled groups. An option in no group falls into "Other" so a newly added entry never disappears. */
+function groupOptions(options: readonly string[], groups: readonly OptionGroup[]): { label: string; items: string[] }[] {
+    const placed = new Set<string>();
+    const out = groups.map(g => ({
+        label: g.label,
+        items: options.filter(o => g.members.includes(o) && !placed.has(o) && (placed.add(o), true)),
+    })).filter(g => g.items.length > 0);
+    const rest = options.filter(o => !placed.has(o));
+    if (rest.length > 0) out.push({ label: 'Other', items: rest });
+    return out;
+}
+
+const COMORBIDITY_GROUPS: readonly OptionGroup[] = [
+    { label: 'Heart rhythm and conduction', members: ['Atrial Fibrillation', SICK_SINUS, CONDUCTION_DEFECT, VENTRICULAR_FIBRILLATION, WPW] },
+    { label: 'Heart and blood vessels', members: ['Coronary Artery Disease', 'Hypotension (Chronic)', 'Pulmonary Hypertension', 'Bilateral Renal Artery Stenosis'] },
+    { label: 'Kidney and liver', members: ['Chronic Kidney Disease', ANURIA, LIVER_BC, LIVER_B_CONFIRMED] },
+    { label: 'Diabetes, weight and endocrine', members: ['Type 1 Diabetes Mellitus', 'Diabetes Mellitus Type 2', 'Prior DKA / Euglycemic DKA', 'Obesity (BMI > 30)', 'Gout', "Adrenal Insufficiency (Addison's disease)"] },
+    { label: 'Lung', members: ['Severe Asthma / Bronchospasm', 'Asthma (Mild/Moderate)', 'COPD'] },
+    { label: 'Drug-related history and GLP-1 cautions', members: ['History of Angioedema', 'Chronic NSAID Use', 'Medullary Thyroid Carcinoma', 'MEN2 Syndrome', 'History of Pancreatitis', 'Severe Gastroparesis', 'Diabetic Retinopathy'] },
+];
+
+const EXTERNAL_MED_GROUPS: readonly OptionGroup[] = [
+    { label: 'Rhythm and calcium-channel drugs', members: ['Amiodarone', 'Verapamil', 'Diltiazem'] },
+    { label: 'Psychiatric', members: ['Lithium'] },
+    { label: 'PDE-5 inhibitors (block nitrates)', members: PDE5_INHIBITORS },
+    { label: 'Riociguat (conflicts with vericiguat and nitrates)', members: OTHER_SGC_STIMULATORS },
+    { label: 'Long-acting nitrates taken outside this tool', members: LONG_ACTING_NITRATES },
+    { label: 'Renin inhibitor', members: ['Aliskiren'] },
+    { label: 'Strong CYP3A inhibitors (affect eplerenone, finerenone, ivabradine)', members: [...STRONG_CYP3A_INHIBITORS, ...IVABRADINE_STRONG_CYP3A4] },
+    { label: 'Moderate CYP3A inhibitors', members: ['Erythromycin', 'Fluconazole'] },
+    { label: 'CYP3A4 inducers (affect ivabradine)', members: CYP3A4_INDUCERS },
+];
 
 interface HistorySectionProps {
     patientData: Patient;
@@ -109,16 +148,18 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
 
             {/* Comorbidities */}
             <div className="mb-6">
-                <Label htmlFor="comorbidity-select">Comorbidities</Label>
+                <Label htmlFor="comorbidity-select">Comorbidities and conditions that change drug choice</Label>
                 <div className="flex gap-2 mb-2">
                     <Select
                         id="comorbidity-select"
                         value={selectedComorbidity}
                         onChange={(e) => setSelectedComorbidity(e.target.value)}
                     >
-                        <option value="">Select Condition...</option>
-                        {RELEVANT_COMORBIDITIES.map(c => (
-                            <option key={c} value={c} disabled={patientData.comorbidities.has(c)}>{c}</option>
+                        <option value="">Select condition...</option>
+                        {groupOptions(RELEVANT_COMORBIDITIES, COMORBIDITY_GROUPS).map(g => (
+                            <optgroup key={g.label} label={g.label}>
+                                {g.items.map(c => <option key={c} value={c} disabled={patientData.comorbidities.has(c)}>{c}</option>)}
+                            </optgroup>
                         ))}
                     </Select>
                     <button onClick={handleAddComorbidity} disabled={!selectedComorbidity} className="px-4 bg-indigo-50 text-indigo-700 rounded-md text-sm font-bold border border-indigo-100 hover:bg-indigo-100">ADD</button>
@@ -135,16 +176,18 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
 
             {/* Active Non-Formulary Medications (DDI Context) */}
             <div className="mb-6">
-                <Label htmlFor="external-med-select">Concurrent Non-Formulary Medications (for DDI checks)</Label>
+                <Label htmlFor="external-med-select">Other current medications (for interaction checks)</Label>
                 <div className="flex gap-2 mb-2">
                     <Select
                         id="external-med-select"
                         value={selectedExternalMedication}
                         onChange={(e) => setSelectedExternalMedication(e.target.value)}
                     >
-                        <option value="">Select Medication...</option>
-                        {RELEVANT_EXTERNAL_MEDICATIONS.map(m => (
-                            <option key={m} value={m} disabled={(patientData.external_medications || new Set()).has(m)}>{m}</option>
+                        <option value="">Select medication...</option>
+                        {groupOptions(RELEVANT_EXTERNAL_MEDICATIONS, EXTERNAL_MED_GROUPS).map(g => (
+                            <optgroup key={g.label} label={g.label}>
+                                {g.items.map(m => <option key={m} value={m} disabled={(patientData.external_medications || new Set()).has(m)}>{m}</option>)}
+                            </optgroup>
                         ))}
                     </Select>
                     <button onClick={handleAddExternalMedication} disabled={!selectedExternalMedication} className="px-4 bg-indigo-50 text-indigo-700 rounded-md text-sm font-bold border border-indigo-100 hover:bg-indigo-100">ADD</button>
@@ -184,7 +227,7 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
 
             {/* Intolerances / Exclusions */}
             <div className="mb-6">
-                <Label>Prior Intolerances</Label>
+                <Label>Prior intolerances (drug stopped for a side effect)</Label>
                 <div className="space-y-2.5 mb-3">
                     {patientData.discontinued_meds.map((dm, idx) => (
                             <div key={idx} className="flex items-center justify-between bg-amber-50 p-2.5 rounded border border-amber-100">
@@ -228,7 +271,7 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                     disabled={!intoleranceDrug || !intoleranceReason}
                     className="w-full py-2 bg-white border border-slate-300 text-slate-700 text-sm font-bold rounded hover:bg-slate-50 disabled:opacity-50 shadow-sm"
                 >
-                    + ADD EXCLUSION
+                    + ADD INTOLERANCE
                 </button>
             </div>
         </section>

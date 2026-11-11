@@ -1,9 +1,25 @@
 import React from 'react';
 import { ChevronDownIcon } from '../icons';
 
-export const Label = ({ children, htmlFor }: React.PropsWithChildren<{ htmlFor?: string }>) => (
+/**
+ * Inputs the form will not run without. Potassium and creatinine are deliberately NOT here: the
+ * engine treats a blank (stored as 0) as "not entered" and withholds the conclusions that depend
+ * on it, so a clinician without a BMP can still run the analysis.
+ */
+export const REQUIRED_FIELDS: ReadonlySet<string> = new Set([
+    'age', 'height_cm', 'sbp', 'dbp', 'pulse', 'lvef', 'nt_pro_bnp', 'kccq_score',
+    'bun', 'dry_weight_kg', 'current_weight_kg', 'max_affordable_cost',
+]);
+
+export const Label = ({ children, htmlFor, required }: React.PropsWithChildren<{ htmlFor?: string; required?: boolean }>) => (
     <label htmlFor={htmlFor} className="block text-sm font-semibold text-slate-700 mb-1.5">
         {children}
+        {(required || (htmlFor && REQUIRED_FIELDS.has(htmlFor))) && (
+            <>
+                <span className="text-rose-600 ml-0.5" aria-hidden="true">*</span>
+                <span className="sr-only"> (required)</span>
+            </>
+        )}
     </label>
 );
 

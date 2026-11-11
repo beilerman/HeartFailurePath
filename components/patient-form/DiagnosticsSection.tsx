@@ -22,12 +22,11 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 <div>
                     <Label htmlFor="lvef">
                         LVEF (%)
-                        <span className="ml-1.5 align-middle text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded uppercase tracking-wide">Required</span>
                     </Label>
                     <Input type="number" name="lvef" value={patientData.lvef ?? ''} onChange={onChange} error={validationErrors.lvef} />
                 </div>
                 <div>
-                    <Label htmlFor="nt_pro_bnp">NT-proBNP</Label>
+                    <Label htmlFor="nt_pro_bnp">NT-proBNP (pg/mL)</Label>
                     <Input type="number" name="nt_pro_bnp" value={patientData.nt_pro_bnp ?? ''} onChange={onChange} error={validationErrors.nt_pro_bnp} />
                 </div>
             </div>
@@ -90,18 +89,19 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <Label htmlFor="creatinine">Creatinine</Label>
-                    <Input type="number" step="0.1" name="creatinine" value={patientData.creatinine ?? ''} onChange={onChange} error={validationErrors.creatinine} />
+                    <Input type="number" step="0.1" name="creatinine" value={patientData.creatinine || ''} placeholder="mg/dL" onChange={onChange} error={validationErrors.creatinine} />
                 </div>
                 <div className="relative">
                     <Label htmlFor="egfr">eGFR (Calc)</Label>
                     <Input
                         type="number"
                         name="egfr"
-                        value={patientData.egfr}
+                        value={patientData.egfr || ''}
+                        placeholder="needs creatinine"
                         readOnly
                         className="!bg-slate-100 !text-slate-600 focus:outline-none"
                     />
-                    <p className="text-[10px] text-slate-400 mt-0.5">Use CKD-EPI 2021 (race-free) equation</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Use CKD-EPI 2021 (race-free) equation</p>
                 </div>
                 <div>
                     <Label htmlFor="bun">BUN</Label>
@@ -109,7 +109,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 </div>
                 <div>
                     <Label htmlFor="potassium">Potassium</Label>
-                    <Input type="number" step="0.1" name="potassium" value={patientData.potassium ?? ''} onChange={onChange} error={validationErrors.potassium} warning={clinicalWarnings.potassium} />
+                    <Input type="number" step="0.1" name="potassium" value={patientData.potassium || ''} placeholder="mEq/L" onChange={onChange} error={validationErrors.potassium} warning={clinicalWarnings.potassium} />
                 </div>
             </div>
 
@@ -132,10 +132,10 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 <div>
                     <Label htmlFor="hemoglobin">Hemoglobin (g/dL)</Label>
                     <Input type="number" step="0.1" name="hemoglobin" value={patientData.hemoglobin ?? ''} onChange={onChange} placeholder="e.g. 12.5" error={validationErrors.hemoglobin} />
-                    <p className="text-[10px] text-slate-400 mt-0.5">Sets the IV iron label dose; held at 15 or higher</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Sets the IV iron label dose; held at 15 or higher</p>
                 </div>
                 <div>
-                    <Label htmlFor="peak_flow_lpm">Peak Flow (L/min)</Label>
+                    <Label htmlFor="peak_flow_lpm">Peak Flow (L/min, if lung disease)</Label>
                     <Input type="number" name="peak_flow_lpm" value={patientData.peak_flow_lpm ?? ''} onChange={onChange} placeholder="e.g. 400" error={validationErrors.peak_flow_lpm} />
                 </div>
             </div>

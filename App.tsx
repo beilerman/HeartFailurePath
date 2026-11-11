@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { PatientForm } from './components/PatientForm';
 import { ClinicalSummary } from './components/ClinicalSummary';
 import { ResultsDisplay } from './components/ResultsDisplay';
 import { MedicationLibrary } from './components/MedicationLibrary';
 import { FAQ } from './components/FAQ';
+import { EvidenceContext } from './components/EvidenceContext';
 import { Patient, ScoredRegimen, ExcludedMedication, MonitoringPlanItem } from './types';
 import { generateAndScoreModifications } from './services/simulationService';
 import { getDrugPrices } from './services/pricingService';
@@ -12,6 +13,25 @@ import { TableIcon, BookOpenIcon, QuestionMarkCircleIcon } from './components/ic
 import { SCENARIOS, INITIAL_PATIENT, clonePatient } from './data/scenarios';
 
 
+
+// "Custom profile" starts from an empty chart, never from the previously loaded sample, so no value
+// from another patient can carry into a new one unnoticed. Potassium/creatinine 0 is the engine's
+// "not entered" sentinel; everything else clinical is left blank for the clinician to enter.
+function blankPatient(): Patient {
+    const base = clonePatient(INITIAL_PATIENT);
+    const blank = {
+        ...base,
+        age: undefined, height_cm: undefined, bmi: 0,
+        sbp: undefined, dbp: undefined, pulse: undefined, oxygen_saturation: undefined,
+        rhythm: 'Sinus', nt_pro_bnp: undefined, nyha_class: 'II', kccq_score: undefined, daily_step_count: undefined,
+        lvef: undefined, lvedd: undefined, lavi: undefined, peak_flow_lpm: undefined, previous_lvef: undefined,
+        volume_status: { dry_weight_kg: undefined, current_weight_kg: undefined, exam_findings: new Set<string>() },
+        egfr: 0, potassium: 0, creatinine: 0, bun: undefined, ferritin: undefined, tsat: undefined, hemoglobin: undefined,
+        comorbidities: new Set<string>(), external_medications: new Set<string>(), allergies: new Set<string>(),
+        discontinued_meds: [], current_regimen: [],
+    };
+    return blank as unknown as Patient;
+}
 
 function App() {
     const [patient, setPatient] = useState<Patient>(INITIAL_PATIENT);
@@ -41,6 +61,15 @@ function App() {
 
     // Navigation State
     const [activeTab, setActiveTab] = useState<'simulation' | 'library' | 'faq'>('simulation');
+    // Evidence tab filter, owned here so a link on a result card can open the tab already filtered.
+    const [evidenceQuery, setEvidenceQuery] = useState('');
+    const [evidenceJump, setEvidenceJump] = useState(0);
+    const openEvidence = useCallback((query: string) => {
+        setEvidenceQuery(query);
+        setEvidenceJump(n => n + 1);
+        setActiveTab('faq');
+    }, []);
+    const evidenceCtx = useMemo(() => ({ openEvidence }), [openEvidence]);
 
     useEffect(() => {
         let active = true;
@@ -80,6 +109,10 @@ function App() {
 
     const handleScenarioChange = (title: string) => {
         setScenario(title);
+        if (title === 'custom') {
+            setPatient(blankPatient());
+            return;
+        }
         const s = SCENARIOS.find(sc => sc.title === title);
         if (s) {
             // Use custom clone instead of JSON.parse/stringify to preserve Sets
@@ -129,7 +162,7 @@ function App() {
     const stableRerun = useCallback(() => runSimRef.current(), []);
 
     const tabClass = (tab: 'simulation' | 'library' | 'faq') =>
-        `px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-2 transition-all ${activeTab === tab ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`;
+        `px-3 sm:px-4 py-2 rounded-md text-sm font-bold flex items-center gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${activeTab === tab ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`;
 
     // WAI-ARIA Tabs keyboard pattern: roving tabindex with arrow-key navigation and
     // automatic activation (selection follows focus).
@@ -149,19 +182,20 @@ function App() {
     };
 
     return (
-        <div className="h-screen w-screen flex flex-col bg-slate-50 text-slate-800 font-sans overflow-hidden">
+        <EvidenceContext.Provider value={evidenceCtx}>
+        <div className="min-h-screen lg:h-screen w-full flex flex-col bg-slate-50 text-slate-800 font-sans lg:overflow-hidden print:h-auto print:overflow-visible">
             <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:font-bold">
                 Skip to main content
             </a>
             {/* Header */}
-            <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm z-20">
+            <header className="min-h-16 bg-white border-b border-slate-200 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 sm:px-6 py-2 shadow-sm z-20 print:hidden">
                 <div className="flex items-center">
                     <div className="h-9 w-9 bg-indigo-600 rounded-lg flex items-center justify-center mr-3 shadow-indigo-200 shadow-lg">
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
                     </div>
                     <div>
                         <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none">HeartFailurePATH</h1>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mt-0.5">GDMT Gap &amp; Safety Checklist</p>
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mt-0.5 hidden sm:block">GDMT Gap &amp; Safety Checklist</p>
                     </div>
                 </div>
 
@@ -206,11 +240,12 @@ function App() {
                 </nav>
             </header>
 
-            <main id="main-content" className="flex-1 flex overflow-hidden relative">
-                {activeTab === 'simulation' && (
-                    <div id="tabpanel-simulation" role="tabpanel" aria-labelledby="tab-simulation" className="flex flex-1">
+            <main id="main-content" className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden relative min-w-0 print:block print:overflow-visible">
+                {/* Kept mounted (just hidden) when another tab is open, so the results and scroll position survive a visit to the Evidence tab. */}
+                {(
+                    <div id="tabpanel-simulation" role="tabpanel" aria-labelledby="tab-simulation" hidden={activeTab !== 'simulation'} className={`${activeTab === 'simulation' ? 'flex' : 'hidden'} flex-col lg:flex-row flex-1 min-w-0 lg:min-h-0 print:block`}>
                         {/* Left: Inputs */}
-                        <aside className="w-[360px] border-r border-slate-200 bg-white flex flex-col z-10 shadow-lg">
+                        <aside aria-label="Patient inputs" className="w-full lg:w-[360px] lg:flex-shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 bg-white flex flex-col z-10 shadow-lg print:hidden">
                             <PatientForm
                                 patientData={patient}
                                 setPatientData={setPatient}
@@ -225,12 +260,12 @@ function App() {
                         </aside>
 
                         {/* Middle: Summary */}
-                        <aside className="w-[280px] border-r border-slate-200 bg-slate-50/50 hidden xl:flex flex-col">
+                        <aside aria-label="Patient status summary" className="w-[280px] border-r border-slate-200 bg-slate-50/50 hidden xl:flex flex-col print:hidden">
                             <ClinicalSummary patient={patient} drugPrices={drugPrices} />
                         </aside>
 
                         {/* Right: Results */}
-                        <section className="flex-1 bg-slate-50 overflow-y-auto p-8 custom-scrollbar">
+                        <section aria-label="Results" className="flex-1 min-w-0 bg-slate-50 lg:overflow-y-auto p-4 sm:p-8 custom-scrollbar print:p-0 print:overflow-visible">
                             <div className="max-w-5xl mx-auto">
                                 <ResultsDisplay
                                     results={results}
@@ -259,12 +294,13 @@ function App() {
                 )}
 
                 {activeTab === 'faq' && (
-                    <section id="tabpanel-faq" role="tabpanel" aria-labelledby="tab-faq" className="flex-1 bg-slate-50 w-full">
-                        <FAQ />
+                    <section id="tabpanel-faq" role="tabpanel" aria-labelledby="tab-faq" className="flex-1 bg-slate-50 w-full min-w-0 print:hidden">
+                        <FAQ evidenceQuery={evidenceQuery} onEvidenceQueryChange={setEvidenceQuery} jumpNonce={evidenceJump} />
                     </section>
                 )}
             </main>
         </div>
+        </EvidenceContext.Provider>
     );
 }
 

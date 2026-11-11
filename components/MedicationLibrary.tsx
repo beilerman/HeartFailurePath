@@ -138,7 +138,7 @@ export const MedicationLibrary: React.FC = () => {
     });
 
     return (
-        <div className="h-full overflow-y-auto bg-slate-50 custom-scrollbar p-8">
+        <div className="h-full overflow-y-auto bg-slate-50 custom-scrollbar p-4 sm:p-8">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row justify-between items-end mb-8 border-b border-slate-200 pb-6">
                     <div className="mb-4 md:mb-0 max-w-2xl">

@@ -45,7 +45,7 @@ export const DemographicsSection: React.FC<DemographicsSectionProps> = ({ patien
                     </div>
                     <div>
                         <Label htmlFor="bmi">BMI</Label>
-                        <Input type="number" name="bmi" value={patientData.bmi} readOnly className="!bg-slate-100 !text-slate-600 focus:outline-none" />
+                        <Input type="number" name="bmi" value={patientData.bmi || ''} readOnly className="!bg-slate-100 !text-slate-600 focus:outline-none" />
                     </div>
                 </div>
             </div>
