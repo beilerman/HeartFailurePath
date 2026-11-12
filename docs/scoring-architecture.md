@@ -1,10 +1,10 @@
 # How HeartFailurePath reaches a recommendation
 
-Written 2026-11-10; updated 2026-11-11 (rule E16, ranking mode, current counts, alignment with the 2026 ESC guideline: see the section near the end). The engine follows the same five-step shape as GlucosePATH: describe the
+Written 2026-11-10; updated 2026-11-12 (rule E19, adversarial review changes, current counts; earlier: rule E16, ranking mode, alignment with the 2026 ESC guideline: see the sections near the end). The engine follows the same five-step shape as GlucosePATH: describe the
 patient and the drugs, exclude what cannot be used, generate options, score them against clinical
 goals and patient values, and show the arithmetic.
 
-`generateAndScoreModifications` in `services/simulationService.ts` is a 52-line orchestrator (signature to closing brace, comments included). Each
+`generateAndScoreModifications` in `services/simulationService.ts` is a 55-line orchestrator (signature to closing brace, comments included). Each
 numbered comment in it is one stage below.
 
 ## The pipeline
@@ -48,13 +48,14 @@ exclusion carries that rule's id and name.
 | E16 | Potassium and renal function required: a NEW ACE inhibitor, ARB, ARNI or MRA is not started while potassium or renal function is blank |
 | E17 | Pregnancy: a NEW beta-blocker start is limited to beta-1-selective agents (`facts.beta1_selective`); a pregnant patient on a non-selective one is offered a switch with the reason (2026 ESC Class I C) |
 | E18 | New RAAS inhibitor start above K+ 5.2 is staged: a NEW ACE inhibitor, ARB or ARNI (patient on none of them) is withheld with or without a K+ binder, recheck and start once K+ is 5.2 or lower (ESC S4/S5 caution threshold; staged start is engine policy). The RAAS GDMT gap states the reason and the monitoring plan adds "repeat potassium; start RAAS inhibitor if 5.2 or lower". A swap within the RAAS pool is not a new start. E13 still blocks a new start above 5.4 |
+| E19 | No new RAAS inhibitor or MRA while the entered baseline creatinine shows the reduce band (rise of 50% or more, or derived eGFR fall over 30%); a drug already in use is untouched here (engine policy following 2026 ESC S4/S5/S8) |
 
 Explanations: a rule may carry an optional `details(ctx, med)` that returns specifics; the filter
 stores them in the additive `ExcludedMedication.why` (E13 lists each contraindication check that fired,
 via `contraindicationReasons`; E12 names the blank renal value; E14 gives the eGFR). They never affect
 the decision and are in `ADDITIVE_KEYS` for the golden master.
 
-E17 comes after E16 (pregnancy beta-blocker start, initiation only); E18 comes last (new RAAS start above K+ 5.2, initiation only; E13 still reports potassium above 5.4 first). E16 (owner decision 2026-11-11) is otherwise the last rule, so a real contraindication (E13/E14) or the renal-gated start (E12) keeps its own label. It covers new starts only. Dose increases and switches to a RAAS inhibitor or MRA are dropped one level up, in `scoreCandidates` (`intensifiesRaasOrMra`), and a single `LABS REQUIRED: ...` clinical alert is raised once per run in the orchestrator. A drug the patient already takes is not affected. There is no freshness window (the form records no lab dates) and no new numeric threshold: "blank" is the existing not-entered value (0).
+E17 comes after E16 (pregnancy beta-blocker start, initiation only); E18 comes next (new RAAS start above K+ 5.2, initiation only; E13 still reports potassium above 5.4 first); E19 comes last (new RAAS inhibitor or MRA start while the baseline creatinine shows the reduce band; needs the optional baseline creatinine, with it blank nothing changes). E15's "already on an MRA" exemption now applies to a within-class switch only while that MRA may continue (potassium below 5.5). E16 (owner decision 2026-11-11) is otherwise the last rule, so a real contraindication (E13/E14) or the renal-gated start (E12) keeps its own label. It covers new starts only. Dose increases and switches to a RAAS inhibitor or MRA are dropped one level up, in `scoreCandidates` (`intensifiesRaasOrMra`), and a single `LABS REQUIRED: ...` clinical alert is raised once per run in the orchestrator. A drug the patient already takes is not affected. There is no freshness window (the form records no lab dates) and no new numeric threshold: "blank" is the existing not-entered value (0).
 
 Order matters in two places: E12 must precede E13 (a blank-renal trip is labelled "renal data
 required", not "contraindicated"), and E10/E11 ignore a current MRA that is being forced off.
@@ -73,7 +74,7 @@ patient values. What a score of 100 means for each is in `DOMAIN_GOALS` (`domain
 | Clinical outcomes | Volume | 12% | Weight above dry weight, exam findings, SpO2 | |
 | Clinical outcomes | Structure | 8% | LVEF level and improvement, chamber size | |
 | Guideline-directed therapy | Guideline | 12% | Indicated pillars present and at target dose for the phenotype | |
-| Guideline-directed therapy | Therapy completeness | 22% | Share of indicated, achievable therapies on board (graded credit below target dose: 0.5 + 0.5 x share of the patient's target daily dose) | |
+| Guideline-directed therapy | Therapy completeness | 22% | Share of indicated, achievable therapies on board (graded credit below target dose: 0.6 + 0.4 x progress from the labeled starting dose to the patient's target; 0.6 at or below the starting tier) | |
 | Patient values | Cost | 12% | Monthly out-of-pocket cost against the budget | `max_affordable_cost`, `cost_sensitivity` |
 | Patient values | Adherence | 7% | Regimen complexity against tolerance | `complexity_tolerance` |
 
@@ -105,10 +106,10 @@ and each is a visible line item in the breakdown, in this order.
 | `SPECIAL_FEATURES` | Per-drug evidence bonuses, normalized by regimen size (x 2.3), clamped to -8..+12. The line lists each feature that fired (`items`) |
 | `VOLUME_DEPLETION_DEESCALATION` | +15 for reducing diuretics in a volume-depleted patient |
 | `PROJECTED_SBP_LT_85` | Override: score set to 0 |
-| `PROJECTED_SBP_LT_90` / `_LT_95` | -20 / -6 |
-| `PROJECTED_HR_LT_50` | -40 |
+| `PROJECTED_SBP_LT_90` / `_LT_95` | -20 / -6. The SBP and HR bands read the LOWER of the projected and the entered value (2026-11-12), so a dose reduction is not rewarded for leaving a band |
+| `PROJECTED_HR_LT_50` | -40 (same lower-of-projected-and-entered rule) |
 | `PROJECTED_K_GT_5_5` | -40 |
-| `DANGEROUS_WARNINGS` | -8 per residual-risk warning |
+| `DANGEROUS_WARNINGS` | -8 per residual-risk warning. Penalized warnings that are already true of the current regimen (`baselineDangerWarnings` in `scoring.ts`) are charged to every option, so none beats "no change" by cutting a drug until a state warning stops firing (2026-11-12) |
 | `UNKNOWN_RENAL` | -12 when the option starts or increases an SGLT2 inhibitor with kidney function blank. This is the only remaining unknown-lab deduction: `UNKNOWN_POTASSIUM` was removed on 2026-11-11 because a RAAS/MRA start or increase can no longer reach scoring with potassium or renal function blank (E16 and the candidate drop) |
 | `SCORE_CLAMP`, `LOW_OUTPUT_CAP` | Overrides on the displayed score: guard clamp to 0-100 (listed only when it changes the value); cap at 25 in low output |
 
@@ -189,9 +190,10 @@ Still in engine code: adjunct initiation criteria for ivabradine, digoxin and H/
 
 | Check | Command | Guards |
 |---|---|---|
-| Golden master | `npm run golden` | Every scenario under three insurance tiers (996 runs, 332 scenarios) is byte-identical |
-| Scenarios | `npm run verify` | 332 clinical scenarios plus 16 structural checks (348 pass on 2026-11-11) |
+| Golden master | `npm run golden` | Every scenario under three insurance tiers (999 runs, 333 scenarios) is byte-identical |
+| Scenarios | `npm run verify` | 333 clinical scenarios plus 20 structural checks (353 pass on 2026-11-12) |
 | Audits | `npm run audit:hundred`, `audit:mistakes`, `audit:red` | Broad, treatment-error and adversarial sweeps |
+| Randomized sweep | `npm run fuzz` | 5,000 seeded random patients (`scripts/fuzzSweep.ts`): safety invariants written independently of the engine, plus consistency checks (regimen listed in another order gives the same answer; ranking mode and care priority change ordering only; a lower-case allergy still excludes the drug). Part of `gate` and `ci` |
 | All of the above | `npm run gate` | |
 
 The structural invariants (the harness count is authoritative): every drug has a price; every score breakdown reconciles; weight profiles never change
@@ -214,7 +216,7 @@ decompensated-HF tables, and the device, advanced-HF, arrhythmia, valve and amyl
 - RAAS potassium: new start blocked above 5.4; a current inhibitor goes one step down from 5.5 (stopped at the lowest tier), is stopped from 6.0, MRA first (`facts.k_continuation.yields_to`); new start staged above 5.2 (rule E18); eGFR below 20 on a RAAS inhibitor raises an alert and never stops it (ESC S4 describes a fall from baseline and the tool has no baseline). The binder rescue is reactive only: attached only when every potassium-raising class in the candidate was already on the current regimen, otherwise a candidate needing a binder for a NEW class is dropped.
 - Doses (Table 11): spironolactone target 50 mg (25 mg at eGFR 45 or below); ARNI starts 24/26 below eGFR 60 or with chronic hypotension (stricter than the label).
 - Loops: titrate, do not swap, except forced swaps and diuretic resistance (congested on a loop at its high-dose alert level); forced swaps land on the nearest equivalent daily dose, never above the declared maximum. Thiazides: short-term note, review prompt, never forced removal.
-- Pregnancy beta-blocker switch lands at the same fraction of the Table 11 target (engine policy). Beta-blocker heart rate: 55 carvedilol (label), 50 metoprolol succinate and bisoprolol (S6); up-titration hold below 60 is engine policy.
+- Pregnancy beta-blocker switch lands at the same fraction of the Table 11 target (engine policy). Beta-blocker heart rate: 55 carvedilol (label), 50 metoprolol succinate and bisoprolol (S6); up-titration hold below 60 is engine policy. With heart rate not entered, a beta-blocker or ivabradine is neither started nor increased (2026-11-12).
 - Text: up-titration every 1-2 weeks (not faster than 2-weekly without close monitoring), chemistry 1-2 weeks after starting and after the final titration then every 4-6 months, creatinine rise under 50% acceptable with eGFR above 15 (was 30%).
 
 Update the golden snapshot (`npm run golden:update`) only for an intended clinical change, in its
@@ -225,5 +227,37 @@ own commit that says why.
 - MRA initiation: K+ 5.0 or higher (E15) and eGFR 30 or lower (new spironolactone start) withhold a new start; spironolactone and eplerenone are capped at 25 mg and start at the lowest tier below eGFR 50 (2022 AHA/ACC/HFSA 7.3.3). Monitoring line: within 1 week, about 4 weeks, after the final titration, then every 4-6 months.
 - Baseline creatinine (optional `Patient.baseline_creatinine`; `services/engine/renalChange.ts`): `assessCreatinineChange` returns none / reduce / stop. Reduce (creatinine rise 50% or more, or CKD-EPI-derived eGFR fall over 30%) reuses the forced one-step reduction for a current RAAS inhibitor and MRA (`candidates.ts`) and blocks increases; stop (rise over 100%, or 50% or more with eGFR below 20) is `creatinineRiseStopCheck`, a contraindication check on every RAAS and MRA entry (removes a current drug, blocks a new start and an in-class swap). A `KIDNEY FUNCTION` alert states the change and the first steps. Blank baseline: no behaviour change.
 - Alerts only (`gates.ts`): device (ICD/CRT classes; asks to check QRS, LBBB, aetiology), advanced-HF referral (lists the markers that fired), atrial fibrillation (anticoagulation by CHA2DS2-VA, rate control). No ranking effect; top picks and exclusions identical.
-- Counts: golden 996 runs (332 scenarios), verify Passed 348.
+- Counts (2026-11-12): golden 999 runs (333 scenarios), verify Passed 353.
 
+## Adversarial review changes (2026-11-12)
+
+Eligibility and candidates:
+
+- E19 added (see the rule table); E15's exemption tightened.
+- The dose-step cap also covers combination strengths (sacubitril/valsartan 24/26 cannot go straight to 97/103; H/ISDN likewise). The always-kept next step is the smallest increase in total daily dose when the next strength at its usual frequency would more than double it (furosemide 80 mg once daily goes to 80 mg twice daily); see `comparableDailyDose` and `smallestStepAbove` in `candidates.ts`.
+- `structuralProblems()` in `candidates.ts` checks every candidate after the forced edits: a regimen listing the same drug twice, two agents of one class group, or a short-course add-on without its oral loop is dropped.
+- Lateral swaps: for every class group except the RAAS pool a swap is offered only when the current drug must go (contraindication, intolerance, allergy) or the loop-resistance rule fires. A drug withheld by a potassium, heart-rate or kidney rule is never swapped for a sibling; a contraindicated diuretic in a non-congested patient is stopped, not replaced.
+- Diuretics are not increased when the patient is more than 1 kg below dry weight, or at or below dry weight with no congestion finding (`diureticHeldForNoCongestion`).
+- `congestionFindingCount()` (`services/clinicalPredicates.ts`) counts edema once whatever the grade and does not count cool extremities (a perfusion sign). The decompensation rule, the volume score and the congestion gate all use it. The form now allows one edema grade at a time.
+- Hypokalemia caution is a class rule: any loop or thiazide-type diuretic added, swapped in or increased with a measured potassium below 3.5 carries a penalized caution (was metolazone only). Anuria is a contraindication check on all loop diuretics and chlorthalidone (was Furoscix, metolazone and hydrochlorothiazide only).
+- Pregnancy: a non-selective beta-blocker that cannot be switched is kept, never increased.
+- Rescue binder: patiromer is auto-added at its label starting dose only (`facts.rescue_role.max_rescue_dose`, 8.4 g daily).
+
+Scoring:
+
+- The projected SBP 90/95 bands and the HR below 50 band read the lower of the projected and the entered value.
+- Penalized warnings already true of the current regimen are charged to every option (`baselineDangerWarnings`).
+- The quadruple-therapy synergy applies to the reduced-EF phenotype only; KCCQ is clamped to 0-100 in the functional score.
+
+Selection (`selection.ts`):
+
+- The blood-pressure and heart-rate display floors apply only when the regimen moves the value the wrong way from the entered baseline; the potassium floor stays absolute. The NO DISPLAY-SAFE alert names the floor that was broken.
+- Ties are broken alphabetically so the answer does not depend on the order the drugs were typed in, and projected SBP, HR and potassium are rounded to 2 decimals.
+- In the over-budget fallback the safety floors are applied before taking the five cheapest, and an option scored 0 is not shown merely because it is cheap. The automatic IV iron add-on is left off when it alone would push a regimen over budget.
+
+Inputs and allergies:
+
+- `auditInputs` (`gates.ts`): NaN, undefined or negative numeric inputs are normalised to 0 (the "not entered" sentinel). A blank systolic BP, current weight or dry weight stops the run with a DATA REQUIRED alert naming the field. A duplicate current drug keeps the higher dose and says so.
+- Allergies (`allergy.ts` and `facts.allergy_aliases` in `constants.ts`): free-text entries are resolved to formulary drugs ignoring case and spacing, by generic, brand or class name ("ACE inhibitors"). An entry matching nothing raises an ALLERGY NOTE, and the form shows what each entry excludes. Adding a drug now means adding its brand names to `ALLERGY_ALIASES_BY_DRUG`.
+
+UI: the Re-run button obeys form validation; Copy and Print are disabled while results are stale; the results pane has its own error boundary; the low-output hint uses the engine's two-of-three rule; the potassium hint covers 5.2, 6.0 and 6.5.

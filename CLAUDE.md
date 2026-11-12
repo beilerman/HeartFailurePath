@@ -13,20 +13,23 @@ npm run dev              # start Vite dev server (default 3000)
 npm run build            # production build
 npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
-                         #   (currently: Passed 353 on 2026-11-11; the printed count is authoritative)
+                         #   (currently: Passed 353 on 2026-11-12; the printed count is authoritative)
 npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone QA, not in CI)
-npm run golden           # golden master: every scenario x 3 insurance tiers (996 runs) must be byte-identical
-npm run gate             # typecheck + golden + verify + all three audits (full pre-release gate)
-npm run ci               # typecheck + build + golden + verify
+npm run golden           # golden master: every scenario x 3 insurance tiers (999 runs) must be byte-identical
+npm run golden:update    # rewrite the golden snapshot after an intended output change (review `npm run ranking:diff` first)
+npm run ranking:diff     # compare the current engine with the golden snapshot; reports ranking changes
+npm run fuzz             # seeded randomized-patient sweep (5,000 patients): safety invariants written independently of the engine + consistency checks (regimen order, ranking mode / care priority change ordering only, lower-case allergy still excludes). Part of gate and ci
+npm run gate             # typecheck + golden + verify + all three audits + fuzz (full pre-release gate)
+npm run ci               # typecheck + build + golden + verify + fuzz
 npm run preview          # preview production build
 ```
 
 There is no `lint` script (a misleading one was removed 2026-07-05).
 
-CI workflow: `.github/workflows/ci.yml` runs `npm ci -> typecheck -> build -> golden -> verify`.
+CI workflow: `.github/workflows/ci.yml` runs `npm ci -> typecheck -> build -> golden -> verify` (the workflow file does not yet have a `fuzz` step; `npm run ci` does).
 
 QA harnesses (full pre-release gate — all four must be green):
 
@@ -57,9 +60,9 @@ HeartFailurePath/
     RecommendationCard.tsx        # regimen card rendering
     patient-form/                 # form subsections
   services/
-    simulationService.ts          # public facade: 52-line staged orchestrator + re-exports
+    simulationService.ts          # public facade: 55-line staged orchestrator + re-exports
     engine/                       # the engine, one module per stage (see docs/scoring-architecture.md):
-                                  #   gates, eligibility (rules E01-E18), candidates, effects, domains,
+                                  #   gates, eligibility (rules E01-E19), candidates, effects, domains,
                                   #   scoreModel (weights + adjustments as data), scoring, selection,
                                   #   explain, registry, intolerance, regimenUtils, drugFacts
     clinicalPredicates.ts         # shared predicates (valueUnknown, hasHistoricalHFrEF,
@@ -216,7 +219,7 @@ Implemented high-priority safeguards include:
   - lisinopril/enalapril/losartan/candesartan have no renal max-dose caps (valsartan 80 mg and ramipril caps kept); losartan 100 and 150 mg are targets
   - generic sacubitril/valsartan pricing (cash ~$60 with a discount card)
 - Rate-control rules (2026-11-10, `docs/medication-review-2026-11-10/verified-rate-control.md`):
-  - `facts.hr_continuation` (`hrContinuationAction` in `regimenUtils.ts`): HR below `reduce_below` on an established beta-blocker/ivabradine forces a ONE-STEP reduction via `forcedReduceNames` (exact next-lower strength on the full ladder, `forcedReduceExactStep`), withhold at the lowest dose; no up-titration below `no_uptitration_below`; skipped in a "Paced" rhythm; alert `BRADYCARDIA ON <DRUG>` from `gates.ts`. Beta-blockers: 55/60 (carvedilol 55 is the label's; the rest is engine policy). Ivabradine: 50/61 (label)
+  - `facts.hr_continuation` (`hrContinuationAction` in `regimenUtils.ts`): HR below `reduce_below` on an established beta-blocker/ivabradine forces a ONE-STEP reduction via `forcedReduceNames` (exact next-lower strength on the full ladder, `forcedReduceExactStep`), withhold at the lowest dose; no up-titration below `no_uptitration_below`; skipped in a "Paced" rhythm; alert `BRADYCARDIA ON <DRUG>` from `gates.ts`. Beta-blockers: reduce below 55 for carvedilol (label) and below 50 for metoprolol succinate and bisoprolol (2026 ESC S6), no up-titration below 60 (engine policy). Ivabradine: 50/61 (label)
   - beta-blocker NEW-start block is initiation-only (`bbStartBradycardiaCheck`): below HR 55 for carvedilol (label), below 50 for metoprolol succinate and bisoprolol (2026 ESC S6); the up-titration hold below 60 is engine policy; AV block 2/3 and sick sinus syndrome without a pacemaker (`SICK_SINUS` comorbidity) still force removal
   - carvedilol effect ratio capped at 25 mg bid; carvedilol/metoprolol/bisoprolol equal at target (lvef 9, NT-proBNP -22%, KCCQ 6, LVEDD -10%, structure 35); carvedilol hepatic CI only for unspecified B/C (B confirmed = caution); metoprolol has no hepatic CI; bisoprolol tiers 2.5/5/10 (1.25 dropped, US strengths)
   - ivabradine: label contraindications in `constants.ts`, exact start tier via `start_dose_for` (2.5 mg for conduction defect / amiodarone / digoxin, else 5), "maximally tolerated" beta-blocker in `candidates.ts` (`bbMaxTolerated`), HR >= 70 is initiation only (bonus kept while on the drug)
@@ -299,7 +302,7 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 353`):
+Current regression scope (the harness's printed count is authoritative — on 2026-11-12 `Passed: 353`):
 
 - 333 clinical scenarios + 20 structural checks (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a congested patient with a possible loop increase is shown one; below-target dose credit is graded; no displayed titrate-up more than doubles the total daily dose except the adjacent tier (`UP_TITRATION_MAX_DAILY_FACTOR`; sourced for RAAS/BB/MRA by ESC 2026 S4-S6/S8, engine policy for loops and others); a one-step titration always exists unless a rule blocks it)
 - safety invariants (dual-class prevention, score bounds, display floors)
@@ -334,7 +337,7 @@ verification (`verified-*.md`, with URLs) and the measured effect of each correc
 - **Starting versus continuing.** A threshold that blocks a NEW start must not remove a drug the
   patient already takes. Continuation rules are data on the entry: `facts.k_continuation` (MRAs:
   reduce one step at potassium 5.5-5.9, withhold at 6.0), `facts.hr_continuation` (ivabradine),
-  beta-blockers reduce one step below heart rate 55 and are removed only for high-grade AV block,
+  beta-blockers reduce one step below their heart-rate threshold (55 carvedilol, 50 metoprolol succinate and bisoprolol) and are removed only for high-grade AV block,
   sick sinus syndrome without a pacemaker, or bradycardia at the lowest dose.
 - **New starts use the label starting dose.** Declare `start_dose_for(patient)` (a ceiling) and, when
   the label gives one exact start, `facts.start_dose_exact`. Higher tiers are reached by titration.
@@ -352,6 +355,21 @@ verification (`verified-*.md`, with URLs) and the measured effect of each correc
   "assumption" in its code comment and in the evidence matrix. Do not present policy as evidence.
 - Unverified findings were NOT changed. They are listed for physician review in
   `docs/medication-review-2026-11-10/README.md`.
+
+### Adversarial review changes (2026-11-12)
+
+- **E19** (`eligibility.ts`): no NEW RAAS inhibitor or MRA while the entered baseline creatinine shows the "reduce" band (rise of 50% or more, or derived eGFR fall over 30%). Rules are E01-E19. E15's "already on an MRA" exemption applies to a within-class switch only while that MRA may continue (potassium below 5.5).
+- **Dose steps** (`candidates.ts`): the step cap also applies to combination strengths (sacubitril/valsartan 24/26 cannot go to 97/103; H/ISDN likewise). The always-kept next step is the smallest increase in total daily dose when the next strength at its usual frequency would more than double it (furosemide 80 mg once daily goes to 80 mg twice daily); see `comparableDailyDose` / `smallestStepAbove`.
+- **`structuralProblems()`**: every candidate is checked after the forced edits; a regimen with the same drug twice, two agents of one class group, or a short-course add-on without its oral loop is dropped.
+- **Lateral swaps**: outside the RAAS pool a swap is offered only when the current drug must go (contraindication, intolerance, allergy) or the loop-resistance rule fires. A drug withheld by a potassium, heart-rate or kidney rule is never swapped for a sibling; a contraindicated diuretic in a non-congested patient is stopped, not replaced.
+- **Diuretics** are not increased more than 1 kg below dry weight, or at or below dry weight with no congestion finding (`diureticHeldForNoCongestion`). `congestionFindingCount()` (`clinicalPredicates.ts`) counts edema once whatever the grade and ignores cool extremities (a perfusion sign); the decompensation rule, the volume score and the congestion gate all use it. The form allows one edema grade at a time.
+- **Class-wide cautions and CIs**: a loop or thiazide-type diuretic added, swapped in or increased with measured potassium below 3.5 carries a penalized caution (was metolazone only). Anuria is a contraindication check on all loops and chlorthalidone.
+- **Scoring**: the projected SBP 90/95 and HR below 50 bands read the LOWER of projected and entered value; penalized warnings already true of the current regimen (`baselineDangerWarnings`, `scoring.ts`) are charged to every option so none beats "no change" by cutting a drug; quadruple-therapy synergy is reduced-EF only; KCCQ is clamped to 0-100.
+- **Selection** (`selection.ts`): BP and HR display floors apply only when the regimen moves the value the wrong way from baseline (potassium floor stays absolute); the NO DISPLAY-SAFE alert names the floor; ties break alphabetically and projected SBP/HR/K+ are rounded to 2 decimals (the answer must not depend on typing order); in the over-budget fallback the safety floors come before the five cheapest and a 0-scored option is not shown merely for being cheap; the automatic IV iron add-on is dropped when it alone would exceed budget.
+- **Rescue binder**: patiromer is auto-added at its label starting dose only (`facts.rescue_role.max_rescue_dose` 8.4 g daily).
+- **Inputs** (`gates.ts` `auditInputs`): NaN, undefined or negative numbers become 0 ("not entered"); blank systolic BP, current weight or dry weight stops the run with a DATA REQUIRED alert naming the field; a duplicate current drug keeps the higher dose and says so. With heart rate not entered a beta-blocker or ivabradine is neither started nor increased.
+- **Allergies** (`allergy.ts`, `facts.allergy_aliases`): free text resolves to formulary drugs ignoring case and spacing, by generic, brand or class name; an entry matching nothing raises an ALLERGY NOTE and the form shows what each entry excludes. A new drug must add its brand names to `ALLERGY_ALIASES_BY_DRUG` in `constants.ts`. Pregnancy: a non-selective beta-blocker that cannot be switched is kept, never increased.
+- **UI**: Re-run obeys form validation; Copy and Print are disabled while results are stale; the results pane has its own error boundary; the low-output hint uses the engine's two-of-three rule; the potassium hint covers 5.2, 6.0 and 6.5.
 
 ## Development Rules of Thumb
 
