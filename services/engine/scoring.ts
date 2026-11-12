@@ -126,6 +126,12 @@ export function addsNewPotassiumRaisingClass(modSet: ModificationSet, patient: P
     return modSet.resulting_regimen.some(r => K_RAISING_CLASSES.has(r.med.drug_class) && !currentGroups.has(getMedicationClassGroup(r.med.drug_class)));
 }
 
+/** True when the resulting regimen contains a RAAS-pool or MRA/nsMRA drug whose class group is already on the patient's current regimen. */
+export function keepsCurrentPotassiumRaiser(modSet: ModificationSet, patient: Patient): boolean {
+    const currentGroups = new Set((patient.current_regimen ?? []).filter(r => K_RAISING_CLASSES.has(r.med.drug_class)).map(r => getMedicationClassGroup(r.med.drug_class)));
+    return modSet.resulting_regimen.some(r => K_RAISING_CLASSES.has(r.med.drug_class) && currentGroups.has(getMedicationClassGroup(r.med.drug_class)));
+}
+
 /**
  * Pre-simulation iron rescue -> simulate once -> reactive K+ binder rescue.
  *
@@ -186,7 +192,9 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
     if (sim.projectedPatient.potassium > 5.3 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder') && addsNewPotassiumRaisingClass(activeModSet, patient)) {
         return { activeModSet, sim, dropped: true };
     }
-    if (sim.projectedPatient.potassium > 5.3 && rescueBinders.length > 0 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder')) {
+    // The binder is attached ONLY to potassium-raising therapy the patient already takes (RAAS pool, MRA, nsMRA kept, up-titrated or swapped within the class). A candidate with
+    // no such drug on board (for example a new beta-blocker start, modeled with a small potassium effect) gets no binder and is scored on its own projected potassium.
+    if (sim.projectedPatient.potassium > 5.3 && rescueBinders.length > 0 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder') && keepsCurrentPotassiumRaiser(activeModSet, patient)) {
         const rescued = tryBinders(activeModSet);
         if (rescued) {
             sim = rescued.sim;

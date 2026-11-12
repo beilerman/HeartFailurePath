@@ -4,6 +4,7 @@ import { isProjectedSafetyClean } from '../services/engine/selection';
 import { getDoseTiers, dailyDose, doseProgressToTarget, isCongestedAboveDryWeight, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
 import { isAcutelyDecompensated } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
+import { getMedicationClassGroup } from '../services/engine/registry';
 import { UP_TITRATION_MAX_DAILY_FACTOR } from '../services/engine/thresholds';
 import { includesLoopIncrease } from '../services/engine/selection';
 import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary } from '../services/engine/candidates';
@@ -2420,9 +2421,10 @@ async function runVerification() {
                 if (scoredRegimens.length === 0) fail('no regimen produced');
                 if (t.includes('Naive RAAS Start Staged')) {
                     if (anyRegimenHasClass('ARNI') || anyRegimenHasClass('ACEi') || anyRegimenHasClass('ARB')) fail('a RAAS inhibitor was started at K+ 5.3');
-                    // Intent: no binder is co-started to ENABLE a new RAAS inhibitor or MRA. (2026-11-11 graded credit: a new carvedilol start can lead at K+ 5.3, and the reactive rescue then appends
-                    // a binder because carvedilol is modeled at +0.05 K+ - a rescue of the beta-blocker, not an enabler. Flagged in the final report.)
-                    if (scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'K+ Binder') && (r.modification_set?.modifications ?? []).some(m => m.action === 'add' && m.target && (RAAS_CLASSES.has(m.target.med.drug_class) || m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')))) fail('a binder was offered with nothing it may enable');
+                    // A binder may appear only beside a RAAS inhibitor or MRA that was ALREADY on board (rule: reactive rescue attaches only to current potassium-raising therapy).
+                    const onBoard = new Set((scenario.patient.current_regimen ?? []).filter(r => RAAS_CLASSES.has(r.med.drug_class) || r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA').map(r => getMedicationClassGroup(r.med.drug_class)));
+                    const isK = (c: string) => RAAS_CLASSES.has(c) || c === 'MRA' || c === 'nsMRA';
+                    if (scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'K+ Binder') && !r.regimen.some(m => isK(m.med.drug_class) && onBoard.has(getMedicationClassGroup(m.med.drug_class))))) fail('a binder was offered with nothing it may enable');
                     if (!raasMeds.every(n => e18.some(e => e.name === n))) fail('not every ACEi/ARB/ARNI is withheld by E18 at K+ 5.3');
                     const why = (e18[0]?.why ?? []).join(' ');
                     if (!/Tables S4\/S5/.test(why) || !/potassium supplements/.test(why) || !/salt substitutes/.test(why) || !/engine policy/.test(why)) fail('E18 details must cite ESC Tables S4/S5, say the staged start is engine policy and name the first steps');
@@ -4080,6 +4082,30 @@ async function runVerification() {
             console.log(`  [PASS] ${relevant} congested scenario x tier x mode runs with a possible loop increase all display one (${tagged} options were added by the congestion step; ${checked} runs examined).`);
             passed++;
         }
+    }
+
+    console.log('Checking structural invariant: a potassium binder is only attached beside a RAAS inhibitor or MRA that was already on board...');
+    {
+        const violations: string[] = [];
+        let withBinder = 0;
+        const isK = (c: string) => RAAS_CLASSES.has(c) || c === 'MRA' || c === 'nsMRA';
+        for (const scenario of SCENARIOS) {
+            for (const tier of ['cash', 'commercial', 'medicare'] as const) {
+                const pt = clonePatient(scenario.patient);
+                pt.insurance_tier = tier;
+                const out = generateAndScoreModifications(pt, availableFor(scenario.title), await getDrugPrices(formularyNames, tier));
+                const onBoardGroups = new Set((scenario.patient.current_regimen ?? []).filter(r => isK(r.med.drug_class)).map(r => getMedicationClassGroup(r.med.drug_class)));
+                for (const r of out.scoredRegimens) {
+                    if (!r.regimen.some(m => m.med.drug_class === 'K+ Binder')) continue;
+                    withBinder++;
+                    // A binder the patient already takes is not a rescue; only regimens whose binder is a NEW addition are checked.
+                    const added = (r.modification_set?.modifications ?? []).some(m => m.action === 'add' && m.target?.med.drug_class === 'K+ Binder');
+                    if (added && !r.regimen.some(m => isK(m.med.drug_class) && onBoardGroups.has(getMedicationClassGroup(m.med.drug_class)))) violations.push(`"${scenario.title}" [${tier}]: a binder was added with no RAAS inhibitor/MRA on board`);
+                }
+            }
+        }
+        if (violations.length > 0) { violations.slice(0, 10).forEach(v => console.error(`  [FAIL] ${v}`)); failed++; }
+        else { console.log(`  [PASS] ${withBinder} displayed regimens with a binder: every added binder sits beside a RAAS inhibitor/MRA already on board.`); passed++; }
     }
 
     console.log('Checking structural invariant: eligibility rule ids are unique/ascending and every exclusion carries one...');

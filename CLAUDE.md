@@ -13,7 +13,7 @@ npm run dev              # start Vite dev server (default 3000)
 npm run build            # production build
 npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
-                         #   (currently: Passed 352 on 2026-11-11; the printed count is authoritative)
+                         #   (currently: Passed 353 on 2026-11-11; the printed count is authoritative)
 npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
@@ -180,7 +180,7 @@ Implemented high-priority safeguards include:
 - Electrolyte safety:
   - hyperkalemic-emergency gate (6.0 alert and 6.5 alerts-only stop are ENGINE POLICY; a secondary source classes K+ > 6.0 as severe): baseline `K+ >= 6.0` fires a HYPERKALEMIC EMERGENCY alert (ECG and urgent repeat potassium; no RAAS/MRA start or increase at 6.0-6.4, a current MRA is withheld); `K+ >= 6.5` returns alerts only (parallel to the SBP < 90 gate); `K+ > 8.0` hard-stops as implausible
   - projected `K+ > 6.0` excluded from display
-  - K+ binder rescue (reactive, projected K+ above 5.3; attached only when every potassium-raising class in the candidate was already on the current regimen, so never a co-start with a new MRA or RAAS inhibitor; a candidate needing a binder for a NEW class is dropped) counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
+  - K+ binder rescue (reactive, projected K+ above 5.3; attached only when every potassium-raising class in the candidate was already on the current regimen AND the candidate keeps, up-titrates or within-class-swaps a RAAS-pool drug or MRA/nsMRA from the current regimen (`keepsCurrentPotassiumRaiser`; a candidate with none, e.g. a new beta-blocker start, gets no binder and is scored on its own projected potassium; 2026-11-11 final pass), so never a co-start with a new MRA or RAAS inhibitor; a candidate needing a binder for a NEW class is dropped) counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
 - Blank-data (sentinel) safety:
   - eGFR/creatinine or K+ of 0/blank = "not entered", never a value: it must never clear a safety gate AND never read as end-stage disease
   - blank renal data: current renal-gated meds are RETAINED (not force-removed); renal-gated new starts are excluded with reason "Renal data required — cannot assess renal safety (obtain BMP before initiation)"; candidates intensifying RAAS/MRA/SGLT2i carry a RENAL FUNCTION UNKNOWN warning + -15 penalty; renal-threshold warnings (eGFR<20 loop alert, Furoscix CKD caution, digoxin renal note) are suppressed
@@ -299,9 +299,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 352`):
+Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 353`):
 
-- 333 clinical scenarios + 19 structural checks (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a congested patient with a possible loop increase is shown one; below-target dose credit is graded; no displayed titrate-up more than doubles the total daily dose except the adjacent tier (`UP_TITRATION_MAX_DAILY_FACTOR`; sourced for RAAS/BB/MRA by ESC 2026 S4-S6/S8, engine policy for loops and others); a one-step titration always exists unless a rule blocks it)
+- 333 clinical scenarios + 20 structural checks (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a congested patient with a possible loop increase is shown one; below-target dose credit is graded; no displayed titrate-up more than doubles the total daily dose except the adjacent tier (`UP_TITRATION_MAX_DAILY_FACTOR`; sourced for RAAS/BB/MRA by ESC 2026 S4-S6/S8, engine policy for loops and others); a one-step titration always exists unless a rule blocks it)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
