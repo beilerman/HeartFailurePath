@@ -10,6 +10,7 @@ import { Patient, ScoredRegimen, ExcludedMedication, MonitoringPlanItem, Ranking
 import { generateAndScoreModifications } from './services/simulationService';
 import { getDrugPrices } from './services/pricingService';
 import { MEDICATION_FORMULARY } from './constants';
+import type { RunSnapshot } from './components/chartHeader';
 import { SCOPE_STATEMENT } from './components/rankingModeMeta';
 import { TableIcon, BookOpenIcon, QuestionMarkCircleIcon } from './components/icons';
 import { SCENARIOS, INITIAL_PATIENT, clonePatient } from './data/scenarios';
@@ -51,6 +52,7 @@ function App() {
     // Incremented per successful analysis so result cards remount (resetting per-card
     // disclosure/modal state) instead of positionally inheriting it across runs.
     const [runId, setRunId] = useState(0);
+    const [runSnapshot, setRunSnapshot] = useState<RunSnapshot | undefined>(undefined);
     const [simError, setSimError] = useState<string | null>(null);
     const [drugPrices, setDrugPrices] = useState<Record<string, number>>({});
     const [pricesLoading, setPricesLoading] = useState(true);
@@ -150,6 +152,7 @@ function App() {
             setMissingDataNotices(notices ?? []);
             setFollowUpCalendar(calendar ?? []);
             setRanking(rankingInfo);
+            setRunSnapshot({ ranAt: new Date().toISOString(), patient: clonePatient(patient) });
             setRunId(r => r + 1);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'An unexpected error occurred during analysis.';
@@ -296,6 +299,7 @@ function App() {
                                     missingDataNotices={missingDataNotices}
                                     followUpCalendar={followUpCalendar}
                                     ranking={ranking}
+                                    runSnapshot={runSnapshot}
                                 />
                                 </ErrorBoundary>
                             </div>

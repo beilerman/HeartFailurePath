@@ -19,6 +19,7 @@ export const DISPLAY_FLOORS = {
     minProjectedSbp: 85,         // projected SBP < 85 mmHg is hidden
     maxProjectedPotassium: 6.0,  // projected K+ > 6.0 mEq/L is hidden
     minProjectedPulse: 45,       // projected HR < 45 bpm is hidden
+    minProjectedPotassium: 3.0,  // projected K+ < 3.0 mEq/L is hidden when the regimen lowers it (usable since 2026-11-12: the projection no longer overstates a fall)
 } as const;
 
 /**
@@ -32,6 +33,7 @@ export function brokenDisplayFloors(r: ScoredRegimen, baseline: Patient): string
     const known = (v: number | undefined) => v !== undefined && !Number.isNaN(v) && v > 0;
     if (p.sbp < DISPLAY_FLOORS.minProjectedSbp && p.sbp < baseline.sbp) out.push('severe hypotension (projected systolic BP below 85)');
     if (p.potassium > DISPLAY_FLOORS.maxProjectedPotassium) out.push('severe hyperkalemia (projected potassium above 6.0)');
+    if (known(baseline.potassium) && p.potassium < DISPLAY_FLOORS.minProjectedPotassium && p.potassium < baseline.potassium) out.push('marked hypokalemia (projected potassium below 3.0)');
     if (known(baseline.pulse) && p.pulse < DISPLAY_FLOORS.minProjectedPulse && p.pulse < baseline.pulse) out.push('severe bradycardia (projected heart rate below 45)');
     return out;
 }

@@ -2,7 +2,7 @@
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
 import { isProjectedSafetyClean } from '../services/engine/selection';
 import { getDoseTiers, dailyDose, doseProgressToTarget, isCongestedAboveDryWeight, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
-import { isAcutelyDecompensated } from '../services/clinicalPredicates';
+import { isAcutelyDecompensated, derivedFields } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
 import { getMedicationClassGroup, isDiureticClass } from '../services/engine/registry';
 import { UP_TITRATION_MAX_DAILY_FACTOR } from '../services/engine/thresholds';
@@ -4259,6 +4259,13 @@ async function runVerification() {
         const rewarded = binders.filter(b => (b.special_features ?? []).some(f => f.points > 0 || (f.points_for_dose && f.points_for_dose(b.available_doses[0].strength) > 0))).map(b => b.name);
         if (binders.length === 0 || rewarded.length > 0) { console.error(`  [FAIL] binder(s) with a positive special-feature bonus: ${rewarded.join(', ') || '(no binder found)'}`); failed++; }
         else { console.log(`  [PASS] ${binders.length} binders, none with a positive evidence bonus.`); passed++; }
+    }
+
+    console.log('Checking structural invariant: every sample patient is what the form would run (eGFR and BMI are fixed points of the form derivation)...');
+    {
+        const drift = SCENARIOS.filter(sc => { const d = derivedFields(sc.patient); return d.egfr !== sc.patient.egfr || d.bmi !== sc.patient.bmi; }).map(sc => sc.title);
+        if (drift.length > 0) { console.error(`  [FAIL] ${drift.length} fixture(s) the form would change on load: ${drift.slice(0, 5).join('; ')}`); failed++; }
+        else { console.log(`  [PASS] ${SCENARIOS.length} fixtures load in the form unchanged.`); passed++; }
     }
 
     console.log(`\nVerification Complete.`);

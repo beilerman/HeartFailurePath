@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem, RankingInfo } from '../types';
 import { RecommendationCard } from './RecommendationCard';
+import { buildChartHeader, type RunSnapshot } from './chartHeader';
+import { RULESET_VERSION } from '../services/rulesetVersion';
 import { Disclosure } from './Disclosure';
 import { useEvidenceLink } from './EvidenceContext';
 import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
@@ -25,6 +27,8 @@ interface Props {
     missingDataNotices?: string[];
     followUpCalendar?: MonitoringPlanItem[];
     ranking?: RankingInfo;
+    /** Time and patient inputs captured when the analysis ran; printed in the copied note header. */
+    runSnapshot?: RunSnapshot;
 }
 
 const modIcon: Record<string, string> = { add: '+', titrate_up: '↑', titrate_down: '↓', swap: '⇄', remove: '−' };
@@ -78,7 +82,7 @@ const ExclusionList: React.FC<{ group: ExclusionGroup }> = ({ group }) => (
     <ul className="space-y-2">{group.entries.map((e, i) => <ExclusionEntryRow key={i} entry={e} />)}</ul>
 );
 
-export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runId = 0, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [], ranking }: Props) {
+export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runId = 0, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [], ranking, runSnapshot }: Props) {
     const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
     const regionRef = useRef<HTMLDivElement>(null);
 
@@ -97,7 +101,8 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
     const modeLines = rankingModeLines(ranking);
 
     const handleCopy = async () => {
-        const text = buildChartSummary({ results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications, ranking });
+        const body = buildChartSummary({ results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications, ranking });
+        const text = runSnapshot ? `${buildChartHeader(runSnapshot)}\n\n${body}` : `Rule-set version: ${RULESET_VERSION}\n\n${body}`;
         try {
             await navigator.clipboard.writeText(text);
             setCopyState('copied');
@@ -438,6 +443,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                     </div>
                 )}
             </section>
+            <p className="text-[11px] text-slate-500 text-right">Rule-set version {RULESET_VERSION}</p>
             </div>
         </div>
     );

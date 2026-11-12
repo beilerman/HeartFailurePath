@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import type { Patient, TestScenario } from '../types';
 import { Label, Select, REQUIRED_FIELDS } from './patient-form/Common';
 import { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_CEILING, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from '../services/simulationService';
-import { calculateCKDEPI } from '../services/clinicalPredicates';
+import { derivedFields } from '../services/clinicalPredicates';
 import { isLowOutputState } from '../services/engine/regimenUtils';
 import { RAAS_START_K_CAUTION } from '../services/engine/thresholds';
 import { DemographicsSection } from './patient-form/DemographicsSection';
@@ -33,25 +33,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     testScenarios, selectedScenario, onScenarioChange
 }) => {
 
-    // Auto-calculate eGFR whenever Age, Sex, or Creatinine changes
+    // eGFR and BMI are computed, not entered: one shared function (clinicalPredicates.derivedFields), which the sample-patient fixtures also satisfy.
     useEffect(() => {
-        const calculatedEgfr = calculateCKDEPI(patientData.creatinine, patientData.age, patientData.sex);
-        if (calculatedEgfr !== patientData.egfr) {
-            setPatientData(prev => ({ ...prev, egfr: calculatedEgfr }));
-        }
-    }, [patientData.creatinine, patientData.age, patientData.sex, setPatientData, patientData.egfr]);
-
-    // Auto-calculate BMI whenever Height or Weight changes
-    useEffect(() => {
-        const h = patientData.height_cm / 100; // Convert to meters
-        const w = patientData.volume_status.current_weight_kg;
-        if (h > 0 && w > 0) {
-            const calculatedBmi = Number((w / (h * h)).toFixed(1));
-            if (calculatedBmi !== patientData.bmi) {
-                setPatientData(prev => ({ ...prev, bmi: calculatedBmi }));
-            }
-        }
-    }, [patientData.volume_status.current_weight_kg, patientData.height_cm, setPatientData, patientData.bmi]);
+        const d = derivedFields(patientData);
+        if (d.egfr !== patientData.egfr || d.bmi !== patientData.bmi) setPatientData(prev => ({ ...prev, egfr: d.egfr, bmi: d.bmi }));
+    }, [patientData, setPatientData]);
 
     // --- 2a. Physiologic validation bounds ---
     // LVEF max 80 matches the engine hard-stop (validatePhysiologicBounds flags > 80 as implausible).

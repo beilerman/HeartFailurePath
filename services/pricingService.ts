@@ -196,7 +196,7 @@ const TIER_KEY_MAP: Record<InsuranceTier, keyof Pick<DrugPriceEntry, 'cash' | 'c
 };
 
 /**
- * Returns monthly drug costs for the requested insurance tier.
+ * Returns monthly drug costs for the requested insurance tier, never above the cash price.
  * @param medicationNames Optional list of medication names (defaults to all formulary drugs).
  * @param tier Insurance scenario: 'cash' | 'commercial' | 'medicare'. Defaults to 'commercial'.
  * @returns Record mapping medication name → monthly cost in USD.
@@ -213,7 +213,8 @@ export const getDrugPrices = (
         namesToFetch.forEach(name => {
             const entry = DRUG_PRICES[name];
             if (entry) {
-                prices[name] = entry[priceKey];
+                // A patient never pays more than the cash price: a plan copay above cash is capped at cash.
+                prices[name] = Math.min(entry[priceKey], entry.cash);
             } else {
                 // Fallback for unknown medications. A FORMULARY med landing here is a curation
                 // miss (it silently prices like a cheap generic) — the verify harness asserts

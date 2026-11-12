@@ -10,6 +10,15 @@ import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy
 import { HYPOKALEMIA_K_BELOW } from './thresholds';
 import { classifyPhenotype } from './domains';
 
+/**
+ * Potassium effect of changing one drug's contribution from `oldChange` to `newChange` (a dose change or a swap). The renal multiplier is a safety margin on a
+ * net RISE only; a net fall (dose reduction, swap to a weaker potassium-raiser) is projected at its plain size, so the projection never overstates a fall.
+ */
+function kPair(oldChange: number, newChange: number, renalRiskFactor: number): [number, number] {
+    const f = newChange > oldChange ? renalRiskFactor : 1;
+    return [oldChange > 0 ? oldChange * f : oldChange, newChange > 0 ? newChange * f : newChange];
+}
+
 /** A drug's heart-rate lowering as credited for THIS patient: digoxin's only counts in the rhythm its label data cover (AFib). */
 function hrDropFor(med: Medication, hrDrop: number, patient: Patient): number {
     const only = drugFacts(med).hr_effect_only_in_rhythm;
@@ -245,11 +254,9 @@ export function simulateModificationEffect(
             sbpDelta -= hemo.sbp_drop;
             dbpDelta -= hemo.sbp_drop * getDbpRatio(mod.source.med.drug_class);
             hrDelta -= hrDropFor(mod.source.med, hemo.hr_drop, currentPatient);
-            if (hemo.potassium_change > 0) {
-                kDelta -= (hemo.potassium_change * renalRiskFactor);
-            } else {
-                kDelta -= hemo.potassium_change;
-            }
+            // Removal takes away the drug's plain effect. The renal multiplier is a safety margin on potassium RISES only: applied to a removal it
+            // overstated the fall (stopping an MRA at eGFR below 30 projected about -1.2 mEq/L), which made the low side of the projection unusable.
+            kDelta -= hemo.potassium_change;
 
             rationale.push(`- ${mod.source.med.name}: ${mod.summary}`);
 
@@ -291,8 +298,7 @@ export function simulateModificationEffect(
             dbpDelta += (newHemo.sbp_drop - oldHemo.sbp_drop) * getDbpRatio(mod.target.med.drug_class);
             hrDelta += hrDropFor(mod.target.med, newHemo.hr_drop, currentPatient) - hrDropFor(mod.source.med, oldHemo.hr_drop, currentPatient);
 
-            const oldK = oldHemo.potassium_change > 0 ? oldHemo.potassium_change * renalRiskFactor : oldHemo.potassium_change;
-            const newK = newHemo.potassium_change > 0 ? newHemo.potassium_change * renalRiskFactor : newHemo.potassium_change;
+            const [oldK, newK] = kPair(oldHemo.potassium_change, newHemo.potassium_change, renalRiskFactor);
             kDelta += (newK - oldK);
 
             const arrow = mod.action === 'titrate_up' ? '↑' : '↓';
@@ -347,8 +353,7 @@ export function simulateModificationEffect(
             sbpDelta += (newHemo.sbp_drop - oldHemo.sbp_drop);
             hrDelta += hrDropFor(mod.target.med, newHemo.hr_drop, currentPatient) - hrDropFor(mod.source.med, oldHemo.hr_drop, currentPatient);
 
-            const oldK = oldHemo.potassium_change > 0 ? oldHemo.potassium_change * renalRiskFactor : oldHemo.potassium_change;
-            const newK = newHemo.potassium_change > 0 ? newHemo.potassium_change * renalRiskFactor : newHemo.potassium_change;
+            const [oldK, newK] = kPair(oldHemo.potassium_change, newHemo.potassium_change, renalRiskFactor);
             kDelta += (newK - oldK);
 
             rationale.push(`↔ ${mod.source.med.name} → ${mod.target.med.name}: ${mod.summary}`);

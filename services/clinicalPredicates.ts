@@ -127,3 +127,19 @@ export const calculateCKDEPI = (scr: number, age: number, sex: 'Male' | 'Female'
 
     return Math.round(egfr);
 };
+
+/** BMI from height and current weight, as the form shows it (one decimal); 0 when either is blank. */
+export const calculateBMI = (heightCm: number | undefined, weightKg: number | undefined): number => {
+    const h = (heightCm ?? 0) / 100, w = weightKg ?? 0;
+    return h > 0 && w > 0 ? Number((w / (h * h)).toFixed(1)) : 0;
+};
+
+/**
+ * The two fields the form computes rather than accepts: eGFR (from creatinine, age, sex) and BMI (from height and current weight). One function, used by the form
+ * and by the sample-patient fixtures, so a sample patient loaded in the browser is the patient the regression suite checked (adversarial review 2026-11-12:
+ * 314 of 333 fixtures carried an eGFR the form replaced on load). BMI keeps its entered value when height or weight is blank, as the form does.
+ */
+export function derivedFields(p: { creatinine: number; age: number; sex: 'Male' | 'Female'; height_cm: number; bmi: number; volume_status: { current_weight_kg: number } }): { egfr: number; bmi: number } {
+    const bmi = calculateBMI(p.height_cm, p.volume_status.current_weight_kg);
+    return { egfr: calculateCKDEPI(p.creatinine, p.age, p.sex), bmi: bmi > 0 ? bmi : p.bmi };
+}

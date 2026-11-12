@@ -1,6 +1,6 @@
 import { Patient, TestScenario, RegimenMed } from '../types';
 import { MEDICATION_FORMULARY } from '../constants';
-import { calculateCKDEPI } from '../services/clinicalPredicates';
+import { calculateCKDEPI, derivedFields } from '../services/clinicalPredicates';
 
 interface ScenarioMedSeed {
     name: string;
@@ -79,7 +79,7 @@ export const INITIAL_PATIENT: Patient = {
     care_priority: 'default'
 };
 
-export const SCENARIOS: TestScenario[] = [
+const AUTHORED_SCENARIOS: TestScenario[] = [
     { title: 'John Doe (Wet & Warm)', patient: INITIAL_PATIENT },
     { title: 'Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback)', patient: { ...INITIAL_PATIENT, max_affordable_cost: 1 } },
     {
@@ -3635,6 +3635,56 @@ export const SCENARIOS: TestScenario[] = [
         ];
     })(),
 ];
+
+/**
+ * Fixtures are authored by intent ("eGFR 28", "BMI 34"), but the form computes eGFR from creatinine/age/sex and BMI from height/weight. Until 2026-11-12 the
+ * authored creatinine and height did not agree with the authored eGFR and BMI, so a sample patient loaded in the browser ran with different numbers than the
+ * regression suite checked. Every fixture now passes through this one step: the creatinine (and height) is fitted to the authored eGFR (and BMI), then eGFR and
+ * BMI are set by the form's own function (clinicalPredicates.derivedFields). The baseline creatinine and BUN are scaled with the creatinine so the authored
+ * ratios (creatinine change from baseline, BUN/creatinine) are kept. A fixture with a deliberately blank creatinine, eGFR, age, height or weight is left as
+ * authored where the form would also leave it. `npm run verify` asserts every fixture is a fixed point of derivedFields.
+ */
+export function reconcileDerivedFields(patient: Patient): Patient {
+    const p: Patient = { ...patient, volume_status: { ...patient.volume_status } };
+    if (p.egfr > 0 && p.age > 0) {
+        // Closest two-decimal creatinine to the authored eGFR (CKD-EPI 2021 is monotonic in creatinine): bisection, then a local search over the rounding.
+        let lo = 0.2, hi = 20;
+        for (let i = 0; i < 60; i++) { const mid = (lo + hi) / 2; if (calculateCKDEPI(mid, p.age, p.sex) > p.egfr) lo = mid; else hi = mid; }
+        const base = Math.round(lo * 100) / 100;
+        let best = base, bestErr = Infinity;
+        for (let k = -6; k <= 6; k++) {
+            const c = Math.round((base + k / 100) * 100) / 100;
+            if (c <= 0) continue;
+            const err = Math.abs(calculateCKDEPI(c, p.age, p.sex) - p.egfr);
+            if (err < bestErr || (err === bestErr && Math.abs(c - (p.creatinine || base)) < Math.abs(best - (p.creatinine || base)))) { best = c; bestErr = err; }
+        }
+        const authored = p.creatinine;
+        if (!(authored > 0 && calculateCKDEPI(authored, p.age, p.sex) === p.egfr)) {
+            if (authored > 0) {
+                const f = best / authored;
+                if (p.baseline_creatinine !== undefined && p.baseline_creatinine > 0) p.baseline_creatinine = Math.round(p.baseline_creatinine * f * 100) / 100;
+                if (p.bun !== undefined && p.bun > 0) p.bun = Math.round(p.bun * f * 10) / 10;
+                p.creatinine = best;
+            } else if (authored === 0 || authored === undefined) {
+                // creatinine deliberately blank with an eGFR given: not reachable in the form; left as authored (counted by verify)
+            }
+        }
+    }
+    const w = p.volume_status.current_weight_kg;
+    if (p.bmi > 0 && w > 0 && p.height_cm > 0 && derivedFields(p).bmi !== p.bmi) {
+        const h = Math.round(100 * Math.sqrt(w / p.bmi));
+        // The whole-centimetre height whose BMI is closest to the authored one (a plausible adult height; otherwise the authored height stands and BMI follows it).
+        const fitted = [h, h - 1, h + 1, h - 2, h + 2].filter(c => c >= 140 && c <= 210)
+            .sort((a, b) => Math.abs(derivedFields({ ...p, height_cm: a }).bmi - p.bmi) - Math.abs(derivedFields({ ...p, height_cm: b }).bmi - p.bmi))[0];
+        if (fitted !== undefined) p.height_cm = fitted;
+    }
+    const d = derivedFields(p);
+    if (p.creatinine > 0 && p.age > 0) p.egfr = d.egfr;
+    p.bmi = d.bmi;
+    return p;
+}
+
+export const SCENARIOS: TestScenario[] = AUTHORED_SCENARIOS.map(sc => ({ ...sc, patient: reconcileDerivedFields(sc.patient) }));
 
 // The single clonePatient implementation lives in the engine (services/simulationService.ts)
 // and is re-exported here for existing import sites. The two previous copies had already
