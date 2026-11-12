@@ -4,6 +4,7 @@ import { isProjectedSafetyClean } from '../services/engine/selection';
 import { getDoseTiers, dailyDose, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
 import { isAcutelyDecompensated } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
+import { UP_TITRATION_MAX_DAILY_FACTOR } from '../services/engine/thresholds';
 import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary } from '../services/engine/candidates';
 import { simulateModificationEffect, patientChfEffects } from '../services/engine/effects';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
@@ -16,6 +17,7 @@ import path from 'node:path';
 
 const RAAS_CLASSES = new Set(['ARNI', 'ACEi', 'ARB']);
 const ASSERTION_TITLE_MARKERS = [
+    'Dose-Step Cap: Congested On Furosemide 40',
     'John Doe (Wet & Warm)',
     'Dry & Cold',
     'Hyperkalemia',
@@ -3050,6 +3052,13 @@ async function runVerification() {
                     const opts = (up.titratableUp ?? []).find((x: any) => x.current.med.name === 'Furosemide')?.options ?? [];
                     if (opts.length === 0 || opts.some((o: RegimenMed) => o.selected_frequency !== 'bid')) fail('Loop titration from 40 mg bid does not keep the twice-daily frequency');
                 }
+                if (t.includes('Dose-Step Cap: Congested On Furosemide 40')) {
+                    // Reproduction (2026-11-11): the over-budget fallback led with "Titrate Furosemide 40->160 mg bid" (40-80 mg/day to 320 mg/day in one visit).
+                    const loopUps = scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).filter(x => x.action === 'titrate_up' && x.source?.med.drug_class === 'Loop Diuretic' && x.target));
+                    if (loopUps.length === 0) fail('No loop-diuretic titrate-up displayed for a congested patient on furosemide 40 (check is vacuous)');
+                    if (loopUps.some(x => dailyDose(x.target!) > 2 * dailyDose(x.source!))) fail(`A loop up-titration more than doubles the daily dose: ${loopUps.map(x => x.summary).join(' | ')}`);
+                    if (!scoredRegimens[0]?.warnings.some(w => w.startsWith('BUDGET EXCEEDED'))) fail('Scenario no longer exercises the over-budget fallback (check is vacuous)');
+                }
                 if (t.includes('Furoscix Short-Course Add-On Not Swap')) {
                     if (mods.some(x => x.m.action === 'swap' && x.m.target?.med.name === FSX)) fail('Furoscix offered as a SWAP (a standing replacement; the label says not for chronic use)');
                     const withFsx = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === FSX));
@@ -3110,7 +3119,10 @@ async function runVerification() {
                 }
                 if (t.includes('Low eGFR Loop Response Note And Titration')) {
                     if (!monitoringPlan.some(m => /Loop diuretic response in advanced CKD/.test(m.test) && /higher doses are usually needed/.test(m.details))) fail('No low-eGFR higher-dose note for the loop');
-                    if (!mods.some(x => x.m.action === 'titrate_up' && x.m.source?.med.drug_class === 'Loop Diuretic')) fail('No loop up-titration candidate at eGFR 24');
+                    // Candidate level (2026-11-11 dose-step cap): the doubled step is generated, but it may now rank below other options and fall outside the displayed three.
+                    const loopUp = analyzeCurrentRegimen(P, MEDICATION_FORMULARY, MEDICATION_FORMULARY.flatMap(m => getDoseTiers(m, P))).titratableUp.find(x => x.current.med.drug_class === 'Loop Diuretic');
+                    if (!loopUp) fail('No loop up-titration candidate at eGFR 24');
+                    else if (!loopUp.options.some(o => dailyDose(o) === 2 * dailyDose(loopUp.current))) fail('The loop up-titration candidates at eGFR 24 do not include the doubled dose');
                 }
                 if (t.includes('Formulary Strengths And Badges')) {
                     const strengths = (n: string) => med(n).available_doses.map(d => Number(d.strength));
@@ -3979,6 +3991,43 @@ async function runVerification() {
     } else {
         console.log(`  [PASS] ${dailyMaxChecked} drug x regimen/tier checks, none above a declared maximum daily dose.`);
         passed++;
+    }
+
+    console.log('Checking structural invariant: no displayed titrate-up more than doubles the total daily dose (except the adjacent tier)...');
+    {
+        // Engine policy (ESC 2026 S4-S6/S8 "doubled at not less than 2-week intervals" for RAAS/BB/MRA; policy for every other class): UP_TITRATION_MAX_DAILY_FACTOR.
+        const violations: string[] = [];
+        const exceptions = new Set<string>();
+        let checked = 0;
+        for (const scenario of SCENARIOS) {
+            for (const tier of ['cash', 'commercial', 'medicare'] as const) {
+                const pt = clonePatient(scenario.patient);
+                pt.insurance_tier = tier;
+                const prices = await getDrugPrices(formularyNames, tier);
+                const out = generateAndScoreModifications(pt, availableFor(scenario.title), prices);
+                for (const r of out.scoredRegimens) {
+                    for (const m of r.modification_set?.modifications ?? []) {
+                        if (m.action !== 'titrate_up' || !m.source || !m.target) continue;
+                        const from = dailyDose(m.source), to = dailyDose(m.target);
+                        if (Number.isNaN(from) || Number.isNaN(to)) continue;
+                        checked++;
+                        if (to <= from * UP_TITRATION_MAX_DAILY_FACTOR + 1e-9) continue;
+                        const adj = adjacentTiers(m.source, pt).up;
+                        const key = `${m.source.med.name} ${m.source.dose.strength}${m.source.dose.unit} -> ${m.target.dose.strength}${m.target.dose.unit}`;
+                        if (adj && String(adj.dose.strength) === String(m.target.dose.strength)) exceptions.add(`${key} (adjacent tier)`);
+                        else violations.push(`"${scenario.title}" [${tier}]: ${m.summary} takes ${from} to ${to}/day (more than ${UP_TITRATION_MAX_DAILY_FACTOR}x, not the adjacent tier)`);
+                    }
+                }
+            }
+        }
+        if (violations.length > 0 || checked === 0) {
+            violations.slice(0, 10).forEach(v => console.error(`  [FAIL] ${v}`));
+            if (checked === 0) console.error('  [FAIL] no titrate-up was checked (vacuous)');
+            failed++;
+        } else {
+            console.log(`  [PASS] ${checked} displayed titrate-ups across scenario x tier runs, none above ${UP_TITRATION_MAX_DAILY_FACTOR}x the current daily dose except the adjacent tier (${exceptions.size} drug/tier pairs: ${[...exceptions].sort().join('; ') || 'none'}).`);
+            passed++;
+        }
     }
 
     console.log('Checking structural invariant: eligibility rule ids are unique/ascending and every exclusion carries one...');

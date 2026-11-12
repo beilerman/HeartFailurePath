@@ -93,3 +93,12 @@ export const ARNI_REDUCED_START_EGFR_BELOW = 60;
 
 /** Low-output markers (isLowOutputState needs at least two of the three, with LVEF below `lvefBelow`). */
 export const LOW_OUTPUT = { lvefBelow: 20, pulsePressureMax: 25, bunCrAbove: 20 } as const;
+
+/**
+ * An up-titration may at most DOUBLE the current total daily dose in one visit (the immediately next labeled tier is always kept, even when it is slightly
+ * more than double, e.g. a 12.5 -> 37.5 ladder). Sources: for RAAS inhibitors, beta-blockers and MRAs, 2026 ESC heart failure guideline supplementary tables
+ * S4-S6 and S8 ("doses are doubled at not less than 2-week intervals"). For loop diuretics (S7: "increase dose", no step size) and every other class this is
+ * ENGINE POLICY, not a sourced step size. Weekly GLP-1 agents keep their stricter facts.titrate_one_step rule. New starts (start_dose_for), swaps and
+ * forced reductions are not governed by this factor.
+ */
+export const UP_TITRATION_MAX_DAILY_FACTOR = 2;

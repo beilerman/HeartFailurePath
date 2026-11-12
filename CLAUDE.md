@@ -13,7 +13,7 @@ npm run dev              # start Vite dev server (default 3000)
 npm run build            # production build
 npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
-                         #   (currently: Passed 348 on 2026-11-11; the printed count is authoritative)
+                         #   (currently: Passed 350 on 2026-11-11; the printed count is authoritative)
 npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
@@ -299,9 +299,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 348`):
+Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 350`):
 
-- 332 clinical scenarios + 16 structural checks (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
+- 333 clinical scenarios + 17 structural checks (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; no displayed titrate-up more than doubles the total daily dose except the adjacent tier (`UP_TITRATION_MAX_DAILY_FACTOR`; sourced for RAAS/BB/MRA by ESC 2026 S4-S6/S8, engine policy for loops and others); a one-step titration always exists unless a rule blocks it)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
@@ -329,6 +329,7 @@ Read `docs/scoring-architecture.md` before changing the engine. Rules that keep 
 verification (`verified-*.md`, with URLs) and the measured effect of each correction
 (`changes-*.txt`). `docs/evidence-matrix.md` maps each rule to its source. Rules that came out of it:
 
+- **Up-titration is capped at double the total daily dose per visit** (`UP_TITRATION_MAX_DAILY_FACTOR`, `higherDoses` in `candidates.ts`; the adjacent tier is always kept). ESC 2026 S4-S6/S8 source it for RAAS/BB/MRA; for loops (S7, no step size) and other classes it is engine policy. Anything reading `titratableUp[].options[last]` gets the capped maximum, by intent.
 - **Starting versus continuing.** A threshold that blocks a NEW start must not remove a drug the
   patient already takes. Continuation rules are data on the entry: `facts.k_continuation` (MRAs:
   reduce one step at potassium 5.5-5.9, withhold at 6.0), `facts.hr_continuation` (ivabradine),

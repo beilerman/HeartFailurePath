@@ -81,6 +81,7 @@ export const INITIAL_PATIENT: Patient = {
 
 export const SCENARIOS: TestScenario[] = [
     { title: 'John Doe (Wet & Warm)', patient: INITIAL_PATIENT },
+    { title: 'Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback)', patient: { ...INITIAL_PATIENT, max_affordable_cost: 1 } },
     {
         title: 'Jane Smith (Dry & Cold)',
         patient: { ...INITIAL_PATIENT, sex: 'Female', height_cm: 162, bmi: 22.8, sbp: 92, dbp: 64, volume_status: { dry_weight_kg: 60, current_weight_kg: 60, exam_findings: new Set(['Cool Extremities']) }, nt_pro_bnp: 4500, lvef: 15, current_regimen: [] }

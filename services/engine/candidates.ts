@@ -6,6 +6,7 @@ import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
 import { isLoopDiureticResistant, adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication, MRA_POOL_CLASSES } from './intolerance';
 import { assessCreatinineChange } from './renalChange';
+import { UP_TITRATION_MAX_DAILY_FACTOR } from './thresholds';
 import { regimenSatisfiesPillar, classifyPhenotype, isImprovedEF } from './domains';
 
 export interface RegimenAnalysis {
@@ -229,6 +230,9 @@ export function analyzeCurrentRegimen(
             // which is NOT ascending — the compound add+titrate candidate previously picked a
             // middle/target tier while labeling it the maximal step).
             let higherDoses = withNeighbour(allTiers.filter(t => tierIdx(t) > currentIdx).map(t => carryFrequency(t, current, dailyCapFor(current.med, patient))), adjacent.up).filter(t => changesDaily(t, 1)).sort((a, b) => tierIdx(a) - tierIdx(b));
+            // Dose-step cap (UP_TITRATION_MAX_DAILY_FACTOR): one visit at most doubles the total daily dose; the immediate next tier is always kept.
+            const currentDaily = dailyDose(current);
+            higherDoses = higherDoses.filter((t, i) => i === 0 || Number.isNaN(currentDaily) || !(dailyDose(t) > currentDaily * UP_TITRATION_MAX_DAILY_FACTOR));
             // facts.titrate_one_step (weekly GLP-1 / GLP-1-GIP): only the NEXT labeled tier, never a jump past a step.
             if (drugFacts(current.med).titrate_one_step) higherDoses = higherDoses.slice(0, 1);
             if (higherDoses.length > 0 && !drugFacts(current.med).single_course_dose) {
