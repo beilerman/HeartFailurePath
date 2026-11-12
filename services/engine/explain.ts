@@ -162,6 +162,20 @@ export const MRA_POTASSIUM_STAGED_MONITORING: MonitoringPlanItem = {
     details: 'A new MRA is withheld while potassium is above 5.0 (2026 ESC guideline: caution at 5.0 or above; 2022 US guideline start criterion K below 5.0, secondary reproduction; Aldactone and Kerendia labels). Recheck potassium and start the MRA once it is 5.0 or lower. Potassium binders carry a Class 2b recommendation in the 2022 US guideline; the 2026 ESC guideline makes no recommendation for them.',
 };
 
+/** When rule E18 withheld a new RAAS inhibitor because potassium is above 5.2, say so on the RAAS GDMT gap (same pattern as the MRA gap). */
+export function annotateGdmtGapsWithRaasPotassium(gaps: string[], excludedMeds: ExcludedMedication[]): string[] {
+    const e18 = excludedMeds.find(m => m.rule_id === 'E18');
+    if (!e18) return gaps;
+    return gaps.map(g => g === PILLAR_LABELS['RAAS Inhibitor'] ? `${g} — not started: ${e18.reason.charAt(0).toLowerCase()}${e18.reason.slice(1)}` : g);
+}
+
+/** Monitoring item added when rule E18 fired (a new RAAS inhibitor was withheld because potassium is above 5.2). */
+export const RAAS_POTASSIUM_STAGED_MONITORING: MonitoringPlanItem = {
+    test: 'Repeat potassium; start RAAS inhibitor if 5.2 or lower',
+    timing: 'Before any RAAS inhibitor start',
+    details: 'A new ACE inhibitor, ARB or ARNI is withheld while potassium is above 5.2 (2026 ESC Supplementary Tables S4/S5: caution and specialist advice above 5.2; the engine applies it as a staged start). First stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes, then recheck potassium and start once it is 5.2 or lower. Potassium binders carry a Class 2b recommendation in the 2022 US guideline for hyperkalaemia that develops while on a RAAS inhibitor; the 2026 ESC guideline makes no recommendation for them, so the tool does not start a RAAS inhibitor together with a binder.',
+};
+
 export function buildMissingDataNotices(patient: Patient): string[] {
     const notices: string[] = [];
     if (patient.lvedd === undefined && patient.lavi === undefined) {
@@ -357,6 +371,7 @@ export function assembleOutput(
         monitoringPlan: [
             ...(topPick.monitoring_plan || []),
             ...(excludedMeds.some(m => m.rule_id === 'E15') ? [MRA_POTASSIUM_STAGED_MONITORING] : []),
+            ...(excludedMeds.some(m => m.rule_id === 'E18') ? [RAAS_POTASSIUM_STAGED_MONITORING] : []),
         ],
         gdmtGaps,
         eligibleAdjuncts,

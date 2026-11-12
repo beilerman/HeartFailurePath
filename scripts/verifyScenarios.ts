@@ -137,7 +137,8 @@ const ASSERTION_TITLE_MARKERS = [
     'ESC26-Table11',
     'ESC26-Diuretic',
     'ESC26-Renal',
-    'ESC26-Alerts'
+    'ESC26-Alerts',
+    'ESC26-RAAS-Start'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -339,6 +340,19 @@ async function runVerification() {
             if (mraStartedAbove5) {
                 failures.push('A new MRA was started above K+ 5.0 (rule E15: staged, never co-started with a binder)');
                 scenarioPassed = false;
+            }
+            // Global safety invariants (every scenario; rule E18 and the reactive-only binder, 2026-11-11): (1) a binder is never part of a regimen that ADDS a potassium-raising class (RAAS pool, MRA,
+            // nsMRA) the patient was not already taking; (2) a NEW RAAS inhibitor (patient on none) is never started above potassium 5.2.
+            {
+                const kClasses = new Set(['ACEi', 'ARB', 'ARNI', 'MRA', 'nsMRA']);
+                const poolOf = (c: string) => (c === 'MRA' || c === 'nsMRA') ? 'MRA' : 'RAAS';
+                const currentPools = new Set((scenario.patient.current_regimen ?? []).filter(r => kClasses.has(r.med.drug_class)).map(r => poolOf(r.med.drug_class)));
+                const newKClassWithBinder = scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'K+ Binder')
+                    && r.regimen.some(m => kClasses.has(m.med.drug_class) && !currentPools.has(poolOf(m.med.drug_class))));
+                if (newKClassWithBinder) { failures.push('A K+ binder accompanies a NEW potassium-raising class (RAAS/MRA); the rescue is reactive to existing therapy only'); scenarioPassed = false; }
+                const naiveOnRaas = !currentPools.has('RAAS');
+                const newRaasAbove52 = naiveOnRaas && scenario.patient.potassium > 5.2 && scoredRegimens.some(r => r.regimen.some(m => ['ACEi', 'ARB', 'ARNI'].includes(m.med.drug_class)));
+                if (newRaasAbove52) { failures.push('A new RAAS inhibitor was started above K+ 5.2 (rule E18)'); scenarioPassed = false; }
             }
             // Global invariant (monitoring timings, verified-clinical-decisions-2026-11-11.md rows 6a, 6b): a displayed regimen that starts or increases an MRA carries the
             // "within 1 week, and about 4 weeks" laboratory item; one that starts or increases an ACEi/ARB/ARNI carries "1-2 weeks".
@@ -2334,7 +2348,7 @@ async function runVerification() {
                     if (excludedMedications.find(e => e.name === 'Lisinopril')?.rule_id !== 'E13') fail('lisinopril not excluded by E13 for a new start above 5.4');
                 }
                 if (t.includes('Allowed Creatinine Text')) {
-                    if (!['ARNI', 'ACEi', 'ARB'].some(c => anyRegimenHasClass(c))) fail('a RAAS inhibitor start at K+ 5.3 must be offered');
+                    if (!['ARNI', 'ACEi', 'ARB'].some(c => anyRegimenHasClass(c))) fail('a RAAS inhibitor start at K+ 5.1 must be offered (E18 withholds only above 5.2; at 5.2 the modeled ARNI/ACEi rise projects above 5.3 and the candidate is dropped, as before)');
                     const text = (monitoringPlan ?? []).map(m => `${m.test} ${m.details}`).join(' | ');
                     if (!text.includes('under 50%') || /more than 30%|rises more than 30/.test(text)) fail('creatinine guidance must use the 50% rule, not 30%');
                     if (!/early eGFR dip/.test(text)) fail('monitoring text must say a transient early eGFR dip should not prompt stopping');
@@ -2391,6 +2405,44 @@ async function runVerification() {
                     if (!raasAlert) fail('the eGFR-below-20 RAAS alert is missing');
                     else if (!/new fall/.test(raasAlert) || !/stable at this level, continue with close monitoring/.test(raasAlert) || !/no baseline value/.test(raasAlert)) fail('the alert must state both readings (new fall: stop and seek specialist advice; stable: continue with close monitoring) and the missing baseline');
                 } else if (raasAlert) fail('the eGFR-below-20 alert fired at eGFR 22 or with a blank eGFR');
+            }
+
+            // 94k. New RAAS inhibitor start above potassium 5.2 is staged (E18); a binder never enables a new potassium-raising class; reactive rescue of existing therapy stays.
+            if (scenario.title.includes('ESC26-RAAS-Start')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const raasMeds = ['Sacubitril/Valsartan (Entresto)', 'Lisinopril', 'Enalapril', 'Ramipril', 'Captopril', 'Valsartan', 'Candesartan', 'Losartan'];
+                const e18 = excludedMedications.filter(e => e.rule_id === 'E18');
+                if (scoredRegimens.length === 0) fail('no regimen produced');
+                if (t.includes('Naive RAAS Start Staged')) {
+                    if (anyRegimenHasClass('ARNI') || anyRegimenHasClass('ACEi') || anyRegimenHasClass('ARB')) fail('a RAAS inhibitor was started at K+ 5.3');
+                    if (anyRegimenHasClass('K+ Binder')) fail('a binder was offered with nothing it may enable');
+                    if (!raasMeds.every(n => e18.some(e => e.name === n))) fail('not every ACEi/ARB/ARNI is withheld by E18 at K+ 5.3');
+                    const why = (e18[0]?.why ?? []).join(' ');
+                    if (!/Tables S4\/S5/.test(why) || !/potassium supplements/.test(why) || !/salt substitutes/.test(why) || !/engine policy/.test(why)) fail('E18 details must cite ESC Tables S4/S5, say the staged start is engine policy and name the first steps');
+                    if (!e18[0]?.reason.includes('above 5.2: recheck and start once it is 5.2 or lower')) fail('E18 reason text wrong');
+                    if (!anyRegimenContainsAnyClass('Beta Blocker')) fail('a beta-blocker must still be offered');
+                    if (!anyRegimenContainsAnyClass('SGLT2i')) fail('an SGLT2 inhibitor must still be offered');
+                    if (!(gdmtGaps ?? []).some(g => g.startsWith('RAAS inhibitor') && g.includes('above 5.2'))) fail('the RAAS GDMT gap does not state the potassium reason');
+                    if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start RAAS inhibitor if 5.2 or lower')) fail('monitoring plan lacks "repeat potassium; start RAAS inhibitor if 5.2 or lower"');
+                }
+                if (t.includes('Naive RAAS Start Offered')) {
+                    if (!(anyRegimenHasClass('ARNI') || anyRegimenHasClass('ACEi') || anyRegimenHasClass('ARB'))) fail('a RAAS inhibitor start must be offered at K+ 5.1');
+                    if (e18.length > 0) fail('E18 fired at K+ 5.1');
+                    if ((monitoringPlan ?? []).some(m => m.test.startsWith('Repeat potassium; start RAAS'))) fail('the staged-start monitoring item appears although E18 did not fire');
+                }
+                if (t.includes('Not Staged By E18') && e18.length > 0) fail('E18 fired at K+ 5.2 (the rule is above 5.2)');
+                if (t.includes('No MRA Binder Co-Start')) {
+                    if (scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'K+ Binder'))) fail('a binder accompanies a new start at K+ 5.0');
+                }
+                if (t.includes('On Lisinopril Kept, Not Staged')) {
+                    if (e18.length > 0) fail('E18 withheld a RAAS inhibitor for a patient already on lisinopril');
+                    if (!anyRegimenHasMed('Lisinopril')) fail('lisinopril on board must be kept at K+ 5.3');
+                }
+                if (t.includes('Binder Rescue Of Existing Therapy Kept')) {
+                    if (e18.length > 0) fail('E18 fired for a patient already on a RAAS inhibitor');
+                    if (!scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'K+ Binder') && r.regimen.some(m => ['ARNI', 'ACEi', 'ARB'].includes(m.med.drug_class)))) fail('the reactive binder rescue of an existing RAAS inhibitor must still be possible at K+ 5.4');
+                }
             }
 
             // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,

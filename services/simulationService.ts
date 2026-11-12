@@ -5,7 +5,7 @@ import { auditInputs, raiseClinicalAlerts, checkSafetyHardStops } from './engine
 import { analyzeCurrentRegimen, generateCandidateModifications } from './engine/candidates';
 import { buildScoringContext, scoreCandidates, intensifiesRaasOrMra, labPrerequisiteBlank } from './engine/scoring';
 import { selectWithRanking } from './engine/selection';
-import { buildEligibleAdjuncts, assembleOutput, annotateGdmtGapsWithMraPotassium } from './engine/explain';
+import { buildEligibleAdjuncts, assembleOutput, annotateGdmtGapsWithMraPotassium, annotateGdmtGapsWithRaasPotassium } from './engine/explain';
 
 // Public facade: every symbol this module exported before the phase-4 split is re-exported here,
 // so nothing outside services/ needs an import change.
@@ -71,7 +71,7 @@ export function generateAndScoreModifications(
     const { formulary, excludedMeds, intolerancePolicy, allBBExcluded } =
         runEligibilityStage(patient, dataAudit.unknownRenal, availableMedNames, clinicalAlerts);
 
-    gdmtGaps = annotateGdmtGapsWithMraPotassium(gdmtGaps, excludedMeds);
+    gdmtGaps = annotateGdmtGapsWithRaasPotassium(annotateGdmtGapsWithMraPotassium(gdmtGaps, excludedMeds), excludedMeds);
 
     // 5. Enumerate: dose tiers -> analyze the current regimen -> candidate modifications (add/titrate/swap/remove/keep).
     const medTiers = formulary.flatMap(m => getDoseTiers(m, patient));

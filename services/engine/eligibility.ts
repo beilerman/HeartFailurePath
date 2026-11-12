@@ -28,7 +28,7 @@ import { RAAS_CLASSES } from './registry';
 import { valueUnknown } from '../clinicalPredicates';
 import { drugFacts } from './drugFacts';
 import { contraindicationReasons } from './contraindications';
-import { MRA_START_K_CEILING } from './thresholds';
+import { MRA_START_K_CEILING, RAAS_START_K_CAUTION } from './thresholds';
 
 /** Everything the rules need, computed once per patient (not per drug). */
 export interface EligibilityContext {
@@ -256,6 +256,23 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             ? 'Pregnancy: only a beta-1-selective beta-blocker (metoprolol succinate, bisoprolol) is newly started' : null,
         details: () => [
             '2026 ESC heart failure guideline (Class I, level C): in pregnancy switch non-selective beta-blockers to beta-1-selective ones (metoprolol, bisoprolol)',
+        ],
+    },
+    {
+        id: 'E18', name: 'New RAAS inhibitor start above potassium 5.2 is staged',
+        summary: 'A NEW ACE inhibitor, ARB or ARNI start (patient on none of them) at potassium above 5.2 is withheld, with or without a potassium binder: recheck potassium and start once it is 5.2 or lower. A swap within the RAAS pool is not a new start and is governed by the existing rules.',
+        // Decision 2026-11-11, parallel to E15. PRIMARY: 2026 ESC heart failure guideline Supplementary Tables S4/S5 (esc-2026-reading-notes.md): potassium above 5.2 is a
+        // caution / seek-specialist-advice threshold for starting an ACE inhibitor, ARB or ARNI; the guideline makes no recommendation for potassium binders. The 2022 US
+        // guideline gives binders Class 2b for patients who develop hyperkalaemia while ON a RAAS inhibitor (secondary), not for enabling a start. Treating the caution as a
+        // staged start (recheck, then start) is ENGINE POLICY. Initiation only: a patient already on any ACEi/ARB/ARNI is unaffected. Above RAAS_START_K_MAX (5.4) rule E13
+        // (clinical contraindication, earlier in the list) still reports the block. Placed after E17 to keep ids ascending.
+        evaluate: (ctx, med) => RAAS_CLASSES.has(med.drug_class)
+            && ctx.patient.potassium > RAAS_START_K_CAUTION
+            && !(ctx.patient.current_regimen ?? []).some(r => RAAS_CLASSES.has(r.med.drug_class))
+            ? `Potassium ${ctx.patient.potassium.toFixed(1)} is above 5.2: recheck and start once it is 5.2 or lower` : null,
+        details: (ctx) => [
+            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above ${RAAS_START_K_CAUTION.toFixed(1)}, the 2026 ESC caution threshold for starting an ACE inhibitor, ARB or ARNI (Supplementary Tables S4/S5: seek specialist advice). The engine applies it as a staged start (engine policy). First steps: stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes, then repeat potassium and start once it is ${RAAS_START_K_CAUTION.toFixed(1)} or lower`,
+            'Potassium binders carry a Class 2b recommendation in the 2022 US guideline for hyperkalaemia that develops while on a RAAS inhibitor (secondary source); the 2026 ESC guideline makes no recommendation for them. The tool does not start a RAAS inhibitor together with a binder',
         ],
     },
 ];

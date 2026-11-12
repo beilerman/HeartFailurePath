@@ -3412,7 +3412,33 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'ESC26-RAAS-K K+ 6.1 Lisinopril And MRA Stopped', patient: { ...base, potassium: 6.1,
                 current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 10, freq: 'qd' }, { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
             { title: 'ESC26-RAAS-K K+ 5.5 New RAAS Start Blocked', patient: { ...base, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
-            { title: 'ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text', patient: { ...base, potassium: 5.3, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text', patient: { ...base, potassium: 5.1, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+        ];
+    })(),
+
+    // ===== New RAAS inhibitor start above potassium 5.2 is staged (rule E18) and a potassium binder never enables a NEW potassium-raising class (2026 ESC S4/S5; 2022 US binder Class 2b is for hyperkalaemia on existing therapy) =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 64, sex: 'Male' as const, sbp: 128, dbp: 78, pulse: 72, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 60, nt_pro_bnp: 1100, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 60, creatinine: 1.2, bun: 20, potassium: 5.3,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            ever_lvef_le_40: 'yes' as const,
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const onLis = buildCurrentRegimen([{ name: 'Lisinopril', strength: 10, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]);
+        return [
+            { title: 'ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder', patient: { ...base, current_regimen: [] } },
+            { title: 'ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered', patient: { ...base, potassium: 5.1, current_regimen: [] } },
+            { title: 'ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18', patient: { ...base, potassium: 5.2, current_regimen: [] } },
+            { title: 'ESC26-RAAS-Start K+ 5.0 Naive No MRA Binder Co-Start', patient: { ...base, potassium: 5.0, current_regimen: [] } },
+            { title: 'ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged', patient: { ...base, current_regimen: onLis } },
+            { title: 'ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept', patient: { ...base, potassium: 5.4, current_regimen: onLis } },
         ];
     })(),
 

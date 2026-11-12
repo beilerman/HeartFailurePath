@@ -13,7 +13,7 @@ import {
 } from './scoreModel';
 import { drugFacts } from './drugFacts';
 import { ivIronCreditTier } from '../clinicalPredicates';
-import { RAAS_CLASSES, MRA_POOL_CLASSES, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES } from './registry';
+import { RAAS_CLASSES, MRA_POOL_CLASSES, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES, getMedicationClassGroup } from './registry';
 import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, isTargetDoseForPatient, restrictToStartTiers } from './regimenUtils';
 import { calculateAdherenceScore, calculateCostScore, calculateFunctionalScore, calculateGuidelineConcordanceScore, calculateNeurohormonalScore, calculateStructureScore, calculateVolumeScore, classifyPhenotype, describeConcordance, nsMraFillsMraSlot, Phenotype } from './domains';
 import { simulateModificationEffect } from './effects';
@@ -118,6 +118,13 @@ export function buildScoringContext(
     };
 }
 
+/** Classes that raise potassium and so can make a binder rescue necessary: the RAAS pool and both MRA classes. */
+const K_RAISING_CLASSES: ReadonlySet<string> = new Set([...RAAS_CLASSES, ...MRA_POOL_CLASSES]);
+export function addsNewPotassiumRaisingClass(modSet: ModificationSet, patient: Patient): boolean {
+    const currentGroups = new Set((patient.current_regimen ?? []).filter(r => K_RAISING_CLASSES.has(r.med.drug_class)).map(r => getMedicationClassGroup(r.med.drug_class)));
+    return modSet.resulting_regimen.some(r => K_RAISING_CLASSES.has(r.med.drug_class) && !currentGroups.has(getMedicationClassGroup(r.med.drug_class)));
+}
+
 /**
  * Pre-simulation iron rescue -> simulate once -> reactive K+ binder rescue.
  *
@@ -126,8 +133,14 @@ export function buildScoringContext(
  * potassium 5.0: rule E15 withholds that start regardless of binder availability (decision 2026-11-11,
  * verified-clinical-decisions-2026-11-11.md rows 1, 3, 4). Note it still fires for a new MRA whose projected potassium
  * (baseline at or below 5.0 plus the modeled rise) exceeds 5.3.
+ *
+ * The rescue is REACTIVE ONLY (decision 2026-11-11): it may be attached only when every potassium-raising drug in the candidate (RAAS pool, MRA, nsMRA) was ALREADY
+ * on the patient's current regimen in that class (kept, up-titrated or swapped within the class). This follows the 2022 US guideline wording (binders, Class 2b, for
+ * hyperkalaemia that develops on existing therapy; secondary source) and the 2026 ESC guideline's absence of any binder recommendation. A candidate that adds a NEW
+ * potassium-raising class and projects potassium above 5.3 is returned with `dropped: true` (a binder must not be what makes the new class acceptable) and the
+ * caller discards it. E15/E18 already stop most such starts at baseline; this covers a start whose baseline is below the ceiling but whose modeled rise is not.
  */
-export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContext): { activeModSet: ModificationSet; sim: Simulation } {
+export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContext): { activeModSet: ModificationSet; sim: Simulation; dropped?: true } {
     const { patient, prices, intolerancePolicy, rescueBinders, ivIron, ironDeficient } = ctx;
     // Iron rescue depends only on patient-level invariants and the candidate's contents, so it is appended BEFORE
     // the single simulation (previously every candidate was simulated twice for iron-deficient patients).
@@ -169,6 +182,9 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
 
     // H7+H8: Binder rescue: if K+ > 5.3, try adding a K+ binder (Patiromer preferred, then Lokelma, lowest effective dose)
     // H8 fix: Use activeModSet (which includes iron if appended) not original modSet
+    if (sim.projectedPatient.potassium > 5.3 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder') && addsNewPotassiumRaisingClass(activeModSet, patient)) {
+        return { activeModSet, sim, dropped: true };
+    }
     if (sim.projectedPatient.potassium > 5.3 && rescueBinders.length > 0 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder')) {
         const rescued = tryBinders(activeModSet);
         if (rescued) {
@@ -444,7 +460,8 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
         }
 
         // Rescue appends + the single simulation (+ reactive K+ binder re-simulation), then the new-class cap.
-        const { activeModSet, sim } = applyRescueAdditions(modSet, ctx);
+        const { activeModSet, sim, dropped } = applyRescueAdditions(modSet, ctx);
+        if (dropped) return; // a new potassium-raising class that would need a binder to stay in range is not offered
 
         if (countNewClassGroups(activeModSet.resulting_regimen, patient.current_regimen || []) > maxNewPerVisit) {
             return;

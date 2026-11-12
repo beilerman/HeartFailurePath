@@ -44,6 +44,13 @@ export const EGFR_FLOOR_FOR_CREATININE_RISE = 15;
  */
 export const RAAS_EGFR_REVIEW_BELOW = 20;
 
+/**
+ * Potassium above this is the ESC "caution" threshold for STARTING an ACE inhibitor, ARB or ARNI (2026 ESC Supplementary Tables S4/S5: seek specialist advice if potassium
+ * is above 5.2). Withholding a NEW RAAS start above it (rule E18) and staging the start is ENGINE POLICY: the guideline says caution, not "do not start". Applies only
+ * when the patient is on no ACE inhibitor, ARB or ARNI; a swap within the pool is not a new start. The block above RAAS_START_K_MAX (5.4) is unchanged.
+ */
+export const RAAS_START_K_CAUTION = 5.2;
+
 /** Potassium below this is hypokalemia (digoxin contraindication; projected-K+ warning). */
 export const HYPOKALEMIA_K_BELOW = 3.5;
 
