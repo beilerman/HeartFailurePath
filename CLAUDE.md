@@ -13,7 +13,7 @@ npm run dev              # start Vite dev server (default 3000)
 npm run build            # production build
 npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
-                         #   (currently: Passed 263 on 2026-11-11 = 248 scenarios + 15 structural invariants; the printed count is authoritative)
+                         #   (currently: Passed 274 on 2026-11-11; the printed count is authoritative)
 npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
@@ -59,7 +59,7 @@ HeartFailurePath/
   services/
     simulationService.ts          # public facade: 52-line staged orchestrator + re-exports
     engine/                       # the engine, one module per stage (see docs/scoring-architecture.md):
-                                  #   gates, eligibility (rules E01-E16), candidates, effects, domains,
+                                  #   gates, eligibility (rules E01-E17), candidates, effects, domains,
                                   #   scoreModel (weights + adjustments as data), scoring, selection,
                                   #   explain, registry, intolerance, regimenUtils, drugFacts
     clinicalPredicates.ts         # shared predicates (valueUnknown, hasHistoricalHFrEF,
@@ -175,9 +175,9 @@ Implemented high-priority safeguards include:
   - projected `SBP < 85` excluded from display
   - projected `HR < 45` excluded from display
 - Electrolyte safety:
-  - hyperkalemic-emergency gate: baseline `K+ >= 6.0` fires a HYPERKALEMIC EMERGENCY alert (ECG, urgent treatment); `K+ >= 6.5` returns alerts only (parallel to the SBP < 90 gate); `K+ > 8.0` hard-stops as implausible
+  - hyperkalemic-emergency gate (6.0 alert and 6.5 alerts-only stop are ENGINE POLICY; a secondary source classes K+ > 6.0 as severe): baseline `K+ >= 6.0` fires a HYPERKALEMIC EMERGENCY alert (ECG and urgent repeat potassium; no RAAS/MRA start or increase at 6.0-6.4, a current MRA is withheld); `K+ >= 6.5` returns alerts only (parallel to the SBP < 90 gate); `K+ > 8.0` hard-stops as implausible
   - projected `K+ > 6.0` excluded from display
-  - K+ binder rescue counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
+  - K+ binder rescue (reactive, projected K+ above 5.3; never a co-start with a new MRA) counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
 - Blank-data (sentinel) safety:
   - eGFR/creatinine or K+ of 0/blank = "not entered", never a value: it must never clear a safety gate AND never read as end-stage disease
   - blank renal data: current renal-gated meds are RETAINED (not force-removed); renal-gated new starts are excluded with reason "Renal data required — cannot assess renal safety (obtain BMP before initiation)"; candidates intensifying RAAS/MRA/SGLT2i carry a RENAL FUNCTION UNKNOWN warning + -15 penalty; renal-threshold warnings (eGFR<20 loop alert, Furoscix CKD caution, digoxin renal note) are suppressed
@@ -187,6 +187,7 @@ Implemented high-priority safeguards include:
 - Pregnancy safety:
   - excludes RAAS classes, MRAs/nsMRA, SGLT2i, Vericiguat (FDA boxed warning — embryo-fetal toxicity), Ivabradine (fetal harm), and GLP-1 therapy
   - H/ISDN deliberately remains pregnancy-appropriate (the RAAS alternative for pregnant HFrEF)
+  - beta-blockers (rule E17, 2026 ESC Class I C): a NEW start is limited to beta-1-selective agents (`facts.beta1_selective`); a non-selective one already on board (carvedilol) gets a switch offered with the reason, never a bare removal
 - Initiation-vs-continuation carve-outs (the `alreadyOn*` pattern):
   - Vericiguat: VICTORIA enrollment criteria (NT-proBNP >= 1000 sinus / >= 1600 AFib, NYHA II-IV, recent worsening, LVEF < 45) gate INITIATION only — a patient already on vericiguat is never force-removed for improved markers; pregnancy still forces removal
   - GLP-1: `BMI >= 30` (both agents), LVEF >= 45 (semaglutide) / >= 50 (tirzepatide) gate INITIATION only; continuation is blocked only by true safety CIs (pregnancy, MTC/MEN2) — weight-loss success never forces removal
@@ -200,7 +201,7 @@ Implemented high-priority safeguards include:
   - forces existing beta-blocker dose REDUCTION only with hypoperfusion ("cold-and-wet": cool extremities, SBP < 90, or pulse pressure ≤ 25) — the cut is ONE dose step down (~50%, e.g. carvedilol 25 → 12.5), not a jump to the lowest tier; warm-and-wet continues the beta-blocker and diureses
   - safe guideline ADDITIONS (esp. SGLT2i — beneficial in acute HF, EMPULSE/SOLOIST) are force-injected alongside any mandated BB reduction so decompensation never suppresses gap-closing therapy
 - MRA potassium and interaction rules (2026-11-10, `docs/medication-review-2026-11-10/verified-mra-binders.md`):
-  - new MRA starts: K+ > 5.5 is a contraindication (initiation only, `mraStartPotassiumCheck`); K+ 5.0-5.5 only with a K+ binder in the same option (DIAMOND pathway) plus the "start the binder first" sequencing warning; rule E15 withholds a new MRA above K+ 5.0 when no binder can be offered
+  - new MRA starts: K+ > 5.5 is a contraindication (initiation only, `mraStartPotassiumCheck`); rule E15 withholds a new MRA above K+ 5.0 with or without a binder (decision 2026-11-11: recheck, start once K+ is 5.0 or lower; the DIAMOND binder co-start was removed; sources: ESC 2026 "caution" at 5.0 or above, US labels 5.0, 2022 US start criterion below 5.0). The MRA GDMT gap states the reason and the monitoring plan adds "repeat potassium; start MRA if 5.0 or lower"
   - continuation: `facts.k_continuation` on spironolactone/eplerenone/finerenone: K+ 5.5-5.9 forces a ONE-STEP reduction (withhold at the lowest dose), K+ >= 6.0 withholds (removal); restart low once K+ < 5.5
   - eplerenone/finerenone contraindicated with strong CYP3A inhibitors (`STRONG_CYP3A_INHIBITORS`); eplerenone capped at 25 mg with a moderate inhibitor (`interaction_dose_cap`) and contraindicated at eGFR <= 30; finerenone/spironolactone contraindicated in adrenal insufficiency
   - `Medication.start_dose_for(patient)` is the opt-in per-drug cap on the dose a NEW START may begin at (finerenone 10/20 mg by eGFR, spironolactone 12.5/25 mg by eGFR); finerenone's target comes from `is_target_dose_for` (20 mg if eGFR < 60, else 40 mg)
@@ -234,7 +235,7 @@ Implemented high-priority safeguards include:
   - `facts.target_daily_dose` (ramipril 10 mg/day): `isTargetDoseForPatient` compares total daily dose, so 5 mg bid is target; `carryFrequency` keeps the current frequency on titration (never above the renal daily cap) and a step that does not raise the daily dose is not an up-titration
   - the immediate next tier above and below the current dose is always a titration candidate (`adjacentTiers`), on top of the sampler's lowest/middle/highest/target; verify invariant "titration never skips the next step"
   - `facts.k_uptitration_max` (finerenone/eplerenone label 5.0; spironolactone 5.0 engine policy): no MRA increase at K+ >= 5.0, alert `POTASSIUM HOLD ON <DRUG>`
-  - loop swaps: `facts.verified_furosemide_equivalent_per_mg` (furosemide 1, bumetanide 40) lands the swap at the equivalent daily dose (`equivalentSwapTier`); torsemide declares none (label states no equivalence) and keeps the lowest tier with a "prescriber must convert" note
+  - loop swaps: `facts.verified_furosemide_equivalent_per_mg` (furosemide 1, bumetanide 40) lands the swap at the equivalent daily dose (`equivalentSwapTier`); torsemide declares 2 (TRANSFORM-HF protocol 1 mg : 2 mg, a trial protocol; decision 2026-11-11) so every swap lands at the equivalent daily dose (there is no unconverted-swap fallback; a verify invariant requires every standing loop to declare it)
   - form input hints read `services/engine/thresholds.ts` (exported via the facade); never keep display-only copies
 - Structural regimen safety:
   - blocks dual RAAS combinations
@@ -297,7 +298,7 @@ Formulary modeling notes (2026-07-05 audit):
 
 Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 263`):
 
-- 248 clinical scenarios + 15 structural invariants (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no MRA start above potassium 5.0 without a binder; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
+- 248 clinical scenarios + 15 structural invariants (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
@@ -337,9 +338,10 @@ verification (`verified-*.md`, with URLs) and the measured effect of each correc
   (`dailyDose` in `regimenUtils.ts`), never the per-dose strength.
 - **Effects are treatment effects.** Use the placebo-adjusted trial difference, not the active-arm
   change (the GLP-1 quality-of-life values were corrected for this).
-- **An MRA is not started above potassium 5.0 unless a binder is projected to hold potassium within
-  3.5-5.3**; otherwise the candidate is dropped. Patiromer is the preferred binder in heart failure
-  (Lokelma carries a sodium load; automatic rescue is capped at 10 g).
+- **A new MRA is not started above potassium 5.0, with or without a binder** (rule E15). The reactive binder rescue
+  (projected K+ above 5.3) remains; patiromer is the preferred binder in heart failure (Lokelma carries a sodium load;
+  automatic rescue is capped at 10 g). Pregnancy: new beta-blocker starts are beta-1-selective only (E17) and carvedilol is
+  switched (2026 ESC Class I C).
 - **Furoscix is a short-course add-on** beside an oral loop, never a standing replacement.
 - **Sourced versus policy.** A number with no primary source is marked "engine policy" or
   "assumption" in its code comment and in the evidence matrix. Do not present policy as evidence.

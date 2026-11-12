@@ -40,7 +40,7 @@ These are judgment calls made during the corrections, numbers that are engine po
 sourced, and findings left unchanged because no source could be opened.
 
 **Policy numbers (not sourced)**
-- Beta-blockers: reduce below heart rate 55 for metoprolol succinate and bisoprolol (the carvedilol
+- Beta-blockers (reviewed 2026-11-11, unchanged, engine policy: labels give no number, the ESC 50 bpm rule was not verifiable): reduce below heart rate 55 for metoprolol succinate and bisoprolol (the carvedilol
   label states 55; the other two labels give no number); no up-titration below 60; no new start below 55.
 - Sacubitril/valsartan "low dose" of a prior ACEi/ARB: at most 10 mg/day enalapril or lisinopril,
   5 mg ramipril, 75 mg captopril, 160 mg valsartan, 16 mg candesartan, 50 mg losartan.
@@ -63,8 +63,6 @@ sourced, and findings left unchanged because no source could be opened.
 - Blank eGFR treated as below 30 for the sacubitril/valsartan starting dose.
 
 **Design decisions kept**
-- An MRA may still be started at potassium 5.0-5.5 together with a binder when the projection stays
-  within range. The spironolactone and finerenone labels say 5.0.
 - The undifferentiated "Child-Pugh B/C" option still excludes sacubitril/valsartan and carvedilol;
   the new "Child-Pugh B confirmed" option allows them with a reduced start or caution.
 - "Best in class" badges remain on sacubitril/valsartan, spironolactone, dapagliflozin and
@@ -74,18 +72,30 @@ sourced, and findings left unchanged because no source could be opened.
 - Efficacy magnitudes for RAAS inhibitors, MRAs, H/ISDN and vericiguat (LVEF, NT-proBNP, quality of life).
 - Spironolactone potassium rise and blood-pressure effect (the review judged both too large).
 - Finerenone quality-of-life credit; iron quality-of-life and NT-proBNP credit.
-- Torsemide 20 mg = furosemide 40 mg equivalence, which the torsemide alert level and Furoscix
-  crediting depend on.
-  Rechecked 2026-11-10: the torsemide label on DailyMed (SPL 09305350-e317-419c-96f5-aa8fbeb4044d) states
-  no furosemide equivalence, and no guideline text could be opened, so it stays unverified.
 - Reduced loop response at low eGFR is a dosing note only; no multiplier.
 - Digoxin LVEF credit stays zero although the label states an increase.
 - Several prices (other generics, vericiguat, H/ISDN, dose-based Wegovy cash price).
 
 **Known gaps**
 - Restart-after-withhold rules for MRAs and Lokelma's 48-hour correction phase are not modeled.
-- Swaps to or from torsemide keep the lowest tier and tell the prescriber to convert the dose (no verified equivalence).
 - Captopril (three times daily) and valsartan (twice daily) renal caps are still compared with the per-dose strength, not the total daily dose, and an arriving regimen above them is not yet checked the way ramipril's is. Found 2026-11-11 while closing the ramipril items; undecided whether either label cap is a daily total.
+
+**Closed 2026-11-11 from sources (docs: `verified-clinical-decisions-2026-11-11.md`, `esc-2026-reading-notes.md`; changes: `changes-mra-staged-start.txt`, `changes-hyperkalemia-6-alert.txt`, `changes-torsemide-equivalence.txt`, `changes-pregnancy-beta-blocker.txt`, `changes-monitoring-timings.txt`)**
+- New MRA start above potassium 5.0 is staged (rule E15), with or without a binder; the DIAMOND co-start was removed. Source types: ESC 2026 "caution" at 5.0 or above (primary), 2022 US start criterion (secondary reproduction), Aldactone and Kerendia labels, DIAMOND (trial protocol, not a recommendation). Binders: Class 2b in the 2022 US guideline (secondary), no recommendation in ESC 2026.
+- Spironolactone, eplerenone and finerenone starting doses and renal rules reviewed against the labels: matched, unchanged. MRA continuation (halve above 5.5, withhold at 6.0 or above, secondary reproduction of ESC guidance) matched, unchanged.
+- Potassium 6.0-6.4: alert now asks for an ECG and urgent repeat potassium and states the severity source and the engine-policy label; no RAAS/MRA start or increase (enforced by scenarios). The 6.0/6.5 thresholds remain engine policy (KDIGO scheme not verifiable).
+- Torsemide 1 mg = furosemide 2 mg from the TRANSFORM-HF protocol (a trial protocol; registry text says 2-4 mg); the "prescriber must convert" fallback is removed. New issues this exposed are listed below under Still open.
+- Pregnancy beta-blockers: beta-1-selective only for new starts, carvedilol switch offered (ESC 2026 Class I C, primary). Pregnancy alert wording corrected.
+- Monitoring timings follow the labels and secondary guideline text; no numeric lab-recency window (none sourced).
+- Reviewed 2026-11-11 and unchanged: beta-blocker heart-rate 55 (policy), low-output handling (not verifiable), spironolactone BP effect ("no effect" refuted, magnitude unknown), spironolactone potassium rise, digoxin LVEF credit (magnitudes not verified).
+
+**Still open after the 2026-11-11 source pass**
+- Torsemide equivalent swaps now lead in several loop scenarios (torsemide's higher weight-loss curve at equal equivalent dose, an engine calibration, plus the swap landing at an equivalent dose); and the "at or above" rule can overshoot on sparse tiers (furosemide 240 mg/day -> torsemide 200 mg/day). Options: treat non-forced loop swaps like GLP-1 (titrate, do not swap), equalize the curves, or choose the nearest tier on either side.
+- A pregnancy beta-blocker switch lands at the new agent's starting dose (no sourced beta-blocker dose equivalence).
+- A RAAS inhibitor already on board is removed at K+ above 5.4 (engine policy, stricter than any verified source; ESC 2026 text says down-titration or discontinuation at severe hyperkalemia with details in the unread supplement). Hyperkalemia top picks at 6.0-6.4 also still up-titrate carvedilol.
+- The creatinine-rise hold (30%) is engine policy; ESC 2026 accepts a rise under 50% while eGFR stays above 15.
+- The 2022 AHA/ACC/HFSA and 2021 ESC guideline pages could not be opened; the 2026 ESC Supplementary practical tables (S4-S9) were not read. Primary guideline pages were not opened for the US guideline, so US-guideline numbers are secondary.
+- The 2026 ESC guideline's larger changes (HFmrEF removed, foundational medical therapy, Table 11 doses, restart rules) are not applied; a separate pass is planned.
 
 **Closed 2026-11-11 (commit `e671e93`, golden regenerated in `d75b5cc`; changes: `changes-ramipril-daily-dose.txt`)**
 - Ramipril effects now use the total daily dose (`facts.effects_on_daily_dose`), so 5 mg twice daily and 10 mg once daily are credited alike.

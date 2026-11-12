@@ -17,6 +17,15 @@ Brad's exact reply, the questions it answers, and a proposed implementation plan
   - **Scope sentence** in the footer and Evidence tab, worded to the gates (hard stops: SBP < 90, K+ >= 6.5, implausible values; K+ 6.0-6.4, low output and pregnancy alert and still list options).
   - **Still open (do not claim otherwise):** binder-then-MRA staged sequencing (offered together); no lab-freshness window; no "cannot do" feasibility states beyond the budget (complexity tolerance is a preference); outpatient escalation boundaries unchanged; foundational mode undefined for HFmrEF/HFpEF; a fully dosed single pillar outranks a starting-dose different pillar.
 
+### Decisions made from sources (2026-11-11)
+Record: `docs/clinical-decisions-2026-11-11.md` (last section), `docs/medication-review-2026-11-10/verified-clinical-decisions-2026-11-11.md`, `esc-2026-reading-notes.md` (2026 ESC guideline, primary; Supplementary tables unread), `changes-*` files. Local only, not pushed.
+- **E15 = staged MRA start**: no new MRA above K+ 5.0 with or without a binder; DIAMOND co-start removed (never re-add; it was a trial run-in). Reactive binder rescue (projected K+ > 5.3) stays.
+- **E17 pregnancy beta-blockers**: new starts beta-1-selective only (`facts.beta1_selective`), carvedilol switched with reason (ESC 2026 Class I C). Switch lands at the starting dose.
+- **Torsemide = 2 mg furosemide per mg** (TRANSFORM-HF protocol); no unconverted-swap fallback; every standing loop must declare `verified_furosemide_equivalent_per_mg` (verify invariant). Known side effects: equivalent torsemide swaps lead in 9 loop scenarios; "at or above" tier rule overshoots on sparse tiers.
+- Potassium 6.0 alert and 6.5 alerts-only stop are engine policy; RAAS contraindicated above 5.4 is policy stricter than any verified source.
+- No numeric lab-recency window (none sourced); monitoring timings follow labels/secondary guideline text.
+- Method: engine decisions each get a commit, `ranking:diff` saved to `changes-*.txt` (its "BUGS" section is expected for intended eligibility/alert changes), golden regenerated in a separate commit.
+
 ### Medication review + source-verified corrections (2026-11-10)
 Full record: `docs/medication-review-2026-11-10/` (README = outcome + open items; `verified-*.md` =
 sources with URLs; `changes-*.txt` = which recommendations each pass changed). Non-obvious points:

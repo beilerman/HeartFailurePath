@@ -44,15 +44,16 @@ exclusion carries that rule's id and name.
 | E12 | Renal data required (blank eGFR/creatinine, renal-gated start) |
 | E13 | Clinical contraindication (the drug's own `contraindications(patient)`) |
 | E14 | Renal dosing contraindication |
-| E15 | New MRA start above K+ 5.0 needs a K+ binder (withheld if none can be offered; initiation only) |
+| E15 | New MRA start above K+ 5.0 is staged: withheld with or without a K+ binder, recheck and start once K+ is 5.0 or lower (initiation only; decision 2026-11-11). The MRA GDMT gap states the reason and the monitoring plan adds "repeat potassium; start MRA if 5.0 or lower". No binder is co-started with a new MRA (the DIAMOND co-start was removed); the reactive rescue (projected K+ above 5.3) remains |
 | E16 | Potassium and renal function required: a NEW ACE inhibitor, ARB, ARNI or MRA is not started while potassium or renal function is blank |
+| E17 | Pregnancy: a NEW beta-blocker start is limited to beta-1-selective agents (`facts.beta1_selective`); a pregnant patient on a non-selective one is offered a switch with the reason (2026 ESC Class I C) |
 
 Explanations: a rule may carry an optional `details(ctx, med)` that returns specifics; the filter
 stores them in the additive `ExcludedMedication.why` (E13 lists each contraindication check that fired,
 via `contraindicationReasons`; E12 names the blank renal value; E14 gives the eGFR). They never affect
 the decision and are in `ADDITIVE_KEYS` for the golden master.
 
-E16 (owner decision 2026-11-11) is the last rule, so a real contraindication (E13/E14) or the renal-gated start (E12) keeps its own label. It covers new starts only. Dose increases and switches to a RAAS inhibitor or MRA are dropped one level up, in `scoreCandidates` (`intensifiesRaasOrMra`), and a single `LABS REQUIRED: ...` clinical alert is raised once per run in the orchestrator. A drug the patient already takes is not affected. There is no freshness window (the form records no lab dates) and no new numeric threshold: "blank" is the existing not-entered value (0).
+E17 comes after E16 (pregnancy beta-blocker start, initiation only). E16 (owner decision 2026-11-11) is otherwise the last rule, so a real contraindication (E13/E14) or the renal-gated start (E12) keeps its own label. It covers new starts only. Dose increases and switches to a RAAS inhibitor or MRA are dropped one level up, in `scoreCandidates` (`intensifiesRaasOrMra`), and a single `LABS REQUIRED: ...` clinical alert is raised once per run in the orchestrator. A drug the patient already takes is not affected. There is no freshness window (the form records no lab dates) and no new numeric threshold: "blank" is the existing not-entered value (0).
 
 Order matters in two places: E12 must precede E13 (a blank-renal trip is labelled "renal data
 required", not "contraindicated"), and E10/E11 ignore a current MRA that is being forced off.
