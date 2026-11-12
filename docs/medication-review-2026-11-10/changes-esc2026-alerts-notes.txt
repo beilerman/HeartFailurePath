@@ -1,0 +1,20 @@
+# Alert and note changes (no ranking effect), 2026-11-11
+
+Added: NT-proBNP above 5000 pg/mL with worsening symptoms or congestion (NYHA III-IV, more than 1 kg above dry weight, or any exam finding) raises "VERY HIGH RISK ... admission is generally
+recommended" (2026 ESC 7.2); external-medication alerts for NSAIDs / COX-2 inhibitors (Class III) and thiazolidinediones / saxagliptin (contraindicated), with entries added to the form's
+"Other medications" list; an IV iron note (TSAT below 20% identifies those most likely to benefit; criteria unchanged); held-drug text for potassium holds ("held under 14 days can usually
+restart at the previous dose"; the MRA labels' low-dose restart is kept as the stricter rule). `npm run ranking:diff` (894 runs): top pick, set and order identical for every existing
+scenario (the 9 differing top picks are the three new ESC26-Alerts scenarios, new keys); alert and warning differences are the new alert and note text only.
+
+Ranking diff vs golden snapshot: 894 runs
+  (a) top pick identical:        885 / 894
+  (b) displayed pick set same:   885 / 894
+  (c) pick order identical:      885 / 894
+  (d) eligibility + alerts identical: NO (75 differences)
+  (e) per-regimen warnings identical: NO (61 regimens)
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 9 of 729 runs
+    LVEF >= 50: 0 of 108 runs

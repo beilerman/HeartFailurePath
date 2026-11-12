@@ -136,7 +136,8 @@ const ASSERTION_TITLE_MARKERS = [
     'ESC26-RAAS-K',
     'ESC26-Table11',
     'ESC26-Diuretic',
-    'ESC26-Renal'
+    'ESC26-Renal',
+    'ESC26-Alerts'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -2387,6 +2388,19 @@ async function runVerification() {
                     if (!(excludedMedications.find(e => e.name === 'Lisinopril')?.why ?? []).some(w => /seek specialist advice/.test(w))) fail('the stop must say to seek specialist advice');
                 }
                 if (t.includes('Lisinopril Kept') && !anyRegimenHasMed('Lisinopril')) fail('lisinopril must be kept at eGFR 22 (the stop is below 20)');
+            }
+
+            // 94k. 2026 ESC alerts (no ranking effect): NT-proBNP above 5000 with congestion (section 7.2); NSAIDs / COX-2 inhibitors (Class III), thiazolidinediones and saxagliptin (section 10).
+            if (scenario.title.includes('ESC26-Alerts')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const has = (re: RegExp) => clinicalAlerts.some(a => re.test(a));
+                if (t.includes('Advises Admission') && !has(/VERY HIGH RISK: NT-proBNP 6000.*admission is generally recommended/)) fail('NT-proBNP above 5000 with congestion must advise admission');
+                if (t.includes('No Admission Alert') && has(/VERY HIGH RISK/)) fail('NT-proBNP 4000 must not raise the admission alert');
+                if (t.includes('Ibuprofen And Pioglitazone')) {
+                    if (!has(/AVOID: Ibuprofen.*Class III/)) fail('missing the NSAID Class III alert');
+                    if (!has(/Pioglitazone, Saxagliptin is contraindicated/)) fail('missing the thiazolidinedione / saxagliptin contraindication alert');
+                }
             }
 
             // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,

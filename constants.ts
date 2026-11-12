@@ -2,7 +2,7 @@
 import { Medication, Patient } from './types';
 import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raasPotassiumChecks, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
     STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, moderateCyp3aInhibitor,
-    PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate } from './services/engine/contraindications';
+    PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
 import { valueUnknown, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
 import { BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_MAX, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
@@ -111,6 +111,9 @@ export const RELEVANT_EXTERNAL_MEDICATIONS = [
     'Verapamil',
     'Diltiazem',
     'Lithium',
+    // Harmful in heart failure (2026 ESC): NSAIDs / COX-2 inhibitors (Class III), thiazolidinediones and saxagliptin (contraindicated).
+    ...NSAID_COX2_EXTERNAL,
+    ...TZD_SAXAGLIPTIN_EXTERNAL,
     // PDE-5 inhibitors (BiDil label: avanafil, sildenafil, tadalafil, vardenafil contraindicated with H/ISDN; Verquvo label: not recommended).
     ...PDE5_INHIBITORS,
     // Riociguat: contraindicated with vericiguat (Verquvo label) and with H/ISDN (BiDil label).
@@ -147,9 +150,11 @@ const BB_S6_START_NOTE = { text: 'Drug note (2026 ESC Supplementary Table S6): s
 // (stopped if already at the lowest tier), stopped from 6.0, with the MRA reduced or stopped first when both are on board (yields_to). Increases are held from 5.5
 // (a new start is blocked above 5.4 by raasPotassiumChecks; ESC advises caution above 5.2). Abrupt withdrawal of an ACEi/ARNI risks deterioration, so a
 // current drug is reduced rather than removed in the 5.5-5.9 band. Before 2026-11-11 a current RAAS inhibitor was removed above 5.4 (engine policy).
+const MRA_K_FIRST_STEPS = 'Recheck potassium and kidney function in 1-2 weeks and look for other causes first (2026 ESC Supplementary Table S8: above 5.5 halve the dose; above 6.0 interrupt and seek specialist advice). ESC says therapy held for less than 14 days can usually restart at the previous dose; the US labels restart an MRA at a low dose once potassium is below 5.5, which is the stricter rule and is the one used.';
+
 const RAAS_K_FACTS = {
     k_continuation: { reduce_at: RAAS_REDUCE_K, withhold_at: RAAS_WITHHOLD_K, restart_below: RAAS_REDUCE_K, yields_to: 'mra' as const,
-        first_steps: 'Stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes first, then recheck potassium and kidney function in 1-2 weeks (2026 ESC Supplementary Tables S4/S5: potassium up to 5.5 is acceptable; a persistent rise above 5.5 halves the dose and is rechecked in 1-2 weeks; S4 also says stop above 5.5, and the main text says down-titrate or discontinue for above 5.5 or above 6, so the engine reduces one step from 5.5 and stops from 6.0).',
+        first_steps: 'Stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes first, then recheck potassium and kidney function in 1-2 weeks (2026 ESC Supplementary Tables S4/S5: potassium up to 5.5 is acceptable; a persistent rise above 5.5 halves the dose and is rechecked in 1-2 weeks; S4 also says stop above 5.5, and the main text says down-titrate or discontinue for above 5.5 or above 6, so the engine reduces one step from 5.5 and stops from 6.0). Therapy held for less than 14 days can usually restart at the previous dose (2026 ESC).',
         basis: '2026 ESC section 6.1: severe hyperkalaemia (above 5.5 or 6) leads to temporary down-titration or discontinuation of the MRA and/or ACEi/ARNI/ARB; the 5.5 reduce / 6.0 stop split and MRA-first order are engine policy' },
     k_uptitration_max: { below: RAAS_REDUCE_K, basis: `Engine policy: the dose is not raised above potassium ${RAAS_START_K_MAX} (2026 ESC advises caution above 5.2)` },
 };
@@ -674,7 +679,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // discontinue". The eplerenone and finerenone labels give 5.5-5.9 = reduce one step, >= 6.0 = withhold;
             // applied here BY ANALOGY (flagged). The code's old removal threshold was K+ > 5.5; the label rule
             // starts at 5.5 inclusive, which is the stricter, so it is used.
-            k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Eplerenone/finerenone label rule applied to spironolactone by analogy (the Aldactone label gives no numeric rule)' },
+            k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Eplerenone/finerenone label rule applied to spironolactone by analogy (the Aldactone label gives no numeric rule)', first_steps: MRA_K_FIRST_STEPS },
             // ENGINE POLICY (class rule by analogy): do not raise the dose while K+ is 5.0 or above. The Aldactone label gives no up-titration potassium number;
             // the Inspra and Kerendia labels both say increase only when K+ is below 5.0.
             k_uptitration_max: { below: 5.0, basis: 'Engine policy: class rule from the eplerenone and finerenone labels applied to spironolactone (the Aldactone label gives no number)' },
@@ -745,7 +750,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // Inspra label (HF): K+ 5.5-5.9 decrease dose (withhold if already at the lowest dose), >= 6.0 withhold.
         // The old code removed at K+ > 5.5; the label rule starts at 5.5 inclusive (stricter), so it is used.
         facts: {
-            k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Inspra label' },
+            k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Inspra label', first_steps: MRA_K_FIRST_STEPS },
             // Inspra label (HF dose adjustment by K+): below 5.0 increase (25 mg every other day -> 25 mg daily -> 50 mg daily); 5.0-5.4 maintain.
             k_uptitration_max: { below: 5.0, basis: 'Inspra label: increase the dose only when potassium is below 5.0; 5.0-5.4 maintain' },
         },
@@ -806,7 +811,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             cirrhosis_cyp3a4_caution: true,
             // Kerendia label (HF), by K+: 10 mg: 5.5-5.9 withhold; >= 6.0 withhold. 20/40 mg: 5.5-5.9 decrease one step
             // (40 -> 20, 20 -> 10); >= 6.0 withhold. Restart 10 mg once K+ is below 5.5 (below 5.0 if recurrent).
-            k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Kerendia label' },
+            k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Kerendia label', first_steps: MRA_K_FIRST_STEPS },
             // Kerendia label (HF): 10 -> 20 mg and 20 -> 40 mg only if K+ is below 5.0.
             k_uptitration_max: { below: 5.0, basis: 'Kerendia label: increase the dose only if potassium is below 5.0' },
             regimen_warnings: [{
@@ -1709,6 +1714,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             regimen_warnings: [
                 // Patient-specific dosing note (label table by weight and hemoglobin).
                 { text: (p) => `Drug note: ${fcmDosingNote(p)}` },
+                { text: 'Drug note (2026 ESC heart failure guideline): a transferrin saturation (TSAT) below 20% identifies the patients most likely to benefit from IV iron; the engine criteria (ferritin below 100, or 100-300 with TSAT below 20%) are unchanged.' },
                 { text: 'Drug note: BOXED WARNING (Injectafer label, 08/2026): symptomatic, severe and prolonged hypophosphatemia, including osteomalacia and fractures, has occurred, also in patients with a normal baseline phosphate. Correct pre-existing hypophosphatemia first; check serum phosphate before any repeat course within 3 months and in patients at risk (malabsorption, inflammatory bowel disease, vitamin D deficiency, hyperparathyroidism).' },
             ],
             monitoring_items: [

@@ -5,7 +5,7 @@ import { MEDICATION_FORMULARY, COMMON_SIDE_EFFECTS, RELEVANT_COMORBIDITIES, RELE
 import type { Patient } from '../../types';
 import {
     ANURIA, LIVER_BC, LIVER_B_CONFIRMED, SICK_SINUS, CONDUCTION_DEFECT, VENTRICULAR_FIBRILLATION, WPW,
-    PDE5_INHIBITORS, OTHER_SGC_STIMULATORS, LONG_ACTING_NITRATES, STRONG_CYP3A_INHIBITORS, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS,
+    PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, OTHER_SGC_STIMULATORS, LONG_ACTING_NITRATES, STRONG_CYP3A_INHIBITORS, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS,
 } from '../../services/engine/contraindications';
 
 interface OptionGroup { label: string; members: readonly string[] }
@@ -34,6 +34,7 @@ const COMORBIDITY_GROUPS: readonly OptionGroup[] = [
 const EXTERNAL_MED_GROUPS: readonly OptionGroup[] = [
     { label: 'Rhythm and calcium-channel drugs', members: ['Amiodarone', 'Verapamil', 'Diltiazem'] },
     { label: 'Psychiatric', members: ['Lithium'] },
+    { label: 'Harmful in heart failure (NSAIDs, COX-2 inhibitors, thiazolidinediones, saxagliptin)', members: [...NSAID_COX2_EXTERNAL, ...TZD_SAXAGLIPTIN_EXTERNAL] },
     { label: 'PDE-5 inhibitors (block nitrates)', members: PDE5_INHIBITORS },
     { label: 'Riociguat (conflicts with vericiguat and nitrates)', members: OTHER_SGC_STIMULATORS },
     { label: 'Long-acting nitrates taken outside this tool', members: LONG_ACTING_NITRATES },

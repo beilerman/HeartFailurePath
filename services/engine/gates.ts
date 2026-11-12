@@ -4,7 +4,7 @@ import { drugFacts } from './drugFacts';
 import { valueUnknown } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
 import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold } from '../clinicalPredicates';
-import { PDE5_INHIBITORS } from './contraindications';
+import { PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './contraindications';
 import { taggedDiscontinuedMeds } from './eligibility';
 import { buildMissingDataNotices, computeGdmtGaps } from './explain';
 import { dailyDose, dedupeCurrentRegimen, hrContinuationAction, kContinuationAction, kUptitrationBlock, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
@@ -98,6 +98,22 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     const onNonDhpCcb = ext.has('Verapamil') || ext.has('Diltiazem') || patient.comorbidities.has('On Verapamil/Diltiazem');
     if (onNonDhpCcb && patient.lvef > 0 && patient.lvef < 50) {
         alerts.push('INAPPROPRIATE THERAPY: Non-dihydropyridine calcium-channel blocker (verapamil / diltiazem) in HFrEF (LVEF below 50) is potentially harmful — it is a negative inotrope and can worsen heart failure (ACC/AHA 2022, Class III). Deprescribe; if rate control is needed, use a beta-blocker ± digoxin.');
+    }
+
+    // External medications that are harmful in heart failure (2026 ESC): NSAIDs / COX-2 inhibitors Class III; thiazolidinediones and saxagliptin contraindicated.
+    const harmfulNsaid = NSAID_COX2_EXTERNAL.filter(n => ext.has(n));
+    if (harmfulNsaid.length > 0) {
+        alerts.push(`AVOID: ${harmfulNsaid.join(', ')} (NSAID / COX-2 inhibitor): Class III in heart failure (2026 ESC) - sodium and fluid retention, blunted diuretic response, kidney injury (worse with RAAS inhibitors or MRAs). Deprescribe; use acetaminophen or topical analgesia where feasible.`);
+    }
+    const harmfulDiabetic = TZD_SAXAGLIPTIN_EXTERNAL.filter(n => ext.has(n));
+    if (harmfulDiabetic.length > 0) {
+        alerts.push(`INAPPROPRIATE THERAPY: ${harmfulDiabetic.join(', ')} is contraindicated in heart failure (2026 ESC section 10.2: thiazolidinediones and saxagliptin). Replace it, preferably with an SGLT2 inhibitor.`);
+    }
+
+    // NT-proBNP above 5000 pg/mL with worsening symptoms or congestion: very high risk, admission generally recommended (2026 ESC section 7.2). Alert only; no ranking effect.
+    const congestedNow = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg) > 1.0 || patient.volume_status.exam_findings.size > 0 || patient.nyha_class === 'III' || patient.nyha_class === 'IV';
+    if (patient.nt_pro_bnp > 5000 && congestedNow) {
+        alerts.push(`VERY HIGH RISK: NT-proBNP ${patient.nt_pro_bnp} pg/mL (above 5000) with worsening symptoms or congestion. The 2026 ESC guideline says this indicates very high risk and admission is generally recommended; assess for admission before outpatient optimization.`);
     }
 
     if (patient.comorbidities.has('Chronic NSAID Use')) {

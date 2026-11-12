@@ -137,6 +137,10 @@ export const STRONG_CYP3A_INHIBITORS: readonly string[] = [
 // The label text read named no moderate agents for eplerenone; this is the standard list used in the review.
 export const MODERATE_CYP3A_INHIBITORS: readonly string[] = ['Verapamil', 'Diltiazem', 'Erythromycin', 'Fluconazole'];
 
+/** External medications that are harmful in heart failure (2026 ESC): NSAIDs and COX-2 inhibitors are Class III; thiazolidinediones and saxagliptin are contraindicated (section 10.2). Matched by name in the form's "Other medications" list. */
+export const NSAID_COX2_EXTERNAL: readonly string[] = ['Ibuprofen', 'Naproxen', 'Diclofenac', 'Meloxicam', 'Celecoxib'];
+export const TZD_SAXAGLIPTIN_EXTERNAL: readonly string[] = ['Pioglitazone', 'Rosiglitazone', 'Saxagliptin'];
+
 export const onAny = (p: Patient, names: readonly string[]): boolean =>
     names.some(n => p.external_medications?.has(n) ?? false);
 export const strongCyp3a4Inhibitor = (p: Patient): boolean => onAny(p, STRONG_CYP3A_INHIBITORS);
