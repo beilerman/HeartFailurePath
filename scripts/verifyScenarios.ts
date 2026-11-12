@@ -196,6 +196,19 @@ async function runVerification() {
     }
     console.log('---');
 
+    // GLOBAL STRUCTURAL INVARIANT (loop equivalence): every standing loop diuretic declares a furosemide equivalence (furosemide 1, bumetanide 40,
+    // torsemide 2), so a loop swap always lands at an equivalent daily dose and no "prescriber must convert" fallback exists.
+    console.log('Checking structural invariant: loop diuretics declare a furosemide equivalence...');
+    const loopsWithoutEquivalence = MEDICATION_FORMULARY.filter(m => m.drug_class === 'Loop Diuretic' && !m.facts?.short_course_addon && m.facts?.verified_furosemide_equivalent_per_mg === undefined).map(m => m.name);
+    if (loopsWithoutEquivalence.length > 0) {
+        console.error(`  [FAIL] Loop diuretic(s) without verified_furosemide_equivalent_per_mg: ${loopsWithoutEquivalence.join(', ')}`);
+        failed++;
+    } else {
+        console.log('  [PASS] Every standing loop diuretic declares a furosemide equivalence.');
+        passed++;
+    }
+    console.log('---');
+
     for (const scenario of SCENARIOS) {
         console.log(`Analyzing Scenario: "${scenario.title}"`);
 
@@ -3128,15 +3141,23 @@ async function runVerification() {
                     if (!back || dailyDose(back) < 40 || dailyDose(back) > 40) fail('Bumetanide 1 mg daily -> furosemide is not 40 mg/day');
                     if (bum.length === 1 && !/equivalent total daily dose: 160 mg\/day Furosemide is about 4 mg\/day Bumetanide/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), bum[0]))) fail('Equivalent loop swap summary does not state the equivalent daily dose');
                 }
-                if (t.includes('To Torsemide Prescriber Converts')) {
+                if (t.includes('To Torsemide Equivalent Daily Dose')) {
+                    // Decision 2026-11-11, verified-clinical-decisions-2026-11-11.md row 13: TRANSFORM-HF protocol, torsemide 1 mg = furosemide 2 mg (trial protocol).
                     const swaps = analysis.swappable.find(x => x.from.med.name === 'Furosemide');
                     const tor = (swaps?.candidates ?? []).filter(c => c.med.name === 'Torsemide');
-                    if (tor.length === 0) fail('No torsemide swap offered (check is vacuous)');
-                    // Torsemide equivalence is NOT verified (label opened, states none): the conservative lowest tier stays.
-                    if (tor.length > 0 && Number(tor[0].dose.strength) !== 5) fail('Unverified torsemide swap no longer offers the lowest tier');
-                    if (tor.length > 0 && !/prescriber must convert the dose/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), tor[0]))) fail('Unverified torsemide swap summary does not tell the prescriber to convert the dose');
-                    if (equivalentSwapTier(rm('Furosemide', 80, 'bid'), med('Torsemide'), P, 1) !== null) fail('A torsemide equivalent dose is computed although no verified equivalence is declared');
-                    if (med('Torsemide').facts?.verified_furosemide_equivalent_per_mg !== undefined) fail('Torsemide declares a verified equivalence without a recorded source');
+                    if (tor.length !== 1) fail(`Expected exactly one torsemide swap tier, found ${tor.length}`);
+                    else if (dailyDose(tor[0]) !== 80) fail(`Furosemide 80 mg bid (160 mg/day) -> torsemide must land at 80 mg/day at the 1:2 protocol ratio (found ${dailyDose(tor[0])} mg/day: ${tor[0].dose.strength} ${tor[0].selected_frequency})`);
+                    const toTor = (strength: number, f: string) => equivalentSwapTier(rm('Furosemide', strength, f), med('Torsemide'), P, 1);
+                    if (!toTor(40, 'qd') || dailyDose(toTor(40, 'qd')!) !== 20) fail('Furosemide 40 mg daily -> torsemide is not 20 mg/day (TRANSFORM-HF: 40 mg furosemide = 20 mg torsemide)');
+                    if (!toTor(20, 'qd') || dailyDose(toTor(20, 'qd')!) !== 10) fail('Furosemide 20 mg daily -> torsemide is not 10 mg/day');
+                    const back = equivalentSwapTier(rm('Torsemide', 20, 'qd'), med('Furosemide'), P, 2);
+                    if (!back || dailyDose(back) !== 40) fail('Torsemide 20 mg daily -> furosemide is not 40 mg/day');
+                    if (tor.length === 1 && !/equivalent total daily dose: 160 mg\/day Furosemide is about 80 mg\/day Torsemide/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), tor[0]))) fail('Torsemide swap summary does not state the equivalent daily dose');
+                    if (med('Torsemide').facts?.verified_furosemide_equivalent_per_mg !== 2) fail('Torsemide verified_furosemide_equivalent_per_mg is not the TRANSFORM-HF protocol ratio 2');
+                    // Consistency: the torsemide high-dose alert level equals the furosemide level at the same equivalence (60 mg torsemide = 120 mg furosemide = 3 mg bumetanide).
+                    const ft = (n: string) => med(n).facts!.high_dose_threshold! * med(n).facts!.verified_furosemide_equivalent_per_mg!;
+                    if (ft('Furosemide') !== ft('Torsemide') || ft('Furosemide') !== ft('Bumetanide')) fail(`High-dose alert levels are not equivalent across loops (furosemide-equivalent ${ft('Furosemide')} / ${ft('Torsemide')} / ${ft('Bumetanide')})`);
+                    if (/prescriber must convert/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), tor[0] ?? rm('Torsemide', 5, 'qd')))) fail('The unconverted-swap fallback text is still emitted');
                 }
             }
 

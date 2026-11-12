@@ -594,10 +594,10 @@ export function formatSwapSummary(from: RegimenMed, to: RegimenMed): string {
     }
     if (from.med.drug_class === 'Loop Diuretic' && to.med.drug_class === 'Loop Diuretic') {
         const fe = drugFacts(from.med).verified_furosemide_equivalent_per_mg, te = drugFacts(to.med).verified_furosemide_equivalent_per_mg;
+        // Every non-add-on loop declares an equivalence (verify invariant), so an equivalent-dose summary is always available.
         if (fe !== undefined && te !== undefined) {
             return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (equivalent total daily dose: ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name} is about ${dailyDose(from) * fe / te} ${to.dose.unit}/day ${to.med.name}; nearest tier at or above)`;
         }
-        return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (no verified dose equivalence for this pair: the prescriber must convert the dose from ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name}; the lowest tier is shown)`;
     }
     return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)}`;
 }

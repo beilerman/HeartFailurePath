@@ -3275,8 +3275,10 @@ export const SCENARIOS: TestScenario[] = [
                 current_regimen: buildCurrentRegimen([{ name: 'Finerenone (Kerendia)', strength: 20, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
             { title: 'Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose', patient: { ...loopPatient,
                 current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
-            { title: 'Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts', patient: { ...loopPatient,
+            { title: 'Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose', patient: { ...loopPatient,
                 current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
+            { title: 'Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose', patient: { ...loopPatient,
+                current_regimen: buildCurrentRegimen([{ name: 'Torsemide', strength: 20, freq: 'qd' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
         ];
     })(),
 

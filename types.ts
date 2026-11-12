@@ -219,8 +219,6 @@ export interface MedFacts {
     short_course_addon?: boolean;
     /** Factor converting this route's mg to ORAL furosemide-equivalent mg (Furoscix 2.0: SC/IV furosemide is about twice an oral dose). */
     oral_equivalent_multiplier?: number;
-    /** Oral furosemide-equivalent mg per mg of this loop at the same daily dose (furosemide 1; bumetanide 40 per its label; torsemide 2 is engine calibration, NOT VERIFIED). Used only to credit a short-course add-on above the oral loop. */
-    loop_furosemide_equivalent_per_mg?: number;
     /** Raises serum uric acid / may precipitate gout (label): a patient with Gout carries the uric-acid caution while this drug is in the regimen. */
     raises_uric_acid?: boolean;
     /** Warn (penalized caution) when this drug is ADDED and the known baseline K+ is below this value. Engine policy, not a label contraindication; `basis` states it. */
@@ -253,9 +251,9 @@ export interface MedFacts {
      */
     renal_cap_is_daily?: boolean;
     /**
-     * VERIFIED oral furosemide-equivalent mg per mg of this loop (furosemide 1; bumetanide 40, label). A swap between two loops that both
-     * declare it lands on the nearest tier at or above the equivalent TOTAL DAILY dose. A loop without it (torsemide: no source opened states
-     * an equivalence) keeps the conservative lowest-tier swap, and the summary says the prescriber must convert the dose.
+     * VERIFIED oral furosemide-equivalent mg per mg of this loop (furosemide 1; bumetanide 40, label; torsemide 2, TRANSFORM-HF protocol). A swap
+     * between two loops lands on the nearest tier at or above the equivalent TOTAL DAILY dose; it also converts an oral loop for crediting a
+     * short-course add-on. Every non-add-on loop must declare it (a verify invariant): there is no unconverted-swap fallback.
      */
     verified_furosemide_equivalent_per_mg?: number;
     /**

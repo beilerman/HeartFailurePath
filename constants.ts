@@ -1109,7 +1109,6 @@ export const MEDICATION_FORMULARY: Medication[] = [
             max_daily_dose: 600,
             effects_on_daily_dose: true,
             raises_uric_acid: true, // label: asymptomatic hyperuricemia can occur; gout may rarely be precipitated
-            loop_furosemide_equivalent_per_mg: 1,
             verified_furosemide_equivalent_per_mg: 1, // reference loop
             monitoring_items: [LOOP_LOW_EGFR_ITEM],
         },
@@ -1248,15 +1247,17 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Torsemide',
         drug_class: 'Loop Diuretic',
         facts: {
-            // TOTAL DAILY dose. 60 mg/day is ENGINE POLICY: it keeps the old furosemide-120 alert level through the code's torsemide:furosemide
-            // calibration of about 1:2, which is NOT VERIFIED (the torsemide label states no equivalence). Label: doses above 200 mg/day not studied.
+            // TOTAL DAILY dose. 60 mg/day is ENGINE POLICY: it is the furosemide-120 alert level (also engine policy) divided by the torsemide:furosemide
+            // ratio below. Label: doses above 200 mg/day not studied.
             high_dose_threshold: 60,
             max_daily_dose: 200,
             effects_on_daily_dose: true,
             raises_uric_acid: true, // label: gout may rarely be precipitated
-            loop_furosemide_equivalent_per_mg: 2, // engine calibration, NOT VERIFIED (only used to credit a Furoscix add-on above the oral loop)
-            // No verified_furosemide_equivalent_per_mg: the torsemide label (DailyMed SPL 09305350, opened 2026-11-10) states no furosemide equivalence, so loop swaps to or from
-            // torsemide keep the lowest tier and tell the prescriber to convert the dose.
+            // Decision 2026-11-11, verified-clinical-decisions-2026-11-11.md row 13: TRANSFORM-HF protocol (NCT03296813) "Oral dosing of torsemide compared to
+            // furosemide will be 1mg:2mg", i.e. furosemide 40 mg = torsemide 20 mg. Source type: TRIAL PROTOCOL (not a label, not a guideline table; no
+            // guideline table was opened). Nuance: the registry arm text gives 1 mg : 2-4 mg, so 2 is the narrow end of that range. The torsemide label
+            // itself (DailyMed SPL 09305350) states no equivalence. Also credits a Furoscix add-on above an oral torsemide (effects.ts).
+            verified_furosemide_equivalent_per_mg: 2,
             monitoring_items: [LOOP_LOW_EGFR_ITEM],
         },
         // No "best in class" badge: TRANSFORM-HF (n=2859) showed no mortality difference vs furosemide (26.1% vs 26.2%, HR 1.02, 95% CI 0.89-1.18).
@@ -1303,7 +1304,6 @@ export const MEDICATION_FORMULARY: Medication[] = [
             max_daily_dose: 10,
             effects_on_daily_dose: true,
             raises_uric_acid: true, // the bumetanide label names asymptomatic hyperuricemia only (gout not mentioned); kept at the loop-class caution it already carried
-            loop_furosemide_equivalent_per_mg: 40,
             verified_furosemide_equivalent_per_mg: 40, // Bumex label: 1 mg bumetanide is about 40 mg furosemide (verified-diuretics.md)
             monitoring_items: [LOOP_LOW_EGFR_ITEM],
         },

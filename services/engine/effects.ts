@@ -44,7 +44,7 @@ type HemoEffects = ReturnType<Medication['hemodynamic_effects']>;
  * The effects of one regimen entry as credited for THIS patient: `chf_effects` and `hemodynamic_effects` evaluated at the entry's effect dose
  * (the TOTAL DAILY dose for a loop, `facts.effects_on_daily_dose`: 40 mg bid is 80 mg/day, not 40).
  * A short-course add-on (`facts.short_course_addon`, Furoscix) beside an oral loop is credited only ABOVE that loop on the same log ceiling:
- * effect(oral loop + add-on) - effect(oral loop), with the loops converted to oral furosemide-equivalents (`loop_furosemide_equivalent_per_mg`,
+ * effect(oral loop + add-on) - effect(oral loop), with the loops converted to oral furosemide-equivalents (`verified_furosemide_equivalent_per_mg`,
  * `oral_equivalent_multiplier`). Adding its full steady-state effect on top of a full oral loop would double count a ceiling-limited drug class.
  */
 function effectsFor(rm: RegimenMed, patient: Patient): { chf: ChfEffects; hemo: HemoEffects } {
@@ -55,7 +55,7 @@ function effectsFor(rm: RegimenMed, patient: Patient): { chf: ChfEffects; hemo: 
         const mult = f.oral_equivalent_multiplier ?? 1;
         const baseOralEq = (patient.current_regimen || [])
             .filter(r => r.med.drug_class === med.drug_class && !drugFacts(r.med).short_course_addon)
-            .reduce((sum, r) => sum + dailyDose(r) * (drugFacts(r.med).loop_furosemide_equivalent_per_mg ?? 1), 0);
+            .reduce((sum, r) => sum + dailyDose(r) * (drugFacts(r.med).verified_furosemide_equivalent_per_mg ?? 1), 0);
         if (baseOralEq > 0) {
             const base = baseOralEq / mult;           // the oral loop(s) in this drug's own mg
             const total = base + Number(dose);
