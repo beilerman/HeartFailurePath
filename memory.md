@@ -509,3 +509,14 @@ consistency. NOTE: Phase-B recClass labels are metadata only — changing a labe
 - `RULESET_VERSION` (services/rulesetVersion.ts, now 2026-11-12.2) must be bumped whenever engine output changes; it is printed on copied notes.
 - scripts/verifyScenarios.ts is near TypeScript's control-flow size limit: put new invariants in scripts/optionInvariants.ts / optionScenarioChecks.ts.
 - Gate after this pass: verify 371/0, golden 1032 runs, audit:hundred 100/100, audit:mistakes 51/51, audit:red clean, audit:pricing OK, fuzz no violations.
+
+## Third pass 2026-11-12 (commit fa34d68; handoff: docs/HANDOFF-2026-11-12.md)
+
+- Method that found the most: follow the top option visit after visit with unchanged inputs. A cycle means some state penalty or threshold is escaped by reversing the previous step. The sweep now does this for 30 visits (`OSCILLATION`).
+- Recurring root cause, now seen four times (SBP band, HR band, baseline warnings, MAP surcharge): a penalty on the patient's EXISTING state that an option escapes by cutting a drug. Rule: read the lower of projected and entered value, or charge it to every option. The potassium band is the deliberate exception (lowering potassium is the treatment).
+- A forced edit must satisfy every other forced-edit filter: the forced beta-blocker reduction filter did not accept a forced switch, which emptied the page. When adding a forced action, check `generateCandidateModifications`' final filter.
+- `eligibleDoses` no longer trims by age. Do not reintroduce a count-based ladder cut; a per-drug age cap belongs on the entry with a source.
+- Rule E20 and the eGFR-below-20 increase hold are engine policy derived from the ESC "stop and seek advice" text; owner has not reviewed them.
+- Alerts are written before options exist. Any alert sentence that says what "the plan" does must go through `reconcilePlanAlerts`.
+- Open, in priority order, in the review record: flat RAAS potassium effect (and binders attached to dose reductions), MRA kidney thresholds on continuation, completeness credit vs renal caps, dose-reduction steps and wording.
+- Reviewer probe scripts lived in a session scratch directory and were not kept; the review record carries enough detail to reproduce each open item.

@@ -70,3 +70,49 @@ These are judgement calls the fixes introduced. None blocks use.
 - A binder already in use is not reduced at potassium 5.0 or higher (the same boundary as the MRA start rule). Engine policy.
 - The top recommendation changed in 25 of 999 reference runs (scoring commit) and 15 more (rule commit). The scoring changes mostly moved toward more pillars on board; a clinician should look at the changed cases before relying on the new order.
 - The sacubitril/valsartan Medicare table copay (74) is still in the table; the cap at the cash price (60) hides it. Fix the table when the plan data is next refreshed.
+
+## Third pass (same day): four fresh reviewers and a visit-by-visit probe
+
+Method: four independent read-only reviewers (safety rules, scoring and ranking, drug data, form/results/docs), each required to reproduce a finding with a run before reporting it, plus a new probe that follows the top option for many visits with the inputs unchanged. Commit `fa34d68`.
+
+### Fixed
+
+| Area | Defect (reproduced) | Fix | Enforced by |
+|---|---|---|---|
+| Rules | Forced beta-blocker switch (pregnancy, allergy) in a low-output state: empty page, no reason | The forced-reduction filter accepts a switch; every empty result names a reason (`NO OPTION AVAILABLE`) | Sweep: `EMPTY_WITHOUT_REASON` |
+| Rules | Pregnancy switch landed on the full target dose at heart rate 52, LVEF 15 | Steps down for a low heart rate; lands on the start dose in low output | Reviewer reproduction (not yet a scenario) |
+| Rules | Lisinopril doubled, or switched to the ARNI, at eGFR 14 beside an alert saying seek specialist advice | Rule E20: no RAAS start, increase or switch at a measured eGFR below 20 | Sweep: `RAAS_INTENSIFIED_EGFR_LT_20` |
+| Rules | "ARB" allergy still offered sacubitril/valsartan; angioedema typed as an allergy was ignored | ARB aliases include the ARNI; allergy text is read for angioedema; ACE inhibitor allergy of unstated type carries a check on an ARNI start | Not yet a scenario |
+| Rules | Loop diuretics switched back and forth on alternate visits | The resistance switch is one-way, from furosemide (`facts.resistance_switch_source`) | Sweep: `OSCILLATION` |
+| Scoring | ACE inhibitor alternated 20, 40, 20 mg: the low-perfusion NT-proBNP surcharge was escaped by cutting a dose | The surcharge reads the lower of projected and entered MAP | Sweep: `OSCILLATION` |
+| Data | Age over 80 halved every dose ladder (no source): no target dose reachable; ivabradine offered as a result | Rule removed; start-low is kept through start tiers, the doubling cap and the elderly warnings | None (removal) |
+| Options | "Start a pillar and raise a dose" built only for the first drug of the first pillar | Built for each missing pillar (one agent per class) | Probe only |
+| Alerts | Alerts stated a plan the options did not follow; deferred beta-blocker start had no alert; potassium shown to one decimal but ruled on the raw value; MRA restart text gave three thresholds | Alerts reconciled with the options; new alert; potassium rounded on entry; text corrected | Not yet scenarios |
+| Warnings | No duplicate-nitrate warning; no aliskiren warning at eGFR below 60 without diabetes; potassium-raiser warning named one drug of two | Added | Not yet scenarios |
+| Form | Negative creatinine froze the tab | eGFR function returns 0 for non-positive input; the effect never writes NaN | jsdom mount by the fixing agent |
+| Results | Chart note omitted pregnancy, other medications and other inputs; empty-regimen note; pills without frequency; "Euvolemic" from weight alone; custom profile defaults unmarked | Fixed in components | Typecheck and build only |
+| Input | Two entries of one drug with the same daily dose: answer depended on typing order | Larger strength wins the tie | Sweep: `ORDER_DEPENDENT` |
+
+Top recommendation changed in 45 of 1,032 reference runs. Sweep after the fixes: 5,000 (gate seed) and 15,000 (fresh seed) patients, no violations.
+
+### Reproduced, NOT fixed (open)
+
+Ordered by how much they matter. Reviewer probe scripts were in a session scratch directory and are not in the repo; each item below has enough detail to reproduce.
+
+1. **RAAS inhibitor dose changes do not move projected potassium.** Every ACE inhibitor, ARB and ARNI has a flat `potassium_change` in `hemodynamic_effects` (constants.ts), while MRAs scale with dose. Halving the dose at potassium above 5.5 projects no fall, so the option keeps the -40 penalty and a binder is attached to a pure dose reduction (about 2% of random patients). Raising the budget can then flip the top pick to "reduce the ACE inhibitor and add a binder" over a cheaper, more complete option. Fix: dose-scale the RAAS potassium effect, and do not attach a binder to an option whose only potassium-raiser change is a reduction.
+2. **A current MRA is removed below the eGFR that blocks a new start** (spironolactone below 30, finerenone below 25; constants.ts unconditional checks). The project's own principle is that a start threshold must not remove a drug in use, and the ESC supplement halves the dose at eGFR below 30 and stops below 20. Needs a clinical decision.
+3. **Full completeness credit ignores renal dose caps.** Eplerenone 25 mg at its renal maximum scores 0.9 where spironolactone 25 mg scores 1.0; ramipril at its renal cap is under-credited (scoring.ts `gdmtCompletenessFraction`).
+4. **Dose reductions have no gentlest-step rule and summaries hide the starting frequency.** "Reduce Furosemide 80 to 40 mg bid" from 80 mg three times daily is 240 to 80 mg/day; "Titrate Furosemide 80 to 80 mg bid" reads as no change. Increases have `smallestStepAbove`; reductions use strength only.
+5. **Empty page when a forced MRA removal meets the low-potassium floor** (quadruple therapy plus a loop, eGFR 24, potassium 3.1): every candidate carries the forced removal and projects below 3.0. The page says no display-safe regimen but not that the forced removal is the cause.
+6. **Foundational-first mode can rank "no change" above a Class I beta-blocker start** when baseline potassium is already above 5.5 and the beta-blocker's modeled +0.05 counts as harm (selection.ts `isProjectedSafetyClean`). Rare.
+7. **"No change" projects NT-proBNP up 20% when the entered MAP is below 65.** Applied to every option equally, so ranking is not distorted, but the displayed projection is misleading.
+8. **Special-feature bonus is discontinuous at five or more drugs** (divisor is the larger of regimen size and indicated pillars).
+9. **Options 2 and 3 are often option 1 minus one step**, unlabeled; two options can differ only by the SGLT2 inhibitor chosen.
+10. **"Cost first" does not order by cost in the over-budget fallback** (the cost score saturates at 0).
+11. **Digoxin with amiodarone is kept at 125 mcg** beside a warning saying to reduce it 30 to 50%; clarithromycin has no digoxin text.
+12. **Binder prices do not vary with dose** (patiromer and Lokelma flat monthly price). Needs price data.
+13. **Formulation strings**: carvedilol 50 mg, metoprolol succinate 12.5 mg, spironolactone 12.5 mg, captopril 6.25 mg and H/ISDN 75/40 are labelled as single tablets; valsartan is labelled a capsule. Feeds only the complexity score.
+14. **Flat modeled effects across doses** for ivabradine and metolazone; GLP-1 `weight_reduction_kg` holds a percent; bumetanide's blood-pressure effect is out of line with the other loops at equivalent doses.
+15. **Lisinopril 20 to 40 mg is offered as the top option** although 20 mg is already at target (ESC table: 20 to 35 mg).
+16. **At potassium 6.0 to 6.4 with nothing potassium-raising left to stop**, the next visit shows no options (the display floor is absolute). An alert is present; whether to show potassium-neutral options is a design decision.
+17. **Tests still to write** for the third-pass fixes marked "not yet a scenario" above.
