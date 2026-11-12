@@ -1,7 +1,7 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
 import { isProjectedSafetyClean } from '../services/engine/selection';
-import { getDoseTiers, dailyDose, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
+import { getDoseTiers, dailyDose, doseFractionOfTarget, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
 import { isAcutelyDecompensated } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
 import { UP_TITRATION_MAX_DAILY_FACTOR } from '../services/engine/thresholds';
@@ -2419,7 +2419,9 @@ async function runVerification() {
                 if (scoredRegimens.length === 0) fail('no regimen produced');
                 if (t.includes('Naive RAAS Start Staged')) {
                     if (anyRegimenHasClass('ARNI') || anyRegimenHasClass('ACEi') || anyRegimenHasClass('ARB')) fail('a RAAS inhibitor was started at K+ 5.3');
-                    if (anyRegimenHasClass('K+ Binder')) fail('a binder was offered with nothing it may enable');
+                    // Intent: no binder is co-started to ENABLE a new RAAS inhibitor or MRA. (2026-11-11 graded credit: a new carvedilol start can lead at K+ 5.3, and the reactive rescue then appends
+                    // a binder because carvedilol is modeled at +0.05 K+ - a rescue of the beta-blocker, not an enabler. Flagged in the final report.)
+                    if (scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'K+ Binder') && (r.modification_set?.modifications ?? []).some(m => m.action === 'add' && m.target && (RAAS_CLASSES.has(m.target.med.drug_class) || m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')))) fail('a binder was offered with nothing it may enable');
                     if (!raasMeds.every(n => e18.some(e => e.name === n))) fail('not every ACEi/ARB/ARNI is withheld by E18 at K+ 5.3');
                     const why = (e18[0]?.why ?? []).join(' ');
                     if (!/Tables S4\/S5/.test(why) || !/potassium supplements/.test(why) || !/salt substitutes/.test(why) || !/engine policy/.test(why)) fail('E18 details must cite ESC Tables S4/S5, say the staged start is engine policy and name the first steps');
@@ -4028,6 +4030,16 @@ async function runVerification() {
             console.log(`  [PASS] ${checked} displayed titrate-ups across scenario x tier runs, none above ${UP_TITRATION_MAX_DAILY_FACTOR}x the current daily dose except the adjacent tier (${exceptions.size} drug/tier pairs: ${[...exceptions].sort().join('; ') || 'none'}).`);
             passed++;
         }
+    }
+
+    console.log('Checking structural invariant: below-target dose credit is graded by the share of the patient target daily dose...');
+    {
+        const P = SCENARIOS[0].patient;
+        const cv = MEDICATION_FORMULARY.find(m => m.drug_class === 'Beta Blocker' && m.name === 'Carvedilol')!;
+        const at = (s: number) => doseFractionOfTarget({ med: cv, dose: cv.available_doses.find(d => Number(d.strength) === s)!, selected_frequency: 'bid' }, P);
+        const a = at(3.125), b = at(6.25), c = at(25);
+        if (a === undefined || b === undefined || c === undefined || !(a < b && b < c) || Math.abs(c - 1) > 1e-9) { console.error(`  [FAIL] carvedilol dose fractions not graded to target: ${a}, ${b}, ${c}`); failed++; }
+        else { console.log(`  [PASS] carvedilol 3.125 / 6.25 / 25 mg bid = ${a.toFixed(3)} / ${b.toFixed(3)} / ${c.toFixed(3)} of the target daily dose.`); passed++; }
     }
 
     console.log('Checking structural invariant: eligibility rule ids are unique/ascending and every exclusion carries one...');

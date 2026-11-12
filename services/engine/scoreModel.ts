@@ -154,6 +154,17 @@ export interface ScoreAdjustmentSpec {
 /** Therapy-completeness credit for a therapy that is on board but below its target dose (full credit = 1). */
 export const COMPLETENESS_SUBTARGET_CREDIT = 0.6;
 
+/**
+ * Graded credit for a therapy on board below its target dose, when a numeric target can be derived for THIS patient (the denominator is the patient-specific
+ * target, e.g. weight- or renal-adjusted): credit = BASE + SPAN x min(1, total daily dose / target total daily dose). Full credit (1) at target, at the maximum, at an
+ * interaction cap, or for a single-dose drug; COMPLETENESS_SUBTARGET_CREDIT (0.6) where no numeric target can be derived.
+ * Basis: dose-response evidence that higher doses give lower event rates (2026 ESC heart failure guideline section 6.1.6: composite event rates were lower with
+ * the target dose than with lower doses). The LINEAR shape and the 0.5 floor are ENGINE POLICY, not sourced numbers. Effect: a one-step titration toward target
+ * (carvedilol 3.125 to 6.25 mg bid) earns credit instead of nothing, while any dose still earns at least half a slot.
+ */
+export const COMPLETENESS_GRADED_CREDIT_BASE = 0.5;
+export const COMPLETENESS_GRADED_CREDIT_SPAN = 0.5;
+
 /** Special-feature points for a drug that raises uric acid (facts.raises_uric_acid) in a patient with gout. Engine policy, unchanged from the loop-diuretic value (-5). */
 export const URIC_ACID_GOUT_POINTS = -5;
 

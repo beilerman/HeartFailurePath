@@ -159,6 +159,17 @@ export function chooseDisplayPicks(
             if (hasGLPR !== hasGLPE) return true;
             if (costDiff > 30) return true;
             if (similarity < 0.7) return true;
+            // Same drugs, different drug being dose-changed (titrate carvedilol vs titrate spironolactone): two different next steps, not one pick twice.
+            // Only when both picks consist solely of up-titrations of disjoint drug sets, so dose variants of the SAME change still collapse.
+            if (similarity === 1) {
+                // Up-titrations only: a dose REDUCTION or a swap is never presented as an alternative next step by this rule.
+                const upChanged = (x: ScoredRegimen) => {
+                    const mods = (x.modification_set?.modifications ?? []).filter(m => m.action !== 'keep');
+                    return mods.length > 0 && mods.every(m => m.action === 'titrate_up') ? new Set(mods.map(m => m.target!.med.name)) : undefined;
+                };
+                const cr = upChanged(r), ce = upChanged(existing);
+                if (cr && ce && [...cr].every(n => !ce.has(n))) return true;
+            }
 
             return false;
         });

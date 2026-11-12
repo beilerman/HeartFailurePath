@@ -73,7 +73,7 @@ patient values. What a score of 100 means for each is in `DOMAIN_GOALS` (`domain
 | Clinical outcomes | Volume | 12% | Weight above dry weight, exam findings, SpO2 | |
 | Clinical outcomes | Structure | 8% | LVEF level and improvement, chamber size | |
 | Guideline-directed therapy | Guideline | 12% | Indicated pillars present and at target dose for the phenotype | |
-| Guideline-directed therapy | Therapy completeness | 22% | Share of indicated, achievable therapies on board (partial credit below target dose) | |
+| Guideline-directed therapy | Therapy completeness | 22% | Share of indicated, achievable therapies on board (graded credit below target dose: 0.5 + 0.5 x share of the patient's target daily dose) | |
 | Patient values | Cost | 12% | Monthly out-of-pocket cost against the budget | `max_affordable_cost`, `cost_sensitivity` |
 | Patient values | Adherence | 7% | Regimen complexity against tolerance | `complexity_tolerance` |
 
@@ -146,7 +146,7 @@ a no-op and `SimulationOutput.ranking.reason_not_applied` says so. When it appli
    harmful way from the entered baseline (SBP or HR lower, K+ higher). A hyperkalemic patient whose regimen does not raise
    potassium is not demoted. The mild SBP < 95 tier does not demote; it still costs score points (step 3).
 2. Higher `foundational_coverage` (0-100): the share of achievable pillar slots (RAAS inhibitor, beta-blocker, MRA, SGLT2
-   inhibitor) on board, credit 1.0 at target, maximum, cap or single dose and 0.6 below. This is the same per-slot rule as
+   inhibitor) on board, credit 1.0 at target, maximum, cap or single dose and a graded credit below (0.5 + 0.5 x min(1, total daily dose / the patient's target total daily dose); 0.6 where no numeric target can be derived; one function, `gdmtCompletenessFraction`). This is the same per-slot rule as
    `gdmt_completeness` but over pillar slots only, so an adjunct (ivabradine, H/ISDN, GLP-1, iron) cannot outrank or tie a pillar.
 3. The Balanced order.
 
@@ -158,7 +158,9 @@ HFrEF/HFimpEF runs (744 runs in all). In 2 runs the foundational lead has lower 
 because the balanced lead is set aside by step 1: `Jane Smith (Dry & Cold)` under commercial and Medicare pricing (balanced lead
 carvedilol 3.125 mg bid + dapagliflozin, 40% coverage; foundational lead lisinopril 2.5 mg, 15%).
 
-Known limit: under the 1.0 / 0.6 credit rule, one fully dosed pillar can outrank a different pillar at its starting dose.
+Graded dose credit (2026-11-11, final pass): the old flat 0.6 for any dose below target gave a titration step (carvedilol 3.125 to 6.25 mg) no credit, so it lost to unrelated changes. `COMPLETENESS_GRADED_CREDIT_BASE` 0.5 and `_SPAN` 0.5 (`scoreModel.ts`) make the credit 0.5 + 0.5 x min(1, daily dose / target daily dose). Basis: higher doses give lower event rates (2026 ESC section 6.1.6: composite event rates were lower with target than lower doses); the linear shape is engine policy. The denominator is the patient-specific target (`doseFractionOfTarget`: `facts.target_daily_dose`, else the lowest strength `is_target_dose_for` accepts, else the `is_target_dose` flag). The guideline-concordance domain still uses the at-target boolean. The distinct-pick rule also treats two regimens with the same drugs as distinct when different drugs are dose-changed (titrate carvedilol versus titrate spironolactone), so a one-step beta-blocker titration is not hidden behind another titration. Effect: `changes-final-graded-dose-credit.txt`.
+
+Known limit: a fully dosed pillar can still outrank a different pillar at its starting dose, and a starting dose that is a large share of target (eplerenone 25 mg of 50) earns more credit than one that is a small share (spironolactone 12.5 mg of 50).
 Over-budget fallback regimens are ordered the same way, and the UI marks them as not affordable at the stated budget.
 
 One quirk is preserved from before the refactor: after a projected SBP < 85 zeroes the score, later

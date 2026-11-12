@@ -134,7 +134,7 @@ Full description: `docs/scoring-architecture.md`. All numbers live in `services/
   `foundational_first` applies to HFrEF/HFimpEF only and changes ONLY the order, never scores, exclusions, alerts, the
   budget filter or display floors (verify enforces it). Order: (a) regimens that do not push SBP, HR or K+ into a severe
   projected range the harmful way from baseline first (`PROJECTED_SBP_LT_85/_LT_90`, `_HR_LT_50`, `_K_GT_5_5`);
-  (b) higher `foundational_coverage` (RAAS, beta-blocker, MRA, SGLT2i slots; 1.0 at target, 0.6 below; explanation-only,
+  (b) higher `foundational_coverage` (RAAS, beta-blocker, MRA, SGLT2i slots; 1.0 at target, graded 0.5 + 0.5 x dose/target below (0.6 if no numeric target); explanation-only,
   never scored); (c) the Balanced order. `SimulationOutput.ranking` reports mode, whether it applied and what Balanced would
   have led with. It is separate from `care_priority`, which changes the weights. Known limit: a fully dosed single pillar
   outranks a different pillar at starting dose.
@@ -146,7 +146,7 @@ Full description: `docs/scoring-architecture.md`. All numbers live in `services/
 - Renal dose caps: an arriving dose above a cap is force-reduced one step; `facts.renal_cap_is_daily` (ramipril) compares the
   total daily dose, otherwise the per-dose strength (captopril, valsartan: undecided, see the medication-review README).
 - Therapy completeness = achievable indicated therapies present / achievable total (pillars +
-  eligible adjuncts; 60% credit below target dose). "Achievable" excludes therapies filtered out
+  eligible adjuncts; graded credit below target dose: `COMPLETENESS_GRADED_CREDIT_BASE/_SPAN` in scoreModel.ts, 0.5 + 0.5 x min(1, daily dose / patient target daily dose), 0.6 if no numeric target; engine policy, ESC 6.1.6 for the direction only). "Achievable" excludes therapies filtered out
   of the formulary — never penalize a contraindicated therapy.
 - Special-feature `points` calibration: outcome-level benefits are large (A-HeFT 60, FINEARTS 45,
   GLP-1 40 (both agents), iron 40 (20 at LVEF 41-49), binders 0 (no bonus since 2026-11-11), TOPCAT HFpEF 18); intra-class tolerability tiebreakers are

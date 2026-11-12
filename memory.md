@@ -11,7 +11,7 @@ Brad's exact reply, the questions it answers, and a proposed implementation plan
 - The four existing `care_priority` weight profiles are not this new toggle. Define its interaction with them, feasibility states and phenotype-specific ordering before coding. Safety, indication, contraindications and required prerequisites must not become optional under either ranking mode.
 - **Implemented 2026-11-11** (engine commits `8713147`..`2b39ba6`, UI `656a5e8`, docs after; golden 744 runs, verify Passed 263 at that time; local only, not pushed):
   - **E16 laboratory prerequisite:** blank potassium or renal function withholds new starts (eligibility E16) and dose increases/switches (dropped in `scoreCandidates`) of RAAS inhibitors and MRAs; one `LABS REQUIRED` alert per run. `UNKNOWN_POTASSIUM` (-12) removed; `UNKNOWN_RENAL` stays for SGLT2i only. No freshness window (no lab dates).
-  - **Ranking mode:** `Patient.ranking_mode` (`balanced` default / `foundational_first`), HFrEF/HFimpEF only; order = no severe projected harm vs baseline, then `foundational_coverage` (pillar slots, 1.0/0.6), then Balanced. Changes the lead in 99 of 630 HFrEF/HFimpEF golden runs. Only known fewer-pillar cases: `Jane Smith (Dry & Cold)` commercial and Medicare, where the balanced lead is demoted by rule (a). UI: "Ranking approach" select, results note, "Foundational coverage N%" on cards, mode in the copy-to-chart text; `components/rankingModeMeta.ts` holds the labels.
+  - **Ranking mode:** `Patient.ranking_mode` (`balanced` default / `foundational_first`), HFrEF/HFimpEF only; order = no severe projected harm vs baseline, then `foundational_coverage` (pillar slots, 1.0 / graded), then Balanced. Changes the lead in 99 of 630 HFrEF/HFimpEF golden runs. Only known fewer-pillar cases: `Jane Smith (Dry & Cold)` commercial and Medicare, where the balanced lead is demoted by rule (a). UI: "Ranking approach" select, results note, "Foundational coverage N%" on cards, mode in the copy-to-chart text; `components/rankingModeMeta.ts` holds the labels.
   - **Over budget:** fallback warning reworded ("BUDGET EXCEEDED ... shown for discussion"); UI banner, card badge and "REGIMEN FOR DISCUSSION ONLY" chart heading.
   - **Ramipril renal cap** judged on total daily dose (`facts.renal_cap_is_daily`); arriving above any renal cap is force-reduced one step. Captopril and valsartan caps remain per dose (undecided).
   - **Scope sentence** in the footer and Evidence tab, worded to the gates (hard stops: SBP < 90, K+ >= 6.5, implausible values; K+ 6.0-6.4, low output and pregnancy alert and still list options).
@@ -262,7 +262,7 @@ standalone QA like redTeam.ts — run `npx tsx scripts/mistakeAudit.ts`). Found 
    (e.g. carvedilol target 25, sampled tiers were 3.125/12.5/50) — target dose now always included
    as a tier so "titrate to target" is a candidate.
 7. **Completeness rewarded presence, not dose** — made dose-aware: a sub-target titratable pillar
-   earns partial credit (`SUBTARGET_CREDIT=0.6`); single-dose / at-target / at-max = full. So
+   earns graded credit (2026-11-11: 0.5 + 0.5 x dose/target, `doseFractionOfTarget`; 0.6 fallback `SUBTARGET_CREDIT` when no numeric target); single-dose / at-target / at-max = full. So
    up-titration raises completeness and a starting-dose quad no longer reads as "done".
 8. **Euvolemic on high-dose loop** (over-diuresis) not flagged — `detectInappropriateRegimen` now
    emits a LOOP DIURETIC OVER-TREATMENT alert (euvolemic + Furosemide≥120 / Torsemide≥50 /

@@ -326,7 +326,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                                 , plus any add-on this patient qualifies for: GLP-1 therapy, hydralazine/isosorbide dinitrate, ivabradine, vericiguat, or IV iron.
                             </li>
                             <li><strong>Not counted against the regimen:</strong> any therapy the patient cannot take (allergy, intolerance, contraindication, or not available). Diuretics and digoxin treat symptoms and are not counted.</li>
-                            <li><strong>Credit for each therapy:</strong> full credit when it is on board at the target dose (or at its highest available dose, or it has only one dose); {COMPLETENESS_SUBTARGET_CREDIT_PCT}% credit when it is on board below the target dose; none when it is missing. Moving a drug up toward its target dose therefore raises this factor.</li>
+                            <li><strong>Credit for each therapy:</strong> full credit when it is on board at the target dose (or at its highest available dose, or it has only one dose); a graded credit when it is on board below the target dose (50% plus half of the share of this patient's target daily dose the drug delivers, so 25% of target earns about 63%; {COMPLETENESS_SUBTARGET_CREDIT_PCT}% where no numeric target can be derived); none when it is missing. Moving a drug up toward its target dose therefore raises this factor, even by one step.</li>
                             <li className="pt-2 border-t border-slate-100">
                                 <strong>Score:</strong> the average credit across those therapies, times 100. If no indicated therapy is achievable for this patient the factor scores 0.
                             </li>

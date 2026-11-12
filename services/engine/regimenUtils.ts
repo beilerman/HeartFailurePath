@@ -384,6 +384,29 @@ export function countNewClassGroups(candidate: RegimenMed[], current: RegimenMed
 }
 
 /**
+ * Fraction (0-1+) of this patient's target TOTAL DAILY dose that the regimen entry delivers, or undefined when no numeric target can be derived.
+ * Target source, in order: `facts.target_daily_dose`; else the lowest listed strength that `is_target_dose_for(strength, patient)` accepts; else the strength flagged
+ * `is_target_dose`. Strengths are compared at the entry's own frequency (a combination strength such as "49/51" uses its leading component).
+ */
+export function doseFractionOfTarget(r: RegimenMed, patient: Patient): number | undefined {
+    const lead = (v: number | string) => { const n = parseFloat(String(v)); return Number.isNaN(n) ? undefined : n; };
+    const dailyTarget = drugFacts(r.med).target_daily_dose;
+    if (dailyTarget !== undefined) {
+        const d = dailyDose(r);
+        return Number.isNaN(d) || dailyTarget <= 0 ? undefined : d / dailyTarget;
+    }
+    const doses = r.med.available_doses;
+    const perPatient = r.med.is_target_dose_for;
+    const targetDose = perPatient
+        ? doses.find(d => { const s = Number(d.strength); return !Number.isNaN(s) && perPatient(s, patient); })
+        : doses.find(d => d.is_target_dose);
+    const target = targetDose ? lead(targetDose.strength) : undefined;
+    const current = lead(r.dose.strength);
+    if (target === undefined || target <= 0 || current === undefined) return undefined;
+    return current / target;
+}
+
+/**
  * Whether a med+dose is at its GDMT target dose FOR THIS PATIENT. Wraps the static
  * `is_target_dose` flag with the one patient-dependent exception: carvedilol's target is
  * body-weight-gated (ACC/AHA: 25 mg BID at <= 85 kg dry weight, 50 mg BID above).
