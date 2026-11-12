@@ -173,8 +173,16 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
     // Only the reactive K+ > 5.3 binder rescue below needs the projected potassium.
     let activeModSet = modSet;
 
+    // A rescue addition is a new drug and counts toward the per-visit limit, but it must never be the reason a candidate is discarded: when the rescue would put
+    // the candidate over the limit, the candidate is scored WITHOUT it (the iron stays in the "also eligible" list; the potassium penalties apply). Before
+    // 2026-11-12 the whole candidate was dropped, including the one that makes only the mandatory changes, so a patient with a limit of 0 was left with only the
+    // options that happened to add no class, and the tool could reverse its own advice on the next run.
+    const withinVisitLimit = (set: ModificationSet) => countNewClassGroups(set.resulting_regimen, patient.current_regimen || []) <= ctx.maxNewPerVisit;
+    const baseWithinLimit = withinVisitLimit(modSet);
+
     // Iron rescue: auto-append IV iron when criteria met (clinic-administered, not competing with oral GDMT)
-    if (ironDeficient && ivIron && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'IV Iron')) {
+    if (ironDeficient && ivIron && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'IV Iron')
+        && !(baseWithinLimit && !withinVisitLimit({ modifications: [], resulting_regimen: [...activeModSet.resulting_regimen, ivIron] }))) {
         const ironMod: RegimenModification = {
             action: 'add',
             target: ivIron,
@@ -222,7 +230,9 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
     // no such drug on board (for example a new beta-blocker start, modeled with a small potassium effect) gets no binder and is scored on its own projected potassium.
     if (sim.projectedPatient.potassium > 5.3 && rescueBinders.length > 0 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder') && keepsCurrentPotassiumRaiser(activeModSet, patient)) {
         const rescued = tryBinders(activeModSet);
-        if (rescued) {
+        // Same rule for the stated budget as for iron above: the binder is not attached when it alone takes an affordable regimen over budget.
+        const binderBreaksBudget = !!rescued && sim.cost <= patient.max_affordable_cost && rescued.sim.cost > patient.max_affordable_cost;
+        if (rescued && !(baseWithinLimit && !withinVisitLimit(rescued.set)) && !binderBreaksBudget) {
             sim = rescued.sim;
             sim.warnings.push(`Binder Required: ${rescued.set.resulting_regimen[rescued.set.resulting_regimen.length - 1].med.name} added to manage Hyperkalemia.`);
             activeModSet = rescued.set;

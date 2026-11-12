@@ -5,7 +5,7 @@ import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raasPotassiumChecks, CI_BILATERAL
     PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
 import { valueUnknown, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
-import { MRA_HALVE_DOSE_EGFR_BELOW, BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_MAX, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
+import { MRA_HALVE_DOSE_EGFR_BELOW, BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_CAUTION, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
 
 // Helper for logarithmic calculations (dose-response curves)
 const logBase = (base: number, x: number) => Math.log(x) / Math.log(base);
@@ -147,8 +147,8 @@ const SGLT2_S9_FACTS = { regimen_warnings: [
 const BB_S6_START_NOTE = { text: 'Drug note (2026 ESC Supplementary Table S6): seek specialist advice before starting in NYHA IV or with a current or recent (under 4 weeks) exacerbation; achieve euvolemia first if congestion persists or systolic pressure is below 90. Asthma is a relative contraindication (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.' };
 
 // Potassium rules for a RAAS inhibitor the patient is ALREADY on (2026 ESC heart failure guideline section 6.1; thresholds.ts): one dose step down from 5.5
-// (stopped if already at the lowest tier), stopped from 6.0, with the MRA reduced or stopped first when both are on board (yields_to). Increases are held from 5.5
-// (a new start is blocked above 5.4 by raasPotassiumChecks; ESC advises caution above 5.2). Abrupt withdrawal of an ACEi/ARNI risks deterioration, so a
+// (stopped if already at the lowest tier), stopped from 6.0, with the MRA reduced or stopped first when both are on board (yields_to). Increases are held above 5.2,
+// the same threshold that stages a new start (rule E18; a new start is blocked outright above 5.4 by raasPotassiumChecks). Abrupt withdrawal of an ACEi/ARNI risks deterioration, so a
 // current drug is reduced rather than removed in the 5.5-5.9 band. Before 2026-11-11 a current RAAS inhibitor was removed above 5.4 (engine policy).
 const MRA_K_FIRST_STEPS = 'Recheck potassium and kidney function in 1-2 weeks and look for other causes first (2026 ESC Supplementary Table S8: above 5.5 halve the dose; above 6.0 interrupt and seek specialist advice). ESC says therapy held for less than 14 days can usually restart at the previous dose; the US labels restart an MRA at a low dose once potassium is below 5.5, which is the stricter rule and is the one used.';
 
@@ -156,7 +156,9 @@ const RAAS_K_FACTS = {
     k_continuation: { reduce_at: RAAS_REDUCE_K, withhold_at: RAAS_WITHHOLD_K, restart_below: RAAS_REDUCE_K, yields_to: 'mra' as const,
         first_steps: 'Stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes first, then recheck potassium and kidney function in 1-2 weeks (2026 ESC Supplementary Tables S4/S5: potassium up to 5.5 is acceptable; a persistent rise above 5.5 halves the dose and is rechecked in 1-2 weeks; S4 also says stop above 5.5, and the main text says down-titrate or discontinue for above 5.5 or above 6, so the engine reduces one step from 5.5 and stops from 6.0). Therapy held for less than 14 days can usually restart at the previous dose (2026 ESC).',
         basis: '2026 ESC section 6.1: severe hyperkalaemia (above 5.5 or 6) leads to temporary down-titration or discontinuation of the MRA and/or ACEi/ARNI/ARB; the 5.5 reduce / 6.0 stop split and MRA-first order are engine policy' },
-    k_uptitration_max: { below: RAAS_REDUCE_K, basis: `Engine policy: the dose is not raised above potassium ${RAAS_START_K_MAX} (2026 ESC advises caution above 5.2)` },
+    // One ladder for intensification: an increase is held above the same potassium at which a new start is held (rule E18). Until 2026-11-12 an increase was
+    // allowed up to 5.4 while a new start was held above 5.2 (adversarial review item 12).
+    k_uptitration_max: { above: RAAS_START_K_CAUTION, basis: `Engine policy: the dose is not raised above potassium ${RAAS_START_K_CAUTION}, the same threshold that holds a new start (2026 ESC Supplementary Tables S4/S5: seek advice above 5.2; a rise to 5.5 on treatment is acceptable)` },
 };
 
 // Wording for the RAAS pregnancy checks: all eight carry a boxed warning for fetal toxicity (replaces the obsolete "Category X").
@@ -465,18 +467,23 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // (judgment: the dose-equivalent of valsartan 160 mg/day; see raasStart.ts).
         facts: {
             ...RAAS_K_FACTS,
+            source_differences: [
+                { topic: 'target dose', label: 'none for heart failure (no labeled indication); the 2022 AHA/ACC/HFSA guideline gives a range of 50-150 mg daily',
+                  guideline: '150 mg daily (2026 ESC Table 11; the HEAAL dose)', tool_follows: 'guideline',
+                  why: 'HEAAL showed fewer deaths or heart failure admissions with 150 mg than with 50 mg' },
+            ],
             low_dose_max_daily_mg: 50,
             regimen_warnings: [
-                { text: 'Drug note: losartan has no FDA-labeled heart-failure indication (label: hypertension, stroke-risk reduction with LVH, diabetic nephropathy); its use in HFrEF is guideline-supported (2022 AHA/ACC/HFSA Table 14, target 50-150 mg daily; HEAAL tested 150 mg). 150 mg is taken as two tablets (100 mg + 50 mg).' },
+                { text: 'Drug note: losartan has no FDA-labeled heart-failure indication (label: hypertension, stroke-risk reduction with LVH, diabetic nephropathy); its use in HFrEF is guideline-supported (2026 ESC target 150 mg daily, as tested in HEAAL; the 2022 AHA/ACC/HFSA Table 14 gives 50-150 mg). 150 mg is taken as two tablets (100 mg + 50 mg).' },
             ],
         },
         start_dose_for: () => 25,
         available_doses: [
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
-            // 2022 AHA/ACC/HFSA Table 14 target: 50-150 mg daily. Per verified-raas.md LO1 both 100 and 150 mg are flagged;
-            // 50 mg (inside the range) is deliberately not flagged: the verified correction lists only 100 and 150.
-            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
+            // Target 150 mg daily (2026 ESC Table 11; HEAAL: 150 mg reduced death or HF admission against 50 mg). The 2022 US guideline gives a 50-150 mg range.
+            // Until 2026-11-12 the 100 mg strength was also flagged, so a patient on 100 mg counted as at target and earned full credit (adversarial review item 10).
+            { strength: 100, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 150, unit: 'mg', formulation: 'two tablets (100 mg + 50 mg)', frequency_options: ['qd'], is_target_dose: true }, // no 150 mg tablet exists (Cozaar: 25/50/100); HEAAL dose
         ],
         chf_effects: (dose) => {
@@ -824,7 +831,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         // Kerendia HF label: start 20 mg if eGFR >= 60, 10 mg if eGFR 25 to < 60; target 40 mg (eGFR >= 60) or 20 mg
         // (eGFR 25 to < 60); do not start below eGFR 25. No static is_target_dose flag: the target depends on eGFR.
-        is_target_dose_for: (strength, patient) => strength === (patient.egfr >= 60 ? 40 : 20),
+        is_target_dose_for: (strength, patient) => strength >= (patient.egfr >= 60 ? 40 : 20), // one threshold: a dose above the target also counts (verify invariant)
         start_dose_for: (patient) => (patient.egfr >= 60 ? 20 : 10),
         available_doses: [
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // Starting dose; eGFR-dependent
@@ -1531,9 +1538,14 @@ export const MEDICATION_FORMULARY: Medication[] = [
         facts: {
             // Verquvo label 2.2: start 5 mg once daily with food; start 2.5 mg only for a patient at risk of symptomatic hypotension; double about every
             // 2 weeks to the 10 mg target. VICTORIA itself started 2.5 mg. The start tier is exact (never both).
+            source_differences: [
+                { topic: 'starting dose', label: '5 mg once daily, or 2.5 mg if at risk of symptomatic hypotension (Verquvo label, revised January 2026)',
+                  guideline: '2.5 mg once daily (2026 ESC Table 11; the VICTORIA starting dose)', tool_follows: 'label',
+                  why: 'the label is the current dosing authority; 2.5 mg is used when systolic pressure is below 110 or chronic hypotension is recorded' },
+            ],
             start_dose_exact: true,
             regimen_warnings: [
-                { text: 'Drug note: vericiguat label dosing: start 5 mg once daily with food (2.5 mg if at risk of symptomatic hypotension), double about every 2 weeks as tolerated to the 10 mg target. VICTORIA started 2.5 mg.' },
+                { text: 'Drug note: vericiguat label dosing: take with food; double about every 2 weeks as tolerated to the 10 mg target.' },
                 { text: 'Drug note: vericiguat with riociguat or another soluble guanylate cyclase stimulator is contraindicated (Verquvo label).',
                   when: p => onOtherSgcStimulator(p) },
                 { text: 'Drug note: PDE-5 inhibitor (sildenafil, tadalafil, vardenafil, avanafil) with vericiguat: concomitant use is not recommended (Verquvo label; sildenafil added up to a 5.4 mmHg additional blood pressure drop). VICTORIA excluded PDE-5 inhibitors. Not a hard exclusion: weigh the indication and stop one agent where possible.',

@@ -10,6 +10,11 @@ import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy
 import { HYPOKALEMIA_K_BELOW } from './thresholds';
 import { classifyPhenotype } from './domains';
 
+/** The "Drug note" text for a declared label-versus-guideline difference (facts.source_differences). Also shown on the formulary card. */
+export function sourceDifferenceNote(drugName: string, d: { topic: string; label: string; guideline: string; tool_follows: 'label' | 'guideline'; why: string }): string {
+    return `Drug note: sources differ on the ${d.topic} of ${drugName.replace(/\s*\(.*\)/, '').toLowerCase()}. Label: ${d.label}. Guideline: ${d.guideline}. This tool follows the ${d.tool_follows} (${d.why}).`;
+}
+
 /**
  * Potassium effect of changing one drug's contribution from `oldChange` to `newChange` (a dose change or a swap). The renal multiplier is a safety margin on a
  * net RISE only; a net fall (dose reduction, swap to a weaker potassium-raiser) is projected at its plain size, so the projection never overstates a fall.
@@ -612,6 +617,7 @@ export function simulateModificationEffect(
         drugFacts(r.med).regimen_warnings?.forEach(w => {
             if (!w.when || w.when(currentPatient, resultingRegimen)) warnings.push(typeof w.text === 'function' ? w.text(currentPatient) : w.text);
         });
+        drugFacts(r.med).source_differences?.forEach(d => warnings.push(sourceDifferenceNote(r.med.name, d)));
     });
 
     if (raasCount > 1) {

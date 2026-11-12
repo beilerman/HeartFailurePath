@@ -341,7 +341,7 @@ export function analyzeCurrentRegimen(
             candidates = candidates.flatMap(t => {
                 if (seen.has(t.med.name)) return [];
                 seen.add(t.med.name);
-                const landed = fractionOfTargetTier(current, t.med, patient);
+                const landed = fractionOfTargetTier(current, t.med, patient, forceDownBB);
                 return landed ? [landed] : [t];
             });
         }
@@ -632,7 +632,7 @@ export function structuralProblems(regimen: RegimenMed[]): string[] {
  * eligible tier of `to` at or below the same fraction of its target (the fraction is capped at 1), never below the drug's start tier. ENGINE POLICY: no
  * source gives a dose equivalence between beta-blockers. Null when either agent lacks a reference target.
  */
-export function fractionOfTargetTier(from: RegimenMed, to: Medication, patient: Patient): RegimenMed | null {
+export function fractionOfTargetTier(from: RegimenMed, to: Medication, patient: Patient, landAtStart = false): RegimenMed | null {
     const fromRef = drugFacts(from.med).target_reference_dose, toRef = drugFacts(to).target_reference_dose;
     const fromStrength = Number(from.dose.strength);
     if (fromRef === undefined || toRef === undefined || Number.isNaN(fromStrength)) return null;
@@ -643,7 +643,9 @@ export function fractionOfTargetTier(from: RegimenMed, to: Medication, patient: 
     const atOrAboveStart = eligible.filter(d => Number(d.strength) >= startStrength);
     const pool = atOrAboveStart.length > 0 ? atOrAboveStart : eligible;
     const below = pool.filter(d => Number(d.strength) <= want + 1e-9);
-    const dose = below.length > 0 ? below[below.length - 1] : pool[0];
+    // `landAtStart`: the patient's state forces a beta-blocker dose REDUCTION (acute decompensation with hypoperfusion), so the switch lands on the new agent's
+    // starting tier; landing by fraction of target put it one step above what the same rule then reduced on the next run.
+    const dose = landAtStart ? pool[0] : below.length > 0 ? below[below.length - 1] : pool[0];
     return { med: to, dose, selected_frequency: pickPreferredFrequency(to, dose.frequency_options, patient, dose.strength) };
 }
 
@@ -1007,15 +1009,20 @@ export function generateCandidateModifications(
             // 'contraindicated' removal, never an elective-tolerability swap framing.
             const hardContraindicated = r.med.contraindications?.(patient) === true;
             const intoleranceReason = hardContraindicated ? undefined : analysis.intolerableCurrentMeds.get(r.med.name);
-            const swapTarget = intoleranceReason
+            // A current drug that must go is REPLACED whenever an eligible agent of the same class group exists, for a contraindication as for an intolerance:
+            // otherwise options 2 and 3 offered the plain removal of a pillar (carvedilol with asthma) beside option 1's switch to a selective agent
+            // (adversarial review item 14). `swappable` already excludes drugs withheld by a potassium, heart-rate or kidney rule, redundant duplicates and
+            // diuretics without congestion, so those are still stopped, not replaced.
+            const mustGo = contraindicated.has(r.med.name);
+            const swapTarget = (intoleranceReason || mustGo)
                 ? analysis.swappable.find(s => s.from.med.name === r.med.name)?.candidates[0]
                 : undefined;
-            if (intoleranceReason && swapTarget) {
+            if ((intoleranceReason || mustGo) && swapTarget) {
                 forcedRemovals.push({
                     action: 'swap',
                     source: r,
                     target: swapTarget,
-                    summary: `${formatSwapSummary(r, swapTarget)} (${intoleranceReason})`
+                    summary: `${formatSwapSummary(r, swapTarget)} (${intoleranceReason ?? analysis.kWithholdReasons.get(r.med.name) ?? 'contraindicated'})`
                 });
             } else if (contraindicated.has(r.med.name)) {
                 const label = analysis.kWithholdReasons.get(r.med.name)

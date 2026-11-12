@@ -158,7 +158,12 @@ export interface Medication {
     chf_effects: (dose: number | string) => ChfEffects;
     hemodynamic_effects: (dose: number | string) => { sbp_drop: number; hr_drop: number; potassium_change: number };
 
-    side_effects: (dose: number | string) => { [key: string]: number }; // Risk probability 0-1
+    /**
+     * DISPLAY ONLY: the adverse effects listed on the formulary card, with an approximate rate at the usual dose (label or trial figure where the entry cites one).
+     * Most entries ignore `dose`, so these numbers must never feed scoring or selection: dose-dependent harm enters the ranking through hemodynamic_effects(dose)
+     * (blood pressure, heart rate, potassium), special_features and the projected-state penalties. `npm run verify` fails if engine code reads this field.
+     */
+    side_effects: (dose: number | string) => { [key: string]: number };
     renal_adjustment?: (egfr: number, patient?: Patient) => { start_dose_modifier?: number; max_dose?: number; caution?: boolean, contraindicated?: boolean };
     /** The function the engine calls. Derived from `contraindication_checks` via `ci()` (services/engine/contraindications.ts). */
     contraindications?: (patient: Patient) => boolean;
@@ -252,7 +257,8 @@ export interface MedFacts {
      * above `below` (finerenone and eplerenone labels: increase only when K+ is below 5.0). `basis` states whether the number is
      * the drug's own label or engine policy (class rule applied by analogy).
      */
-    k_uptitration_max?: { below: number; basis: string };
+    /** `below`: held AT or above this value. `above`: held strictly above this value (the RAAS start-caution threshold, so an increase is never allowed at a potassium where a new start is held). */
+    k_uptitration_max?: { below?: number; above?: number; basis: string };
     /**
      * GDMT target as a TOTAL DAILY dose (entry's dose unit), declared by an entry whose doses can be given at more than one
      * frequency (ramipril 5 mg twice daily = 10 mg/day). When set, `isTargetDoseForPatient` compares strength x doses per day with it
@@ -308,6 +314,11 @@ export interface MedFacts {
     cash_price_by_dose?: Record<string, number>;
     /** Plain-language warnings shown whenever this drug is in a recommended regimen (optionally only when `when(patient)`); informational, not score-penalized (text starts 'Drug note:'). */
     regimen_warnings?: { text: string | ((p: Patient) => string); when?: (p: Patient, regimen: RegimenMed[]) => boolean }[];
+    /**
+     * Places where the drug's label and the guideline give different numbers. Declared as data so the difference is shown on every option carrying the drug
+     * (a "Drug note") and on the formulary card, with which source the tool follows and why, instead of living only in a code comment.
+     */
+    source_differences?: { topic: string; label: string; guideline: string; tool_follows: 'label' | 'guideline'; why: string }[];
     /** Monitoring-plan items added whenever this drug is in a recommended regimen. */
     monitoring_items?: (MonitoringPlanItem & { when?: (p: Patient) => boolean })[];
 }
@@ -351,7 +362,7 @@ export type TradeOffTone = 'good' | 'neutral' | 'bad';
 
 export interface TradeOffLabel {
     dimension: string;             // "Cost", "Pill burden", "Evidence"
-    label: string;                 // "Low cost", "High complexity", "Class I (strong)"
+    label: string;                 // "Well within budget", "High complexity", "Class I (strong)"
     tone: TradeOffTone;
 }
 

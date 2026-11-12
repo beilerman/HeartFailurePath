@@ -143,9 +143,14 @@ export function adjacentTiers(current: RegimenMed, patient: Patient): { up?: Reg
  */
 export function kUptitrationBlock(med: Medication, patient: Patient): { reason: string; basis: string } | null {
     const rule = med.facts?.k_uptitration_max;
-    if (!rule || !(patient.potassium > 0) || patient.potassium < rule.below) return null;
+    if (!rule || !(patient.potassium > 0)) return null;
+    const atOrAbove = rule.below !== undefined && patient.potassium >= rule.below;
+    const strictlyAbove = rule.above !== undefined && patient.potassium > rule.above;
+    if (!atOrAbove && !strictlyAbove) return null;
     return {
-        reason: `potassium ${patient.potassium.toFixed(1)} mEq/L is ${rule.below.toFixed(1)} or above: the dose is not increased (maintain; recheck potassium)`,
+        reason: atOrAbove
+            ? `potassium ${patient.potassium.toFixed(1)} mEq/L is ${rule.below!.toFixed(1)} or above: the dose is not increased (maintain; recheck potassium)`
+            : `potassium ${patient.potassium.toFixed(1)} mEq/L is above ${rule.above!.toFixed(1)}: the dose is not increased (maintain; recheck potassium)`,
         basis: rule.basis,
     };
 }

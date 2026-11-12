@@ -293,7 +293,8 @@ export function buildEligibleAdjuncts(addableAdjuncts: RegimenMed[]): string[] {
 export function buildTradeOffLabels(domain: DomainScores): TradeOffLabel[] {
     const band = (s: number, good: string, mid: string, bad: string): { label: string; tone: TradeOffTone } =>
         s >= 80 ? { label: good, tone: 'good' } : s >= 50 ? { label: mid, tone: 'neutral' } : { label: bad, tone: 'bad' };
-    const cost = band(domain.cost, 'Low cost', 'Moderate cost', 'High cost / financial-toxicity risk');
+    // The cost domain measures cost against the STATED BUDGET, so the label says so: "Low cost" described a $953/month regimen under a large budget (review 2026-11-12).
+    const cost = band(domain.cost, 'Well within budget', 'Near the budget limit', 'Over budget / financial-toxicity risk');
     const burden = band(domain.adherence, 'Low pill burden', 'Moderate complexity', 'High complexity / adherence risk');
     const evidence = band(domain.guideline, 'Strong guideline concordance', 'Partial concordance', 'Limited concordance');
     return [

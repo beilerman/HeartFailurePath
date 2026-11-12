@@ -45,15 +45,20 @@ export function brokenDisplayFloors(r: ScoredRegimen, baseline: Patient): string
 //   3. Still tied: higher unrounded score, then the cheaper regimen.
 // Completeness is also one of the eight weighted domains; here it only orders regimens the
 // clinician sees as equal.
-//   4. Still tied: alphabetical by regimen, so the answer never depends on the order the current drugs were typed in.
+//   4. Still tied: the option with fewer changes to the current regimen.
+//   5. Still tied: alphabetical by regimen, so the answer never depends on the order the current drugs were typed in.
 // Scores are compared to 9 decimals: the same regimen summed in a different drug order differs in the last floating-point bits.
 const stable = (x: number | undefined) => Math.round((x ?? 0) * 1e9) / 1e9;
 const regimenKey = (r: ScoredRegimen): string => r.regimen.map(x => `${x.med.name} ${x.dose.strength} ${x.selected_frequency}`).sort().join(' + ');
+/** Number of changes to the current regimen. Between otherwise equal options the one that changes less comes first: an elective dose reduction with no modeled
+ * benefit tied with "mandatory changes only" and won alphabetically, so the tool lowered a dose it had started on the previous run (review 2026-11-12). */
+const changeCount = (r: ScoredRegimen): number => (r.modification_set?.modifications ?? []).filter(m => m.action !== 'keep').length;
 export const byScoreThenCost = (a: ScoredRegimen, b: ScoredRegimen) =>
     b.overall_score - a.overall_score ||
     stable(b.gdmt_completeness) - stable(a.gdmt_completeness) ||
     stable(b.raw_score) - stable(a.raw_score) ||
     a.cost - b.cost ||
+    changeCount(a) - changeCount(b) ||
     (regimenKey(a) < regimenKey(b) ? -1 : regimenKey(a) > regimenKey(b) ? 1 : 0);
 
 // ---------------------------------------------------------------------------------------------------

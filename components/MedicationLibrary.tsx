@@ -107,6 +107,10 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                         ))}
                         {Object.keys(sideEffects).length === 0 && <span className="text-xs text-slate-400 italic">Generally well tolerated</span>}
                     </div>
+                    <p className="mt-1 text-[10px] text-slate-400">Listed effects only. Ranking uses the dose-scaled effects on blood pressure, heart rate and potassium.</p>
+                    {(med.facts?.source_differences ?? []).map(d => (
+                        <p key={d.topic} className="mt-2 text-[11px] text-slate-600"><span className="font-semibold">Sources differ ({d.topic}).</span> Label: {d.label}. Guideline: {d.guideline}. This tool follows the {d.tool_follows}: {d.why}.</p>
+                    ))}
                 </div>
 
                 {/* Not offered when (contraindication checks) */}

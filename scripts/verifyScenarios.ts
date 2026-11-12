@@ -5,7 +5,7 @@ import { getDoseTiers, dailyDose, doseProgressToTarget, isCongestedAboveDryWeigh
 import { isAcutelyDecompensated, derivedFields } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
 import { getMedicationClassGroup, isDiureticClass } from '../services/engine/registry';
-import { UP_TITRATION_MAX_DAILY_FACTOR } from '../services/engine/thresholds';
+import { UP_TITRATION_MAX_DAILY_FACTOR, RAAS_START_K_CAUTION, MRA_START_K_CEILING } from '../services/engine/thresholds';
 import { includesLoopIncrease } from '../services/engine/selection';
 import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary, diureticHeldForNoCongestion } from '../services/engine/candidates';
 import { simulateModificationEffect, patientChfEffects } from '../services/engine/effects';
@@ -3602,8 +3602,8 @@ async function runVerification() {
                     const los = MEDICATION_FORMULARY.find(m => m.name === 'Losartan')!;
                     const isT = (strength: number) => isTargetDoseForPatient({ med: los, dose: los.available_doses.find(d => d.strength === strength)!, selected_frequency: 'qd' }, scenario.patient);
                     if (!isT(150)) fail('Losartan 150 mg is not a target dose (2022 Table 14 target range 50-150 mg)');
-                    if (!isT(100)) fail('Losartan 100 mg stopped counting as a target dose');
-                    if (isT(50)) fail('Losartan 50 mg is flagged target; the verified correction flags only 100 and 150');
+                    // 2026-11-12: one target per drug. 150 mg is the target (2026 ESC Table 11, HEAAL); 100 mg earns graded credit and can be increased.
+                    if (isT(100) || isT(50)) fail('Losartan below 150 mg counts as a target dose (the target is 150 mg: 2026 ESC Table 11)');
                     if (/tablet/.test(los.available_doses.find(d => d.strength === 150)!.formulation) && !/two tablets/.test(los.available_doses.find(d => d.strength === 150)!.formulation)) fail('Losartan 150 mg is not labelled as two tablets');
                     if (mods.some(x => x.m.action === 'titrate_up' && x.m.source?.med.name === 'Losartan')) fail('Losartan 150 mg offered a further up-titration (it is at target)');
                     if (!scoredRegimens.some(r => r.warnings.some(w => w.includes('no FDA-labeled heart-failure indication')))) fail('Losartan regimen lacks the no-HF-label display note');
@@ -4263,6 +4263,51 @@ async function runVerification() {
         const rewarded = binders.filter(b => (b.special_features ?? []).some(f => f.points > 0 || (f.points_for_dose && f.points_for_dose(b.available_doses[0].strength) > 0))).map(b => b.name);
         if (binders.length === 0 || rewarded.length > 0) { console.error(`  [FAIL] binder(s) with a positive special-feature bonus: ${rewarded.join(', ') || '(no binder found)'}`); failed++; }
         else { console.log(`  [PASS] ${binders.length} binders, none with a positive evidence bonus.`); passed++; }
+    }
+
+    console.log('Checking structural invariant: one potassium ladder (a dose increase is never allowed at a potassium where a new start of the same class is held)...');
+    {
+        const bad: string[] = [];
+        const base = clonePatient(SCENARIOS[0].patient);
+        for (const m of MEDICATION_FORMULARY) {
+            const isRaas = ['ACEi', 'ARB', 'ARNI'].includes(m.drug_class), isMra = m.drug_class === 'MRA' || m.drug_class === 'nsMRA';
+            if (!isRaas && !isMra) continue;
+            for (let k10 = 45; k10 <= 64; k10++) {
+                const k = k10 / 10;
+                const startHeld = isRaas ? k > RAAS_START_K_CAUTION : k >= MRA_START_K_CEILING;
+                const increaseHeld = kUptitrationBlock(m, { ...base, potassium: k }) !== null;
+                if (startHeld && !increaseHeld) bad.push(`${m.name} at potassium ${k}: a new start is held but an increase is allowed`);
+            }
+        }
+        if (bad.length > 0) { console.error(`  [FAIL] ${bad.slice(0, 5).join('; ')}`); failed++; }
+        else { console.log('  [PASS] RAAS inhibitors and MRAs: increases are held wherever starts are.'); passed++; }
+    }
+
+    console.log('Checking structural invariant: engine code never reads the display-only side_effects rates (most ignore dose)...');
+    {
+        const engineDir = path.join(process.cwd(), 'services/engine');
+        const readers = [...readdirSync(engineDir).filter(n => n.endsWith('.ts')).map(n => path.join(engineDir, n)), path.join(process.cwd(), 'services/simulationService.ts'), path.join(process.cwd(), 'services/clinicalPredicates.ts')]
+            .filter(f => /\.side_effects\b/.test(readFileSync(f, 'utf8'))).map(f => path.basename(f));
+        if (readers.length > 0) { console.error(`  [FAIL] side_effects read by: ${readers.join(', ')}`); failed++; }
+        else { console.log('  [PASS] side_effects is display-only.'); passed++; }
+    }
+
+    console.log('Checking structural invariant: "at target" is one threshold per drug (a dose above an at-target dose is also at target, for every sample patient)...');
+    {
+        const bad = new Set<string>();
+        for (const m of MEDICATION_FORMULARY) {
+            const flagged = m.available_doses.map(d => !!d.is_target_dose);
+            // static flags: once a strength is flagged, every higher strength is flagged ("target or above"), so the lowest flagged strength IS the target
+            if (flagged.some((f, i) => f && flagged.slice(i + 1).some(g => !g))) bad.add(`${m.name}: a flagged target strength sits below an unflagged one`);
+            if (m.drug_class === 'IV Iron') continue; // a single weight- and hemoglobin-determined course, not a titration ladder
+            for (const sc of SCENARIOS) {
+                const tiers = getDoseTiers(m, sc.patient).filter(t => typeof t.dose.strength === 'number').sort((a, b) => dailyDose(a) - dailyDose(b));
+                const first = tiers.findIndex(t => isTargetDoseForPatient(t, sc.patient));
+                if (first >= 0 && tiers.slice(first).some(t => !isTargetDoseForPatient(t, sc.patient))) bad.add(`${m.name}: a dose above the target is not "at target" (${sc.title})`);
+            }
+        }
+        if (bad.size > 0) { console.error(`  [FAIL] ${[...bad].slice(0, 6).join('; ')}`); failed++; }
+        else { console.log(`  [PASS] ${MEDICATION_FORMULARY.length} drugs: one target threshold each.`); passed++; }
     }
 
     console.log('Checking structural invariant: one fact, one charge (a state warning priced by a named adjustment is not counted again), and coverage counts are consistent...');
