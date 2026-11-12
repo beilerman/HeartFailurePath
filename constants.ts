@@ -1,11 +1,11 @@
 
 import { Medication, Patient } from './types';
 import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raasPotassiumChecks, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
-    STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, moderateCyp3aInhibitor,
+    STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, mraStartEgfrCheck, moderateCyp3aInhibitor,
     PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
 import { valueUnknown, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
-import { BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_MAX, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
+import { MRA_HALVE_DOSE_EGFR_BELOW, BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_MAX, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
 
 // Helper for logarithmic calculations (dose-response curves)
 const logBase = (base: number, x: number) => Math.log(x) / Math.log(base);
@@ -694,8 +694,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // modeled as the 12.5 mg daily tier. New starts never begin above it; titration of an existing dose is unaffected.
         start_dose_for: (p) => (p.egfr > 50 ? 25 : 12.5),
         // Target 50 mg daily (2026 ESC Table 11; the Aldactone label allows increasing 25 to 50 mg as tolerated). It was 25 or 50 before 2026-11-11 (the 2022 US range).
-        // With eGFR 45 or below the engine's own renal cap is 25 mg, so 25 is the highest allowed dose and counts as the target there.
-        is_target_dose_for: (strength, patient) => strength >= (patient.egfr <= 45 ? 25 : 50),
+        // With eGFR 31-49 (below 50) the dose is halved (2022 AHA/ACC/HFSA 7.3.3), so 25 is the highest allowed dose and counts as the target there.
+        is_target_dose_for: (strength, patient) => strength >= (patient.egfr < MRA_HALVE_DOSE_EGFR_BELOW ? 25 : 50),
         is_best_in_class: true,
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
@@ -724,6 +724,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             mraStartPotassiumCheck('Spironolactone'),
             CI_MRA_WITHHOLD_K6,
             { reason: 'eGFR below 30', when: p => p.egfr < 30 },
+            mraStartEgfrCheck('Spironolactone'), // NEW start only: eGFR 30 or below (2022 AHA/ACC/HFSA 7.3.3); a patient already on it at exactly 30 is not removed
             CI_ADRENAL_INSUFFICIENCY, // Aldactone label contraindication: Addison's disease
             // The Aldactone label gives no letter pregnancy category (the old "Category X" comment was unsupported):
             // it says spironolactone may affect male sex differentiation and advises avoiding it in pregnancy.
@@ -731,7 +732,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         ]),
         renal_adjustment: (egfr) => {
             if (egfr < 30) return { contraindicated: true };
-            if (egfr <= 45) return { max_dose: 25, caution: true };
+            if (egfr < MRA_HALVE_DOSE_EGFR_BELOW) return { max_dose: 25, caution: true }; // 2022 AHA/ACC/HFSA 7.3.3: halve the dosing at eGFR 31-49 (was 45 or below)
             return {};
         },
         special_features: [
@@ -794,7 +795,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         ]),
         renal_adjustment: (egfr) => {
             if (egfr <= 30) return { contraindicated: true };
-            if (egfr <= 45) return { max_dose: 25, caution: true }; // 45/50 cap not source-verified; left unchanged
+            if (egfr < MRA_HALVE_DOSE_EGFR_BELOW) return { max_dose: 25, caution: true }; // 2022 AHA/ACC/HFSA 7.3.3: halve the dosing at eGFR 31-49 (was 45 or below, unsourced)
             return {};
         },
     },

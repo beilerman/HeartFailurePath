@@ -11,7 +11,7 @@
  * No engine imports here: constants.ts (the formulary) imports this module.
  */
 import type { Patient, Medication, ContraindicationCheck } from '../../types';
-import { MRA_START_K_MAX, RAAS_START_K_MAX, RAAS_WITHHOLD_K } from './thresholds';
+import { MRA_START_EGFR_MAX, MRA_START_K_MAX, RAAS_START_K_MAX, RAAS_WITHHOLD_K } from './thresholds';
 
 /** Spread into a formulary entry: `...ci([...])` sets both `contraindication_checks` and `contraindications`. */
 export const ci = (checks: ContraindicationCheck[]) => ({
@@ -165,6 +165,11 @@ export const CI_ADRENAL_INSUFFICIENCY: ContraindicationCheck = {
 export const mraStartPotassiumCheck = (name: string): ContraindicationCheck => ({
     reason: 'Potassium above 5.5 mEq/L (new start)',
     when: p => !alreadyOnMed(p, name) && p.potassium > MRA_START_K_MAX,
+});
+/** NEW steroidal MRA start contraindicated at eGFR 30 or below (2022 AHA/ACC/HFSA 7.3.3); a drug already on board is not removed by this check. Blank eGFR (0) is handled by the renal-only probe (rule E12). */
+export const mraStartEgfrCheck = (name: string): ContraindicationCheck => ({
+    reason: 'eGFR 30 or below (new start; 2022 AHA/ACC/HFSA: contraindication to MRA initiation)',
+    when: p => !alreadyOnMed(p, name) && p.egfr <= MRA_START_EGFR_MAX,
 });
 /** Withhold an MRA already on board at K+ 6.0 or above (eplerenone and finerenone labels; spironolactone by analogy). */
 export const CI_MRA_WITHHOLD_K6: ContraindicationCheck = {

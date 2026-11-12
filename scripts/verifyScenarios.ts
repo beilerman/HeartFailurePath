@@ -332,13 +332,13 @@ async function runVerification() {
             const hasScenarioSpecificCoverage = ASSERTION_TITLE_MARKERS.some(marker => scenario.title.includes(marker));
             const externalMeds = scenario.patient.external_medications || new Set<string>();
 
-            // Global safety invariant (every scenario): a NEW MRA is never started above K+ 5.0, with or without a binder (rule E15; decision
+            // Global safety invariant (every scenario): a NEW MRA is never started at K+ 5.0 or higher, with or without a binder (rule E15; decision
             // 2026-11-11, verified-clinical-decisions-2026-11-11.md rows 1, 2a, 2c). Replaces the older "only together with a binder" invariant.
             const mraStartedAbove5 = scoredRegimens.some(r =>
                 (r.modification_set?.modifications ?? []).some(m => m.action === 'add' && m.target && (m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA'))
-                && scenario.patient.potassium > 5.0);
+                && scenario.patient.potassium >= 5.0);
             if (mraStartedAbove5) {
-                failures.push('A new MRA was started above K+ 5.0 (rule E15: staged, never co-started with a binder)');
+                failures.push('A new MRA was started at K+ 5.0 or higher (rule E15: staged, never co-started with a binder)');
                 scenarioPassed = false;
             }
             // Global safety invariants (every scenario; rule E18 and the reactive-only binder, 2026-11-11): (1) a binder is never part of a regimen that ADDS a potassium-raising class (RAAS pool, MRA,
@@ -361,7 +361,7 @@ async function runVerification() {
                 const mra = mods.some(m => m.target!.med.drug_class === 'MRA' || m.target!.med.drug_class === 'nsMRA');
                 const raas = mods.some(m => RAAS_CLASSES.has(m.target!.med.drug_class));
                 const plan = r.monitoring_plan ?? [];
-                if (mra && !plan.some(i => i.timing.includes('Within 1 week') && i.timing.includes('4 weeks'))) { failures.push('MRA start/increase without the "within 1 week and about 4 weeks" lab item'); scenarioPassed = false; }
+                if (mra && !plan.some(i => i.timing.includes('Within 1 week') && i.timing.includes('4 weeks') && i.timing.includes('every 4-6 months'))) { failures.push('MRA start/increase without the "within 1 week, about 4 weeks, then every 4-6 months" lab item'); scenarioPassed = false; }
                 if (raas && !plan.some(i => i.timing.includes('1-2 weeks'))) { failures.push('RAAS start/increase without the "1-2 weeks" lab item'); scenarioPassed = false; }
             }
             // Global invariant: Lokelma in any displayed regimen carries the heart-failure sodium/edema warning.
@@ -1640,12 +1640,12 @@ async function runVerification() {
                     failures.push('Spironolactone and eplerenone not both withheld by E15 at K+ 5.1');
                     scenarioPassed = false;
                 }
-                if (!(gdmtGaps ?? []).some(g => g.startsWith('Mineralocorticoid') && g.includes('5.0 or lower'))) {
+                if (!(gdmtGaps ?? []).some(g => g.startsWith('Mineralocorticoid') && g.includes('below 5.0'))) {
                     failures.push('The MRA GDMT gap does not state the potassium reason');
                     scenarioPassed = false;
                 }
-                if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start MRA if 5.0 or lower')) {
-                    failures.push('Monitoring plan lacks "repeat potassium; start MRA if 5.0 or lower"');
+                if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start MRA once below 5.0')) {
+                    failures.push('Monitoring plan lacks "repeat potassium; start MRA once below 5.0"');
                     scenarioPassed = false;
                 }
             }
@@ -2576,13 +2576,35 @@ async function runVerification() {
                     if (s.length === 0) fail('Spironolactone not offered as a new start (check is vacuous)');
                     if (s.some(x => x > limit)) fail(`Spironolactone new start above ${limit} mg at eGFR ${scenario.patient.egfr} (found ${s.join(', ')})`);
                 }
+                if (t.includes('New Start K+ 5.0 Staged')) {
+                    if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) fail('MRA offered at K+ 5.0 (2022 US guideline: 5.0 or above is a contraindication to initiation)');
+                    if (['Spironolactone', 'Eplerenone'].some(n => excl(n)?.rule_id !== 'E15')) fail('Spironolactone/eplerenone not withheld by E15 at exactly K+ 5.0');
+                    if (!excl('Spironolactone')?.reason.includes('5.0 or higher')) fail('E15 reason must read "Potassium X.X is 5.0 or higher"');
+                }
+                if (t.includes('New Start K+ 4.9 Offered')) {
+                    if (!anyRegimenContainsAnyClass('MRA')) fail('MRA start not offered at K+ 4.9');
+                    if (['Spironolactone', 'Eplerenone'].some(n => excl(n)?.rule_id === 'E15')) fail('E15 fired at K+ 4.9');
+                }
+                if (t.includes('Spironolactone New Start eGFR 30 Excluded')) {
+                    if (!excl('Spironolactone')) fail('Spironolactone offered as a NEW start at eGFR 30 (2022 US guideline: eGFR 30 or below is a contraindication to initiation)');
+                    if (regimenHas('Spironolactone')) fail('Spironolactone in a displayed regimen at eGFR 30 (new start)');
+                }
+                if (t.includes('Spironolactone Current At eGFR 30 Continued')) {
+                    if (excl('Spironolactone')) fail('Current spironolactone removed at eGFR exactly 30 (the start criterion must not remove a drug already on board)');
+                    if (!regimenHas('Spironolactone')) fail('Current spironolactone not retained at eGFR 30');
+                }
+                if (t.includes('Halved Dose Cap eGFR 49')) {
+                    const sp = strengthsOf('Spironolactone'), ep = strengthsOf('Eplerenone');
+                    if (sp.length === 0 && ep.length === 0) fail('no MRA offered (check is vacuous)');
+                    if ([...sp, ...ep].some(x => x > 25)) fail(`MRA dose above 25 mg at eGFR 49 (found ${[...sp, ...ep].join(', ')}); 2022 US guideline: halve the dosing at eGFR 31-49`);
+                }
                 if (t.includes('MRA Start K+ 5.3 Staged, Not Co-Started With A Binder')) {
                     if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) fail('MRA offered at K+ 5.3 (rule E15 withholds a new start above 5.0, with or without a binder)');
                     if (anyRegimenContainsAnyClass('K+ Binder')) fail('K+ binder co-started although no MRA may start and nothing needs rescue');
                     if (['Spironolactone', 'Eplerenone'].some(n => excl(n)?.rule_id !== 'E15')) fail('Spironolactone/eplerenone not withheld by E15 at K+ 5.3');
-                    if (!(excl('Spironolactone')?.why ?? []).some(w => w.includes('Class 2b'))) fail('E15 details do not mention the binder option (Class 2b)');
+                    if (!(excl('Spironolactone')?.why ?? []).some(w => w.includes('uncertain'))) fail('E15 details do not say binder outcome benefit is uncertain (2022 US guideline 7.3.6)');
                     if (!(gdmtGaps ?? []).some(g => g.startsWith('Mineralocorticoid') && g.includes('potassium 5.3'))) fail('MRA gap lacks the potassium reason');
-                    if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start MRA if 5.0 or lower')) fail('Monitoring plan lacks the repeat-potassium item');
+                    if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start MRA once below 5.0')) fail('Monitoring plan lacks the repeat-potassium item');
                 }
                 if (t.includes('MRA Start K+ 5.3 No Binder Available')) {
                     const noBinderExcl = ['Spironolactone', 'Eplerenone'].filter(n => excl(n)?.rule_id === 'E15');

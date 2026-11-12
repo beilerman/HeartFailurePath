@@ -10,12 +10,20 @@ export const HYPOTENSION_SBP_BELOW = 90;
 /** Potassium above this is never a NEW MRA start (label ceiling; contraindication check). */
 export const MRA_START_K_MAX = 5.5;
 /**
- * A NEW MRA start is withheld above this potassium (rule E15), with or without a potassium binder: start once potassium is at or below it.
- * Sources (verified-clinical-decisions-2026-11-11.md rows 1, 2a, 2c): 2022 AHA/ACC/HFSA start criterion K < 5.0 (SECONDARY reproduction; the
- * primary guideline was not opened), Aldactone label "serum potassium <=5.0", Kerendia label "do not initiate ... > 5.0". One rule for every MRA:
- * the eplerenone label's looser K > 5.5 start contraindication (row 2b) does not govern.
+ * A NEW MRA start is withheld at this potassium or higher (rule E15), with or without a potassium binder: start once potassium is BELOW it.
+ * Sources: 2022 AHA/ACC/HFSA section 7.3.3 (primary text read 2026-11-11): "eGFR 30 or below or serum potassium 5.0 mEq/L or above are contraindications to MRA
+ * initiation"; 2026 ESC section 6.1 "caution" at 5.0 or above; Aldactone label "serum potassium <=5.0" and Kerendia label "do not initiate ... > 5.0" are looser
+ * at exactly 5.0, so the engine keeps the STRICTER (guideline) boundary, the same for every MRA. The eplerenone label's looser K > 5.5 start contraindication
+ * does not govern. Before 2026-11-11 (second pass) the rule withheld only above 5.0.
  */
 export const MRA_START_K_CEILING = 5.0;
+/** A NEW steroidal MRA start is contraindicated at eGFR at or below this (2022 AHA/ACC/HFSA 7.3.3: "eGFR 30 or below"; eplerenone label CrCl 30 or less). Continuation is not affected. */
+export const MRA_START_EGFR_MAX = 30;
+/**
+ * eGFR below this (31-49 in whole numbers) halves the steroidal MRA dose: a new start begins at the lowest tier and the dose is capped at 25 mg (half the 50 mg target)
+ * (2022 AHA/ACC/HFSA 7.3.3 "halve the dosing at eGFR 31-49"). The Aldactone label's start boundary (25 mg daily only if eGFR is above 50) is stricter for the START and is kept.
+ */
+export const MRA_HALVE_DOSE_EGFR_BELOW = 50;
 /**
  * RAAS inhibitor (ACEi, ARB, ARNI) potassium rules (2026 ESC heart failure guideline section 6.1; esc-2026-reading-notes.md).
  * A NEW start (or a swap-in) is blocked above RAAS_START_K_MAX: the engine's longstanding block (ESC says "caution" above 5.2). For an inhibitor the

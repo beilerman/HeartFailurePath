@@ -29,8 +29,8 @@ export function buildMonitoringPlan(
     if (hasMraIntensification) {
         plan.push({
             test: 'BMP (potassium, creatinine, eGFR) after MRA start or increase',
-            timing: 'Within 1 week, and again at about 4 weeks (and 1-2 weeks after the final titration)',
-            details: 'Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months.'
+            timing: 'Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months',
+            details: 'Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).'
         });
     }
     if (hasRaasIntensification) {
@@ -146,7 +146,7 @@ export function computeGdmtGaps(patient: Patient): string[] {
 }
 
 /**
- * When rule E15 withheld a new MRA because potassium is above 5.0, say so on the MRA GDMT gap (the gap list is built before
+ * When rule E15 withheld a new MRA because potassium is 5.0 or higher, say so on the MRA GDMT gap (the gap list is built before
  * eligibility, from the current regimen alone). Decision 2026-11-11, verified-clinical-decisions-2026-11-11.md rows 1, 2a, 2c.
  */
 export function annotateGdmtGapsWithMraPotassium(gaps: string[], excludedMeds: ExcludedMedication[]): string[] {
@@ -155,11 +155,11 @@ export function annotateGdmtGapsWithMraPotassium(gaps: string[], excludedMeds: E
     return gaps.map(g => g === PILLAR_LABELS['MRA'] ? `${g} — not started: ${e15.reason.charAt(0).toLowerCase()}${e15.reason.slice(1)}` : g);
 }
 
-/** Monitoring item added when rule E15 fired (a new MRA was withheld because potassium is above 5.0). */
+/** Monitoring item added when rule E15 fired (a new MRA was withheld because potassium is 5.0 or higher). */
 export const MRA_POTASSIUM_STAGED_MONITORING: MonitoringPlanItem = {
-    test: 'Repeat potassium; start MRA if 5.0 or lower',
+    test: 'Repeat potassium; start MRA once below 5.0',
     timing: 'Before any MRA start',
-    details: 'A new MRA is withheld while potassium is above 5.0 (2026 ESC guideline: caution at 5.0 or above; 2022 US guideline start criterion K below 5.0, secondary reproduction; Aldactone and Kerendia labels). Recheck potassium and start the MRA once it is 5.0 or lower. Potassium binders carry a Class 2b recommendation in the 2022 US guideline; the 2026 ESC guideline makes no recommendation for them.',
+    details: 'A new MRA is withheld while potassium is 5.0 or higher (2022 US guideline 7.3.3: potassium 5.0 or above is a contraindication to MRA initiation; 2026 ESC guideline: caution at 5.0 or above; the labels allow exactly 5.0, the guideline boundary is the stricter). Recheck potassium and start the MRA once it is below 5.0. Whether potassium binders improve outcomes is uncertain in the 2022 US guideline; the 2026 ESC guideline makes no recommendation for them.',
 };
 
 /** When rule E18 withheld a new RAAS inhibitor because potassium is above 5.2, say so on the RAAS GDMT gap (same pattern as the MRA gap). */

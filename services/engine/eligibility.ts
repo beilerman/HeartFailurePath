@@ -205,10 +205,10 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         ],
     },
     {
-        id: 'E15', name: 'New MRA start above potassium 5.0 is staged',
-        summary: 'A NEW MRA or nsMRA start at potassium above 5.0 is withheld, with or without a potassium binder: recheck potassium and start once it is 5.0 or lower. A binder is not a reason to start sooner (Class 2b in the 2022 US guideline; no recommendation in the 2026 ESC guideline).',
+        id: 'E15', name: 'New MRA start at potassium 5.0 or higher is staged',
+        summary: 'A NEW MRA or nsMRA start at potassium 5.0 or higher is withheld, with or without a potassium binder: recheck potassium and start once it is below 5.0. A binder is not a reason to start sooner (outcome benefit uncertain in the 2022 US guideline; no recommendation in the 2026 ESC guideline).',
         // Decision 2026-11-11 (docs/medication-review-2026-11-10/verified-clinical-decisions-2026-11-11.md, rows 1, 2a, 2c, 3, 4):
-        //  - row 1: 2022 AHA/ACC/HFSA start criterion K < 5.0 (COR 1, LOE A) - SECONDARY reproduction, primary guideline not opened
+        //  - row 1: 2022 AHA/ACC/HFSA section 7.3.3, PRIMARY text read 2026-11-11: "serum potassium 5.0 mEq/L or above ... contraindications to MRA initiation" (class label still secondary)
         //  - row 2a / 2c: Aldactone label (K <= 5.0) and Kerendia label (do not initiate if K > 5.0) - labels
         //  - row 3: binders for hyperkalemia on RAASi are Class 2b (secondary); row 4: DIAMOND co-started an MRA with patiromer only inside a
         //    trial run-in, which is not a recommendation to start an MRA above 5.0
@@ -218,12 +218,12 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         // Initiation only: a patient already on any MRA is not affected (continuation is facts.k_continuation). Placed after E13 so
         // potassium above 5.5 is still reported as a contraindication.
         evaluate: (ctx, med) => MRA_POOL_CLASSES.has(med.drug_class)
-            && ctx.patient.potassium > MRA_START_K_CEILING
+            && ctx.patient.potassium >= MRA_START_K_CEILING
             && !(ctx.patient.current_regimen ?? []).some(r => MRA_POOL_CLASSES.has(r.med.drug_class))
-            ? `Potassium ${ctx.patient.potassium.toFixed(1)} is above 5.0: recheck and start the MRA once potassium is 5.0 or lower` : null,
+            ? `Potassium ${ctx.patient.potassium.toFixed(1)} is 5.0 or higher: recheck and start the MRA once potassium is below 5.0` : null,
         details: (ctx) => [
-            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above the ${MRA_START_K_CEILING.toFixed(1)} start limit (2022 AHA/ACC/HFSA start criterion K below 5.0, reproduced in a secondary source; Aldactone and Kerendia labels). Repeat potassium and start the MRA once it is ${MRA_START_K_CEILING.toFixed(1)} or lower`,
-            'Potassium binders carry a Class 2b recommendation in the 2022 US guideline (secondary source); the 2026 ESC guideline makes no recommendation for them (insufficient evidence of clinical benefit). The tool does not start an MRA together with a binder',
+            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is at or above the ${MRA_START_K_CEILING.toFixed(1)} start limit (2022 AHA/ACC/HFSA 7.3.3: potassium 5.0 or above is a contraindication to MRA initiation; 2026 ESC section 6.1: caution at 5.0 or above; the Aldactone and Kerendia labels allow exactly 5.0, the guideline boundary is the stricter and is used). Repeat potassium and start the MRA once it is below ${MRA_START_K_CEILING.toFixed(1)}`,
+            'Potassium binders: whether they improve outcomes is uncertain in the 2022 US guideline (primary text); the 2026 ESC guideline makes no recommendation for them (insufficient evidence of clinical benefit). The tool does not start an MRA together with a binder',
         ],
     },
     {
