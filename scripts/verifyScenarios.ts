@@ -86,7 +86,7 @@ const ASSERTION_TITLE_MARKERS = [
     'Furoscix Candidate',
     'Furoscix Allergy Guardrail',
     'ARNI Hepatic CI',
-    'MRA + DIAMOND Binder',
+    'MRA Start Staged At K+ 5.1',
     'HFpEF Steroidal MRA Eligible',
     'Incomplete Data: Missing Potassium',
     'Incomplete Data: Missing LVEF',
@@ -201,7 +201,7 @@ async function runVerification() {
         try {
             const scenarioPrices = await getDrugPrices(formularyNames, scenario.patient.insurance_tier);
             const scenarioAvailableMedNames = availableFor(scenario.title);
-            const { scoredRegimens, excludedMedications, clinicalAlerts, monitoringPlan, eligibleAdjuncts, missingDataNotices } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
+            const { scoredRegimens, excludedMedications, clinicalAlerts, monitoringPlan, gdmtGaps, eligibleAdjuncts, missingDataNotices } = generateAndScoreModifications(scenario.patient, scenarioAvailableMedNames, scenarioPrices);
             const topRegimen = scoredRegimens[0];
 
             // GLOBAL STRUCTURAL INVARIANT (every exclusion has a known rule): see services/engine/eligibility.ts.
@@ -309,14 +309,13 @@ async function runVerification() {
             const hasScenarioSpecificCoverage = ASSERTION_TITLE_MARKERS.some(marker => scenario.title.includes(marker));
             const externalMeds = scenario.patient.external_medications || new Set<string>();
 
-            // Global safety invariant (every scenario): an MRA is never STARTED above K+ 5.0 without a K+ binder in the same
-            // option (label/guideline start threshold is 5.0; the binder-sequenced pathway is the only exception).
-            const mraStartedWithoutBinder = scoredRegimens.some(r =>
+            // Global safety invariant (every scenario): a NEW MRA is never started above K+ 5.0, with or without a binder (rule E15; decision
+            // 2026-11-11, verified-clinical-decisions-2026-11-11.md rows 1, 2a, 2c). Replaces the older "only together with a binder" invariant.
+            const mraStartedAbove5 = scoredRegimens.some(r =>
                 (r.modification_set?.modifications ?? []).some(m => m.action === 'add' && m.target && (m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA'))
-                && scenario.patient.potassium > 5.0
-                && !r.regimen.some(m => m.med.drug_class === 'K+ Binder'));
-            if (mraStartedWithoutBinder) {
-                failures.push('MRA started above K+ 5.0 without a K+ binder in the same option');
+                && scenario.patient.potassium > 5.0);
+            if (mraStartedAbove5) {
+                failures.push('A new MRA was started above K+ 5.0 (rule E15: staged, never co-started with a binder)');
                 scenarioPassed = false;
             }
             // Global invariant: Lokelma in any displayed regimen carries the heart-failure sodium/edema warning.
@@ -1584,27 +1583,26 @@ async function runVerification() {
                 }
             }
 
-            // 68. MRA + DIAMOND Binder -> Every regimen with MRA must also have K+ binder
-            if (scenario.title.includes('MRA + DIAMOND Binder')) {
-                const regimensWithMRA = scoredRegimens.filter(r =>
-                    r.regimen.some(m => m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA')
-                );
-                if (regimensWithMRA.length === 0) {
-                    failures.push('No regimens with MRA generated for DIAMOND binder scenario');
+            // 68. New MRA at K+ 5.1 is staged: withheld by E15, no binder co-start, the MRA gap states why, and the monitoring item is present
+            if (scenario.title.includes('MRA Start Staged At K+ 5.1')) {
+                if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) {
+                    failures.push('MRA offered at K+ 5.1 (rule E15 withholds a new start above 5.0)');
                     scenarioPassed = false;
                 }
-                const mraWithoutBinder = regimensWithMRA.filter(r =>
-                    !r.regimen.some(m => m.med.drug_class === 'K+ Binder')
-                );
-                if (mraWithoutBinder.length > 0) {
-                    failures.push(`${mraWithoutBinder.length} regimen(s) with MRA missing K+ binder (DIAMOND protocol requires binder at K+ > 5.0)`);
+                if (anyRegimenContainsAnyClass('K+ Binder')) {
+                    failures.push('K+ binder offered with nothing to rescue at K+ 5.1 (no co-start with an MRA)');
                     scenarioPassed = false;
                 }
-                // Check for DIAMOND/borderline K+ warning
-                const allWarnings = scoredRegimens.flatMap(r => r.warnings || []);
-                const hasDiamondWarning = allWarnings.some(w => w.includes('BORDERLINE K+') || w.includes('DIAMOND'));
-                if (!hasDiamondWarning) {
-                    failures.push('Missing DIAMOND/borderline K+ warning for MRA initiation at K+ 5.1');
+                if (!['Spironolactone', 'Eplerenone'].every(n => excludedMedications.some(e => e.name === n && e.rule_id === 'E15'))) {
+                    failures.push('Spironolactone and eplerenone not both withheld by E15 at K+ 5.1');
+                    scenarioPassed = false;
+                }
+                if (!(gdmtGaps ?? []).some(g => g.startsWith('Mineralocorticoid') && g.includes('5.0 or lower'))) {
+                    failures.push('The MRA GDMT gap does not state the potassium reason');
+                    scenarioPassed = false;
+                }
+                if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start MRA if 5.0 or lower')) {
+                    failures.push('Monitoring plan lacks "repeat potassium; start MRA if 5.0 or lower"');
                     scenarioPassed = false;
                 }
             }
@@ -2309,15 +2307,17 @@ async function runVerification() {
                     if (s.length === 0) fail('Spironolactone not offered as a new start (check is vacuous)');
                     if (s.some(x => x > limit)) fail(`Spironolactone new start above ${limit} mg at eGFR ${scenario.patient.egfr} (found ${s.join(', ')})`);
                 }
-                if (t.includes('MRA Start K+ 5.3 Needs Binder And Sequencing')) {
-                    const withMra = scoredRegimens.filter(r => r.regimen.some(m => m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA'));
-                    if (withMra.length === 0) fail('No MRA start offered at K+ 5.3 (the binder-sequenced pathway should remain)');
-                    if (withMra.some(r => !r.regimen.some(m => m.med.drug_class === 'K+ Binder'))) fail('MRA started above K+ 5.0 without a binder in the same option');
-                    if (withMra.some(r => !(r.warnings ?? []).some(w => w.includes('BORDERLINE K+') && w.includes('start the binder first')))) fail('MRA start above K+ 5.0 lacks the sequencing warning (label start threshold 5.0)');
+                if (t.includes('MRA Start K+ 5.3 Staged, Not Co-Started With A Binder')) {
+                    if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) fail('MRA offered at K+ 5.3 (rule E15 withholds a new start above 5.0, with or without a binder)');
+                    if (anyRegimenContainsAnyClass('K+ Binder')) fail('K+ binder co-started although no MRA may start and nothing needs rescue');
+                    if (['Spironolactone', 'Eplerenone'].some(n => excl(n)?.rule_id !== 'E15')) fail('Spironolactone/eplerenone not withheld by E15 at K+ 5.3');
+                    if (!(excl('Spironolactone')?.why ?? []).some(w => w.includes('Class 2b'))) fail('E15 details do not mention the binder option (Class 2b)');
+                    if (!(gdmtGaps ?? []).some(g => g.startsWith('Mineralocorticoid') && g.includes('potassium 5.3'))) fail('MRA gap lacks the potassium reason');
+                    if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start MRA if 5.0 or lower')) fail('Monitoring plan lacks the repeat-potassium item');
                 }
                 if (t.includes('MRA Start K+ 5.3 No Binder Available')) {
                     const noBinderExcl = ['Spironolactone', 'Eplerenone'].filter(n => excl(n)?.rule_id === 'E15');
-                    if (noBinderExcl.length !== 2) fail('MRA not excluded by E15 when no binder can be offered at K+ 5.3');
+                    if (noBinderExcl.length !== 2) fail('MRA not excluded by E15 at K+ 5.3 when no binder is available');
                     if (anyRegimenContainsAnyClass('MRA', 'nsMRA', 'K+ Binder')) fail('MRA or binder appears although none may be offered');
                 }
                 if (t.includes('Lokelma HF Warning')) {

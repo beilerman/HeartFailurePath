@@ -28,7 +28,7 @@ import { RAAS_CLASSES } from './registry';
 import { valueUnknown } from '../clinicalPredicates';
 import { drugFacts } from './drugFacts';
 import { contraindicationReasons } from './contraindications';
-import { MRA_START_K_BINDER_ABOVE } from './thresholds';
+import { MRA_START_K_CEILING } from './thresholds';
 
 /** Everything the rules need, computed once per patient (not per drug). */
 export interface EligibilityContext {
@@ -48,11 +48,6 @@ export interface EligibilityContext {
     hasHyperkalemiaHistory: boolean;
     currentHasSteroidalMRA: boolean;
     currentHasNsMRA: boolean;
-    /**
-     * Whether any K+ binder can actually be offered (formulary-available, not allergic/discontinued). Set when the
-     * formulary filter runs (it needs `availableMedNames`); undefined before that. Rule E15 reads it.
-     */
-    kBinderAvailable?: boolean;
 }
 
 export interface EligibilityRule {
@@ -210,17 +205,23 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         ],
     },
     {
-        id: 'E15', name: 'MRA start above potassium 5.0 needs a binder',
-        summary: 'A NEW MRA start at potassium above 5.0 is only offered together with a potassium binder (the label/guideline start threshold is 5.0). If no binder can be offered, the MRA is not started.',
-        // Initiation only: a patient already on any MRA is not affected (continuation is governed by the potassium
-        // continuation rule). Placed after E13 so potassium above 5.5 is reported as a contraindication.
+        id: 'E15', name: 'New MRA start above potassium 5.0 is staged',
+        summary: 'A NEW MRA or nsMRA start at potassium above 5.0 is withheld, with or without a potassium binder: recheck potassium and start once it is 5.0 or lower. A binder (guideline Class 2b) is an option if potassium stays high on a RAAS inhibitor.',
+        // Decision 2026-11-11 (docs/medication-review-2026-11-10/verified-clinical-decisions-2026-11-11.md, rows 1, 2a, 2c, 3, 4):
+        //  - row 1: 2022 AHA/ACC/HFSA start criterion K < 5.0 (COR 1, LOE A) - SECONDARY reproduction, primary guideline not opened
+        //  - row 2a / 2c: Aldactone label (K <= 5.0) and Kerendia label (do not initiate if K > 5.0) - labels
+        //  - row 3: binders for hyperkalemia on RAASi are Class 2b (secondary); row 4: DIAMOND co-started an MRA with patiromer only inside a
+        //    trial run-in, which is not a recommendation to start an MRA above 5.0
+        // One rule for all MRAs (eplerenone's looser label K > 5.5 start contraindication, row 2b, does not govern).
+        // Initiation only: a patient already on any MRA is not affected (continuation is facts.k_continuation). Placed after E13 so
+        // potassium above 5.5 is still reported as a contraindication.
         evaluate: (ctx, med) => MRA_POOL_CLASSES.has(med.drug_class)
-            && ctx.kBinderAvailable === false
-            && ctx.patient.potassium > MRA_START_K_BINDER_ABOVE
+            && ctx.patient.potassium > MRA_START_K_CEILING
             && !(ctx.patient.current_regimen ?? []).some(r => MRA_POOL_CLASSES.has(r.med.drug_class))
-            ? 'MRA start above potassium 5.0 needs a potassium binder, and none can be offered' : null,
+            ? `Potassium ${ctx.patient.potassium.toFixed(1)} is above 5.0: recheck and start the MRA once potassium is 5.0 or lower` : null,
         details: (ctx) => [
-            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above the 5.0 start threshold; the tool only starts an MRA at 5.0-5.5 together with a binder, and no binder is available for this patient`,
+            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above the ${MRA_START_K_CEILING.toFixed(1)} start limit (2022 AHA/ACC/HFSA start criterion K below 5.0, reproduced in a secondary source; Aldactone and Kerendia labels). Repeat potassium and start the MRA once it is ${MRA_START_K_CEILING.toFixed(1)} or lower`,
+            'A potassium binder is an option (guideline Class 2b) if potassium stays high on a RAAS inhibitor; the tool does not start an MRA together with a binder',
         ],
     },
     {
@@ -261,10 +262,7 @@ export function filterEligibleMedications(
     const excludedMeds = taggedDiscontinuedMeds(ctx.patient);
     ctx = {
         ...ctx,
-        kBinderAvailable: MEDICATION_FORMULARY.some(m =>
-            drugFacts(m).rescue_role?.kind === 'k_binder' && availableMedNames.has(m.name)
-            && !ctx.patient.allergies.has(m.name) && !ctx.discontinuedByName.has(m.name)),
-    };
+            };
     const formulary = MEDICATION_FORMULARY.filter(m => {
         if (!availableMedNames.has(m.name)) return false;
         for (const rule of ELIGIBILITY_RULES) {

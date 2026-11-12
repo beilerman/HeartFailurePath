@@ -20,7 +20,6 @@ import { simulateModificationEffect } from './effects';
 import { IntolerancePolicy } from './intolerance';
 import { RegimenAnalysis } from './candidates';
 import { CriticalDataAudit, ClinicalFlags } from './gates';
-import { MRA_START_K_BINDER_ABOVE } from './thresholds';
 
 type Simulation = ReturnType<typeof simulateModificationEffect>;
 
@@ -119,14 +118,20 @@ export function buildScoringContext(
     };
 }
 
-/** Pre-simulation rescue appends (iron, DIAMOND binder) -> simulate once -> reactive K+ binder rescue. */
-export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContext): { activeModSet: ModificationSet; sim: Simulation; unsafeMraStart?: boolean } {
+/**
+ * Pre-simulation iron rescue -> simulate once -> reactive K+ binder rescue.
+ *
+ * The reactive binder rescue covers any candidate whose PROJECTED potassium exceeds 5.3 (for example a RAAS inhibitor
+ * continued or increased in a patient already at borderline potassium). It is no longer a way to start an MRA above
+ * potassium 5.0: rule E15 withholds that start regardless of binder availability (decision 2026-11-11,
+ * verified-clinical-decisions-2026-11-11.md rows 1, 3, 4). Note it still fires for a new MRA whose projected potassium
+ * (baseline at or below 5.0 plus the modeled rise) exceeds 5.3.
+ */
+export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContext): { activeModSet: ModificationSet; sim: Simulation } {
     const { patient, prices, intolerancePolicy, rescueBinders, ivIron, ironDeficient } = ctx;
-    // Pre-simulation rescue appends are built FIRST, then the candidate is simulated ONCE.
-    // Iron rescue depends only on patient-level invariants and the candidate's contents;
-    // DIAMOND depends on BASELINE potassium — neither needs a prior simulation (previously
-    // every candidate was simulated twice for iron-deficient patients, discarding the first
-    // result). Only the reactive K+ > 5.3 binder rescue below needs the projected potassium.
+    // Iron rescue depends only on patient-level invariants and the candidate's contents, so it is appended BEFORE
+    // the single simulation (previously every candidate was simulated twice for iron-deficient patients).
+    // Only the reactive K+ > 5.3 binder rescue below needs the projected potassium.
     let activeModSet = modSet;
 
     // Iron rescue: auto-append IV iron when criteria met (clinic-administered, not competing with oral GDMT)
@@ -142,52 +147,30 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
         };
     }
 
-    // DIAMOND protocol: proactive binder co-prescription when initiating MRA at baseline K+ > 5.0
-    const isMraAdd = activeModSet.modifications.some(m =>
-        m.action === 'add' && m.target &&
-        (m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
-    );
-    const alreadyHasBinder = activeModSet.resulting_regimen.some(r =>
-        r.med.drug_class === 'K+ Binder'
-    );
-    // Try each binder tier in order and keep the first whose simulation brings projected K+ into 3.5-5.3 (the
-    // lowest effective dose). `fallbackToStrongest`: if none does, still add the tier with the lowest projected K+.
-    const withBinder = (base: ModificationSet, binder: RegimenMed, suffix: string): ModificationSet => ({
+    // Try each binder tier in order and keep the first whose simulation brings projected K+ into 3.5-5.3 (the lowest effective dose).
+    const withBinder = (base: ModificationSet, binder: RegimenMed): ModificationSet => ({
         modifications: [...base.modifications, {
             action: 'add' as const, target: binder,
-            summary: `Add ${binder.med.name} ${formatDose(binder)}${suffix}`,
+            summary: `Add ${binder.med.name} ${formatDose(binder)}`,
         }],
         resulting_regimen: [...base.resulting_regimen, binder],
     });
-    const tryBinders = (base: ModificationSet, suffix: string, fallbackToStrongest: boolean) => {
-        let best: { set: ModificationSet; sim: Simulation } | undefined;
+    const tryBinders = (base: ModificationSet) => {
         for (const binder of rescueBinders) {
-            const set = withBinder(base, binder, suffix);
+            const set = withBinder(base, binder);
             const trial = simulateModificationEffect(patient, set, prices, intolerancePolicy);
             const k = trial.projectedPatient.potassium;
-            if (k < 5.3 && k > 3.5) return { set, sim: trial, rescued: true };
-            if (!best || k < best.sim.projectedPatient.potassium) best = { set, sim: trial };
+            if (k < 5.3 && k > 3.5) return { set, sim: trial };
         }
-        return fallbackToStrongest && best ? { ...best, rescued: false } : undefined;
+        return undefined;
     };
 
-    let sim: Simulation | undefined;
-    // An MRA start above K+ 5.0 never appears without a binder: eligibility rule E15 withholds the MRA when no
-    // binder can be offered, so rescueBinders is non-empty here whenever an MRA is being added.
-    if (isMraAdd && patient.potassium > MRA_START_K_BINDER_ABOVE && rescueBinders.length > 0 && !alreadyHasBinder) {
-        // The labels say do not START an MRA above 5.0 (spironolactone, finerenone). The binder-enabled start
-        // is offered only when a binder tier is projected to hold potassium inside 3.5-5.3; if none does, the
-        // candidate is dropped (treat the potassium first) rather than starting the MRA anyway.
-        const chosen = tryBinders(activeModSet, ' (DIAMOND protocol)', false);
-        if (!chosen) return { activeModSet, sim: simulateModificationEffect(patient, activeModSet, prices, intolerancePolicy), unsafeMraStart: true };
-        activeModSet = chosen.set; sim = chosen.sim;
-    }
-    if (!sim) sim = simulateModificationEffect(patient, activeModSet, prices, intolerancePolicy);
+    let sim: Simulation = simulateModificationEffect(patient, activeModSet, prices, intolerancePolicy);
 
     // H7+H8: Binder rescue: if K+ > 5.3, try adding a K+ binder (Patiromer preferred, then Lokelma, lowest effective dose)
     // H8 fix: Use activeModSet (which includes iron if appended) not original modSet
     if (sim.projectedPatient.potassium > 5.3 && rescueBinders.length > 0 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder')) {
-        const rescued = tryBinders(activeModSet, '', false);
+        const rescued = tryBinders(activeModSet);
         if (rescued) {
             sim = rescued.sim;
             sim.warnings.push(`Binder Required: ${rescued.set.resulting_regimen[rescued.set.resulting_regimen.length - 1].med.name} added to manage Hyperkalemia.`);
@@ -368,14 +351,14 @@ export function aggregateScore(
 
     // "Binder Required" deliberately COUNTS here: a regimen that needs a rescue binder to
     // stay under the K+ ceiling carries residual hyperkalemia risk. The binder enables the
-    // regimen to be considered (DIAMOND), but must not erase the risk in ranking — an
+    // regimen to be considered, but must not erase the risk in ranking — an
     // otherwise-equal regimen that needs no rescue should score above one that does.
     // Only TRUE safety warnings should reduce the score. Informational / procedural guidance
     // (titration cadence, elderly start-low-go-slow, routine monitoring) must NOT be penalized —
     // counting the "Titration Interval" guidance as a danger made titrating GDMT toward target
     // score LOWER than leaving it sub-target, defeating the point. NOTE: "Binder Required" is
     // deliberately NOT here — a regimen needing K+ binder rescue carries residual hyperkalemia
-    // risk and should rank below an equal regimen that does not (DIAMOND enables, doesn't erase).
+    // risk and should rank below an equal regimen that does not (a binder enables, it doesn't erase).
     // Marker list (NON_PENALIZED_WARNING_MARKERS) lives in services/engine/scoreModel.ts.
     const dangerousWarnings = sim.warnings.filter(w =>
         !NON_PENALIZED_WARNING_MARKERS.some(marker => w.includes(marker))
@@ -461,8 +444,7 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
         }
 
         // Rescue appends + the single simulation (+ reactive K+ binder re-simulation), then the new-class cap.
-        const { activeModSet, sim, unsafeMraStart } = applyRescueAdditions(modSet, ctx);
-        if (unsafeMraStart) return;
+        const { activeModSet, sim } = applyRescueAdditions(modSet, ctx);
 
         if (countNewClassGroups(activeModSet.resulting_regimen, patient.current_regimen || []) > maxNewPerVisit) {
             return;

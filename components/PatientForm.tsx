@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import type { Patient, TestScenario } from '../types';
 import { Label, Select, REQUIRED_FIELDS } from './patient-form/Common';
-import { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_BINDER_ABOVE, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from '../services/simulationService';
+import { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_CEILING, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from '../services/simulationService';
 import { DemographicsSection } from './patient-form/DemographicsSection';
 import { SymptomsSection } from './patient-form/SymptomsSection';
 import { PhysicalExamSection } from './patient-form/PhysicalExamSection';
@@ -163,7 +163,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         if (!(patientData.potassium > 0)) warnings.potassium = 'Not entered: RAAS inhibitor and MRA decisions will be withheld until a potassium is available';
         else if (patientData.potassium > MRA_START_K_MAX) warnings.potassium = 'High K+: a new MRA is not started; an MRA already on board is reduced or withheld';
         else if (patientData.potassium < HYPOKALEMIA_K_BELOW) warnings.potassium = `K+ < ${HYPOKALEMIA_K_BELOW} increases digoxin/arrhythmia risk`;
-        else if (patientData.potassium > MRA_START_K_BINDER_ABOVE) warnings.potassium = 'Borderline K+: a new MRA needs a potassium binder in the same plan';
+        else if (patientData.potassium > MRA_START_K_CEILING) warnings.potassium = `K+ above ${MRA_START_K_CEILING}: a new MRA is not started; recheck potassium and start once it is ${MRA_START_K_CEILING} or lower`;
         if (patientData.is_pregnant) warnings.pregnancy = 'RAAS inhibitors, MRAs, SGLT2 inhibitors, vericiguat, ivabradine and GLP-1 therapies are excluded';
         if (patientData.nyha_class === 'IV') warnings.nyha = 'BB initiation blocked';
         if (patientData.pulse < BB_HR_BELOW) warnings.pulse = 'Low heart rate: a new beta-blocker is not started; an established one is reduced a step';

@@ -590,32 +590,19 @@ export function simulateModificationEffect(
         }
     }
 
-    // D2: MRA initiation with borderline K+ — ACC/AHA recommends initiating MRA when K+ ≤ 5.0.
-    // K+ 5.0-5.5 is allowed here with binder rescue (DIAMOND), but requires explicit warning.
+    // D2: MRA initiation at the potassium start limit. A NEW MRA above potassium 5.0 never reaches here (rule E15 withholds it with or
+    // without a binder; verified-clinical-decisions-2026-11-11.md rows 1, 2a, 2c); a start at exactly 5.0 is the highest the guideline start
+    // criterion (K < 5.0, secondary reproduction) and the labels (K <= 5.0) allow, so it carries the monitoring instruction. Counted as a
+    // residual-risk warning (penalized).
     const isMraInitiation = modificationSet.modifications.some(m =>
         m.action === 'add' && m.target && (m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
     );
     if (isMraInitiation && currentPatient.potassium >= 5.0 && currentPatient.potassium <= 5.5) {
-        const hasBinder = resultingRegimen.some(r => r.med.drug_class === 'K+ Binder');
-        // Above 5.0 the label/guideline threshold for STARTING an MRA is not met: sequence the binder first.
-        // (The eplerenone label allows a start up to 5.5; spironolactone and finerenone say 5.0.) This is the
-        // existing penalized residual-risk warning, extended rather than duplicated.
-        const sequencing = currentPatient.potassium > 5.0
-            ? ' The label/guideline threshold for STARTING an MRA is K+ 5.0 or below: start the binder first and begin the MRA once a repeat potassium is 5.0 or below.'
-            : '';
-        if (hasBinder) {
-            warnings.push(
-                'MRA INITIATION AT BORDERLINE K+: Baseline potassium is ' + currentPatient.potassium.toFixed(1) +
-                ' mEq/L. Concurrent K+ binder included per DIAMOND trial protocol.' + sequencing +
-                ' Check BMP in 48-72 hours. Discontinue MRA if K+ rises above 5.5 despite binder therapy.'
-            );
-        } else {
-            warnings.push(
-                'MRA INITIATION AT BORDERLINE K+: Baseline potassium is ' + currentPatient.potassium.toFixed(1) +
-                ' mEq/L. Consider concurrent K+ binder per DIAMOND protocol.' + sequencing +
-                ' Check BMP in 48-72 hours. Discontinue MRA if K+ rises above 5.5.'
-            );
-        }
+        warnings.push(
+            'MRA INITIATION AT THE POTASSIUM START LIMIT: Baseline potassium is ' + currentPatient.potassium.toFixed(1) +
+            ' mEq/L, the highest at which the labels and the guideline start criterion allow an MRA start. ' +
+            'Check potassium within 1 week and again at about 4 weeks (labels and guideline); reduce the MRA one dose step if potassium rises above 5.5 and withhold it at 6.0 or above.'
+        );
     }
 
     // Drug-specific regimen warnings declared as data on the formulary entry (facts.regimen_warnings).

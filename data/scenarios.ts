@@ -1967,9 +1967,9 @@ export const SCENARIOS: TestScenario[] = [
             max_new_classes_per_visit: 3
         }
     },
-    // ===== Issue 1: MRA + DIAMOND Binder =====
+    // ===== Issue 1: new MRA start above potassium 5.0 is staged (was: DIAMOND binder co-start; changed 2026-11-11) =====
     {
-        title: 'MRA + DIAMOND Binder (K+ 5.1)',
+        title: 'MRA Start Staged At K+ 5.1 (No Binder Co-Start)',
         patient: {
             ...INITIAL_PATIENT,
             age: 58,
@@ -2913,6 +2913,13 @@ export const SCENARIOS: TestScenario[] = [
             { name: 'Carvedilol', strength: 25, freq: 'bid' },
             { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
         ]);
+        // ARNI below target + beta-blocker + SGLT2i, no MRA: at borderline potassium the ARNI step-up projects potassium above 5.3,
+        // which is what the ordinary (reactive) binder rescue covers. A new MRA is withheld above 5.0 (rule E15), so it cannot be the trigger.
+        const arniStepUp = buildCurrentRegimen([
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' },
+            { name: 'Carvedilol', strength: 12.5, freq: 'bid' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
         const hfpef = { ...base, lvef: 55, nt_pro_bnp: 700, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFpEF']) };
         return [
             { title: 'MRA-Source Eplerenone With Strong CYP3A4 Inhibitor Excluded', patient: { ...base, external_medications: new Set(['Clarithromycin']) } },
@@ -2935,10 +2942,10 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'MRA-Source Finerenone New Start Tier eGFR 40', patient: { ...hfpef, egfr: 40, creatinine: 1.8 } },
             { title: 'MRA-Source Spironolactone Start Dose eGFR 40', patient: { ...base, egfr: 40, creatinine: 1.7, current_regimen: noMra } },
             { title: 'MRA-Source Spironolactone Start Dose eGFR 70', patient: { ...base, egfr: 70, creatinine: 1.0, current_regimen: noMra } },
-            { title: 'MRA-Source MRA Start K+ 5.3 Needs Binder And Sequencing', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
+            { title: 'MRA-Source MRA Start K+ 5.3 Staged, Not Co-Started With A Binder', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
             { title: 'MRA-Source MRA Start K+ 5.3 No Binder Available', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
-            { title: 'MRA-Source Lokelma HF Warning (No Patiromer Available)', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
-            { title: 'MRA-Source Patiromer Warnings (No Lokelma Available)', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
+            { title: 'MRA-Source Lokelma HF Warning (No Patiromer Available)', patient: { ...base, potassium: 5.4, current_regimen: arniStepUp } },
+            { title: 'MRA-Source Patiromer Warnings (No Lokelma Available)', patient: { ...base, potassium: 5.4, current_regimen: arniStepUp } },
         ];
     })(),
 

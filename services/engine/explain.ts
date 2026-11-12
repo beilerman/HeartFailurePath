@@ -140,6 +140,23 @@ export function computeGdmtGaps(patient: Patient): string[] {
         .map(p => PILLAR_LABELS[p] || p);
 }
 
+/**
+ * When rule E15 withheld a new MRA because potassium is above 5.0, say so on the MRA GDMT gap (the gap list is built before
+ * eligibility, from the current regimen alone). Decision 2026-11-11, verified-clinical-decisions-2026-11-11.md rows 1, 2a, 2c.
+ */
+export function annotateGdmtGapsWithMraPotassium(gaps: string[], excludedMeds: ExcludedMedication[]): string[] {
+    const e15 = excludedMeds.find(m => m.rule_id === 'E15');
+    if (!e15) return gaps;
+    return gaps.map(g => g === PILLAR_LABELS['MRA'] ? `${g} — not started: ${e15.reason.charAt(0).toLowerCase()}${e15.reason.slice(1)}` : g);
+}
+
+/** Monitoring item added when rule E15 fired (a new MRA was withheld because potassium is above 5.0). */
+export const MRA_POTASSIUM_STAGED_MONITORING: MonitoringPlanItem = {
+    test: 'Repeat potassium; start MRA if 5.0 or lower',
+    timing: 'Before any MRA start',
+    details: 'A new MRA is withheld while potassium is above 5.0 (guideline start criterion K below 5.0, secondary reproduction; Aldactone and Kerendia labels). Recheck potassium and start the MRA once it is 5.0 or lower. If potassium stays high on a RAAS inhibitor, a potassium binder is an option (guideline Class 2b).',
+};
+
 export function buildMissingDataNotices(patient: Patient): string[] {
     const notices: string[] = [];
     if (patient.lvedd === undefined && patient.lavi === undefined) {
@@ -332,7 +349,10 @@ export function assembleOutput(
         scoredRegimens: finalPicks,
         excludedMedications: excludedMeds,
         clinicalAlerts,
-        monitoringPlan: topPick.monitoring_plan || [],
+        monitoringPlan: [
+            ...(topPick.monitoring_plan || []),
+            ...(excludedMeds.some(m => m.rule_id === 'E15') ? [MRA_POTASSIUM_STAGED_MONITORING] : []),
+        ],
         gdmtGaps,
         eligibleAdjuncts,
         missingDataNotices,

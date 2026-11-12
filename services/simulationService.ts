@@ -5,7 +5,7 @@ import { auditInputs, raiseClinicalAlerts, checkSafetyHardStops } from './engine
 import { analyzeCurrentRegimen, generateCandidateModifications } from './engine/candidates';
 import { buildScoringContext, scoreCandidates, intensifiesRaasOrMra, labPrerequisiteBlank } from './engine/scoring';
 import { selectWithRanking } from './engine/selection';
-import { buildEligibleAdjuncts, assembleOutput } from './engine/explain';
+import { buildEligibleAdjuncts, assembleOutput, annotateGdmtGapsWithMraPotassium } from './engine/explain';
 
 // Public facade: every symbol this module exported before the phase-4 split is re-exported here,
 // so nothing outside services/ needs an import change.
@@ -20,7 +20,7 @@ export {
 } from './engine/domains';
 export type { PillarKey, PillarConcordance, Phenotype } from './engine/domains';
 export { DISPLAY_FLOORS, resolveRankingMode } from './engine/selection';
-export { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_BINDER_ABOVE, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from './engine/thresholds';
+export { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_CEILING, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from './engine/thresholds';
 
 /**
  * THE engine entry point. Deterministic and side-effect free: given a patient (including
@@ -57,7 +57,8 @@ export function generateAndScoreModifications(
     // 1. Audit inputs: duplicates, missing/implausible data, unknown LVEF, SBP <= DBP (alerts-only hard stops).
     const audit = auditInputs(patient, clinicalAlerts);
     if (audit.stop) return audit.stop;
-    const { dataAudit, gdmtGaps, missingDataNotices } = audit;
+    const { dataAudit, missingDataNotices } = audit;
+    let gdmtGaps = audit.gdmtGaps;
 
     // 2. Raise the alert-only gates (pregnancy, low output, referrals, volume depletion, ...).
     const flags = raiseClinicalAlerts(patient, dataAudit, clinicalAlerts);
@@ -69,6 +70,8 @@ export function generateAndScoreModifications(
     // 4. Eligibility: numbered rules withhold drugs (allergy, intolerance, contraindication, renal) with a reason.
     const { formulary, excludedMeds, intolerancePolicy, allBBExcluded } =
         runEligibilityStage(patient, dataAudit.unknownRenal, availableMedNames, clinicalAlerts);
+
+    gdmtGaps = annotateGdmtGapsWithMraPotassium(gdmtGaps, excludedMeds);
 
     // 5. Enumerate: dose tiers -> analyze the current regimen -> candidate modifications (add/titrate/swap/remove/keep).
     const medTiers = formulary.flatMap(m => getDoseTiers(m, patient));

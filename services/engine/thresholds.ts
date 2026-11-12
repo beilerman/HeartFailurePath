@@ -9,8 +9,13 @@ export const HYPOTENSION_SBP_BELOW = 90;
 
 /** Potassium above this is never a NEW MRA start (label ceiling; contraindication check). */
 export const MRA_START_K_MAX = 5.5;
-/** A NEW MRA start above this potassium is offered only together with a potassium binder (label/guideline start threshold; rule E15). */
-export const MRA_START_K_BINDER_ABOVE = 5.0;
+/**
+ * A NEW MRA start is withheld above this potassium (rule E15), with or without a potassium binder: start once potassium is at or below it.
+ * Sources (verified-clinical-decisions-2026-11-11.md rows 1, 2a, 2c): 2022 AHA/ACC/HFSA start criterion K < 5.0 (SECONDARY reproduction; the
+ * primary guideline was not opened), Aldactone label "serum potassium <=5.0", Kerendia label "do not initiate ... > 5.0". One rule for every MRA:
+ * the eplerenone label's looser K > 5.5 start contraindication (row 2b) does not govern.
+ */
+export const MRA_START_K_CEILING = 5.0;
 /** Potassium below this is hypokalemia (digoxin contraindication; projected-K+ warning). */
 export const HYPOKALEMIA_K_BELOW = 3.5;
 
