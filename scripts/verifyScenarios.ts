@@ -333,6 +333,16 @@ async function runVerification() {
                 failures.push('A new MRA was started above K+ 5.0 (rule E15: staged, never co-started with a binder)');
                 scenarioPassed = false;
             }
+            // Global invariant (monitoring timings, verified-clinical-decisions-2026-11-11.md rows 6a, 6b): a displayed regimen that starts or increases an MRA carries the
+            // "within 1 week, and about 4 weeks" laboratory item; one that starts or increases an ACEi/ARB/ARNI carries "1-2 weeks".
+            for (const r of scoredRegimens) {
+                const mods = (r.modification_set?.modifications ?? []).filter(m => (m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap') && m.target);
+                const mra = mods.some(m => m.target!.med.drug_class === 'MRA' || m.target!.med.drug_class === 'nsMRA');
+                const raas = mods.some(m => RAAS_CLASSES.has(m.target!.med.drug_class));
+                const plan = r.monitoring_plan ?? [];
+                if (mra && !plan.some(i => i.timing.includes('Within 1 week') && i.timing.includes('4 weeks'))) { failures.push('MRA start/increase without the "within 1 week and about 4 weeks" lab item'); scenarioPassed = false; }
+                if (raas && !plan.some(i => i.timing.includes('1-2 weeks'))) { failures.push('RAAS start/increase without the "1-2 weeks" lab item'); scenarioPassed = false; }
+            }
             // Global invariant: Lokelma in any displayed regimen carries the heart-failure sodium/edema warning.
             const lokelmaWithoutWarning = scoredRegimens.some(r =>
                 r.regimen.some(m => m.med.name === 'Sodium Zirconium Cyclosilicate (Lokelma)')

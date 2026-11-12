@@ -20,24 +20,31 @@ export function buildMonitoringPlan(
     const hasDiureticIntensification = hasRelevantIntensification(modificationSet, DIURETIC_CLASSES);
     const higherRiskElectrolytes = currentPatient.egfr < 45 || currentPatient.potassium >= 5.0 || projectedPatient.potassium > 5.0;
 
-    if (hasRaasOrMraIntensification) {
+    // Timings follow the sources (verified-clinical-decisions-2026-11-11.md rows 6a, 6b): MRA start or increase - potassium within 1 week (Aldactone and Inspra
+    // labels; guideline text, secondary) and about 4 weeks (Kerendia label: 4 weeks; Inspra: 1 month; guideline text: ~1 week then 4 weeks); ACEi/ARB/ARNI start
+    // or increase - urea/creatinine/potassium 1-2 weeks after (ESC-derived consensus, secondary). The 48-72 hour check for higher-risk patients is ENGINE POLICY.
+    const hasMraIntensification = hasRelevantIntensification(modificationSet, new Set(['MRA', 'nsMRA']));
+    const hasRaasIntensification = hasRelevantIntensification(modificationSet, RAAS_CLASSES);
+    if (hasMraIntensification) {
         plan.push({
-            test: 'BMP (potassium, creatinine, eGFR)',
-            timing: '3-7 days after RAAS/MRA change',
-            details: 'Assess for early hyperkalemia or renal decline after initiation, swap, or up-titration.'
+            test: 'BMP (potassium, creatinine, eGFR) after MRA start or increase',
+            timing: 'Within 1 week, and again at about 4 weeks',
+            details: 'Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). Reduce the dose if potassium is above 5.5 and withhold it at 6.0 or above.'
         });
+    }
+    if (hasRaasIntensification) {
         plan.push({
-            test: 'BMP repeat before next titration',
-            timing: '10-14 days after change',
-            details: 'Hold/reduce and reassess if potassium >= 5.5 or creatinine rises >30% from baseline.'
+            test: 'BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase',
+            timing: '1-2 weeks after starting or increasing the dose',
+            details: 'European consensus guidance (secondary source). Hold/reduce and reassess if potassium rises to 5.5 or higher or creatinine rises more than 30% from baseline (engine policy; the 2026 ESC guideline accepts a creatinine rise under 50% while eGFR stays above 15).'
         });
-        if (higherRiskElectrolytes) {
-            plan.push({
-                test: 'Early potassium check',
-                timing: '48-72 hours',
-                details: 'Required due to CKD and/or borderline potassium at baseline.'
-            });
-        }
+    }
+    if (hasRaasOrMraIntensification && higherRiskElectrolytes) {
+        plan.push({
+            test: 'Early potassium check',
+            timing: '48-72 hours',
+            details: 'Engine policy for CKD and/or borderline potassium at baseline (no source gives this window).'
+        });
     }
 
     const hasSglt2iIntensification = hasRelevantIntensification(modificationSet, new Set(['SGLT2i']));

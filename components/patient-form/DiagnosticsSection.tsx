@@ -112,6 +112,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                     <Input type="number" step="0.1" name="potassium" value={patientData.potassium || ''} placeholder="mEq/L" onChange={onChange} error={validationErrors.potassium} warning={clinicalWarnings.potassium} />
                 </div>
             </div>
+            <p className="text-[11px] text-slate-500 -mt-2 mb-4">Potassium and kidney function are required before starting or increasing a RAAS inhibitor or MRA. Enter values that reflect the patient's current medications and clinical state.</p>
 
             {clinicalWarnings.egfr && (
                 <div className="mb-4 px-3 py-2 rounded-md bg-amber-50 border border-amber-300 text-amber-800 text-xs font-medium">

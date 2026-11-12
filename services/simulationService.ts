@@ -86,7 +86,7 @@ export function generateAndScoreModifications(
     // dose increases are withheld because potassium or renal function is blank.
     if (labPrerequisiteBlank(dataAudit) &&
         (excludedMeds.some(m => m.rule_id === 'E16') || candidateSets.some(intensifiesRaasOrMra))) {
-        clinicalAlerts.push('LABS REQUIRED: potassium/renal function not entered — RAAS inhibitor and MRA starts and dose increases are withheld until a basic metabolic panel is available.');
+        clinicalAlerts.push('LABS REQUIRED: potassium/renal function not entered — RAAS inhibitor and MRA starts and dose increases are withheld until a basic metabolic panel is available. Enter labs that reflect the patient\'s current medications and clinical state.');
     }
 
     // 6. Score: rescue appends -> simulate -> 8 domain scores -> weights + named adjustments -> ScoredRegimen.
