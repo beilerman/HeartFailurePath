@@ -9,7 +9,7 @@ Scope: the whole tool on branch `refactor/glucosepath-alignment` (PR #1). Method
 - Safety invariants restated in the test (not imported from the engine): what must never be started, raised or kept.
 - Consistency: same answer when the regimen is typed in another order; ranking mode and care priority change ordering only; an allergy typed in lower case excludes the drug; entering option 1 as the current regimen must not make the tool undo it.
 
-First run: 300 patients produced 8 kinds of violation. After the fixes: 25,000 patients on two fresh seeds produce none, apart from the watched self-reversal code (about 1 patient in 2,000; ceiling 1 in 500).
+First run: 300 patients produced 8 kinds of violation. After the fixes: 25,000 patients on two fresh seeds produce none, and the second pass removed the last watched code (self-reversal): 0 reversals in 45,000 random patients on three seeds, and the sweep now fails on any reversal, like every other code.
 
 ## Systemic defects found and fixed
 
@@ -37,22 +37,36 @@ Smaller fixes: hypokalemia caution made a diuretic class rule; quadruple-therapy
 
 Top recommendation changed in 41 of 999 golden runs.
 
-## Found, not changed (owner's judgement or larger work)
+## Second pass: the 17 open items, fixed
 
-1. **Sample patients change when loaded in the form.** The form recomputes eGFR (CKD-EPI) and BMI, so 314 of 333 scenarios run in the browser with a different eGFR than the regression suite checks, and 85 cross a rule cut-off. Fixing it means regenerating the fixtures.
-2. **Projected potassium is unreliable on the low side.** Removing an MRA at eGFR below 30 projects a fall of about 1.2 mEq/L because the renal risk multiplier is applied to removals too. For that reason no low-potassium display floor was added; hypokalemia has cautions only.
-3. **Special-feature bonus** is divided by the number of drugs, so a 3-point tolerability note is worth about 7 points on a one-drug regimen (eplerenone alone can lead a three-pillar start by one point at SBP 98), and large evidence differences clamp to the same +12.
-4. **Penalty stacking:** a projected-state fact can cost a named adjustment and a warning (projected SBP below 90: -20 and -8).
-5. **Coverage figures shrink when a pillar is staged** (potassium 5.3: "foundational coverage 80%" with two of four pillars on board).
-6. **"Low cost" label** is relative to the stated budget (a $953/month regimen is "low cost" under a large budget).
-7. **Intolerance reasons** hypotension, kidney injury, rash, liver toxicity, fatigue and gout exclude only the named drug, not its class.
-8. **Options nothing reads:** "Chronic Kidney Disease" and "Obesity" comorbidities; the atrial fibrillation comorbidity and the rhythm field are separate and can disagree.
-9. **Pricing:** sacubitril/valsartan Medicare copay (74) exceeds its cash price (60).
-10. **Target-dose flags:** several drugs flag more than one strength as target (losartan 100 mg counts as at target; ESC lists 150 mg).
-11. **Side-effect probabilities** are the same at every dose for most drugs.
-12. **RAAS up-titration** is allowed up to potassium 5.4 while a new start is held above 5.2 (documented policy, left as is).
-13. **Vericiguat start dose:** the US label (revised January 2026, read on DailyMed) starts at 5 mg, 2.5 mg if at risk of hypotension; the 2026 ESC table lists 2.5 mg. The tool follows the label.
-14. **A contraindicated beta-blocker** (carvedilol with asthma) can appear as a plain removal in options 2 and 3 when option 1 offers the switch to a selective agent.
-15. **External medication list** has no potassium supplements, amiloride/triamterene or trimethoprim.
-16. **Copy-to-chart text** carries no patient inputs, date or rule version.
-17. **Residual self-reversal:** about 1 random patient in 2,000, mostly the over-budget fallback and single-option outputs in extreme patients.
+Every item that the first pass left open now has a systemic fix (commits 7d880af, 27b5e20, 75e830c, 898d6ef, bdf9cbb, b3d4b08). Gate afterwards: verify 371 pass, 0 fail; golden 1032 runs; audit:hundred 100/100; audit:mistakes 51/51; audit:red clean; audit:pricing OK; fuzz 5,000 patients with no violation. Rule-set version 2026-11-12.2.
+
+| # | What was wrong | Systemic fix | How it is enforced |
+|---|---|---|---|
+| 1 | Sample patients changed when loaded in the form (form recomputes eGFR and BMI) | Form and fixtures share `derivedFields`; each fixture's creatinine and height are fitted to its authored eGFR and BMI | Verify asserts every fixture loads unchanged |
+| 2 | Projected potassium fell about 1.2 mEq/L when an MRA was stopped at eGFR below 30 | The renal multiplier applies to rises only; an option that lowers potassium below 3.0 is not shown | Scenario checks; display floor in `selection.ts` |
+| 3 | Evidence bonus worth about 7 points on a one-drug regimen | Divisor is the larger of the regimen size and the number of indicated foundational therapies | Verify scenario; golden snapshot |
+| 4 | One fact charged twice (a named adjustment plus a generic warning) | `WARNINGS_PRICED_BY_NAMED_ADJUSTMENT`: the warning is shown, charged once | Verify invariant |
+| 5 | Coverage shrank when a pillar was staged | Coverage is counted over indicated pillars; the card says "n of m on board; k cannot be started today" | Verify invariant on the counts |
+| 6 | "Low cost" meant low relative to the budget | Labels are "Well within budget", "Near the budget limit", "Over budget" | Scenario checks on the label |
+| 7 | Six intolerance reasons excluded only the named drug | One table (`INTOLERANCE_TABLE`): exclude, caution, drug only or history flag for every reason; cautions read "Intolerance history:" and are not penalized; the form shows each effect | Verify checks every reason has a declared effect and every caution fires for exactly its classes |
+| 8 | Options nothing read (Chronic Kidney Disease, Obesity); AF comorbidity and rhythm disagreed | Two options removed (derived lines shown); `hasAtrialFibrillationHistory`; paroxysmal AF note on ivabradine starts | Verify fails for any selectable option the engine does not read (`DISPLAY_ONLY_OPTIONS` is empty) |
+| 9 | Medicare copay (74) above the cash price (60) | Patient cost is capped at the cash price in `getDrugPrices` | `npm run audit:pricing` (in gate and ci) |
+| 10 | Several strengths flagged as target (losartan 100 mg) | One target threshold per drug; losartan target is 150 mg | Verify: a dose above an at-target dose is at target |
+| 11 | Side-effect rates ignore dose for most drugs | Declared display-only; the formulary card says so | Verify fails if engine code reads them |
+| 12 | RAAS increases allowed to potassium 5.4, new starts held above 5.2 | Increases are held above 5.2 as well | Verify: an increase is never allowed where a start is held |
+| 13 | US label and ESC table disagree (vericiguat start, losartan target) | Declared as data (`facts.source_differences`), shown on the option and the formulary card | Verify scenario |
+| 14 | Contraindicated carvedilol shown as a plain removal in options 2 and 3 | A contraindicated drug with an eligible same-class alternative is switched in every option | Verify scenario |
+| 15 | No potassium supplement, amiloride, triamterene or trimethoprim in external medications | `EXTERNAL_POTASSIUM_RAISERS` with two alerts and an option warning | Verify scenarios; option coverage invariant |
+| 16 | Copy-to-chart text had no date, rule version or inputs | Text carries run date, `RULESET_VERSION` and the inputs used (blank prints "not entered") | Verify check on the note text |
+| 17 | The tool undid its own option on the next run (about 1 patient in 2,000) | Four causes fixed: rescue binder or iron over the per-visit limit or budget no longer discards the option; fewer changes beats the alphabetical tie-break; forced beta-blocker switch lands at or below the start dose in a low-output state; a binder is not reduced while potassium is 5.0 or higher | Fuzz sweep fails on any reversal (no longer a watched code) |
+
+## Still the owner's call
+
+These are judgement calls the fixes introduced. None blocks use.
+
+- Losartan target 150 mg (2026 ESC Table 11, HEAAL) against the US 50 to 150 mg range. Under the new rule 100 mg earns graded credit and can be increased.
+- RAAS increases are held above potassium 5.2, the same line as new starts. The ESC text gives 5.2 as a caution, not a ban, so this is engine policy.
+- A binder already in use is not reduced at potassium 5.0 or higher (the same boundary as the MRA start rule). Engine policy.
+- The top recommendation changed in 25 of 999 reference runs (scoring commit) and 15 more (rule commit). The scoring changes mostly moved toward more pillars on board; a clinician should look at the changed cases before relying on the new order.
+- The sacubitril/valsartan Medicare table copay (74) is still in the table; the cap at the cash price (60) hides it. Fix the table when the plan data is next refreshed.

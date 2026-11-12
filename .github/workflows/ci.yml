@@ -31,5 +31,8 @@ jobs:
 
       - name: Verify scenarios
         run: npm run verify
+      - name: Pricing audit
+        run: npm run audit:pricing
+
       - name: Randomized-patient sweep
         run: npm run fuzz

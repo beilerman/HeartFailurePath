@@ -11,7 +11,7 @@ import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary, diureticH
 import { simulateModificationEffect, patientChfEffects } from '../services/engine/effects';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
-import { SCENARIOS } from '../data/scenarios';
+import { SCENARIOS, INITIAL_PATIENT } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
 import { checkOptionScenario } from './optionScenarioChecks';
 import { runOptionInvariants } from './optionInvariants';
@@ -4342,6 +4342,7 @@ async function runVerification() {
     console.log('Checking structural invariant: every sample patient is what the form would run (eGFR and BMI are fixed points of the form derivation)...');
     {
         const drift = SCENARIOS.filter(sc => { const d = derivedFields(sc.patient); return d.egfr !== sc.patient.egfr || d.bmi !== sc.patient.bmi; }).map(sc => sc.title);
+        { const d = derivedFields(INITIAL_PATIENT); if (d.egfr !== INITIAL_PATIENT.egfr || d.bmi !== INITIAL_PATIENT.bmi) drift.push('INITIAL_PATIENT (the patient shown when the app opens)'); }
         if (drift.length > 0) { console.error(`  [FAIL] ${drift.length} fixture(s) the form would change on load: ${drift.slice(0, 5).join('; ')}`); failed++; }
         else { console.log(`  [PASS] ${SCENARIOS.length} fixtures load in the form unchanged.`); passed++; }
     }

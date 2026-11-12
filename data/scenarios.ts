@@ -62,8 +62,8 @@ export const INITIAL_PATIENT: Patient = {
     },
     egfr: 45,
     potassium: 4.9,
-    creatinine: 1.5,
-    bun: 32, // Suggests mild prerenal if Cr is 1.5 (Ratio ~21)
+    creatinine: 1.66, // CKD-EPI 2021 gives eGFR 45 for a 65-year-old man (the form computes eGFR; verify asserts this patient loads unchanged)
+    bun: 35.4, // Suggests mild prerenal (BUN/creatinine ratio ~21)
     comorbidities: new Set(['HFrEF', 'Atrial Fibrillation', 'Chronic Kidney Disease', 'Diabetes Mellitus Type 2']),
     external_medications: new Set<string>(),
     allergies: new Set(),

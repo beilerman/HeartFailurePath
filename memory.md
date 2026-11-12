@@ -478,7 +478,7 @@ consistency. NOTE: Phase-B recClass labels are metadata only — changing a labe
 ## Adversarial review 2026-11-12 (record: docs/adversarial-review-2026-11-12.md)
 - `npm run fuzz` (scripts/fuzzSweep.ts, in `gate` and `ci`) is the fastest way to find a class of defect: seeded random patients, invariants restated in the
   test (do NOT import engine class lists into it), consistency checks (reorder the regimen, flip ranking mode / care priority, re-enter option 1). Reproduce one
-  patient with `randomPatient(seed)`. Watched code `ADVICE_REVERSED_NEXT_RUN` has a ceiling (1 in 500); every other code fails.
+  patient with `randomPatient(seed)`. Every code fails the sweep, including `ADVICE_REVERSED_NEXT_RUN` (it was a watched code until the second pass; 0 reversals in 45,000 patients).
 - Recurring root causes to look for first: (1) `Number()` on a combination strength ("24/26") is NaN and silently disables a numeric rule: use
   `comparableDailyDose` for ordering; (2) a rule enforced on "add" but not on swap-in / titrate / rescue / the combination of two changes: put the check on the
   finished candidate (`structuralProblems`) or in eligibility; (3) scoring that penalizes the patient's EXISTING state rewards cutting drugs: charge baseline
@@ -486,6 +486,26 @@ consistency. NOTE: Phase-B recClass labels are metadata only — changing a labe
   bits of a float sum: sort by name, round projections; (5) a fact declared on one drug of a class (anuria, hypokalemia caution).
 - Engine code may hold no drug names (verify invariant): allergy brand names live in `ALLERGY_ALIASES_BY_DRUG` in constants.ts and reach the engine as
   `facts.allergy_aliases`.
-- Projected potassium is not trustworthy on the LOW side (the renal multiplier is applied to removals), so there is deliberately no low-potassium display floor.
-- The potassium display floor is absolute; the SBP and HR floors are baseline-aware (a regimen is hidden only if it worsens the value).
-- Open items the owner has not decided are listed at the end of the review record.
+- Projected potassium: the renal multiplier now applies to RISES only (`kPair` in effects.ts), so falls are plain size and there IS a low floor (hidden below 3.0 when the option lowers potassium; `minProjectedPotassium`).
+- The high potassium display floor is absolute; the SBP and HR floors are baseline-aware (a regimen is hidden only if it worsens the value).
+- Open items the owner has not decided are listed at the end of the review record ("Still the owner's call").
+
+## Second pass 2026-11-12 (all 17 open items fixed; table in the review record)
+- Fixtures: the form recomputes eGFR/BMI on load, so `data/scenarios.ts` runs every fixture through `reconcileDerivedFields` (shared `derivedFields` in
+  clinicalPredicates). Without it the browser runs a different patient than verify checks. Verify asserts every fixture loads unchanged; a new fixture with
+  an eGFR or BMI that does not match its creatinine/height is silently rewritten, so author creatinine/height to fit.
+- Rescue additions (binder, iron) never discard a candidate: if they break the per-visit limit or the budget the option is scored without them. Discarding
+  removed "mandatory changes only" and caused self-reversal.
+- Tie-break order (selection.ts): displayed score, coverage, unrounded score, cost, FEWER CHANGES, then alphabetical. "Fewer changes" must stay above
+  alphabetical or a pointless dose cut can win a tie.
+- One potassium ladder: a RAAS increase is held above 5.2, same as a new start (verify invariant: an increase is never allowed where a start is held).
+  A binder in use is not reduced while measured potassium is 5.0 or higher. Both are engine policy, listed as owner's calls.
+- Label vs guideline differences are data (`facts.source_differences`), shown on the option and the formulary card. Vericiguat start follows the label (5 mg);
+  losartan target is 150 mg (ESC). Add a new difference as data, not as engine text.
+- `side_effects` rates are display-only; verify fails if engine code reads them. Do not use them to score.
+- Patient cost is capped at the cash price in `getDrugPrices`; `npm run audit:pricing` is in gate and ci. Entresto Medicare table copay 74 stays in the table.
+- Intolerance reasons live in one table (`INTOLERANCE_TABLE`); cautions are unpenalized "Intolerance history:" warnings. Every selectable option must be read
+  by the engine (verify fails otherwise; `DISPLAY_ONLY_OPTIONS` is empty). Do not re-add CKD or Obesity checkboxes.
+- `RULESET_VERSION` (services/rulesetVersion.ts, now 2026-11-12.2) must be bumped whenever engine output changes; it is printed on copied notes.
+- scripts/verifyScenarios.ts is near TypeScript's control-flow size limit: put new invariants in scripts/optionInvariants.ts / optionScenarioChecks.ts.
+- Gate after this pass: verify 371/0, golden 1032 runs, audit:hundred 100/100, audit:mistakes 51/51, audit:red clean, audit:pricing OK, fuzz no violations.

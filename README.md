@@ -88,7 +88,7 @@ Other loop/thiazide rules from the same review: loop effects and the high-dose a
 
 ### 6) Adversarial review changes (2026-11-12)
 
-- Eligibility rule E19: no NEW RAAS inhibitor or MRA while the entered baseline creatinine shows the "reduce" band (rise of 50% or more, or derived eGFR fall over 30%). Rules are now E01-E19. The E15 "already on an MRA" exemption applies to a within-class switch only while that MRA may continue (potassium below 5.5).
+- Eligibility rule E19: no NEW RAAS inhibitor or MRA while the entered baseline creatinine shows the "reduce" band (rise of 50% or more, or derived eGFR fall over 30%). Rules are now E01-E19. Second pass (2026-11-12): all 17 open items of the review are fixed, see `docs/adversarial-review-2026-11-12.md` (the form and fixtures share one derived-field function; a RAAS increase is held above potassium 5.2 like a new start; losartan target is 150 mg; the cost label reads "Well within budget / Near the budget limit / Over budget"; the Chronic Kidney Disease and Obesity checkboxes are gone because nothing read them). The E15 "already on an MRA" exemption applies to a within-class switch only while that MRA may continue (potassium below 5.5).
 - Dose steps: the one-step cap also covers combination strengths (sacubitril/valsartan 24/26 cannot jump to 97/103; H/ISDN likewise). The always-kept next step is the smallest increase in total daily dose when the next strength at its usual frequency would more than double it (furosemide 80 mg once daily goes to 80 mg twice daily).
 - Every candidate is checked after the forced edits; a regimen listing the same drug twice, two agents of one class group, or a short-course add-on without its oral loop is dropped.
 - Lateral swaps: outside the RAAS pool a swap is offered only when the current drug must go (contraindication, intolerance, allergy) or the loop-resistance rule fires. A drug withheld by a potassium, heart-rate or kidney rule is never swapped for a sibling, and a contraindicated diuretic in a non-congested patient is stopped, not replaced.
@@ -109,12 +109,12 @@ the three audit harnesses are standalone (not part of CI) but are part of the fu
 
 | Harness | Command | Pass criteria |
 |---------|---------|---------------|
-| Scenario assertions (`scripts/verifyScenarios.ts`) | `npm run verify` | All pass: `353` on 2026-11-12 (333 clinical scenarios + 20 structural checks); the harness output is authoritative |
+| Scenario assertions (`scripts/verifyScenarios.ts`) | `npm run verify` | All pass: `371` on 2026-11-12 (333 clinical scenarios + 38 structural checks); the harness output is authoritative |
 | Adversarial red team (`scripts/redTeam.ts`) | `npm run audit:red` | 0 CRITICAL / HIGH / MEDIUM findings |
 | Treatment-error audit (`scripts/mistakeAudit.ts`) | `npm run audit:mistakes` | 51/51 clean |
 | Broad clinical audit (`scripts/hundredScenarioAudit.ts`) | `npm run audit:hundred` | 100/100 clean |
 
-- CI command: `npm run ci` (typecheck + build + golden + verify + fuzz). The fuzz sweep (`scripts/fuzzSweep.ts`, 5,000 seeded patients) is also part of `npm run gate`.
+- CI command: `npm run ci` (typecheck + build + golden + verify + pricing audit + fuzz). The fuzz sweep (`scripts/fuzzSweep.ts`, 5,000 seeded patients; any violation, including the tool reversing its own advice on the next run, fails it) and `npm run audit:pricing` are also part of `npm run gate`.
 
 Global invariants covered include:
 
@@ -153,17 +153,18 @@ Default dev host/port: `0.0.0.0:3000` (Vite auto-increments if occupied).
 ```bash
 npm run typecheck        # tsc --noEmit
 npm run build            # production build
-npm run verify           # scenario assertion harness (its printed count is authoritative; currently 353 passing)
+npm run verify           # scenario assertion harness (its printed count is authoritative; currently 371 passing)
 npm run test             # alias of verify
-npm run golden           # golden master: every scenario under three insurance tiers must be byte-identical (999 runs)
+npm run golden           # golden master: every scenario under three insurance tiers must be byte-identical (1032 runs)
 npm run golden:update    # rewrite the golden master after an intended output change (review the diff first)
 npm run ranking:diff     # compare the current engine with the golden snapshot and report what an intended scoring change did to the ranking (run before golden:update)
+npm run audit:pricing    # every drug under every plan: patient cost never above the cash price, tiers consistent
 npm run fuzz             # seeded randomized-patient sweep (5,000 patients): safety invariants written independently of the engine, plus consistency checks (same answer when the regimen is listed in another order; ranking mode and care priority change ordering only; an allergy typed in lower case still excludes the drug)
 npm run audit:red        # adversarial red-team probes (standalone)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone)
-npm run gate             # full pre-release gate: typecheck + golden + verify + the three audits + fuzz
-npm run ci               # typecheck + build + golden + verify + fuzz
+npm run gate             # full pre-release gate: typecheck + golden + verify + the three audits + audit:pricing + fuzz
+npm run ci               # typecheck + build + golden + verify + audit:pricing + fuzz
 npm run preview          # preview production build
 ```
 
