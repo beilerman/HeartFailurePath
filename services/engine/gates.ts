@@ -96,8 +96,8 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
 
     const ext = patient.external_medications || new Set<string>();
     const onNonDhpCcb = ext.has('Verapamil') || ext.has('Diltiazem') || patient.comorbidities.has('On Verapamil/Diltiazem');
-    if (onNonDhpCcb && patient.lvef > 0 && patient.lvef <= 40) {
-        alerts.push('INAPPROPRIATE THERAPY: Non-dihydropyridine calcium-channel blocker (verapamil / diltiazem) in HFrEF is potentially harmful — it is a negative inotrope and can worsen heart failure (ACC/AHA 2022, Class III). Deprescribe; if rate control is needed, use a beta-blocker ± digoxin.');
+    if (onNonDhpCcb && patient.lvef > 0 && patient.lvef < 50) {
+        alerts.push('INAPPROPRIATE THERAPY: Non-dihydropyridine calcium-channel blocker (verapamil / diltiazem) in HFrEF (LVEF below 50) is potentially harmful — it is a negative inotrope and can worsen heart failure (ACC/AHA 2022, Class III). Deprescribe; if rate control is needed, use a beta-blocker ± digoxin.');
     }
 
     if (patient.comorbidities.has('Chronic NSAID Use')) {
@@ -235,7 +235,7 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
             (atLowest
                 ? `The dose is already the lowest, so the plan withholds it (for a beta-blocker, taper over 1-2 weeks; do not stop abruptly). `
                 : `The plan reduces it ONE dose step; it is not removed. `) +
-            `Basis: ${hr.basis}. Reassess symptoms and the ECG for sick sinus syndrome or AV block and review other rate-slowing drugs; no up-titration while the rate is low.`
+            `Basis: ${hr.basis}. ESC advises lowering the dose when the rate is below 50 with worsening symptoms; this tool applies the reduction on heart rate alone, so confirm symptoms and exclude heart block with an ECG; review digoxin, ivabradine and amiodarone. No up-titration while the rate is low (below 60 is engine policy).`
         );
     });
 
@@ -248,6 +248,14 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
             `POTASSIUM HOLD ON ${r.med.name.toUpperCase()}: ${hold.reason}. ${r.med.name} ${r.dose.strength}${r.dose.unit} stays at the current dose; ` +
             `recheck potassium before any increase. Basis: ${hold.basis}.`
         );
+    });
+
+    // --- Potassium rule on a drug the patient already takes (facts.k_continuation.first_steps): say what to do first.
+    (patient.current_regimen || []).forEach(r => {
+        const rule = r.med.facts?.k_continuation;
+        const act = kContinuationAction(r.med, patient);
+        if (!rule?.first_steps || !act || r.med.contraindications?.(patient) && act.action !== 'withhold') return;
+        clinicalAlerts.push(`POTASSIUM ${act.action === 'withhold' ? 'STOP' : 'REDUCE'} ON ${r.med.name.toUpperCase()}: ${act.reason}. ${rule.first_steps}`);
     });
 
     // --- S2: Hemodynamic instability — block pharmacologic optimization ---

@@ -274,7 +274,11 @@ export function analyzeCurrentRegimen(
         // GLP-1 Therapy joins the set (verified-sglt2-glp1-adjuncts.md): a new GLP-1 start begins at its lowest labeled tier, so a lateral swap to the
         // other agent mid-escalation (e.g. semaglutide 1.7 mg -> tirzepatide 2.5 mg) is not how therapy is escalated; swap only when the current agent must go.
         const TITRATE_NOT_SWAP_GROUPS = new Set(['Beta Blocker', 'MRA', 'SGLT2i', 'GLP-1 Therapy', 'Loop Diuretic']);
-        if (TITRATE_NOT_SWAP_GROUPS.has(group) && !contraindicatedCurrentMeds.has(current.med.name)) return;
+        // Diuretic resistance (2026 ESC Supplementary Table S7: "consider switching furosemide to bumetanide or torasemide"): a loop may also be swapped when the patient
+        // stays congested (more than 1 kg above dry weight) on a HIGH dose of the current loop, high dose = the entry's own alert level (facts.high_dose_threshold).
+        const loopResistant = current.med.drug_class === 'Loop Diuretic' && fluidExcess > 1.0
+            && (drugFacts(current.med).high_dose_threshold ?? Infinity) <= dailyDose(current);
+        if (TITRATE_NOT_SWAP_GROUPS.has(group) && !contraindicatedCurrentMeds.has(current.med.name) && !loopResistant) return;
         const sourceContraindicated = contraindicatedCurrentMeds.has(current.med.name);
         const groupTiers = (tiersByGroup.get(group) || []).filter(t => startTiers.includes(t));
         let candidates = groupTiers.filter(t =>

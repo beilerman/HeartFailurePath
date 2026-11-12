@@ -35,11 +35,24 @@ export const RAAS_WITHHOLD_K = 6.0;
 export const CREATININE_RISE_ACCEPTABLE_PCT = 50;
 export const EGFR_FLOOR_FOR_CREATININE_RISE = 15;
 
+/**
+ * eGFR below this: stop an ACE inhibitor, ARB or ARNI and seek specialist advice (2026 ESC Supplementary Table S4; MRAs are withheld below 20 by S7, but the steroidal
+ * MRAs (eGFR 30) and finerenone (25) already have stricter label gates, so no new MRA rule is needed). The tables phrase this as a FALL in eGFR after starting; the engine
+ * has no baseline eGFR or creatinine, so it applies to the current value, and only to an inhibitor already on board (a new start at eGFR 15-19 is unchanged; a blank eGFR is never treated as below 20). Before 2026-11-11 there was no such stop.
+ */
+export const RAAS_STOP_EGFR_BELOW = 20;
+
 /** Potassium below this is hypokalemia (digoxin contraindication; projected-K+ warning). */
 export const HYPOKALEMIA_K_BELOW = 3.5;
 
-/** Resting heart rate below this blocks a NEW beta-blocker start and, on an established one, forces a one-step reduction. Engine policy except carvedilol's label 55. */
+/**
+ * Resting heart rate below which a NEW beta-blocker start is blocked and an established one is reduced one step. Per drug (facts.hr_continuation / the start check):
+ * carvedilol 55 (Coreg label: reduce below 55); metoprolol succinate and bisoprolol 50 (2026 ESC Supplementary Table S6: caution before starting below 50; on
+ * treatment lower the dose if below 50 with worsening symptoms; their labels give no number). The engine has no worsening-symptoms qualifier for bradycardia, so the
+ * reduction applies on heart rate alone. BB_HR_BELOW stays the highest (carvedilol) value, used for the form hint.
+ */
 export const BB_HR_BELOW = 55;
+export const BB_HR_BELOW_ESC = 50;
 
 /** eGFR below this is severe CKD for the engine's dose-limiting and start-dose rules (e.g. sacubitril/valsartan start dose). */
 export const SEVERE_CKD_EGFR_BELOW = 30;

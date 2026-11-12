@@ -393,6 +393,8 @@ export function simulateModificationEffect(
             rationale.push(`+ ${r.med.name}: ${feature}`);
             specialFeatureBonus += URIC_ACID_GOUT_POINTS;
             specialFeatureItems.push({ med: r.med.name, feature, points: URIC_ACID_GOUT_POINTS });
+            const goutNote = 'Drug note (2026 ESC Supplementary Table S7): with gout on a loop or thiazide-type diuretic, consider allopurinol prophylaxis, use colchicine for an acute attack, and avoid NSAIDs.';
+            if (!warnings.includes(goutNote)) warnings.push(goutNote);
         }
 
         // Rationale for target dose and clinical effects
@@ -556,12 +558,12 @@ export function simulateModificationEffect(
     if (newAdds.length >= 2) {
         const targetAdds = newAdds.filter(m => m.target && isTargetDoseForPatient(m.target, currentPatient));
         if (targetAdds.length >= 2) {
-            warnings.push('Multiple new medications at target dose. In practice, initiate at low dose and titrate each q2-4 weeks.');
+            warnings.push('Multiple new medications at target dose. In practice, initiate at low dose and titrate every 1-2 weeks, not faster than every 2 weeks without close monitoring (2026 ESC).');
         }
     }
     // D9: Single-agent titration interval guidance
     if (titrations.length > 0 && newAdds.length === 0) {
-        warnings.push('Titration Interval: Allow 2-4 weeks between dose increases. Recheck BP, HR, and labs (BMP) before each uptitration step.');
+        warnings.push('Titration Interval: Up-titrate every 1-2 weeks (2026 ESC Table 5); doses are doubled at intervals of not less than 2 weeks without close monitoring (Supplementary Tables S4-S6, S8). Recheck BP, HR, and labs (BMP) before each uptitration step.');
     }
 
     // --- P3: Age-adjusted warnings ---

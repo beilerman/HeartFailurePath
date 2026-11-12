@@ -135,7 +135,8 @@ const ASSERTION_TITLE_MARKERS = [
     'ESC26-Digoxin',
     'ESC26-RAAS-K',
     'ESC26-Table11',
-    'ESC26-Diuretic'
+    'ESC26-Diuretic',
+    'ESC26-Renal'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -2376,6 +2377,18 @@ async function runVerification() {
                 if (!t.includes('Gets Review') && clinicalAlerts.some(a => a.startsWith('DIURETIC REVIEW'))) fail('the review prompt fired for a patient who is not stable and euvolemic on a thiazide');
             }
 
+            // 94j. 2026 ESC Supplementary Table S4: stop an ACEi/ARB/ARNI and seek specialist advice at eGFR below 20 (current value; no baseline in the tool).
+            if (scenario.title.includes('ESC26-Renal')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                if (scoredRegimens.length === 0) fail('no regimen produced');
+                if (t.includes('Stopped')) {
+                    if (anyRegimenHasMed('Lisinopril')) fail('lisinopril must be stopped at eGFR 18');
+                    if (!(excludedMedications.find(e => e.name === 'Lisinopril')?.why ?? []).some(w => /seek specialist advice/.test(w))) fail('the stop must say to seek specialist advice');
+                }
+                if (t.includes('Lisinopril Kept') && !anyRegimenHasMed('Lisinopril')) fail('lisinopril must be kept at eGFR 22 (the stop is below 20)');
+            }
+
             // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,
             // ivabradine, SGLT2i not recommended, Class III C; a secondary review adds vericiguat). Beta-1 selectivity is read from facts.beta1_selective.
             if (scenario.title.includes('Pregnancy-Source')) {
@@ -2986,12 +2999,27 @@ async function runVerification() {
                 };
                 if (t.includes('Carvedilol 25 mg HR 54 One-Step Reduction')) {
                     oneStep('Carvedilol', 25, 12.5, 54);
+                    // 2026-11-11: metoprolol succinate and bisoprolol start thresholds are 50 (ESC S6), so at HR 54 they are NOT blocked (before: blocked below 55).
                     for (const n of ['Metoprolol Succinate', 'Bisoprolol']) {
-                        if (excl(n)?.rule_id !== 'E13' || !/START/.test(whyText(n))) fail(`${n} (a NEW start) not blocked at HR 54 with the initiation reason`);
+                        if (excl(n)?.rule_id === 'E13' && /START/.test(whyText(n))) fail(`${n} (a NEW start) is blocked at HR 54 (the ESC S6 start threshold is 50)`);
                     }
                 }
-                if (t.includes('Metoprolol Succinate 100 mg HR 52')) oneStep('Metoprolol Succinate', 100, 50, 52);
-                if (t.includes('Bisoprolol 10 mg HR 53')) oneStep('Bisoprolol', 10, 5, 53);
+                if (t.includes('Metoprolol Succinate 100 mg HR 48')) oneStep('Metoprolol Succinate', 100, 50, 48);
+                if (t.includes('Bisoprolol 10 mg HR 48')) oneStep('Bisoprolol', 10, 5, 48);
+                if (t.includes('Metoprolol Succinate 100 mg HR 52 No Reduction')) {
+                    if (scoredRegimens.length === 0) fail('No regimens (check is vacuous)');
+                    if (summaries.some(x => x.startsWith('Reduce Metoprolol Succinate')) || bradyAlert('METOPROLOL SUCCINATE')) fail('Metoprolol succinate reduced at HR 52 (ESC S6 threshold is 50)');
+                    if (!anyRegimenHasMed('Metoprolol Succinate')) fail('Metoprolol succinate not retained at HR 52');
+                }
+                if (t.includes('Bisoprolol New Start At HR 52 Allowed')) {
+                    if (excl('Bisoprolol')) fail('Bisoprolol new start excluded at HR 52 (ESC S6 threshold is 50)');
+                    if (excl('Carvedilol')?.rule_id !== 'E13' || !/START/.test(whyText('Carvedilol'))) fail('Carvedilol new start not blocked at HR 52 (label threshold 55)');
+                    if (excl('Metoprolol Succinate')) fail('Metoprolol succinate new start excluded at HR 52 (ESC S6 threshold is 50)');
+                }
+                if (t.includes('Bisoprolol New Start At HR 48 Withheld')) {
+                    if (excl('Bisoprolol')?.rule_id !== 'E13' || !/START/.test(whyText('Bisoprolol'))) fail('Bisoprolol new start not withheld at HR 48');
+                    if (anyBb()) fail('A beta-blocker START offered at HR 48');
+                }
                 if (t.includes('Carvedilol 3.125 mg HR 50 Withheld')) {
                     if (strengthsOf('Carvedilol').length > 0) fail('Carvedilol 3.125 mg (lowest dose) kept at HR 50: it must be withheld');
                     if (!summaries.some(x => x.startsWith('Remove Carvedilol') && x.includes('50 bpm') && x.includes('lowest'))) fail('Withhold at the lowest dose does not state the heart rate and the reason');
@@ -3023,11 +3051,11 @@ async function runVerification() {
                 if (t.includes('Up-Titration Offered At HR 66')) {
                     if (!summaries.some(x => x.startsWith('Titrate Carvedilol'))) fail('Carvedilol up-titration not offered at HR 66 (positive control for the HR 56 rule)');
                 }
-                if (t.includes('New Beta-Blocker Start Blocked At HR 52')) {
+                if (t.includes('New Beta-Blocker Start Blocked At HR 48')) {
                     for (const n of BETA_BLOCKERS) {
-                        if (excl(n)?.rule_id !== 'E13' || !/START/.test(whyText(n))) fail(`${n} new start not blocked at HR 52 with the initiation reason`);
+                        if (excl(n)?.rule_id !== 'E13' || !/START/.test(whyText(n))) fail(`${n} new start not blocked at HR 48 with the initiation reason`);
                     }
-                    if (anyBb()) fail('A beta-blocker START offered at HR 52');
+                    if (anyBb()) fail('A beta-blocker START offered at HR 48');
                 }
                 if (t.includes('Beta-Blocker Dose Effects Equalized')) {
                     const c = med('Carvedilol'), m = med('Metoprolol Succinate'), b = med('Bisoprolol');
@@ -3288,6 +3316,9 @@ async function runVerification() {
                 if (t.includes('Finerenone 20 mg Potassium 5.1 Not Increased')) {
                     if (upOf('Finerenone (Kerendia)').length > 0) fail('Finerenone 20 mg is offered an increase at potassium 5.1 (label: increase to 40 mg only if potassium is below 5.0)');
                     if (!clinicalAlerts.some(a => a.startsWith('POTASSIUM HOLD ON FINERENONE') && a.includes('Kerendia label'))) fail('No finerenone potassium-hold alert citing the label');
+                }
+                if (t.includes('Congested On High Dose Swap Allowed')) {
+                    if (!analysis.swappable.some(x => x.from.med.drug_class === 'Loop Diuretic' && x.candidates.some(c => c.med.drug_class === 'Loop Diuretic'))) fail('a loop swap must be offered when congested on a high dose of the current loop (diuretic resistance, ESC S7)');
                 }
                 if (t.includes('Is Not Swapped Without A Reason')) {
                     // TRANSFORM-HF: no outcome difference between torsemide and furosemide, so a loop is titrated, not swapped, unless it must go.

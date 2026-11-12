@@ -29,15 +29,15 @@ export function buildMonitoringPlan(
     if (hasMraIntensification) {
         plan.push({
             test: 'BMP (potassium, creatinine, eGFR) after MRA start or increase',
-            timing: 'Within 1 week, and again at about 4 weeks',
-            details: 'Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). Reduce the dose if potassium is above 5.5 and withhold it at 6.0 or above.'
+            timing: 'Within 1 week, and again at about 4 weeks (and 1-2 weeks after the final titration)',
+            details: 'Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months.'
         });
     }
     if (hasRaasIntensification) {
         plan.push({
             test: 'BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase',
-            timing: '1-2 weeks after starting or increasing the dose',
-            details: `European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under ${CREATININE_RISE_ACCEPTABLE_PCT}% above baseline is acceptable while eGFR stays above ${EGFR_FLOOR_FOR_CREATININE_RISE} (2026 ESC; the former 30% figure was engine policy). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop.`
+            timing: '1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months',
+            details: `European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under ${CREATININE_RISE_ACCEPTABLE_PCT}% above baseline is acceptable while eGFR stays above ${EGFR_FLOOR_FOR_CREATININE_RISE} (2026 ESC; the former 30% figure was engine policy). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it can apply only the current-eGFR stop below 20.`
         });
     }
     if (hasRaasOrMraIntensification && higherRiskElectrolytes) {
@@ -72,7 +72,7 @@ export function buildMonitoringPlan(
         });
         plan.push({
             test: 'BMP (electrolytes, creatinine)',
-            timing: '3-7 days after diuretic increase',
+            timing: '3-7 days after a diuretic start or increase, and again at 1-2 weeks (2026 ESC Supplementary Table S7)',
             details: 'Screen for pre-renal AKI, hypokalemia, and hyponatremia after dose escalation.'
         });
     }
@@ -199,8 +199,8 @@ export function buildFollowUpCalendar(modSet: ModificationSet | undefined): Moni
     );
     if (!initiatesOrTitrates) return [];
     return [
-        { test: 'Clinical review + BMP (K+, creatinine, eGFR) + BP/HR', timing: 'Day 7 (±2)', details: 'STRONG-HF model: assess tolerance and labs within ~1 week of any GDMT initiation or up-titration. Hold/reduce if K+ ≥ 5.5 or creatinine rises > 30% from baseline.' },
-        { test: 'BMP + BP/HR + congestion check; up-titrate if tolerated', timing: 'Week 2', details: 'Advance toward target doses if BP, HR, renal function and K+ permit. Reinforce daily-weight self-monitoring and adherence.' },
+        { test: 'Clinical review + BMP (K+, creatinine, eGFR) + BP/HR', timing: 'Day 7 (±2)', details: 'STRONG-HF model: assess tolerance and labs within ~1 week of any GDMT initiation or up-titration. Reduce one step if K+ is above 5.5 (stop at 6.0 or above) or if creatinine rises 50% or more above baseline (2026 ESC; the former 30% was engine policy).' },
+        { test: 'BMP + BP/HR + congestion check; up-titrate if tolerated', timing: 'Week 2', details: 'Advance toward target doses if BP, HR, renal function and K+ permit; up-titrate every 1-2 weeks (2026 ESC Table 5), and not faster than every 2 weeks without close monitoring (Supplementary Tables S4-S6, S8). Reinforce daily-weight self-monitoring and adherence.' },
         { test: 'BMP + BP/HR; continue stepwise titration', timing: 'Week 4', details: 'Continue up-titration of each pillar toward guideline target / maximally tolerated dose.' },
         { test: 'NT-proBNP + clinical assessment; confirm target doses', timing: 'Week 6', details: 'Confirm quadruple therapy at target/maximally tolerated doses. Document residual gaps and any device/referral needs.' }
     ];

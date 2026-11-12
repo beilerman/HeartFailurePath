@@ -11,7 +11,7 @@
  * No engine imports here: constants.ts (the formulary) imports this module.
  */
 import type { Patient, Medication, ContraindicationCheck } from '../../types';
-import { BB_HR_BELOW, MRA_START_K_MAX, RAAS_START_K_MAX, RAAS_WITHHOLD_K } from './thresholds';
+import { MRA_START_K_MAX, RAAS_START_K_MAX, RAAS_WITHHOLD_K, RAAS_STOP_EGFR_BELOW } from './thresholds';
 
 /** Spread into a formulary entry: `...ci([...])` sets both `contraindication_checks` and `contraindications`. */
 export const ci = (checks: ContraindicationCheck[]) => ({
@@ -38,8 +38,10 @@ export const CI_ANURIA: ContraindicationCheck = {
  * Two checks: a NEW start (or swap-in) above 5.4 is blocked ("caution" above 5.2 in ESC); a drug already on board is withheld at 6.0 or above.
  * Between them a current RAAS inhibitor is kept and handled by facts.k_continuation (one step down from 5.5), never removed at 5.5-5.9.
  */
+/** The eGFR stop applies to the whole class while any RAAS inhibitor is on board, so stopping one never becomes a swap to another. */
 export const raasPotassiumChecks = (name: string): ContraindicationCheck[] => [
     { reason: `Potassium above ${RAAS_START_K_MAX} mEq/L (new start; 2026 ESC advises caution above 5.2)`, when: p => !alreadyOnMed(p, name) && p.potassium > RAAS_START_K_MAX },
+    { reason: `eGFR below ${RAAS_STOP_EGFR_BELOW}: stop the RAAS inhibitor and seek specialist advice (2026 ESC Supplementary Table S4; applied to the current eGFR because the tool has no baseline)`, when: p => (p.current_regimen ?? []).some(r => ['ARNI', 'ACEi', 'ARB'].includes(r.med.drug_class)) && p.egfr > 0 && p.egfr < RAAS_STOP_EGFR_BELOW },
     { reason: `Potassium ${RAAS_WITHHOLD_K.toFixed(1)} mEq/L or above: stop the RAAS inhibitor (2026 ESC: severe hyperkalaemia leads to temporary discontinuation)`, when: p => p.potassium >= RAAS_WITHHOLD_K },
 ];
 export const CI_BILATERAL_RAS: ContraindicationCheck = {
@@ -81,9 +83,9 @@ export const alreadyOnMed = (p: Patient, name: string): boolean =>
  * intrinsic-rate block does not apply (carvedilol label: severe bradycardia is a contraindication "unless a permanent
  * pacemaker is in place"). A blank pulse (0) still blocks a new start, as before.
  */
-export const bbStartBradycardiaCheck = (name: string): ContraindicationCheck => ({
-    reason: 'Heart rate below 55 bpm: do not START a beta-blocker (the labels say "severe bradycardia" without a number; below 55 bpm is this tool\'s start threshold, and an established beta-blocker is dose-reduced, not stopped)',
-    when: p => !alreadyOnMed(p, name) && p.rhythm !== 'Paced' && p.pulse < BB_HR_BELOW,
+export const bbStartBradycardiaCheck = (name: string, below: number, basis: string): ContraindicationCheck => ({
+    reason: `Heart rate below ${below} bpm: do not START a beta-blocker (${basis}; an established beta-blocker is dose-reduced, not stopped)`,
+    when: p => !alreadyOnMed(p, name) && p.rhythm !== 'Paced' && p.pulse < below,
 });
 export const SICK_SINUS = 'Sick Sinus Syndrome / Sinoatrial Block';
 /**

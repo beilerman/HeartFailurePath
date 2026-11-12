@@ -242,6 +242,8 @@ export interface MedFacts {
         restart_below?: number;
         /** In the REDUCE band only: take no forced action while an MRA on board is itself being reduced or withheld by its potassium rule (the MRA goes first). */
         yields_to?: 'mra';
+        /** Steps to take before or alongside the dose change, shown in the potassium alert (2026 ESC Supplementary Tables S4/S5). */
+        first_steps?: string;
     };
     /**
      * Potassium rule for INCREASING the dose of an MRA the patient is already on: the dose is not raised while known K+ is at or

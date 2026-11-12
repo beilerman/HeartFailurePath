@@ -3034,14 +3034,18 @@ export const SCENARIOS: TestScenario[] = [
         return [
             { title: 'Rate-Source Carvedilol 25 mg HR 54 One-Step Reduction', patient: { ...base, pulse: 54, current_regimen: withBb('Carvedilol', 25) } },
             { title: 'Rate-Source Carvedilol 3.125 mg HR 50 Withheld', patient: { ...base, pulse: 50, current_regimen: withBb('Carvedilol', 3.125) } },
-            { title: 'Rate-Source Metoprolol Succinate 100 mg HR 52 One-Step Reduction', patient: { ...base, pulse: 52, current_regimen: withBb('Metoprolol Succinate', 100, 'qd') } },
-            { title: 'Rate-Source Bisoprolol 10 mg HR 53 One-Step Reduction', patient: { ...base, pulse: 53, current_regimen: withBb('Bisoprolol', 10, 'qd') } },
+            // Metoprolol succinate and bisoprolol use 50 bpm (2026 ESC Supplementary Table S6; their labels give no number), carvedilol 55 (label). 2026-11-11: the old 52/53 probes moved to 48.
+            { title: 'Rate-Source Metoprolol Succinate 100 mg HR 48 One-Step Reduction', patient: { ...base, pulse: 48, current_regimen: withBb('Metoprolol Succinate', 100, 'qd') } },
+            { title: 'Rate-Source Metoprolol Succinate 100 mg HR 52 No Reduction', patient: { ...base, pulse: 52, current_regimen: withBb('Metoprolol Succinate', 100, 'qd') } },
+            { title: 'Rate-Source Bisoprolol New Start At HR 52 Allowed', patient: { ...base, pulse: 52, current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Bisoprolol New Start At HR 48 Withheld', patient: { ...base, pulse: 48, current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source Bisoprolol 10 mg HR 48 One-Step Reduction', patient: { ...base, pulse: 48, current_regimen: withBb('Bisoprolol', 10, 'qd') } },
             { title: 'Rate-Source Third-Degree AV Block Beta-Blocker Removed', patient: { ...base, pulse: 52, rhythm: '3rd Degree AV Block' as const, current_regimen: withBb('Carvedilol', 12.5) } },
             { title: 'Rate-Source Sick Sinus Syndrome Without Pacemaker Beta-Blocker Removed', patient: { ...base, pulse: 66, comorbidities: new Set(['HFrEF', 'Sick Sinus Syndrome / Sinoatrial Block']), current_regimen: withBb('Metoprolol Succinate', 50, 'qd') } },
             { title: 'Rate-Source Paced Rhythm HR 52 Beta-Blocker Kept', patient: { ...base, pulse: 52, rhythm: 'Paced' as const, comorbidities: new Set(['HFrEF', 'Sick Sinus Syndrome / Sinoatrial Block']), current_regimen: withBb('Carvedilol', 12.5) } },
             { title: 'Rate-Source No Up-Titration At HR 56', patient: { ...base, pulse: 56, current_regimen: withBb('Carvedilol', 12.5) } },
             { title: 'Rate-Source Up-Titration Offered At HR 66', patient: { ...base, pulse: 66, current_regimen: withBb('Carvedilol', 12.5) } },
-            { title: 'Rate-Source New Beta-Blocker Start Blocked At HR 52', patient: { ...base, pulse: 52, current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Rate-Source New Beta-Blocker Start Blocked At HR 48', patient: { ...base, pulse: 48, current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
             { title: 'Rate-Source Beta-Blocker Dose Effects Equalized', patient: { ...base, current_regimen: withBb('Carvedilol', 25) } },
             { title: 'Rate-Source Carvedilol Child-Pugh B Confirmed Allowed', patient: { ...base, comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)', 'Liver Disease: Child-Pugh B confirmed (not C)']), current_regimen: [] } },
             { title: 'Rate-Source Carvedilol Child-Pugh B/C Unspecified Excluded Metoprolol Allowed', patient: { ...base, comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: [] } },
@@ -3282,8 +3286,11 @@ export const SCENARIOS: TestScenario[] = [
                 current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
             { title: 'Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose', patient: { ...loopPatient, allergies: new Set(['Torsemide']),
                 current_regimen: buildCurrentRegimen([{ name: 'Torsemide', strength: 20, freq: 'qd' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
-            { title: 'Final-Gaps Furosemide 80 mg bid Is Not Swapped Without A Reason', patient: { ...loopPatient,
+            // Diuretic resistance (ESC S7): congested on a HIGH dose (furosemide 160 mg/day is above the 120 mg/day alert level) the loop may be swapped; at 80 mg/day it is titrated, not swapped.
+            { title: 'Final-Gaps Furosemide 80 mg bid Congested On High Dose Swap Allowed', patient: { ...loopPatient,
                 current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
+            { title: 'Final-Gaps Furosemide 40 mg bid Is Not Swapped Without A Reason', patient: { ...loopPatient,
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 40, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
             { title: 'Final-Gaps Torsemide 20 mg qd Is Not Swapped Without A Reason', patient: { ...loopPatient,
                 current_regimen: buildCurrentRegimen([{ name: 'Torsemide', strength: 20, freq: 'qd' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
         ];
@@ -3460,6 +3467,28 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'ESC26-Diuretic Stable Euvolemic On Metolazone Gets Review', patient: { ...base, nyha_class: 'II' as const, volume_status: { dry_weight_kg: 70, current_weight_kg: 70.2, exam_findings: new Set<string>() },
                 current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 40, freq: 'qd' }, { name: 'Metolazone', strength: 2.5, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
             { title: 'ESC26-Diuretic Congested Not On Loop No Thiazide', patient: { ...base, volume_status: { dry_weight_kg: 70, current_weight_kg: 75, exam_findings: new Set(['Edema (2+)']) }, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+        ];
+    })(),
+
+    // ===== 2026 ESC Supplementary Table S4 kidney rule: stop an ACE inhibitor / ARB / ARNI and seek specialist advice when eGFR is below 20 (current value; the tool has no baseline) =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 66, sex: 'Male' as const, sbp: 128, dbp: 78, pulse: 72, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 60, nt_pro_bnp: 1100, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 18, creatinine: 3.4, bun: 40, potassium: 4.6,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            ever_lvef_le_40: 'yes' as const,
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const onLis = buildCurrentRegimen([{ name: 'Lisinopril', strength: 5, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]);
+        return [
+            { title: 'ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice', patient: { ...base, current_regimen: onLis } },
+            { title: 'ESC26-Renal eGFR 22 Lisinopril Kept', patient: { ...base, egfr: 22, creatinine: 2.9, current_regimen: onLis } },
         ];
     })(),
 

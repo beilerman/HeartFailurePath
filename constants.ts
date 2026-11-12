@@ -5,7 +5,7 @@ import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raasPotassiumChecks, CI_BILATERAL
     PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
 import { valueUnknown, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
-import { BB_HR_BELOW, HYPOKALEMIA_K_BELOW, RAAS_START_K_MAX, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
+import { BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_MAX, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
 
 // Helper for logarithmic calculations (dose-response curves)
 const logBase = (base: number, x: number) => Math.log(x) / Math.log(base);
@@ -134,12 +134,22 @@ const LOKELMA_EDEMA_RATE = (dose: number | string): number => {
     return d >= 15 ? 0.161 : d >= 10 ? 0.059 : 0.044;
 };
 
+// 2026 ESC Supplementary Table S9 notes for an SGLT2 inhibitor (informational; the existing label-based gates are unchanged).
+const SGLT2_S9_FACTS = { regimen_warnings: [
+    { text: 'Drug note (2026 ESC Supplementary Table S9): caution with symptomatic hypotension when systolic pressure is below 95; review diuretics first.', when: (p: Patient) => p.sbp > 0 && p.sbp < 95 },
+    { text: 'Drug note (2026 ESC Supplementary Table S9): if eGFR falls below 20 while on an SGLT2 inhibitor, look for other causes; ESC advises continuing it with close monitoring. This tool keeps the existing label-based continuation.', when: (p: Patient) => p.egfr > 0 && p.egfr < 20 },
+] };
+
+// 2026 ESC Supplementary Table S6 cautions for starting a beta-blocker (shared by the three agents).
+const BB_S6_START_NOTE = { text: 'Drug note (2026 ESC Supplementary Table S6): seek specialist advice before starting in NYHA IV or with a current or recent (under 4 weeks) exacerbation; achieve euvolemia first if congestion persists or systolic pressure is below 90. Asthma is a relative contraindication (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.' };
+
 // Potassium rules for a RAAS inhibitor the patient is ALREADY on (2026 ESC heart failure guideline section 6.1; thresholds.ts): one dose step down from 5.5
 // (stopped if already at the lowest tier), stopped from 6.0, with the MRA reduced or stopped first when both are on board (yields_to). Increases are held from 5.5
 // (a new start is blocked above 5.4 by raasPotassiumChecks; ESC advises caution above 5.2). Abrupt withdrawal of an ACEi/ARNI risks deterioration, so a
 // current drug is reduced rather than removed in the 5.5-5.9 band. Before 2026-11-11 a current RAAS inhibitor was removed above 5.4 (engine policy).
 const RAAS_K_FACTS = {
     k_continuation: { reduce_at: RAAS_REDUCE_K, withhold_at: RAAS_WITHHOLD_K, restart_below: RAAS_REDUCE_K, yields_to: 'mra' as const,
+        first_steps: 'Stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes first, then recheck potassium and kidney function in 1-2 weeks (2026 ESC Supplementary Tables S4/S5: potassium up to 5.5 is acceptable; a persistent rise above 5.5 halves the dose and is rechecked in 1-2 weeks; S4 also says stop above 5.5, and the main text says down-titrate or discontinue for above 5.5 or above 6, so the engine reduces one step from 5.5 and stops from 6.0).',
         basis: '2026 ESC section 6.1: severe hyperkalaemia (above 5.5 or 6) leads to temporary down-titration or discontinuation of the MRA and/or ACEi/ARNI/ARB; the 5.5 reduce / 6.0 stop split and MRA-first order are engine policy' },
     k_uptitration_max: { below: RAAS_REDUCE_K, basis: `Engine policy: the dose is not raised above potassium ${RAAS_START_K_MAX} (2026 ESC advises caution above 5.2)` },
 };
@@ -497,9 +507,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         start_dose_for: () => 3.125,
         facts: {
             nonselective_beta_blocker: true, hepatically_metabolized: true, target_reference_dose: 25, // 2026 ESC Table 11: carvedilol target 25 mg twice daily (50 mg above 85 kg); the fraction uses 25
+            regimen_warnings: [BB_S6_START_NOTE],
             // Coreg label sec 2.1 and 5.2: "reduce the dose if heart rate is less than 55 beats per minute" (sourced). No
             // up-titration below 60 bpm is ENGINE POLICY (no label number). Established therapy is reduced one step, never stopped at a rate.
-            hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'Coreg label: reduce the dose if heart rate is below 55; no up-titration below 60 is this tool\'s policy' },
+            hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'Coreg label: reduce the dose if heart rate is below 55 (the 55 is also used as the start threshold); no up-titration below 60 is ENGINE POLICY (no source)' },
         },
         // ACC/AHA target: 25 mg BID for <= 85 kg dry weight, 50 mg BID above (the label calls 50 mg BID the maximum
         // ADMINISTERED to patients over 85 kg; the weight-based target is from the guideline, secondary source).
@@ -535,7 +546,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => ({ sbp_drop: 5 + Number(dose)/5, hr_drop: 8 + Number(dose)/3, potassium_change: 0.05 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.15, hypotension: 0.10, fluid_retention_transient: 0.05 }),
         ...ci([
-            bbStartBradycardiaCheck('Carvedilol'),
+            bbStartBradycardiaCheck('Carvedilol', BB_HR_BELOW, 'Coreg label: reduce the dose below 55; the label gives no start number, so 55 is used for the start as well'),
             CI_SICK_SINUS_NO_PACEMAKER,
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
@@ -558,9 +569,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         start_dose_for: (p) => (p.nyha_class === 'III' || p.nyha_class === 'IV' ? 12.5 : 25),
         facts: {
             beta1_selective: true, hepatically_metabolized: true, target_reference_dose: 200, // 2026 ESC Table 11: metoprolol succinate target 200 mg daily
+            regimen_warnings: [BB_S6_START_NOTE],
             // Toprol-XL/generic label: "if patients experience symptomatic bradycardia, reduce the dose" (no number). Below 55 bpm as the
             // trigger (same as carvedilol's labeled number) and no up-titration below 60 are ENGINE POLICY.
-            hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'metoprolol label: reduce the dose for symptomatic bradycardia (no number); below 55 and no up-titration below 60 are this tool\'s policy' },
+            hr_continuation: { reduce_below: BB_HR_BELOW_ESC, no_uptitration_below: 60, basis: '2026 ESC Supplementary Table S6: lower the dose if heart rate is below 50 with worsening symptoms (the metoprolol label gives no number); no up-titration below 60 is ENGINE POLICY (no source)' },
         },
         // is_best_in_class removed: the three beta-blockers are modeled as equal at target (verified-rate-control.md); no verified source ranks one above the others.
         available_doses: [
@@ -589,7 +601,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // No hepatic contraindication: the label (8.6) has no hepatic-impairment studies and says to consider a low initial dose and
         // increase gradually. The hepatic caution warning (effects.ts, via facts.hepatically_metabolized) covers it.
         ...ci([
-            bbStartBradycardiaCheck('Metoprolol Succinate'),
+            bbStartBradycardiaCheck('Metoprolol Succinate', BB_HR_BELOW_ESC, '2026 ESC Supplementary Table S6: caution before starting below 50; the metoprolol label gives no number'),
             CI_SICK_SINUS_NO_PACEMAKER,
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
@@ -606,8 +618,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
             beta1_selective: true, most_cardioselective: true, target_reference_dose: 10, // 2026 ESC Table 11: bisoprolol target 10 mg daily
             // The US label gives no heart-rate number ("marked sinus bradycardia" is a contraindication). Below 55 bpm as the reduction
             // trigger and no up-titration below 60 are ENGINE POLICY, matched to the other two beta-blockers.
-            hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'bisoprolol US label gives no heart-rate number; below 55 and no up-titration below 60 are this tool\'s policy' },
+            hr_continuation: { reduce_below: BB_HR_BELOW_ESC, no_uptitration_below: 60, basis: '2026 ESC Supplementary Table S6: lower the dose if heart rate is below 50 with worsening symptoms (the bisoprolol label gives no number); no up-titration below 60 is ENGINE POLICY (no source)' },
             regimen_warnings: [
+                BB_S6_START_NOTE,
                 { text: 'Drug note: the US bisoprolol label is for hypertension only and lists overt cardiac failure as a contraindication, so heart-failure use is off-label (guideline-supported: CIBIS-II, target 10 mg daily). US single-agent tablets are 5 mg and 10 mg; 2.5 mg is half of a scored 5 mg tablet, and the CIBIS-II 1.25 mg starting dose is not obtainable (a quarter tablet is impractical).' },
             ],
         },
@@ -635,7 +648,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => ({ sbp_drop: 3 + Number(dose)/5, hr_drop: 8 + Number(dose)/1.5, potassium_change: 0 }),
         side_effects: () => ({ bradycardia: 0.10, fatigue: 0.08 }),
         ...ci([
-            bbStartBradycardiaCheck('Bisoprolol'),
+            bbStartBradycardiaCheck('Bisoprolol', BB_HR_BELOW_ESC, '2026 ESC Supplementary Table S6: caution before starting below 50; the bisoprolol label gives no number'),
             CI_SICK_SINUS_NO_PACEMAKER, // label: "marked sinus bradycardia" is a contraindication; extended to sick sinus syndrome like the other two (conservative)
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
@@ -879,6 +892,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Dapagliflozin',
         drug_class: 'SGLT2i',
+        facts: SGLT2_S9_FACTS,
         is_best_in_class: true,
         available_doses: [
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
@@ -914,6 +928,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Empagliflozin',
         drug_class: 'SGLT2i',
+        facts: SGLT2_S9_FACTS,
         is_best_in_class: true,
         available_doses: [
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },

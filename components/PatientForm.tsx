@@ -166,7 +166,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         else if (patientData.potassium > MRA_START_K_CEILING) warnings.potassium = `K+ above ${MRA_START_K_CEILING}: a new MRA is not started; recheck potassium and start once it is ${MRA_START_K_CEILING} or lower`;
         if (patientData.is_pregnant) warnings.pregnancy = 'RAAS inhibitors, MRAs, SGLT2 inhibitors, vericiguat, ivabradine and GLP-1 therapies are excluded';
         if (patientData.nyha_class === 'IV') warnings.nyha = 'BB initiation blocked';
-        if (patientData.pulse < BB_HR_BELOW) warnings.pulse = 'Low heart rate: a new beta-blocker is not started; an established one is reduced a step';
+        if (patientData.pulse < BB_HR_BELOW) warnings.pulse = 'Low heart rate: a new beta-blocker is not started and an established one is reduced a step below 55 bpm for carvedilol (label) or below 50 bpm for metoprolol succinate and bisoprolol (2026 ESC)';
         if (patientData.rhythm === '2nd Degree AV Block' || patientData.rhythm === '3rd Degree AV Block') {
             warnings.av_block = 'AV block present: beta blockers and digoxin are contraindicated unless paced/specialist-directed.';
         }
