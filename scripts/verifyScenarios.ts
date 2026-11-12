@@ -87,6 +87,7 @@ const ASSERTION_TITLE_MARKERS = [
     'Furoscix Allergy Guardrail',
     'ARNI Hepatic CI',
     'MRA Start Staged At K+ 5.1',
+    'K6-Source',
     'HFpEF Steroidal MRA Eligible',
     'Incomplete Data: Missing Potassium',
     'Incomplete Data: Missing LVEF',
@@ -2215,6 +2216,31 @@ async function runVerification() {
                 if (anyRegimenHasRaas()) {
                     failures.push('RAAS agent retained in a displayed regimen at K+ 6.2 (hard CI at K+ > 5.4)');
                     scenarioPassed = false;
+                }
+            }
+
+            // 94c. Potassium 6.0-6.4 (decision 2026-11-11; verified-clinical-decisions-2026-11-11.md rows 5b, 7, 8): the alert tells the clinician to get an ECG
+            // and repeat the potassium urgently, says a secondary source classes K+ above 6.0 as severe and that the thresholds are engine policy; no displayed option
+            // starts or increases a RAAS inhibitor or MRA; a current MRA is withheld (not merely reduced).
+            if (scenario.title.includes('K6-Source')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const alert = clinicalAlerts.find(a => a.includes('HYPERKALEMIC EMERGENCY')) ?? '';
+                if (!alert) fail('No HYPERKALEMIC EMERGENCY alert at K+ 6.0-6.4');
+                if (!/ECG/.test(alert) || !/repeat the potassium urgently/.test(alert)) fail('Alert lacks the ECG / repeat-potassium instruction');
+                if (!/secondary source/.test(alert) || !/above 6\.0 as severe/.test(alert) || !/engine policy/.test(alert)) fail('Alert lacks the secondary-source severity statement and the engine-policy label');
+                for (const r of scoredRegimens) {
+                    for (const m of r.modification_set?.modifications ?? []) {
+                        if (!m.target) continue;
+                        const c = m.target.med.drug_class;
+                        if ((m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap') && (RAAS_CLASSES.has(c) || c === 'MRA' || c === 'nsMRA')) {
+                            fail(`${m.action} of ${m.target.med.name} offered at K+ ${scenario.patient.potassium} (no RAAS/MRA start or increase at 6.0-6.4)`);
+                        }
+                    }
+                    if (r.regimen.some(m => m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA')) fail('An MRA remains in a displayed option at K+ 6.0-6.4 (withhold, not reduce)');
+                }
+                if (scenario.title.includes('On Quad') && scoredRegimens.length > 0
+                    && !scoredRegimens.some(r => (r.modification_set?.modifications ?? []).some(m => m.action === 'remove' && m.source?.med.name === 'Spironolactone'))) {
+                    fail('A current MRA was not removed at K+ 6.0-6.4');
                 }
             }
 

@@ -1,0 +1,89 @@
+NOTE (written by hand, 2026-11-11): this change touches ALERT TEXT ONLY (the HYPERKALEMIC EMERGENCY alert gained "obtain an ECG now and repeat the
+potassium urgently", the secondary-source severity statement and the engine-policy label), so the "BUGS" section (clinicalAlerts differ) is expected.
+No existing scenario changed a pick. The 12 "top pick changed" rows are the six NEW scenarios (K6-Source, 6.0/6.2/6.4 x on-quad / no-MRA) that had no entry
+in the old snapshot. Clinical read: no option starts or increases a RAAS inhibitor or MRA; the current spironolactone and ARNI are removed (stated reasons:
+MRA withheld at 6.0 or above; RAAS contraindicated above 5.4); the binder at 6.0-6.4 treats the present hyperkalemia. Looks odd and is NOT part of this
+decision: the top picks at 6.0-6.4 still up-titrate carvedilol (12.5 to 25 mg) while potassium is in the emergency range; this was already so before.
+
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 762 runs
+  (a) top pick identical:        750 / 762
+  (b) displayed pick set same:   750 / 762
+  (c) pick order identical:      750 / 762
+  (d) eligibility + alerts identical: NO (45 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+Top pick changed in 12 runs:
+  K6-Source K+ 6.0 On Quad :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.77]
+  K6-Source K+ 6.0 On Quad :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.80]
+  K6-Source K+ 6.0 On Quad :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.78]
+  K6-Source K+ 6.0 No MRA :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 51, raw 50.58]
+  K6-Source K+ 6.0 No MRA :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 58, raw 58.46]
+  K6-Source K+ 6.0 No MRA :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 58, raw 58.18]
+  K6-Source K+ 6.2 On Quad :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 16.8g qd [overall 56, raw 56.43]
+  K6-Source K+ 6.2 On Quad :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 16.8g qd [overall 65, raw 64.80]
+  K6-Source K+ 6.2 On Quad :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 16.8g qd [overall 64, raw 64.39]
+  K6-Source K+ 6.4 On Quad :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 56, raw 56.43]
+  K6-Source K+ 6.4 On Quad :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 65, raw 64.80]
+  K6-Source K+ 6.4 On Quad :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 64, raw 64.39]
+
+BUGS (eligibility/alerts must not change):
+  Hyperkalemic Emergency K+ 6.2 (Deprescribe Offered) :: cash: clinicalAlerts differ
+  Hyperkalemic Emergency K+ 6.2 (Deprescribe Offered) :: commercial: clinicalAlerts differ
+  Hyperkalemic Emergency K+ 6.2 (Deprescribe Offered) :: medicare: clinicalAlerts differ
+  Hyperkalemic Emergency K+ 6.8 (Alerts Only) :: cash: clinicalAlerts differ
+  Hyperkalemic Emergency K+ 6.8 (Alerts Only) :: commercial: clinicalAlerts differ
+  Hyperkalemic Emergency K+ 6.8 (Alerts Only) :: medicare: clinicalAlerts differ
+  MRA-Source Current MRA K+ 6.1 Withheld :: cash: clinicalAlerts differ
+  MRA-Source Current MRA K+ 6.1 Withheld :: commercial: clinicalAlerts differ
+  MRA-Source Current MRA K+ 6.1 Withheld :: medicare: clinicalAlerts differ
+  K6-Source K+ 6.0 On Quad :: cash: excludedMedications differ
+  K6-Source K+ 6.0 On Quad :: cash: clinicalAlerts differ
+  K6-Source K+ 6.0 On Quad :: commercial: excludedMedications differ
+  K6-Source K+ 6.0 On Quad :: commercial: clinicalAlerts differ
+  K6-Source K+ 6.0 On Quad :: medicare: excludedMedications differ
+  K6-Source K+ 6.0 On Quad :: medicare: clinicalAlerts differ
+  K6-Source K+ 6.0 No MRA :: cash: excludedMedications differ
+  K6-Source K+ 6.0 No MRA :: cash: clinicalAlerts differ
+  K6-Source K+ 6.0 No MRA :: commercial: excludedMedications differ
+  K6-Source K+ 6.0 No MRA :: commercial: clinicalAlerts differ
+  K6-Source K+ 6.0 No MRA :: medicare: excludedMedications differ
+  K6-Source K+ 6.0 No MRA :: medicare: clinicalAlerts differ
+  K6-Source K+ 6.2 On Quad :: cash: excludedMedications differ
+  K6-Source K+ 6.2 On Quad :: cash: clinicalAlerts differ
+  K6-Source K+ 6.2 On Quad :: commercial: excludedMedications differ
+  K6-Source K+ 6.2 On Quad :: commercial: clinicalAlerts differ
+  K6-Source K+ 6.2 On Quad :: medicare: excludedMedications differ
+  K6-Source K+ 6.2 On Quad :: medicare: clinicalAlerts differ
+  K6-Source K+ 6.2 No MRA :: cash: excludedMedications differ
+  K6-Source K+ 6.2 No MRA :: cash: clinicalAlerts differ
+  K6-Source K+ 6.2 No MRA :: commercial: excludedMedications differ

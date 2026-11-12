@@ -262,12 +262,18 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
     // urgent treatment, not outpatient regimen optimization. For K+ >= 6.5 the engine returns
     // alerts only (parallel to the SBP < 90 gate below); for 6.0-6.4 it alerts and proceeds —
     // deprescribing the offending agent with binder rescue is still clinically useful there.
+    // Sources and honesty (verified-clinical-decisions-2026-11-11.md rows 5b, 7, 8): a secondary review (Heart Fail Rev 2021) classes
+    // K+ > 6.0 as severe and advises stopping or reducing RAAS therapy; a secondary ESC-derived consensus says withhold an MRA above 6.0.
+    // The KDIGO severity scheme (5.0-5.9 / 6.0-6.4 / >= 6.5) could NOT be verified, so the 6.0 alert and the 6.5 alerts-only stop are ENGINE
+    // POLICY. At 6.0-6.4 no candidate starts or increases a RAAS inhibitor or MRA (RAAS contraindicated above 5.4, MRA new start above
+    // 5.5 and withheld at 6.0 by facts.k_continuation) - verify scenarios "Hyperkalemia 6.0 / 6.2 / 6.4".
     const hyperkalemicEmergency = patient.potassium >= 6.0 && patient.potassium <= 8.0;
     if (hyperkalemicEmergency) {
         clinicalAlerts.push(
             'HYPERKALEMIC EMERGENCY: Serum K+ ' + patient.potassium.toFixed(1) + ' mEq/L (≥ 6.0). ' +
-            'Obtain ECG immediately and treat urgently — IV calcium if ECG changes, insulin/glucose, ' +
-            'K+ binder or dialysis — before oral GDMT optimization.'
+            'Obtain an ECG now and repeat the potassium urgently, then treat urgently — IV calcium if ECG changes, insulin/glucose, ' +
+            'K+ binder or dialysis — before oral GDMT optimization. No RAAS inhibitor or MRA is started or increased. ' +
+            'A secondary source (Heart Fail Rev 2021) classes potassium above 6.0 as severe hyperkalemia; the tool\'s 6.0 alert and its alerts-only stop at 6.5 are engine policy (the severity classification could not be verified from a primary source).'
         );
     }
 

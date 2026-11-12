@@ -2934,6 +2934,14 @@ export const SCENARIOS: TestScenario[] = [
                 current_regimen: buildCurrentRegimen([{ name: 'Eplerenone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
             { title: 'MRA-Source Current MRA K+ 6.1 Withheld', patient: { ...base, potassium: 6.1,
                 current_regimen: buildCurrentRegimen([{ name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            // Potassium 6.0-6.4 (decision 2026-11-11, verified-clinical-decisions-2026-11-11.md rows 5b, 7): urgent ECG/repeat alert, no RAAS/MRA start or
+            // increase, a current MRA withheld. Each K value is run on the full quad (a current MRA) and on the quad minus the MRA (a new-start candidate).
+            ...[6.0, 6.2, 6.4].flatMap(k => [
+                { title: `K6-Source K+ ${k.toFixed(1)} On Quad`, patient: { ...base, potassium: k,
+                    current_regimen: buildCurrentRegimen([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' },
+                        { name: 'Dapagliflozin', strength: 10, freq: 'qd' }, { name: 'Spironolactone', strength: 25, freq: 'qd' }]) } },
+                { title: `K6-Source K+ ${k.toFixed(1)} No MRA`, patient: { ...base, potassium: k, current_regimen: arniStepUp } },
+            ]),
             { title: 'MRA-Source Finerenone eGFR 40 Targets 20 mg', patient: { ...hfpef, egfr: 40, creatinine: 1.8,
                 current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }, { name: 'Finerenone (Kerendia)', strength: 20, freq: 'qd' }]) } },
             { title: 'MRA-Source Finerenone eGFR 70 Targets 40 mg', patient: { ...hfpef, egfr: 70, creatinine: 1.0,
