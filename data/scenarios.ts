@@ -3370,6 +3370,34 @@ export const SCENARIOS: TestScenario[] = [
         ];
     })(),
 
+    // ===== 2026 ESC potassium and creatinine rules for a RAAS inhibitor already in use (section 6.1) =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 64, sex: 'Male' as const, sbp: 128, dbp: 78, pulse: 72, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 60, nt_pro_bnp: 1100, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 60, creatinine: 1.2, bun: 20, potassium: 5.6,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            ever_lvef_le_40: 'yes' as const,
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const lis = (strength: number) => buildCurrentRegimen([{ name: 'Lisinopril', strength, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]);
+        return [
+            { title: 'ESC26-RAAS-K K+ 5.6 Lisinopril 10 Reduced One Step', patient: { ...base, current_regimen: lis(10) } },
+            { title: 'ESC26-RAAS-K K+ 5.6 Lisinopril 2.5 Lowest Tier Withheld', patient: { ...base, current_regimen: lis(2.5) } },
+            { title: 'ESC26-RAAS-K K+ 5.6 With MRA Reduces The MRA First', patient: { ...base,
+                current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 10, freq: 'qd' }, { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'ESC26-RAAS-K K+ 6.1 Lisinopril And MRA Stopped', patient: { ...base, potassium: 6.1,
+                current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 10, freq: 'qd' }, { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'ESC26-RAAS-K K+ 5.5 New RAAS Start Blocked', patient: { ...base, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text', patient: { ...base, potassium: 5.3, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+        ];
+    })(),
+
     // ===== Laboratory prerequisite (rule E16, 2026-11-11 physician-owner decision): potassium and renal function required before RAAS/MRA new starts and dose increases =====
     ...((): TestScenario[] => {
         const base = {

@@ -269,8 +269,8 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
     // Sources and honesty (verified-clinical-decisions-2026-11-11.md rows 5b, 7, 8): a secondary review (Heart Fail Rev 2021) classes
     // K+ > 6.0 as severe and advises stopping or reducing RAAS therapy; a secondary ESC-derived consensus says withhold an MRA above 6.0.
     // The KDIGO severity scheme (5.0-5.9 / 6.0-6.4 / >= 6.5) could NOT be verified, so the 6.0 alert and the 6.5 alerts-only stop are ENGINE
-    // POLICY. At 6.0-6.4 no candidate starts or increases a RAAS inhibitor or MRA (RAAS contraindicated above 5.4, MRA new start above
-    // 5.5 and withheld at 6.0 by facts.k_continuation) - verify scenarios "Hyperkalemia 6.0 / 6.2 / 6.4".
+    // POLICY. At 6.0-6.4 no candidate starts or increases a RAAS inhibitor or MRA (RAAS new start blocked above 5.4 and a current RAAS inhibitor stopped
+    // at 6.0, 2026 ESC section 6.1; MRA new start above 5.5 and withheld at 6.0 by facts.k_continuation) - verify scenarios "Hyperkalemia 6.0 / 6.2 / 6.4".
     const hyperkalemicEmergency = patient.potassium >= 6.0 && patient.potassium <= 8.0;
     if (hyperkalemicEmergency) {
         clinicalAlerts.push(

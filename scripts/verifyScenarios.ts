@@ -132,7 +132,8 @@ const ASSERTION_TITLE_MARKERS = [
     'Final-Gaps',
     'Lab-Prereq',
     'ESC26-Phenotype',
-    'ESC26-Digoxin'
+    'ESC26-Digoxin',
+    'ESC26-RAAS-K'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -2305,6 +2306,35 @@ async function runVerification() {
                 if (t.includes('Is Offered') && !offered) fail('digoxin must be offered to a symptomatic NYHA II HFrEF patient on optimized foundational therapy');
                 if (t.includes('Is Not Offered') && offered) fail('digoxin offered outside symptomatic LVEF <= 40');
                 if (t.includes('Titratable') && offered) fail('digoxin offered while a pillar can still be up-titrated');
+            }
+
+            // 94g. 2026 ESC section 6.1: a RAAS inhibitor already in use goes one step down above 5.5 (stopped if already lowest), stops at 6.0 or above, the MRA first
+            // when both are on board; a NEW start stays blocked above 5.4. Creatinine: a rise under 50% above baseline is acceptable while eGFR stays above 15.
+            if (scenario.title.includes('ESC26-RAAS-K')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const strengthsOf = (name: string) => scoredRegimens.map(r => r.regimen.find(m => m.med.name === name)?.dose.strength);
+                if (scoredRegimens.length === 0) fail('no regimen produced');
+                if (t.includes('Lisinopril 10 Reduced One Step')) {
+                    if (strengthsOf('Lisinopril').some(x => Number(x) !== 5)) fail('lisinopril 10 mg at K+ 5.6 must be reduced one step to 5 mg in every option (not removed, not raised, not swapped)');
+                    if (anyRegimenHasClass('ARNI')) fail('an ARNI swap-in is a new start and is blocked above potassium 5.4');
+                }
+                if (t.includes('Lowest Tier Withheld') && anyRegimenHasMed('Lisinopril')) fail('lisinopril at its lowest tier must be withheld at K+ 5.6');
+                if (t.includes('Reduces The MRA First')) {
+                    if (strengthsOf('Lisinopril').some(x => Number(x) !== 10)) fail('with an MRA also on board the RAAS inhibitor keeps its dose at K+ 5.6 (MRA first)');
+                    if (strengthsOf('Spironolactone').some(x => x !== undefined && Number(x) > 12.5)) fail('the MRA must be reduced one step at K+ 5.6');
+                }
+                if (t.includes('Lisinopril And MRA Stopped') && (anyRegimenHasMed('Lisinopril') || anyRegimenHasClass('MRA'))) fail('lisinopril and the MRA must both be stopped at K+ 6.1');
+                if (t.includes('New RAAS Start Blocked')) {
+                    if (RAAS_CLASSES.size > 0 && ['ARNI', 'ACEi', 'ARB'].some(c => anyRegimenHasClass(c))) fail('a new RAAS inhibitor start must stay blocked above potassium 5.4');
+                    if (excludedMedications.find(e => e.name === 'Lisinopril')?.rule_id !== 'E13') fail('lisinopril not excluded by E13 for a new start above 5.4');
+                }
+                if (t.includes('Allowed Creatinine Text')) {
+                    if (!['ARNI', 'ACEi', 'ARB'].some(c => anyRegimenHasClass(c))) fail('a RAAS inhibitor start at K+ 5.3 must be offered');
+                    const text = (monitoringPlan ?? []).map(m => `${m.test} ${m.details}`).join(' | ');
+                    if (!text.includes('under 50%') || /more than 30%|rises more than 30/.test(text)) fail('creatinine guidance must use the 50% rule, not 30%');
+                    if (!/early eGFR dip/.test(text)) fail('monitoring text must say a transient early eGFR dip should not prompt stopping');
+                }
             }
 
             // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,

@@ -11,7 +11,7 @@
  * No engine imports here: constants.ts (the formulary) imports this module.
  */
 import type { Patient, Medication, ContraindicationCheck } from '../../types';
-import { BB_HR_BELOW, MRA_START_K_MAX } from './thresholds';
+import { BB_HR_BELOW, MRA_START_K_MAX, RAAS_START_K_MAX, RAAS_WITHHOLD_K } from './thresholds';
 
 /** Spread into a formulary entry: `...ci([...])` sets both `contraindication_checks` and `contraindications`. */
 export const ci = (checks: ContraindicationCheck[]) => ({
@@ -33,9 +33,15 @@ export const ANURIA = 'Anuria';
 export const CI_ANURIA: ContraindicationCheck = {
     reason: 'Anuria (label contraindication)', when: p => p.comorbidities.has(ANURIA),
 };
-export const CI_POTASSIUM_GT_5_4: ContraindicationCheck = {
-    reason: 'Potassium above 5.4 mEq/L', when: p => p.potassium > 5.4,
-};
+/**
+ * RAAS inhibitor potassium checks (2026 ESC section 6.1; thresholds.ts). Spread into the entry: `...raasPotassiumChecks('Lisinopril')`.
+ * Two checks: a NEW start (or swap-in) above 5.4 is blocked ("caution" above 5.2 in ESC); a drug already on board is withheld at 6.0 or above.
+ * Between them a current RAAS inhibitor is kept and handled by facts.k_continuation (one step down from 5.5), never removed at 5.5-5.9.
+ */
+export const raasPotassiumChecks = (name: string): ContraindicationCheck[] => [
+    { reason: `Potassium above ${RAAS_START_K_MAX} mEq/L (new start; 2026 ESC advises caution above 5.2)`, when: p => !alreadyOnMed(p, name) && p.potassium > RAAS_START_K_MAX },
+    { reason: `Potassium ${RAAS_WITHHOLD_K.toFixed(1)} mEq/L or above: stop the RAAS inhibitor (2026 ESC: severe hyperkalaemia leads to temporary discontinuation)`, when: p => p.potassium >= RAAS_WITHHOLD_K },
+];
 export const CI_BILATERAL_RAS: ContraindicationCheck = {
     reason: 'Bilateral renal artery stenosis', when: p => p.comorbidities.has("Bilateral Renal Artery Stenosis"),
 };

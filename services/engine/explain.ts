@@ -2,6 +2,7 @@
 import { Patient, Medication, ScoredRegimen, ExcludedMedication, SimulationOutput, RegimenMed, ModificationSet, MonitoringPlanItem, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores, RankingInfo } from '../../types';
 import { valueUnknown, hasUnknownHistoricalHFrEF, isIronDeficient, ivIronCreditTier } from '../clinicalPredicates';
 import { DISEASE_MODIFYING_CLASSES, DIURETIC_CLASSES, RAAS_CLASSES } from './registry';
+import { CREATININE_RISE_ACCEPTABLE_PCT, EGFR_FLOOR_FOR_CREATININE_RISE } from './thresholds';
 import { hasRelevantIntensification } from './regimenUtils';
 import { regimenSatisfiesPillar, classifyPhenotype } from './domains';
 import { drugFacts } from './drugFacts';
@@ -36,7 +37,7 @@ export function buildMonitoringPlan(
         plan.push({
             test: 'BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase',
             timing: '1-2 weeks after starting or increasing the dose',
-            details: 'European consensus guidance (secondary source). Hold/reduce and reassess if potassium rises to 5.5 or higher or creatinine rises more than 30% from baseline (engine policy; the 2026 ESC guideline accepts a creatinine rise under 50% while eGFR stays above 15).'
+            details: `European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under ${CREATININE_RISE_ACCEPTABLE_PCT}% above baseline is acceptable while eGFR stays above ${EGFR_FLOOR_FOR_CREATININE_RISE} (2026 ESC; the former 30% figure was engine policy). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop.`
         });
     }
     if (hasRaasOrMraIntensification && higherRiskElectrolytes) {

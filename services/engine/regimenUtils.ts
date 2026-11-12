@@ -1,7 +1,7 @@
 /** Small regimen/patient helpers shared by the candidate, effects and scoring stages. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, MedicationDose, ScoredRegimen, RegimenMed, ModificationSet } from '../../types';
 import { hasUnknownHistoricalHFrEF, valueUnknown } from '../clinicalPredicates';
-import { getMedicationClassGroup, isDiureticClass } from './registry';
+import { getMedicationClassGroup, isDiureticClass, MRA_POOL_CLASSES } from './registry';
 import { drugFacts } from './drugFacts';
 import { LOW_OUTPUT } from './thresholds';
 
@@ -225,7 +225,10 @@ export function kContinuationAction(med: Medication, patient: Patient): { action
         return { action: 'withhold', reason: `potassium ${k} mEq/L is ${rule.withhold_at.toFixed(1)} or above: withhold; restart at a low dose once potassium is below 5.5 (${rule.basis})` };
     }
     if (patient.potassium >= rule.reduce_at) {
-        return { action: 'reduce', reason: `potassium ${k} mEq/L is 5.5-5.9: reduce one dose step (withhold if already at the lowest dose); restart/titrate only once potassium is below 5.0 (${rule.basis})` };
+        // MRA first: with an MRA on board that this potassium already reduces or withholds, a drug that yields takes no forced step (its dose is held, not raised).
+        if (rule.yields_to === 'mra' && (patient.current_regimen ?? []).some(r => r.med !== med && MRA_POOL_CLASSES.has(r.med.drug_class)
+            && (r.med.facts?.k_continuation?.yields_to === undefined) && patient.potassium >= (r.med.facts?.k_continuation?.reduce_at ?? Infinity))) return null;
+        return { action: 'reduce', reason: `potassium ${k} mEq/L is ${rule.reduce_at.toFixed(1)}-${(rule.withhold_at - 0.1).toFixed(1)}: reduce one dose step (withhold if already at the lowest dose); restart/titrate only once potassium is below ${(rule.restart_below ?? 5.0).toFixed(1)} (${rule.basis})` };
     }
     return null;
 }

@@ -232,7 +232,13 @@ export interface MedFacts {
      * checks). K+ at or above `reduce_at` and below `withhold_at`: forced ONE-STEP dose reduction (withhold
      * if already at the lowest tier). K+ at or above `withhold_at`: withhold (remove). `basis` states the rule.
      */
-    k_continuation?: { reduce_at: number; withhold_at: number; basis: string };
+    k_continuation?: {
+        reduce_at: number; withhold_at: number; basis: string;
+        /** Potassium below which a reduced dose may be raised again (default 5.0, the MRA labels). */
+        restart_below?: number;
+        /** In the REDUCE band only: take no forced action while an MRA on board is itself being reduced or withheld by its potassium rule (the MRA goes first). */
+        yields_to?: 'mra';
+    };
     /**
      * Potassium rule for INCREASING the dose of an MRA the patient is already on: the dose is not raised while known K+ is at or
      * above `below` (finerenone and eplerenone labels: increase only when K+ is below 5.0). `basis` states whether the number is
