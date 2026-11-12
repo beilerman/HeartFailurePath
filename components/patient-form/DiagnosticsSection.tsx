@@ -106,6 +106,11 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                     <p className="text-[11px] text-slate-500 mt-0.5">Use CKD-EPI 2021 (race-free) equation</p>
                 </div>
                 <div>
+                    <Label htmlFor="baseline_creatinine">Baseline creatinine (optional)</Label>
+                    <Input type="number" step="0.1" name="baseline_creatinine" value={patientData.baseline_creatinine || ''} placeholder="mg/dL" onChange={onChange} error={validationErrors.baseline_creatinine} />
+                    <p className="text-[11px] text-slate-500 mt-0.5">Creatinine before the last RAAS inhibitor/MRA start or dose change, if known</p>
+                </div>
+                <div>
                     <Label htmlFor="bun">BUN</Label>
                     <Input type="number" name="bun" value={patientData.bun ?? ''} onChange={onChange} error={validationErrors.bun} />
                 </div>

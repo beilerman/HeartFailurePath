@@ -42,6 +42,17 @@ export const RAAS_WITHHOLD_K = 6.0;
  */
 export const CREATININE_RISE_ACCEPTABLE_PCT = 50;
 export const EGFR_FLOOR_FOR_CREATININE_RISE = 15;
+/**
+ * Change from a BASELINE creatinine (2026 ESC section 6.1.6 / 10.3 and Supplementary Tables S4, S5, S8; optional input `baseline_creatinine`):
+ *  - creatinine rise of CREATININE_RISE_ACCEPTABLE_PCT (50%) or more, or an eGFR fall of more than EGFR_FALL_ACCEPTABLE_PCT (30%, S4/S5/S8), persisting after other
+ *    offending drugs are stopped: halve the RAAS inhibitor and the MRA (one dose step), recheck in 1-2 weeks, no increase;
+ *  - creatinine rise over CREATININE_RISE_STOP_PCT (100%, S4), or a rise of 50% or more with current eGFR below RAAS_EGFR_REVIEW_BELOW (20): stop the RAAS inhibitor,
+ *    withhold the MRA, seek specialist advice.
+ * The main text (creatinine under 50%) and the supplement (eGFR fall under 30%) differ; the engine applies EITHER trigger (the stricter). The eGFR fall is derived
+ * from creatinine with the same CKD-EPI 2021 equation the form uses (current vs baseline creatinine, same age and sex).
+ */
+export const EGFR_FALL_ACCEPTABLE_PCT = 30;
+export const CREATININE_RISE_STOP_PCT = 100;
 
 /**
  * eGFR below this on a RAAS inhibitor raises an ALERT, never a forced stop (2026 ESC Supplementary Table S4: stop an ACE inhibitor/ARB and seek specialist advice when

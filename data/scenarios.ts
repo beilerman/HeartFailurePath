@@ -1,5 +1,6 @@
 import { Patient, TestScenario, RegimenMed } from '../types';
 import { MEDICATION_FORMULARY } from '../constants';
+import { calculateCKDEPI } from '../services/clinicalPredicates';
 
 interface ScenarioMedSeed {
     name: string;
@@ -2956,6 +2957,24 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'MRA-Source Spironolactone New Start eGFR 30 Excluded', patient: { ...base, egfr: 30, creatinine: 2.2, current_regimen: noMra } },
             { title: 'MRA-Source Spironolactone Current At eGFR 30 Continued', patient: { ...base, egfr: 30, creatinine: 2.2,
                 current_regimen: buildCurrentRegimen([{ name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            // Baseline creatinine (2026 ESC 6.1.6 / 10.3, S4/S5/S8): eGFR is the app's CKD-EPI 2021 value for each creatinine (male, age 62, as the form computes it).
+            ...((): TestScenario[] => {
+                const kidney = (baseline: number | undefined, current: number) => ({
+                    ...base, creatinine: current, baseline_creatinine: baseline, egfr: calculateCKDEPI(current, base.age, base.sex),
+                    current_regimen: buildCurrentRegimen([
+                        { name: 'Lisinopril', strength: 20, freq: 'qd' }, { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                        { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]),
+                });
+                return [
+                    { title: 'MRA-Source Kidney-Baseline Blank Keeps Behaviour', patient: kidney(undefined, 1.6) },
+                    { title: 'MRA-Source Kidney-Baseline Rise 30% No Change', patient: kidney(1.0, 1.3) },
+                    { title: 'MRA-Source Kidney-Baseline Rise 60% Halves Both', patient: kidney(1.0, 1.6) },
+                    { title: 'MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both', patient: kidney(1.0, 1.4) },
+                    { title: 'MRA-Source Kidney-Baseline Rise 130% Stops Both', patient: kidney(1.0, 2.3) },
+                    { title: 'MRA-Source Kidney-Baseline Rise 59% With eGFR Below 20 Stops Both', patient: kidney(2.2, 3.5) },
+                    { title: 'MRA-Source Kidney-Baseline Stable eGFR 19 Kept No Stop', patient: kidney(3.4, 3.5) },
+                ];
+            })(),
             { title: 'MRA-Source Halved Dose Cap eGFR 49 New Start', patient: { ...base, egfr: 49, creatinine: 1.6, current_regimen: noMra } },
             { title: 'MRA-Source Halved Dose Cap eGFR 49 Current Spironolactone 50', patient: { ...base, egfr: 49, creatinine: 1.6,
                 current_regimen: buildCurrentRegimen([{ name: 'Spironolactone', strength: 50, freq: 'qd' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },

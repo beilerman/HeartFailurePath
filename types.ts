@@ -64,6 +64,8 @@ export interface Patient {
     // Labs & Comorbidities
     bun: number; // Blood Urea Nitrogen
     creatinine: number;
+    /** Optional prior serum creatinine (mg/dL), before the last RAAS inhibitor/MRA start or dose change. Blank/0 = unknown. Enables the ESC change-from-baseline kidney rules (renalChange.ts). */
+    baseline_creatinine?: number;
     egfr: number; // Calculated
     potassium: number;
 

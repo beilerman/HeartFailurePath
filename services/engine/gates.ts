@@ -6,9 +6,11 @@ import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
 import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold } from '../clinicalPredicates';
 import { PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './contraindications';
 import { taggedDiscontinuedMeds } from './eligibility';
+import { MRA_POOL_CLASSES } from './intolerance';
 import { buildMissingDataNotices, computeGdmtGaps } from './explain';
 import { dailyDose, dedupeCurrentRegimen, hrContinuationAction, kContinuationAction, kUptitrationBlock, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
-import { HYPOTENSION_SBP_BELOW, RAAS_EGFR_REVIEW_BELOW } from './thresholds';
+import { HYPOTENSION_SBP_BELOW, RAAS_EGFR_REVIEW_BELOW, CREATININE_RISE_ACCEPTABLE_PCT, EGFR_FLOOR_FOR_CREATININE_RISE } from './thresholds';
+import { assessCreatinineChange, creatinineRiseIsAcceptable } from './renalChange';
 
 export interface CriticalDataAudit {
     alerts: string[];
@@ -275,11 +277,39 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
     });
 
     // --- eGFR below 20 on a RAAS inhibitor: an alert, not a stop (2026 ESC Table S4 describes a FALL from baseline; the tool has no baseline). ---
-    if (patient.egfr > 0 && patient.egfr < RAAS_EGFR_REVIEW_BELOW && (patient.current_regimen ?? []).some(r => RAAS_CLASSES.has(r.med.drug_class))) {
+    // With the optional baseline creatinine entered, the change is computed and the rules below are enforced (renalChange.ts); without it the alert says the tool cannot tell.
+    const onRaasOrMra = (patient.current_regimen ?? []).filter(r => RAAS_CLASSES.has(r.med.drug_class) || MRA_POOL_CLASSES.has(r.med.drug_class));
+    const creatinineChange = assessCreatinineChange(patient);
+    const egfrBelow20OnRaas = patient.egfr > 0 && patient.egfr < RAAS_EGFR_REVIEW_BELOW && (patient.current_regimen ?? []).some(r => RAAS_CLASSES.has(r.med.drug_class));
+    const kidneyFirstSteps = 'First steps: check volume status (dehydration, over-diuresis), stop NSAIDs and other nephrotoxins, review the diuretic dose.';
+    if (creatinineChange && creatinineChange.band === 'stop') {
         clinicalAlerts.push(
-            'eGFR below 20 on a RAAS inhibitor: if this is a new fall (or creatinine has more than doubled), the 2026 ESC guideline advises stopping it and seeking specialist advice; ' +
-            'if kidney function is stable at this level, continue with close monitoring. The tool has no baseline value and cannot tell these apart.'
+            `KIDNEY FUNCTION: ${creatinineChange.summary}. This meets the 2026 ESC criteria to stop the ACE inhibitor/ARB/ARNI and withhold the MRA (Supplementary Tables S4/S5/S8): seek specialist advice. ` +
+            `${onRaasOrMra.length > 0 ? 'The tool removes them from the plan and does not start a new one. ' : 'No RAAS inhibitor or MRA is started. '}${kidneyFirstSteps} Restart is a specialist decision.`
         );
+    } else if (creatinineChange && creatinineChange.band === 'reduce') {
+        clinicalAlerts.push(
+            `KIDNEY FUNCTION: ${creatinineChange.summary}. This meets the 2026 ESC criteria to halve the RAAS inhibitor and the MRA (Supplementary Tables S4/S5/S8; main text 6.1.6: a rise of less than 50% is acceptable). ` +
+            `${onRaasOrMra.length > 0 ? 'Each is reduced one dose step (a drug already at the lowest dose is kept, not increased), recheck chemistry in 1-2 weeks, no up-titration until stable. ' : 'Recheck chemistry in 1-2 weeks before any start. '}${kidneyFirstSteps}`
+        );
+    } else if (creatinineChange && creatinineRiseIsAcceptable(creatinineChange, patient.egfr)
+        && (onRaasOrMra.length > 0 || (patient.current_regimen ?? []).some(r => r.med.drug_class === 'SGLT2i'))) {
+        clinicalAlerts.push(
+            `KIDNEY FUNCTION: ${creatinineChange.summary}. This is within the 2026 ESC acceptable range (creatinine rise under ${CREATININE_RISE_ACCEPTABLE_PCT}%, derived eGFR fall under 30%, eGFR 20 or higher); an early dip after starting or raising a RAAS inhibitor, MRA or SGLT2 inhibitor should not prompt stopping. Recheck chemistry in 1-2 weeks.`
+        );
+    }
+    if (egfrBelow20OnRaas) {
+        if (!creatinineChange) {
+            clinicalAlerts.push(
+                'eGFR below 20 on a RAAS inhibitor: if this is a new fall (or creatinine has more than doubled), the 2026 ESC guideline advises stopping it and seeking specialist advice; ' +
+                'if kidney function is stable at this level, continue with close monitoring. The tool has no baseline value and cannot tell these apart.'
+            );
+        } else if (creatinineChange.band === 'none') {
+            clinicalAlerts.push(
+                `eGFR below 20 on a RAAS inhibitor with ${creatinineChange.summary}: not a new fall from baseline, so the 2026 ESC stop criterion is not met; continue with close monitoring` +
+                `${patient.egfr < EGFR_FLOOR_FOR_CREATININE_RISE ? ` (eGFR below ${EGFR_FLOOR_FOR_CREATININE_RISE}: ESC allows temporary discontinuation in acute kidney injury; seek specialist advice)` : ''}.`
+            );
+        }
     }
 
     // --- S2: Hemodynamic instability — block pharmacologic optimization ---

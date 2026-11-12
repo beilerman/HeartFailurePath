@@ -1,7 +1,7 @@
 
 import { Medication, Patient } from './types';
 import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raasPotassiumChecks, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
-    STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, mraStartEgfrCheck, moderateCyp3aInhibitor,
+    STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, mraStartEgfrCheck, creatinineRiseStopCheck, moderateCyp3aInhibitor,
     PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
 import { valueUnknown, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
@@ -723,6 +723,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // handled by facts.k_continuation (reduce 5.5-5.9) and the withhold check below (>= 6.0).
             mraStartPotassiumCheck('Spironolactone'),
             CI_MRA_WITHHOLD_K6,
+            creatinineRiseStopCheck('MRA'),
             { reason: 'eGFR below 30', when: p => p.egfr < 30 },
             mraStartEgfrCheck('Spironolactone'), // NEW start only: eGFR 30 or below (2022 AHA/ACC/HFSA 7.3.3); a patient already on it at exactly 30 is not removed
             CI_ADRENAL_INSUFFICIENCY, // Aldactone label contraindication: Addison's disease
@@ -788,6 +789,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // says 5.0, so the engine adds a binder from 5.0). Continuation: facts.k_continuation + the >= 6.0 check.
             mraStartPotassiumCheck('Eplerenone'),
             CI_MRA_WITHHOLD_K6,
+            creatinineRiseStopCheck('MRA'),
             // Inspra label: contraindicated at CrCl <= 30 mL/min (boundary inclusive; eGFR used as the proxy).
             { reason: 'eGFR 30 or below (label: CrCl 30 mL/min or less)', when: p => p.egfr <= 30 },
             CI_STRONG_CYP3A,
@@ -875,6 +877,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // with a binder, E15). Continuation: facts.k_continuation + the >= 6.0 withhold check.
             mraStartPotassiumCheck('Finerenone (Kerendia)'),
             CI_MRA_WITHHOLD_K6,
+            creatinineRiseStopCheck('MRA'),
             { reason: 'eGFR below 25', when: p => p.egfr < 25 },
             CI_STRONG_CYP3A, // Kerendia label contraindication (strong CYP3A4 inhibitors)
             CI_ADRENAL_INSUFFICIENCY, // Kerendia label contraindication

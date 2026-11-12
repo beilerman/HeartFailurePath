@@ -11,6 +11,7 @@
  * No engine imports here: constants.ts (the formulary) imports this module.
  */
 import type { Patient, Medication, ContraindicationCheck } from '../../types';
+import { assessCreatinineChange } from './renalChange';
 import { MRA_START_EGFR_MAX, MRA_START_K_MAX, RAAS_START_K_MAX, RAAS_WITHHOLD_K } from './thresholds';
 
 /** Spread into a formulary entry: `...ci([...])` sets both `contraindication_checks` and `contraindications`. */
@@ -39,9 +40,18 @@ export const CI_ANURIA: ContraindicationCheck = {
  * There is deliberately NO current-eGFR stop here: ESC Table S4 says stop when eGFR FALLS below 20 (a change from baseline), the tool has no baseline, so eGFR below
  * 20 on a RAAS inhibitor raises an alert instead (gates.ts, RAAS_EGFR_REVIEW_BELOW). Between them a current RAAS inhibitor is kept and handled by facts.k_continuation (one step down from 5.5), never removed at 5.5-5.9.
  */
+/**
+ * Change from a baseline creatinine (optional input; renalChange.ts): over 100% above baseline, or 50% or more with eGFR below 20, stops the RAAS inhibitor and withholds the MRA
+ * (2026 ESC Supplementary Tables S4/S5/S8, "stop and seek specialist advice"). It also blocks a NEW start. Never fires without a baseline creatinine.
+ */
+export const creatinineRiseStopCheck = (kind: 'RAAS inhibitor' | 'MRA'): ContraindicationCheck => ({
+    reason: `Creatinine rise from baseline requires stopping the ${kind}: more than 100% above baseline, or 50% or more with eGFR below 20 (2026 ESC Supplementary Tables S4/S5/S8): ${kind === 'MRA' ? 'withhold the MRA' : 'stop the RAAS inhibitor'} and seek specialist advice`,
+    when: p => assessCreatinineChange(p)?.band === 'stop',
+});
 export const raasPotassiumChecks = (name: string): ContraindicationCheck[] => [
     { reason: `Potassium above ${RAAS_START_K_MAX} mEq/L (new start; 2026 ESC advises caution above 5.2)`, when: p => !alreadyOnMed(p, name) && p.potassium > RAAS_START_K_MAX },
     { reason: `Potassium ${RAAS_WITHHOLD_K.toFixed(1)} mEq/L or above: stop the RAAS inhibitor (2026 ESC: severe hyperkalaemia leads to temporary discontinuation)`, when: p => p.potassium >= RAAS_WITHHOLD_K },
+    creatinineRiseStopCheck('RAAS inhibitor'),
 ];
 export const CI_BILATERAL_RAS: ContraindicationCheck = {
     reason: 'Bilateral renal artery stenosis', when: p => p.comorbidities.has("Bilateral Renal Artery Stenosis"),

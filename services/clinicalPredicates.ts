@@ -88,3 +88,27 @@ export function ivIronCreditTier(patient: Patient): 'full' | 'limited' | null {
     if (patient.lvef < 50) return 'limited';
     return null;
 }
+
+// CKD-EPI Creatinine Equation (2021 Refit)
+export const calculateCKDEPI = (scr: number, age: number, sex: 'Male' | 'Female'): number => {
+    if (!scr || !age) return 0;
+
+    // Kappa: 0.7 (female), 0.9 (male)
+    const kappa = sex === 'Female' ? 0.7 : 0.9;
+    // Alpha: -0.241 (female), -0.302 (male)
+    const alpha = sex === 'Female' ? -0.241 : -0.302;
+
+    // Factors
+    const scrOverKappa = scr / kappa;
+    const minPart = Math.min(scrOverKappa, 1);
+    const maxPart = Math.max(scrOverKappa, 1);
+
+    // 142 * (min^alpha) * (max^-1.200) * (0.9938^age) * (1.012 if female)
+    let egfr = 142 * Math.pow(minPart, alpha) * Math.pow(maxPart, -1.200) * Math.pow(0.9938, age);
+
+    if (sex === 'Female') {
+        egfr *= 1.012;
+    }
+
+    return Math.round(egfr);
+};

@@ -4,7 +4,8 @@ import { drugFacts } from './drugFacts';
 import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
 import { adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
-import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication } from './intolerance';
+import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication, MRA_POOL_CLASSES } from './intolerance';
+import { assessCreatinineChange } from './renalChange';
 import { regimenSatisfiesPillar, classifyPhenotype, isImprovedEF } from './domains';
 
 export interface RegimenAnalysis {
@@ -101,7 +102,14 @@ export function analyzeCurrentRegimen(
     const kWithholdReasons = new Map<string, string>();
     const forcedReduceExactStep = new Set<string>();
     const renalDataUnknown = valueUnknown(patient.egfr) || valueUnknown(patient.creatinine);
+    // Change from a baseline creatinine (optional input; renalChange.ts): 'reduce' halves a current RAAS inhibitor and MRA one step with no increase, 'stop' removes them
+    // (the stop is also a contraindication check on every RAAS/MRA entry, so a new start and a swap within the class are blocked as well).
+    const creatinineChange = assessCreatinineChange(patient);
+    const raasOrMra = (cls: string) => RAAS_CLASSES.has(cls) || MRA_POOL_CLASSES.has(cls);
     currentRegimen.forEach(r => {
+        if (creatinineChange?.band === 'stop' && raasOrMra(r.med.drug_class)) {
+            kWithholdReasons.set(r.med.name, `${creatinineChange.why}: ${RAAS_CLASSES.has(r.med.drug_class) ? 'stop' : 'withhold'} and seek specialist advice (2026 ESC Supplementary Tables S4/S5/S8)`);
+        }
         // Potassium continuation rule (facts.k_continuation): >= withhold_at withholds the drug; the reduce band
         // is resolved with the dose tiers in the titration pass below.
         const kRule = kContinuationAction(r.med, patient);
@@ -189,7 +197,8 @@ export function analyzeCurrentRegimen(
         const reduceReason = (kRule?.action === 'reduce' ? kRule.reason : undefined)
             ?? (aboveCap ? `${cap!.reason}: current dose is above the maximum` : undefined)
             ?? (renalCapHit ? `eGFR ${patient.egfr}: ${renalCapHit.basis === 'daily' ? 'total daily dose' : 'dose'} ${renalCapHit.amount} ${current.dose.unit} is above the renal maximum of ${renalCapHit.cap} ${current.dose.unit}${renalCapHit.basis === 'daily' ? '/day' : ''}` : undefined)
-            ?? (hrRule?.reduce ? hrRule.reduceReason : undefined);
+            ?? (hrRule?.reduce ? hrRule.reduceReason : undefined)
+            ?? (creatinineChange?.band === 'reduce' && raasOrMra(current.med.drug_class) ? `${creatinineChange.why}: halve the dose (one step), recheck in 1-2 weeks, no increase until stable (2026 ESC Supplementary Tables S4/S5/S8)` : undefined);
 
         const allTiers = getDoseTiers(current.med, patient);
         // Compare by dose-ORDER INDEX (available_doses are listed low→high), not Number(strength).

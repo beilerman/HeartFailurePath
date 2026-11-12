@@ -2576,6 +2576,40 @@ async function runVerification() {
                     if (s.length === 0) fail('Spironolactone not offered as a new start (check is vacuous)');
                     if (s.some(x => x > limit)) fail(`Spironolactone new start above ${limit} mg at eGFR ${scenario.patient.egfr} (found ${s.join(', ')})`);
                 }
+                if (t.includes('Kidney-Baseline')) {
+                    const kidneyAlert = clinicalAlerts.find(a => a.startsWith('KIDNEY FUNCTION'));
+                    const lis = strengthsOf('Lisinopril'), spi = strengthsOf('Spironolactone');
+                    const anyUp = scoredRegimens.some(r => (r.modification_set?.modifications ?? []).some(m => m.action === 'titrate_up'
+                        && (m.target?.med.drug_class === 'MRA' || ['ACEi', 'ARB', 'ARNI'].includes(m.target?.med.drug_class ?? ''))));
+                    if (t.includes('Blank Keeps Behaviour')) {
+                        if (kidneyAlert) fail('KIDNEY FUNCTION alert raised without a baseline creatinine');
+                        if (!lis.includes(20) && !lis.includes(40)) fail('lisinopril 20 mg not kept/offered with a blank baseline (behaviour must be unchanged)');
+                    }
+                    if (t.includes('Rise 30% No Change')) {
+                        if (!kidneyAlert || !kidneyAlert.includes('acceptable')) fail('no reassurance alert for an acceptable creatinine rise');
+                        if (!lis.includes(20) || !spi.includes(25)) fail('lisinopril 20 / spironolactone 25 not kept after an acceptable rise');
+                    }
+                    if (t.includes('Halves Both')) {
+                        if (!kidneyAlert || !kidneyAlert.includes('halve') || !kidneyAlert.includes('1-2 weeks') || !kidneyAlert.includes('NSAIDs')) fail('halving alert missing, or without the recheck interval and first steps');
+                        if (lis.length === 0 || lis.some(x => x > 10)) fail(`lisinopril not reduced one step to 10 mg (found ${lis.join(', ')})`);
+                        if (spi.length === 0 || spi.some(x => x > 12.5)) fail(`spironolactone not reduced one step to 12.5 mg (found ${spi.join(', ')})`);
+                        if (anyUp) fail('a RAAS inhibitor or MRA is up-titrated while the kidney rule says halve');
+                        if (excl('Lisinopril') || excl('Spironolactone')) fail('a halved drug was excluded instead of reduced');
+                    }
+                    if (t.includes('Stops Both')) {
+                        if (!kidneyAlert || !kidneyAlert.includes('seek specialist advice')) fail('stop alert missing "seek specialist advice"');
+                        if (anyRegimenContainsAnyClass('ACEi', 'ARB', 'ARNI', 'MRA', 'nsMRA')) fail('a RAAS inhibitor or MRA remains in a displayed regimen');
+                        if (!['Lisinopril', 'Spironolactone'].every(n => excl(n)?.rule_id === 'E13')) fail('lisinopril/spironolactone not excluded by E13 with the creatinine reason');
+                        if (!(excl('Lisinopril')?.why ?? []).some(w => w.includes('Creatinine rise from baseline'))) fail('exclusion detail does not state the creatinine-rise reason');
+                        if (!allSummaries.some(x => x.includes('seek specialist advice'))) fail('removal summary does not carry the creatinine reason');
+                    }
+                    if (t.includes('Stable eGFR 19')) {
+                        if (kidneyAlert) fail('KIDNEY FUNCTION alert raised at eGFR 19 (the dedicated eGFR below 20 alert speaks there)');
+                        if (!clinicalAlerts.some(a => a.includes('eGFR below 20 on a RAAS inhibitor') && a.includes('not a new fall'))) fail('eGFR < 20 alert does not say the fall is not new');
+                        if (clinicalAlerts.some(a => a.includes('cannot tell these apart'))) fail('baseline entered but the alert still says the tool cannot tell');
+                        if (excl('Lisinopril')) fail('lisinopril stopped at eGFR 19 with a stable baseline (ESC: a fall from baseline is the stop criterion)');
+                    }
+                }
                 if (t.includes('New Start K+ 5.0 Staged')) {
                     if (anyRegimenContainsAnyClass('MRA', 'nsMRA')) fail('MRA offered at K+ 5.0 (2022 US guideline: 5.0 or above is a contraindication to initiation)');
                     if (['Spironolactone', 'Eplerenone'].some(n => excl(n)?.rule_id !== 'E15')) fail('Spironolactone/eplerenone not withheld by E15 at exactly K+ 5.0');

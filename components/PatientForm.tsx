@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import type { Patient, TestScenario } from '../types';
 import { Label, Select, REQUIRED_FIELDS } from './patient-form/Common';
 import { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_CEILING, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from '../services/simulationService';
+import { calculateCKDEPI } from '../services/clinicalPredicates';
 import { DemographicsSection } from './patient-form/DemographicsSection';
 import { SymptomsSection } from './patient-form/SymptomsSection';
 import { PhysicalExamSection } from './patient-form/PhysicalExamSection';
@@ -21,30 +22,6 @@ interface PatientFormProps {
     selectedScenario: string;
     onScenarioChange: (title: string) => void;
 }
-
-// CKD-EPI Creatinine Equation (2021 Refit)
-const calculateCKDEPI = (scr: number, age: number, sex: 'Male' | 'Female'): number => {
-    if (!scr || !age) return 0;
-
-    // Kappa: 0.7 (female), 0.9 (male)
-    const kappa = sex === 'Female' ? 0.7 : 0.9;
-    // Alpha: -0.241 (female), -0.302 (male)
-    const alpha = sex === 'Female' ? -0.241 : -0.302;
-
-    // Factors
-    const scrOverKappa = scr / kappa;
-    const minPart = Math.min(scrOverKappa, 1);
-    const maxPart = Math.max(scrOverKappa, 1);
-
-    // 142 * (min^alpha) * (max^-1.200) * (0.9938^age) * (1.012 if female)
-    let egfr = 142 * Math.pow(minPart, alpha) * Math.pow(maxPart, -1.200) * Math.pow(0.9938, age);
-
-    if (sex === 'Female') {
-        egfr *= 1.012;
-    }
-
-    return Math.round(egfr);
-};
 
 export const PatientForm: React.FC<PatientFormProps> = ({
     patientData, setPatientData,
@@ -85,6 +62,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         kccq_score: { min: 0, max: 100, label: 'KCCQ' },
         potassium: { min: 2.0, max: 8.0, label: 'K+' },
         creatinine: { min: 0.2, max: 15, label: 'Creatinine' },
+        baseline_creatinine: { min: 0.2, max: 15, label: 'Baseline creatinine' },
         bun: { min: 2, max: 200, label: 'BUN' },
         ferritin: { min: 1, max: 2000, label: 'Ferritin' },
         tsat: { min: 1, max: 100, label: 'TSAT' },
@@ -102,7 +80,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
     // Required inputs live in patient-form/Common (REQUIRED_FIELDS) so the labels and this check agree.
     // Potassium and creatinine may be left blank: the engine reads a blank as "not entered".
-    const BLANK_MEANS_NOT_ENTERED = new Set(['potassium', 'creatinine']);
+    const BLANK_MEANS_NOT_ENTERED = new Set(['potassium', 'creatinine', 'baseline_creatinine']);
 
     // --- 2b. Validation errors ---
     const validationErrors = useMemo(() => {
@@ -129,6 +107,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         check('kccq_score', patientData.kccq_score);
         check('potassium', patientData.potassium);
         check('creatinine', patientData.creatinine);
+        check('baseline_creatinine', patientData.baseline_creatinine);
         check('bun', patientData.bun);
         check('ferritin', patientData.ferritin);
         check('tsat', patientData.tsat);
@@ -163,7 +142,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         if (!(patientData.potassium > 0)) warnings.potassium = 'Not entered: RAAS inhibitor and MRA decisions will be withheld until a potassium is available';
         else if (patientData.potassium > MRA_START_K_MAX) warnings.potassium = 'High K+: a new MRA is not started; an MRA already on board is reduced or withheld';
         else if (patientData.potassium < HYPOKALEMIA_K_BELOW) warnings.potassium = `K+ < ${HYPOKALEMIA_K_BELOW} increases digoxin/arrhythmia risk`;
-        else if (patientData.potassium > MRA_START_K_CEILING) warnings.potassium = `K+ above ${MRA_START_K_CEILING}: a new MRA is not started; recheck potassium and start once it is ${MRA_START_K_CEILING} or lower`;
+        else if (patientData.potassium >= MRA_START_K_CEILING) warnings.potassium = `K+ ${MRA_START_K_CEILING} or higher: a new MRA is not started; recheck potassium and start once it is below ${MRA_START_K_CEILING}`;
         if (patientData.is_pregnant) warnings.pregnancy = 'RAAS inhibitors, MRAs, SGLT2 inhibitors, vericiguat, ivabradine and GLP-1 therapies are excluded';
         if (patientData.nyha_class === 'IV') warnings.nyha = 'BB initiation blocked';
         if (patientData.pulse < BB_HR_BELOW) warnings.pulse = 'Low heart rate: a new beta-blocker is not started and an established one is reduced a step below 55 bpm for carvedilol (label) or below 50 bpm for metoprolol succinate and bisoprolol (2026 ESC)';

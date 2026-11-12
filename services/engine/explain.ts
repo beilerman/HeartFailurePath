@@ -1,4 +1,5 @@
 /** Display/explanation builders: monitoring plan, qualitative projections, trade-offs, follow-up calendar. Moved verbatim from simulationService.ts (phase 4). */
+import { assessCreatinineChange } from './renalChange';
 import { Patient, Medication, ScoredRegimen, ExcludedMedication, SimulationOutput, RegimenMed, ModificationSet, MonitoringPlanItem, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores, RankingInfo } from '../../types';
 import { valueUnknown, hasUnknownHistoricalHFrEF, isIronDeficient, ivIronCreditTier } from '../clinicalPredicates';
 import { DISEASE_MODIFYING_CLASSES, DIURETIC_CLASSES, RAAS_CLASSES } from './registry';
@@ -14,6 +15,10 @@ export function buildMonitoringPlan(
     modificationSet: ModificationSet
 ): MonitoringPlanItem[] {
     const plan: MonitoringPlanItem[] = [];
+    // The tool applies the change-from-baseline kidney rules only when the optional baseline creatinine is entered (renalChange.ts).
+    const baselineNote = assessCreatinineChange(currentPatient) !== null
+        ? 'The baseline creatinine is entered, so the tool applies these change-based rules (creatinine rise of 50% or more, or a derived eGFR fall over 30%: halve the RAAS inhibitor and MRA; rise over 100%, or 50% or more with eGFR below 20: stop them; see the KIDNEY FUNCTION alert).'
+        : 'The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.';
     const hasRaasOrMraIntensification = hasRelevantIntensification(
         modificationSet,
         new Set([...RAAS_CLASSES, 'MRA', 'nsMRA'])
@@ -37,7 +42,7 @@ export function buildMonitoringPlan(
         plan.push({
             test: 'BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase',
             timing: '1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months',
-            details: `European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under ${CREATININE_RISE_ACCEPTABLE_PCT}% above baseline is acceptable while eGFR stays above ${EGFR_FLOOR_FOR_CREATININE_RISE} (2026 ESC; the former 30% figure was engine policy). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.`
+            details: `European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under ${CREATININE_RISE_ACCEPTABLE_PCT}% above baseline is acceptable while eGFR stays above ${EGFR_FLOOR_FOR_CREATININE_RISE} (2026 ESC; the former 30% figure was engine policy). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. ${baselineNote}`
         });
     }
     if (hasRaasOrMraIntensification && higherRiskElectrolytes) {
