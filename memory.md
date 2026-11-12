@@ -474,3 +474,18 @@ Adding/restating a pillar or phenotype is now a data edit in the table. Both pha
 red-team probes + typecheck + build all green. Red-team probe 17 locks evidence-surfacing + concordance
 consistency. NOTE: Phase-B recClass labels are metadata only — changing a label does NOT change the score
 (points are separate); to change scoring, edit `base`/`targetBonus`.
+
+## Adversarial review 2026-11-12 (record: docs/adversarial-review-2026-11-12.md)
+- `npm run fuzz` (scripts/fuzzSweep.ts, in `gate` and `ci`) is the fastest way to find a class of defect: seeded random patients, invariants restated in the
+  test (do NOT import engine class lists into it), consistency checks (reorder the regimen, flip ranking mode / care priority, re-enter option 1). Reproduce one
+  patient with `randomPatient(seed)`. Watched code `ADVICE_REVERSED_NEXT_RUN` has a ceiling (1 in 500); every other code fails.
+- Recurring root causes to look for first: (1) `Number()` on a combination strength ("24/26") is NaN and silently disables a numeric rule: use
+  `comparableDailyDose` for ordering; (2) a rule enforced on "add" but not on swap-in / titrate / rescue / the combination of two changes: put the check on the
+  finished candidate (`structuralProblems`) or in eligibility; (3) scoring that penalizes the patient's EXISTING state rewards cutting drugs: charge baseline
+  warnings to every option (`baselineDangerWarnings`) and read bands on the lower of projected and entered; (4) anything decided by array order or by the last
+  bits of a float sum: sort by name, round projections; (5) a fact declared on one drug of a class (anuria, hypokalemia caution).
+- Engine code may hold no drug names (verify invariant): allergy brand names live in `ALLERGY_ALIASES_BY_DRUG` in constants.ts and reach the engine as
+  `facts.allergy_aliases`.
+- Projected potassium is not trustworthy on the LOW side (the renal multiplier is applied to removals), so there is deliberately no low-potassium display floor.
+- The potassium display floor is absolute; the SBP and HR floors are baseline-aware (a regimen is hidden only if it worsens the value).
+- Open items the owner has not decided are listed at the end of the review record.
