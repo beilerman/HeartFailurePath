@@ -1,8 +1,52 @@
+import { resolveAllergy } from '../../services/engine/allergy';
 import React, { useState } from 'react';
 import { WarningIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import { MEDICATION_FORMULARY, COMMON_SIDE_EFFECTS, RELEVANT_COMORBIDITIES, RELEVANT_EXTERNAL_MEDICATIONS } from '../../constants';
 import type { Patient } from '../../types';
+import { describeIntoleranceEffect } from '../../services/engine/intolerance';
+import { describeDerivedStatus } from '../../services/clinicalPredicates';
+import {
+    ANURIA, LIVER_BC, LIVER_B_CONFIRMED, SICK_SINUS, CONDUCTION_DEFECT, VENTRICULAR_FIBRILLATION, WPW,
+    PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, OTHER_SGC_STIMULATORS, LONG_ACTING_NITRATES, STRONG_CYP3A_INHIBITORS, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, EXTERNAL_POTASSIUM_RAISERS,
+} from '../../services/engine/contraindications';
+
+interface OptionGroup { label: string; members: readonly string[] }
+
+/** Split a flat option list into labelled groups. An option in no group falls into "Other" so a newly added entry never disappears. */
+function groupOptions(options: readonly string[], groups: readonly OptionGroup[]): { label: string; items: string[] }[] {
+    const placed = new Set<string>();
+    const out = groups.map(g => ({
+        label: g.label,
+        items: options.filter(o => g.members.includes(o) && !placed.has(o) && (placed.add(o), true)),
+    })).filter(g => g.items.length > 0);
+    const rest = options.filter(o => !placed.has(o));
+    if (rest.length > 0) out.push({ label: 'Other', items: rest });
+    return out;
+}
+
+const COMORBIDITY_GROUPS: readonly OptionGroup[] = [
+    { label: 'Heart rhythm and conduction', members: ['Atrial Fibrillation', SICK_SINUS, CONDUCTION_DEFECT, VENTRICULAR_FIBRILLATION, WPW] },
+    { label: 'Heart and blood vessels', members: ['Coronary Artery Disease', 'Hypotension (Chronic)', 'Pulmonary Hypertension', 'Bilateral Renal Artery Stenosis'] },
+    { label: 'Kidney and liver', members: [ANURIA, LIVER_BC, LIVER_B_CONFIRMED] },
+    { label: 'Diabetes, weight and endocrine', members: ['Type 1 Diabetes Mellitus', 'Diabetes Mellitus Type 2', 'Prior DKA / Euglycemic DKA', 'Gout', "Adrenal Insufficiency (Addison's disease)"] },
+    { label: 'Lung', members: ['Severe Asthma / Bronchospasm', 'Asthma (Mild/Moderate)', 'COPD'] },
+    { label: 'Drug-related history and GLP-1 cautions', members: ['History of Angioedema', 'Chronic NSAID Use', 'Medullary Thyroid Carcinoma', 'MEN2 Syndrome', 'History of Pancreatitis', 'Severe Gastroparesis', 'Diabetic Retinopathy'] },
+];
+
+const EXTERNAL_MED_GROUPS: readonly OptionGroup[] = [
+    { label: 'Rhythm and calcium-channel drugs', members: ['Amiodarone', 'Verapamil', 'Diltiazem'] },
+    { label: 'Psychiatric', members: ['Lithium'] },
+    { label: 'Harmful in heart failure (NSAIDs, COX-2 inhibitors, thiazolidinediones, saxagliptin)', members: [...NSAID_COX2_EXTERNAL, ...TZD_SAXAGLIPTIN_EXTERNAL] },
+    { label: 'PDE-5 inhibitors (block nitrates)', members: PDE5_INHIBITORS },
+    { label: 'Riociguat (conflicts with vericiguat and nitrates)', members: OTHER_SGC_STIMULATORS },
+    { label: 'Long-acting nitrates taken outside this tool', members: LONG_ACTING_NITRATES },
+    { label: 'Renin inhibitor', members: ['Aliskiren'] },
+    { label: 'Strong CYP3A inhibitors (affect eplerenone, finerenone, ivabradine)', members: [...STRONG_CYP3A_INHIBITORS, ...IVABRADINE_STRONG_CYP3A4] },
+    { label: 'Moderate CYP3A inhibitors', members: ['Erythromycin', 'Fluconazole'] },
+    { label: 'CYP3A4 inducers (affect ivabradine)', members: CYP3A4_INDUCERS },
+    { label: 'Potassium-raising drugs', members: EXTERNAL_POTASSIUM_RAISERS },
+];
 
 interface HistorySectionProps {
     patientData: Patient;
@@ -54,10 +98,11 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
     };
 
     const handleAddAllergy = () => {
-        if (!allergyInput) return;
+        const entry = allergyInput.replace(/\s+/g, ' ').trim();
+        if (!entry) return;
         setPatientData(prev => ({
             ...prev,
-            allergies: new Set(prev.allergies).add(allergyInput)
+            allergies: new Set(prev.allergies).add(entry)
         }));
         setAllergyInput('');
     };
@@ -109,20 +154,33 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
 
             {/* Comorbidities */}
             <div className="mb-6">
-                <Label htmlFor="comorbidity-select">Comorbidities</Label>
+                <Label htmlFor="comorbidity-select">Comorbidities and conditions that change drug choice</Label>
                 <div className="flex gap-2 mb-2">
                     <Select
                         id="comorbidity-select"
                         value={selectedComorbidity}
                         onChange={(e) => setSelectedComorbidity(e.target.value)}
                     >
-                        <option value="">Select Condition...</option>
-                        {RELEVANT_COMORBIDITIES.map(c => (
-                            <option key={c} value={c} disabled={patientData.comorbidities.has(c)}>{c}</option>
+                        <option value="">Select condition...</option>
+                        {groupOptions(RELEVANT_COMORBIDITIES, COMORBIDITY_GROUPS).map(g => (
+                            <optgroup key={g.label} label={g.label}>
+                                {g.items.map(c => <option key={c} value={c} disabled={patientData.comorbidities.has(c)}>{c}</option>)}
+                            </optgroup>
                         ))}
                     </Select>
                     <button onClick={handleAddComorbidity} disabled={!selectedComorbidity} className="px-4 bg-indigo-50 text-indigo-700 rounded-md text-sm font-bold border border-indigo-100 hover:bg-indigo-100">ADD</button>
                 </div>
+                {(() => {
+                    const derived = describeDerivedStatus(patientData);
+                    const paroxysmal = patientData.comorbidities.has('Atrial Fibrillation') && patientData.rhythm === 'Sinus';
+                    return (
+                        <div className="mb-2 text-xs text-slate-600 space-y-0.5" data-testid="derived-status">
+                            <p>{derived.kidney}</p>
+                            {derived.weight && <p>{derived.weight}</p>}
+                            {paroxysmal && <p>Recorded as paroxysmal: rhythm rules use today&apos;s rhythm (sinus).</p>}
+                        </div>
+                    );
+                })()}
                 <div className="flex flex-wrap gap-2">
                     {Array.from(patientData.comorbidities).map((c: string) => (
                         <span key={c} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded border border-blue-100">
@@ -135,16 +193,18 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
 
             {/* Active Non-Formulary Medications (DDI Context) */}
             <div className="mb-6">
-                <Label htmlFor="external-med-select">Concurrent Non-Formulary Medications (for DDI checks)</Label>
+                <Label htmlFor="external-med-select">Other current medications (for interaction checks)</Label>
                 <div className="flex gap-2 mb-2">
                     <Select
                         id="external-med-select"
                         value={selectedExternalMedication}
                         onChange={(e) => setSelectedExternalMedication(e.target.value)}
                     >
-                        <option value="">Select Medication...</option>
-                        {RELEVANT_EXTERNAL_MEDICATIONS.map(m => (
-                            <option key={m} value={m} disabled={(patientData.external_medications || new Set()).has(m)}>{m}</option>
+                        <option value="">Select medication...</option>
+                        {groupOptions(RELEVANT_EXTERNAL_MEDICATIONS, EXTERNAL_MED_GROUPS).map(g => (
+                            <optgroup key={g.label} label={g.label}>
+                                {g.items.map(m => <option key={m} value={m} disabled={(patientData.external_medications || new Set()).has(m)}>{m}</option>)}
+                            </optgroup>
                         ))}
                     </Select>
                     <button onClick={handleAddExternalMedication} disabled={!selectedExternalMedication} className="px-4 bg-indigo-50 text-indigo-700 rounded-md text-sm font-bold border border-indigo-100 hover:bg-indigo-100">ADD</button>
@@ -167,24 +227,33 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                         id="allergy-input"
                         value={allergyInput}
                         onChange={(e) => setAllergyInput(e.target.value)}
-                        placeholder="e.g. Penicillin"
+                        placeholder="Drug, brand or class (e.g. lisinopril, Entresto, ACE inhibitor)"
                         onKeyDown={(e) => e.key === 'Enter' && handleAddAllergy()}
                     />
                     <button onClick={handleAddAllergy} className="px-4 bg-slate-100 text-slate-700 rounded-md text-sm font-bold hover:bg-slate-200">ADD</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {Array.from(patientData.allergies).map((alg: string) => (
-                        <span key={alg} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-sm font-medium rounded border border-red-100">
-                            {alg}
-                            <button onClick={() => handleRemoveAllergy(alg)} className="hover:text-red-900 font-bold" aria-label={`Remove ${alg}`}>&times;</button>
-                        </span>
-                    ))}
+                    {Array.from(patientData.allergies).map((alg: string) => {
+                        // Show what the entry excludes, or that it excludes nothing (same resolver the engine uses).
+                        const matched = resolveAllergy(alg, MEDICATION_FORMULARY);
+                        return (
+                            <span key={alg} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-sm font-medium rounded border border-red-100">
+                                <span>
+                                    {alg}
+                                    <span className={`block text-xs font-normal ${matched.length > 0 ? 'text-red-600' : 'text-slate-600'}`}>
+                                        {matched.length > 0 ? `Excludes: ${matched.join(', ')}` : 'No drug in this tool matched; nothing is excluded'}
+                                    </span>
+                                </span>
+                                <button onClick={() => handleRemoveAllergy(alg)} className="hover:text-red-900 font-bold" aria-label={`Remove ${alg}`}>&times;</button>
+                            </span>
+                        );
+                    })}
                 </div>
             </div>
 
             {/* Intolerances / Exclusions */}
             <div className="mb-6">
-                <Label>Prior Intolerances</Label>
+                <Label>Prior intolerances (drug stopped for a side effect)</Label>
                 <div className="space-y-2.5 mb-3">
                     {patientData.discontinued_meds.map((dm, idx) => (
                             <div key={idx} className="flex items-center justify-between bg-amber-50 p-2.5 rounded border border-amber-100">
@@ -192,6 +261,7 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                                     <span className="font-bold text-amber-900">{dm.name}</span>
                                     <span className="mx-2 text-amber-400">|</span>
                                     <span className="text-amber-800 italic">{dm.reason}</span>
+                                    <span className="block text-amber-800 text-xs mt-1" data-testid="intolerance-effect">{describeIntoleranceEffect(dm.name, dm.drug_class, dm.reason)}</span>
                                     {dm.reason_detail && <span className="block text-amber-700 text-xs mt-1">{dm.reason_detail}</span>}
                                     {dm.occurred_at && <span className="block text-amber-700 text-xs">When: {dm.occurred_at}</span>}
                                 </div>
@@ -228,7 +298,7 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                     disabled={!intoleranceDrug || !intoleranceReason}
                     className="w-full py-2 bg-white border border-slate-300 text-slate-700 text-sm font-bold rounded hover:bg-slate-50 disabled:opacity-50 shadow-sm"
                 >
-                    + ADD EXCLUSION
+                    + ADD INTOLERANCE
                 </button>
             </div>
         </section>

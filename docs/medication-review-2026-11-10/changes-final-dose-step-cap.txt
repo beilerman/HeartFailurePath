@@ -1,0 +1,62 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 996 runs
+  (a) top pick identical:        982 / 996
+  (b) displayed pick set same:   926 / 996
+  (c) pick order identical:      926 / 996
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 5 of 57 runs
+    LVEF <= 40: 9 of 828 runs
+    LVEF >= 50: 0 of 111 runs
+
+Top pick changed in 14 runs:
+  ACEi-to-ARNI Swap (Washout Warning) :: cash
+     old: Lisinopril 40mg qd [overall 58, raw 58.16]
+     new: Lisinopril 20mg qd [overall 58, raw 57.60]
+  ACEi-to-ARNI Swap (Washout Warning) :: commercial
+     old: Lisinopril 40mg qd [overall 58, raw 58.16]
+     new: Lisinopril 20mg qd [overall 58, raw 57.60]
+  ACEi-to-ARNI Swap (Washout Warning) :: medicare
+     old: Lisinopril 40mg qd [overall 58, raw 58.16]
+     new: Lisinopril 20mg qd [overall 58, raw 57.60]
+  Dual MRA With Steroidal Intolerance :: cash
+     old: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd [overall 59, raw 58.85]
+     new: Finerenone (Kerendia) 20mg qd + Lisinopril 10mg qd [overall 59, raw 58.58]
+  Dual MRA With Steroidal Intolerance :: medicare
+     old: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd [overall 66, raw 66.43]
+     new: Finerenone (Kerendia) 20mg qd + Lisinopril 10mg qd [overall 66, raw 66.16]
+  Gynecomastia From Eplerenone on Spironolactone :: cash
+     old: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd [overall 60, raw 60.01]
+     new: Finerenone (Kerendia) 10mg qd + Lisinopril 20mg qd [overall 60, raw 59.73]
+  Gynecomastia From Eplerenone on Spironolactone :: medicare
+     old: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd [overall 68, raw 67.59]
+     new: Finerenone (Kerendia) 10mg qd + Lisinopril 20mg qd [overall 67, raw 67.31]
+  Dual MRA Unknown History Keeps nsMRA :: cash
+     old: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd [overall 65, raw 65.29]
+     new: Finerenone (Kerendia) 10mg qd + Lisinopril 20mg qd [overall 65, raw 64.95]
+  Rate-Source Ivabradine Beta-Blocker Not Maximized Not Offered :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.81]
+     new: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 82, raw 82.25]
+  Rate-Source Ivabradine Beta-Blocker Not Maximized Not Offered :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.83]
+     new: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 82, raw 82.27]
+  Rate-Source Ivabradine Beta-Blocker Not Maximized Not Offered :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.81]
+     new: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 82, raw 82.25]
+  ESC26-Digoxin Beta-Blocker Still Titratable Is Not Offered :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 88, raw 87.59]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 83.55]
+  ESC26-Digoxin Beta-Blocker Still Titratable Is Not Offered :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 88, raw 87.60]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 83.55]
+  ESC26-Digoxin Beta-Blocker Still Titratable Is Not Offered :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 88, raw 87.59]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 83.55]
+(node:84121) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)

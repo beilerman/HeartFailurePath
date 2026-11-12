@@ -1,0 +1,132 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 906 runs
+  (a) top pick identical:        879 / 906
+  (b) displayed pick set same:   879 / 906
+  (c) pick order identical:      879 / 906
+  (d) eligibility + alerts identical: NO (54 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 21 of 735 runs
+    LVEF >= 50: 0 of 108 runs
+    unknown: 6 of 6 runs
+
+Top pick changed in 27 runs:
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Ivabradine 5mg bid [overall 42, raw 41.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 53, raw 52.87]
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: commercial
+     old: Bumetanide 2mg bid + Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 42, raw 41.72]
+     new: Bumetanide 2mg bid + Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 53, raw 52.87]
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: medicare
+     old: Bumetanide 2mg bid + Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 42, raw 41.71]
+     new: Bumetanide 2mg bid + Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 53, raw 52.87]
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Torsemide 40mg bid [overall 41, raw 40.82]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Torsemide 40mg bid [overall 41, raw 40.82]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Torsemide 40mg bid [overall 41, raw 40.82]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Torsemide 40mg bid [overall 41, raw 40.82]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Torsemide 40mg bid [overall 41, raw 40.82]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Torsemide 40mg bid [overall 41, raw 40.82]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice :: cash
+     old: Carvedilol 25mg bid [overall 76, raw 75.86]
+     new: (no pick)
+  ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice :: commercial
+     old: Carvedilol 25mg bid [overall 76, raw 75.86]
+     new: (no pick)
+  ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice :: medicare
+     old: Carvedilol 25mg bid [overall 76, raw 75.86]
+     new: (no pick)
+  ESC26-Renal eGFR 22 Lisinopril Kept :: cash
+     old: Carvedilol 25mg bid + Empagliflozin 10mg qd + Lisinopril 5mg qd [overall 82, raw 82.26]
+     new: (no pick)
+  ESC26-Renal eGFR 22 Lisinopril Kept :: commercial
+     old: Carvedilol 25mg bid + Empagliflozin 10mg qd + Lisinopril 5mg qd [overall 82, raw 82.26]
+     new: (no pick)
+  ESC26-Renal eGFR 22 Lisinopril Kept :: medicare
+     old: Carvedilol 25mg bid + Empagliflozin 10mg qd + Lisinopril 5mg qd [overall 82, raw 82.26]
+     new: (no pick)
+  ESC26-Renal eGFR 18 Lisinopril Kept With Alert :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Lisinopril 5mg qd [overall 76, raw 76.07]
+  ESC26-Renal eGFR 18 Lisinopril Kept With Alert :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Lisinopril 5mg qd [overall 76, raw 76.07]
+  ESC26-Renal eGFR 18 Lisinopril Kept With Alert :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Lisinopril 5mg qd [overall 76, raw 76.07]
+  ESC26-Renal eGFR 18 Stable Sacubitril/Valsartan Kept With Alert :: cash
+     old: (no pick)
+     new: Carvedilol 12.5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 78, raw 77.54]
+  ESC26-Renal eGFR 18 Stable Sacubitril/Valsartan Kept With Alert :: commercial
+     old: (no pick)
+     new: Carvedilol 12.5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 78, raw 77.54]
+  ESC26-Renal eGFR 18 Stable Sacubitril/Valsartan Kept With Alert :: medicare
+     old: (no pick)
+     new: Carvedilol 12.5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 78, raw 77.54]
+  ESC26-Renal eGFR 22 Lisinopril Kept No Alert :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Empagliflozin 10mg qd + Lisinopril 5mg qd [overall 82, raw 82.26]
+  ESC26-Renal eGFR 22 Lisinopril Kept No Alert :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Empagliflozin 10mg qd + Lisinopril 5mg qd [overall 82, raw 82.26]
+  ESC26-Renal eGFR 22 Lisinopril Kept No Alert :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Empagliflozin 10mg qd + Lisinopril 5mg qd [overall 82, raw 82.26]
+  ESC26-Renal eGFR Blank Lisinopril Kept No Alert :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Lisinopril 5mg qd [overall 76, raw 76.07]
+  ESC26-Renal eGFR Blank Lisinopril Kept No Alert :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Lisinopril 5mg qd [overall 76, raw 76.07]
+  ESC26-Renal eGFR Blank Lisinopril Kept No Alert :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Lisinopril 5mg qd [overall 76, raw 76.07]
+
+BUGS (eligibility/alerts must not change):
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: cash: excludedMedications differ
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: cash: clinicalAlerts differ
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: commercial: excludedMedications differ
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: commercial: clinicalAlerts differ
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: medicare: excludedMedications differ
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: medicare: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: cash: excludedMedications differ
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: cash: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: commercial: excludedMedications differ
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: commercial: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: medicare: excludedMedications differ
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: medicare: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: cash: excludedMedications differ
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: cash: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: commercial: excludedMedications differ
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: commercial: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: medicare: excludedMedications differ
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: medicare: clinicalAlerts differ
+  ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice :: cash: excludedMedications differ
+  ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice :: cash: clinicalAlerts differ
+  ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice :: commercial: excludedMedications differ
+  ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice :: commercial: clinicalAlerts differ
+  ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice :: medicare: excludedMedications differ
+  ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice :: medicare: clinicalAlerts differ
+  ESC26-Renal eGFR 22 Lisinopril Kept :: cash: excludedMedications differ
+  ESC26-Renal eGFR 22 Lisinopril Kept :: cash: clinicalAlerts differ
+  ESC26-Renal eGFR 22 Lisinopril Kept :: commercial: excludedMedications differ
+  ESC26-Renal eGFR 22 Lisinopril Kept :: commercial: clinicalAlerts differ
+  ESC26-Renal eGFR 22 Lisinopril Kept :: medicare: excludedMedications differ
+  ESC26-Renal eGFR 22 Lisinopril Kept :: medicare: clinicalAlerts differ

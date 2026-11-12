@@ -1,0 +1,41 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 738 runs
+  (a) top pick identical:        738 / 738
+  (b) displayed pick set same:   738 / 738
+  (c) pick order identical:      738 / 738
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: NO (27 regimens)
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+Warning differences:
+  Iron-Deficient HFrEF :: cash: Carvedilol 3.125mg bid + Ferric Carboxymaltose 1000mg once
+  Iron-Deficient HFrEF :: cash: Ferric Carboxymaltose 1000mg once + Lisinopril 2.5mg qd
+  Iron-Deficient HFrEF :: cash: Ferric Carboxymaltose 1000mg once + Spironolactone 12.5mg qd
+  Elderly >80 on All 4 Pillars (Age Dosing) :: cash: Empagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd
+  Dual MRA With Steroidal Intolerance :: cash: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd
+  Dual MRA With Steroidal Intolerance :: medicare: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd
+  Gynecomastia From Eplerenone on Spironolactone :: cash: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd
+  Gynecomastia From Eplerenone on Spironolactone :: medicare: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd
+  Over-Budget Value Ordering :: cash: Carvedilol 3.125mg bid + Spironolactone 12.5mg qd
+  Over-Budget Value Ordering :: cash: Spironolactone 25mg qd
+  Over-Budget Value Ordering :: cash: Carvedilol 3.125mg bid
+  Over-Budget Value Ordering :: commercial: Spironolactone 25mg qd
+  Over-Budget Value Ordering :: commercial: Carvedilol 3.125mg bid
+  Over-Budget Value Ordering :: commercial: Lisinopril 2.5mg qd
+  Over-Budget Value Ordering :: medicare: Spironolactone 25mg qd
+  Over-Budget Value Ordering :: medicare: Carvedilol 3.125mg bid
+  Over-Budget Value Ordering :: medicare: Lisinopril 2.5mg qd
+  High Body Weight Carvedilol Target Requires 50 BID :: cash: Carvedilol 50mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  High Body Weight Carvedilol Target Requires 50 BID :: medicare: Carvedilol 50mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  Vericiguat Continuation Carve-Out :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd
+  GLP-1 Continuation Carve-Out (BMI 28) :: cash: Dapagliflozin 10mg qd + Tirzepatide (Zepbound) 12.5mg weekly
+  Dual MRA Unknown History Keeps nsMRA :: cash: Finerenone (Kerendia) 10mg qd + Lisinopril 40mg qd
+  MRA-Source Current MRA K+ 5.6 One-Step Reduction :: cash: Carvedilol 12.5mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Patiromer 16.8g qd + Spironolactone 12.5mg qd
+  MRA-Source Current MRA K+ 5.7 Lowest Dose Withheld :: cash: Carvedilol 25mg bid + Patiromer 8.4g qd
+  MRA-Source Current MRA K+ 6.1 Withheld :: cash: Carvedilol 25mg bid + Patiromer 16.8g qd
+  MRA-Source Finerenone eGFR 40 Targets 20 mg :: cash: Dapagliflozin 10mg qd + Finerenone (Kerendia) 20mg qd
+  MRA-Source Finerenone eGFR 70 Targets 40 mg :: cash: Dapagliflozin 10mg qd + Finerenone (Kerendia) 40mg qd

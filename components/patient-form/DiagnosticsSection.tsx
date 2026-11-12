@@ -22,13 +22,13 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 <div>
                     <Label htmlFor="lvef">
                         LVEF (%)
-                        <span className="ml-1.5 align-middle text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-200 px-1.5 py-0.5 rounded uppercase tracking-wide">Required</span>
                     </Label>
-                    <Input type="number" name="lvef" value={patientData.lvef ?? ''} onChange={onChange} error={validationErrors.lvef} />
+                    <Input type="number" min={0} name="lvef" value={patientData.lvef ?? ''} onChange={onChange} error={validationErrors.lvef} />
+                    <p className="mt-1 text-xs text-slate-500">LVEF 41-49 is treated as reduced EF per the 2026 ESC guideline; the 2022 AHA/ACC/HFSA guideline keeps a separate mildly reduced category with weaker recommendations; no large trial tested beta-blockers or RAAS inhibitors only in this range.</p>
                 </div>
                 <div>
-                    <Label htmlFor="nt_pro_bnp">NT-proBNP</Label>
-                    <Input type="number" name="nt_pro_bnp" value={patientData.nt_pro_bnp ?? ''} onChange={onChange} error={validationErrors.nt_pro_bnp} />
+                    <Label htmlFor="nt_pro_bnp">NT-proBNP (pg/mL)</Label>
+                    <Input type="number" min={0} name="nt_pro_bnp" value={patientData.nt_pro_bnp ?? ''} onChange={onChange} error={validationErrors.nt_pro_bnp} />
                 </div>
             </div>
 
@@ -43,8 +43,9 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 </div>
                 <div>
                     <Label htmlFor="previous_lvef">Prior Lowest LVEF (%)</Label>
+                    <p className="mb-1 text-xs text-slate-500">A prior value below 50 keeps a current LVEF of 50 or higher in the reduced-EF group (2026 ESC: HFpEF needs an LVEF that was never below 50).</p>
                     <Input
-                        type="number"
+                        type="number" min={0}
                         name="previous_lvef"
                         value={patientData.previous_lvef ?? ''}
                         onChange={onChange}
@@ -62,7 +63,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
 
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div className="col-span-2">
-                    <Label htmlFor="recent_hf_worsening_within_6mo">Recent worsening HF (hospitalization or IV diuretics within 6 months)?</Label>
+                    <Label htmlFor="recent_hf_worsening_within_6mo">Recent worsening HF (HF hospitalization within 6 months, or outpatient IV diuretics within 3 months)?</Label>
                     <Select
                         name="recent_hf_worsening_within_6mo"
                         value={patientData.recent_hf_worsening_within_6mo ?? 'unknown'}
@@ -78,11 +79,11 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <Label htmlFor="lvedd">LVEDD (mm)</Label>
-                    <Input type="number" name="lvedd" value={patientData.lvedd ?? ''} onChange={onChange} placeholder="Normal < 55" error={validationErrors.lvedd} />
+                    <Input type="number" min={0} name="lvedd" value={patientData.lvedd ?? ''} onChange={onChange} placeholder="Normal < 55" error={validationErrors.lvedd} />
                 </div>
                 <div>
                     <Label htmlFor="lavi">LAVI (mL/m²)</Label>
-                    <Input type="number" name="lavi" value={patientData.lavi ?? ''} onChange={onChange} placeholder="Normal < 34" error={validationErrors.lavi} />
+                    <Input type="number" min={0} name="lavi" value={patientData.lavi ?? ''} onChange={onChange} placeholder="Normal < 34" error={validationErrors.lavi} />
                 </div>
             </div>
 
@@ -90,28 +91,35 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <Label htmlFor="creatinine">Creatinine</Label>
-                    <Input type="number" step="0.1" name="creatinine" value={patientData.creatinine ?? ''} onChange={onChange} error={validationErrors.creatinine} />
+                    <Input type="number" min={0} step="0.1" name="creatinine" value={patientData.creatinine || ''} placeholder="mg/dL" onChange={onChange} error={validationErrors.creatinine} />
                 </div>
                 <div className="relative">
                     <Label htmlFor="egfr">eGFR (Calc)</Label>
                     <Input
                         type="number"
                         name="egfr"
-                        value={patientData.egfr}
+                        value={patientData.egfr || ''}
+                        placeholder="needs creatinine"
                         readOnly
                         className="!bg-slate-100 !text-slate-600 focus:outline-none"
                     />
-                    <p className="text-[10px] text-slate-400 mt-0.5">Use CKD-EPI 2021 (race-free) equation</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Use CKD-EPI 2021 (race-free) equation</p>
+                </div>
+                <div>
+                    <Label htmlFor="baseline_creatinine">Baseline creatinine (optional)</Label>
+                    <Input type="number" min={0} step="0.1" name="baseline_creatinine" value={patientData.baseline_creatinine || ''} placeholder="mg/dL" onChange={onChange} error={validationErrors.baseline_creatinine} />
+                    <p className="text-[11px] text-slate-500 mt-0.5">Creatinine before the last RAAS inhibitor/MRA start or dose change, if known</p>
                 </div>
                 <div>
                     <Label htmlFor="bun">BUN</Label>
-                    <Input type="number" name="bun" value={patientData.bun ?? ''} onChange={onChange} error={validationErrors.bun} />
+                    <Input type="number" min={0} name="bun" value={patientData.bun ?? ''} onChange={onChange} error={validationErrors.bun} />
                 </div>
                 <div>
                     <Label htmlFor="potassium">Potassium</Label>
-                    <Input type="number" step="0.1" name="potassium" value={patientData.potassium ?? ''} onChange={onChange} error={validationErrors.potassium} warning={clinicalWarnings.potassium} />
+                    <Input type="number" min={0} step="0.1" name="potassium" value={patientData.potassium || ''} placeholder="mEq/L" onChange={onChange} error={validationErrors.potassium} warning={clinicalWarnings.potassium} />
                 </div>
             </div>
+            <p className="text-[11px] text-slate-500 -mt-2 mb-4">Potassium and kidney function are required before starting or increasing a RAAS inhibitor or MRA. Enter values that reflect the patient's current medications and clinical state.</p>
 
             {clinicalWarnings.egfr && (
                 <div className="mb-4 px-3 py-2 rounded-md bg-amber-50 border border-amber-300 text-amber-800 text-xs font-medium">
@@ -123,15 +131,20 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <Label htmlFor="ferritin">Ferritin</Label>
-                    <Input type="number" name="ferritin" value={patientData.ferritin ?? ''} onChange={onChange} error={validationErrors.ferritin} />
+                    <Input type="number" min={0} name="ferritin" value={patientData.ferritin ?? ''} onChange={onChange} error={validationErrors.ferritin} />
                 </div>
                 <div>
                     <Label htmlFor="tsat">TSAT (%)</Label>
-                    <Input type="number" name="tsat" value={patientData.tsat ?? ''} onChange={onChange} error={validationErrors.tsat} />
+                    <Input type="number" min={0} name="tsat" value={patientData.tsat ?? ''} onChange={onChange} error={validationErrors.tsat} />
                 </div>
                 <div>
-                    <Label htmlFor="peak_flow_lpm">Peak Flow (L/min)</Label>
-                    <Input type="number" name="peak_flow_lpm" value={patientData.peak_flow_lpm ?? ''} onChange={onChange} placeholder="e.g. 400" error={validationErrors.peak_flow_lpm} />
+                    <Label htmlFor="hemoglobin">Hemoglobin (g/dL)</Label>
+                    <Input type="number" min={0} step="0.1" name="hemoglobin" value={patientData.hemoglobin ?? ''} onChange={onChange} placeholder="e.g. 12.5" error={validationErrors.hemoglobin} />
+                    <p className="text-[11px] text-slate-500 mt-0.5">Sets the IV iron label dose; held at 15 or higher</p>
+                </div>
+                <div>
+                    <Label htmlFor="peak_flow_lpm">Peak Flow (L/min, if lung disease)</Label>
+                    <Input type="number" min={0} name="peak_flow_lpm" value={patientData.peak_flow_lpm ?? ''} onChange={onChange} placeholder="e.g. 400" error={validationErrors.peak_flow_lpm} />
                 </div>
             </div>
         </section>

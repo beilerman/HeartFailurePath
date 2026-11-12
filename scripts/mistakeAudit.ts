@@ -3,6 +3,7 @@
  * medications already on board. Each scenario declares what the engine SHOULD do; the
  * harness reports deviations. Standalone QA (not part of CI). Run: npx tsx scripts/mistakeAudit.ts
  */
+import { withCarePriority } from './carePriorityEnv';
 import { generateAndScoreModifications } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
 import { MEDICATION_FORMULARY } from '../constants';
@@ -53,7 +54,7 @@ const A = (o: SimulationOutput) => {
     const alert = (kw: string) => o.clinicalAlerts.some(a => a.toLowerCase().includes(kw.toLowerCase()));
     const anyWarn = (kw: string) => regs.some(r => r.warnings.some(w => w.toLowerCase().includes(kw.toLowerCase())));
     const adjunct = (kw: string) => (o.eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(kw.toLowerCase()));
-    const dualClass = (pred: (c: string) => boolean) => regs.some(r => r.regimen.filter(m => pred(m.med.drug_class)).length > 1);
+    const dualClass = (pred: (c: string) => boolean) => regs.some(r => r.regimen.filter(m => !m.med.facts?.short_course_addon && pred(m.med.drug_class)).length > 1);
     const removesMed = (n: string) => regs.length > 0 && regs.every(r => (r.modification_set?.modifications ?? []).some(m => (m.action === 'remove' || m.action === 'swap') && m.source?.med.name === n));
     return { regs, hasClassInAny, hasMedInAny, excludedClass, alert, anyWarn, adjunct, dualClass, removesMed };
 };
@@ -120,7 +121,7 @@ const S: Scenario[] = [
       expect: (o) => { const a = A(o); const e: string[] = []; if (a.hasMedInAny('Digoxin') && !a.anyWarn('digoxin')) e.push('Digoxin renal accumulation not addressed'); return e; } },
     { title: '26 Liver disease (Child-Pugh B/C) on ARNI', patient: base({ comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: reg([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (a.hasClassInAny(c => c === 'ARNI')) e.push('ARNI retained in Child-Pugh B/C (hepatic CI)'); return e; } },
-    { title: '27 Liver disease on Finerenone', patient: base({ lvef: 45, ever_lvef_le_40: 'no', comorbidities: new Set(['HFmrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: reg([{ name: 'Finerenone (Kerendia)', strength: 10 }]) }),
+    { title: '27 Liver disease on Finerenone', patient: base({ lvef: 45, ever_lvef_le_40: 'no', comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: reg([{ name: 'Finerenone (Kerendia)', strength: 10 }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (a.hasMedInAny('Finerenone (Kerendia)')) e.push('Finerenone retained in Child-Pugh B/C (CYP3A4 CI)'); return e; } },
 
     // ===== E. Diuretic mistakes =====
@@ -189,7 +190,7 @@ async function run() {
     for (const sc of S) {
         const prices = await getDrugPrices(names, sc.patient.insurance_tier);
         let out: SimulationOutput;
-        try { out = generateAndScoreModifications(sc.patient, available, prices); }
+        try { out = generateAndScoreModifications(withCarePriority(sc.patient), available, prices); }
         catch (err) { problems.push({ title: sc.title, errs: ['THREW: ' + (err as Error).message] }); continue; }
         const errs = sc.expect(out, sc.patient);
         if (errs.length === 0) pass++;

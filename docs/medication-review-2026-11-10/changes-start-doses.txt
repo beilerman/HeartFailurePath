@@ -1,0 +1,49 @@
+Ranking diff vs golden snapshot: 705 runs
+  (a) top pick identical:        692 / 705
+  (b) displayed pick set same:   674 / 705
+  (c) pick order identical:      674 / 705
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+Top pick changed in 13 runs:
+  Iron-Deficient HFrEF :: cash
+     old: Carvedilol 25mg bid + Ferric Carboxymaltose 1000mg once [overall 64, raw 64.17]
+     new: Carvedilol 3.125mg bid + Ferric Carboxymaltose 1000mg once [overall 60, raw 59.61]
+  Sinus Tachycardia (No BB Available) - Ivabradine Fallback :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 88, raw 87.57]
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 83, raw 83.43]
+  Sinus Tachycardia (No BB Available) - Ivabradine Fallback :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 88, raw 87.97]
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 83.83]
+  Sinus Tachycardia (No BB Available) - Ivabradine Fallback :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 88, raw 87.53]
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 83, raw 83.39]
+  Over-Budget Value Ordering :: cash
+     old: Carvedilol 25mg bid [overall 51, raw 51.48]
+     new: Carvedilol 3.125mg bid + Spironolactone 12.5mg qd [overall 51, raw 51.15]
+  Over-Budget Value Ordering :: commercial
+     old: Carvedilol 25mg bid [overall 53, raw 53.48]
+     new: Spironolactone 25mg qd [overall 51, raw 51.02]
+  Over-Budget Value Ordering :: medicare
+     old: Carvedilol 25mg bid [overall 53, raw 53.48]
+     new: Spironolactone 25mg qd [overall 51, raw 51.02]
+  Max New Classes Counts Binder Rescue :: cash
+     old: Carvedilol 25mg bid [overall 61, raw 60.88]
+     new: Dapagliflozin 10mg qd [overall 58, raw 57.71]
+  Max New Classes Counts Binder Rescue :: commercial
+     old: Carvedilol 25mg bid [overall 61, raw 60.89]
+     new: Dapagliflozin 10mg qd [overall 58, raw 57.93]
+  Max New Classes Counts Binder Rescue :: medicare
+     old: Carvedilol 25mg bid [overall 61, raw 60.89]
+     new: Dapagliflozin 10mg qd [overall 58, raw 57.78]
+  Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded :: cash
+     old: Dapagliflozin 10mg qd + Metoprolol Succinate 200mg qd + Spironolactone 25mg qd [overall 81, raw 80.73]
+     new: Dapagliflozin 10mg qd + Enalapril 2.5mg bid + Spironolactone 25mg qd [overall 77, raw 76.56]
+  Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded :: commercial
+     old: Dapagliflozin 10mg qd + Metoprolol Succinate 200mg qd + Spironolactone 25mg qd [overall 81, raw 80.73]
+     new: Dapagliflozin 10mg qd + Enalapril 2.5mg bid + Spironolactone 25mg qd [overall 77, raw 76.56]
+  Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded :: medicare
+     old: Dapagliflozin 10mg qd + Metoprolol Succinate 200mg qd + Spironolactone 25mg qd [overall 81, raw 80.73]
+     new: Dapagliflozin 10mg qd + Enalapril 2.5mg bid + Spironolactone 25mg qd [overall 77, raw 76.56]

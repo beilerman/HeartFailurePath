@@ -26,5 +26,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Golden master
+        run: npm run golden
+
       - name: Verify scenarios
         run: npm run verify
+      - name: Pricing audit
+        run: npm run audit:pricing
+
+      - name: Randomized-patient sweep
+        run: npm run fuzz

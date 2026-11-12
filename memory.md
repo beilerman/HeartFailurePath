@@ -2,6 +2,102 @@
 
 ## Architecture / Clinical-Safety Decisions
 
+### Outpatient scope, laboratory prerequisites and ranking toggle (2026-11-11)
+Brad's exact reply, the questions it answers, and a proposed implementation plan are recorded in
+`docs/clinical-decisions-2026-11-11.md`. This is a documentation-only checkpoint; no code or deployment changed.
+- **Scope:** outpatient only, but not restricted to stable patients. Acute escalation boundaries remain to be defined; do not infer new exclusions or relax existing safety gates.
+- **Labs:** clinically appropriate prerequisites are supported. No freshness window, numerical threshold or exception rule was supplied. The combined question does not establish an independent decision to machine-enforce binder/MRA sequencing; clarify that separately.
+- **Ranking:** add a balance-versus-foundational-priority toggle. Balanced is the proposed default. Affordability and actual ability to execute a regimen matter in both modes; distinguish confirmed impossibility from a preference for lower cost or less burden.
+- The four existing `care_priority` weight profiles are not this new toggle. Define its interaction with them, feasibility states and phenotype-specific ordering before coding. Safety, indication, contraindications and required prerequisites must not become optional under either ranking mode.
+- **Implemented 2026-11-11** (engine commits `8713147`..`2b39ba6`, UI `656a5e8`, docs after; golden 744 runs, verify Passed 263 at that time; local only, not pushed):
+  - **E16 laboratory prerequisite:** blank potassium or renal function withholds new starts (eligibility E16) and dose increases/switches (dropped in `scoreCandidates`) of RAAS inhibitors and MRAs; one `LABS REQUIRED` alert per run. `UNKNOWN_POTASSIUM` (-12) removed; `UNKNOWN_RENAL` stays for SGLT2i only. No freshness window (no lab dates).
+  - **Ranking mode:** `Patient.ranking_mode` (`balanced` default / `foundational_first`), HFrEF/HFimpEF only; order = no severe projected harm vs baseline, then `foundational_coverage` (pillar slots, 1.0 / graded), then Balanced. Changes the lead in 99 of 630 HFrEF/HFimpEF golden runs. Only known fewer-pillar cases: `Jane Smith (Dry & Cold)` commercial and Medicare, where the balanced lead is demoted by rule (a). UI: "Ranking approach" select, results note, "Foundational coverage N%" on cards, mode in the copy-to-chart text; `components/rankingModeMeta.ts` holds the labels.
+  - **Over budget:** fallback warning reworded ("BUDGET EXCEEDED ... shown for discussion"); UI banner, card badge and "REGIMEN FOR DISCUSSION ONLY" chart heading.
+  - **Ramipril renal cap** judged on total daily dose (`facts.renal_cap_is_daily`); arriving above any renal cap is force-reduced one step. Captopril and valsartan caps remain per dose (undecided).
+  - **Scope sentence** in the footer and Evidence tab, worded to the gates (hard stops: SBP < 90, K+ >= 6.5, implausible values; K+ 6.0-6.4, low output and pregnancy alert and still list options).
+  - **Still open (do not claim otherwise):** binder-then-MRA staged sequencing is no longer offered (E15/E18 stage new starts; the binder is reactive only); no lab-freshness window; no "cannot do" feasibility states beyond the budget (complexity tolerance is a preference); outpatient escalation boundaries unchanged; foundational mode undefined for HFmrEF/HFpEF; a fully dosed single pillar outranks a starting-dose different pillar.
+
+### Aligned with the 2026 ESC guideline (2026-11-11, local branch refactor/glucosepath-alignment, not pushed)
+- Phenotype is two-tier: HFrEF = LVEF < 50 (or improved EF, or current >= 50 with a numeric prior < 50), HFpEF = >= 50 and never < 50; HFmrEF removed (`classifyPhenotype`, `isImprovedEF`, `nsMraFillsMraSlot`). HFpEF MRA is a Class I pillar; RAAS in HFpEF is IIb (credit 4, never added/swapped). Foundational-first ranking now applies to LVEF 41-49.
+- ESC Supplementary Tables S3-S9 were read (S26 and decompensated-HF tables were not). Data-driven rules: `facts.k_continuation` on RAAS (5.5 reduce / 6.0 stop, MRA first, `yields_to`), `RAAS_EGFR_REVIEW_BELOW` 20 (an ALERT, never a forced stop: ESC S4 describes a FALL from baseline and the tool has no baseline; a stable CKD 4 patient on an ARNI is kept), `facts.hr_continuation` 55 carvedilol / 50 metoprolol+bisoprolol (reduction on heart rate alone), `facts.target_reference_dose` (pregnancy switch by fraction of target, engine policy), `facts.chronic_use_review` (thiazides), binders no bonus, spironolactone target 50 (25 at eGFR <= 45), ARNI start 24/26 below eGFR 60 or with chronic hypotension, loops titrate-not-swap with forced and diuretic-resistance swaps.
+- Counts: 298 scenarios, verify Passed 314, golden 894 runs. Per-change effects and the odd results are in `docs/medication-review-2026-11-10/changes-esc2026-*.txt`; evidence rows HF-ESC-001..011 in `docs/evidence-matrix.md`.
+
+### Second pass: primary US text, baseline creatinine, device/AF alerts (2026-11-11, local, not pushed)
+- Record: `docs/clinical-decisions-2026-11-11.md` (last section), `changes-final-*.txt`, evidence rows HF-MRA-009, HF-ESC-013, HF-ESC-014, HF-TITR-001. Counts: 333 scenarios, golden 999 runs, verify Passed 353; mistake audit 51/51.
+- **Up-titration step cap** (`UP_TITRATION_MAX_DAILY_FACTOR` = 2): `higherDoses` in `candidates.ts` drops tiers above double the current total daily dose, always keeping the adjacent tier. Side effect: a congested patient's loop increase is now a doubling, which often ranks outside the displayed three (loop titrate-ups displayed in 35 scenario x tier runs before, 6 after) - see `changes-final-dose-step-cap.txt`. FIXED the same day by (a) graded below-target credit (`doseProgressToTarget`, HF-SCORE-002) and (b) `ensureCongestionCoverage` (HF-DIU-CONG-001, `changes-final-congestion-coverage.txt`): John Doe shows `Titrate Furosemide 40→80` again as option 3.
+- **E15 is now K+ 5.0 or HIGHER** (2022 US 7.3.3 primary text; labels allow exactly 5.0, stricter used); new spironolactone start contraindicated at eGFR <= 30 (`mraStartEgfrCheck`, never removes a current drug); spironolactone/eplerenone cap 25 mg below eGFR 50 (`MRA_HALVE_DOSE_EGFR_BELOW`).
+- **Baseline creatinine** (`Patient.baseline_creatinine`, optional; `services/engine/renalChange.ts`): none/reduce/stop. The derived eGFR fall (CKD-EPI from creatinine, age, sex) is an EXTRA trigger, so the effective creatinine trigger is about +35%, stricter than the main text's 50% (chosen on purpose: S4/S5/S8 say eGFR fall 30%). Stop = `creatinineRiseStopCheck` on every RAAS/MRA entry. Blank baseline must stay golden-byte-identical (the monitoring text and the eGFR<20 alert keep their old wording when it is blank).
+- **Device/advanced-HF/AF alerts** (gates.ts) are alert-only. Engine-policy numbers: NT-proBNP 4000 (NYHA III-IV), pulse above 100. Cardiac-rehab suppression keeps the OLD severe criteria (`severeAdvancedHF`) so the broader referral markers never silence it. Advanced-HF alert fires in ~10% of scenarios.
+- Loop maxima already matched 2022 US Table 12 (no change). ESC device/advanced HF/AF tables and the 2022 US text points are now primary; US class labels were images (still secondary).
+
+### Decisions made from sources (2026-11-11)
+Record: `docs/clinical-decisions-2026-11-11.md` (last section), `docs/medication-review-2026-11-10/verified-clinical-decisions-2026-11-11.md`, `esc-2026-reading-notes.md` (2026 ESC guideline, primary; Supplementary tables S3-S9 read), `changes-*` files. Local only, not pushed.
+- **Congestion coverage prefers the plain loop step** (`isPlainLoopStep`, safety-clean via `isProjectedSafetyClean`; `changes-final-congestion-plain-step.txt`): 'Bradycardia (HR 48)' option 3 went from `Add ARNI + Add Furosemide` (score 7) to `Add Furosemide 20` (score 0).
+- **Binder rescue only beside a current RAAS/MRA** (`keepsCurrentPotassiumRaiser`, 2026-11-11): a candidate with no RAAS/MRA on board gets no binder (31 top picks changed, `changes-final-binder-rescue.txt`); the carvedilol +0.05 K+ effect in constants.ts has NO cited source (unchanged, flagged). Verify has a structural invariant for it.
+- **E15 = staged MRA start**: no new MRA above K+ 5.0 with or without a binder; DIAMOND co-start removed (never re-add; it was a trial run-in). **E18 = staged RAAS start (2026-11-11)**: no new ACEi/ARB/ARNI (patient on none) above K+ 5.2 (ESC S4/S5 caution; staging is engine policy; `RAAS_START_K_CAUTION`). The binder rescue (projected K+ > 5.3) is REACTIVE ONLY: it attaches only when every potassium-raising class in the candidate (RAAS pool, MRA) was already on the current regimen; a candidate adding a new one that would need a binder is dropped (`addsNewPotassiumRaisingClass`, scoring.ts). Known consequence: at K+ 5.2 a new ARNI/ACEi projects above 5.3 and is dropped, so a new RAAS start is realistically offered up to about K+ 5.1.
+- **eGFR below 20 on a RAAS inhibitor = alert only** (never a stop on the current value; 2026-11-11 correction of an over-reach in 2cdc909).
+- **E17 pregnancy beta-blockers**: new starts beta-1-selective only (`facts.beta1_selective`), carvedilol switched with reason (ESC 2026 Class I C). Switch lands at the starting dose.
+- **Torsemide = 2 mg furosemide per mg** (TRANSFORM-HF protocol); no unconverted-swap fallback; every standing loop must declare `verified_furosemide_equivalent_per_mg` (verify invariant). Known side effects: equivalent torsemide swaps lead in 9 loop scenarios; "at or above" tier rule overshoots on sparse tiers.
+- Potassium 6.0 alert and 6.5 alerts-only stop are engine policy; RAAS contraindicated above 5.4 is policy stricter than any verified source.
+- No numeric lab-recency window (none sourced); monitoring timings follow labels/secondary guideline text.
+- Method: engine decisions each get a commit, `ranking:diff` saved to `changes-*.txt` (its "BUGS" section is expected for intended eligibility/alert changes), golden regenerated in a separate commit.
+
+### Medication review + source-verified corrections (2026-11-10)
+Full record: `docs/medication-review-2026-11-10/` (README = outcome + open items; `verified-*.md` =
+sources with URLs; `changes-*.txt` = which recommendations each pass changed). Non-obvious points:
+- **Review-from-memory was wrong in places; verification caught it.** E.g. the Entresto label's
+  default start is 49/51 (24/26 is the reduced start); the carvedilol label DOES say act at HR<55 —
+  by reducing the dose; CLOROTIC tested HCTZ with MORE drug at lower clearance. Never correct the
+  engine from a review that did not open the source.
+- **Guideline pages (ahajournals/jacc/ESC) return 403 to automated fetch.** DailyMed (incl. its
+  JSON/XML API), PubMed E-utilities (efetch) and Europe PMC work. Guideline-only claims stayed unverified.
+- **DIAMOND's -0.10 mmol/L is not patiromer's effect** (both arms had RAAS therapy adjusted to
+  potassium). Using it made the engine prefer Lokelma (sodium load) — reverted to PEARL-HF -0.45.
+  Watch for this class of error: a between-arm difference from a treat-to-target trial.
+- **A sweep over every scenario x tier x priority is how the carvedilol-25-mg new start was found**
+  after five targeted passes missed it. Run broad invariant sweeps, not only targeted scenarios.
+- **Scores are not comparable across this date** (scale change, then pricing/effect corrections).
+- **UI:** blank potassium/creatinine map to the engine's 0 = "not entered" sentinel (the form used
+  to reject 0, so the missing-potassium sample could not run). Evidence tab renders
+  `docs/evidence-matrix.md` via `?raw` — keep its table structure (8 cells per row). The colliding
+  HF-ADJ-001..006 in the 2026-11-10 GLP-1 rows were renumbered to HF-ADJ-015..020 on 2026-11-11.
+- **Not verified by anyone:** a real print preview, screen-reader behavior.
+
+### GlucosePATH alignment refactor (2026-11-10, behavior-preserving)
+Engine restructured to mirror GlucosePATH's shape (numbered exclusions -> enumerate -> factor
+scores x one weight table -> printed arithmetic). Structure is in `docs/scoring-architecture.md`
+and CLAUDE.md; what is NOT obvious from the code:
+- **Golden master was captured BEFORE any refactor** (commit 7c920fc) and never updated; every
+  phase was byte-identical against it. It is the proof the refactor changed no clinical output.
+- **Same day, intended scoring change (golden regenerated once):** completeness became an 8th
+  domain, the scale was divided by 1.3 and rounded to clean weights/penalties, patient-selected
+  weight profiles were added. Measured against the pre-refactor baseline: 309/315 top picks
+  unchanged; exclusions, alerts and warnings identical in all 315.
+- **The completeness tie-break in the sort is load-bearing.** Sorting on unrounded score alone
+  was tried and reverted the same day: it led with eplerenone monotherapy (HFmrEF obese), a
+  beta-blocker alone (pregnant on GLP-1) and dropped spironolactone in acute NYHA IV on <0.5-pt
+  differences. Keep displayed score → completeness → unrounded → cost.
+- **Six top picks differ from the pre-change baseline** (near-ties): MRA Boundary (commercial)
+  now leads with Furoscix + half-dose ARNI over patiromer-rescued full-dose ARNI; Acute
+  Decompensated NYHA IV (medicare) drops spironolactone; HFmrEF Obese (cash) and Pregnant on
+  GLP-1 (all tiers) now lead with two-drug regimens instead of monotherapy. Not yet reviewed by Brad.
+- **Weight profiles are uncalibrated.** `simplicity_first` can lead with SGLT2i monotherapy
+  (Angioedema Hx, Non-Compliant); `outcomes_first` barely differs from Balanced (2/98 scenarios).
+- **Not done:** per-patient numeric targets (HF targets are not individualized in guidelines).
+- `ExcludedMedication.why` (not `details` — that name collides with followUpCalendar items in
+  the golden harness's ADDITIVE_KEYS).
+- **Preserved quirk:** after projected SBP<85 zeroes the score, later penalties still apply, so
+  `raw_score` can go negative (only affects tie-breaks among display-hidden regimens). Recorded
+  as an override in `score_breakdown`; do not "fix" without a golden update.
+- **E14 (renal dosing contraindication) is probably unreachable** — E13 catches the same eGFR
+  cutoffs first. Kept as belt-and-braces. **E03 uses the 'suspected' free-text tier**, so
+  "denies cough" can withhold an ACEi for new starts (pre-existing).
+- **`Medication.facts` is plain data** and is in the golden harness's ADDITIVE_KEYS. An agent
+  first made it function-valued to hide it from the snapshot — don't do that again.
+- Still engine code, not formulary data: adjunct initiation criteria (candidates.ts) and DDI
+  warning prose (effects.ts). Moving warnings risks reordering, which changes the −10/warning
+  penalty and golden output — convert warnings to structured {code, penalizes, text} first.
+
 ### Full verified audit pass (2026-07-05)
 Whole-codebase audit; everything below is the CURRENT state (all landed, harnesses green:
 verify Passed 106 = 105 scenarios + 1 structural pricing invariant; 100/100 audit; 51/51
@@ -168,7 +264,7 @@ standalone QA like redTeam.ts — run `npx tsx scripts/mistakeAudit.ts`). Found 
    (e.g. carvedilol target 25, sampled tiers were 3.125/12.5/50) — target dose now always included
    as a tier so "titrate to target" is a candidate.
 7. **Completeness rewarded presence, not dose** — made dose-aware: a sub-target titratable pillar
-   earns partial credit (`SUBTARGET_CREDIT=0.6`); single-dose / at-target / at-max = full. So
+   earns graded credit (2026-11-11: 0.6 at the start tier rising to 1.0 at target, `doseProgressToTarget`; 0.6 fallback `SUBTARGET_CREDIT` when no numeric target; new starts score as before); single-dose / at-target / at-max = full. So
    up-titration raises completeness and a starting-dose quad no longer reads as "done".
 8. **Euvolemic on high-dose loop** (over-diuresis) not flagged — `detectInappropriateRegimen` now
    emits a LOOP DIURETIC OVER-TREATMENT alert (euvolemic + Furosemide≥120 / Torsemide≥50 /
@@ -378,3 +474,49 @@ Adding/restating a pillar or phenotype is now a data edit in the table. Both pha
 red-team probes + typecheck + build all green. Red-team probe 17 locks evidence-surfacing + concordance
 consistency. NOTE: Phase-B recClass labels are metadata only — changing a label does NOT change the score
 (points are separate); to change scoring, edit `base`/`targetBonus`.
+
+## Adversarial review 2026-11-12 (record: docs/adversarial-review-2026-11-12.md)
+- `npm run fuzz` (scripts/fuzzSweep.ts, in `gate` and `ci`) is the fastest way to find a class of defect: seeded random patients, invariants restated in the
+  test (do NOT import engine class lists into it), consistency checks (reorder the regimen, flip ranking mode / care priority, re-enter option 1). Reproduce one
+  patient with `randomPatient(seed)`. Every code fails the sweep, including `ADVICE_REVERSED_NEXT_RUN` (it was a watched code until the second pass; 0 reversals in 45,000 patients).
+- Recurring root causes to look for first: (1) `Number()` on a combination strength ("24/26") is NaN and silently disables a numeric rule: use
+  `comparableDailyDose` for ordering; (2) a rule enforced on "add" but not on swap-in / titrate / rescue / the combination of two changes: put the check on the
+  finished candidate (`structuralProblems`) or in eligibility; (3) scoring that penalizes the patient's EXISTING state rewards cutting drugs: charge baseline
+  warnings to every option (`baselineDangerWarnings`) and read bands on the lower of projected and entered; (4) anything decided by array order or by the last
+  bits of a float sum: sort by name, round projections; (5) a fact declared on one drug of a class (anuria, hypokalemia caution).
+- Engine code may hold no drug names (verify invariant): allergy brand names live in `ALLERGY_ALIASES_BY_DRUG` in constants.ts and reach the engine as
+  `facts.allergy_aliases`.
+- Projected potassium: the renal multiplier now applies to RISES only (`kPair` in effects.ts), so falls are plain size and there IS a low floor (hidden below 3.0 when the option lowers potassium; `minProjectedPotassium`).
+- The high potassium display floor is absolute; the SBP and HR floors are baseline-aware (a regimen is hidden only if it worsens the value).
+- Open items the owner has not decided are listed at the end of the review record ("Still the owner's call").
+
+## Second pass 2026-11-12 (all 17 open items fixed; table in the review record)
+- Fixtures: the form recomputes eGFR/BMI on load, so `data/scenarios.ts` runs every fixture through `reconcileDerivedFields` (shared `derivedFields` in
+  clinicalPredicates). Without it the browser runs a different patient than verify checks. Verify asserts every fixture loads unchanged; a new fixture with
+  an eGFR or BMI that does not match its creatinine/height is silently rewritten, so author creatinine/height to fit.
+- Rescue additions (binder, iron) never discard a candidate: if they break the per-visit limit or the budget the option is scored without them. Discarding
+  removed "mandatory changes only" and caused self-reversal.
+- Tie-break order (selection.ts): displayed score, coverage, unrounded score, cost, FEWER CHANGES, then alphabetical. "Fewer changes" must stay above
+  alphabetical or a pointless dose cut can win a tie.
+- One potassium ladder: a RAAS increase is held above 5.2, same as a new start (verify invariant: an increase is never allowed where a start is held).
+  A binder in use is not reduced while measured potassium is 5.0 or higher. Both are engine policy, listed as owner's calls.
+- Label vs guideline differences are data (`facts.source_differences`), shown on the option and the formulary card. Vericiguat start follows the label (5 mg);
+  losartan target is 150 mg (ESC). Add a new difference as data, not as engine text.
+- `side_effects` rates are display-only; verify fails if engine code reads them. Do not use them to score.
+- Patient cost is capped at the cash price in `getDrugPrices`; `npm run audit:pricing` is in gate and ci. Entresto Medicare table copay 74 stays in the table.
+- Intolerance reasons live in one table (`INTOLERANCE_TABLE`); cautions are unpenalized "Intolerance history:" warnings. Every selectable option must be read
+  by the engine (verify fails otherwise; `DISPLAY_ONLY_OPTIONS` is empty). Do not re-add CKD or Obesity checkboxes.
+- `RULESET_VERSION` (services/rulesetVersion.ts, now 2026-11-12.2) must be bumped whenever engine output changes; it is printed on copied notes.
+- scripts/verifyScenarios.ts is near TypeScript's control-flow size limit: put new invariants in scripts/optionInvariants.ts / optionScenarioChecks.ts.
+- Gate after this pass: verify 371/0, golden 1032 runs, audit:hundred 100/100, audit:mistakes 51/51, audit:red clean, audit:pricing OK, fuzz no violations.
+
+## Third pass 2026-11-12 (commit fa34d68; handoff: docs/HANDOFF-2026-11-12.md)
+
+- Method that found the most: follow the top option visit after visit with unchanged inputs. A cycle means some state penalty or threshold is escaped by reversing the previous step. The sweep now does this for 30 visits (`OSCILLATION`).
+- Recurring root cause, now seen four times (SBP band, HR band, baseline warnings, MAP surcharge): a penalty on the patient's EXISTING state that an option escapes by cutting a drug. Rule: read the lower of projected and entered value, or charge it to every option. The potassium band is the deliberate exception (lowering potassium is the treatment).
+- A forced edit must satisfy every other forced-edit filter: the forced beta-blocker reduction filter did not accept a forced switch, which emptied the page. When adding a forced action, check `generateCandidateModifications`' final filter.
+- `eligibleDoses` no longer trims by age. Do not reintroduce a count-based ladder cut; a per-drug age cap belongs on the entry with a source.
+- Rule E20 and the eGFR-below-20 increase hold are engine policy derived from the ESC "stop and seek advice" text; owner has not reviewed them.
+- Alerts are written before options exist. Any alert sentence that says what "the plan" does must go through `reconcilePlanAlerts`.
+- Open, in priority order, in the review record: flat RAAS potassium effect (and binders attached to dose reductions), MRA kidney thresholds on continuation, completeness credit vs renal caps, dose-reduction steps and wording.
+- Reviewer probe scripts lived in a session scratch directory and were not kept; the review record carries enough detail to reproduce each open item.

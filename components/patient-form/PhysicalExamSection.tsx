@@ -2,6 +2,8 @@ import React from 'react';
 import { ActivityIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
+import { congestionFindingCount } from '../../services/clinicalPredicates';
+import { isCongestedAboveDryWeight } from '../../services/engine/regimenUtils';
 
 interface PhysicalExamSectionProps {
     patientData: Patient;
@@ -22,19 +24,26 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
 }) => {
     // Volume Status Calculations
     const weightDiff = patientData.volume_status.current_weight_kg - patientData.volume_status.dry_weight_kg;
-    const isOverloaded = weightDiff > 1.0;
+    // Same predicates the engine uses; weight and exam can disagree, and the label says so.
+    const isOverloaded = isCongestedAboveDryWeight(patientData);
     const isDehydrated = weightDiff < -1.0;
-    const weightStatusText = isOverloaded
-        ? `+${weightDiff.toFixed(1)} kg (Overload)`
+    const hasWeights = Number.isFinite(weightDiff);
+    const hasFindings = congestionFindingCount(patientData.volume_status.exam_findings) > 0;
+    const weightStatusText = !hasWeights
+        ? 'Enter both weights'
+        : isOverloaded
+        ? (hasFindings ? `+${weightDiff.toFixed(1)} kg (Overload)` : `Above dry weight (+${weightDiff.toFixed(1)} kg), no congestion findings recorded`)
         : isDehydrated
             ? `${weightDiff.toFixed(1)} kg (Volume Depleted)`
-            : 'Euvolemic';
+            : hasFindings ? 'Weight at dry weight, but congestion findings recorded' : 'Euvolemic';
 
-    const weightStatusColor = isOverloaded
+    const weightStatusColor = !hasWeights
+        ? 'text-slate-600 bg-slate-50 border-slate-200'
+        : isOverloaded
         ? 'text-red-700 bg-red-50 border-red-200'
         : isDehydrated
             ? 'text-amber-700 bg-amber-50 border-amber-200'
-            : 'text-emerald-700 bg-emerald-50 border-emerald-200';
+            : hasFindings ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200';
 
     const findingsList = ['Edema (1+)', 'Edema (2+)', 'Edema (3+)', 'JVP Elevated', 'Orthopnea', 'Crackles', 'Ascites', 'Cool Extremities'];
 
@@ -47,21 +56,21 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
             {/* Hemodynamics */}
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                    <Label>SBP / DBP (mmHg)</Label>
+                    <Label required>SBP / DBP (mmHg)</Label>
                     <div className="flex gap-2">
-                        <Input type="number" name="sbp" value={patientData.sbp ?? ''} onChange={onChange} placeholder="Sys" aria-label="Systolic blood pressure" error={validationErrors.sbp} />
-                        <Input type="number" name="dbp" value={patientData.dbp ?? ''} onChange={onChange} placeholder="Dia" aria-label="Diastolic blood pressure" error={validationErrors.dbp} />
+                        <Input type="number" min={0} name="sbp" value={patientData.sbp ?? ''} onChange={onChange} placeholder="Sys" aria-label="Systolic blood pressure" error={validationErrors.sbp} />
+                        <Input type="number" min={0} name="dbp" value={patientData.dbp ?? ''} onChange={onChange} placeholder="Dia" aria-label="Diastolic blood pressure" error={validationErrors.dbp} />
                     </div>
                 </div>
                 <div>
-                    <Label>Pulse / SpO2</Label>
+                    <Label required>Pulse / SpO2</Label>
                     <div className="flex gap-2">
                         <div className="relative w-full">
-                            <Input type="number" name="pulse" value={patientData.pulse ?? ''} onChange={onChange} placeholder="BPM" aria-label="Pulse rate" error={validationErrors.pulse} />
+                            <Input type="number" min={0} name="pulse" value={patientData.pulse ?? ''} onChange={onChange} placeholder="BPM" aria-label="Pulse rate" error={validationErrors.pulse} />
                             <span className="absolute right-2 top-2 text-xs text-slate-400">bpm</span>
                         </div>
                         <div className="relative w-full">
-                            <Input type="number" name="oxygen_saturation" value={patientData.oxygen_saturation ?? ''} onChange={onChange} placeholder="%" aria-label="Oxygen saturation" error={validationErrors.oxygen_saturation} />
+                            <Input type="number" min={0} name="oxygen_saturation" value={patientData.oxygen_saturation ?? ''} onChange={onChange} placeholder="%" aria-label="Oxygen saturation" error={validationErrors.oxygen_saturation} />
                             <span className="absolute right-2 top-2 text-xs text-slate-400">%</span>
                         </div>
                     </div>
@@ -108,11 +117,11 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
                 <div className="grid grid-cols-2 gap-4 mb-2">
                     <div>
                         <Label htmlFor="dry_weight_kg">Dry Wt (kg)</Label>
-                        <Input type="number" name="dry_weight_kg" value={patientData.volume_status.dry_weight_kg} onChange={(e) => onVolumeChange('dry_weight_kg', Number(e.target.value))} error={validationErrors.dry_weight_kg} />
+                        <Input type="number" min={0} name="dry_weight_kg" value={patientData.volume_status.dry_weight_kg ?? ''} onChange={(e) => onVolumeChange('dry_weight_kg', Number(e.target.value))} error={validationErrors.dry_weight_kg} />
                     </div>
                     <div>
                         <Label htmlFor="current_weight_kg">Current (kg)</Label>
-                        <Input type="number" name="current_weight_kg" value={patientData.volume_status.current_weight_kg} onChange={(e) => onVolumeChange('current_weight_kg', Number(e.target.value))} error={validationErrors.current_weight_kg} />
+                        <Input type="number" min={0} name="current_weight_kg" value={patientData.volume_status.current_weight_kg ?? ''} onChange={(e) => onVolumeChange('current_weight_kg', Number(e.target.value))} error={validationErrors.current_weight_kg} />
                     </div>
                 </div>
             </div>

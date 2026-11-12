@@ -1,0 +1,32 @@
+# Ranking change: 2026 ESC Supplementary Tables S4-S9 (beta-blocker heart rate, RAAS potassium text, kidney stop, loop resistance, notes), 2026-11-11
+
+Changes: (1) Beta-blocker heart rate (S6): metoprolol succinate and bisoprolol reduce one step and block a new start below 50 bpm (was 55, engine policy); carvedilol keeps 55
+(label). Alert text states the reduction applies on heart rate alone. Up-titration hold below 60 stays, labeled engine policy. S6 start cautions added as a drug note.
+(2) RAAS potassium (S4/S5): alert adds "stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes first; recheck in 1-2 weeks";
+the S4 "halve" vs "stop" inconsistency is stated. (3) Kidney: the engine has only the CURRENT eGFR and creatinine (no baseline), so only the current-eGFR rule is implemented: an ACEi/ARB/ARNI
+on board is stopped (class-wide, so it is not swapped for another) when eGFR is below 20, "seek specialist advice"; new starts are unchanged; MRAs already have stricter label gates.
+The 50% / 100% creatinine and 30% eGFR-fall bands need a baseline value and are text only. (4) Monitoring and titration-interval text. (5) Loop swap allowed when congested
+(more than 1 kg above dry weight) on a loop at or above its high-dose alert level (S7 diuretic resistance). (6) Notes: gout line, SGLT2i S9, diltiazem/verapamil alert now below LVEF 50.
+
+`npm run ranking:diff` against the golden snapshot before the update (897 runs; new-key runs are the new/renamed scenarios).
+
+Ranking diff vs golden snapshot: 897 runs
+  (a) top pick identical:        834 / 897
+  (b) displayed pick set same:   834 / 897
+  (c) pick order identical:      834 / 897
+  (d) eligibility + alerts identical: NO (156 differences)
+  (e) per-regimen warnings identical: NO (1333 regimens)
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 51 of 720 runs
+    LVEF >= 50: 0 of 108 runs
+
+Existing-scenario top-pick changes (cash tier shown above in the run output):
+- "Rate-Source Carvedilol 3.125 mg HR 50 Withheld": with carvedilol withheld, metoprolol succinate 12.5 + sacubitril/valsartan 24/26 now lead (a beta-blocker may start at HR 50;
+  the old lead was dapagliflozin + eplerenone). Consistent with the 50 bpm ESC start threshold.
+- Five "Diuretic-Source" scenarios (eGFR 15-25, arriving on sacubitril/valsartan 97/103 or similar, congested on a high-dose loop): the loop swap to torsemide 40 mg bid now leads
+  (diuretic resistance rule) and, at eGFR below 20, the RAAS inhibitor is stopped. "Diuretic-Source Bumetanide eGFR 15 ...": the lead loses the ARNI (eGFR 15 is below 20) and keeps
+  carvedilol + dapagliflozin + furosemide + ivabradine.
+Clinically odd, kept as instructed: a stable CKD 4 patient (eGFR 15-19) long established on an ARNI is stopped because the tool has no baseline eGFR to tell a fall from a steady state.

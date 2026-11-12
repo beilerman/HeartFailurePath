@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ScoredRegimen } from '../types';
+import { congestionFindingCount } from '../services/clinicalPredicates';
 import {
     calculateStructureScoreComponents, classifyPhenotype,
     // Scoring tables/constants imported from the ENGINE so this explanation panel can never
@@ -8,28 +9,49 @@ import {
     BNP_SCORE_TARGET, BNP_SCORE_CRITICAL, NYHA_SCORE_MAP, FUNCTIONAL_STEPS_FULL_CREDIT,
     VOLUME_SCORING, adherenceComplexityThreshold, CONCORDANCE_TABLE, pillarKeyOf,
 } from '../services/simulationService';
+import { DOMAIN_WEIGHTS, DOMAIN_LABELS, WEIGHT_PROFILE_META, COMPLETENESS_SUBTARGET_CREDIT, type ScoreDomainKey } from '../services/engine/scoreModel';
+import { STRUCTURE_BLEND_WEIGHTS, DOMAIN_GOALS } from '../services/simulationService';
+
+const pct = (x: number) => `${Math.round(x * 100)}%`;
+import { ScoreLedger } from './ScoreLedger';
+import { useEvidenceLink } from './EvidenceContext';
+import { ScoreComparisonDetail } from './ScoreComparison';
+import { goalAfterEquals } from './scoreExplain';
 import type { Phenotype, PillarKey, PillarConcordance } from '../services/simulationService';
 
 interface Props {
-    domain: string;
+    /** 'overall' opens the full ledger; a domain key opens that factor's explanation. */
+    domain: 'overall' | ScoreDomainKey;
     score: number;
     regimen: ScoredRegimen;
     onClose: () => void;
+    /** Option 1, for the "why ranked lower" comparison. Omit for option 1 itself. */
+    leader?: ScoredRegimen;
+    /** Foundational ranking mode applied: the comparison explains the order accordingly. */
+    foundationalOrder?: boolean;
+    rank?: number;
 }
 
-const guidelinePhenotype = (regimen: ScoredRegimen): Phenotype => {
-    return classifyPhenotype({
-        ...regimen.projected_patient,
-        lvef: regimen.baseline_lvef ?? regimen.projected_patient.lvef,
-    });
-};
+// The patient as first entered (baseline LVEF), the basis of the phenotype and of the MRA-slot rule.
+const guidelinePatient = (regimen: ScoredRegimen) => ({
+    ...regimen.projected_patient,
+    lvef: regimen.baseline_lvef ?? regimen.projected_patient.lvef,
+});
+const guidelinePhenotype = (regimen: ScoredRegimen): Phenotype => classifyPhenotype(guidelinePatient(regimen));
 
-export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onClose }) => {
+const COMPLETENESS_SUBTARGET_CREDIT_PCT = Math.round(COMPLETENESS_SUBTARGET_CREDIT * 100);
+
+export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onClose, leader, rank = 1, foundationalOrder = false }) => {
     const p = regimen.projected_patient;
+    const { openEvidence } = useEvidenceLink();
+    const title = domain === 'overall' ? 'Overall' : DOMAIN_LABELS[domain];
+    const domainLine = domain === 'overall' ? undefined : regimen.score_breakdown?.domains.find(d => d.key === domain);
+    const weight = domainLine?.weight ?? (domain === 'overall' ? undefined : DOMAIN_WEIGHTS[domain]);
+    const profileLabel = regimen.score_breakdown ? WEIGHT_PROFILE_META[regimen.score_breakdown.weight_profile].label : WEIGHT_PROFILE_META.default.label;
 
     const renderContent = () => {
         switch (domain) {
-            case 'Neurohormonal':
+            case 'neurohormonal':
                 const bnp = Math.round(p.nt_pro_bnp);
                 return (
                     <div className="space-y-3">
@@ -47,7 +69,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                     </div>
                 );
 
-            case 'Functional':
+            case 'functional':
                 const nyhaPts = NYHA_SCORE_MAP[p.nyha_class] || 0;
                 const stepPts = p.daily_step_count !== undefined
                     ? Math.min(100, (p.daily_step_count / FUNCTIONAL_STEPS_FULL_CREDIT) * 100)
@@ -80,11 +102,11 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                     </div>
                 );
 
-            case 'Volume':
+            case 'volume':
                 const dry = p.volume_status.dry_weight_kg;
                 const curr = p.volume_status.current_weight_kg;
                 const diff = curr - dry;
-                const findingsCount = p.volume_status.exam_findings.size;
+                const findingsCount = congestionFindingCount(p.volume_status.exam_findings);
                 const weightPenalty = diff > 1.0 ? Math.round((diff - 1.0) * VOLUME_SCORING.weightPenaltyPerKgAbove1) : 0;
                 const findingsPenalty = findingsCount * VOLUME_SCORING.findingPenalty;
                 const spo2Penalty = p.oxygen_saturation === undefined
@@ -117,7 +139,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                     </div>
                 );
 
-            case 'Structure':
+            case 'structure':
                 const lvef = p.lvef;
                 const lvedd = p.lvedd;
                 const lavi = p.lavi;
@@ -141,15 +163,15 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                             </div>
                         </div>
                         <ul className="text-sm text-slate-600 space-y-1 mt-2">
-                            <li><strong>Absolute LVEF state:</strong> {Math.round(structure.absoluteScore)} pts <span className="text-slate-400">(40% weight)</span></li>
-                            <li><strong>Improvement trajectory:</strong> {Math.round(structure.improvementScore)} pts <span className="text-slate-400">(40% weight; baseline LVEF {baselineLvef.toFixed(0)}%)</span></li>
-                            <li><strong>Chamber geometry:</strong> {Math.round(structure.chamberScore)} pts <span className="text-slate-400">(20% weight; neutral 50 if echo data unavailable)</span></li>
+                            <li><strong>Absolute LVEF state:</strong> {Math.round(structure.absoluteScore)} pts <span className="text-slate-400">({pct(STRUCTURE_BLEND_WEIGHTS.absolute)} weight)</span></li>
+                            <li><strong>Improvement trajectory:</strong> {Math.round(structure.improvementScore)} pts <span className="text-slate-400">({pct(STRUCTURE_BLEND_WEIGHTS.improvement)} weight; baseline LVEF {baselineLvef.toFixed(0)}%)</span></li>
+                            <li><strong>Chamber geometry:</strong> {Math.round(structure.chamberScore)} pts <span className="text-slate-400">({pct(STRUCTURE_BLEND_WEIGHTS.chamber)} weight; neutral 50 if echo data unavailable)</span></li>
                             <li className="pt-2 border-t border-slate-100 font-bold text-slate-800">Engine Structure Score: {score}</li>
                         </ul>
                     </div>
                 );
 
-            case 'Cost':
+            case 'cost':
                 const budget = p.max_affordable_cost;
                 const sens = p.cost_sensitivity;
                 const isZeroBudget = budget <= 0;
@@ -196,7 +218,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                     </div>
                 );
 
-            case 'Adherence':
+            case 'adherence':
                 const complexity = regimen.complexity;
                 const tolerance = p.complexity_tolerance;
                 const threshold = adherenceComplexityThreshold(tolerance);
@@ -225,14 +247,14 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                     </div>
                 );
 
-            case 'Guideline':
+            case 'guideline':
                 const regimenMeds = regimen.regimen;
                 const phenotype = guidelinePhenotype(regimen);
                 // Pillars present in this regimen, using the ENGINE's own pillar mapping
-                // (pillarKeyOf handles nsMRA-counts-as-MRA per phenotype).
+                // (pillarKeyOf handles nsMRA-counts-as-MRA per patient).
                 const guidePillars = new Set<PillarKey>();
                 regimenMeds.forEach(r => {
-                    const key = pillarKeyOf(r.med.drug_class, phenotype);
+                    const key = pillarKeyOf(r.med.drug_class, guidelinePatient(regimen));
                     if (key) guidePillars.add(key);
                 });
 
@@ -245,14 +267,12 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                     .map(([key, ev]) => ({ key, name: PILLAR_LABELS[key], pts: ev.base, targetBonus: ev.targetBonus, evidenceClass: `Class ${ev.recClass}`, trials: ev.trials }));
 
                 const phenotypeLabel = phenotype === 'HFpEF'
-                    ? 'HFpEF: Guideline Recommendations'
-                    : phenotype === 'HFmrEF'
-                        ? 'HFmrEF: Guideline Recommendations (LVEF 41-49%)'
-                        : 'HFrEF: Class I Pillars (2022 AHA/ACC/HFSA)';
+                    ? 'HFpEF (LVEF 50% or higher, never below 50%): SGLT2 inhibitor and MRA are Class I (2026 ESC)'
+                    : 'Reduced EF (LVEF below 50%, or improved EF): four Class I pillars (2026 ESC; 2022 AHA/ACC/HFSA)';
                 const capNote = Number.isFinite(table.targetBonusCap) ? ` (capped at +${table.targetBonusCap} total)` : '';
                 const volumeNote = table.volumeBonus > 0 ? ` Volume management: +${table.volumeBonus}.` : '';
                 const scoringNote = `At-target dose bonus per pillar shown below${capNote}.${volumeNote}` +
-                    (phenotype === 'HFrEF' ? ' Finerenone/nsMRA does not count for the HFrEF/HFimpEF MRA pillar.' : '');
+                    (phenotype === 'HFrEF' ? ' Finerenone counts for the MRA pillar from LVEF 41% up, but not for improved-EF patients with a prior LVEF of 40% or lower. LVEF 41-49% is treated as reduced EF per the 2026 ESC guideline; the 2022 AHA/ACC/HFSA guideline keeps a separate mildly reduced category with weaker recommendations.' : ' A RAAS inhibitor is Class IIb in HFpEF and earns only a small credit; it is not a foundational therapy.');
                 const guidelineRationale = regimen.rationale.filter(r => r.startsWith('Guideline:'));
 
                 return (
@@ -279,15 +299,49 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         <p className="text-xs text-slate-500 mt-3 leading-relaxed">
                             <strong>Scoring:</strong> {scoringNote}
                         </p>
-                        <p className="text-xs text-slate-400">
-                            This domain carries 15% of the overall score, ensuring guideline-concordant therapy is prioritized.
-                        </p>
                         {guidelineRationale.length > 0 && (
                             <ul className="text-xs text-slate-500 mt-3 space-y-1 border-t border-slate-100 pt-2">
                                 {guidelineRationale.map((r, i) => <li key={i}>{r}</li>)}
                             </ul>
                         )}
                     </div>
+                );
+
+            case 'completeness': {
+                const fraction = regimen.gdmt_completeness ?? score / 100;
+                const phen = guidelinePhenotype(regimen);
+                const reduced = phen !== 'HFpEF';
+                return (
+                    <div className="space-y-3">
+                        <div className="bg-slate-50 p-3 rounded border border-slate-200">
+                            <div className="text-xs text-slate-500 uppercase font-bold">Indicated therapy covered</div>
+                            <div className="text-2xl font-black text-slate-900">{Math.round(fraction * 100)}%</div>
+                            <div className="text-xs text-slate-500">Average credit across the therapies this patient could take.</div>
+                        </div>
+                        <ul className="text-sm text-slate-600 space-y-2">
+                            <li>
+                                <strong>What counts:</strong> {reduced
+                                    ? 'a RAAS inhibitor, a beta-blocker, a mineralocorticoid receptor antagonist (MRA) and an SGLT2 inhibitor'
+                                    : 'an SGLT2 inhibitor and an MRA'}
+                                {phen === 'HFrEF' ? ' (a nonsteroidal MRA can fill the MRA slot from LVEF 41% up, unless the prior LVEF was 40% or lower)' : ''}
+                                , plus any add-on this patient qualifies for: GLP-1 therapy, hydralazine/isosorbide dinitrate, ivabradine, vericiguat, or IV iron.
+                            </li>
+                            <li><strong>Not counted against the regimen:</strong> any therapy the patient cannot take (allergy, intolerance, contraindication, or not available). Diuretics and digoxin treat symptoms and are not counted.</li>
+                            <li><strong>Credit for each therapy:</strong> full credit when it is on board at the target dose (or at its highest available dose, or it has only one dose); a graded credit when it is on board below the target dose ({COMPLETENESS_SUBTARGET_CREDIT_PCT}% at or below the drug's labeled starting dose, rising in proportion to the progress from the starting dose to this patient's target dose; {COMPLETENESS_SUBTARGET_CREDIT_PCT}% where no numeric target can be derived); none when it is missing. Moving a drug up toward its target dose therefore raises this factor, even by one step.</li>
+                            <li className="pt-2 border-t border-slate-100">
+                                <strong>Score:</strong> the average credit across those therapies, times 100. If no indicated therapy is achievable for this patient the factor scores 0.
+                            </li>
+                        </ul>
+                    </div>
+                );
+            }
+
+            case 'overall':
+                return (
+                    <>
+                        <ScoreLedger breakdown={regimen.score_breakdown} onEvidence={(term) => { onClose(); openEvidence(term); }} />
+                        {leader && leader !== regimen && <ScoreComparisonDetail regimen={regimen} leader={leader} rank={rank} foundationalOrder={foundationalOrder} />}
+                    </>
                 );
 
             default:
@@ -360,22 +414,32 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
             <div
                 ref={dialogRef}
                 tabIndex={-1}
-                className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden outline-none"
+                className={`bg-white rounded-xl shadow-2xl w-full ${domain === 'overall' ? 'max-w-xl max-h-[90vh] flex flex-col' : 'max-w-sm'} overflow-hidden outline-none`}
                 onClick={e => e.stopPropagation()}
             >
                 <div className="bg-indigo-600 p-4 flex justify-between items-center">
-                    <h3 id="score-modal-title" className="font-bold text-white text-lg">{domain} Score</h3>
+                    <h3 id="score-modal-title" className="font-bold text-white text-lg">{title} Score{domain === 'overall' && rank > 1 ? ` — Option ${rank}` : ''}</h3>
                     <button onClick={onClose} className="text-white/80 hover:text-white" aria-label="Close score details">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-                <div className="p-6">
-                    <div className="flex justify-center mb-6">
+                <div className={`p-4 sm:p-6 ${domain === 'overall' ? 'overflow-y-auto' : ''}`}>
+                    <div className="flex justify-center mb-4 sm:mb-6">
                         <div className="h-20 w-20 rounded-full border-4 border-indigo-100 flex items-center justify-center bg-indigo-50">
                             <span className="text-3xl font-black text-indigo-600">{score}</span>
                         </div>
                     </div>
+                    {domain !== 'overall' && (
+                        <p className="text-xs text-slate-600 mb-3 leading-snug">
+                            <span className="font-bold">100 =</span> {goalAfterEquals(DOMAIN_GOALS[domain])}
+                        </p>
+                    )}
                     {renderContent()}
+                    {weight !== undefined && (
+                        <p className="text-xs text-slate-500 mt-4 pt-3 border-t border-slate-100 leading-snug">
+                            This factor carries {pct(weight)} of the overall score under the {profileLabel} weighting.
+                        </p>
+                    )}
                 </div>
                 <div className="bg-slate-50 p-3 text-center border-t border-slate-100">
                     <button onClick={onClose} className="text-sm font-bold text-indigo-600 hover:text-indigo-800" aria-label="Close score details">Close</button>

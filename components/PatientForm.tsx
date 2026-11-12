@@ -1,6 +1,10 @@
 import React, { useEffect, useMemo } from 'react';
 import type { Patient, TestScenario } from '../types';
-import { Label, Select } from './patient-form/Common';
+import { Label, Select, REQUIRED_FIELDS } from './patient-form/Common';
+import { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_CEILING, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from '../services/simulationService';
+import { derivedFields } from '../services/clinicalPredicates';
+import { isLowOutputState } from '../services/engine/regimenUtils';
+import { RAAS_START_K_CAUTION } from '../services/engine/thresholds';
 import { DemographicsSection } from './patient-form/DemographicsSection';
 import { SymptomsSection } from './patient-form/SymptomsSection';
 import { PhysicalExamSection } from './patient-form/PhysicalExamSection';
@@ -15,61 +19,35 @@ interface PatientFormProps {
     simulationMedicationNames: Set<string>;
     setSimulationMedicationNames: React.Dispatch<React.SetStateAction<Set<string>>>;
     onRunSimulation: () => void;
+    /** Reports whether the form currently has blocking input errors, so every way of running the analysis (the form button AND the "Re-run" button on the results) obeys them. */
+    onValidityChange?: (hasErrors: boolean) => void;
     pricesReady: boolean;
     testScenarios: TestScenario[];
     selectedScenario: string;
     onScenarioChange: (title: string) => void;
 }
 
-// CKD-EPI Creatinine Equation (2021 Refit)
-const calculateCKDEPI = (scr: number, age: number, sex: 'Male' | 'Female'): number => {
-    if (!scr || !age) return 0;
-
-    // Kappa: 0.7 (female), 0.9 (male)
-    const kappa = sex === 'Female' ? 0.7 : 0.9;
-    // Alpha: -0.241 (female), -0.302 (male)
-    const alpha = sex === 'Female' ? -0.241 : -0.302;
-
-    // Factors
-    const scrOverKappa = scr / kappa;
-    const minPart = Math.min(scrOverKappa, 1);
-    const maxPart = Math.max(scrOverKappa, 1);
-
-    // 142 * (min^alpha) * (max^-1.200) * (0.9938^age) * (1.012 if female)
-    let egfr = 142 * Math.pow(minPart, alpha) * Math.pow(maxPart, -1.200) * Math.pow(0.9938, age);
-
-    if (sex === 'Female') {
-        egfr *= 1.012;
-    }
-
-    return Math.round(egfr);
-};
-
 export const PatientForm: React.FC<PatientFormProps> = ({
     patientData, setPatientData,
-    onRunSimulation, pricesReady,
+    onRunSimulation, onValidityChange, pricesReady,
     testScenarios, selectedScenario, onScenarioChange
 }) => {
 
-    // Auto-calculate eGFR whenever Age, Sex, or Creatinine changes
+    // eGFR and BMI are computed, not entered: one shared function (clinicalPredicates.derivedFields), which the sample-patient fixtures also satisfy.
     useEffect(() => {
-        const calculatedEgfr = calculateCKDEPI(patientData.creatinine, patientData.age, patientData.sex);
-        if (calculatedEgfr !== patientData.egfr) {
-            setPatientData(prev => ({ ...prev, egfr: calculatedEgfr }));
-        }
-    }, [patientData.creatinine, patientData.age, patientData.sex, setPatientData, patientData.egfr]);
+        const d = derivedFields(patientData);
+        // A non-finite derived value (e.g. a negative creatinine) is the blank sentinel 0; NaN never goes into state (NaN !== NaN would loop).
+        const egfr = Number.isFinite(d.egfr) ? d.egfr : 0;
+        const bmi = Number.isFinite(d.bmi) ? d.bmi : 0;
+        if (!Object.is(egfr, patientData.egfr) || !Object.is(bmi, patientData.bmi)) setPatientData(prev => ({ ...prev, egfr, bmi }));
+    }, [patientData, setPatientData]);
 
-    // Auto-calculate BMI whenever Height or Weight changes
+    // Rhythm AFib records the atrial fibrillation history (the comorbidity) so the two cannot disagree.
     useEffect(() => {
-        const h = patientData.height_cm / 100; // Convert to meters
-        const w = patientData.volume_status.current_weight_kg;
-        if (h > 0 && w > 0) {
-            const calculatedBmi = Number((w / (h * h)).toFixed(1));
-            if (calculatedBmi !== patientData.bmi) {
-                setPatientData(prev => ({ ...prev, bmi: calculatedBmi }));
-            }
+        if (patientData.rhythm === 'AFib' && !patientData.comorbidities.has('Atrial Fibrillation')) {
+            setPatientData(prev => ({ ...prev, comorbidities: new Set(prev.comorbidities).add('Atrial Fibrillation') }));
         }
-    }, [patientData.volume_status.current_weight_kg, patientData.height_cm, setPatientData, patientData.bmi]);
+    }, [patientData.rhythm, patientData.comorbidities, setPatientData]);
 
     // --- 2a. Physiologic validation bounds ---
     // LVEF max 80 matches the engine hard-stop (validatePhysiologicBounds flags > 80 as implausible).
@@ -84,9 +62,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         kccq_score: { min: 0, max: 100, label: 'KCCQ' },
         potassium: { min: 2.0, max: 8.0, label: 'K+' },
         creatinine: { min: 0.2, max: 15, label: 'Creatinine' },
+        baseline_creatinine: { min: 0.2, max: 15, label: 'Baseline creatinine' },
         bun: { min: 2, max: 200, label: 'BUN' },
         ferritin: { min: 1, max: 2000, label: 'Ferritin' },
         tsat: { min: 1, max: 100, label: 'TSAT' },
+        hemoglobin: { min: 3, max: 25, label: 'Hemoglobin' },
         oxygen_saturation: { min: 50, max: 100, label: 'SpO2' },
         lvedd: { min: 20, max: 100, label: 'LVEDD' },
         lavi: { min: 10, max: 80, label: 'LAVI' },
@@ -98,13 +78,9 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         max_affordable_cost: { min: 0, max: 100000, label: 'Monthly Budget' },
     };
 
-    // Fields the engine requires — clearing one must disable Run Analysis rather than
-    // silently feeding undefined/NaN into the scoring math. Genuinely optional fields
-    // (SpO2, ferritin, TSAT, LVEDD, LAVI, prior LVEF, steps, peak flow) skip when blank.
-    const REQUIRED_FIELDS = new Set([
-        'age', 'height_cm', 'sbp', 'dbp', 'pulse', 'lvef', 'nt_pro_bnp', 'kccq_score',
-        'potassium', 'creatinine', 'bun', 'dry_weight_kg', 'current_weight_kg', 'max_affordable_cost',
-    ]);
+    // Required inputs live in patient-form/Common (REQUIRED_FIELDS) so the labels and this check agree.
+    // Potassium and creatinine may be left blank: the engine reads a blank as "not entered".
+    const BLANK_MEANS_NOT_ENTERED = new Set(['potassium', 'creatinine', 'baseline_creatinine']);
 
     // --- 2b. Validation errors ---
     const validationErrors = useMemo(() => {
@@ -112,6 +88,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         const check = (field: string, value: number | undefined) => {
             const bounds = VALIDATION_BOUNDS[field];
             if (!bounds) return;
+            if (BLANK_MEANS_NOT_ENTERED.has(field) && (value === undefined || value === null || Number.isNaN(value) || value === 0)) return;
             if (value === undefined || value === null || Number.isNaN(value)) {
                 if (REQUIRED_FIELDS.has(field)) errors[field] = `${bounds.label} is required`;
                 return;
@@ -130,9 +107,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         check('kccq_score', patientData.kccq_score);
         check('potassium', patientData.potassium);
         check('creatinine', patientData.creatinine);
+        check('baseline_creatinine', patientData.baseline_creatinine);
         check('bun', patientData.bun);
         check('ferritin', patientData.ferritin);
         check('tsat', patientData.tsat);
+        check('hemoglobin', patientData.hemoglobin);
         check('oxygen_saturation', patientData.oxygen_saturation);
         check('lvedd', patientData.lvedd);
         check('lavi', patientData.lavi);
@@ -152,37 +131,65 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     // --- 2c. Clinical warnings ---
     const clinicalWarnings = useMemo(() => {
         const warnings: Record<string, string> = {};
-        const bunCrRatio = patientData.creatinine > 0 ? patientData.bun / patientData.creatinine : 0;
-        const pulsePressure = patientData.sbp - patientData.dbp;
         const hasInvalidBP = patientData.sbp <= patientData.dbp;
-        const hasLowOutputMarker = !hasInvalidBP && (patientData.volume_status.exam_findings.has('Cool Extremities') || pulsePressure <= 25 || bunCrRatio > 20);
 
         if (hasInvalidBP) warnings.sbp = 'Invalid BP entry: SBP must exceed DBP';
-        else if (patientData.sbp < 90) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
-        if (patientData.potassium > 5.5) warnings.potassium = 'MRA contraindicated at K+ > 5.5';
-        else if (patientData.potassium < 3.5) warnings.potassium = 'K+ < 3.5 increases digoxin/arrhythmia risk';
-        else if (patientData.potassium < 4.0) warnings.potassium = 'K+ 3.5-4.0: monitor closely with loop diuretics/digoxin';
-        else if (patientData.potassium > 5.0) warnings.potassium = 'Elevated K+ - MRA/RAAS risk';
-        if (patientData.is_pregnant) warnings.pregnancy = 'RAAS/MRA/nsMRA/SGLT2i excluded';
+        else if (patientData.sbp < HYPOTENSION_SBP_BELOW) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
+        // Potassium 0 / blank means "not entered" (the engine withholds K+-dependent conclusions).
+        if (!(patientData.potassium > 0)) warnings.potassium = 'Not entered: RAAS inhibitor and MRA decisions will be withheld until a potassium is available';
+        // The hint states what the engine does at each level (same constants the rules read).
+        else if (patientData.potassium >= 6.5) warnings.potassium = 'K+ 6.5 or higher: emergency alert only, no drug recommendations will be generated';
+        else if (patientData.potassium >= 6.0) warnings.potassium = 'K+ 6.0 or higher: hyperkalemia emergency alert; RAAS inhibitors and MRAs in use are withheld and none is started';
+        else if (patientData.potassium > MRA_START_K_MAX) warnings.potassium = 'High K+: a new MRA is not started; an MRA already on board is reduced or withheld';
+        else if (patientData.potassium < HYPOKALEMIA_K_BELOW) warnings.potassium = `K+ < ${HYPOKALEMIA_K_BELOW} increases digoxin/arrhythmia risk`;
+        else if (patientData.potassium > RAAS_START_K_CAUTION) warnings.potassium = `K+ above ${RAAS_START_K_CAUTION}: a new MRA and a new ACE inhibitor, ARB or ARNI are not started; recheck potassium first`;
+        else if (patientData.potassium >= MRA_START_K_CEILING) warnings.potassium = `K+ ${MRA_START_K_CEILING} or higher: a new MRA is not started; recheck potassium and start once it is below ${MRA_START_K_CEILING}`;
+        if (patientData.is_pregnant) warnings.pregnancy = 'RAAS inhibitors, MRAs, SGLT2 inhibitors, vericiguat, ivabradine and GLP-1 therapies are excluded';
         if (patientData.nyha_class === 'IV') warnings.nyha = 'BB initiation blocked';
-        if (patientData.pulse < 55) warnings.pulse = 'Severe bradycardia - BB contraindicated';
+        if (patientData.pulse < BB_HR_BELOW) warnings.pulse = 'Low heart rate: a new beta-blocker is not started and an established one is reduced a step below 55 bpm for carvedilol (label) or below 50 bpm for metoprolol succinate and bisoprolol (2026 ESC)';
         if (patientData.rhythm === '2nd Degree AV Block' || patientData.rhythm === '3rd Degree AV Block') {
             warnings.av_block = 'AV block present: beta blockers and digoxin are contraindicated unless paced/specialist-directed.';
         }
-        // eGFR tiers mirror the engine: steroidal MRA CI < 30 (RAAS dose-limited); SGLT2i/finerenone
-        // initiation blocked < 25 (continuation allowed); loop-response note appended < 20.
-        if (patientData.egfr < 30) {
-            const egfrNotes = ['Severe CKD - MRA contraindicated, RAAS doses limited.'];
-            if (patientData.egfr < 25) egfrNotes.push('SGLT2i/Finerenone initiation blocked (continuation of an existing SGLT2i allowed).');
-            if (patientData.egfr < 20) egfrNotes.push('eGFR < 20: loop response may be poor; consider BID/TID strategy.');
-            warnings.egfr = egfrNotes.join(' ');
+        // Low or unknown eGFR changes which drugs are offered and at what dose; the exact cut-offs differ by
+        // drug (and are shown with the reason after the analysis runs), so this hint does not restate them.
+        if (patientData.egfr > 0 && patientData.egfr < SEVERE_CKD_EGFR_BELOW) {
+            warnings.egfr = 'Severe CKD: several drugs are withheld or dose-limited (MRAs, RAAS inhibitors, SGLT2 inhibitors). Run the analysis to see which, and why.';
+        } else if (!(patientData.egfr > 0)) {
+            warnings.egfr = 'Creatinine not entered: renal-dependent decisions will be withheld until a creatinine is available.';
         }
-        if (patientData.lvef < 20 && hasLowOutputMarker) warnings.low_output = 'Low-output profile detected (LVEF < 20 with hypoperfusion markers)';
+        // Same rule the engine applies (LVEF below 20 with at least TWO of: cool extremities, narrow pulse pressure, BUN/creatinine above 20), not one marker.
+        if (isLowOutputState(patientData)) warnings.low_output = `Low-output profile detected (LVEF < ${LOW_OUTPUT.lvefBelow} with hypoperfusion markers)`;
         return warnings;
     }, [patientData]);
 
     // --- 2d. Disable simulation when validation errors exist ---
     const hasValidationErrors = Object.keys(validationErrors).length > 0;
+    useEffect(() => { onValidityChange?.(hasValidationErrors); }, [hasValidationErrors, onValidityChange]);
+
+    // The sample list is long (clinical cases plus per-medication review cases); group it so the
+    // everyday cases are not buried. Titles like "Rate-Source ..." belong to a medication-review group.
+    const scenarioGroups = useMemo(() => {
+        const groups = new Map<string, string[]>();
+        const order: string[] = [];
+        for (const sc of testScenarios) {
+            const m = /^([A-Za-z0-9]+)-Source /.exec(sc.title);
+            const label = m ? `Medication review: ${m[1]}` : 'Clinical cases';
+            if (!groups.has(label)) { groups.set(label, []); order.push(label); }
+            groups.get(label)!.push(sc.title);
+        }
+        return order.map(label => ({ label, titles: groups.get(label)! }));
+    }, [testScenarios]);
+
+    const focusField = (field: string) => {
+        const el = document.getElementById(field);
+        el?.scrollIntoView({ block: 'center' });
+        (el as HTMLElement | null)?.focus();
+    };
+    // The blank form keeps engine-required defaults the clinician has not chosen; say so until any of them is edited.
+    const showPrefilledNotice = selectedScenario === 'custom' && patientData.sex === 'Male' && patientData.race === 'White'
+        && patientData.insurance_tier === 'commercial' && patientData.max_affordable_cost === 100
+        && patientData.cost_sensitivity === 5 && patientData.complexity_tolerance === 5 && patientData.max_new_classes_per_visit === 2;
+    const problemEntries = Object.entries(validationErrors);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
@@ -190,9 +197,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         const isNumber = type === 'number' || type === 'range';
 
         setPatientData(prev => {
+            // Blank potassium/creatinine is stored as the engine's "not entered" sentinel (0), never undefined.
+            const blankValue = (name === 'potassium' || name === 'creatinine') ? 0 : undefined;
             const next: Patient = {
                 ...prev,
-                [name]: value === '' && isNumber ? undefined : (isNumber ? Number(value) : value)
+                [name]: value === '' && isNumber ? blankValue : (isNumber ? Number(value) : value)
             };
             // A stale pregnancy flag must never persist invisibly after sex leaves 'Female'
             // (the checkbox is only rendered for Female patients).
@@ -212,7 +221,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         setPatientData(prev => {
             const next = new Set(prev.volume_status.exam_findings);
             if (next.has(finding)) next.delete(finding);
-            else next.add(finding);
+            else {
+                // Edema has ONE grade: choosing a grade clears the others (two grades used to count as two congestion findings).
+                if (finding.startsWith('Edema')) [...next].filter(f => f.startsWith('Edema')).forEach(f => next.delete(f));
+                next.add(finding);
+            }
             return {
                 ...prev,
                 volume_status: { ...prev.volume_status, exam_findings: next }
@@ -223,18 +236,27 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     return (
         <div className="flex flex-col h-full bg-white">
             <div className="bg-slate-50 p-5 border-b border-slate-200">
-                <Label htmlFor="scenarios">Load Patient Profile</Label>
+                <Label htmlFor="scenarios">Load a sample patient, or start blank</Label>
                 <Select
                     id="scenarios"
                     value={selectedScenario}
                     onChange={(e) => onScenarioChange(e.target.value)}
                 >
-                    {testScenarios.map(s => <option key={s.title} value={s.title}>{s.title}</option>)}
-                    <option value="custom">Custom Profile</option>
+                    <option value="custom">Custom profile (blank form)</option>
+                    {scenarioGroups.map(g => (
+                        <optgroup key={g.label} label={g.label}>
+                            {g.titles.map(t => <option key={t} value={t}>{t}</option>)}
+                        </optgroup>
+                    ))}
                 </Select>
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                {showPrefilledNotice && (
+                    <p role="status" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                        Pre-filled defaults to review: sex Male, race White, commercial insurance, budget $100/month, 2 new drug classes per visit.
+                    </p>
+                )}
                 <DemographicsSection patientData={patientData} onChange={handleInputChange} validationErrors={validationErrors} />
                 <SymptomsSection patientData={patientData} onChange={handleInputChange} validationErrors={validationErrors} clinicalWarnings={clinicalWarnings} />
                 <PhysicalExamSection
@@ -251,7 +273,19 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                 <SocialSection patientData={patientData} onChange={handleInputChange} setPatientData={setPatientData} validationErrors={validationErrors} clinicalWarnings={clinicalWarnings} />
             </div>
 
-            <div className="p-5 border-t border-slate-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+            <div className="sticky bottom-0 p-5 border-t border-slate-200 bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10">
+                {problemEntries.length > 0 && (
+                    <div className="mb-3 rounded-md border border-red-200 bg-red-50 px-3 py-2" role="status">
+                        <p className="text-xs font-bold text-red-800 mb-1">Before you can run the analysis ({problemEntries.length}):</p>
+                        <ul className="text-xs text-red-700 space-y-0.5 max-h-24 overflow-y-auto">
+                            {problemEntries.map(([field, msg]) => (
+                                <li key={field}>
+                                    <button type="button" onClick={() => focusField(field)} className="underline text-left hover:text-red-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded">{msg}</button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
                 <button
                     onClick={onRunSimulation}
                     disabled={hasValidationErrors || !pricesReady}
@@ -259,6 +293,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                 >
                     {!pricesReady ? 'Loading Prices...' : hasValidationErrors ? 'Fix Errors to Run Analysis' : 'Run Analysis'}
                 </button>
+                <p className="mt-2 text-[11px] text-slate-500 text-center"><span className="text-rose-600" aria-hidden="true">*</span> required. Potassium and creatinine may be left blank if not yet available.</p>
             </div>
         </div>
     );

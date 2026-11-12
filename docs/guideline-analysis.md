@@ -31,21 +31,16 @@ Guideline-concordance scoring rewards:
 - pillar presence
 - target-dose achievement
 
-### HFmrEF (`LVEF 41-49`)
+### Reduced EF (`LVEF < 50`, improved EF, or a prior LVEF < 50)
 
-Implemented as weighted intermediate pathway:
+Since 2026-11-11 (2026 ESC guideline; HFmrEF is removed) LVEF 41-49 scores exactly like LVEF 40 or lower: four Class I pillars, 20 points each, plus 5 per pillar at target.
+The 2022 AHA/ACC/HFSA guideline keeps a separate mildly reduced category with weaker recommendations, and no large trial tested beta-blockers or RAAS inhibitors only in
+this range. Drug-specific LVEF criteria keep their own evidence thresholds (digoxin and H/ISDN 40, ivabradine 35, vericiguat 45, GLP-1 45/50, IV iron below 50, finerenone 40).
 
-- stronger points for RAAS and SGLT2i
-- lower weight for BB and MRA relative to HFrEF
-- volume-management contribution
+### HFpEF (`LVEF >= 50` and never below 50)
 
-### HFpEF (`LVEF >= 50`)
-
-Implemented as SGLT2i-first framework with adjunct options:
-
-- SGLT2i primary scoring contribution
-- volume-management reward
-- adjunct MRA/nsMRA logic
+SGLT2i (45, +10 at target) and MRA (30, +5 at target), both Class I, plus volume management (10). A RAAS inhibitor is Class IIb: a small credit (4), never a gap or a slot.
+- finerenone is the alternative MRA offered as an extra option
 - obesity phenotype pathway allows GLP-1 class consideration
 
 ### HFimpEF Preservation

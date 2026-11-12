@@ -1,0 +1,31 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 738 runs
+  (a) top pick identical:        738 / 738
+  (b) displayed pick set same:   738 / 738
+  (c) pick order identical:      738 / 738
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: NO (17 regimens)
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+Warning differences:
+  Negated Free-Text Intolerance Detail :: cash: Dapagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: cash: Furosemide 20mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: cash: Digoxin 62.5mcg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: commercial: Dapagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: commercial: Empagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: commercial: Furosemide 20mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: medicare: Dapagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: medicare: Empagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: medicare: Furosemide 20mg qd + Ramipril 5mg qd
+  Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded :: cash: Dapagliflozin 10mg qd + Ramipril 1.25mg qd + Spironolactone 25mg qd
+  Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded :: commercial: Dapagliflozin 10mg qd + Ramipril 1.25mg qd + Spironolactone 25mg qd
+  Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded :: medicare: Dapagliflozin 10mg qd + Ramipril 1.25mg qd + Spironolactone 25mg qd
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 5mg bid + Spironolactone 25mg qd
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ramipril 5mg bid + Spironolactone 50mg qd
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 5mg bid + Spironolactone 25mg qd
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 5mg bid + Spironolactone 25mg qd
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ramipril 5mg bid + Spironolactone 50mg qd

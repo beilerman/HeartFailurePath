@@ -5,8 +5,9 @@ interface ErrorBoundaryState {
     error: Error | null;
 }
 
-export class ErrorBoundary extends React.Component<React.PropsWithChildren, ErrorBoundaryState> {
-    constructor(props: React.PropsWithChildren) {
+/** `compact`: a message in place of the failed section only (the rest of the app, including the entered patient, stays usable). */
+export class ErrorBoundary extends React.Component<React.PropsWithChildren<{ compact?: boolean }>, ErrorBoundaryState> {
+    constructor(props: React.PropsWithChildren<{ compact?: boolean }>) {
         super(props);
         this.state = { hasError: false, error: null };
     }
@@ -20,6 +21,14 @@ export class ErrorBoundary extends React.Component<React.PropsWithChildren, Erro
     }
 
     render() {
+        if (this.state.hasError && this.props.compact) {
+            return (
+                <div role="alert" className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
+                    <p className="font-bold mb-1">The results could not be displayed.</p>
+                    <p>Your patient entries are unchanged. Run the analysis again; if this repeats, note the inputs and report it. {this.state.error?.message}</p>
+                </div>
+            );
+        }
         if (this.state.hasError) {
             return (
                 <div className="h-screen w-screen flex items-center justify-center bg-slate-50 p-8">

@@ -19,7 +19,7 @@ export const DemographicsSection: React.FC<DemographicsSectionProps> = ({ patien
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <Label htmlFor="age">Age</Label>
-                    <Input type="number" name="age" value={patientData.age ?? ''} onChange={onChange} error={validationErrors.age} />
+                    <Input type="number" min={0} name="age" value={patientData.age ?? ''} onChange={onChange} error={validationErrors.age} />
                 </div>
                 <div>
                     <Label htmlFor="sex">Sex</Label>
@@ -41,11 +41,11 @@ export const DemographicsSection: React.FC<DemographicsSectionProps> = ({ patien
                 <div className="grid grid-cols-2 gap-2">
                     <div>
                         <Label htmlFor="height_cm">Height (cm)</Label>
-                        <Input type="number" name="height_cm" value={patientData.height_cm ?? ''} onChange={onChange} error={validationErrors.height_cm} />
+                        <Input type="number" min={0} name="height_cm" value={patientData.height_cm ?? ''} onChange={onChange} error={validationErrors.height_cm} />
                     </div>
                     <div>
                         <Label htmlFor="bmi">BMI</Label>
-                        <Input type="number" name="bmi" value={patientData.bmi} readOnly className="!bg-slate-100 !text-slate-600 focus:outline-none" />
+                        <Input type="number" name="bmi" value={patientData.bmi || ''} readOnly className="!bg-slate-100 !text-slate-600 focus:outline-none" />
                     </div>
                 </div>
             </div>
