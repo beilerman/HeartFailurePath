@@ -102,3 +102,9 @@ export const LOW_OUTPUT = { lvefBelow: 20, pulsePressureMax: 25, bunCrAbove: 20 
  * forced reductions are not governed by this factor.
  */
 export const UP_TITRATION_MAX_DAILY_FACTOR = 2;
+
+/**
+ * The engine's congestion criterion for diuretic decisions: more than this many kg above dry weight. One definition: the loop-diuretic start (candidates.ts), the
+ * diuretic-resistance rule (regimenUtils.ts) and the congestion-coverage selection step (selection.ts) all read it. Policy, unchanged from the earlier literal 1.0.
+ */
+export const CONGESTION_EXCESS_KG_ABOVE = 1.0;

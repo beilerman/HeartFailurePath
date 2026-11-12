@@ -181,6 +181,9 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                             <span className="bg-red-100 text-red-800 text-xs font-bold px-2 py-0.5 rounded border border-red-300">Over budget: not affordable as entered</span>
                         )}
                     </div>
+                    {regimen.shown_because && (
+                        <p className="text-xs font-semibold text-sky-800 bg-sky-50 border border-sky-200 rounded px-2 py-1 mb-3">{regimen.shown_because}</p>
+                    )}
                     {showFoundationalCoverage && regimen.foundational_coverage !== undefined && (
                         <p className="text-xs font-semibold text-slate-600 mb-3">Foundational coverage {Math.round(regimen.foundational_coverage)}%</p>
                     )}

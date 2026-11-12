@@ -17,7 +17,7 @@ numbered comment in it is one stage below.
 | 4 | Eligibility | `eligibility.ts` | Which drugs cannot be offered, by numbered rule |
 | 5 | Enumerate | `candidates.ts` | Changes to the current regimen: add, titrate, swap, remove, keep |
 | 6 | Score | `scoring.ts`, `effects.ts`, `domains.ts`, `scoreModel.ts` | A number for each candidate |
-| 7 | Rank and select | `selection.ts` | Affordability, display-safety floors, up to 3 distinct picks |
+| 7 | Rank and select | `selection.ts` | Affordability, display-safety floors, up to 3 distinct picks, then the congestion-coverage step |
 | 8 | Explain | `explain.ts` | Monitoring plan, projections, trade-offs, follow-up |
 
 Unlike GlucosePATH, stage 5 does not try every combination. Heart-failure care is titration of an
@@ -159,6 +159,8 @@ because the balanced lead is set aside by step 1: `Jane Smith (Dry & Cold)` unde
 carvedilol 3.125 mg bid + dapagliflozin, 40% coverage; foundational lead lisinopril 2.5 mg, 15%).
 
 Graded dose credit (2026-11-11, final pass): the old flat 0.6 for any dose below target gave a titration step (carvedilol 3.125 to 6.25 mg) no credit, so it lost to unrelated changes. `COMPLETENESS_GRADED_CREDIT_BASE` 0.5 and `_SPAN` 0.5 (`scoreModel.ts`) make the credit 0.5 + 0.5 x min(1, daily dose / target daily dose). Basis: higher doses give lower event rates (2026 ESC section 6.1.6: composite event rates were lower with target than lower doses); the linear shape is engine policy. The denominator is the patient-specific target (`doseFractionOfTarget`: `facts.target_daily_dose`, else the lowest strength `is_target_dose_for` accepts, else the `is_target_dose` flag). The guideline-concordance domain still uses the at-target boolean. The distinct-pick rule also treats two regimens with the same drugs as distinct when different drugs are dose-changed (titrate carvedilol versus titrate spironolactone), so a one-step beta-blocker titration is not hidden behind another titration. Effect: `changes-final-graded-dose-credit.txt`.
+
+Congestion coverage (2026-11-11, final pass; `ensureCongestionCoverage` in `selection.ts`, a named pure step after distinct-pick selection, no score change): ESC 2026 dosing the loop diuretic to volume status for congestion is Class I A, so when the patient meets the engine's congestion criterion (more than `CONGESTION_EXCESS_KG_ABOVE` = 1.0 kg above dry weight, `isCongestedAboveDryWeight`, the same predicate the loop start and the diuretic-resistance rule use) and no displayed option raises or starts a loop diuretic, the best-ranked display-safe candidate that does is shown: it replaces the LAST option when three are shown, else is appended. Option 1 is never displaced, the display floors and the budget rule still apply (in the over-budget fallback the cheapest loop candidate is used), both ranking modes behave the same, and the added option carries the explanation-only `shown_because` line (card and copy-to-chart text). A loop candidate exists only if the engine's own hold rules allow an increase (volume depletion, loop at its maximum daily dose, hypotension). Effect: `changes-final-congestion-coverage.txt`.
 
 Known limit: a fully dosed pillar can still outrank a different pillar at its starting dose, and a starting dose that is a large share of target (eplerenone 25 mg of 50) earns more credit than one that is a small share (spironolactone 12.5 mg of 50).
 Over-budget fallback regimens are ordered the same way, and the UI marks them as not affordable at the stated budget.

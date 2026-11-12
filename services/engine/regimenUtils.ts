@@ -3,7 +3,7 @@ import { Patient, Medication, MedicationDose, ScoredRegimen, RegimenMed, Modific
 import { hasUnknownHistoricalHFrEF, valueUnknown } from '../clinicalPredicates';
 import { getMedicationClassGroup, isDiureticClass, MRA_POOL_CLASSES } from './registry';
 import { drugFacts } from './drugFacts';
-import { LOW_OUTPUT } from './thresholds';
+import { LOW_OUTPUT, CONGESTION_EXCESS_KG_ABOVE } from './thresholds';
 
 // --- Helper Functions ---
 const DOSES_PER_DAY: Record<string, number> = { qd: 1, bid: 2, tid: 3 };
@@ -329,13 +329,17 @@ export function computeRedundantCurrentMeds(
 // H2 fix: Require ≥2 of 3 hypoperfusion markers to avoid false positives from a single
 // nonspecific finding (e.g., BUN/Cr > 20 alone from dehydration, not true low output).
 // Markers: (1) cool extremities, (2) narrow pulse pressure ≤ 25, (3) prerenal azotemia BUN/Cr > 20.
+/** Congested by the engine's weight criterion: current weight more than CONGESTION_EXCESS_KG_ABOVE kg above dry weight. */
+export function isCongestedAboveDryWeight(patient: Patient): boolean {
+    return patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg > CONGESTION_EXCESS_KG_ABOVE;
+}
+
 /**
  * Diuretic resistance as the engine defines it (2026 ESC Supplementary Table S7 context): the patient stays congested (more than 1 kg above dry weight) on a loop at its
  * HIGH daily dose (the entry's own `facts.high_dose_threshold`). Shared by the loop-swap rule and the advanced-HF referral markers.
  */
 export function isLoopDiureticResistant(patient: Patient, loop: RegimenMed): boolean {
-    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
-    return loop.med.drug_class === 'Loop Diuretic' && fluidExcess > 1.0
+    return loop.med.drug_class === 'Loop Diuretic' && isCongestedAboveDryWeight(patient)
         && (drugFacts(loop.med).high_dose_threshold ?? Infinity) <= dailyDose(loop);
 }
 

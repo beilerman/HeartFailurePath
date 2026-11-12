@@ -3,7 +3,7 @@ import { Patient, Medication, RegimenMed, ModificationAction, RegimenModificatio
 import { drugFacts } from './drugFacts';
 import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
-import { isLoopDiureticResistant, adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
+import { isCongestedAboveDryWeight, isLoopDiureticResistant, adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication, MRA_POOL_CLASSES } from './intolerance';
 import { assessCreatinineChange } from './renalChange';
 import { UP_TITRATION_MAX_DAILY_FACTOR } from './thresholds';
@@ -466,7 +466,7 @@ export function analyzeCurrentRegimen(
     }
 
     // Diuretics if congested and not already on one (an oral loop is started; a short-course add-on is never the first loop)
-    if (fluidExcess > 1.0 && !currentClasses.has('Loop Diuretic')) {
+    if (isCongestedAboveDryWeight(patient) && !currentClasses.has('Loop Diuretic')) {
         const loopTiers = medTiers.filter(r => r.med.drug_class === 'Loop Diuretic' && !drugFacts(r.med).short_course_addon);
         // New loop start: the LOWEST tier of the first loop agent (start low, titrate to the weight response). The sampled tier list is
         // [lowest, highest, ...], and its "highest" tier is a titration step, not a start (furosemide 160 mg, i.e. 2 x 80 mg twice daily).

@@ -1,10 +1,11 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
 import { isProjectedSafetyClean } from '../services/engine/selection';
-import { getDoseTiers, dailyDose, doseFractionOfTarget, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
+import { getDoseTiers, dailyDose, doseFractionOfTarget, isCongestedAboveDryWeight, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
 import { isAcutelyDecompensated } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
 import { UP_TITRATION_MAX_DAILY_FACTOR } from '../services/engine/thresholds';
+import { includesLoopIncrease } from '../services/engine/selection';
 import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary } from '../services/engine/candidates';
 import { simulateModificationEffect, patientChfEffects } from '../services/engine/effects';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
@@ -4040,6 +4041,43 @@ async function runVerification() {
         const a = at(3.125), b = at(6.25), c = at(25);
         if (a === undefined || b === undefined || c === undefined || !(a < b && b < c) || Math.abs(c - 1) > 1e-9) { console.error(`  [FAIL] carvedilol dose fractions not graded to target: ${a}, ${b}, ${c}`); failed++; }
         else { console.log(`  [PASS] carvedilol 3.125 / 6.25 / 25 mg bid = ${a.toFixed(3)} / ${b.toFixed(3)} / ${c.toFixed(3)} of the target daily dose.`); passed++; }
+    }
+
+    console.log('Checking structural invariant: a congested patient on a loop with a possible increase is shown a loop increase...');
+    {
+        // Congestion criterion = the engine's own (isCongestedAboveDryWeight). "A candidate exists" = the engine offers a loop up-titration (its own hold rules passed).
+        // Exceptions are reported, not hidden: a loop option whose projected state breaks a display floor is never shown.
+        const violations: string[] = [];
+        let checked = 0, relevant = 0, tagged = 0;
+        for (const scenario of SCENARIOS) {
+            for (const tier of ['cash', 'commercial', 'medicare'] as const) {
+                const pt = clonePatient(scenario.patient);
+                pt.insurance_tier = tier;
+                const prices = await getDrugPrices(formularyNames, tier);
+                for (const mode of ['balanced', 'foundational_first'] as const) {
+                    const p = { ...clonePatient(pt), ranking_mode: mode };
+                    const out = generateAndScoreModifications(p, availableFor(scenario.title), prices);
+                    checked++;
+                    if (out.scoredRegimens.length === 0 || !isCongestedAboveDryWeight(p)) continue;
+                    const formularyNow = MEDICATION_FORMULARY.filter(m => availableFor(scenario.title).has(m.name));
+                    const up = analyzeCurrentRegimen(p, formularyNow, formularyNow.flatMap(m => getDoseTiers(m, p))).titratableUp.some(x => x.current.med.drug_class === 'Loop Diuretic');
+                    for (const r of out.scoredRegimens) if (r.shown_because) tagged++;
+                    if (out.scoredRegimens[0].shown_because) violations.push(`"${scenario.title}" [${tier}/${mode}]: option 1 carries shown_because (it must never be displaced or tagged)`);
+                    if (!up) continue;
+                    relevant++;
+                    const has = out.scoredRegimens.some(r => includesLoopIncrease(r));
+                    if (!has) violations.push(`"${scenario.title}" [${tier}/${mode}]: congested on a loop with an increase available, but no displayed option raises the loop`);
+                }
+            }
+        }
+        if (violations.length > 0 || relevant === 0) {
+            violations.slice(0, 10).forEach(v => console.error(`  [FAIL] ${v}`));
+            if (relevant === 0) console.error('  [FAIL] no congested loop case was checked (vacuous)');
+            failed++;
+        } else {
+            console.log(`  [PASS] ${relevant} congested scenario x tier x mode runs with a possible loop increase all display one (${tagged} options were added by the congestion step; ${checked} runs examined).`);
+            passed++;
+        }
     }
 
     console.log('Checking structural invariant: eligibility rule ids are unique/ascending and every exclusion carries one...');

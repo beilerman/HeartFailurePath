@@ -8,7 +8,8 @@ import { drugFacts } from './drugFacts';
 import { getMedicationClassGroup } from './registry';
 import { classifyPhenotype } from './domains';
 import { SCORE_ADJUSTMENTS } from './scoreModel';
-import { formatDose } from './regimenUtils';
+import { formatDose, isCongestedAboveDryWeight } from './regimenUtils';
+import { CONGESTION_EXCESS_KG_ABOVE } from './thresholds';
 
 /**
  * Hard display floors on the PROJECTED state: a regimen that projects past any of these is never
@@ -95,6 +96,7 @@ export function chooseDisplayPicks(
 ): { picks: ScoredRegimen[]; allUnsafe: boolean } {
     const affordableRegimens = results.filter(r => r.cost <= patient.max_affordable_cost);
     let outputRegimens: ScoredRegimen[] = [];
+    let extraPool: ScoredRegimen[] = [];
 
     if (affordableRegimens.length > 0) {
         outputRegimens = affordableRegimens.sort(cmp);
@@ -109,10 +111,14 @@ export function chooseDisplayPicks(
             ? 'No zero-copay regimen found. Add covered medications or raise budget.'
             : 'Increase budget to find valid options.';
         // Owner decision 2026-11-11: an option the patient cannot afford must not read as an implementable plan.
-        outputRegimens = cheapest.map(r => ({
+        const flagOverBudget = (r: ScoredRegimen): ScoredRegimen => ({
             ...r,
             warnings: [`BUDGET EXCEEDED: nothing fits the stated budget. Cheapest option ($${r.cost}) is shown for discussion, not as a plan the patient can carry out. ${budgetMessage}`, ...r.warnings]
-        }));
+        });
+        outputRegimens = cheapest.map(flagOverBudget);
+        // Congestion coverage (below) may need a loop candidate outside the five cheapest: offer the cheapest one, flagged the same way.
+        const cheapestSigs = new Set(cheapest);
+        extraPool = results.filter(r => !cheapestSigs.has(r)).sort((a, b) => a.cost - b.cost || cmp(a, b)).map(flagOverBudget);
     }
 
     // Display-safety floors mirror the graduated score penalties: penalties begin at SBP < 95,
@@ -179,7 +185,33 @@ export function chooseDisplayPicks(
         }
     }
 
-    return { picks: distinctPicks, allUnsafe };
+    const displaySafe = (r: ScoredRegimen) =>
+        r.projected_patient.sbp >= DISPLAY_FLOORS.minProjectedSbp && r.projected_patient.potassium <= DISPLAY_FLOORS.maxProjectedPotassium && r.projected_patient.pulse >= DISPLAY_FLOORS.minProjectedPulse;
+    return { picks: ensureCongestionCoverage(distinctPicks, [...outputRegimens, ...extraPool.filter(displaySafe)], patient), allUnsafe };
+}
+
+/** True when the regimen raises a standing loop diuretic's dose or starts one (a short-course add-on beside the oral loop is neither). */
+export function includesLoopIncrease(r: ScoredRegimen): boolean {
+    return (r.modification_set?.modifications ?? []).some(m => !!m.target && m.target.med.drug_class === 'Loop Diuretic' && !drugFacts(m.target.med).short_course_addon
+        && (m.action === 'titrate_up' || m.action === 'add'));
+}
+
+/**
+ * Congestion coverage (named selection step, runs after distinct-pick selection; pure, changes no score). When the patient meets the engine's congestion criterion
+ * (more than CONGESTION_EXCESS_KG_ABOVE kg above dry weight, `isCongestedAboveDryWeight`) and no displayed option raises or starts a loop diuretic, show the
+ * best-ranked candidate that does: it replaces the LAST option when three are shown, else it is appended. Option 1 is never displaced. `pool` is the ranked,
+ * display-safe, budget-filtered candidate list (the over-budget fallback list plus the cheapest loop candidates beyond it), so the floors and the budget rule still hold.
+ * A loop candidate exists only if the engine's own hold rules (volume depletion, loop at its maximum daily dose, hypotension) allow the increase.
+ * The shown option carries `shown_because` (explanation only).
+ */
+export function ensureCongestionCoverage(picks: ScoredRegimen[], pool: ScoredRegimen[], patient: Patient): ScoredRegimen[] {
+    if (picks.length === 0 || !isCongestedAboveDryWeight(patient) || picks.some(includesLoopIncrease)) return picks;
+    const shown = new Set(picks);
+    const candidate = pool.find(r => !shown.has(r) && includesLoopIncrease(r));
+    if (!candidate) return picks;
+    const kg = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg).toFixed(1);
+    const tagged: ScoredRegimen = { ...candidate, shown_because: `Includes a diuretic increase: the patient is congested (${kg} kg above dry weight; the tool's criterion is more than ${CONGESTION_EXCESS_KG_ABOVE} kg), and no other option raises the loop diuretic.` };
+    return picks.length >= 3 ? [...picks.slice(0, picks.length - 1), tagged] : [...picks, tagged];
 }
 
 const regimenSignature = (r: ScoredRegimen | undefined): string =>

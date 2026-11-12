@@ -186,6 +186,8 @@ export function buildChartSummary(c: ChartInput): string {
         const { safety, notes } = partitionWarnings(top.warnings);
         lines.push(...bullets('SAFETY WARNINGS FOR THIS OPTION', safety));
         lines.push(...bullets('PRESCRIBING NOTES', notes.map(stripDrugNotePrefix)));
+        const shownBecause = c.results.map((r, i) => (r.shown_because ? `option ${i + 1}: ${r.shown_because}` : '')).filter(Boolean);
+        lines.push(...bullets('OTHER OPTIONS SHOWN FOR A SPECIFIC REASON', shownBecause));
     } else {
         lines.push('', 'No regimen was generated (see safety alerts).');
     }
