@@ -208,13 +208,17 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                         <div className="flex items-center gap-2 print:hidden">
                             <button
                                 onClick={handleCopy}
-                                className="text-sm font-bold px-3 py-1.5 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 transition-colors min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                disabled={resultsStale}
+                                title={resultsStale ? 'Inputs changed: re-run the analysis before copying' : undefined}
+                                className="text-sm font-bold px-3 py-1.5 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 transition-colors min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Copy to chart
                             </button>
                             <button
                                 onClick={() => window.print()}
-                                className="text-sm font-bold px-3 py-1.5 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 transition-colors min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                                disabled={resultsStale}
+                                title={resultsStale ? 'Inputs changed: re-run the analysis before printing' : undefined}
+                                className="text-sm font-bold px-3 py-1.5 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 transition-colors min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Print
                             </button>

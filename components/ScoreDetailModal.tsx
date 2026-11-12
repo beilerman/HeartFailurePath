@@ -1,6 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ScoredRegimen } from '../types';
+import { congestionFindingCount } from '../services/clinicalPredicates';
 import {
     calculateStructureScoreComponents, classifyPhenotype,
     // Scoring tables/constants imported from the ENGINE so this explanation panel can never
@@ -105,7 +106,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 const dry = p.volume_status.dry_weight_kg;
                 const curr = p.volume_status.current_weight_kg;
                 const diff = curr - dry;
-                const findingsCount = p.volume_status.exam_findings.size;
+                const findingsCount = congestionFindingCount(p.volume_status.exam_findings);
                 const weightPenalty = diff > 1.0 ? Math.round((diff - 1.0) * VOLUME_SCORING.weightPenaltyPerKgAbove1) : 0;
                 const findingsPenalty = findingsCount * VOLUME_SCORING.findingPenalty;
                 const spo2Penalty = p.oxygen_saturation === undefined

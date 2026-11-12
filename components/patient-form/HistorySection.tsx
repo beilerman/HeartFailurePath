@@ -1,3 +1,4 @@
+import { resolveAllergy } from '../../services/engine/allergy';
 import React, { useState } from 'react';
 import { WarningIcon } from '../icons';
 import { Label, Input, Select } from './Common';
@@ -94,10 +95,11 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
     };
 
     const handleAddAllergy = () => {
-        if (!allergyInput) return;
+        const entry = allergyInput.replace(/\s+/g, ' ').trim();
+        if (!entry) return;
         setPatientData(prev => ({
             ...prev,
-            allergies: new Set(prev.allergies).add(allergyInput)
+            allergies: new Set(prev.allergies).add(entry)
         }));
         setAllergyInput('');
     };
@@ -211,18 +213,27 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                         id="allergy-input"
                         value={allergyInput}
                         onChange={(e) => setAllergyInput(e.target.value)}
-                        placeholder="e.g. Penicillin"
+                        placeholder="Drug, brand or class (e.g. lisinopril, Entresto, ACE inhibitor)"
                         onKeyDown={(e) => e.key === 'Enter' && handleAddAllergy()}
                     />
                     <button onClick={handleAddAllergy} className="px-4 bg-slate-100 text-slate-700 rounded-md text-sm font-bold hover:bg-slate-200">ADD</button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                    {Array.from(patientData.allergies).map((alg: string) => (
-                        <span key={alg} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-sm font-medium rounded border border-red-100">
-                            {alg}
-                            <button onClick={() => handleRemoveAllergy(alg)} className="hover:text-red-900 font-bold" aria-label={`Remove ${alg}`}>&times;</button>
-                        </span>
-                    ))}
+                    {Array.from(patientData.allergies).map((alg: string) => {
+                        // Show what the entry excludes, or that it excludes nothing (same resolver the engine uses).
+                        const matched = resolveAllergy(alg, MEDICATION_FORMULARY);
+                        return (
+                            <span key={alg} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-sm font-medium rounded border border-red-100">
+                                <span>
+                                    {alg}
+                                    <span className={`block text-xs font-normal ${matched.length > 0 ? 'text-red-600' : 'text-slate-600'}`}>
+                                        {matched.length > 0 ? `Excludes: ${matched.join(', ')}` : 'No drug in this tool matched; nothing is excluded'}
+                                    </span>
+                                </span>
+                                <button onClick={() => handleRemoveAllergy(alg)} className="hover:text-red-900 font-bold" aria-label={`Remove ${alg}`}>&times;</button>
+                            </span>
+                        );
+                    })}
                 </div>
             </div>
 

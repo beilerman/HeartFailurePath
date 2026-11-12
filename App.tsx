@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { PatientForm } from './components/PatientForm';
 import { ClinicalSummary } from './components/ClinicalSummary';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ResultsDisplay } from './components/ResultsDisplay';
 import { MedicationLibrary } from './components/MedicationLibrary';
 import { FAQ } from './components/FAQ';
@@ -36,6 +37,7 @@ function blankPatient(): Patient {
 
 function App() {
     const [patient, setPatient] = useState<Patient>(INITIAL_PATIENT);
+    const [formHasErrors, setFormHasErrors] = useState(false);
     const [scenario, setScenario] = useState<string>(SCENARIOS[0].title);
     const [results, setResults] = useState<ScoredRegimen[]>([]);
     const [excludedMeds, setExcludedMeds] = useState<ExcludedMedication[]>([]);
@@ -123,6 +125,11 @@ function App() {
     };
 
     const runSimulation = () => {
+        // Every entry point obeys the form's input errors (the "Re-run" button on the results used to bypass them).
+        if (formHasErrors) {
+            setSimError('Fix the highlighted input errors in the patient form, then run the analysis again.');
+            return;
+        }
         if (!pricesReady) {
             setSimError(priceLoadError ?? 'Drug pricing is still loading. Run analysis after prices finish loading.');
             return;
@@ -256,6 +263,7 @@ function App() {
                                 simulationMedicationNames={simMeds}
                                 setSimulationMedicationNames={setSimMeds}
                                 onRunSimulation={runSimulation}
+                                onValidityChange={setFormHasErrors}
                                 pricesReady={pricesReady}
                                 testScenarios={SCENARIOS}
                                 selectedScenario={scenario}
@@ -271,6 +279,8 @@ function App() {
                         {/* Right: Results */}
                         <section aria-label="Results" className="flex-1 min-w-0 bg-slate-50 lg:overflow-y-auto p-4 sm:p-8 custom-scrollbar print:p-0 print:overflow-visible">
                             <div className="max-w-5xl mx-auto">
+                                {/* A render error in a result card must not replace the whole app and discard the entered patient. */}
+                                <ErrorBoundary compact key={runId}>
                                 <ResultsDisplay
                                     results={results}
                                     runId={runId}
@@ -287,6 +297,7 @@ function App() {
                                     followUpCalendar={followUpCalendar}
                                     ranking={ranking}
                                 />
+                                </ErrorBoundary>
                             </div>
                         </section>
                     </div>

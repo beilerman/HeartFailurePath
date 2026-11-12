@@ -65,7 +65,7 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                     </p>
                 </div>
                 <div>
-                    <Label htmlFor="max_affordable_cost">Monthly medication budget ($; 0 if none)</Label>
+                    <Label htmlFor="max_affordable_cost">Monthly medication budget ($). 0 means the patient can pay nothing</Label>
                     <Input
                         type="number"
                         name="max_affordable_cost"

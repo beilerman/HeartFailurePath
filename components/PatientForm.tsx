@@ -3,6 +3,8 @@ import type { Patient, TestScenario } from '../types';
 import { Label, Select, REQUIRED_FIELDS } from './patient-form/Common';
 import { HYPOTENSION_SBP_BELOW, MRA_START_K_MAX, MRA_START_K_CEILING, HYPOKALEMIA_K_BELOW, BB_HR_BELOW, SEVERE_CKD_EGFR_BELOW, LOW_OUTPUT } from '../services/simulationService';
 import { calculateCKDEPI } from '../services/clinicalPredicates';
+import { isLowOutputState } from '../services/engine/regimenUtils';
+import { RAAS_START_K_CAUTION } from '../services/engine/thresholds';
 import { DemographicsSection } from './patient-form/DemographicsSection';
 import { SymptomsSection } from './patient-form/SymptomsSection';
 import { PhysicalExamSection } from './patient-form/PhysicalExamSection';
@@ -17,6 +19,8 @@ interface PatientFormProps {
     simulationMedicationNames: Set<string>;
     setSimulationMedicationNames: React.Dispatch<React.SetStateAction<Set<string>>>;
     onRunSimulation: () => void;
+    /** Reports whether the form currently has blocking input errors, so every way of running the analysis (the form button AND the "Re-run" button on the results) obeys them. */
+    onValidityChange?: (hasErrors: boolean) => void;
     pricesReady: boolean;
     testScenarios: TestScenario[];
     selectedScenario: string;
@@ -25,7 +29,7 @@ interface PatientFormProps {
 
 export const PatientForm: React.FC<PatientFormProps> = ({
     patientData, setPatientData,
-    onRunSimulation, pricesReady,
+    onRunSimulation, onValidityChange, pricesReady,
     testScenarios, selectedScenario, onScenarioChange
 }) => {
 
@@ -131,17 +135,18 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     // --- 2c. Clinical warnings ---
     const clinicalWarnings = useMemo(() => {
         const warnings: Record<string, string> = {};
-        const bunCrRatio = patientData.creatinine > 0 ? patientData.bun / patientData.creatinine : 0;
-        const pulsePressure = patientData.sbp - patientData.dbp;
         const hasInvalidBP = patientData.sbp <= patientData.dbp;
-        const hasLowOutputMarker = !hasInvalidBP && (patientData.volume_status.exam_findings.has('Cool Extremities') || pulsePressure <= LOW_OUTPUT.pulsePressureMax || bunCrRatio > LOW_OUTPUT.bunCrAbove);
 
         if (hasInvalidBP) warnings.sbp = 'Invalid BP entry: SBP must exceed DBP';
         else if (patientData.sbp < HYPOTENSION_SBP_BELOW) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
         // Potassium 0 / blank means "not entered" (the engine withholds K+-dependent conclusions).
         if (!(patientData.potassium > 0)) warnings.potassium = 'Not entered: RAAS inhibitor and MRA decisions will be withheld until a potassium is available';
+        // The hint states what the engine does at each level (same constants the rules read).
+        else if (patientData.potassium >= 6.5) warnings.potassium = 'K+ 6.5 or higher: emergency alert only, no drug recommendations will be generated';
+        else if (patientData.potassium >= 6.0) warnings.potassium = 'K+ 6.0 or higher: hyperkalemia emergency alert; RAAS inhibitors and MRAs in use are withheld and none is started';
         else if (patientData.potassium > MRA_START_K_MAX) warnings.potassium = 'High K+: a new MRA is not started; an MRA already on board is reduced or withheld';
         else if (patientData.potassium < HYPOKALEMIA_K_BELOW) warnings.potassium = `K+ < ${HYPOKALEMIA_K_BELOW} increases digoxin/arrhythmia risk`;
+        else if (patientData.potassium > RAAS_START_K_CAUTION) warnings.potassium = `K+ above ${RAAS_START_K_CAUTION}: a new MRA and a new ACE inhibitor, ARB or ARNI are not started; recheck potassium first`;
         else if (patientData.potassium >= MRA_START_K_CEILING) warnings.potassium = `K+ ${MRA_START_K_CEILING} or higher: a new MRA is not started; recheck potassium and start once it is below ${MRA_START_K_CEILING}`;
         if (patientData.is_pregnant) warnings.pregnancy = 'RAAS inhibitors, MRAs, SGLT2 inhibitors, vericiguat, ivabradine and GLP-1 therapies are excluded';
         if (patientData.nyha_class === 'IV') warnings.nyha = 'BB initiation blocked';
@@ -156,12 +161,14 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         } else if (!(patientData.egfr > 0)) {
             warnings.egfr = 'Creatinine not entered: renal-dependent decisions will be withheld until a creatinine is available.';
         }
-        if (patientData.lvef < LOW_OUTPUT.lvefBelow && hasLowOutputMarker) warnings.low_output = `Low-output profile detected (LVEF < ${LOW_OUTPUT.lvefBelow} with hypoperfusion markers)`;
+        // Same rule the engine applies (LVEF below 20 with at least TWO of: cool extremities, narrow pulse pressure, BUN/creatinine above 20), not one marker.
+        if (isLowOutputState(patientData)) warnings.low_output = `Low-output profile detected (LVEF < ${LOW_OUTPUT.lvefBelow} with hypoperfusion markers)`;
         return warnings;
     }, [patientData]);
 
     // --- 2d. Disable simulation when validation errors exist ---
     const hasValidationErrors = Object.keys(validationErrors).length > 0;
+    useEffect(() => { onValidityChange?.(hasValidationErrors); }, [hasValidationErrors, onValidityChange]);
 
     // The sample list is long (clinical cases plus per-medication review cases); group it so the
     // everyday cases are not buried. Titles like "Rate-Source ..." belong to a medication-review group.
@@ -214,7 +221,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         setPatientData(prev => {
             const next = new Set(prev.volume_status.exam_findings);
             if (next.has(finding)) next.delete(finding);
-            else next.add(finding);
+            else {
+                // Edema has ONE grade: choosing a grade clears the others (two grades used to count as two congestion findings).
+                if (finding.startsWith('Edema')) [...next].filter(f => f.startsWith('Edema')).forEach(f => next.delete(f));
+                next.add(finding);
+            }
             return {
                 ...prev,
                 volume_status: { ...prev.volume_status, exam_findings: next }
