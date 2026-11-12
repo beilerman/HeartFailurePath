@@ -96,6 +96,7 @@ export function analyzeCurrentRegimen(
     const intolerancePolicy = deriveIntolerancePolicy(patient);
     const contraindicatedCurrentMeds = new Set<string>();
     const intolerableCurrentMeds = new Map<string, string>();
+    const fractionOfTargetSwapNames = new Set<string>(); // forced beta-blocker switches landed by fraction of target dose (pregnancy)
     const forcedReduceNames = new Map<string, string>();
     const kWithholdReasons = new Map<string, string>();
     const forcedReduceExactStep = new Set<string>();
@@ -136,7 +137,8 @@ export function analyzeCurrentRegimen(
         if (patient.is_pregnant === true && r.med.drug_class === 'Beta Blocker' && !drugFacts(r.med).beta1_selective && !intolerableCurrentMeds.has(r.med.name)
             && formulary.some(m => m.drug_class === 'Beta Blocker' && drugFacts(m).beta1_selective)) {
             contraindicatedCurrentMeds.add(r.med.name);
-            intolerableCurrentMeds.set(r.med.name, 'Pregnancy: switch to a beta-1-selective beta-blocker (2026 ESC heart failure guideline, Class I C)');
+            intolerableCurrentMeds.set(r.med.name, 'Pregnancy: switch to a beta-1-selective beta-blocker (2026 ESC heart failure guideline, Class I C); the new dose is set at the same fraction of the target dose (engine policy: no sourced equivalence between beta-blockers) and heart rate and blood pressure should be reassessed after the switch');
+            if (drugFacts(r.med).target_reference_dose !== undefined) fractionOfTargetSwapNames.add(r.med.name);
         }
         // A current med matching a documented ALLERGY by name must not be kept or up-titrated.
         // The new-start formulary filter already excludes allergy names (D8), but the arriving
@@ -289,6 +291,17 @@ export function analyzeCurrentRegimen(
         // inhibitor is Class IIb and any one of them is as good as another, so a non-forced swap is not offered there.
         if (group === 'RAAS Inhibitor' && !sourceContraindicated) {
             candidates = isHFpEF ? [] : candidates.filter(t => t.med.drug_class === 'ARNI' && current.med.drug_class !== 'ARNI');
+        }
+        // Forced pregnancy beta-blocker switch: the swap-in is the tier nearest (rounding down, never below the start tier) the SAME FRACTION OF THE TARGET DOSE
+        // (facts.target_reference_dose, 2026 ESC Table 11 per-dose targets). ENGINE POLICY: no source gives a beta-blocker dose equivalence.
+        if (fractionOfTargetSwapNames.has(current.med.name)) {
+            const seen = new Set<string>();
+            candidates = candidates.flatMap(t => {
+                if (seen.has(t.med.name)) return [];
+                seen.add(t.med.name);
+                const landed = fractionOfTargetTier(current, t.med, patient);
+                return landed ? [landed] : [t];
+            });
         }
         // Forced loop-to-loop swap at an EQUIVALENT total daily dose (facts.verified_furosemide_equivalent_per_mg on both agents): the swap-in is the NEAREST
         // tier to the equivalent daily dose (not the new loop's lowest tier), never above the drug's declared daily maximum. An agent without a verified equivalence keeps its lowest tier.
@@ -518,6 +531,26 @@ export function analyzeCurrentRegimen(
 }
 
 /**
+ * Forced beta-blocker switch dose by FRACTION OF TARGET (both agents declare facts.target_reference_dose, the 2026 ESC Table 11 per-dose target): the highest
+ * eligible tier of `to` at or below the same fraction of its target (the fraction is capped at 1), never below the drug's start tier. ENGINE POLICY: no
+ * source gives a dose equivalence between beta-blockers. Null when either agent lacks a reference target.
+ */
+export function fractionOfTargetTier(from: RegimenMed, to: Medication, patient: Patient): RegimenMed | null {
+    const fromRef = drugFacts(from.med).target_reference_dose, toRef = drugFacts(to).target_reference_dose;
+    const fromStrength = Number(from.dose.strength);
+    if (fromRef === undefined || toRef === undefined || Number.isNaN(fromStrength)) return null;
+    const want = Math.min(1, fromStrength / fromRef) * toRef;
+    const startStrength = to.start_dose_for ? Number(to.start_dose_for(patient)) : -Infinity;
+    const eligible = eligibleDoses(to, patient).filter(d => typeof d.strength === 'number').sort((a, b) => Number(a.strength) - Number(b.strength));
+    if (eligible.length === 0) return null;
+    const atOrAboveStart = eligible.filter(d => Number(d.strength) >= startStrength);
+    const pool = atOrAboveStart.length > 0 ? atOrAboveStart : eligible;
+    const below = pool.filter(d => Number(d.strength) <= want + 1e-9);
+    const dose = below.length > 0 ? below[below.length - 1] : pool[0];
+    return { med: to, dose, selected_frequency: pickPreferredFrequency(to, dose.frequency_options, patient, dose.strength) };
+}
+
+/**
  * The tier of `to` NEAREST to the furosemide-equivalent TOTAL DAILY dose of `from` (both agents declare facts.verified_furosemide_equivalent_per_mg), at the
  * current dosing frequency where the tier allows it and never above the declared daily maximum (frequenciesWithinMax). A tie between two tiers goes to the
  * lower dose (the safer side). Null when `to` has no verified equivalence. (Before 2026-11-11: nearest at or above.)
@@ -596,7 +629,7 @@ export function formatSwapSummary(from: RegimenMed, to: RegimenMed): string {
         const fe = drugFacts(from.med).verified_furosemide_equivalent_per_mg, te = drugFacts(to.med).verified_furosemide_equivalent_per_mg;
         // Every non-add-on loop declares an equivalence (verify invariant), so an equivalent-dose summary is always available.
         if (fe !== undefined && te !== undefined) {
-            return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (equivalent total daily dose: ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name} is about ${dailyDose(from) * fe / te} ${to.dose.unit}/day ${to.med.name}; nearest tier at or above)`;
+            return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (equivalent total daily dose: ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name} is about ${dailyDose(from) * fe / te} ${to.dose.unit}/day ${to.med.name}; nearest tier)`;
         }
     }
     return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)}`;

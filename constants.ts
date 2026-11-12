@@ -496,7 +496,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // Label (heart failure): start 3.125 mg twice daily; double no sooner than every 2 weeks.
         start_dose_for: () => 3.125,
         facts: {
-            nonselective_beta_blocker: true, hepatically_metabolized: true,
+            nonselective_beta_blocker: true, hepatically_metabolized: true, target_reference_dose: 25, // 2026 ESC Table 11: carvedilol target 25 mg twice daily (50 mg above 85 kg); the fraction uses 25
             // Coreg label sec 2.1 and 5.2: "reduce the dose if heart rate is less than 55 beats per minute" (sourced). No
             // up-titration below 60 bpm is ENGINE POLICY (no label number). Established therapy is reduced one step, never stopped at a rate.
             hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'Coreg label: reduce the dose if heart rate is below 55; no up-titration below 60 is this tool\'s policy' },
@@ -557,7 +557,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // Label (heart failure): start 25 mg daily in NYHA class II, 12.5 mg daily in more severe heart failure.
         start_dose_for: (p) => (p.nyha_class === 'III' || p.nyha_class === 'IV' ? 12.5 : 25),
         facts: {
-            beta1_selective: true, hepatically_metabolized: true,
+            beta1_selective: true, hepatically_metabolized: true, target_reference_dose: 200, // 2026 ESC Table 11: metoprolol succinate target 200 mg daily
             // Toprol-XL/generic label: "if patients experience symptomatic bradycardia, reduce the dose" (no number). Below 55 bpm as the
             // trigger (same as carvedilol's labeled number) and no up-titration below 60 are ENGINE POLICY.
             hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'metoprolol label: reduce the dose for symptomatic bradycardia (no number); below 55 and no up-titration below 60 are this tool\'s policy' },
@@ -603,7 +603,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // CIBIS-II started at 1.25 mg; the lowest US tablet-derived tier here is 2.5 mg (half a scored 5 mg tablet).
         start_dose_for: () => 2.5,
         facts: {
-            beta1_selective: true, most_cardioselective: true,
+            beta1_selective: true, most_cardioselective: true, target_reference_dose: 10, // 2026 ESC Table 11: bisoprolol target 10 mg daily
             // The US label gives no heart-rate number ("marked sinus bradycardia" is a contraindication). Below 55 bpm as the reduction
             // trigger and no up-titration below 60 are ENGINE POLICY, matched to the other two beta-blockers.
             hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'bisoprolol US label gives no heart-rate number; below 55 and no up-titration below 60 are this tool\'s policy' },

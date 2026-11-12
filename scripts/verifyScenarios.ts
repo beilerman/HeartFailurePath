@@ -2396,6 +2396,23 @@ async function runVerification() {
                     if (scoredRegimens.some(r => !r.regimen.some(m => m.med.drug_class === 'Beta Blocker'))) fail('The beta-blocker was stopped instead of switched');
                     if (!clinicalAlerts.some(a => a.includes('PREGNANCY: Carvedilol is non-selective'))) fail('Pregnancy alert for a current non-selective beta-blocker missing');
                 }
+                if (t.includes('Carvedilol Switched') || t.includes('Target Fraction') || t.includes('Start Tier')) {
+                    // Engine policy (no sourced beta-blocker equivalence): the switch lands at the tier nearest the same fraction of the ESC Table 11 target (carvedilol 25 bid,
+                    // metoprolol succinate 200, bisoprolol 10), rounded down, never below the start tier.
+                    const swapTargets = scoredRegimens.flatMap(r => r.modification_set?.modifications ?? []).filter(m => m.action === 'swap' && m.source?.med.name === 'Carvedilol' && m.target);
+                    const expectBy: Record<string, Record<string, number>> = {
+                        'Carvedilol Switched': { Bisoprolol: 5, 'Metoprolol Succinate': 100 },
+                        'Target Fraction': { Bisoprolol: 10, 'Metoprolol Succinate': 200 },
+                        'Start Tier': { Bisoprolol: 2.5, 'Metoprolol Succinate': 25 },
+                    };
+                    const key = t.includes('Target Fraction') ? 'Target Fraction' : t.includes('Start Tier') ? 'Start Tier' : 'Carvedilol Switched';
+                    if (swapTargets.length === 0) fail('no carvedilol switch offered');
+                    swapTargets.forEach(m => {
+                        const want = expectBy[key][m.target!.med.name];
+                        if (want === undefined || Number(m.target!.dose.strength) !== want) fail(`${t}: switch to ${m.target!.med.name} landed at ${m.target!.dose.strength}, expected ${want} (same fraction of target, rounded down, not below the start tier)`);
+                        if (!/same fraction of the target dose/.test(m.summary) || !/engine policy/.test(m.summary) || !/heart rate and blood pressure/.test(m.summary)) fail('the switch summary lacks the engine-policy label or the heart rate and blood pressure reassessment note');
+                    });
+                }
                 if (t.includes('Metoprolol Continued')) {
                     if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Metoprolol Succinate'))) fail('Metoprolol was dropped in pregnancy');
                 }

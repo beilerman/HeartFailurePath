@@ -3308,6 +3308,10 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only', patient: { ...base } },
             { title: 'Pregnancy-Source Carvedilol Switched To Beta-1-Selective', patient: { ...base,
                 current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'Pregnancy-Source Carvedilol 25 mg bid Switch Lands At Target Fraction', patient: { ...base,
+                current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 25, freq: 'bid' }]) } },
+            { title: 'Pregnancy-Source Carvedilol 3.125 mg bid Switch Lands At Start Tier', patient: { ...base,
+                current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 3.125, freq: 'bid' }]) } },
             { title: 'Pregnancy-Source Metoprolol Continued', patient: { ...base,
                 current_regimen: buildCurrentRegimen([{ name: 'Metoprolol Succinate', strength: 25, freq: 'qd' }]) } },
         ];
