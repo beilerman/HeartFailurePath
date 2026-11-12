@@ -2419,7 +2419,7 @@ export const SCENARIOS: TestScenario[] = [
             current_regimen: buildCurrentRegimen([
                 { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
                 { name: 'Carvedilol', strength: 25, freq: 'bid' },
-                { name: 'Spironolactone', strength: 25, freq: 'qd' },
+                { name: 'Spironolactone', strength: 50, freq: 'qd' },
                 { name: 'Dapagliflozin', strength: 10, freq: 'qd' }
             ]),
             insurance_tier: 'commercial' as const,
@@ -3075,7 +3075,8 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'Rate-Source Ivabradine Paced Rhythm Excluded', patient: { ...base, pulse: 78, rhythm: 'Paced' as const, current_regimen: quad } },
             { title: 'Rate-Source Digoxin Sinus Rhythm Not Offered While Pillars Remain Addable', patient: { ...base, nyha_class: 'III' as const, lvef: 25,
                 current_regimen: buildCurrentRegimen([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
-            { title: 'Rate-Source Digoxin Sinus Rhythm Offered After Maximal GDMT', patient: { ...base, nyha_class: 'III' as const, lvef: 25, current_regimen: quad } },
+            // Spironolactone at 50 mg since 2026-11-11 (2026 ESC Table 11 target); at 25 mg the engine still has a pillar to up-titrate and correctly holds digoxin back.
+            { title: 'Rate-Source Digoxin Sinus Rhythm Offered After Maximal GDMT', patient: { ...base, nyha_class: 'III' as const, lvef: 25, current_regimen: quad.map(r => r.med.name === 'Spironolactone' ? { ...r, dose: r.med.available_doses.find(d => d.strength === 50)! } : r) } },
             { title: 'Rate-Source Digoxin Sinus Rhythm Preserved EF Not Offered', patient: { ...base, nyha_class: 'III' as const, lvef: 58, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFpEF']),
                 current_regimen: buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
             { title: 'Rate-Source Digoxin Ventricular Fibrillation Excluded', patient: { ...base, rhythm: 'AFib' as const, pulse: 96, comorbidities: new Set(['HFrEF', 'Ventricular Fibrillation (active)']), current_regimen: withBb('Carvedilol', 25) } },
@@ -3395,6 +3396,37 @@ export const SCENARIOS: TestScenario[] = [
                 current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 10, freq: 'qd' }, { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
             { title: 'ESC26-RAAS-K K+ 5.5 New RAAS Start Blocked', patient: { ...base, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
             { title: 'ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text', patient: { ...base, potassium: 5.3, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+        ];
+    })(),
+
+    // ===== 2026 ESC Table 11 doses: spironolactone target 50 mg (25 mg at the engine's eGFR 45 or below renal cap); sacubitril/valsartan start 24/26 below eGFR 60 or with chronic hypotension =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 64, sex: 'Male' as const, sbp: 130, dbp: 78, pulse: 66, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 60, nt_pro_bnp: 1100, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 70, creatinine: 1.1, bun: 18, potassium: 4.4,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            ever_lvef_le_40: 'yes' as const,
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const quad25 = buildCurrentRegimen([
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+            { name: 'Carvedilol', strength: 25, freq: 'bid' },
+            { name: 'Spironolactone', strength: 25, freq: 'qd' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        const highLisinopril = buildCurrentRegimen([{ name: 'Lisinopril', strength: 20, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]);
+        return [
+            { title: 'ESC26-Table11 Spironolactone 25 mg eGFR 70 Titrates To 50', patient: { ...base, current_regimen: quad25 } },
+            { title: 'ESC26-Table11 Spironolactone 25 mg eGFR 40 Is At Its Renal Cap', patient: { ...base, egfr: 40, creatinine: 1.9, current_regimen: quad25 } },
+            { title: 'ESC26-Table11 ARNI Start 49/51 After High-Dose ACEi eGFR 70', patient: { ...base, current_regimen: highLisinopril } },
+            { title: 'ESC26-Table11 ARNI Start 24/26 At eGFR 45', patient: { ...base, egfr: 45, creatinine: 1.7, current_regimen: highLisinopril } },
+            { title: 'ESC26-Table11 ARNI Start 24/26 With Chronic Hypotension', patient: { ...base, sbp: 104, dbp: 64, comorbidities: new Set(['HFrEF', 'Hypotension (Chronic)']), current_regimen: highLisinopril } },
         ];
     })(),
 

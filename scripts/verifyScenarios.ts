@@ -133,7 +133,8 @@ const ASSERTION_TITLE_MARKERS = [
     'Lab-Prereq',
     'ESC26-Phenotype',
     'ESC26-Digoxin',
-    'ESC26-RAAS-K'
+    'ESC26-RAAS-K',
+    'ESC26-Table11'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -2335,6 +2336,25 @@ async function runVerification() {
                     if (!text.includes('under 50%') || /more than 30%|rises more than 30/.test(text)) fail('creatinine guidance must use the 50% rule, not 30%');
                     if (!/early eGFR dip/.test(text)) fail('monitoring text must say a transient early eGFR dip should not prompt stopping');
                 }
+            }
+
+            // 94h. 2026 ESC Table 11: spironolactone target 50 mg; sacubitril/valsartan start 24/26 at eGFR 30-60 or with chronic hypotension (the label halves it below 30).
+            if (scenario.title.includes('ESC26-Table11')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const spiro = scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.name === 'Spironolactone').map(m => Number(m.dose.strength)));
+                const arni = scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.drug_class === 'ARNI').map(m => String(m.dose.strength)));
+                if (t.includes('Titrates To 50') && !spiro.includes(50)) fail('spironolactone 25 mg at eGFR 70 must be offered an increase to the 50 mg target');
+                if (t.includes('Renal Cap')) {
+                    if (spiro.some(x => x > 25)) fail('spironolactone above 25 mg offered at eGFR 40 (renal cap)');
+                    const med = MEDICATION_FORMULARY.find(m => m.name === 'Spironolactone')!;
+                    const at25 = { med, dose: med.available_doses.find(d => d.strength === 25)!, selected_frequency: 'qd' };
+                    if (!isTargetDoseForPatient(at25, scenario.patient)) fail('25 mg must count as the target at the eGFR 40 renal cap');
+                    if (isTargetDoseForPatient(at25, { ...scenario.patient, egfr: 70 })) fail('25 mg must not count as the target at eGFR 70');
+                }
+                if (t.includes('49/51 After High-Dose') && (arni.length === 0 || arni.some(x => x !== '49/51' && x !== '97/103'))) fail(`ARNI start after a high-dose ACEi at eGFR 70 must be 49/51, got ${arni.join(',')}`);
+                if (t.includes('24/26 At eGFR 45') && (arni.length === 0 || arni.some(x => x !== '24/26'))) fail(`ARNI start at eGFR 45 must be 24/26, got ${arni.join(',')}`);
+                if (t.includes('Chronic Hypotension') && (arni.length === 0 || arni.some(x => x !== '24/26'))) fail(`ARNI start with chronic hypotension must be 24/26, got ${arni.join(',')}`);
             }
 
             // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,

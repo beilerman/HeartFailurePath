@@ -671,10 +671,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // Aldactone label (HF): start 25 mg daily if K+ <= 5.0 and eGFR > 50; eGFR 30-50 -> 25 mg every other day,
         // modeled as the 12.5 mg daily tier. New starts never begin above it; titration of an existing dose is unaffected.
         start_dose_for: (p) => (p.egfr > 50 ? 25 : 12.5),
+        // Target 50 mg daily (2026 ESC Table 11; the Aldactone label allows increasing 25 to 50 mg as tolerated). It was 25 or 50 before 2026-11-11 (the 2022 US range).
+        // With eGFR 45 or below the engine's own renal cap is 25 mg, so 25 is the highest allowed dose and counts as the target there.
+        is_target_dose_for: (strength, patient) => strength >= (patient.egfr <= 45 ? 25 : 50),
         is_best_in_class: true,
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
-            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
+            { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
         chf_effects: (dose) => {

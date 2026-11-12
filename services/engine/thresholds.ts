@@ -44,5 +44,11 @@ export const BB_HR_BELOW = 55;
 /** eGFR below this is severe CKD for the engine's dose-limiting and start-dose rules (e.g. sacubitril/valsartan start dose). */
 export const SEVERE_CKD_EGFR_BELOW = 30;
 
+/**
+ * 2026 ESC Table 11: sacubitril/valsartan starts at 49/51 mg twice daily, with 24/26 mg "optional" after prior symptomatic hypotension, in ACEi/ARB-naive patients, or
+ * at eGFR 30-60. The Entresto label halves the start only below 30 (plus naive/low dose and Child-Pugh B). The engine keeps the STRICTER of the two: 24/26 below eGFR 60.
+ */
+export const ARNI_REDUCED_START_EGFR_BELOW = 60;
+
 /** Low-output markers (isLowOutputState needs at least two of the three, with LVEF below `lvefBelow`). */
 export const LOW_OUTPUT = { lvefBelow: 20, pulsePressureMax: 25, bunCrAbove: 20 } as const;

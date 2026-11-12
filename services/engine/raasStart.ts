@@ -2,8 +2,8 @@
  * New-start dose rule for sacubitril/valsartan (Entresto label sections 2.2, 2.7, 2.8; verified-raas.md S1-S3).
  *
  * Standard adult start is 49/51 mg bid. The start is HALVED (24/26 mg bid) when the patient is not taking an
- * ACE inhibitor or ARB, or takes a LOW dose of one, when eGFR is below 30, or with moderate hepatic impairment
- * (Child-Pugh B). 97/103 mg is reached only by up-titration (every 2-4 weeks), never as a start.
+ * ACE inhibitor or ARB, or takes a LOW dose of one, when eGFR is below 30 (label) or below 60 (2026 ESC Table 11; the stricter is kept), with
+ * chronic hypotension (2026 ESC Table 11), or with moderate hepatic impairment (Child-Pugh B). 97/103 mg is reached only by up-titration (every 2-4 weeks), never as a start.
  *
  * "Low dose" (the label's phrase) is defined per agent as data on the ACEi/ARB entry
  * (`facts.low_dose_max_daily_mg`, total daily dose). No imports from the engine facade; constants.ts imports this.
@@ -11,7 +11,7 @@
 import type { Patient } from '../../types';
 import { drugFacts } from './drugFacts';
 import { hasChildPughBConfirmed } from './contraindications';
-import { SEVERE_CKD_EGFR_BELOW } from './thresholds';
+import { SEVERE_CKD_EGFR_BELOW, ARNI_REDUCED_START_EGFR_BELOW } from './thresholds';
 
 const DOSES_PER_DAY: Record<string, number> = { qd: 1, bid: 2, tid: 3 };
 
@@ -35,6 +35,8 @@ export function arniReducedStartReasons(p: Patient): string[] {
     const reasons: string[] = [];
     if (raasNaiveOrLowDose(p)) reasons.push('not taking an ACE inhibitor or ARB, or taking only a low dose of one');
     if (p.egfr < SEVERE_CKD_EGFR_BELOW) reasons.push('eGFR below 30 (or not entered)');
+    else if (p.egfr < ARNI_REDUCED_START_EGFR_BELOW) reasons.push(`eGFR 30-${ARNI_REDUCED_START_EGFR_BELOW - 1} (2026 ESC Table 11 optional lower start; the label halves the start only below 30)`);
+    if (p.comorbidities.has('Hypotension (Chronic)')) reasons.push('prior symptomatic or chronic hypotension (2026 ESC Table 11 optional lower start)');
     if (hasChildPughBConfirmed(p)) reasons.push('moderate hepatic impairment (Child-Pugh B)');
     return reasons;
 }

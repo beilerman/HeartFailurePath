@@ -284,8 +284,10 @@ export function analyzeCurrentRegimen(
         // (ARNI → ACEi/ARB) purely to reach a target dose — that loses the ARNI benefit; the ARNI
         // should be up-titrated instead. (A contraindicated source can still swap to any non-CI
         // alternative.)
+        // The upgrade is a heart-failure-with-reduced-EF recommendation (2026 ESC Table 5: switch ACEi/ARB to ARNI, Class I B1, symptomatic HFrEF). In HFpEF a RAAS
+        // inhibitor is Class IIb and any one of them is as good as another, so a non-forced swap is not offered there.
         if (group === 'RAAS Inhibitor' && !sourceContraindicated) {
-            candidates = candidates.filter(t => t.med.drug_class === 'ARNI' && current.med.drug_class !== 'ARNI');
+            candidates = isHFpEF ? [] : candidates.filter(t => t.med.drug_class === 'ARNI' && current.med.drug_class !== 'ARNI');
         }
         // Loop-to-loop swap at an EQUIVALENT total daily dose (facts.verified_furosemide_equivalent_per_mg on both agents): the swap-in is the nearest
         // tier at or just above the equivalent daily dose, not the new loop's lowest tier. An agent without a verified equivalence keeps its lowest tier.
