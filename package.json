@@ -19,8 +19,9 @@
     "golden": "tsx scripts/goldenMaster.ts",
     "golden:update": "tsx scripts/goldenMaster.ts --update",
     "ranking:diff": "tsx scripts/rankingDiff.ts",
-    "gate": "npm run typecheck && npm run golden && npm run verify && npm run audit:hundred && npm run audit:mistakes && npm run audit:red",
-    "ci": "npm run typecheck && npm run build && npm run golden && npm run verify"
+    "gate": "npm run typecheck && npm run golden && npm run verify && npm run audit:hundred && npm run audit:mistakes && npm run audit:red && npm run fuzz",
+    "ci": "npm run typecheck && npm run build && npm run golden && npm run verify && npm run fuzz",
+    "fuzz": "tsx scripts/fuzzSweep.ts 5000"
   },
   "dependencies": {
     "react": "^19.2.0",

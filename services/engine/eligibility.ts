@@ -25,10 +25,12 @@ import {
     type IntolerancePolicy,
 } from './intolerance';
 import { RAAS_CLASSES } from './registry';
+import { kContinuationAction } from './regimenUtils';
 import { valueUnknown } from '../clinicalPredicates';
 import { drugFacts } from './drugFacts';
 import { contraindicationReasons } from './contraindications';
 import { MRA_START_K_CEILING, RAAS_START_K_CAUTION } from './thresholds';
+import { assessCreatinineChange } from './renalChange';
 
 /** Everything the rules need, computed once per patient (not per drug). */
 export interface EligibilityContext {
@@ -219,7 +221,9 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         // potassium above 5.5 is still reported as a contraindication.
         evaluate: (ctx, med) => MRA_POOL_CLASSES.has(med.drug_class)
             && ctx.patient.potassium >= MRA_START_K_CEILING
-            && !(ctx.patient.current_regimen ?? []).some(r => MRA_POOL_CLASSES.has(r.med.drug_class))
+            // "Already on an MRA" exempts a switch within the class only while that MRA may continue at its dose: one being reduced or withheld by its
+            // potassium rule (5.5 or higher) is not a licence to start a different MRA (2026-11-12).
+            && !(ctx.patient.current_regimen ?? []).some(r => MRA_POOL_CLASSES.has(r.med.drug_class) && kContinuationAction(r.med, ctx.patient) === null)
             ? `Potassium ${ctx.patient.potassium.toFixed(1)} is 5.0 or higher: recheck and start the MRA once potassium is below 5.0` : null,
         details: (ctx) => [
             `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is at or above the ${MRA_START_K_CEILING.toFixed(1)} start limit (2022 AHA/ACC/HFSA 7.3.3: potassium 5.0 or above is a contraindication to MRA initiation; 2026 ESC section 6.1: caution at 5.0 or above; the Aldactone and Kerendia labels allow exactly 5.0, the guideline boundary is the stricter and is used). Repeat potassium and start the MRA once it is below ${MRA_START_K_CEILING.toFixed(1)}`,
@@ -274,6 +278,24 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above ${RAAS_START_K_CAUTION.toFixed(1)}, the 2026 ESC caution threshold for starting an ACE inhibitor, ARB or ARNI (Supplementary Tables S4/S5: seek specialist advice). The engine applies it as a staged start (engine policy). First steps: stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes, then repeat potassium and start once it is ${RAAS_START_K_CAUTION.toFixed(1)} or lower`,
             'Potassium binders carry a Class 2b recommendation in the 2022 US guideline for hyperkalaemia that develops while on a RAAS inhibitor (secondary source); the 2026 ESC guideline makes no recommendation for them. The tool does not start a RAAS inhibitor together with a binder',
         ],
+    },
+    {
+        id: 'E19', name: 'No new RAAS inhibitor or MRA while kidney function is worsening',
+        summary: 'When the entered baseline creatinine shows a rise of 50% or more (or a derived eGFR fall of more than 30%), a NEW ACE inhibitor, ARB, ARNI or MRA is not started until kidney function is stable. Drugs of these classes already in use are reduced one step by the kidney rule.',
+        // Added 2026-11-12 (adversarial review): the kidney rule halved an RAAS inhibitor / MRA already in use (2026 ESC Supplementary Tables S4/S5/S8) while a NEW one
+        // of the other class was started at full starting dose in the same option, and the next run then halved it. The guideline text covers the drug in use; withholding
+        // a new start in the same state is ENGINE POLICY that follows from it (it also says "no increase until stable"). The 'stop' band is a contraindication check (E13).
+        // Needs the optional baseline creatinine: with it blank nothing changes.
+        evaluate: (ctx, med) => {
+            if (!(RAAS_CLASSES.has(med.drug_class) || MRA_POOL_CLASSES.has(med.drug_class))) return null;
+            if ((ctx.patient.current_regimen ?? []).some(r => r.med.name === med.name)) return null;
+            const change = assessCreatinineChange(ctx.patient);
+            return change?.band === 'reduce' ? 'Kidney function has worsened from baseline: not started until it is stable' : null;
+        },
+        details: (ctx) => {
+            const change = assessCreatinineChange(ctx.patient);
+            return change ? [`${change.why}. The 2026 ESC guideline (Supplementary Tables S4/S5/S8) halves these drugs when already in use and allows no increase until kidney function is stable; not starting a new one in the same state is engine policy. Look for and stop other causes (NSAIDs, volume depletion), recheck in 1-2 weeks`] : [];
+        },
     },
 ];
 

@@ -302,6 +302,8 @@ export interface MedFacts {
      * than in the non-diabetes trial): `weight` scales the placebo-adjusted weight percent, `kccq` the KCCQ effect.
      */
     t2dm_scale?: { weight: number; kccq: number; basis: string };
+    /** Lower-case brand and common names by which an allergy to this drug may be typed ("entresto", "lasix"); read by services/engine/allergy.ts. */
+    allergy_aliases?: string[];
     /** Cash-pay monthly price by dose strength (used instead of the flat price when `patient.insurance_tier` is 'cash'). */
     cash_price_by_dose?: Record<string, number>;
     /** Plain-language warnings shown whenever this drug is in a recommended regimen (optionally only when `when(patient)`); informational, not score-penalized (text starts 'Drug note:'). */

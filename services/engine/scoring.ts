@@ -43,7 +43,13 @@ export interface ScoringContext {
     ironDeficient: boolean;
     maxNewPerVisit: number;
     achievableSlots: GdmtSlot[];
+    /** Penalized warnings already true of the CURRENT regimen with nothing changed (number-free keys -> text). See `warningKey`. */
+    baselineDangerWarnings: Map<string, string>;
 }
+
+/** A warning's identity without its numbers ("Low Perfusion Pressure (MAP 62 mmHg)" and "(MAP 63 mmHg)" are the same warning). */
+export const warningKey = (w: string): string => w.replace(/-?\d+(\.\d+)?/g, '#');
+const isPenalizedWarning = (w: string): boolean => !NON_PENALIZED_WARNING_MARKERS.some(marker => w.includes(marker));
 
 export function buildScoringContext(
     patient: Patient,
@@ -113,9 +119,19 @@ export function buildScoringContext(
     // Keep only slots the patient can actually attain (a non-excluded formulary med exists).
     const achievableSlots = completenessSlots.filter(s => formulary.some(m => s.match(m.drug_class)));
 
+    // Warnings that already apply to the patient as entered (the current regimen, nothing changed). They are charged to EVERY candidate, so a candidate cannot
+    // out-score "no change" merely by cutting a drug until a state warning stops firing (adversarial review 2026-11-12: at MAP 63 "reduce the beta-blocker"
+    // beat "no change" by one warning while "increase it" beat "no change" on completeness, and the tool reversed its own advice on the next run).
+    const baselineDangerWarnings = new Map<string, string>();
+    const current = patient.current_regimen ?? [];
+    if (current.length > 0) {
+        const keepAll: ModificationSet = { modifications: current.map(r => ({ action: 'keep' as const, source: r, summary: `Keep ${r.med.name}` })), resulting_regimen: [...current] };
+        simulateModificationEffect(patient, keepAll, prices, intolerancePolicy).warnings.filter(isPenalizedWarning).forEach(w => baselineDangerWarnings.set(warningKey(w), w));
+    }
+
     return {
         patient, prices, intolerancePolicy, dataAudit, phenotype, isVolumeDepleted, hasDiureticInCurrent,
-        rescueBinders, ivIron, ironDeficient, maxNewPerVisit, achievableSlots,
+        rescueBinders, ivIron, ironDeficient, maxNewPerVisit, achievableSlots, baselineDangerWarnings,
     };
 }
 
@@ -186,6 +202,13 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
     };
 
     let sim: Simulation = simulateModificationEffect(patient, activeModSet, prices, intolerancePolicy);
+    // The automatic iron add-on must not be the reason a regimen exceeds the stated budget: when the regimen fits without it, it is offered without it and
+    // iron stays in the "also eligible" list (2026-11-12: one iron-deficient cash patient with a $100 budget was shown only over-budget options at $284
+    // while a $58 three-pillar regimen existed).
+    if (activeModSet !== modSet && sim.cost > patient.max_affordable_cost) {
+        const plain = simulateModificationEffect(patient, modSet, prices, intolerancePolicy);
+        if (plain.cost <= patient.max_affordable_cost) { activeModSet = modSet; sim = plain; }
+    }
 
     // H7+H8: Binder rescue: if K+ > 5.3, try adding a K+ binder (Patiromer preferred, then Lokelma, lowest effective dose)
     // H8 fix: Use activeModSet (which includes iron if appended) not original modSet
@@ -363,6 +386,11 @@ export function aggregateScore(
     // CONSERVATIVE pre-compensation estimate. The prior −60/−30 made hemodynamically-inert
     // drugs (e.g. digoxin) out-rank SGLT2i / full GDMT in de-novo patients starting near
     // SBP 100 — backwards. Disqualification at < 85 is retained.
+    // The 90 and 95 bands read the LOWER of the projected and the entered systolic pressure: a regimen that raises blood pressure by reducing or stopping a drug
+    // is not credited with leaving the band. Otherwise, at an entered SBP of 93, "halve the beta-blocker" out-scored "no change" (which carries the band penalty)
+    // while "double the beta-blocker" also out-scored it on completeness, and the tool reversed its own advice on the next run (adversarial review 2026-11-12).
+    const sbpForBand = Math.min(p.sbp, ctx.patient.sbp > 0 ? ctx.patient.sbp : p.sbp);
+    const sbpDetail = sbpForBand < p.sbp ? `entered SBP ${ctx.patient.sbp} (projected ${p.sbp}; a dose reduction is not credited with leaving this band)` : `projected SBP ${p.sbp}`;
     if (p.sbp < SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.threshold) {
         // Projected severe hypotension — disqualify (also display-filtered). Non-additive: recorded as an override.
         // NOTE: later adjustments (HR, K+, warnings, unknown-lab) still apply on top of this zeroed total.
@@ -376,9 +404,13 @@ export function aggregateScore(
         });
         overall = 0;
     }
-    else if (p.sbp < SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90, SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.points, `projected SBP ${p.sbp}`);  // Caution; GDMT often still appropriate with monitoring
-    else if (p.sbp < SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95, SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.points, `projected SBP ${p.sbp}`);   // Mild; within trial tolerability for the conservative estimate
-    if (p.pulse < SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50, SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.points, `projected HR ${p.pulse}`);
+    else if (sbpForBand < SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90, SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.points, sbpDetail);  // Caution; GDMT often still appropriate with monitoring
+    else if (sbpForBand < SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95, SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_95.points, sbpDetail);   // Mild; within trial tolerability for the conservative estimate
+    // Heart-rate band: only with a measured heart rate, and (like the SBP bands) on the LOWER of projected and entered, so cutting a beta-blocker is not rewarded
+    // for leaving the band (a rate below the reduce threshold already forces the reduction in every option; a paced patient at 49 is not helped by it).
+    const hrKnown = ctx.patient.pulse > 0;
+    const hrForBand = Math.min(p.pulse, hrKnown ? ctx.patient.pulse : p.pulse);
+    if (hrKnown && hrForBand < SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50, SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.points, hrForBand < p.pulse ? `entered HR ${ctx.patient.pulse} (projected ${p.pulse}; a dose reduction is not credited with leaving this band)` : `projected HR ${p.pulse}`);
     if (p.potassium > SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5, SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.points, `projected K+ ${p.potassium}`);
 
     // "Binder Required" deliberately COUNTS here: a regimen that needs a rescue binder to
@@ -392,9 +424,11 @@ export function aggregateScore(
     // deliberately NOT here — a regimen needing K+ binder rescue carries residual hyperkalemia
     // risk and should rank below an equal regimen that does not (a binder enables, it doesn't erase).
     // Marker list (NON_PENALIZED_WARNING_MARKERS) lives in services/engine/scoreModel.ts.
-    const dangerousWarnings = sim.warnings.filter(w =>
-        !NON_PENALIZED_WARNING_MARKERS.some(marker => w.includes(marker))
-    );
+    const ownWarnings = sim.warnings.filter(isPenalizedWarning);
+    // Plus the warnings that were already true before any change and that this candidate no longer shows: they still count (see baselineDangerWarnings).
+    const ownKeys = new Set(ownWarnings.map(warningKey));
+    const carried = [...ctx.baselineDangerWarnings.entries()].filter(([key]) => !ownKeys.has(key)).map(([, text]) => `${text} (true of the current regimen; counted for every option)`);
+    const dangerousWarnings = [...ownWarnings, ...carried];
     if (dangerousWarnings.length > 0) addAdjustment(SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS, dangerousWarnings.length * SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.perUnit, dangerousWarnings.join(' | '));
 
     // Unknown baseline potassium: a RAAS/MRA start or dose increase can no longer reach this point with the lab

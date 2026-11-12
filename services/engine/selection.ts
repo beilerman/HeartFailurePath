@@ -21,6 +21,21 @@ export const DISPLAY_FLOORS = {
     minProjectedPulse: 45,       // projected HR < 45 bpm is hidden
 } as const;
 
+/**
+ * Which display floors a regimen breaks. The blood-pressure and heart-rate floors count only when the regimen moves that value the WRONG way from the
+ * entered baseline: a patient who arrives with a heart rate of 43 is not denied a beta-blocker dose reduction, an SGLT2 inhibitor or a diuretic because the
+ * unchanged pulse is already under the floor (before 2026-11-12 these floors were absolute and such a patient got an empty page with the wrong reason).
+ * The potassium floor stays ABSOLUTE: at a baseline of 6.0-6.4 only an option that brings projected potassium to 6.0 or lower is shown.
+ */
+export function brokenDisplayFloors(r: ScoredRegimen, baseline: Patient): string[] {
+    const p = r.projected_patient, out: string[] = [];
+    const known = (v: number | undefined) => v !== undefined && !Number.isNaN(v) && v > 0;
+    if (p.sbp < DISPLAY_FLOORS.minProjectedSbp && p.sbp < baseline.sbp) out.push('severe hypotension (projected systolic BP below 85)');
+    if (p.potassium > DISPLAY_FLOORS.maxProjectedPotassium) out.push('severe hyperkalemia (projected potassium above 6.0)');
+    if (known(baseline.pulse) && p.pulse < DISPLAY_FLOORS.minProjectedPulse && p.pulse < baseline.pulse) out.push('severe bradycardia (projected heart rate below 45)');
+    return out;
+}
+
 // Ranking rule (stated to the clinician in the FAQ and score ledger):
 //   1. Higher displayed score first.
 //   2. Same displayed score (the same whole number): the regimen covering more of the indicated
@@ -28,11 +43,16 @@ export const DISPLAY_FLOORS = {
 //   3. Still tied: higher unrounded score, then the cheaper regimen.
 // Completeness is also one of the eight weighted domains; here it only orders regimens the
 // clinician sees as equal.
+//   4. Still tied: alphabetical by regimen, so the answer never depends on the order the current drugs were typed in.
+// Scores are compared to 9 decimals: the same regimen summed in a different drug order differs in the last floating-point bits.
+const stable = (x: number | undefined) => Math.round((x ?? 0) * 1e9) / 1e9;
+const regimenKey = (r: ScoredRegimen): string => r.regimen.map(x => `${x.med.name} ${x.dose.strength} ${x.selected_frequency}`).sort().join(' + ');
 export const byScoreThenCost = (a: ScoredRegimen, b: ScoredRegimen) =>
     b.overall_score - a.overall_score ||
-    (b.gdmt_completeness ?? 0) - (a.gdmt_completeness ?? 0) ||
-    (b.raw_score ?? 0) - (a.raw_score ?? 0) ||
-    a.cost - b.cost;
+    stable(b.gdmt_completeness) - stable(a.gdmt_completeness) ||
+    stable(b.raw_score) - stable(a.raw_score) ||
+    a.cost - b.cost ||
+    (regimenKey(a) < regimenKey(b) ? -1 : regimenKey(a) > regimenKey(b) ? 1 : 0);
 
 // ---------------------------------------------------------------------------------------------------
 // Ranking mode (physician-owner decision 2026-11-11). Balanced is the default and is exactly byScoreThenCost.
@@ -93,7 +113,7 @@ export function rankingComparator(mode: RankingMode, patient: Patient): (a: Scor
  */
 export function chooseDisplayPicks(
     results: ScoredRegimen[], patient: Patient, cmp: (a: ScoredRegimen, b: ScoredRegimen) => number,
-): { picks: ScoredRegimen[]; allUnsafe: boolean } {
+): { picks: ScoredRegimen[]; allUnsafe: boolean; unsafeReasons: string[] } {
     const affordableRegimens = results.filter(r => r.cost <= patient.max_affordable_cost);
     let outputRegimens: ScoredRegimen[] = [];
     let extraPool: ScoredRegimen[] = [];
@@ -106,14 +126,20 @@ export function chooseDisplayPicks(
         // equal benefit the cheaper wins (byScoreThenCost ends in cost). Pure cost-ascending
         // would lead with a thin monotherapy / symptomatic-only regimen over a higher-benefit
         // sibling at the same price.
-        const cheapest = [...results].sort((a, b) => a.cost - b.cost).slice(0, 5).sort(cmp);
+        // An option the tool scores 0 (it projects harm) is not offered merely because it is cheap, unless nothing else exists.
+        // The display-safety floors are applied BEFORE taking the cheapest five: otherwise five cheap unsafe options hid a safe one, and whether anything was
+        // shown could depend on the patient's care-priority weighting.
+        const safePool = results.filter(r => brokenDisplayFloors(r, patient).length === 0);
+        const fallbackPool = safePool.length > 0 ? safePool : results;
+        const worthShowing = fallbackPool.some(r => r.overall_score > 0) ? fallbackPool.filter(r => r.overall_score > 0) : fallbackPool;
+        const cheapest = [...worthShowing].sort((a, b) => a.cost - b.cost || cmp(a, b)).slice(0, 5).sort(cmp);
         const budgetMessage = patient.max_affordable_cost <= 0
             ? 'No zero-copay regimen found. Add covered medications or raise budget.'
             : 'Increase budget to find valid options.';
         // Owner decision 2026-11-11: an option the patient cannot afford must not read as an implementable plan.
         const flagOverBudget = (r: ScoredRegimen): ScoredRegimen => ({
             ...r,
-            warnings: [`BUDGET EXCEEDED: nothing fits the stated budget. Cheapest option ($${r.cost}) is shown for discussion, not as a plan the patient can carry out. ${budgetMessage}`, ...r.warnings]
+            warnings: [`BUDGET EXCEEDED: nothing fits the stated budget. This is one of the lowest-cost options ($${r.cost}), shown for discussion, not as a plan the patient can carry out. ${budgetMessage}`, ...r.warnings]
         });
         outputRegimens = cheapest.map(flagOverBudget);
         // Congestion coverage (below) may need a loop candidate outside the five cheapest: offer the cheapest one, flagged the same way.
@@ -124,14 +150,14 @@ export function chooseDisplayPicks(
     // Display-safety floors mirror the graduated score penalties: penalties begin at SBP < 95,
     // K+ > 5.5, HR < 50; the more extreme floors below are hard display gates — a projected
     // state past them is never shown, regardless of how well the regimen scores elsewhere.
-    const displaySafeRegimens = outputRegimens.filter(r =>
-        r.projected_patient.sbp >= DISPLAY_FLOORS.minProjectedSbp && r.projected_patient.potassium <= DISPLAY_FLOORS.maxProjectedPotassium && r.projected_patient.pulse >= DISPLAY_FLOORS.minProjectedPulse
-    );
+    const displaySafe = (r: ScoredRegimen) => brokenDisplayFloors(r, patient).length === 0;
+    const displaySafeRegimens = outputRegimens.filter(displaySafe);
     const allUnsafe = outputRegimens.length > 0 && displaySafeRegimens.length === 0;
+    const unsafeReasons = allUnsafe ? [...new Set(outputRegimens.flatMap(r => brokenDisplayFloors(r, patient)))] : [];
     outputRegimens = displaySafeRegimens;
 
     const topPick = outputRegimens[0];
-    if (!topPick) return { picks: [], allUnsafe };
+    if (!topPick) return { picks: [], allUnsafe, unsafeReasons };
 
     // S2 note: the SBP < 90 hemodynamic-instability gate returns alerts-only near the top of this
     // function (search 'HEMODYNAMIC INSTABILITY') — do not re-add a duplicate check here; a second
@@ -185,9 +211,7 @@ export function chooseDisplayPicks(
         }
     }
 
-    const displaySafe = (r: ScoredRegimen) =>
-        r.projected_patient.sbp >= DISPLAY_FLOORS.minProjectedSbp && r.projected_patient.potassium <= DISPLAY_FLOORS.maxProjectedPotassium && r.projected_patient.pulse >= DISPLAY_FLOORS.minProjectedPulse;
-    return { picks: ensureCongestionCoverage(distinctPicks, [...outputRegimens, ...extraPool.filter(displaySafe)], patient), allUnsafe };
+    return { picks: ensureCongestionCoverage(distinctPicks, [...outputRegimens, ...extraPool.filter(displaySafe)], patient), allUnsafe, unsafeReasons };
 }
 
 /** True when the regimen raises a standing loop diuretic's dose or starts one (a short-course add-on beside the oral loop is neither). */
@@ -243,10 +267,10 @@ export function selectWithRanking(
 ): { picks: ScoredRegimen[]; ranking: RankingInfo } {
     const mode = resolveRankingMode(patient);
     const applies = foundationalModeApplies(patient);
-    const { picks, allUnsafe } = chooseDisplayPicks(results, patient, rankingComparator(mode, patient));
+    const { picks, allUnsafe, unsafeReasons } = chooseDisplayPicks(results, patient, rankingComparator(mode, patient));
     if (allUnsafe) {
         clinicalAlerts.push(
-            'NO DISPLAY-SAFE REGIMEN: Candidate regimens projected severe hypotension (SBP < 85), severe hyperkalemia (K+ > 6.0), or severe bradycardia (HR < 45). ' +
+            `NO DISPLAY-SAFE REGIMEN: every candidate regimen projected ${unsafeReasons.join(' or ')}. ` +
             'Stabilize and reassess before oral intensification.'
         );
     }

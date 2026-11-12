@@ -4,10 +4,10 @@ import { isProjectedSafetyClean } from '../services/engine/selection';
 import { getDoseTiers, dailyDose, doseProgressToTarget, isCongestedAboveDryWeight, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
 import { isAcutelyDecompensated } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
-import { getMedicationClassGroup } from '../services/engine/registry';
+import { getMedicationClassGroup, isDiureticClass } from '../services/engine/registry';
 import { UP_TITRATION_MAX_DAILY_FACTOR } from '../services/engine/thresholds';
 import { includesLoopIncrease } from '../services/engine/selection';
-import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary } from '../services/engine/candidates';
+import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary, diureticHeldForNoCongestion } from '../services/engine/candidates';
 import { simulateModificationEffect, patientChfEffects } from '../services/engine/effects';
 import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/eligibility';
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
@@ -431,7 +431,8 @@ async function runVerification() {
             }
 
             // Global display-safety invariant: every displayed regimen must remain above critical hemodynamic/lab floors.
-            if (scoredRegimens.some(r => r.projected_patient.sbp < 85)) {
+            // Blood pressure and heart rate: a floor is broken only when the regimen LOWERS the value from the entered baseline (2026-11-12); potassium is absolute.
+            if (scoredRegimens.some(r => r.projected_patient.sbp < 85 && r.projected_patient.sbp < scenario.patient.sbp)) {
                 failures.push('Displayed regimen projects SBP < 85');
                 scenarioPassed = false;
             }
@@ -439,7 +440,7 @@ async function runVerification() {
                 failures.push('Displayed regimen projects K+ > 6.0');
                 scenarioPassed = false;
             }
-            if (scoredRegimens.some(r => r.projected_patient.pulse < 45)) {
+            if (scoredRegimens.some(r => r.projected_patient.pulse < 45 && r.projected_patient.pulse < scenario.patient.pulse)) {
                 failures.push('Displayed regimen projects HR < 45 (severe bradycardia)');
                 scenarioPassed = false;
             }
@@ -3746,7 +3747,7 @@ async function runVerification() {
                 if (out.scoredRegimens.length > 0 && base.scoredRegimens.length === 0) profileSafetyViolations.push(`${tag}: regimens shown although default shows none`);
                 for (const r of out.scoredRegimens) {
                     const pp = r.projected_patient;
-                    if (pp.sbp < DISPLAY_FLOORS.minProjectedSbp || pp.potassium > DISPLAY_FLOORS.maxProjectedPotassium || pp.pulse < DISPLAY_FLOORS.minProjectedPulse) {
+                    if ((pp.sbp < DISPLAY_FLOORS.minProjectedSbp && pp.sbp < scenario.patient.sbp) || pp.potassium > DISPLAY_FLOORS.maxProjectedPotassium || (pp.pulse < DISPLAY_FLOORS.minProjectedPulse && pp.pulse < scenario.patient.pulse)) {
                         profileSafetyViolations.push(`${tag}: displayed regimen violates a display floor`);
                     }
                     if (r.regimen.filter(m => RAAS_CLASSES.has(m.med.drug_class)).length > 1) profileSafetyViolations.push(`${tag}: dual RAAS displayed`);
@@ -3946,11 +3947,15 @@ async function runVerification() {
                 const single = cur.med.facts?.single_course_dose === true;
                 const blockedUp = single || analysis.contraindicatedCurrentMeds.has(name) || analysis.redundantCurrentMeds.has(name) || analysis.forcedReduceNames.has(name)
                     || kUptitrationBlock(cur.med, P) !== null || hrContinuationAction(cur.med, P)?.blockUp === true
-                    || (cur.med.drug_class === 'Beta Blocker' && isAcutelyDecompensated(P));
+                    || (cur.med.drug_class === 'Beta Blocker' && isAcutelyDecompensated(P))
+                    || (isDiureticClass(cur.med.drug_class) && diureticHeldForNoCongestion(P));
                 const raises = (t: RegimenMed | undefined, dir: 1 | -1) => !!t && (Number.isNaN(dailyDose(t)) || Number.isNaN(dailyDose(cur)) || (dir === 1 ? dailyDose(t) > dailyDose(cur) : dailyDose(t) < dailyDose(cur)));
                 if (!blockedUp && raises(adj.up, 1)) {
                     checked++;
-                    if (!up.some(o => String(o.dose.strength) === String(adj.up!.dose.strength))) skipViolations.push(`${sc.title}: ${name} ${cur.dose.strength} has no one-step up candidate (${adj.up!.dose.strength})`);
+                    // The next step is the next STRENGTH, or (2026-11-12) the smallest increase in total daily dose when the next strength at its usual
+                    // frequency would more than double it (furosemide 80 mg once daily -> 80 mg twice daily, not 160 mg twice daily).
+                    const withinDouble = (o: RegimenMed) => dailyDose(o) > dailyDose(cur) && dailyDose(o) <= 2 * dailyDose(cur);
+                    if (!up.some(o => String(o.dose.strength) === String(adj.up!.dose.strength) || withinDouble(o))) skipViolations.push(`${sc.title}: ${name} ${cur.dose.strength} has no one-step up candidate (${adj.up!.dose.strength})`);
                 }
                 if (!single && raises(adj.down, -1)) {
                     checked++;

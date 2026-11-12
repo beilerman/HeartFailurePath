@@ -240,8 +240,10 @@ export function buildQualitativeProjections(baseline: Patient, projected: Patien
     else if (baseExcess > 1.5) out.push({ label: 'Congestion', direction: 'caution', detail: 'Residual volume overload — diuretic strategy may need adjustment.' });
     else out.push({ label: 'Congestion', direction: 'stable', detail: 'Near-euvolemic / stable volume status.' });
 
-    if (projected.nt_pro_bnp < baseline.nt_pro_bnp * 0.85) out.push({ label: 'Neurohormonal stress', direction: 'improve', detail: 'Natriuretic-peptide burden expected to fall.' });
-    else if (projected.nt_pro_bnp > baseline.nt_pro_bnp * 1.1) out.push({ label: 'Neurohormonal stress', direction: 'caution', detail: 'Natriuretic-peptide burden may rise — reassess.' });
+    // Not stated when NT-proBNP was not entered (a blank value projects to the model's floor and read as a "rise").
+    if (!(baseline.nt_pro_bnp > 0)) { /* no line */ }
+    else if (projected.nt_pro_bnp < baseline.nt_pro_bnp * 0.85) out.push({ label: 'Neurohormonal stress', direction: 'improve', detail: 'Natriuretic-peptide burden expected to fall.' });
+    else if (projected.nt_pro_bnp > Math.max(baseline.nt_pro_bnp * 1.1, 60)) out.push({ label: 'Neurohormonal stress', direction: 'caution', detail: 'Natriuretic-peptide burden may rise — reassess.' });
     else out.push({ label: 'Neurohormonal stress', direction: 'stable', detail: 'Little change in natriuretic-peptide burden expected.' });
 
     // Conservative projected SBP (post safety change — compensation excluded from this value)

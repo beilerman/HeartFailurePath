@@ -1,7 +1,7 @@
 /** The domain scorers, their scoring constants, and the guideline-concordance table. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, RegimenMed } from '../../types';
 import type { ScoreDomainKey } from './scoreModel';
-import { hasHistoricalHFrEF, hasPriorLvefBelow50 } from '../clinicalPredicates';
+import { hasHistoricalHFrEF, hasPriorLvefBelow50, congestionFindingCount } from '../clinicalPredicates';
 import { DIURETIC_CLASSES, RAAS_CLASSES, getMedicationClassGroup } from './registry';
 import { isTargetDoseForPatient, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 
@@ -89,7 +89,8 @@ export function calculateNeurohormonalScore(bnp: number): number {
 export function calculateFunctionalScore(nyha: string, kccq: number, steps?: number): number {
     const nyhaScore = NYHA_SCORE_MAP[nyha] || 0;
 
-    let totalScore = nyhaScore + kccq;
+    // KCCQ is a 0-100 scale: a projected value pushed below 0 (several removals at once) used to drive this domain negative.
+    let totalScore = nyhaScore + Math.max(0, Math.min(100, kccq));
     let divisor = 2;
 
     if (steps !== undefined) {
@@ -116,7 +117,7 @@ export function calculateVolumeScore(dryWeight: number, currentWeight: number, f
     }
 
     // Findings Penalty: -10 pts per finding
-    score -= (findings.size * VOLUME_SCORING.findingPenalty);
+    score -= (congestionFindingCount(findings) * VOLUME_SCORING.findingPenalty);
 
     // SpO2 Penalty (Surrogate for Pulmonary Congestion)
     if (spo2 !== undefined) {

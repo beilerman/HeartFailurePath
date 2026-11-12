@@ -240,7 +240,12 @@ export function kContinuationAction(med: Medication, patient: Patient): { action
  */
 export function hrContinuationAction(med: Medication, patient: Patient): { reduce: boolean; blockUp: boolean; reduceReason: string; withholdReason: string; basis: string } | null {
     const rule = med.facts?.hr_continuation;
-    if (!rule || !(patient.pulse > 0) || patient.rhythm === 'Paced') return null;
+    if (!rule || patient.rhythm === 'Paced') return null;
+    // Heart rate not entered: the dose is neither reduced (no evidence of bradycardia) nor INCREASED (no evidence it is safe to). Before 2026-11-12 a blank
+    // pulse allowed up-titration.
+    if (!(patient.pulse > 0)) {
+        return { reduce: false, blockUp: true, reduceReason: '', withholdReason: '', basis: 'Heart rate not entered: the dose is not increased until it is known (engine policy)' };
+    }
     const reduce = patient.pulse < rule.reduce_below;
     const blockUp = patient.pulse < rule.no_uptitration_below;
     if (!reduce && !blockUp) return null;
@@ -298,7 +303,8 @@ export function computeRedundantCurrentMeds(
     byGroup.forEach((allMeds, group) => {
         if (allMeds.length <= 1) return;
         const keepable = allMeds.filter(r => !isUnkeepable(r.med));
-        const meds = keepable.length > 0 ? keepable : allMeds;
+        // Sorted by name so a tie (two agents at the same strength) never depends on the order the drugs were typed in.
+        const meds = [...(keepable.length > 0 ? keepable : allMeds)].sort((a, b) => a.med.name < b.med.name ? -1 : a.med.name > b.med.name ? 1 : 0);
         let keeper: RegimenMed;
         if (group === 'RAAS Inhibitor') {
             keeper = meds.reduce((best, cur) =>
@@ -358,22 +364,34 @@ export function isLowOutputState(patient: Patient): boolean {
     return markerCount >= 2;
 }
 
-export function dedupeCurrentRegimen(regimen: RegimenMed[]): { regimen: RegimenMed[]; duplicateNames: string[] } {
-    const seen = new Set<string>();
+/**
+ * One entry per drug. When the same drug is listed more than once the entry with the HIGHER total daily dose is kept (the conservative reading for every
+ * safety projection), in the position of the first entry; `kept` names it when the doses differed. Before 2026-11-12 the first entry typed won, so the
+ * answer depended on the order of the list.
+ */
+export function dedupeCurrentRegimen(regimen: RegimenMed[]): { regimen: RegimenMed[]; duplicateNames: string[]; kept: string[] } {
+    const best = new Map<string, RegimenMed>();
     const duplicateNames = new Set<string>();
-    const deduped: RegimenMed[] = [];
-
+    const conflicting = new Set<string>();
+    const daily = (r: RegimenMed) => parseFloat(String(r.dose.strength)) * dosesPerDay(r.selected_frequency);
     regimen.forEach(item => {
-        const key = item.med.name;
-        if (seen.has(key)) {
-            duplicateNames.add(item.med.name);
-            return;
-        }
-        seen.add(key);
-        deduped.push(item);
+        const held = best.get(item.med.name);
+        if (!held) { best.set(item.med.name, item); return; }
+        duplicateNames.add(item.med.name);
+        if (daily(item) !== daily(held)) conflicting.add(item.med.name);
+        if (daily(item) > daily(held)) best.set(item.med.name, item);
     });
-
-    return { regimen: deduped, duplicateNames: Array.from(duplicateNames) };
+    const emitted = new Set<string>();
+    const deduped: RegimenMed[] = [];
+    regimen.forEach(item => {
+        if (emitted.has(item.med.name)) return;
+        emitted.add(item.med.name);
+        deduped.push(best.get(item.med.name)!);
+    });
+    return {
+        regimen: deduped, duplicateNames: Array.from(duplicateNames),
+        kept: Array.from(conflicting).map(n => { const k = best.get(n)!; return `${n} ${k.dose.strength} ${k.dose.unit} ${k.selected_frequency}`; }),
+    };
 }
 
 export function countNewClassGroups(candidate: RegimenMed[], current: RegimenMed[]): number {

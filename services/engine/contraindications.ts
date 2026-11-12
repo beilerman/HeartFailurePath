@@ -29,7 +29,7 @@ export function contraindicationReasons(med: Medication, patient: Patient): stri
 export const CI_ANGIOEDEMA: ContraindicationCheck = {
     reason: 'History of angioedema', when: p => p.comorbidities.has("History of Angioedema"),
 };
-/** Anuria: a label contraindication of furosemide (incl. Furoscix), metolazone and hydrochlorothiazide (verified-diuretics.md). The app has no urine-output field; the comorbidity option "Anuria" records it. */
+/** Anuria: a label contraindication of the loop diuretics (furosemide incl. Furoscix, torsemide, bumetanide) and the thiazide-type diuretics (metolazone, hydrochlorothiazide, chlorthalidone). The app has no urine-output field; the comorbidity option "Anuria" records it. */
 export const ANURIA = 'Anuria';
 export const CI_ANURIA: ContraindicationCheck = {
     reason: 'Anuria (label contraindication)', when: p => p.comorbidities.has(ANURIA),
@@ -93,7 +93,7 @@ export const alreadyOnMed = (p: Patient, name: string): boolean =>
  * pacemaker is in place"). A blank pulse (0) still blocks a new start, as before.
  */
 export const bbStartBradycardiaCheck = (name: string, below: number, basis: string): ContraindicationCheck => ({
-    reason: `Heart rate below ${below} bpm: do not START a beta-blocker (${basis}; an established beta-blocker is dose-reduced, not stopped)`,
+    reason: `Heart rate below ${below} bpm, or not entered: do not START a beta-blocker (${basis}; an established beta-blocker is dose-reduced, not stopped)`,
     when: p => !alreadyOnMed(p, name) && p.rhythm !== 'Paced' && p.pulse < below,
 });
 export const SICK_SINUS = 'Sick Sinus Syndrome / Sinoatrial Block';
@@ -173,7 +173,7 @@ export const CI_ADRENAL_INSUFFICIENCY: ContraindicationCheck = {
  * pathway in scoring.ts and eligibility rule E15). Blank potassium (0) is never a value.
  */
 export const mraStartPotassiumCheck = (name: string): ContraindicationCheck => ({
-    reason: 'Potassium above 5.5 mEq/L (new start)',
+    reason: 'Potassium above 5.5 mEq/L (new start; rule E15 already holds a new start from 5.0)',
     when: p => !alreadyOnMed(p, name) && p.potassium > MRA_START_K_MAX,
 });
 /** NEW steroidal MRA start contraindicated at eGFR 30 or below (2022 AHA/ACC/HFSA 7.3.3); a drug already on board is not removed by this check. Blank eGFR (0) is handled by the renal-only probe (rule E12). */

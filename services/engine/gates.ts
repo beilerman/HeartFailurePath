@@ -1,7 +1,7 @@
 /** Input audit and safety gates (stages 1-3 of the pipeline). Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, RegimenMed, SimulationOutput } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown } from '../clinicalPredicates';
+import { valueUnknown, congestionFindingCount } from '../clinicalPredicates';
 import { RAAS_CLASSES, MRA_POOL_CLASSES, getMedicationClassGroup } from './registry';
 import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold } from '../clinicalPredicates';
 import { PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './contraindications';
@@ -10,6 +10,8 @@ import { buildMissingDataNotices, computeGdmtGaps } from './explain';
 import { dailyDose, isLoopDiureticResistant, dedupeCurrentRegimen, hrContinuationAction, kContinuationAction, kUptitrationBlock, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { HYPOTENSION_SBP_BELOW, RAAS_EGFR_REVIEW_BELOW, CREATININE_RISE_ACCEPTABLE_PCT, EGFR_FLOOR_FOR_CREATININE_RISE } from './thresholds';
 import { assessCreatinineChange, creatinineRiseIsAcceptable } from './renalChange';
+import { expandAllergies } from './allergy';
+import { MEDICATION_FORMULARY } from '../../constants';
 
 export interface CriticalDataAudit {
     alerts: string[];
@@ -17,6 +19,8 @@ export interface CriticalDataAudit {
     unknownRenal: boolean;
     unknownBnp: boolean;
     unknownLvef: boolean;
+    /** Heart rate blank in a non-paced rhythm: beta-blocker / ivabradine starts and dose increases are withheld. */
+    unknownPulse: boolean;
 }
 
 export function auditCriticalData(patient: Patient): CriticalDataAudit {
@@ -25,13 +29,16 @@ export function auditCriticalData(patient: Patient): CriticalDataAudit {
     const unknownPotassium = valueUnknown(patient.potassium);
     const unknownRenal = valueUnknown(patient.egfr) || valueUnknown(patient.creatinine);
     const unknownBnp = valueUnknown(patient.nt_pro_bnp);
+    const unknownPulse = valueUnknown(patient.pulse) && patient.rhythm !== 'Paced';
 
     if (unknownLvef) alerts.push('DATA REQUIRED: LVEF not entered. HF phenotype (HFrEF = LVEF below 50, HFpEF = LVEF 50 or higher) cannot be determined and a GDMT pathway cannot be selected. Obtain an echocardiogram before relying on recommendations.');
     if (unknownPotassium) alerts.push('DATA REQUIRED: Serum potassium not entered. Obtain a BMP before initiating or up-titrating a RAAS inhibitor or MRA — hyperkalemia risk cannot be assessed and must not be assumed absent.');
     if (unknownRenal) alerts.push('DATA REQUIRED: Renal function (eGFR / creatinine) not entered. Required for renal dose adjustment and RAAS / MRA / SGLT2i safety. Obtain a BMP.');
     if (unknownBnp) alerts.push('DATA NOTE: NT-proBNP not entered. Neurohormonal status is not assessed and is excluded from scoring (not scored as normal).');
 
-    return { alerts, unknownPotassium, unknownRenal, unknownBnp, unknownLvef };
+    if (unknownPulse) alerts.push('DATA REQUIRED: Heart rate not entered. A beta-blocker or ivabradine is not started or increased until the resting heart rate is known; drugs already in use are kept at their current dose.');
+
+    return { alerts, unknownPotassium, unknownRenal, unknownBnp, unknownLvef, unknownPulse };
 }
 
 // Catches data-entry errors (unit confusion, transcription slips) — values outside the range
@@ -112,7 +119,7 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     }
 
     // NT-proBNP above 5000 pg/mL with worsening symptoms or congestion: very high risk, admission generally recommended (2026 ESC section 7.2). Alert only; no ranking effect.
-    const congestedNow = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg) > 1.0 || patient.volume_status.exam_findings.size > 0 || patient.nyha_class === 'III' || patient.nyha_class === 'IV';
+    const congestedNow = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg) > 1.0 || congestionFindingCount(patient.volume_status.exam_findings) > 0 || patient.nyha_class === 'III' || patient.nyha_class === 'IV';
     if (patient.nt_pro_bnp > 5000 && congestedNow) {
         alerts.push(`VERY HIGH RISK: NT-proBNP ${patient.nt_pro_bnp} pg/mL (above 5000) with worsening symptoms or congestion. The 2026 ESC guideline says this indicates very high risk and admission is generally recommended; assess for admission before outpatient optimization.`);
     }
@@ -172,11 +179,29 @@ export interface InputAudit {
  * Mutates `patient.current_regimen` (the caller's clone) when duplicates are removed.
  */
 export function auditInputs(patient: Patient, clinicalAlerts: string[]): InputAudit {
+    // A blank numeric field reaches the engine as 0 from the form, but as NaN or undefined from other callers (a cleared field, a fixture, an import).
+    // The gates are written as `value < limit`, which is FALSE for NaN: an unreadable eGFR or pulse would pass every limit as if normal. One sentinel only: 0.
+    const blankToZero = (v: number | undefined): number => (v === undefined || v === null || Number.isNaN(v) || v < 0 ? 0 : v);
+    patient.sbp = blankToZero(patient.sbp); patient.dbp = blankToZero(patient.dbp); patient.pulse = blankToZero(patient.pulse);
+    patient.potassium = blankToZero(patient.potassium); patient.egfr = blankToZero(patient.egfr); patient.creatinine = blankToZero(patient.creatinine);
+    patient.lvef = blankToZero(patient.lvef); patient.nt_pro_bnp = blankToZero(patient.nt_pro_bnp); patient.bun = blankToZero(patient.bun);
+    patient.volume_status.dry_weight_kg = blankToZero(patient.volume_status.dry_weight_kg);
+    patient.volume_status.current_weight_kg = blankToZero(patient.volume_status.current_weight_kg);
+
+    // Allergy text is free text: resolve it to formulary drugs (case, brand names, class names) so every allergy check sees them, and say so when an entry
+    // matches nothing instead of silently excluding no drug (allergy.ts).
+    const allergy = expandAllergies(patient.allergies ?? new Set<string>(), MEDICATION_FORMULARY);
+    patient.allergies = allergy.expanded;
+    if (allergy.unmatched.length > 0) {
+        clinicalAlerts.push(`ALLERGY NOTE: ${allergy.unmatched.map(a => `"${a}"`).join(', ')} ${allergy.unmatched.length > 1 ? 'do' : 'does'} not match a drug or drug class in this tool, so no drug is excluded for ${allergy.unmatched.length > 1 ? 'them' : 'it'}. If it is one of the tool's medications, enter its generic or brand name.`);
+    }
+
     const dedupedCurrent = dedupeCurrentRegimen(patient.current_regimen || []);
     if (dedupedCurrent.duplicateNames.length > 0) {
         patient.current_regimen = dedupedCurrent.regimen;
         clinicalAlerts.push(
             `INPUT SAFETY: Duplicate current medications removed (${dedupedCurrent.duplicateNames.join(', ')}). ` +
+            `Where the two entries had different doses the HIGHER one was kept (${dedupedCurrent.kept.join('; ') || 'same dose'}): confirm which dose the patient takes. ` +
             'Duplicate entries can double-count hemodynamic effects.'
         );
     }
@@ -194,6 +219,18 @@ export function auditInputs(patient: Patient, clinicalAlerts: string[]): InputAu
     // computed on garbage, so this is a hard stop, not a flag-and-proceed. (e.g. LVEF 99 would
     // otherwise classify as HFpEF and drive a confident SGLT2i pathway off a typo.)
     if (implausibleValueAlerts.length > 0) {
+        return stopped({ scoredRegimens: [], excludedMedications: taggedDiscontinuedMeds(patient), clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] });
+    }
+
+    // Blood pressure and weight are read by every projection and gate: without them nothing can be assessed. Say WHICH field is blank instead of ending
+    // at a generic "no display-safe regimen" (a cleared dry weight used to read as tens of kilograms of congestion).
+    const blankVitals = [
+        valueUnknown(patient.sbp) ? 'systolic blood pressure' : '',
+        valueUnknown(patient.volume_status.current_weight_kg) ? 'current weight' : '',
+        valueUnknown(patient.volume_status.dry_weight_kg) ? 'dry weight' : '',
+    ].filter(Boolean);
+    if (blankVitals.length > 0) {
+        clinicalAlerts.push(`DATA REQUIRED: ${blankVitals.join(', ')} not entered. No recommendation is made without ${blankVitals.length > 1 ? 'them' : 'it'}.`);
         return stopped({ scoredRegimens: [], excludedMedications: taggedDiscontinuedMeds(patient), clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] });
     }
 
@@ -344,7 +381,7 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
         clinicalAlerts.push(
             'HYPERKALEMIC EMERGENCY: Serum K+ ' + patient.potassium.toFixed(1) + ' mEq/L (≥ 6.0). ' +
             'Obtain an ECG now and repeat the potassium urgently, then treat urgently — IV calcium if ECG changes, insulin/glucose, ' +
-            'K+ binder or dialysis — before oral GDMT optimization. No RAAS inhibitor or MRA is started or increased. ' +
+            'K+ binder or dialysis — before oral GDMT optimization. No RAAS inhibitor or MRA is started or increased, and those already in use are withheld until potassium is controlled (2026 ESC section 6.1). ' +
             'A secondary source (Heart Fail Rev 2021) classes potassium above 6.0 as severe hyperkalemia; the tool\'s 6.0 alert and its alerts-only stop at 6.5 are engine policy (the severity classification could not be verified from a primary source).'
         );
     }

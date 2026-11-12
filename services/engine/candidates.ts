@@ -1,8 +1,8 @@
 /** Current-regimen analysis and candidate-modification generation. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, RegimenMed, ModificationAction, RegimenModification, ModificationSet } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
-import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
+import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient, congestionFindingCount } from '../clinicalPredicates';
+import { RAAS_CLASSES, getMedicationClassGroup, isDiureticClass } from './registry';
 import { isCongestedAboveDryWeight, isLoopDiureticResistant, adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication, MRA_POOL_CLASSES } from './intolerance';
 import { assessCreatinineChange } from './renalChange';
@@ -107,6 +107,10 @@ export function analyzeCurrentRegimen(
     // (the stop is also a contraindication check on every RAAS/MRA entry, so a new start and a swap within the class are blocked as well).
     const creatinineChange = assessCreatinineChange(patient);
     const raasOrMra = (cls: string) => RAAS_CLASSES.has(cls) || MRA_POOL_CLASSES.has(cls);
+    // A diuretic is titrated to congestion. It is not INCREASED (and a contraindicated one is stopped, not replaced by another diuretic) when the patient is more
+    // than 1 kg BELOW dry weight, or at or below dry weight with no congestion finding on examination. Engine policy (2026 ESC Supplementary Table S7: use the
+    // lowest dose that maintains euvolaemia). Before 2026-11-12 a loop could be doubled in a patient 3 kg below dry weight and was reduced again on the next run.
+    const noCongestion = diureticHeldForNoCongestion(patient);
     currentRegimen.forEach(r => {
         if (creatinineChange?.band === 'stop' && raasOrMra(r.med.drug_class)) {
             kWithholdReasons.set(r.med.name, `${creatinineChange.why}: ${RAAS_CLASSES.has(r.med.drug_class) ? 'stop' : 'withhold'} and seek specialist advice (2026 ESC Supplementary Tables S4/S5/S8)`);
@@ -184,7 +188,10 @@ export function analyzeCurrentRegimen(
         //     CONTINUE the current dose and diurese; up-titrate after euvolemia is restored.
         //   - Forced dose REDUCTION remains hypoperfusion-gated ("cold-and-wet" only, H5) —
         //     warm-and-wet patients keep their current BB dose.
-        const isBBBlockedUp = isAcutelyDecompensated && current.med.drug_class === 'Beta Blocker';
+        // Pregnancy: a non-selective beta-blocker that could not be switched (no beta-1-selective agent is eligible) is kept, never INCREASED
+        // (2026 ESC Recommendation Table 27 asks for the switch; raising the dose of the agent to be replaced contradicts it).
+        const pregnancyNonSelectiveBb = patient.is_pregnant === true && current.med.drug_class === 'Beta Blocker' && !drugFacts(current.med).beta1_selective;
+        const isBBBlockedUp = (isAcutelyDecompensated && current.med.drug_class === 'Beta Blocker') || pregnancyNonSelectiveBb;
         const isBBForcedDown = forceDownBB && current.med.drug_class === 'Beta Blocker';
         // Forced ONE-STEP reduction: potassium 5.5-5.9 on an MRA (label rule), or a dose above an interaction cap.
         const kRule = kContinuationAction(current.med, patient);
@@ -224,15 +231,24 @@ export function analyzeCurrentRegimen(
         // MRA potassium gate on INCREASING the dose (facts.k_uptitration_max): the dose is held, the alert states why.
         const kUpBlock = kUptitrationBlock(current.med, patient);
 
-        if (!isContraindicated && !isBBBlockedUp && reduceReason === undefined && !hrRule?.blockUp && !kUpBlock) {
+        const diureticHold = isDiureticClass(current.med.drug_class) && noCongestion;
+        if (!isContraindicated && !isBBBlockedUp && reduceReason === undefined && !hrRule?.blockUp && !kUpBlock && !diureticHold) {
             // Sorted ASCENDING by dose index so consumers can rely on options[last] being the
             // highest tier (getDoseTiers construction order is [lowest, highest, middle, target],
             // which is NOT ascending — the compound add+titrate candidate previously picked a
             // middle/target tier while labeling it the maximal step).
             let higherDoses = withNeighbour(allTiers.filter(t => tierIdx(t) > currentIdx).map(t => carryFrequency(t, current, dailyCapFor(current.med, patient))), adjacent.up).filter(t => changesDaily(t, 1)).sort((a, b) => tierIdx(a) - tierIdx(b));
             // Dose-step cap (UP_TITRATION_MAX_DAILY_FACTOR): one visit at most doubles the total daily dose; the immediate next tier is always kept.
-            const currentDaily = dailyDose(current);
-            higherDoses = higherDoses.filter((t, i) => i === 0 || Number.isNaN(currentDaily) || !(dailyDose(t) > currentDaily * UP_TITRATION_MAX_DAILY_FACTOR));
+            // Compared on the LEADING component for a combination strength ("24/26" -> 24): Number("24/26") is NaN, which used to switch the cap off for
+            // sacubitril/valsartan (24/26 -> 97/103 in one visit) and H/ISDN (adversarial review 2026-11-12).
+            const currentDaily = comparableDailyDose(current);
+            // The always-kept next tier is given at the FEWEST doses per day that still raises the daily dose, when its preferred frequency would more than
+            // double it (furosemide 80 mg once daily -> 160 mg once... is not offered; 80 mg twice daily is the next step, not 160 mg twice daily).
+            if (higherDoses.length > 0 && !Number.isNaN(currentDaily) && comparableDailyDose(higherDoses[0]) > currentDaily * UP_TITRATION_MAX_DAILY_FACTOR) {
+                const gentler = smallestStepAbove(current, patient, currentDaily);
+                if (gentler) higherDoses = [gentler, ...higherDoses.filter(t => comparableDailyDose(t) > comparableDailyDose(gentler))];
+            }
+            higherDoses = higherDoses.filter((t, i) => i === 0 || Number.isNaN(currentDaily) || !(comparableDailyDose(t) > currentDaily * UP_TITRATION_MAX_DAILY_FACTOR));
             // facts.titrate_one_step (weekly GLP-1 / GLP-1-GIP): only the NEXT labeled tier, never a jump past a step.
             if (drugFacts(current.med).titrate_one_step) higherDoses = higherDoses.slice(0, 1);
             if (higherDoses.length > 0 && !drugFacts(current.med).single_course_dose) {
@@ -276,6 +292,13 @@ export function analyzeCurrentRegimen(
         // swapped to another agent in the same group — swapping would preserve the duplication. The
         // keeper covers the class; the duplicate is force-removed downstream.
         if (redundantCurrentMeds.has(current.med.name)) return;
+        // A short-course add-on (Furoscix) sits BESIDE an oral loop: it is stopped, never "swapped" for a second oral loop.
+        if (drugFacts(current.med).short_course_addon) return;
+        // A drug WITHHELD by a potassium, heart-rate or kidney rule is stopped: the reason applies to its whole class, so it is not swapped for a sibling
+        // (spironolactone withheld at potassium 5.5 was being swapped to eplerenone 25 mg, which the next run then withheld).
+        if (kWithholdReasons.has(current.med.name)) return;
+        // A contraindicated diuretic in a patient who is not congested is stopped, not replaced by another diuretic.
+        if (isDiureticClass(current.med.drug_class) && noCongestion) return;
         const group = getMedicationClassGroup(current.med.drug_class);
         // For beta-blockers, MRAs, and SGLT2i, a lateral swap to a DIFFERENT agent in the same
         // class is not how therapy is escalated — you up-titrate the existing agent. Offer such a
@@ -286,15 +309,18 @@ export function analyzeCurrentRegimen(
         // when the current loop must go (allergy, intolerance, contraindication). A short-course add-on (Furoscix) is never a swap target.
         // GLP-1 Therapy joins the set (verified-sglt2-glp1-adjuncts.md): a new GLP-1 start begins at its lowest labeled tier, so a lateral swap to the
         // other agent mid-escalation (e.g. semaglutide 1.7 mg -> tirzepatide 2.5 mg) is not how therapy is escalated; swap only when the current agent must go.
-        const TITRATE_NOT_SWAP_GROUPS = new Set(['Beta Blocker', 'MRA', 'SGLT2i', 'GLP-1 Therapy', 'Loop Diuretic']);
+        // 2026-11-12: the rule is now the DEFAULT for every class group except the RAAS pool (whose only non-forced swap is the ACEi/ARB -> ARNI upgrade below).
+        // A lateral metolazone -> chlorthalidone or patiromer -> Lokelma swap was being offered, and ranked, as a treatment step.
+        const TITRATE_NOT_SWAP = group !== 'RAAS Inhibitor';
         // Diuretic resistance (2026 ESC Supplementary Table S7: "consider switching furosemide to bumetanide or torasemide"): a loop may also be swapped when the patient
         // stays congested (more than 1 kg above dry weight) on a HIGH dose of the current loop, high dose = the entry's own alert level (facts.high_dose_threshold).
         const loopResistant = isLoopDiureticResistant(patient, current);
-        if (TITRATE_NOT_SWAP_GROUPS.has(group) && !contraindicatedCurrentMeds.has(current.med.name) && !loopResistant) return;
+        if (TITRATE_NOT_SWAP && !contraindicatedCurrentMeds.has(current.med.name) && !loopResistant) return;
         const sourceContraindicated = contraindicatedCurrentMeds.has(current.med.name);
         const groupTiers = (tiersByGroup.get(group) || []).filter(t => startTiers.includes(t));
         let candidates = groupTiers.filter(t =>
             t.med.name !== current.med.name &&
+            !currentRegimen.some(r => r !== current && r.med.name === t.med.name) && // Don't swap TO a drug already on board (it would be listed twice)
             !contraindicatedCurrentMeds.has(t.med.name) && // Don't swap TO a contraindicated med
             !drugFacts(t.med).short_course_addon           // A short-course add-on (Furoscix, "not for chronic use") is never a standing replacement
         );
@@ -544,6 +570,61 @@ export function analyzeCurrentRegimen(
         forcedReduceExactStep,
         kWithholdReasons
     };
+}
+
+/** True when a diuretic is not increased for this patient: more than 1 kg below dry weight, or at or below dry weight with no congestion finding on examination. */
+export function diureticHeldForNoCongestion(patient: Patient): boolean {
+    const weightExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    return weightExcess < -1.0 || (weightExcess <= 0 && congestionFindingCount(patient.volume_status.exam_findings) === 0);
+}
+
+/** Total daily dose for ORDERING doses of one drug: a combination strength ("24/26", "37.5/20") is read by its leading component. */
+export function comparableDailyDose(r: RegimenMed): number {
+    return parseFloat(String(r.dose.strength)) * dosesPerDay(r.selected_frequency);
+}
+
+/**
+ * The smallest increase in total daily dose available for a drug the patient takes: every eligible strength x allowed frequency (within the declared and renal
+ * daily maxima) above the current daily dose, lowest first; a tie goes to fewer doses per day. Used when the next strength at its usual frequency would more
+ * than double the dose. Null when no combination raises the dose.
+ */
+export function smallestStepAbove(current: RegimenMed, patient: Patient, currentDaily: number): RegimenMed | null {
+    const cap = dailyCapFor(current.med, patient);
+    const options: RegimenMed[] = [];
+    eligibleDoses(current.med, patient).forEach(dose => {
+        frequenciesWithinMax(current.med, dose.frequency_options, dose.strength).forEach(f => {
+            const r = { med: current.med, dose, selected_frequency: f };
+            const d = comparableDailyDose(r);
+            if (d > currentDaily + 1e-9 && (cap === undefined || d <= cap)) options.push(r);
+        });
+    });
+    if (options.length === 0) return null;
+    return options.sort((a, b) => comparableDailyDose(a) - comparableDailyDose(b) || dosesPerDay(a.selected_frequency) - dosesPerDay(b.selected_frequency))[0];
+}
+
+/**
+ * Structural problems that make a regimen unprescribable whatever its score: the same drug listed twice, two agents of one class group (a short-course add-on
+ * beside its oral loop is the one allowed pair), or a short-course add-on with no oral loop to sit beside. Every candidate is checked AFTER the forced edits,
+ * so a combination of individually valid changes (swap X to Y + add Y) cannot reach the clinician (adversarial review 2026-11-12).
+ */
+export function structuralProblems(regimen: RegimenMed[]): string[] {
+    const problems: string[] = [];
+    const names = new Set<string>();
+    const groups = new Map<string, string>();
+    regimen.forEach(r => {
+        if (names.has(r.med.name)) problems.push(`${r.med.name} listed twice`);
+        names.add(r.med.name);
+        if (drugFacts(r.med).short_course_addon) return;
+        const g = getMedicationClassGroup(r.med.drug_class);
+        if (groups.has(g) && groups.get(g) !== r.med.name) problems.push(`two ${g} agents (${groups.get(g)} and ${r.med.name})`);
+        groups.set(g, r.med.name);
+    });
+    regimen.forEach(r => {
+        if (!drugFacts(r.med).short_course_addon) return;
+        const g = getMedicationClassGroup(r.med.drug_class);
+        if (!regimen.some(o => o !== r && !drugFacts(o.med).short_course_addon && getMedicationClassGroup(o.med.drug_class) === g)) problems.push(`${r.med.name} without an oral ${g}`);
+    });
+    return problems;
 }
 
 /**
@@ -1077,7 +1158,10 @@ export function generateCandidateModifications(
         // M4: Structural block for dual RAAS (ACEi+ARB, ACEi+ARNI, etc.) — not just warning
         const raasInRegimen = c.resulting_regimen.filter(r => RAAS_CLASSES.has(r.med.drug_class));
         const hasDualRAAS = raasInRegimen.length > 1;
-        return satisfiesForcedBbDownTitration && satisfiesForcedReduction && newClassCount <= maxNewPerVisit && !hasDualMRA && !hasDualRAAS;
+        // A candidate that is structurally unprescribable is dropped UNLESS the patient arrived that way and the candidate does not make it worse
+        // (the duplicate-therapy cleanup above removes arriving duplicates; what is left here was built by combining changes).
+        const structurallySound = structuralProblems(c.resulting_regimen).length === 0;
+        return satisfiesForcedBbDownTitration && satisfiesForcedReduction && newClassCount <= maxNewPerVisit && !hasDualMRA && !hasDualRAAS && structurallySound;
     });
 }
 

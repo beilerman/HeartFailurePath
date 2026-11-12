@@ -61,12 +61,27 @@ export function isIronDeficient(patient: Patient): boolean {
     return ferritin <= 300 && tsat !== undefined && tsat < 20;             // functional
 }
 
+/**
+ * Number of distinct CONGESTION findings on examination. Edema is one finding whatever its grade (the form offers 1+, 2+ and 3+ as separate toggles; two grades
+ * ticked used to count as two findings), and cool extremities is a perfusion sign, not congestion, so it is not counted (it is read by the low-output and
+ * hypoperfusion rules instead). Before 2026-11-12 every rule used the raw size of the findings set.
+ */
+export function congestionFindingCount(findings: Set<string>): number {
+    let n = 0, edema = false;
+    findings.forEach(f => {
+        if (f === 'Cool Extremities') return;
+        if (f.startsWith('Edema')) { edema = true; return; }
+        n += 1;
+    });
+    return n + (edema ? 1 : 0);
+}
+
 // Acutely decompensated heart failure, as the engine defines it everywhere (beta-blocker initiation block, ivabradine
 // contraindication): NYHA IV, or NYHA III with more than 2 kg above dry weight and at least two congestion exam findings.
 export function isAcutelyDecompensated(patient: Patient): boolean {
     const excess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
     return patient.nyha_class === 'IV' ||
-        (patient.nyha_class === 'III' && excess > 2.0 && patient.volume_status.exam_findings.size >= 2);
+        (patient.nyha_class === 'III' && excess > 2.0 && congestionFindingCount(patient.volume_status.exam_findings) >= 2);
 }
 
 // Vericiguat initiation NT-proBNP threshold (VICTORIA inclusion, NCT02861534): >= 1000 pg/mL in sinus rhythm, >= 1600 in atrial

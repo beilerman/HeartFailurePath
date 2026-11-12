@@ -793,7 +793,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // Inspra label: contraindicated at CrCl <= 30 mL/min (boundary inclusive; eGFR used as the proxy).
             { reason: 'eGFR 30 or below (label: CrCl 30 mL/min or less)', when: p => p.egfr <= 30 },
             CI_STRONG_CYP3A,
-            pregnancyCheck('Category X'), // pregnancy Category X
+            pregnancyCheck(), // no letter category is cited (the letter system is retired); the engine avoids every MRA in pregnancy (2026 ESC, Class III)
         ]),
         renal_adjustment: (egfr) => {
             if (egfr <= 30) return { contraindicated: true };
@@ -1178,6 +1178,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => { const d = Math.min(Number(dose), 160); return { sbp_drop: 2 + d/40, hr_drop: 0, potassium_change: -0.3 - (d/80 * 0.3) }; },
         // Uric-acid caution comes from facts.raises_uric_acid (read by the engine).
         side_effects: () => ({ hypokalemia: 0.20, renal_worsening: 0.10, hypotension: 0.05 }),
+        // Anuria is a label contraindication of every loop diuretic (furosemide, torsemide and bumetanide labels); it was declared on Furoscix only (2026-11-12).
+        ...ci([CI_ANURIA]),
         renal_adjustment: (egfr) => {
             if (egfr < 20) return { caution: true };
             return {};
@@ -1327,6 +1329,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => { const d = Math.min(Number(dose), 100); return { sbp_drop: 2 + d/20, hr_drop: 0, potassium_change: -0.3 - (d/50 * 0.2) }; },
         // Renal-worsening display risk equalized with furosemide (no source compares the drugs; TRANSFORM-HF showed no outcome difference).
         side_effects: () => ({ hypokalemia: 0.15, renal_worsening: 0.10, hypotension: 0.05 }),
+        // Anuria is a label contraindication of every loop diuretic (furosemide, torsemide and bumetanide labels); it was declared on Furoscix only (2026-11-12).
+        ...ci([CI_ANURIA]),
         renal_adjustment: (egfr) => {
             if (egfr < 20) return { caution: true };
             return {};
@@ -1370,6 +1374,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => { const d = Math.min(Number(dose), 4); return { sbp_drop: 2 + d * 2, hr_drop: 0, potassium_change: -0.3 - (d / 2 * 0.3) }; },
         side_effects: () => ({ hypokalemia: 0.20, renal_worsening: 0.10, hypotension: 0.05 }),
+        // Anuria is a label contraindication of every loop diuretic (furosemide, torsemide and bumetanide labels); it was declared on Furoscix only (2026-11-12).
+        ...ci([CI_ANURIA]),
         renal_adjustment: (egfr) => {
             if (egfr < 20) return { caution: true };
             return {};
@@ -1609,7 +1615,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Patiromer',
         drug_class: 'K+ Binder',
         facts: {
-            rescue_role: { kind: 'k_binder', preferred: true },
+            // Automatic rescue adds the LABEL STARTING dose only (Veltassa: 8.4 g once daily, adjusted by 8.4 g at intervals of a week or longer); higher tiers stay prescribable.
+            rescue_role: { kind: 'k_binder', preferred: true, max_rescue_dose: 8.4 },
             // Veltassa label: take other oral drugs at least 3 hours before or after; avoid in severe constipation,
             // bowel obstruction or impaction; hypomagnesemia 5.3% (monitor magnesium).
             regimen_warnings: [
@@ -1891,7 +1898,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 10, hr_drop: 0, potassium_change: -0.4 - (Number(dose) / 25 * 0.1) }),
         side_effects: () => ({ severe_hypokalemia: 0.25, dehydration: 0.15, hyponatremia: 0.10, worsening_renal_function: THIAZIDE_WRF_EXCESS }),
-        ...ci([{ reason: 'eGFR below 15 (anuria/ESRD)', when: p => p.egfr < 15 }]), // Anuria/ESRD
+        ...ci([{ reason: 'eGFR below 15 (anuria/ESRD)', when: p => p.egfr < 15 }, CI_ANURIA]), // Anuria/ESRD (label: anuria)
     },
     {
         name: 'Hydrochlorothiazide',
@@ -1931,3 +1938,47 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
     }
 ];
+
+/**
+ * Brand and common names by which an allergy to a formulary drug may be typed (lower case). Attached to each entry as facts.allergy_aliases and read by
+ * services/engine/allergy.ts, so "Entresto", "Aldactone" or "Lasix" in the free-text allergy box excludes the drug (2026-11-12). Add a row when adding a drug.
+ */
+const ALLERGY_ALIASES_BY_DRUG: Record<string, string[]> = {
+    'Sacubitril/Valsartan (Entresto)': ['entresto'],
+    'Lisinopril': ['zestril', 'prinivil', 'qbrelis'],
+    'Enalapril': ['vasotec'],
+    'Ramipril': ['altace'],
+    'Captopril': ['capoten'],
+    'Valsartan': ['diovan'],
+    'Candesartan': ['atacand'],
+    'Losartan': ['cozaar'],
+    'Carvedilol': ['coreg'],
+    'Metoprolol Succinate': ['toprol', 'toprol xl', 'toprol-xl'],
+    'Bisoprolol': ['zebeta'],
+    'Spironolactone': ['aldactone', 'carospir'],
+    'Eplerenone': ['inspra'],
+    'Finerenone (Kerendia)': ['kerendia'],
+    'Dapagliflozin': ['farxiga'],
+    'Empagliflozin': ['jardiance'],
+    'Semaglutide (Wegovy)': ['wegovy', 'ozempic', 'rybelsus'],
+    'Tirzepatide (Zepbound)': ['zepbound', 'mounjaro'],
+    'Furosemide': ['lasix', 'frusemide'],
+    'Furoscix (SC Furosemide)': ['lasix', 'furoscix', 'frusemide'],
+    'Torsemide': ['demadex', 'soaanz', 'torasemide'],
+    'Bumetanide': ['bumex'],
+    'Hydralazine/Isosorbide Dinitrate': ['bidil', 'hydralazine', 'isosorbide', 'isosorbide dinitrate', 'isordil', 'apresoline'],
+    'Ivabradine': ['corlanor', 'procoralan'],
+    'Vericiguat': ['verquvo'],
+    'Patiromer': ['veltassa'],
+    'Sodium Zirconium Cyclosilicate (Lokelma)': ['lokelma', 'szc'],
+    'Ferric Carboxymaltose': ['injectafer', 'ferinject', 'iv iron'],
+    'Digoxin': ['lanoxin'],
+    'Metolazone': ['zaroxolyn'],
+    'Hydrochlorothiazide': ['hctz', 'microzide'],
+    'Chlorthalidone': ['thalitone', 'hygroton', 'chlortalidone'],
+};
+MEDICATION_FORMULARY.forEach(m => {
+    const aliases = ALLERGY_ALIASES_BY_DRUG[m.name];
+    if (aliases) m.facts = { ...(m.facts ?? {}), allergy_aliases: aliases };
+});
+

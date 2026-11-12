@@ -3,11 +3,12 @@ import { Patient, Medication, ModificationSet, ChfEffects, RegimenMed } from '..
 import { drugFacts } from './drugFacts';
 import { valueUnknown } from '../clinicalPredicates';
 import { hasChildPughBorC, hasChildPughBConfirmed, onPde5Inhibitor as onPde5InhibitorPatient } from './contraindications';
-import { RAAS_CLASSES, getDbpRatio, getMedicationClassGroup } from './registry';
+import { RAAS_CLASSES, getDbpRatio, getMedicationClassGroup, isDiureticClass } from './registry';
 import { clonePatient, dailyDose, effectDose, isTargetDoseForPatient } from './regimenUtils';
 import { URIC_ACID_GOUT_POINTS } from './scoreModel';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
 import { HYPOKALEMIA_K_BELOW } from './thresholds';
+import { classifyPhenotype } from './domains';
 
 /** A drug's heart-rate lowering as credited for THIS patient: digoxin's only counts in the rhythm its label data cover (AFib). */
 function hrDropFor(med: Medication, hrDrop: number, patient: Patient): number {
@@ -368,7 +369,9 @@ export function simulateModificationEffect(
         rationale.push("Synergy: SGLT2i enhances Loop Diuretic efficiency");
     }
 
-    if (hasRAAS && hasBeta && hasMRA && hasSGLT2 && !currentHasQuad) {
+    // Reduced EF only (LVEF below 50, improved EF or a prior LVEF below 50): the four-pillar evidence is HFrEF evidence. In HFpEF a RAAS inhibitor is Class IIb and a
+    // beta-blocker has no HF indication, so "quadruple therapy" there is not a recognised regimen and earns no synergy (2026-11-12).
+    if (hasRAAS && hasBeta && hasMRA && hasSGLT2 && !currentHasQuad && classifyPhenotype(currentPatient) === 'HFrEF') {
         lvefDelta += 3;
         kccqDelta += 5;
         rationale.push("QUADRUPLE THERAPY (The 4 Pillars): Maximal survival benefit");
@@ -526,7 +529,8 @@ export function simulateModificationEffect(
     }
 
     const safetyFloor = dryWeightAdjusted - 2.0;
-    if (projectedWeight < safetyFloor) {
+    // Only when THIS regimen lowers weight: a patient who arrives below the floor and has a diuretic reduced is moving up, not losing weight rapidly.
+    if (projectedWeight < safetyFloor && projectedWeight < currentPatient.volume_status.current_weight_kg - 1e-9) {
         warnings.push(`Caution: Rapid Weight Loss (${Math.abs(currentPatient.volume_status.current_weight_kg - projectedWeight).toFixed(1)}kg) - Monitor hydration`);
         proj.nt_pro_bnp = proj.nt_pro_bnp * 1.3;
         if (map < 70) {
@@ -542,15 +546,19 @@ export function simulateModificationEffect(
     }
 
     // M6: Physiologic floor — prevent model artifacts (negative/zero) from misleading NPs
-    proj.sbp = Math.max(60, finalSbp);
-    proj.dbp = Math.max(30, finalDbp);
-    proj.pulse = Math.max(30, currentPatient.pulse - hrDelta);
+    // Rounded to 2 decimals: the deltas are floating-point sums whose last bits depend on the order the drugs are listed in, and a projected 6.000000001 vs
+    // 5.999999999 used to decide whether an option was shown (the same patient gave different answers when the regimen was typed in another order).
+    const r2 = (x: number) => Math.round(x * 100) / 100;
+    proj.sbp = r2(Math.max(60, finalSbp));
+    proj.dbp = r2(Math.max(30, finalDbp));
+    // A blank heart rate (0) stays blank: it is not projected to the 30 bpm floor and then penalized as bradycardia.
+    proj.pulse = valueUnknown(currentPatient.pulse) ? 0 : r2(Math.max(30, currentPatient.pulse - hrDelta));
     // Unknown baseline K+ (blank/0) must not flow into projected-K+ math — 0 + kDelta would
     // fire fabricated hypokalemia warnings and print "projected K+ 0.0" into clinician-facing
     // DDI text. The unknown sentinel is preserved; the dedicated POTASSIUM UNKNOWN pathway
     // (audit alert + RAAS/MRA caution penalty) governs instead.
     const kUnknown = valueUnknown(currentPatient.potassium);
-    proj.potassium = kUnknown ? currentPatient.potassium : currentPatient.potassium + kDelta;
+    proj.potassium = kUnknown ? currentPatient.potassium : r2(currentPatient.potassium + kDelta);
 
     // --- Titration Timeline Warning ---
     const newAdds = modificationSet.modifications.filter(m => m.action === 'add');
@@ -576,7 +584,7 @@ export function simulateModificationEffect(
 
     // --- Safety Checks ---
     if (proj.sbp < 90) warnings.push('Risk of Hypotension (SBP < 90)');
-    if (proj.pulse < 50) warnings.push('Risk of Bradycardia (HR < 50)');
+    if (proj.pulse > 0 && proj.pulse < 50) warnings.push('Risk of Bradycardia (HR < 50)');
 
     if (!kUnknown) {
         if (proj.potassium > 6.0) {
@@ -736,13 +744,17 @@ export function simulateModificationEffect(
         warnings.push('Severe CKD Loop Strategy: eGFR < 20 may blunt loop response. Consider split dosing (BID/TID), torsemide/bumetanide conversion, and close urine output + daily weight tracking.');
     }
 
-    // Penalized caution when a drug declaring facts.hypokalemia_caution_below_k is ADDED (or swapped in) with a known baseline K+ below its level.
+    // Penalized caution when a potassium-LOWERING diuretic (loop or thiazide-type) is added, swapped in or increased with a measured baseline K+ below 3.5
+    // (HYPOKALEMIA_K_BELOW). A class rule since 2026-11-12: it was declared on metolazone only, so furosemide could be doubled at K+ 3.0 with no specific caution
+    // while metolazone carried one. An entry's own facts.hypokalemia_caution_below_k (level and basis) is used when declared. Engine policy: the labels warn of
+    // hypokalemia and give no potassium contraindication. Tied to the MEASURED value, not the projection.
     if (!kUnknown) {
         modificationSet.modifications.forEach(mod => {
-            const tgt = (mod.action === 'add' || mod.action === 'swap') ? mod.target : undefined;
-            const rule = tgt ? drugFacts(tgt.med).hypokalemia_caution_below_k : undefined;
-            if (tgt && rule && currentPatient.potassium < rule.k) {
-                warnings.push(`HYPOKALEMIA CAUTION: ${tgt.med.name} lowers potassium and the baseline K+ is ${currentPatient.potassium} (below ${rule.k}). Replete potassium first or monitor closely; check electrolytes within days of starting (${rule.basis}).`);
+            const tgt = (mod.action === 'add' || mod.action === 'swap' || mod.action === 'titrate_up') ? mod.target : undefined;
+            if (!tgt || !isDiureticClass(tgt.med.drug_class)) return;
+            const rule = drugFacts(tgt.med).hypokalemia_caution_below_k ?? { k: HYPOKALEMIA_K_BELOW, basis: 'engine policy; loop and thiazide-type diuretic labels warn of hypokalemia and give no potassium contraindication' };
+            if (currentPatient.potassium < rule.k) {
+                warnings.push(`HYPOKALEMIA CAUTION: ${tgt.med.name} lowers potassium and the baseline K+ is ${currentPatient.potassium} (below ${rule.k}). Replete potassium first or monitor closely; check electrolytes within days of ${mod.action === 'titrate_up' ? 'the increase' : 'starting'} (${rule.basis}).`);
             }
         });
     }

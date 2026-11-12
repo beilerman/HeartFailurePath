@@ -288,8 +288,8 @@ function globalSafetyChecks(output: SimulationOutput, patient: Patient): string[
         Object.entries(r.domain_scores).forEach(([domain, score]) => {
             if (score < 0 || score > 100) failures.push(`regimen ${index + 1} ${domain} score out of range`);
         });
-        if (r.projected_patient.sbp < 85) failures.push(`regimen ${index + 1} projects SBP < 85`);
-        if (r.projected_patient.pulse < 45) failures.push(`regimen ${index + 1} projects HR < 45`);
+        if (r.projected_patient.sbp < 85 && r.projected_patient.sbp < patient.sbp) failures.push(`regimen ${index + 1} projects SBP < 85`);
+        if (r.projected_patient.pulse < 45 && r.projected_patient.pulse < patient.pulse) failures.push(`regimen ${index + 1} projects HR < 45`);
         if (r.projected_patient.potassium > 6.0) failures.push(`regimen ${index + 1} projects K+ > 6.0`);
     });
 
