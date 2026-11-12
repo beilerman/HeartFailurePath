@@ -209,7 +209,11 @@ export interface ClinicalFlags {
 export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAudit, clinicalAlerts: string[]): ClinicalFlags {
     // --- S4: Pregnancy safety alert ---
     if (patient.is_pregnant === true) {
-        clinicalAlerts.push('PREGNANCY ALERT: ACEi, ARB, ARNI, MRA, and nsMRA (Finerenone) are contraindicated (Category X). SGLT2i excluded (Category C — insufficient human safety data). Vericiguat excluded (FDA BOXED WARNING — embryo-fetal toxicity) and Ivabradine excluded (fetal harm in animal studies). GLP-1 therapy excluded. These agents have been excluded from all recommendations.');
+        clinicalAlerts.push('PREGNANCY ALERT: ACE inhibitors, ARBs, ARNI (RAAS inhibitors: fetotoxicity) and MRAs (spironolactone, eplerenone, finerenone) are contraindicated. SGLT2 inhibitors, ivabradine and vericiguat are not recommended (paucity of safety data; vericiguat carries an FDA boxed warning for embryo-fetal toxicity). GLP-1 therapy is excluded. These agents have been excluded from all recommendations. Hydralazine plus a nitrate and loop diuretics (only with congestion) remain available; beta-1-selective beta-blockers (metoprolol, bisoprolol) are the choice. Sources: 2026 ESC heart failure guideline (primary; RAAS inhibitors, MRAs, ivabradine and SGLT2 inhibitors not recommended, Class III C) and a peer-reviewed peripartum cardiomyopathy review (Heart Fail Rev 2024, secondary).');
+        // A non-selective beta-blocker the patient already takes: not stopped abruptly; a switch to a beta-1-selective agent is offered (analyzeCurrentRegimen).
+        (patient.current_regimen || []).filter(r => r.med.drug_class === 'Beta Blocker' && !drugFacts(r.med).beta1_selective).forEach(r => {
+            clinicalAlerts.push(`PREGNANCY: ${r.med.name} is non-selective. The 2026 ESC heart failure guideline (Class I, level C) says to switch non-selective beta-blockers to beta-1-selective ones (metoprolol, bisoprolol) in pregnancy; a switch is offered. Do not stop the beta-blocker abruptly.`);
+        });
     }
 
     // --- Heart-rate rule on an established beta-blocker / ivabradine (facts.hr_continuation): the dose is reduced one step,

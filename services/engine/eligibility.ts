@@ -206,12 +206,14 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
     },
     {
         id: 'E15', name: 'New MRA start above potassium 5.0 is staged',
-        summary: 'A NEW MRA or nsMRA start at potassium above 5.0 is withheld, with or without a potassium binder: recheck potassium and start once it is 5.0 or lower. A binder (guideline Class 2b) is an option if potassium stays high on a RAAS inhibitor.',
+        summary: 'A NEW MRA or nsMRA start at potassium above 5.0 is withheld, with or without a potassium binder: recheck potassium and start once it is 5.0 or lower. A binder is not a reason to start sooner (Class 2b in the 2022 US guideline; no recommendation in the 2026 ESC guideline).',
         // Decision 2026-11-11 (docs/medication-review-2026-11-10/verified-clinical-decisions-2026-11-11.md, rows 1, 2a, 2c, 3, 4):
         //  - row 1: 2022 AHA/ACC/HFSA start criterion K < 5.0 (COR 1, LOE A) - SECONDARY reproduction, primary guideline not opened
         //  - row 2a / 2c: Aldactone label (K <= 5.0) and Kerendia label (do not initiate if K > 5.0) - labels
         //  - row 3: binders for hyperkalemia on RAASi are Class 2b (secondary); row 4: DIAMOND co-started an MRA with patiromer only inside a
         //    trial run-in, which is not a recommendation to start an MRA above 5.0
+        //  - PRIMARY: 2026 ESC heart failure guideline section 6.1 (esc-2026-reading-notes.md): "caution" when starting an MRA at potassium 5.0 or above; potassium
+        //    binders: "no specific recommendations" (insufficient evidence of clinical benefit).
         // One rule for all MRAs (eplerenone's looser label K > 5.5 start contraindication, row 2b, does not govern).
         // Initiation only: a patient already on any MRA is not affected (continuation is facts.k_continuation). Placed after E13 so
         // potassium above 5.5 is still reported as a contraindication.
@@ -221,7 +223,7 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             ? `Potassium ${ctx.patient.potassium.toFixed(1)} is above 5.0: recheck and start the MRA once potassium is 5.0 or lower` : null,
         details: (ctx) => [
             `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above the ${MRA_START_K_CEILING.toFixed(1)} start limit (2022 AHA/ACC/HFSA start criterion K below 5.0, reproduced in a secondary source; Aldactone and Kerendia labels). Repeat potassium and start the MRA once it is ${MRA_START_K_CEILING.toFixed(1)} or lower`,
-            'A potassium binder is an option (guideline Class 2b) if potassium stays high on a RAAS inhibitor; the tool does not start an MRA together with a binder',
+            'Potassium binders carry a Class 2b recommendation in the 2022 US guideline (secondary source); the 2026 ESC guideline makes no recommendation for them (insufficient evidence of clinical benefit). The tool does not start an MRA together with a binder',
         ],
     },
     {
@@ -237,6 +239,23 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             ? `Laboratory prerequisite — ${blankLabNames(ctx).join(' and ')} not entered; obtain a BMP before starting this drug` : null,
         details: (ctx, med) => [
             `${blankLabNames(ctx).join(' and ')} ${blankLabNames(ctx).length > 1 ? 'are' : 'is'} blank (not entered): a new ${med.drug_class} start needs a current potassium and renal function — obtain a BMP first`,
+        ],
+    },
+    {
+        id: 'E17', name: 'Pregnancy: new beta-blocker start limited to beta-1-selective agents',
+        summary: 'In pregnancy only a beta-1-selective beta-blocker (metoprolol succinate, bisoprolol) is newly started. A pregnant patient on a non-selective beta-blocker is offered a switch to a beta-1-selective one.',
+        // Decision 2026-11-11. PRIMARY source: 2026 ESC heart failure guideline, Recommendation Table 27 (esc-2026-reading-notes.md): "switch non-selective
+        // beta-blockers to beta-1-selective ones (metoprolol, bisoprolol)", Class I, level C. A 2024 peer-reviewed review (secondary, verified-clinical-decisions-
+        // 2026-11-11.md row 12) names metoprolol as preferred; both agree beta-1-selective agents are the choice. Read from data (facts.beta1_selective).
+        // Initiation only: a drug already in the regimen is never excluded here (its switch is offered by analyzeCurrentRegimen). Placed last so real
+        // contraindications keep their labels.
+        evaluate: (ctx, med) => ctx.patient.is_pregnant === true
+            && med.drug_class === 'Beta Blocker'
+            && !drugFacts(med).beta1_selective
+            && !(ctx.patient.current_regimen ?? []).some(r => r.med.name === med.name)
+            ? 'Pregnancy: only a beta-1-selective beta-blocker (metoprolol succinate, bisoprolol) is newly started' : null,
+        details: () => [
+            '2026 ESC heart failure guideline (Class I, level C): in pregnancy switch non-selective beta-blockers to beta-1-selective ones (metoprolol, bisoprolol)',
         ],
     },
 ];

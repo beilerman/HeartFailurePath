@@ -88,6 +88,7 @@ const ASSERTION_TITLE_MARKERS = [
     'ARNI Hepatic CI',
     'MRA Start Staged At K+ 5.1',
     'K6-Source',
+    'Pregnancy-Source',
     'HFpEF Steroidal MRA Eligible',
     'Incomplete Data: Missing Potassium',
     'Incomplete Data: Missing LVEF',
@@ -2254,6 +2255,31 @@ async function runVerification() {
                 if (scenario.title.includes('On Quad') && scoredRegimens.length > 0
                     && !scoredRegimens.some(r => (r.modification_set?.modifications ?? []).some(m => m.action === 'remove' && m.source?.med.name === 'Spironolactone'))) {
                     fail('A current MRA was not removed at K+ 6.0-6.4');
+                }
+            }
+
+            // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,
+            // ivabradine, SGLT2i not recommended, Class III C; a secondary review adds vericiguat). Beta-1 selectivity is read from facts.beta1_selective.
+            if (scenario.title.includes('Pregnancy-Source')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const banned = ['ARNI', 'ACEi', 'ARB', 'MRA', 'nsMRA', 'SGLT2i', 'If Inhibitor', 'sGC Stimulator'];
+                if (anyRegimenContainsAnyClass(...banned)) fail('A class that is not recommended in pregnancy appears in a displayed option');
+                const bbs = scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.drug_class === 'Beta Blocker'));
+                if (t.includes('New Beta-Blocker Start')) {
+                    if (bbs.length === 0) fail('No beta-blocker offered in pregnancy (check is vacuous)');
+                    if (bbs.some(m => !m.med.facts?.beta1_selective)) fail('A non-selective beta-blocker was newly started in pregnancy');
+                    if (excludedMedications.find(e => e.name === 'Carvedilol')?.rule_id !== 'E17') fail('Carvedilol not withheld by E17 in pregnancy');
+                }
+                if (t.includes('Carvedilol Switched')) {
+                    if (bbs.length === 0 || bbs.some(m => !m.med.facts?.beta1_selective)) fail('A non-selective beta-blocker remains in a displayed option (a switch to a beta-1-selective agent is expected)');
+                    const swaps = scoredRegimens.flatMap(r => r.modification_set?.modifications ?? []).filter(m => m.action === 'swap' && m.source?.med.name === 'Carvedilol');
+                    if (swaps.length === 0 || swaps.some(m => !/beta-1-selective/.test(m.summary))) fail('The carvedilol switch is not offered with its reason');
+                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.drug_class === 'Beta Blocker'))) fail('The beta-blocker was stopped instead of switched');
+                    if (!clinicalAlerts.some(a => a.includes('PREGNANCY: Carvedilol is non-selective'))) fail('Pregnancy alert for a current non-selective beta-blocker missing');
+                }
+                if (t.includes('Metoprolol Continued')) {
+                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Metoprolol Succinate'))) fail('Metoprolol was dropped in pregnancy');
                 }
             }
 

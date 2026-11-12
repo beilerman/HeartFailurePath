@@ -154,7 +154,7 @@ export function annotateGdmtGapsWithMraPotassium(gaps: string[], excludedMeds: E
 export const MRA_POTASSIUM_STAGED_MONITORING: MonitoringPlanItem = {
     test: 'Repeat potassium; start MRA if 5.0 or lower',
     timing: 'Before any MRA start',
-    details: 'A new MRA is withheld while potassium is above 5.0 (guideline start criterion K below 5.0, secondary reproduction; Aldactone and Kerendia labels). Recheck potassium and start the MRA once it is 5.0 or lower. If potassium stays high on a RAAS inhibitor, a potassium binder is an option (guideline Class 2b).',
+    details: 'A new MRA is withheld while potassium is above 5.0 (2026 ESC guideline: caution at 5.0 or above; 2022 US guideline start criterion K below 5.0, secondary reproduction; Aldactone and Kerendia labels). Recheck potassium and start the MRA once it is 5.0 or lower. Potassium binders carry a Class 2b recommendation in the 2022 US guideline; the 2026 ESC guideline makes no recommendation for them.',
 };
 
 export function buildMissingDataNotices(patient: Patient): string[] {

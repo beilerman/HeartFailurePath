@@ -130,6 +130,14 @@ export function analyzeCurrentRegimen(
             contraindicatedCurrentMeds.add(r.med.name);
             intolerableCurrentMeds.set(r.med.name, intoleranceReason);
         }
+        // Pregnancy (2026 ESC heart failure guideline, Recommendation Table 27, Class I C): a non-selective beta-blocker is switched to a beta-1-selective
+        // one. Routed through intolerableCurrentMeds so the forced cleanup SWAPS to an eligible beta-1-selective agent; flagged only when one is
+        // available, so the beta-blocker is never simply stopped.
+        if (patient.is_pregnant === true && r.med.drug_class === 'Beta Blocker' && !drugFacts(r.med).beta1_selective && !intolerableCurrentMeds.has(r.med.name)
+            && formulary.some(m => m.drug_class === 'Beta Blocker' && drugFacts(m).beta1_selective)) {
+            contraindicatedCurrentMeds.add(r.med.name);
+            intolerableCurrentMeds.set(r.med.name, 'Pregnancy: switch to a beta-1-selective beta-blocker (2026 ESC heart failure guideline, Class I C)');
+        }
         // A current med matching a documented ALLERGY by name must not be kept or up-titrated.
         // The new-start formulary filter already excludes allergy names (D8), but the arriving
         // regimen was never cross-checked — a patient could arrive ON a drug they report an
@@ -895,6 +903,12 @@ export function generateCandidateModifications(
                 forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (redundant — deprescribe duplicate ${getMedicationClassGroup(r.med.drug_class)} therapy)` });
             }
         });
+
+        // A pregnancy switch from a non-selective beta-blocker always states its reason, including when the swap came from the generic swap candidates.
+        candidates.forEach(c => c.modifications.forEach(m => {
+            const why = m.action === 'swap' && m.source ? analysis.intolerableCurrentMeds.get(m.source.med.name) : undefined;
+            if (why && why.startsWith('Pregnancy:') && !m.summary.includes(why)) m.summary += ` (${why})`;
+        }));
 
         candidates.forEach(c => {
             forcedRemovals.forEach(forced => {

@@ -3282,6 +3282,30 @@ export const SCENARIOS: TestScenario[] = [
         ];
     })(),
 
+    // ===== Pregnancy: beta-blockers limited to beta-1-selective agents (2026 ESC heart failure guideline, Recommendation Table 27, Class I C) =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 31, sex: 'Female' as const, is_pregnant: true, sbp: 118, dbp: 72, pulse: 80, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 60, nt_pro_bnp: 1100, lvef: 32,
+            volume_status: { dry_weight_kg: 68, current_weight_kg: 69, exam_findings: new Set<string>() },
+            egfr: 95, creatinine: 0.8, bun: 12, potassium: 4.2,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            current_regimen: [] as RegimenMed[],
+            max_affordable_cost: 400, cost_sensitivity: 3, insurance_tier: 'commercial' as const,
+            complexity_tolerance: 8, max_new_classes_per_visit: 2,
+        };
+        return [
+            { title: 'Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only', patient: { ...base } },
+            { title: 'Pregnancy-Source Carvedilol Switched To Beta-1-Selective', patient: { ...base,
+                current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'Pregnancy-Source Metoprolol Continued', patient: { ...base,
+                current_regimen: buildCurrentRegimen([{ name: 'Metoprolol Succinate', strength: 25, freq: 'qd' }]) } },
+        ];
+    })(),
+
     // ===== Laboratory prerequisite (rule E16, 2026-11-11 physician-owner decision): potassium and renal function required before RAAS/MRA new starts and dose increases =====
     ...((): TestScenario[] => {
         const base = {
