@@ -171,7 +171,7 @@ export const URIC_ACID_GOUT_POINTS = -5;
 export const SCORE_ADJUSTMENTS = {
     SPECIAL_FEATURES: {
         code: 'SPECIAL_FEATURES',
-        label: 'Special-feature bonus (normalized by regimen size)',
+        label: 'Special-feature bonus (average per drug; divisor at least the number of indicated foundational therapies)',
         factor: 2.3, min: -8, max: 12,
     },
     VOLUME_DEPLETION_DEESCALATION: {
@@ -245,6 +245,15 @@ export const NON_PENALIZED_WARNING_MARKERS: readonly string[] = [
     // sodium load in HF). Informational by design: the real risk is already priced by the dose-scaled Lokelma
     // sodium special feature, the projected-K+ gates and the borderline-K+ MRA warning, which stay penalized.
     'Drug note',
+];
+
+/**
+ * State warnings whose fact already carries its own named adjustment above (PROJECTED_SBP_LT_90, PROJECTED_HR_LT_50, PROJECTED_K_GT_5_5). They are shown to the
+ * clinician but not counted again in DANGEROUS_WARNINGS: one fact, one charge (adversarial review 2026-11-12: projected SBP below 90 cost -20 and a further -8).
+ * `npm run verify` checks that no ledger charges a fact twice.
+ */
+export const WARNINGS_PRICED_BY_NAMED_ADJUSTMENT: readonly string[] = [
+    'Risk of Hypotension (SBP < 90)', 'Risk of Bradycardia (HR < 50)', 'High Hyperkalemia Risk (K+ > 5.5)', 'Severe Hyperkalemia Risk (K+ > 6.0)',
 ];
 
 export interface ScoreBreakdownDomainLine {

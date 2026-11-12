@@ -185,7 +185,13 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                         <p className="text-xs font-semibold text-sky-800 bg-sky-50 border border-sky-200 rounded px-2 py-1 mb-3">{regimen.shown_because}</p>
                     )}
                     {showFoundationalCoverage && regimen.foundational_coverage !== undefined && (
-                        <p className="text-xs font-semibold text-slate-600 mb-3">Foundational coverage {Math.round(regimen.foundational_coverage)}%</p>
+                        <p className="text-xs font-semibold text-slate-600 mb-3">
+                            Foundational coverage {Math.round(regimen.foundational_coverage)}%
+                            {regimen.foundational_slots && (
+                                <span className="font-normal"> ({regimen.foundational_slots.on_board} of {regimen.foundational_slots.indicated} indicated therapies on board, credited by dose
+                                    {regimen.foundational_slots.not_startable > 0 ? `; ${regimen.foundational_slots.not_startable} cannot be started today` : ''})</span>
+                            )}
+                        </p>
                     )}
                     <div className="flex flex-wrap gap-2">
                         {regimen.regimen.map((r, i) => {

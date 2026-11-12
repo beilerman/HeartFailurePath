@@ -13,7 +13,7 @@ import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/elig
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
-import { SCORE_ADJUSTMENTS, WEIGHT_PROFILES, DOMAIN_KEYS, WEIGHT_PROFILE_NAMES, type WeightProfileName } from '../services/engine/scoreModel';
+import { WARNINGS_PRICED_BY_NAMED_ADJUSTMENT, SCORE_ADJUSTMENTS, WEIGHT_PROFILES, DOMAIN_KEYS, WEIGHT_PROFILE_NAMES, type WeightProfileName } from '../services/engine/scoreModel';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 
@@ -1458,7 +1458,11 @@ async function runVerification() {
                     // LVEF 41-49 gets full quad therapy (RAAS, BB, MRA, SGLT2i) but BB/MRA are Class IIb
                     const hasRaas = topClasses.has('ARNI') || topClasses.has('ACEi') || topClasses.has('ARB');
                     const hasSglt2 = topClasses.has('SGLT2i');
-                    if (!hasRaas) { failures.push('LVEF 41-49: missing RAAS (Class I pillar)'); scenarioPassed = false; }
+                    // 2026-11-12: the special-feature bonus is no longer magnified on small regimens, so the two-drug start may pair the SGLT2 inhibitor with either a
+                    // RAAS inhibitor or an MRA (same recommendation class at this LVEF); the RAAS inhibitor must still be among the displayed options.
+                    const hasMra = topClasses.has('MRA') || topClasses.has('nsMRA');
+                    const raasDisplayed = scoredRegimens.some(r => r.regimen.some(x => ['ARNI', 'ACEi', 'ARB'].includes(x.med.drug_class)));
+                    if (!(hasRaas || hasMra) || !raasDisplayed) { failures.push('LVEF 41-49: top pick lacks a RAAS inhibitor or MRA, or no displayed option carries a RAAS inhibitor'); scenarioPassed = false; }
                     if (!hasSglt2) { failures.push('LVEF 41-49: missing SGLT2i (Class I pillar)'); scenarioPassed = false; }
                 }
                 // Device therapy screening: LVEF 45 > 35 → should NOT trigger ICD/CRT alert
@@ -4259,6 +4263,25 @@ async function runVerification() {
         const rewarded = binders.filter(b => (b.special_features ?? []).some(f => f.points > 0 || (f.points_for_dose && f.points_for_dose(b.available_doses[0].strength) > 0))).map(b => b.name);
         if (binders.length === 0 || rewarded.length > 0) { console.error(`  [FAIL] binder(s) with a positive special-feature bonus: ${rewarded.join(', ') || '(no binder found)'}`); failed++; }
         else { console.log(`  [PASS] ${binders.length} binders, none with a positive evidence bonus.`); passed++; }
+    }
+
+    console.log('Checking structural invariant: one fact, one charge (a state warning priced by a named adjustment is not counted again), and coverage counts are consistent...');
+    {
+        const bad: string[] = [];
+        for (const sc of SCENARIOS) {
+            const names = MEDICATION_FORMULARY.map(m => m.name);
+            const out = generateAndScoreModifications(clonePatient(sc.patient), new Set(names), await getDrugPrices(names, 'cash'));
+            for (const r of out.scoredRegimens) {
+                const dw = r.score_breakdown?.adjustments.find(a => a.code === SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.code);
+                const twice = WARNINGS_PRICED_BY_NAMED_ADJUSTMENT.find(m => dw?.detail?.includes(m));
+                if (twice) bad.push(`${sc.title}: "${twice}" counted in the warnings penalty`);
+                const fs = r.foundational_slots;
+                if (fs && (fs.on_board > fs.indicated || fs.on_board + fs.not_startable > fs.indicated || (r.foundational_coverage ?? 0) > 100 * fs.on_board / Math.max(1, fs.indicated) + 1e-6))
+                    bad.push(`${sc.title}: coverage ${r.foundational_coverage} inconsistent with ${fs.on_board} of ${fs.indicated} on board`);
+            }
+        }
+        if (bad.length > 0) { console.error(`  [FAIL] ${bad.length}: ${bad.slice(0, 4).join('; ')}`); failed++; }
+        else { console.log('  [PASS] no ledger charges a fact twice; coverage never exceeds the share of indicated therapies on board.'); passed++; }
     }
 
     console.log('Checking structural invariant: every sample patient is what the form would run (eGFR and BMI are fixed points of the form derivation)...');

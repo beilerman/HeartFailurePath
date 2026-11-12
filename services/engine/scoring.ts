@@ -7,7 +7,7 @@
  */
 import { Patient, Medication, ScoredRegimen, RegimenMed, RegimenModification, ModificationSet, DomainScores } from '../../types';
 import {
-    DOMAIN_KEYS, DOMAIN_LABELS, WEIGHT_PROFILES, resolveWeightProfile, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS,
+    DOMAIN_KEYS, DOMAIN_LABELS, WEIGHT_PROFILES, resolveWeightProfile, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS, WARNINGS_PRICED_BY_NAMED_ADJUSTMENT,
     ScoreBreakdown, ScoreBreakdownAdjustment, ScoreBreakdownDomainLine, ScoreBreakdownOverride, ScoreDomainKey,
     COMPLETENESS_SUBTARGET_CREDIT,
     COMPLETENESS_GRADED_CREDIT_SPAN,
@@ -43,13 +43,15 @@ export interface ScoringContext {
     ironDeficient: boolean;
     maxNewPerVisit: number;
     achievableSlots: GdmtSlot[];
+    /** The foundational (pillar) slots indicated for the phenotype, whether or not a drug for them can be started today. Display and averaging only. */
+    indicatedFoundationalSlots: GdmtSlot[];
     /** Penalized warnings already true of the CURRENT regimen with nothing changed (number-free keys -> text). See `warningKey`. */
     baselineDangerWarnings: Map<string, string>;
 }
 
 /** A warning's identity without its numbers ("Low Perfusion Pressure (MAP 62 mmHg)" and "(MAP 63 mmHg)" are the same warning). */
 export const warningKey = (w: string): string => w.replace(/-?\d+(\.\d+)?/g, '#');
-const isPenalizedWarning = (w: string): boolean => !NON_PENALIZED_WARNING_MARKERS.some(marker => w.includes(marker));
+const isPenalizedWarning = (w: string): boolean => !NON_PENALIZED_WARNING_MARKERS.some(marker => w.includes(marker)) && !WARNINGS_PRICED_BY_NAMED_ADJUSTMENT.some(marker => w.includes(marker));
 
 export function buildScoringContext(
     patient: Patient,
@@ -116,6 +118,7 @@ export function buildScoringContext(
     if (hasGlp1Slot) completenessSlots.push({ match: (c) => c === 'GLP-1 RA' || c === 'GLP-1/GIP RA' });
     eligibleAdjunctClasses.forEach(cls => completenessSlots.push({ match: (c) => c === cls }));
 
+    const indicatedFoundationalSlots = completenessSlots.filter(s => s.foundational);
     // Keep only slots the patient can actually attain (a non-excluded formulary med exists).
     const achievableSlots = completenessSlots.filter(s => formulary.some(m => s.match(m.drug_class)));
 
@@ -131,7 +134,7 @@ export function buildScoringContext(
 
     return {
         patient, prices, intolerancePolicy, dataAudit, phenotype, isVolumeDepleted, hasDiureticInCurrent,
-        rescueBinders, ivIron, ironDeficient, maxNewPerVisit, achievableSlots, baselineDangerWarnings,
+        rescueBinders, ivIron, ironDeficient, maxNewPerVisit, achievableSlots, indicatedFoundationalSlots, baselineDangerWarnings,
     };
 }
 
@@ -361,10 +364,13 @@ export function aggregateScore(
         });
     };
 
-    // Special feature bonus (normalized by regimen size, clamped to the SPECIAL_FEATURES bounds)
+    // Special-feature bonus: the average per drug, where the divisor is never smaller than the number of foundational therapies indicated for the patient.
+    // Dividing by the regimen size alone made a 3-point note worth about 7 points on a one-drug regimen, so one drug could out-rank a three-pillar start
+    // (adversarial review 2026-11-12). Clamped to the SPECIAL_FEATURES bounds.
     const regimenLength = activeModSet.resulting_regimen.length;
+    const sfDivisor = Math.max(regimenLength, ctx.indicatedFoundationalSlots.length);
     const normalizedSFBonus = regimenLength > 0
-        ? Math.max(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.min, Math.min(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.max, sim.specialFeatureBonus / regimenLength * SCORE_ADJUSTMENTS.SPECIAL_FEATURES.factor))
+        ? Math.max(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.min, Math.min(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.max, sim.specialFeatureBonus / sfDivisor * SCORE_ADJUSTMENTS.SPECIAL_FEATURES.factor))
         : 0;
     addAdjustment(SCORE_ADJUSTMENTS.SPECIAL_FEATURES, normalizedSFBonus, undefined, sim.specialFeatureItems);
 
@@ -533,7 +539,13 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
             special_feature_bonus: Math.round(agg.normalizedSFBonus),
             gdmt_completeness: agg.gdmtCompleteness,
             // Same per-slot credit rule, over the foundational (pillar) slots only; explanation/ranking-mode only, never scored.
-            foundational_coverage: gdmtCompletenessFraction(activeModSet, ctx, ctx.achievableSlots.filter(sl => sl.foundational)).fraction * 100,
+            // Over the INDICATED pillars, not only those startable today: with a pillar held (potassium 5.3) two of four on board read "80%" (review 2026-11-12).
+            foundational_coverage: gdmtCompletenessFraction(activeModSet, ctx, ctx.indicatedFoundationalSlots).fraction * 100,
+            foundational_slots: {
+                indicated: ctx.indicatedFoundationalSlots.length,
+                on_board: ctx.indicatedFoundationalSlots.filter(sl => activeModSet.resulting_regimen.some(r => sl.match(r.med.drug_class))).length,
+                not_startable: ctx.indicatedFoundationalSlots.filter(sl => !ctx.achievableSlots.includes(sl) && !activeModSet.resulting_regimen.some(r => sl.match(r.med.drug_class))).length,
+            },
             cost: sim.cost,
             complexity: sim.complexity,
             rationale: sim.rationale,

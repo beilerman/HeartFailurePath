@@ -369,8 +369,10 @@ export interface ScoredRegimen {
     overall_score: number;
     domain_scores: DomainScores;
     special_feature_bonus?: number; // Bonus from guideline-specific special features
-    /** 0-100: share of the achievable FOUNDATIONAL (pillar) slots on board, same credit rule as gdmt_completeness (1.0 at target/max/cap, 0.6 below). Used only by the foundational ranking mode; never scored. */
+    /** 0-100: share of the INDICATED foundational (pillar) slots on board (whether or not startable today), same credit rule as gdmt_completeness (1.0 at target/max/cap, 0.6 below). Used only by the foundational ranking mode; never scored. */
     foundational_coverage?: number;
+    /** Counts behind foundational_coverage: pillars indicated for the phenotype, how many have a drug on board, and how many of the missing ones cannot be started today. */
+    foundational_slots?: { indicated: number; on_board: number; not_startable: number };
     /** Explanation only (never scored): why this option is on screen when it was not chosen by the normal ranking (the congestion-coverage selection step). */
     shown_because?: string;
     gdmt_completeness?: number; // Fraction (0-1) of indicated, achievable GDMT therapies present — display tiebreaker
