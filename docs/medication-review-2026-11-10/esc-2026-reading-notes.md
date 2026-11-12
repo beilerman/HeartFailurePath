@@ -203,3 +203,58 @@ experience. This replaces the "supplement not read" caveat above for these table
 - Caution: symptomatic hypotension with systolic below 95.
 - If eGFR falls below 20 on treatment: look for other causes; continuation is advised with close
   monitoring.
+
+## Further sections read 2026-11-11 (devices, advanced HF, atrial fibrillation)
+
+Paraphrased from Recommendation Tables 6, 7, 11, 15 and Tables 14-15 of the 2026 ESC guideline.
+
+**ICD (Rec. Table 6)**
+- Primary prevention: symptomatic HFrEF, NYHA II-III, LVEF 35 or below despite at least 3 months of
+  optimal foundational therapy, expected survival over 1 year. Ischaemic aetiology: Class I B1 (not
+  within 40 days of a myocardial infarction: Class III). Non-ischaemic: Class IIa B1.
+- Not recommended in NYHA IV refractory to drugs unless a candidate for CRT, LVAD or transplant.
+
+**CRT (Rec. Table 7)** - all require symptomatic HFrEF, LVEF 35 or below, optimal therapy, sinus rhythm
+- LBBB with QRS 150 ms or more: Class I A. LBBB 130-149: IIa. Non-LBBB 150 or more: IIa.
+  Non-LBBB 130-149: IIb. QRS below 130 without a pacing indication: Class III.
+- CRT rather than RV pacing when ventricular pacing is needed for high-degree AV block: IIa.
+
+**Advanced HF (Tables 14-15, Rec. Table 11)**
+- Early consultation with an advanced HF centre is Class I for patients with or at risk of advanced HF.
+- "Rule of three" (any one): 2 or more HF hospitalizations (or 1 needing inotropes) in the last year;
+  diuretic resistance; intolerance to neurohormonal drugs with cardiorenal syndrome.
+- "I NEED HELP" markers (any one): inotropes; NYHA III/IV or persistently high natriuretic peptides;
+  end-organ dysfunction; EF below 20 or poor RV function; defibrillator shocks; more than 1 HF
+  hospitalization; escalating diuretics; low blood pressure / high heart rate; intolerance or
+  down-titration of prognostic medication.
+- Definition of advanced HF includes LVEF 30 or below with NYHA III-IV and recurrent congestion or
+  low-output episodes despite therapy.
+
+**Atrial fibrillation (Rec. Table 15)**
+- Oral anticoagulation by CHA2DS2-VA score: Class I; DOACs preferred over warfarin (except mechanical
+  valves and moderate-severe mitral stenosis).
+- Rate control: beta-blockers first line in stable HFrEF with AF (I C). Digoxin should be considered
+  when the rate stays high despite beta-blockers or when they are not tolerated (IIa C).
+
+# 2022 AHA/ACC/HFSA guideline: points read directly 2026-11-11
+
+Opened in a browser (earlier automated fetches were blocked):
+https://www.ahajournals.org/doi/full/10.1161/CIR.0000000000001063 . Sections read: 7.1.1 diuretic
+table (Table 12), 7.3.2 beta-blockers, 7.3.3 MRAs, 7.3.6 other drug treatment (binders text),
+7.6.1 HFmrEF synopsis, 9.1 synopsis. The class-of-recommendation tables are images on that page and
+were not readable as text, so classes quoted elsewhere still come from secondary reproductions.
+
+- **MRA initiation:** "eGFR 30 or below or serum potassium 5.0 mEq/L or above are contraindications
+  to MRA initiation." Start spironolactone or eplerenone 25 mg daily, increase to 50 mg after a
+  month; halve the dosing at eGFR 31-49. Check potassium and renal function at about 1 week, 4 weeks,
+  then every 6 months after starting or intensifying. Risk is higher when continued at potassium
+  5.5 or above. Hold temporarily with dehydrating illness.
+- **Potassium binders:** lower potassium and enable RAAS inhibitor treatment; whether they improve
+  outcomes is "uncertain" / under investigation.
+- **Loop diuretics (Table 12), initial -> maximum total daily dose:** bumetanide 0.5-1.0 mg once or
+  twice -> 10 mg; furosemide 20-40 mg once or twice -> 600 mg; torsemide 10-20 mg once -> 200 mg. No
+  equivalence ratio is given.
+- **Beta-blockers:** bisoprolol, metoprolol succinate and carvedilol only (not a class effect); start
+  low, aim for trial target doses; avoid abrupt withdrawal. No heart-rate number in this section.
+- **HFmrEF (41-49):** no prospective trials; patients at the lower end respond like HFrEF, so it
+  "may be reasonable" to treat with HFrEF therapy; repeat LVEF to follow the trajectory.
