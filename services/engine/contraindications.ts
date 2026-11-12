@@ -11,7 +11,7 @@
  * No engine imports here: constants.ts (the formulary) imports this module.
  */
 import type { Patient, Medication, ContraindicationCheck } from '../../types';
-import { MRA_START_K_MAX, RAAS_START_K_MAX, RAAS_WITHHOLD_K, RAAS_STOP_EGFR_BELOW } from './thresholds';
+import { MRA_START_K_MAX, RAAS_START_K_MAX, RAAS_WITHHOLD_K } from './thresholds';
 
 /** Spread into a formulary entry: `...ci([...])` sets both `contraindication_checks` and `contraindications`. */
 export const ci = (checks: ContraindicationCheck[]) => ({
@@ -36,12 +36,11 @@ export const CI_ANURIA: ContraindicationCheck = {
 /**
  * RAAS inhibitor potassium checks (2026 ESC section 6.1; thresholds.ts). Spread into the entry: `...raasPotassiumChecks('Lisinopril')`.
  * Two checks: a NEW start (or swap-in) above 5.4 is blocked ("caution" above 5.2 in ESC); a drug already on board is withheld at 6.0 or above.
- * Between them a current RAAS inhibitor is kept and handled by facts.k_continuation (one step down from 5.5), never removed at 5.5-5.9.
+ * There is deliberately NO current-eGFR stop here: ESC Table S4 says stop when eGFR FALLS below 20 (a change from baseline), the tool has no baseline, so eGFR below
+ * 20 on a RAAS inhibitor raises an alert instead (gates.ts, RAAS_EGFR_REVIEW_BELOW). Between them a current RAAS inhibitor is kept and handled by facts.k_continuation (one step down from 5.5), never removed at 5.5-5.9.
  */
-/** The eGFR stop applies to the whole class while any RAAS inhibitor is on board, so stopping one never becomes a swap to another. */
 export const raasPotassiumChecks = (name: string): ContraindicationCheck[] => [
     { reason: `Potassium above ${RAAS_START_K_MAX} mEq/L (new start; 2026 ESC advises caution above 5.2)`, when: p => !alreadyOnMed(p, name) && p.potassium > RAAS_START_K_MAX },
-    { reason: `eGFR below ${RAAS_STOP_EGFR_BELOW}: stop the RAAS inhibitor and seek specialist advice (2026 ESC Supplementary Table S4; applied to the current eGFR because the tool has no baseline)`, when: p => (p.current_regimen ?? []).some(r => ['ARNI', 'ACEi', 'ARB'].includes(r.med.drug_class)) && p.egfr > 0 && p.egfr < RAAS_STOP_EGFR_BELOW },
     { reason: `Potassium ${RAAS_WITHHOLD_K.toFixed(1)} mEq/L or above: stop the RAAS inhibitor (2026 ESC: severe hyperkalaemia leads to temporary discontinuation)`, when: p => p.potassium >= RAAS_WITHHOLD_K },
 ];
 export const CI_BILATERAL_RAS: ContraindicationCheck = {

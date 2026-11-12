@@ -36,11 +36,13 @@ export const CREATININE_RISE_ACCEPTABLE_PCT = 50;
 export const EGFR_FLOOR_FOR_CREATININE_RISE = 15;
 
 /**
- * eGFR below this: stop an ACE inhibitor, ARB or ARNI and seek specialist advice (2026 ESC Supplementary Table S4; MRAs are withheld below 20 by S7, but the steroidal
- * MRAs (eGFR 30) and finerenone (25) already have stricter label gates, so no new MRA rule is needed). The tables phrase this as a FALL in eGFR after starting; the engine
- * has no baseline eGFR or creatinine, so it applies to the current value, and only to an inhibitor already on board (a new start at eGFR 15-19 is unchanged; a blank eGFR is never treated as below 20). Before 2026-11-11 there was no such stop.
+ * eGFR below this on a RAAS inhibitor raises an ALERT, never a forced stop (2026 ESC Supplementary Table S4: stop an ACE inhibitor/ARB and seek specialist advice when
+ * eGFR FALLS below 20 or creatinine rises more than 100%; the guideline also says stopping is "very rarely necessary", that withdrawal risks deterioration, and
+ * section 6.1.6 allows temporary discontinuation in acute kidney injury with eGFR below 15). The tables describe a CHANGE from baseline; the tool has only the current
+ * value and cannot tell a new fall from stable CKD 4, so it must not remove a long-established inhibitor on the number alone. Corrected 2026-11-11: an earlier pass
+ * stopped the class at current eGFR below 20. A blank eGFR is never treated as below 20. New starts keep their existing label renal gates.
  */
-export const RAAS_STOP_EGFR_BELOW = 20;
+export const RAAS_EGFR_REVIEW_BELOW = 20;
 
 /** Potassium below this is hypokalemia (digoxin contraindication; projected-K+ warning). */
 export const HYPOKALEMIA_K_BELOW = 3.5;

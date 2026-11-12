@@ -3470,7 +3470,7 @@ export const SCENARIOS: TestScenario[] = [
         ];
     })(),
 
-    // ===== 2026 ESC Supplementary Table S4 kidney rule: stop an ACE inhibitor / ARB / ARNI and seek specialist advice when eGFR is below 20 (current value; the tool has no baseline) =====
+    // ===== 2026 ESC Supplementary Table S4 kidney rule: eGFR below 20 on a RAAS inhibitor is an ALERT (the table describes a FALL from baseline; the tool has no baseline, so it never stops the drug on the current value) =====
     ...((): TestScenario[] => {
         const base = {
             ...INITIAL_PATIENT,
@@ -3487,8 +3487,10 @@ export const SCENARIOS: TestScenario[] = [
         };
         const onLis = buildCurrentRegimen([{ name: 'Lisinopril', strength: 5, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]);
         return [
-            { title: 'ESC26-Renal eGFR 18 Lisinopril Stopped Seek Specialist Advice', patient: { ...base, current_regimen: onLis } },
-            { title: 'ESC26-Renal eGFR 22 Lisinopril Kept', patient: { ...base, egfr: 22, creatinine: 2.9, current_regimen: onLis } },
+            { title: 'ESC26-Renal eGFR 18 Lisinopril Kept With Alert', patient: { ...base, current_regimen: onLis } },
+            { title: 'ESC26-Renal eGFR 18 Stable Sacubitril/Valsartan Kept With Alert', patient: { ...base, current_regimen: buildCurrentRegimen([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '24/26', freq: 'bid' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'ESC26-Renal eGFR 22 Lisinopril Kept No Alert', patient: { ...base, egfr: 22, creatinine: 2.9, current_regimen: onLis } },
+            { title: 'ESC26-Renal eGFR Blank Lisinopril Kept No Alert', patient: { ...base, egfr: 0, creatinine: 0, current_regimen: onLis } },
         ];
     })(),
 

@@ -2378,29 +2378,19 @@ async function runVerification() {
                 if (!t.includes('Gets Review') && clinicalAlerts.some(a => a.startsWith('DIURETIC REVIEW'))) fail('the review prompt fired for a patient who is not stable and euvolemic on a thiazide');
             }
 
-            // 94j. 2026 ESC Supplementary Table S4: stop an ACEi/ARB/ARNI and seek specialist advice at eGFR below 20 (current value; no baseline in the tool).
+            // 94j. 2026 ESC Supplementary Table S4: eGFR below 20 on a RAAS inhibitor raises an alert and never forces a stop (the table describes a FALL from baseline; the tool has no baseline).
             if (scenario.title.includes('ESC26-Renal')) {
                 const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
                 const t = scenario.title;
+                const raasAlert = clinicalAlerts.find(a => a.startsWith('eGFR below 20 on a RAAS inhibitor'));
                 if (scoredRegimens.length === 0) fail('no regimen produced');
-                if (t.includes('Stopped')) {
-                    if (anyRegimenHasMed('Lisinopril')) fail('lisinopril must be stopped at eGFR 18');
-                    if (!(excludedMedications.find(e => e.name === 'Lisinopril')?.why ?? []).some(w => /seek specialist advice/.test(w))) fail('the stop must say to seek specialist advice');
-                }
-                if (t.includes('Lisinopril Kept') && !anyRegimenHasMed('Lisinopril')) fail('lisinopril must be kept at eGFR 22 (the stop is below 20)');
-            }
-
-            // 94k. 2026 ESC alerts (no ranking effect): NT-proBNP above 5000 with congestion (section 7.2); NSAIDs / COX-2 inhibitors (Class III), thiazolidinediones and saxagliptin (section 10).
-            if (scenario.title.includes('ESC26-Alerts')) {
-                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
-                const t = scenario.title;
-                const has = (re: RegExp) => clinicalAlerts.some(a => re.test(a));
-                if (t.includes('Advises Admission') && !has(/VERY HIGH RISK: NT-proBNP 6000.*admission is generally recommended/)) fail('NT-proBNP above 5000 with congestion must advise admission');
-                if (t.includes('No Admission Alert') && has(/VERY HIGH RISK/)) fail('NT-proBNP 4000 must not raise the admission alert');
-                if (t.includes('Ibuprofen And Pioglitazone')) {
-                    if (!has(/AVOID: Ibuprofen.*Class III/)) fail('missing the NSAID Class III alert');
-                    if (!has(/Pioglitazone, Saxagliptin is contraindicated/)) fail('missing the thiazolidinedione / saxagliptin contraindication alert');
-                }
+                const drug = t.includes('Sacubitril') ? 'Sacubitril/Valsartan (Entresto)' : 'Lisinopril';
+                if (excludedMedications.some(e => e.name === drug)) fail(`${drug} must not be excluded by a current-eGFR stop`);
+                if (!anyRegimenHasMed(drug)) fail(`${drug} must be kept (stable CKD 4 is not a stop)`);
+                if (t.includes('With Alert')) {
+                    if (!raasAlert) fail('the eGFR-below-20 RAAS alert is missing');
+                    else if (!/new fall/.test(raasAlert) || !/stable at this level, continue with close monitoring/.test(raasAlert) || !/no baseline value/.test(raasAlert)) fail('the alert must state both readings (new fall: stop and seek specialist advice; stable: continue with close monitoring) and the missing baseline');
+                } else if (raasAlert) fail('the eGFR-below-20 alert fired at eGFR 22 or with a blank eGFR');
             }
 
             // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,

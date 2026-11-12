@@ -8,7 +8,7 @@ import { PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from '
 import { taggedDiscontinuedMeds } from './eligibility';
 import { buildMissingDataNotices, computeGdmtGaps } from './explain';
 import { dailyDose, dedupeCurrentRegimen, hrContinuationAction, kContinuationAction, kUptitrationBlock, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
-import { HYPOTENSION_SBP_BELOW } from './thresholds';
+import { HYPOTENSION_SBP_BELOW, RAAS_EGFR_REVIEW_BELOW } from './thresholds';
 
 export interface CriticalDataAudit {
     alerts: string[];
@@ -273,6 +273,14 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
         if (!rule?.first_steps || !act || r.med.contraindications?.(patient) && act.action !== 'withhold') return;
         clinicalAlerts.push(`POTASSIUM ${act.action === 'withhold' ? 'STOP' : 'REDUCE'} ON ${r.med.name.toUpperCase()}: ${act.reason}. ${rule.first_steps}`);
     });
+
+    // --- eGFR below 20 on a RAAS inhibitor: an alert, not a stop (2026 ESC Table S4 describes a FALL from baseline; the tool has no baseline). ---
+    if (patient.egfr > 0 && patient.egfr < RAAS_EGFR_REVIEW_BELOW && (patient.current_regimen ?? []).some(r => RAAS_CLASSES.has(r.med.drug_class))) {
+        clinicalAlerts.push(
+            'eGFR below 20 on a RAAS inhibitor: if this is a new fall (or creatinine has more than doubled), the 2026 ESC guideline advises stopping it and seeking specialist advice; ' +
+            'if kidney function is stable at this level, continue with close monitoring. The tool has no baseline value and cannot tell these apart.'
+        );
+    }
 
     // --- S2: Hemodynamic instability — block pharmacologic optimization ---
     // Threshold raised to SBP < 90 (MAP ~65 mmHg): oral GDMT initiation requires adequate perfusion
