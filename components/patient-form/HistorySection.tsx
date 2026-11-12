@@ -4,9 +4,11 @@ import { WarningIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import { MEDICATION_FORMULARY, COMMON_SIDE_EFFECTS, RELEVANT_COMORBIDITIES, RELEVANT_EXTERNAL_MEDICATIONS } from '../../constants';
 import type { Patient } from '../../types';
+import { describeIntoleranceEffect } from '../../services/engine/intolerance';
+import { describeDerivedStatus } from '../../services/clinicalPredicates';
 import {
     ANURIA, LIVER_BC, LIVER_B_CONFIRMED, SICK_SINUS, CONDUCTION_DEFECT, VENTRICULAR_FIBRILLATION, WPW,
-    PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, OTHER_SGC_STIMULATORS, LONG_ACTING_NITRATES, STRONG_CYP3A_INHIBITORS, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS,
+    PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, OTHER_SGC_STIMULATORS, LONG_ACTING_NITRATES, STRONG_CYP3A_INHIBITORS, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, EXTERNAL_POTASSIUM_RAISERS,
 } from '../../services/engine/contraindications';
 
 interface OptionGroup { label: string; members: readonly string[] }
@@ -26,8 +28,8 @@ function groupOptions(options: readonly string[], groups: readonly OptionGroup[]
 const COMORBIDITY_GROUPS: readonly OptionGroup[] = [
     { label: 'Heart rhythm and conduction', members: ['Atrial Fibrillation', SICK_SINUS, CONDUCTION_DEFECT, VENTRICULAR_FIBRILLATION, WPW] },
     { label: 'Heart and blood vessels', members: ['Coronary Artery Disease', 'Hypotension (Chronic)', 'Pulmonary Hypertension', 'Bilateral Renal Artery Stenosis'] },
-    { label: 'Kidney and liver', members: ['Chronic Kidney Disease', ANURIA, LIVER_BC, LIVER_B_CONFIRMED] },
-    { label: 'Diabetes, weight and endocrine', members: ['Type 1 Diabetes Mellitus', 'Diabetes Mellitus Type 2', 'Prior DKA / Euglycemic DKA', 'Obesity (BMI > 30)', 'Gout', "Adrenal Insufficiency (Addison's disease)"] },
+    { label: 'Kidney and liver', members: [ANURIA, LIVER_BC, LIVER_B_CONFIRMED] },
+    { label: 'Diabetes, weight and endocrine', members: ['Type 1 Diabetes Mellitus', 'Diabetes Mellitus Type 2', 'Prior DKA / Euglycemic DKA', 'Gout', "Adrenal Insufficiency (Addison's disease)"] },
     { label: 'Lung', members: ['Severe Asthma / Bronchospasm', 'Asthma (Mild/Moderate)', 'COPD'] },
     { label: 'Drug-related history and GLP-1 cautions', members: ['History of Angioedema', 'Chronic NSAID Use', 'Medullary Thyroid Carcinoma', 'MEN2 Syndrome', 'History of Pancreatitis', 'Severe Gastroparesis', 'Diabetic Retinopathy'] },
 ];
@@ -43,6 +45,7 @@ const EXTERNAL_MED_GROUPS: readonly OptionGroup[] = [
     { label: 'Strong CYP3A inhibitors (affect eplerenone, finerenone, ivabradine)', members: [...STRONG_CYP3A_INHIBITORS, ...IVABRADINE_STRONG_CYP3A4] },
     { label: 'Moderate CYP3A inhibitors', members: ['Erythromycin', 'Fluconazole'] },
     { label: 'CYP3A4 inducers (affect ivabradine)', members: CYP3A4_INDUCERS },
+    { label: 'Potassium-raising drugs', members: EXTERNAL_POTASSIUM_RAISERS },
 ];
 
 interface HistorySectionProps {
@@ -167,6 +170,17 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                     </Select>
                     <button onClick={handleAddComorbidity} disabled={!selectedComorbidity} className="px-4 bg-indigo-50 text-indigo-700 rounded-md text-sm font-bold border border-indigo-100 hover:bg-indigo-100">ADD</button>
                 </div>
+                {(() => {
+                    const derived = describeDerivedStatus(patientData);
+                    const paroxysmal = patientData.comorbidities.has('Atrial Fibrillation') && patientData.rhythm === 'Sinus';
+                    return (
+                        <div className="mb-2 text-xs text-slate-600 space-y-0.5" data-testid="derived-status">
+                            <p>{derived.kidney}</p>
+                            {derived.weight && <p>{derived.weight}</p>}
+                            {paroxysmal && <p>Recorded as paroxysmal: rhythm rules use today&apos;s rhythm (sinus).</p>}
+                        </div>
+                    );
+                })()}
                 <div className="flex flex-wrap gap-2">
                     {Array.from(patientData.comorbidities).map((c: string) => (
                         <span key={c} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-700 text-sm font-medium rounded border border-blue-100">
@@ -247,6 +261,7 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                                     <span className="font-bold text-amber-900">{dm.name}</span>
                                     <span className="mx-2 text-amber-400">|</span>
                                     <span className="text-amber-800 italic">{dm.reason}</span>
+                                    <span className="block text-amber-800 text-xs mt-1" data-testid="intolerance-effect">{describeIntoleranceEffect(dm.name, dm.drug_class, dm.reason)}</span>
                                     {dm.reason_detail && <span className="block text-amber-700 text-xs mt-1">{dm.reason_detail}</span>}
                                     {dm.occurred_at && <span className="block text-amber-700 text-xs">When: {dm.occurred_at}</span>}
                                 </div>

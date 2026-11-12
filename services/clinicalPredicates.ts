@@ -143,3 +143,40 @@ export function derivedFields(p: { creatinine: number; age: number; sex: 'Male' 
     const bmi = calculateBMI(p.height_cm, p.volume_status.current_weight_kg);
     return { egfr: calculateCKDEPI(p.creatinine, p.age, p.sex), bmi: bmi > 0 ? bmi : p.bmi };
 }
+
+/** Structured intolerance reason that records hyperuricemia / gout on a drug (the form's side-effect list). */
+export const GOUT_INTOLERANCE_REASON = 'Gout / Hyperuricemia';
+
+/**
+ * Gout history: the comorbidity OR a documented intolerance for gout/hyperuricemia on any drug. Every read of "has gout" goes through this
+ * (the uric-acid caution on loop and thiazide-type diuretics), so the two ways of entering it cannot disagree.
+ */
+export function hasGoutHistory(patient: Patient): boolean {
+    return patient.comorbidities.has('Gout')
+        || (patient.discontinued_meds ?? []).some(dm => dm.reason.trim().toLowerCase() === GOUT_INTOLERANCE_REASON.toLowerCase());
+}
+
+/**
+ * Atrial fibrillation HISTORY: today's rhythm is AFib OR the comorbidity is recorded (paroxysmal AF, now in sinus rhythm). Use this for rules about the
+ * history (anticoagulation, drug warnings). Rules about TODAY's rhythm (ivabradine needs sinus rhythm, digoxin rate credit, the vericiguat NT-proBNP
+ * threshold) keep reading `patient.rhythm`.
+ */
+export function hasAtrialFibrillationHistory(patient: Patient): boolean {
+    return patient.rhythm === 'AFib' || patient.comorbidities.has('Atrial Fibrillation');
+}
+
+/** KDIGO eGFR category for display (by eGFR alone: no albuminuria or duration), or null at 60 and above. */
+export function ckdStageFromEgfr(egfr: number): string | null {
+    if (valueUnknown(egfr) || egfr >= 60) return null;
+    return egfr >= 45 ? '3a' : egfr >= 30 ? '3b' : egfr >= 15 ? '4' : '5';
+}
+
+/** Read-only lines for the form: the tool reads kidney function from eGFR and weight status from the computed BMI, not from comorbidity checkboxes. */
+export function describeDerivedStatus(p: { egfr: number; bmi: number }): { kidney: string; weight: string | null } {
+    const stage = ckdStageFromEgfr(p.egfr);
+    const kidney = valueUnknown(p.egfr)
+        ? 'Kidney function: not entered (add a creatinine; kidney rules wait for it).'
+        : `Kidney function: eGFR ${Math.round(p.egfr)}${stage ? ` (CKD stage ${stage} range)` : ''}, from creatinine.`;
+    const weight = valueUnknown(p.bmi) ? null : `BMI ${Math.round(p.bmi)}${p.bmi >= 30 ? ': obesity' : ''}, from height and weight.`;
+    return { kidney, weight };
+}

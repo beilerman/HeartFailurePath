@@ -232,6 +232,8 @@ export interface MedFacts {
     chronic_use_review?: string;
     /** Raises serum uric acid / may precipitate gout (label): a patient with Gout carries the uric-acid caution while this drug is in the regimen. */
     raises_uric_acid?: boolean;
+    /** Drug note shown on an option that STARTS this drug in a patient with an atrial fibrillation history who is in sinus rhythm today (paroxysmal AF); informational, not penalized. */
+    af_signal_note?: string;
     /** Warn (penalized caution) when this drug is ADDED and the known baseline K+ is below this value. Engine policy, not a label contraindication; `basis` states it. */
     hypokalemia_caution_below_k?: { k: number; basis: string };
     /** Role when the engine must append a rescue agent (K+ binder): `preferred` is tried first, else the first available. */
