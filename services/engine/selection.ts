@@ -191,15 +191,22 @@ export function chooseDisplayPicks(
 }
 
 /** True when the regimen raises a standing loop diuretic's dose or starts one (a short-course add-on beside the oral loop is neither). */
+const isLoopIncreaseMod = (m: { action: string; target?: RegimenMed }) =>
+    !!m.target && m.target.med.drug_class === 'Loop Diuretic' && !drugFacts(m.target.med).short_course_addon && (m.action === 'titrate_up' || m.action === 'add');
 export function includesLoopIncrease(r: ScoredRegimen): boolean {
-    return (r.modification_set?.modifications ?? []).some(m => !!m.target && m.target.med.drug_class === 'Loop Diuretic' && !drugFacts(m.target.med).short_course_addon
-        && (m.action === 'titrate_up' || m.action === 'add'));
+    return (r.modification_set?.modifications ?? []).some(isLoopIncreaseMod);
+}
+
+/** True when the loop increase/start is the regimen's ONLY change, apart from forced safety changes (a removal or a dose reduction). */
+export function isPlainLoopStep(r: ScoredRegimen): boolean {
+    const changes = (r.modification_set?.modifications ?? []).filter(m => m.action !== 'keep');
+    return changes.some(isLoopIncreaseMod) && changes.every(m => isLoopIncreaseMod(m) || m.action === 'remove' || m.action === 'titrate_down');
 }
 
 /**
  * Congestion coverage (named selection step, runs after distinct-pick selection; pure, changes no score). When the patient meets the engine's congestion criterion
  * (more than CONGESTION_EXCESS_KG_ABOVE kg above dry weight, `isCongestedAboveDryWeight`) and no displayed option raises or starts a loop diuretic, show the
- * best-ranked candidate that does: it replaces the LAST option when three are shown, else it is appended. Option 1 is never displaced. `pool` is the ranked,
+ * best-ranked candidate that does (preferring one whose only change is the loop step, plus forced removals/reductions, and never one that itself causes severe projected harm): it replaces the LAST option when three are shown, else it is appended. Option 1 is never displaced. `pool` is the ranked,
  * display-safe, budget-filtered candidate list (the over-budget fallback list plus the cheapest loop candidates beyond it), so the floors and the budget rule still hold.
  * A loop candidate exists only if the engine's own hold rules (volume depletion, loop at its maximum daily dose, hypotension) allow the increase.
  * The shown option carries `shown_because` (explanation only).
@@ -207,7 +214,10 @@ export function includesLoopIncrease(r: ScoredRegimen): boolean {
 export function ensureCongestionCoverage(picks: ScoredRegimen[], pool: ScoredRegimen[], patient: Patient): ScoredRegimen[] {
     if (picks.length === 0 || !isCongestedAboveDryWeight(patient) || picks.some(includesLoopIncrease)) return picks;
     const shown = new Set(picks);
-    const candidate = pool.find(r => !shown.has(r) && includesLoopIncrease(r));
+    // Preference: (i) the best-ranked candidate whose only change is the loop step (plus forced removals/reductions), else (ii) the best-ranked candidate with a loop step.
+    // Never a candidate that itself causes a severe projected-safety adjustment (isProjectedSafetyClean against the entered baseline).
+    const eligible = pool.filter(r => !shown.has(r) && includesLoopIncrease(r) && isProjectedSafetyClean(r, patient));
+    const candidate = eligible.find(isPlainLoopStep) ?? eligible[0];
     if (!candidate) return picks;
     const kg = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg).toFixed(1);
     const tagged: ScoredRegimen = { ...candidate, shown_because: `Includes a diuretic increase: the patient is congested (${kg} kg above dry weight; the tool's criterion is more than ${CONGESTION_EXCESS_KG_ABOVE} kg), and no other option raises the loop diuretic.` };
