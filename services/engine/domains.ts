@@ -1,23 +1,32 @@
 /** The domain scorers, their scoring constants, and the guideline-concordance table. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, RegimenMed } from '../../types';
 import type { ScoreDomainKey } from './scoreModel';
-import { hasHistoricalHFrEF } from '../clinicalPredicates';
+import { hasHistoricalHFrEF, hasPriorLvefBelow50 } from '../clinicalPredicates';
 import { DIURETIC_CLASSES, RAAS_CLASSES, getMedicationClassGroup } from './registry';
 import { isTargetDoseForPatient, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 
-export function mineralocorticoidCountsAsEvidencePillar(drugClass: string, phenotype: Phenotype): boolean {
+/**
+ * Whether a nonsteroidal MRA (finerenone) may fill the MRA slot for this patient. FINEARTS-HF and the Kerendia HF label cover LVEF 40 or
+ * higher, so it fills the slot at current LVEF 41 or higher (the former HFmrEF range and HFpEF) but never for a patient with a documented (or
+ * presumed) prior LVEF of 40 or lower: that patient is improved-EF HFrEF and takes a steroidal MRA (2026 ESC Table 5: steroidal MRA for HFrEF).
+ * The 2026 ESC guideline recommends a steroidal MRA below LVEF 50; keeping the finerenone allowance at 41-49 is the stricter-evidence US
+ * label rule (docs/evidence-matrix.md HF-MRA-010).
+ */
+export function nsMraFillsMraSlot(patient: Patient): boolean {
+    return patient.lvef >= 41 && !isImprovedEF(patient);
+}
+
+export function mineralocorticoidCountsAsEvidencePillar(drugClass: string, patient: Patient): boolean {
     if (drugClass === 'MRA') return true;
-    // Finerenone has LVEF >=40 evidence; it must not satisfy HFrEF/HFimpEF steroidal-MRA credit.
-    return drugClass === 'nsMRA' && phenotype !== 'HFrEF';
+    return drugClass === 'nsMRA' && nsMraFillsMraSlot(patient);
 }
 
 export function regimenSatisfiesPillar(regimen: RegimenMed[], pillar: string, patient: Patient): boolean {
-    const phenotype = classifyPhenotype(patient);
     return regimen.some(r => {
         const cls = r.med.drug_class;
         if (pillar === 'RAAS Inhibitor') return RAAS_CLASSES.has(cls);
         if (pillar === 'Beta Blocker') return cls === 'Beta Blocker';
-        if (pillar === 'MRA') return mineralocorticoidCountsAsEvidencePillar(cls, phenotype);
+        if (pillar === 'MRA') return mineralocorticoidCountsAsEvidencePillar(cls, patient);
         if (pillar === 'SGLT2i') return cls === 'SGLT2i';
         return getMedicationClassGroup(cls) === pillar;
     });
@@ -156,7 +165,7 @@ export function calculateStructureScoreComponents(
     let absoluteScore: number;
     if (lvef >= 55) absoluteScore = 100;
     else if (lvef >= 45) absoluteScore = 70 + ((lvef - 45) / 10) * 30;  // Near-normal
-    else if (lvef >= 35) absoluteScore = 40 + ((lvef - 35) / 10) * 30;  // HFmrEF / mild
+    else if (lvef >= 35) absoluteScore = 40 + ((lvef - 35) / 10) * 30;  // LVEF 35-44, mildly reduced range
     else if (lvef >= 25) absoluteScore = 15 + ((lvef - 25) / 10) * 25;  // Moderate HFrEF
     else if (lvef >= 15) absoluteScore = ((lvef - 15) / 10) * 15;       // Severe HFrEF
     else absoluteScore = 0;                                               // Incompatible w/ life
@@ -296,14 +305,12 @@ export function calculateAdherenceScore(complexity: number, toleranceInput: numb
 }
 
 /**
- * Domain 7: Guideline Concordance (2022 AHA/ACC/HFSA)
- * Scores alignment with evidence-based GDMT recommendations — 3-tier phenotype.
+ * Domain 7: Guideline Concordance (2026 ESC heart failure guideline, Recommendation Table 5; 2022 AHA/ACC/HFSA where noted)
+ * Scores alignment with evidence-based foundational therapy for the phenotype. Two phenotypes (2026 ESC removed HFmrEF):
  *
- * HFrEF (LVEF ≤ 40): All 4 pillars Class I — 20 pts each (max 80) + 5 pts/pillar at target (max 20) = 100.
- * HFmrEF (LVEF 41-49): SGLT2i Class IIa and RAAS/BB/MRA Class IIb weighted hybrid model
- *   (SGLT2i/RAAS 22 pts each; BB/MRA 13 pts each = 70 max) + 5 pts/pillar at target (max 20)
- *   + volume management (10) = 100. See docs/evidence-matrix.md (HF-GDMT-002).
- * HFpEF (LVEF ≥ 50): SGLT2i (70) + target dose (15) + volume management (15) = 100.
+ * HFrEF (LVEF < 50, or improved EF, or a prior LVEF < 50): all 4 pillars Class I, 20 pts each (max 80) + 5 pts/pillar at target (max 20) = 100.
+ * HFpEF (LVEF >= 50 and never < 50): SGLT2i and MRA Class I (SGLT2i 45 + 10 at target, MRA 30 + 5 at target) + volume management (10) = 100.
+ *   A RAAS inhibitor is Class IIb in HFpEF: small credit, never a foundational slot.
  */
 // =====================================================================================
 // GUIDELINE-CONCORDANCE EVIDENCE TABLE — evidence as data, not magic numbers.
@@ -320,7 +327,7 @@ export type RecClass = 'I' | 'IIa' | 'IIb' | 'III';
 
 export interface PillarConcordance { base: number; targetBonus: number; recClass: RecClass; trials: string; }
 
-export type Phenotype = 'HFrEF' | 'HFmrEF' | 'HFpEF';
+export type Phenotype = 'HFrEF' | 'HFpEF';
 
 export interface PhenoConcordance {
     pillars: Partial<Record<PillarKey, PillarConcordance>>;
@@ -342,55 +349,62 @@ export const CONCORDANCE_TABLE: Record<Phenotype, PhenoConcordance> = {
         targetBonusCap: Infinity,
         volumeBonus: 0,
     },
-    HFmrEF: {
-        pillars: {
-            RAAS:   { base: 22, targetBonus: 5, recClass: 'IIb', trials: 'ACC/AHA 2022 §7.3.2 (CHARM subgroup)' },
-            SGLT2i: { base: 22, targetBonus: 5, recClass: 'IIa', trials: 'DELIVER / EMPEROR-Preserved (LVEF 41-49)' },
-            BB:     { base: 13, targetBonus: 5, recClass: 'IIb', trials: 'subgroup / observational' },
-            MRA:    { base: 13, targetBonus: 5, recClass: 'IIb', trials: 'TOPCAT (LVEF 45-49)' },
-        },
-        targetBonusCap: 20,
-        volumeBonus: 10,
-    },
     HFpEF: {
         pillars: {
-            SGLT2i: { base: 70, targetBonus: 15, recClass: 'I', trials: 'EMPEROR-Preserved / DELIVER' },
-            MRA:    { base: 8, targetBonus: 0, recClass: 'IIb', trials: 'TOPCAT Americas / FINEARTS-HF' },
+            SGLT2i: { base: 45, targetBonus: 10, recClass: 'I', trials: 'EMPEROR-Preserved / DELIVER (2026 ESC Table 5)' },
+            MRA:    { base: 30, targetBonus: 5, recClass: 'I', trials: 'TOPCAT Americas / FINEARTS-HF (2026 ESC Table 5: steroidal or non-steroidal)' },
+            RAAS:   { base: 4, targetBonus: 0, recClass: 'IIb', trials: 'PARAGON-HF / CHARM-Preserved (2026 ESC Table 5: Class IIb C; not a foundational therapy)' },
         },
         targetBonusCap: Infinity,
-        volumeBonus: 15,
+        volumeBonus: 10,
     },
 };
 
-export function pillarKeyOf(drugClass: string, phenotype: Phenotype): PillarKey | null {
+// The pillar a drug class belongs to as a FAMILY (finerenone sits with the MRAs), independent of any patient. Used only for display grouping.
+export function pillarFamilyOf(drugClass: string): PillarKey | null {
     if (RAAS_CLASSES.has(drugClass)) return 'RAAS';
     if (drugClass === 'Beta Blocker') return 'BB';
-    if (mineralocorticoidCountsAsEvidencePillar(drugClass, phenotype)) return 'MRA';
+    if (drugClass === 'MRA' || drugClass === 'nsMRA') return 'MRA';
+    if (drugClass === 'SGLT2i') return 'SGLT2i';
+    return null;
+}
+
+export function pillarKeyOf(drugClass: string, patient: Patient): PillarKey | null {
+    if (RAAS_CLASSES.has(drugClass)) return 'RAAS';
+    if (drugClass === 'Beta Blocker') return 'BB';
+    if (mineralocorticoidCountsAsEvidencePillar(drugClass, patient)) return 'MRA';
     if (drugClass === 'SGLT2i') return 'SGLT2i';
     return null;
 }
 
 /**
- * 3-tier HF phenotype from LVEF: HFrEF (<= 40), HFmrEF (41-49), HFpEF (>= 50) — with the
- * HFimpEF override: a documented (or conservatively presumed, when history is unknown but
- * the patient arrives on RAAS/BB/MRA) prior LVEF <= 40 classifies as HFrEF so quad GDMT is
- * continued after EF recovery (ACC/AHA 2022). Drives pathway selection, concordance tables,
- * GDMT-completeness slots, and GLP-1/nsMRA phenotype gating.
+ * Improved-EF HFrEF: LVEF now above 40 with a documented prior LVEF of 40 or lower (or, conservatively, presumed when the history is unknown but
+ * the patient arrives on RAAS/BB/MRA). Such a patient stays on full HFrEF therapy (2026 ESC Table 5: continue foundational therapy at the highest
+ * tolerated dose after LVEF improves; 2022 AHA/ACC/HFSA HFimpEF). It also blocks nonsteroidal-MRA and GLP-1 starts.
+ */
+export function isImprovedEF(patient: Patient): boolean {
+    return patient.lvef > 40 && (hasHistoricalHFrEF(patient) || shouldPreserveQuadForUnknownHistory(patient));
+}
+
+/**
+ * 2-tier HF phenotype from LVEF (2026 ESC guideline sections 3.3.1 and 5.2: HFmrEF is removed).
+ *   HFrEF: LVEF < 50, OR improved EF (isImprovedEF), OR current LVEF >= 50 with a recorded prior LVEF < 50 (HFpEF requires an LVEF that was never < 50).
+ *   HFpEF: LVEF >= 50 and no recorded prior LVEF < 50.
+ * Only a numeric `previous_lvef` can show a prior value of 41-49: the categorical ever_lvef_le_40 answer says nothing about it, so a patient with
+ * LVEF >= 50 and only "ever <= 40: no" is HFpEF here. Drives pathway selection, concordance tables, completeness slots and ranking-mode applicability.
+ * Drug-specific LVEF criteria (digoxin, ivabradine, vericiguat, GLP-1, iron, finerenone) keep their own evidence thresholds.
  */
 export function classifyPhenotype(patient: Patient): Phenotype {
-    const preserveQuadForUnknownHistory = shouldPreserveQuadForUnknownHistory(patient);
-    const isHFimpEF = patient.lvef > 40 && (hasHistoricalHFrEF(patient) || preserveQuadForUnknownHistory);
-    if (isHFimpEF) return 'HFrEF';            // HFimpEF continues full HFrEF pillar expectations
-    if (patient.lvef >= 50) return 'HFpEF';
-    if (patient.lvef >= 41) return 'HFmrEF';
-    return 'HFrEF';
+    if (patient.lvef < 50) return 'HFrEF';
+    if (isImprovedEF(patient) || hasPriorLvefBelow50(patient)) return 'HFrEF';
+    return 'HFpEF';
 }
 
 // Returns, per pillar present in the regimen, whether it is at target dose.
-export function pillarsPresentAtTarget(regimen: RegimenMed[], patient: Patient, phenotype: Phenotype = classifyPhenotype(patient)): Map<PillarKey, boolean> {
+export function pillarsPresentAtTarget(regimen: RegimenMed[], patient: Patient): Map<PillarKey, boolean> {
     const present = new Map<PillarKey, boolean>();
     regimen.forEach(r => {
-        const key = pillarKeyOf(r.med.drug_class, phenotype);
+        const key = pillarKeyOf(r.med.drug_class, patient);
         if (!key) return;
         const atTarget = isTargetDoseForPatient(r, patient);
         present.set(key, (present.get(key) ?? false) || atTarget);
@@ -403,7 +417,7 @@ export function pillarsPresentAtTarget(regimen: RegimenMed[], patient: Patient, 
 // for every candidate. Defaults preserve standalone-call behavior.
 export function calculateGuidelineConcordanceScore(resultingRegimen: RegimenMed[], patient: Patient, phenotype: Phenotype = classifyPhenotype(patient)): number {
     const table = CONCORDANCE_TABLE[phenotype];
-    const present = pillarsPresentAtTarget(resultingRegimen, patient, phenotype);
+    const present = pillarsPresentAtTarget(resultingRegimen, patient);
 
     let score = 0;
     let targetBonusSum = 0;
@@ -424,7 +438,7 @@ export function calculateGuidelineConcordanceScore(resultingRegimen: RegimenMed[
 // Surfaceable evidence for the pillars actually present — the "why" behind the concordance score.
 export function describeConcordance(resultingRegimen: RegimenMed[], patient: Patient, phenotype: Phenotype = classifyPhenotype(patient)): string[] {
     const table = CONCORDANCE_TABLE[phenotype];
-    const present = pillarsPresentAtTarget(resultingRegimen, patient, phenotype);
+    const present = pillarsPresentAtTarget(resultingRegimen, patient);
     const labels: Record<PillarKey, string> = { RAAS: 'RAAS inhibitor', BB: 'Beta-blocker', MRA: 'MRA', SGLT2i: 'SGLT2i' };
     const out: string[] = [];
     (Object.keys(table.pillars) as PillarKey[]).forEach(key => {

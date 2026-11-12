@@ -12,6 +12,7 @@
 import { readFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { capture, SNAPSHOT } from './goldenMaster';
+import { SCENARIOS } from '../data/scenarios';
 
 interface Pick {
     regimen?: { med: { name: string }; dose: { strength: number | string; unit?: string }; selected_frequency: string }[];
@@ -33,6 +34,9 @@ async function main() {
 
     let topSame = 0, setSame = 0, orderSame = 0;
     const topChanged: string[] = [];
+    const lvefOf = new Map(SCENARIOS.map(sc => [sc.title, sc.patient.lvef] as const));
+    const band = (key: string) => { const v = lvefOf.get(key.replace(/ :: [a-z]+$/, '')); return v === undefined ? 'unknown' : v <= 40 ? 'LVEF <= 40' : v < 50 ? 'LVEF 41-49' : 'LVEF >= 50'; };
+    const bandRuns: Record<string, number> = {}, bandChanged: Record<string, number> = {};
     const bugs: string[] = [];
     const warnDiffs: string[] = [];
     const oldTop: number[] = [], newTop: number[] = [];
@@ -46,8 +50,10 @@ async function main() {
         if (np[0]?.overall_score !== undefined) newTop.push(np[0].overall_score);
 
         const oSigs = op.map(regimenSig), nSigs = np.map(regimenSig);
+        const b = band(key); bandRuns[b] = (bandRuns[b] ?? 0) + 1;
         if (oSigs[0] === nSigs[0]) topSame++;
-        else topChanged.push(`  ${key}\n     old: ${regimenLabel(op[0])}\n     new: ${regimenLabel(np[0])}`);
+        else bandChanged[b] = (bandChanged[b] ?? 0) + 1;
+        if (oSigs[0] !== nSigs[0]) topChanged.push(`  ${key}\n     old: ${regimenLabel(op[0])}\n     new: ${regimenLabel(np[0])}`);
         if (same([...oSigs].sort(), [...nSigs].sort())) setSame++;
         if (same(oSigs, nSigs)) orderSame++;
 
@@ -68,6 +74,8 @@ async function main() {
     console.log(`  (e) per-regimen warnings identical: ${warnDiffs.length === 0 ? 'YES' : `NO (${warnDiffs.length} regimens)`}`);
     console.log(`  top-pick overall_score  old: ${range(oldTop)}`);
     console.log(`  top-pick overall_score  new: ${range(newTop)}`);
+    console.log('  top pick changed, by baseline LVEF band:');
+    Object.keys(bandRuns).sort().forEach(b => console.log(`    ${b}: ${bandChanged[b] ?? 0} of ${bandRuns[b]} runs`));
     if (topChanged.length) { console.log(`\nTop pick changed in ${topChanged.length} runs:`); topChanged.forEach(l => console.log(l)); }
     if (bugs.length) { console.log('\nBUGS (eligibility/alerts must not change):'); bugs.slice(0, 30).forEach(b => console.log('  ' + b)); }
     if (warnDiffs.length) { console.log('\nWarning differences:'); warnDiffs.slice(0, 30).forEach(b => console.log('  ' + b)); }

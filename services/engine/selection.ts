@@ -37,8 +37,8 @@ export const byScoreThenCost = (a: ScoredRegimen, b: ScoredRegimen) =>
 // Ranking mode (physician-owner decision 2026-11-11). Balanced is the default and is exactly byScoreThenCost.
 // "Prioritize foundational therapy" changes ONLY the order of regimens that already passed eligibility, the
 // budget filter and the display floors; it never changes a score, an exclusion, an alert or a gap. It is applied
-// only to HFrEF and HFimpEF (classifyPhenotype reports both as HFrEF); for HFmrEF/HFpEF it is a no-op because no
-// clinical ordering for those phenotypes was specified.
+// only to HFrEF (LVEF below 50, improved EF, or a prior LVEF below 50: classifyPhenotype); for HFpEF it is a no-op because no
+// clinical ordering for HFpEF was specified.
 // ---------------------------------------------------------------------------------------------------
 
 /** Missing or unknown values resolve to Balanced (compatibility default). */
@@ -199,7 +199,7 @@ export function selectWithRanking(
     }
     const ranking: RankingInfo = { mode, applied: mode === 'foundational_first' && applies, balanced_lead_differs: false };
     if (mode === 'foundational_first' && !applies) {
-        ranking.reason_not_applied = 'Prioritizing foundational therapy applies to HFrEF and improved-EF (HFimpEF) only; for this phenotype the order is the same as Balanced.';
+        ranking.reason_not_applied = 'Prioritizing foundational therapy applies to reduced EF (LVEF below 50, improved EF, or a prior LVEF below 50) only; for HFpEF the order is the same as Balanced.';
     }
     if (ranking.applied) {
         const balanced = chooseDisplayPicks(results, patient, byScoreThenCost).picks[0];

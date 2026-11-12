@@ -77,8 +77,8 @@ const ASSERTION_TITLE_MARKERS = [
     'GLP-1 Contraindication (MEN2)',
     'Nitrate + PDE5 Exposure',
     'HFimpEF Unknown on Existing Quad',
-    'HFmrEF Standalone',
-    'HFmrEF Obese',
+    'LVEF 45 Reduced-EF Standalone',
+    'LVEF 42 Reduced-EF Obese',
     'Severe Congestion + Loop',
     'Hypoxia Alert',
     'NYHA III Acute Decompensation',
@@ -130,7 +130,8 @@ const ASSERTION_TITLE_MARKERS = [
     'Adjunct-Source',
     'Diuretic-Source',
     'Final-Gaps',
-    'Lab-Prereq'
+    'Lab-Prereq',
+    'ESC26-Phenotype'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -1425,30 +1426,30 @@ async function runVerification() {
                 }
             }
 
-            // 59. HFmrEF Standalone -> all 4 GDMT pillars available, BB/MRA scored lower (Class IIb)
-            if (scenario.title.includes('HFmrEF Standalone')) {
+            // 59. LVEF 45 Reduced-EF Standalone -> all 4 GDMT pillars available, BB/MRA scored lower (Class IIb)
+            if (scenario.title.includes('LVEF 45 Reduced-EF Standalone')) {
                 if (!topRegimen) {
-                    failures.push('HFmrEF: no regimen generated');
+                    failures.push('LVEF 41-49: no regimen generated');
                     scenarioPassed = false;
                 } else {
-                    // HFmrEF gets full quad therapy (RAAS, BB, MRA, SGLT2i) but BB/MRA are Class IIb
+                    // LVEF 41-49 gets full quad therapy (RAAS, BB, MRA, SGLT2i) but BB/MRA are Class IIb
                     const hasRaas = topClasses.has('ARNI') || topClasses.has('ACEi') || topClasses.has('ARB');
                     const hasSglt2 = topClasses.has('SGLT2i');
-                    if (!hasRaas) { failures.push('HFmrEF: missing RAAS (Class I pillar)'); scenarioPassed = false; }
-                    if (!hasSglt2) { failures.push('HFmrEF: missing SGLT2i (Class I pillar)'); scenarioPassed = false; }
+                    if (!hasRaas) { failures.push('LVEF 41-49: missing RAAS (Class I pillar)'); scenarioPassed = false; }
+                    if (!hasSglt2) { failures.push('LVEF 41-49: missing SGLT2i (Class I pillar)'); scenarioPassed = false; }
                 }
                 // Device therapy screening: LVEF 45 > 35 → should NOT trigger ICD/CRT alert
                 if (clinicalAlerts.some(a => a.includes('DEVICE THERAPY SCREENING'))) {
-                    failures.push('HFmrEF LVEF 45: unexpected ICD/CRT screening (requires LVEF ≤ 35)');
+                    failures.push('LVEF 41-49 LVEF 45: unexpected ICD/CRT screening (requires LVEF ≤ 35)');
                     scenarioPassed = false;
                 }
             }
 
-            // 60. HFmrEF + Obese at LVEF 42 -> NO GLP-1 initiation: semaglutide needs LVEF >= 45 (STEP-HFpEF), tirzepatide >= 50 (SUMMIT)
+            // 60. LVEF 41-49 + Obese at LVEF 42 -> NO GLP-1 initiation: semaglutide needs LVEF >= 45 (STEP-HFpEF), tirzepatide >= 50 (SUMMIT)
             // (verified-sglt2-glp1-adjuncts.md row 18; this scenario previously asserted eligibility at LVEF >= 40, which the trials contradict).
-            if (scenario.title.includes('HFmrEF Obese')) {
+            if (scenario.title.includes('LVEF 42 Reduced-EF Obese')) {
                 if (!topRegimen) {
-                    failures.push('HFmrEF Obese: no regimen generated');
+                    failures.push('LVEF 42 Reduced-EF Obese: no regimen generated');
                     scenarioPassed = false;
                 }
                 // Both GLP-1 agents are excluded at LVEF 42 with the LVEF reason, and neither is offered or surfaced
@@ -1465,7 +1466,7 @@ async function runVerification() {
                 }
                 // SGLT2i should be present in displayed regimens
                 if (!anyRegimenHasClass('SGLT2i')) {
-                    failures.push('HFmrEF Obese: missing SGLT2i');
+                    failures.push('LVEF 42 Reduced-EF Obese: missing SGLT2i');
                     scenarioPassed = false;
                 }
             }
@@ -1859,7 +1860,7 @@ async function runVerification() {
             }
 
             // 82b. INTOLERANCE REGRESSION (review): gynecomastia offender = eplerenone, arriving
-            // on spironolactone, HFmrEF -> both offenders avoided, nsMRA (finerenone) must
+            // on spironolactone, LVEF 41-49 -> both offenders avoided, nsMRA (finerenone) must
             // survive as the MRA-pool agent instead of the whole pillar being dropped.
             if (scenario.title.includes('Gynecomastia From Eplerenone on Spironolactone')) {
                 if (anyRegimenHasMed('Spironolactone') || anyRegimenHasMed('Eplerenone')) {
@@ -2266,6 +2267,36 @@ async function runVerification() {
                     && !scoredRegimens.some(r => (r.modification_set?.modifications ?? []).some(m => m.action === 'remove' && m.source?.med.name === 'Spironolactone'))) {
                     fail('A current MRA was not removed at K+ 6.0-6.4');
                 }
+            }
+
+            // 94e. 2026 ESC phenotype (HFmrEF removed; sections 3.3.1 and 5.2, Recommendation Table 5): LVEF < 50 is HFrEF; HFpEF is LVEF >= 50 and never < 50.
+            if (scenario.title.includes('ESC26-Phenotype')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const out = generateAndScoreModifications({ ...scenario.patient, ranking_mode: 'foundational_first' }, scenarioAvailableMedNames, scenarioPrices);
+                const gaps = (out.gdmtGaps ?? []).map(g => g.split(' — ')[0]);
+                const phen = classifyPhenotype(scenario.patient);
+                const reduced = /Is HFrEF|Excludes Finerenone/.test(t);
+                if (reduced && phen !== 'HFrEF') fail(`classifyPhenotype returned ${phen}, expected HFrEF`);
+                if (!reduced && phen !== 'HFpEF') fail(`classifyPhenotype returned ${phen}, expected HFpEF`);
+                if (reduced) {
+                    if (gaps.length !== 4) fail(`expected four foundational gaps (RAAS, beta-blocker, MRA, SGLT2i), got ${gaps.length}`);
+                    if (!out.ranking?.applied) fail('foundational-first ranking should apply to reduced EF (LVEF below 50)');
+                    if (!anyRegimenHasClass('Beta Blocker')) fail('a beta-blocker is a Class I pillar below LVEF 50 but no displayed option offers one');
+                } else if (t.includes('Stays HFpEF') || t.includes('LVEF 50 Is HFpEF')) {
+                    if (gaps.length !== 2 || gaps.some(g => g.startsWith('Evidence-based beta-blocker') || g.startsWith('RAAS'))) fail('HFpEF gaps must be SGLT2i and MRA only');
+                    if (out.ranking?.applied) fail('foundational-first ranking must not apply to HFpEF');
+                    if (scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Beta Blocker' || RAAS_CLASSES.has(m.med.drug_class)))) fail('HFpEF must not be offered a beta-blocker or RAAS inhibitor as a new start');
+                }
+                if (t.includes('RAAS Not A Slot')) {
+                    if (gaps.some(g => g.startsWith('RAAS'))) fail('HFpEF must not list a RAAS gap (Class IIb)');
+                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Lisinopril'))) fail('an HFpEF patient on lisinopril had it removed');
+                }
+                if (t.includes('LVEF 45 Is HFrEF') || t.includes('LVEF 41 Is HFrEF') || t.includes('LVEF 49 Is HFrEF')) {
+                    const ns = anyRegimenHasClass('nsMRA');
+                    if (ns) fail('finerenone is not offered as an extra option in the former HFmrEF range (steroidal MRA per 2026 ESC)');
+                }
+                if (t.includes('Excludes Finerenone') && excludedMedications.find(e => e.name === 'Finerenone (Kerendia)') === undefined) fail('finerenone must be excluded for improved EF (prior LVEF 35)');
             }
 
             // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,

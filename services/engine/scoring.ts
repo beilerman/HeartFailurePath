@@ -15,7 +15,7 @@ import { drugFacts } from './drugFacts';
 import { ivIronCreditTier } from '../clinicalPredicates';
 import { RAAS_CLASSES, MRA_POOL_CLASSES, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES } from './registry';
 import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, isTargetDoseForPatient, restrictToStartTiers } from './regimenUtils';
-import { calculateAdherenceScore, calculateCostScore, calculateFunctionalScore, calculateGuidelineConcordanceScore, calculateNeurohormonalScore, calculateStructureScore, calculateVolumeScore, classifyPhenotype, describeConcordance, Phenotype } from './domains';
+import { calculateAdherenceScore, calculateCostScore, calculateFunctionalScore, calculateGuidelineConcordanceScore, calculateNeurohormonalScore, calculateStructureScore, calculateVolumeScore, classifyPhenotype, describeConcordance, nsMraFillsMraSlot, Phenotype } from './domains';
 import { simulateModificationEffect } from './effects';
 import { IntolerancePolicy } from './intolerance';
 import { RegimenAnalysis } from './candidates';
@@ -75,14 +75,14 @@ export function buildScoringContext(
     // contraindicated pillar. Safety penalties are applied on top of the weighted sum, so an unsafe
     // projection still disqualifies the regimen regardless of completeness.
     const phenotype = classifyPhenotype(patient);
-    const isReducedPhenotype = phenotype === 'HFrEF' || phenotype === 'HFmrEF';
+    const isReducedPhenotype = phenotype === 'HFrEF';
 
     const completenessSlots: GdmtSlot[] = [];
     if (isReducedPhenotype) {
         completenessSlots.push(
             { match: (c) => RAAS_CLASSES.has(c), foundational: true },
             { match: (c) => c === 'Beta Blocker', foundational: true },
-            { match: (c) => c === 'MRA' || (c === 'nsMRA' && phenotype === 'HFmrEF'), foundational: true },
+            { match: (c) => c === 'MRA' || (c === 'nsMRA' && nsMraFillsMraSlot(patient)), foundational: true },
             { match: (c) => c === 'SGLT2i', foundational: true }
         );
     } else { // HFpEF

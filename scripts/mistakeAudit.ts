@@ -121,7 +121,7 @@ const S: Scenario[] = [
       expect: (o) => { const a = A(o); const e: string[] = []; if (a.hasMedInAny('Digoxin') && !a.anyWarn('digoxin')) e.push('Digoxin renal accumulation not addressed'); return e; } },
     { title: '26 Liver disease (Child-Pugh B/C) on ARNI', patient: base({ comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: reg([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (a.hasClassInAny(c => c === 'ARNI')) e.push('ARNI retained in Child-Pugh B/C (hepatic CI)'); return e; } },
-    { title: '27 Liver disease on Finerenone', patient: base({ lvef: 45, ever_lvef_le_40: 'no', comorbidities: new Set(['HFmrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: reg([{ name: 'Finerenone (Kerendia)', strength: 10 }]) }),
+    { title: '27 Liver disease on Finerenone', patient: base({ lvef: 45, ever_lvef_le_40: 'no', comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: reg([{ name: 'Finerenone (Kerendia)', strength: 10 }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (a.hasMedInAny('Finerenone (Kerendia)')) e.push('Finerenone retained in Child-Pugh B/C (CYP3A4 CI)'); return e; } },
 
     // ===== E. Diuretic mistakes =====

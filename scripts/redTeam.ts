@@ -80,7 +80,7 @@ async function run() {
     probe('2. Dual MRA, steroidal contraindicated, nsMRA viable (should keep an MRA, not drop both)',
         base({
             lvef: 45, nyha_class: 'II', nt_pro_bnp: 1200, potassium: 4.6, egfr: 55,
-            comorbidities: new Set(['HFmrEF']),
+            comorbidities: new Set(['HFrEF']),
             discontinued_meds: [{ name: 'Eplerenone', drug_class: 'MRA', reason: 'gynecomastia' }],
             current_regimen: [med('Spironolactone', 25), med('Finerenone (Kerendia)', 10), med('Lisinopril', 10)],
         }),
@@ -248,7 +248,7 @@ async function run() {
 
     // PROBE 16 — Dialysis-range eGFR (6). No crash; renal-contraindicated drugs (finerenone) excluded.
     probe('16. Dialysis-range eGFR 6 — no crash; finerenone/SGLT2i-init handled, alerts present',
-        base({ lvef: 45, egfr: 6, creatinine: 6.5, potassium: 5.0, comorbidities: new Set(['HFmrEF', 'Chronic Kidney Disease']), current_regimen: [] }),
+        base({ lvef: 45, egfr: 6, creatinine: 6.5, potassium: 5.0, comorbidities: new Set(['HFrEF', 'Chronic Kidney Disease']), current_regimen: [] }),
         ({ recommendsName, o }) => {
             const f: Finding[] = [];
             if (recommendsName('Finerenone (Kerendia)')) f.push({ severity: 'HIGH', msg: 'Finerenone offered at eGFR 6 (contraindicated < 25)' });

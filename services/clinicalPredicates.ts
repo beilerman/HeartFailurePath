@@ -29,6 +29,12 @@ export function hasHistoricalHFrEF(patient: Patient): boolean {
     return patient.ever_lvef_le_40 === 'yes';
 }
 
+// A recorded numeric prior LVEF below 50. With current LVEF >= 50 this makes the patient HFrEF (2026 ESC: HFpEF requires an LVEF that was never
+// below 50). A blank or zero previous_lvef is not a measurement (see above), and the categorical ever_lvef_le_40 answer cannot show a prior 41-49.
+export function hasPriorLvefBelow50(patient: Patient): boolean {
+    return !valueUnknown(patient.previous_lvef) && patient.previous_lvef! < 50;
+}
+
 // True when prior-EF history is genuinely unknown (no usable numeric previous_lvef AND
 // the categorical answer is unknown) — drives the conservative preserve-quad pathways.
 export function hasUnknownHistoricalHFrEF(patient: Patient): boolean {

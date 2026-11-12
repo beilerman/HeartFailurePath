@@ -1,11 +1,11 @@
 /** Current-regimen analysis and candidate-modification generation. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, RegimenMed, ModificationAction, RegimenModification, ModificationSet } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown, hasHistoricalHFrEF, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
+import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
-import { adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication } from './intolerance';
-import { regimenSatisfiesPillar } from './domains';
+import { regimenSatisfiesPillar, classifyPhenotype, isImprovedEF } from './domains';
 
 export interface RegimenAnalysis {
     currentClassMap: Map<string, RegimenMed>;  // class group → current med+dose
@@ -44,13 +44,13 @@ export function analyzeCurrentRegimen(
     });
 
     // Determine which GDMT pillars apply based on HF phenotype
-    // HFimpEF (ACC/AHA 2022): If LVEF was ≤40% and has improved, continue all 4 pillars
-    const preserveQuadForUnknownHistory = shouldPreserveQuadForUnknownHistory(patient);
-    const isHFimpEF = patient.lvef > 40 && (hasHistoricalHFrEF(patient) || preserveQuadForUnknownHistory);
-    const isHFpEF = patient.lvef >= 50 && !isHFimpEF;
+    // 2026 ESC (Table 5): HFrEF (LVEF < 50, improved EF, or a prior LVEF < 50) takes the four foundational therapies; HFpEF (LVEF >= 50, never < 50)
+    // takes SGLT2i + MRA (both Class I). A RAAS inhibitor in HFpEF is Class IIb and is never added as a pillar.
+    const isHFimpEF = isImprovedEF(patient);
+    const isHFpEF = classifyPhenotype(patient) === 'HFpEF';
     const applicablePillars = isHFpEF
-        ? ['SGLT2i']                                    // HFpEF: only SGLT2i is Class I
-        : ['RAAS Inhibitor', 'Beta Blocker', 'MRA', 'SGLT2i'];  // HFrEF/HFmrEF/HFimpEF: full quad
+        ? ['SGLT2i', 'MRA']
+        : ['RAAS Inhibitor', 'Beta Blocker', 'MRA', 'SGLT2i'];
 
     let missingPillars = applicablePillars.filter(p => !regimenSatisfiesPillar(currentRegimen, p, patient));
 
@@ -470,9 +470,10 @@ export function analyzeCurrentRegimen(
         if (ironStart) addableAdjuncts.push(ironStart);
     }
 
-    // nsMRA (Finerenone) for HFpEF as adjunct — FINEARTS-HF, LVEF ≥ 40, FDA approved
-    // In HFmrEF, nsMRA is already offered as a pillar option (grouped with MRA)
-    // In HFpEF, MRA is NOT a pillar, so nsMRA must be added as adjunct
+    // nsMRA (finerenone) as the alternative MRA in HFpEF (FINEARTS-HF, LVEF >= 40; 2026 ESC Table 5: steroidal or non-steroidal MRA, Class I).
+    // The steroidal MRA is offered by the pillar path (MRA is a foundational HFpEF therapy); finerenone is added here as a separate candidate.
+    // In the former HFmrEF range (LVEF 41-49, now HFrEF) the steroidal MRA is the recommended agent and finerenone is not offered as an extra option.
+    // getMedicationClassGroup groups nsMRA with MRA, preventing dual MRA in one regimen.
     if (isHFpEF && patient.lvef >= 40 && !currentClasses.has('MRA') && !currentClasses.has('nsMRA')) {
         const nsmraTiers = startTiers.filter(r => r.med.drug_class === 'nsMRA');
         if (nsmraTiers.length > 0) {
@@ -482,17 +483,7 @@ export function analyzeCurrentRegimen(
         }
     }
 
-    // Steroidal MRA for HFpEF — TOPCAT Americas, Class IIb (ACC/AHA 2022 §7.4)
-    // Cost-effective alternative to Finerenone; offered alongside nsMRA as separate candidate
-    // getMedicationClassGroup groups nsMRA→MRA, preventing dual MRA in same regimen
-    if (isHFpEF && !currentClasses.has('MRA') && !currentClasses.has('nsMRA')) {
-        const steroidalMraTiers = startTiers.filter(r => r.med.drug_class === 'MRA');
-        if (steroidalMraTiers.length > 0) {
-            addableAdjuncts.push(steroidalMraTiers[0]);
-        }
-    }
-
-    // GLP-1 if obese + HFpEF/HFmrEF (STEP-HFpEF, SUMMIT trials — no evidence for HFrEF or HFimpEF)
+    // GLP-1 if obese and LVEF above 40 (STEP-HFpEF, SUMMIT trials; 2026 ESC IIa B1 at LVEF 45 or higher — no evidence for LVEF 40 or lower or improved EF)
     // HFimpEF is managed as HFrEF — GLP-1 not appropriate despite LVEF >= 40.
     // Boundary matches classifyPhenotype: LVEF exactly 40 is HFrEF (quad pathway), so the gate is
     // strictly > 40 — not >= 40, which wrongly made an LVEF-40 HFrEF patient GLP-1 eligible.

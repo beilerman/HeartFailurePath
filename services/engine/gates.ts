@@ -25,7 +25,7 @@ export function auditCriticalData(patient: Patient): CriticalDataAudit {
     const unknownRenal = valueUnknown(patient.egfr) || valueUnknown(patient.creatinine);
     const unknownBnp = valueUnknown(patient.nt_pro_bnp);
 
-    if (unknownLvef) alerts.push('DATA REQUIRED: LVEF not entered. HF phenotype (HFrEF / HFmrEF / HFpEF) cannot be determined and a GDMT pathway cannot be selected. Obtain an echocardiogram before relying on recommendations.');
+    if (unknownLvef) alerts.push('DATA REQUIRED: LVEF not entered. HF phenotype (HFrEF = LVEF below 50, HFpEF = LVEF 50 or higher) cannot be determined and a GDMT pathway cannot be selected. Obtain an echocardiogram before relying on recommendations.');
     if (unknownPotassium) alerts.push('DATA REQUIRED: Serum potassium not entered. Obtain a BMP before initiating or up-titrating a RAAS inhibitor or MRA — hyperkalemia risk cannot be assessed and must not be assumed absent.');
     if (unknownRenal) alerts.push('DATA REQUIRED: Renal function (eGFR / creatinine) not entered. Required for renal dose adjustment and RAAS / MRA / SGLT2i safety. Obtain a BMP.');
     if (unknownBnp) alerts.push('DATA NOTE: NT-proBNP not entered. Neurohormonal status is not assessed and is excluded from scoring (not scored as normal).');
@@ -174,7 +174,7 @@ export function auditInputs(patient: Patient, clinicalAlerts: string[]): InputAu
     }
 
     // LVEF is the axis the entire phenotype/pathway selection turns on. Without it the tool
-    // cannot pick HFrEF vs HFmrEF vs HFpEF — fail safe with alerts only rather than guessing.
+    // cannot pick HFrEF vs HFpEF — fail safe with alerts only rather than guessing.
     if (dataAudit.unknownLvef) {
         return stopped({ scoredRegimens: [], excludedMedications: taggedDiscontinuedMeds(patient), clinicalAlerts, monitoringPlan: [], gdmtGaps: [], missingDataNotices: buildMissingDataNotices(patient), followUpCalendar: [] });
     }

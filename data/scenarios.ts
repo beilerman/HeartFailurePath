@@ -1191,7 +1191,7 @@ export const SCENARIOS: TestScenario[] = [
             potassium: 4.4,
             creatinine: 1.4,
             bun: 30,
-            comorbidities: new Set(['HFmrEF']),
+            comorbidities: new Set(['HFrEF']),
             allergies: new Set<string>(),
             discontinued_meds: [],
             recent_hf_worsening_within_6mo: 'yes',
@@ -1648,9 +1648,9 @@ export const SCENARIOS: TestScenario[] = [
             ])
         }
     },
-    // --- HFmrEF standalone (LVEF 45) — validates HFmrEF-specific guideline scoring ---
+    // --- LVEF 41-49 standalone (LVEF 45) — LVEF 41-49 is reduced EF under the 2026 ESC guideline ---
     {
-        title: 'HFmrEF Standalone (LVEF 45, NYHA II)',
+        title: 'LVEF 45 Reduced-EF Standalone (NYHA II)',
         patient: {
             ...INITIAL_PATIENT,
             sbp: 128,
@@ -1681,9 +1681,9 @@ export const SCENARIOS: TestScenario[] = [
             max_new_classes_per_visit: 2
         }
     },
-    // --- HFmrEF + Obese (GLP-1 eligible) — BMI ≥ 30 + LVEF 42 ---
+    // --- LVEF 41-49 + Obese (GLP-1 eligible) — BMI ≥ 30 + LVEF 42 ---
     {
-        title: 'HFmrEF Obese (BMI 33, LVEF 42, GLP-1 Not Eligible Below LVEF 45)',
+        title: 'LVEF 42 Reduced-EF Obese (BMI 33, GLP-1 Not Eligible Below LVEF 45)',
         patient: {
             ...INITIAL_PATIENT,
             sbp: 134,
@@ -2141,16 +2141,16 @@ export const SCENARIOS: TestScenario[] = [
         }
     },
     {
-        // HFmrEF patient arrives on dual MRA (steroidal + finerenone) — keep steroidal, deprescribe nsMRA.
+        // LVEF 41-49 patient arrives on dual MRA (steroidal + finerenone) — keep steroidal, deprescribe nsMRA.
         title: 'Inappropriate Dual MRA on Arrival (Steroidal + nsMRA)',
         patient: {
             ...INITIAL_PATIENT,
-            lvef: 45, // HFmrEF — both MRA types are otherwise permissible, so this is true redundancy
+            lvef: 45, // LVEF 41-49 — both MRA types are otherwise permissible, so this is true redundancy
             nyha_class: 'II' as const,
             nt_pro_bnp: 1200,
             potassium: 4.6,
             egfr: 55,
-            comorbidities: new Set(['HFmrEF']),
+            comorbidities: new Set(['HFrEF']),
             current_regimen: buildCurrentRegimen([
                 { name: 'Spironolactone', strength: 25, freq: 'qd' },
                 { name: 'Finerenone (Kerendia)', strength: 10, freq: 'qd' },
@@ -2184,12 +2184,12 @@ export const SCENARIOS: TestScenario[] = [
             ...INITIAL_PATIENT,
             sex: 'Male',
             ever_lvef_le_40: 'no' as const,
-            lvef: 45, // HFmrEF — both MRA types otherwise permissible
+            lvef: 45, // LVEF 41-49 — both MRA types otherwise permissible
             nyha_class: 'II' as const,
             nt_pro_bnp: 1200,
             potassium: 4.6,
             egfr: 55,
-            comorbidities: new Set(['HFmrEF']),
+            comorbidities: new Set(['HFrEF']),
             discontinued_meds: [
                 { name: 'Eplerenone', drug_class: 'MRA', reason: 'Gynecomastia' }
             ],
@@ -2239,7 +2239,7 @@ export const SCENARIOS: TestScenario[] = [
     },
     {
         // INTOLERANCE REGRESSION (review): the documented gynecomastia offender is EPLERENONE and
-        // the patient arrives on spironolactone (HFmrEF, so finerenone is viable). Spironolactone
+        // the patient arrives on spironolactone (LVEF 41-49, so finerenone is viable). Spironolactone
         // and eplerenone are both avoided; the nsMRA must survive — previously the "dual MRA
         // prevention" formulary exclusion keyed on the departing steroidal MRA and blocked
         // finerenone too, silently dropping the whole MRA pillar.
@@ -2253,7 +2253,7 @@ export const SCENARIOS: TestScenario[] = [
             nt_pro_bnp: 1200,
             potassium: 4.6,
             egfr: 55,
-            comorbidities: new Set(['HFmrEF']),
+            comorbidities: new Set(['HFrEF']),
             discontinued_meds: [
                 { name: 'Eplerenone', drug_class: 'MRA', reason: 'Gynecomastia' }
             ],
@@ -2607,7 +2607,7 @@ export const SCENARIOS: TestScenario[] = [
             nyha_class: 'II' as const,
             kccq_score: 55,
             nt_pro_bnp: 1400,
-            lvef: 40, // exactly at the boundary — HFrEF, not HFmrEF
+            lvef: 40, // exactly at the boundary — HFrEF, not LVEF 41-49
             volume_status: { dry_weight_kg: 96, current_weight_kg: 97, exam_findings: new Set<string>() },
             egfr: 65,
             potassium: 4.2,
@@ -2730,7 +2730,7 @@ export const SCENARIOS: TestScenario[] = [
             creatinine: 1.3,
             bun: 20,
             potassium: 4.6,
-            comorbidities: new Set(['HFmrEF']),
+            comorbidities: new Set(['HFrEF']),
             allergies: new Set<string>(),
             discontinued_meds: [
                 { name: 'Eplerenone', drug_class: 'MRA', reason: 'gynecomastia' }
@@ -3182,7 +3182,7 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'Adjunct-Source IV Iron Dose Hb 14.5 Is 500 mg', patient: { ...iron, hemoglobin: 14.5 } },
             { title: 'Adjunct-Source IV Iron Held At Hb 15.5', patient: { ...iron, hemoglobin: 15.5 } },
             { title: 'Adjunct-Source IV Iron Hemoglobin Not Entered Both Bands', patient: iron },
-            { title: 'Adjunct-Source IV Iron Limited Evidence LVEF 45', patient: { ...iron, lvef: 45, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFmrEF']) } },
+            { title: 'Adjunct-Source IV Iron Limited Evidence LVEF 45', patient: { ...iron, lvef: 45, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFrEF']) } },
             { title: 'Adjunct-Source IV Iron Price Amortized Per Course', patient: iron },
         ];
     })(),
@@ -3303,6 +3303,35 @@ export const SCENARIOS: TestScenario[] = [
                 current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
             { title: 'Pregnancy-Source Metoprolol Continued', patient: { ...base,
                 current_regimen: buildCurrentRegimen([{ name: 'Metoprolol Succinate', strength: 25, freq: 'qd' }]) } },
+        ];
+    })(),
+
+    // ===== 2026 ESC phenotype (HFmrEF removed): LVEF below 50 is HFrEF; HFpEF is LVEF 50 or higher and never below 50 =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 66, sex: 'Male' as const, sbp: 128, dbp: 78, pulse: 72, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 62, nt_pro_bnp: 900, lvef: 45,
+            volume_status: { dry_weight_kg: 82, current_weight_kg: 82.5, exam_findings: new Set<string>() },
+            egfr: 70, creatinine: 1.1, bun: 18, potassium: 4.4,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            current_regimen: [] as RegimenMed[], ever_lvef_le_40: 'no' as const,
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 4,
+        };
+        return [
+            { title: 'ESC26-Phenotype LVEF 41 Is HFrEF', patient: { ...base, lvef: 41 } },
+            { title: 'ESC26-Phenotype LVEF 45 Is HFrEF', patient: { ...base, lvef: 45 } },
+            { title: 'ESC26-Phenotype LVEF 49 Is HFrEF', patient: { ...base, lvef: 49 } },
+            { title: 'ESC26-Phenotype LVEF 50 Is HFpEF', patient: { ...base, lvef: 50 } },
+            { title: 'ESC26-Phenotype Prior LVEF 45 Now 55 Is HFrEF', patient: { ...base, lvef: 55, previous_lvef: 45 } },
+            { title: 'ESC26-Phenotype Prior LVEF 49 Now 50 Is HFrEF', patient: { ...base, lvef: 50, previous_lvef: 49 } },
+            { title: 'ESC26-Phenotype Prior LVEF 50 Now 58 Stays HFpEF', patient: { ...base, lvef: 58, previous_lvef: 50 } },
+            { title: 'ESC26-Phenotype HFpEF On Lisinopril RAAS Not A Slot', patient: { ...base, lvef: 58,
+                current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 10, freq: 'qd' }]) } },
+            { title: 'ESC26-Phenotype Improved EF Prior 35 Now 46 Excludes Finerenone', patient: { ...base, lvef: 46, previous_lvef: 35, ever_lvef_le_40: 'yes' as const } },
         ];
     })(),
 

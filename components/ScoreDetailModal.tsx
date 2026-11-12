@@ -31,12 +31,12 @@ interface Props {
     rank?: number;
 }
 
-const guidelinePhenotype = (regimen: ScoredRegimen): Phenotype => {
-    return classifyPhenotype({
-        ...regimen.projected_patient,
-        lvef: regimen.baseline_lvef ?? regimen.projected_patient.lvef,
-    });
-};
+// The patient as first entered (baseline LVEF), the basis of the phenotype and of the MRA-slot rule.
+const guidelinePatient = (regimen: ScoredRegimen) => ({
+    ...regimen.projected_patient,
+    lvef: regimen.baseline_lvef ?? regimen.projected_patient.lvef,
+});
+const guidelinePhenotype = (regimen: ScoredRegimen): Phenotype => classifyPhenotype(guidelinePatient(regimen));
 
 const COMPLETENESS_SUBTARGET_CREDIT_PCT = Math.round(COMPLETENESS_SUBTARGET_CREDIT * 100);
 
@@ -250,10 +250,10 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 const regimenMeds = regimen.regimen;
                 const phenotype = guidelinePhenotype(regimen);
                 // Pillars present in this regimen, using the ENGINE's own pillar mapping
-                // (pillarKeyOf handles nsMRA-counts-as-MRA per phenotype).
+                // (pillarKeyOf handles nsMRA-counts-as-MRA per patient).
                 const guidePillars = new Set<PillarKey>();
                 regimenMeds.forEach(r => {
-                    const key = pillarKeyOf(r.med.drug_class, phenotype);
+                    const key = pillarKeyOf(r.med.drug_class, guidelinePatient(regimen));
                     if (key) guidePillars.add(key);
                 });
 
@@ -266,14 +266,12 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                     .map(([key, ev]) => ({ key, name: PILLAR_LABELS[key], pts: ev.base, targetBonus: ev.targetBonus, evidenceClass: `Class ${ev.recClass}`, trials: ev.trials }));
 
                 const phenotypeLabel = phenotype === 'HFpEF'
-                    ? 'HFpEF: Guideline Recommendations'
-                    : phenotype === 'HFmrEF'
-                        ? 'HFmrEF: Guideline Recommendations (LVEF 41-49%)'
-                        : 'HFrEF: Class I Pillars (2022 AHA/ACC/HFSA)';
+                    ? 'HFpEF (LVEF 50% or higher, never below 50%): SGLT2 inhibitor and MRA are Class I (2026 ESC)'
+                    : 'Reduced EF (LVEF below 50%, or improved EF): four Class I pillars (2026 ESC; 2022 AHA/ACC/HFSA)';
                 const capNote = Number.isFinite(table.targetBonusCap) ? ` (capped at +${table.targetBonusCap} total)` : '';
                 const volumeNote = table.volumeBonus > 0 ? ` Volume management: +${table.volumeBonus}.` : '';
                 const scoringNote = `At-target dose bonus per pillar shown below${capNote}.${volumeNote}` +
-                    (phenotype === 'HFrEF' ? ' Finerenone/nsMRA does not count for the HFrEF/HFimpEF MRA pillar.' : '');
+                    (phenotype === 'HFrEF' ? ' Finerenone counts for the MRA pillar from LVEF 41% up, but not for improved-EF patients with a prior LVEF of 40% or lower. LVEF 41-49% is treated as reduced EF per the 2026 ESC guideline; the 2022 AHA/ACC/HFSA guideline keeps a separate mildly reduced category with weaker recommendations.' : ' A RAAS inhibitor is Class IIb in HFpEF and earns only a small credit; it is not a foundational therapy.');
                 const guidelineRationale = regimen.rationale.filter(r => r.startsWith('Guideline:'));
 
                 return (
@@ -324,7 +322,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                                 <strong>What counts:</strong> {reduced
                                     ? 'a RAAS inhibitor, a beta-blocker, a mineralocorticoid receptor antagonist (MRA) and an SGLT2 inhibitor'
                                     : 'an SGLT2 inhibitor and an MRA'}
-                                {phen === 'HFmrEF' ? ' (a nonsteroidal MRA can fill the MRA slot)' : ''}
+                                {phen === 'HFrEF' ? ' (a nonsteroidal MRA can fill the MRA slot from LVEF 41% up, unless the prior LVEF was 40% or lower)' : ''}
                                 , plus any add-on this patient qualifies for: GLP-1 therapy, hydralazine/isosorbide dinitrate, ivabradine, vericiguat, or IV iron.
                             </li>
                             <li><strong>Not counted against the regimen:</strong> any therapy the patient cannot take (allergy, intolerance, contraindication, or not available). Diuretics and digoxin treat symptoms and are not counted.</li>

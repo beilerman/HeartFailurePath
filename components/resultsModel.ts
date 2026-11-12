@@ -2,7 +2,7 @@ import type { ExcludedMedication, MonitoringPlanItem, ScoredRegimen, RankingInfo
 import { RANKING_MODE_META } from './rankingModeMeta';
 import { PILLAR_LABELS } from '../services/engine/explain';
 import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
-import { pillarKeyOf, getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
+import { pillarFamilyOf, getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 import type { PillarKey } from '../services/simulationService';
 
 // Display-side organisation of the engine's output. Nothing here changes what the engine says: it
@@ -83,9 +83,9 @@ const PILLAR_BY_LABEL = new Map<string, PillarKey>([
 
 export const pillarOfGap = (gap: string): PillarKey | null => PILLAR_BY_LABEL.get(gap) ?? null;
 
-// A drug belongs to a pillar's family if it counts for it in either phenotype (so finerenone sits with the MRAs).
+// A drug belongs to a pillar's family (finerenone sits with the MRAs).
 export const pillarOfDrugClass = (drugClass: string): PillarKey | null =>
-    pillarKeyOf(drugClass, 'HFrEF') ?? pillarKeyOf(drugClass, 'HFpEF');
+    pillarFamilyOf(drugClass);
 
 const FAMILY_LABEL: Record<PillarKey, string> = {
     RAAS: 'RAAS inhibitors (ARNI, ACE inhibitor, ARB)',

@@ -15,7 +15,7 @@ export type { IntolerancePolicy } from './engine/intolerance';
 export { MRA_POOL_CLASSES } from './engine/registry';
 export {
     BNP_SCORE_TARGET, BNP_SCORE_CRITICAL, NYHA_SCORE_MAP, FUNCTIONAL_STEPS_FULL_CREDIT, VOLUME_SCORING,
-    adherenceComplexityThreshold, calculateStructureScoreComponents, CONCORDANCE_TABLE, pillarKeyOf, classifyPhenotype,
+    adherenceComplexityThreshold, calculateStructureScoreComponents, CONCORDANCE_TABLE, pillarKeyOf, pillarFamilyOf, classifyPhenotype,
     STRUCTURE_BLEND_WEIGHTS, DOMAIN_GOALS,
 } from './engine/domains';
 export type { PillarKey, PillarConcordance, Phenotype } from './engine/domains';
