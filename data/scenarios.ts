@@ -3441,7 +3441,8 @@ const AUTHORED_SCENARIOS: TestScenario[] = [
             { title: 'ESC26-RAAS-K K+ 6.1 Lisinopril And MRA Stopped', patient: { ...base, potassium: 6.1,
                 current_regimen: buildCurrentRegimen([{ name: 'Lisinopril', strength: 10, freq: 'qd' }, { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
             { title: 'ESC26-RAAS-K K+ 5.5 New RAAS Start Blocked', patient: { ...base, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
-            { title: 'ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text', patient: { ...base, potassium: 5.1, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            // Carvedilol at target (25 mg bid) so no dose increase competes with the RAAS start whose monitoring text this scenario checks.
+            { title: 'ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text', patient: { ...base, potassium: 5.1, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 25, freq: 'bid' }]) } },
         ];
     })(),
 

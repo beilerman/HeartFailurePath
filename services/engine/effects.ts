@@ -9,8 +9,8 @@ import { URIC_ACID_GOUT_POINTS } from './scoreModel';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
 import { HYPOKALEMIA_K_BELOW } from './thresholds';
 import { MRA_POOL_CLASSES } from './registry';
-import { EXTERNAL_POTASSIUM_RAISERS, potassiumRaisersTaken } from './contraindications';
-import { intoleranceCautionsFor } from './intolerance';
+import { EXTERNAL_POTASSIUM_RAISERS, potassiumRaisersTaken, ALISKIREN } from './contraindications';
+import { intoleranceCautionsFor, aceInhibitorAllergies } from './intolerance';
 import { classifyPhenotype } from './domains';
 
 /** The "Drug note" text for a declared label-versus-guideline difference (facts.source_differences). Also shown on the formulary card. */
@@ -532,6 +532,11 @@ export function simulateModificationEffect(
         uniqueRationale.push("Renal Benefit: Decongestion improves renal venous outflow");
     }
 
+    // The NT-proBNP surcharge for low perfusion pressure reads the LOWER of the projected and the entered MAP (same rule as the SBP and heart-rate bands in
+    // scoring.ts): a patient who arrives with MAP 63 is not credited for crossing 65 by cutting a drug. Otherwise "halve the ACE inhibitor" out-scored
+    // "no change" at 40 mg while "double it" out-scored "no change" at 20 mg, and the tool alternated 20 -> 40 -> 20 visit after visit (review 3, 2026-11-12).
+    const enteredMap = currentPatient.sbp > 0 && currentPatient.dbp > 0 ? (currentPatient.sbp + 2 * currentPatient.dbp) / 3 : map;
+    if (map >= 65 && enteredMap < 65 && lvefDelta < 5) proj.nt_pro_bnp = proj.nt_pro_bnp * 1.2;
     if (map < 65) {
         warnings.push(`Low Perfusion Pressure (MAP ${map.toFixed(0)} mmHg) - Risk of AKI`);
         if (lvefDelta < 5) {
@@ -607,7 +612,7 @@ export function simulateModificationEffect(
         } else if (proj.potassium > 5.2) {
             warnings.push('Caution: Elevated Potassium (K+ > 5.2). Monitor closely.');
         } else if (proj.potassium > 5.0 && hasMRA) {
-            warnings.push('Monitor: K+ > 5.0 with MRA. Check potassium within 1 week; consider Patiromer if rising.');
+            warnings.push(`Monitor: K+ is projected above 5.0 with an MRA (projected ${proj.potassium.toFixed(1)}, measured ${currentPatient.potassium.toFixed(1)}). Check potassium within 1 week of the change; consider a potassium binder if it rises.`);
         } else if (proj.potassium < HYPOKALEMIA_K_BELOW) {
             warnings.push(`Risk of Hypokalemia (K+ < ${HYPOKALEMIA_K_BELOW})`);
         }
@@ -804,6 +809,12 @@ export function simulateModificationEffect(
         warnings.push('DDI CAUTION: Pulmonary hypertension may imply PDE5 inhibitor use. Confirm sildenafil/tadalafil exposure before initiating nitrate therapy.');
     }
 
+    // Aliskiren with a RAAS inhibitor at eGFR below 60 (Entresto and ACE inhibitor / ARB labels: avoid the combination in renal impairment). With diabetes the
+    // combination is a contraindication (contraindications.ts); without it there was no warning at all.
+    if (hasRAASDrug && currentPatient.external_medications?.has(ALISKIREN) && currentPatient.egfr > 0 && currentPatient.egfr < 60) {
+        warnings.push(`DDI WARNING: aliskiren with a RAAS inhibitor at eGFR ${currentPatient.egfr} (below 60): the labels advise avoiding the combination in renal impairment (hyperkalemia, kidney injury, hypotension). Stop aliskiren or do not combine.`);
+    }
+
     // DDI-2: RAAS + chronic NSAID use → AKI risk (extremely common outpatient DDI)
     if (hasRAASDrug && currentPatient.comorbidities.has('Chronic NSAID Use')) {
         warnings.push('DDI WARNING: RAAS inhibitor + chronic NSAID use significantly increases AKI risk. Discontinue NSAIDs if possible. If unavoidable, monitor creatinine and potassium weekly.');
@@ -812,14 +823,26 @@ export function simulateModificationEffect(
     // DDI-8: potassium-raising co-medication (list EXTERNAL_POTASSIUM_RAISERS) + an option that STARTS or INCREASES a RAAS inhibitor or MRA: additive hyperkalemia
     // (Aldactone and Inspra labels: potassium supplements and potassium-sparing diuretics; Bactrim label: trimethoprim, mostly with RAAS inhibitors). Penalized.
     // A potassium supplement is appropriate when potassium is projected LOW, so it alone draws no warning then; the sparing diuretics and trimethoprim always do.
-    const raisedKDrug = modificationSet.modifications.find(mod =>
+    const raisedKDrugs = modificationSet.modifications.filter(mod =>
         (mod.action === 'add' || mod.action === 'swap' || mod.action === 'titrate_up') && mod.target
         && (RAAS_CLASSES.has(mod.target.med.drug_class) || MRA_POOL_CLASSES.has(mod.target.med.drug_class)));
-    if (raisedKDrug?.target) {
+    if (raisedKDrugs.length > 0) {
         const lowK = !kUnknown && proj.potassium < HYPOKALEMIA_K_BELOW;
         const raisers = potassiumRaisersTaken(currentPatient).filter(n => !(lowK && n === EXTERNAL_POTASSIUM_RAISERS[0]));
         if (raisers.length > 0) {
-            warnings.push(`DDI WARNING: ${raisers.join(', ')} with ${raisedKDrug.target.med.name} (${raisedKDrug.action === 'titrate_up' ? 'dose increase' : 'new start'}): additive hyperkalemia risk; recheck potassium within 1 week.`);
+            // Every drug started or increased is named (an ARNI + MRA start named only the ARNI).
+            const named = raisedKDrugs.map(mod => `${mod.target!.med.name} (${mod.action === 'titrate_up' ? 'dose increase' : 'new start'})`).join(' and ');
+            warnings.push(`DDI WARNING: ${raisers.join(', ')} with ${named}: additive hyperkalemia risk; recheck potassium within 1 week.`);
+        }
+    }
+
+    // An ACE inhibitor ALLERGY of unstated type with an option that starts the ARNI: the ARNI is contraindicated after ACE inhibitor (or ARB) angioedema
+    // (Entresto label), and an allergy entry does not say what the reaction was. Penalized, so an ARB ranks ahead until the reaction is confirmed.
+    if (!intolerancePolicy.angioedema.suspected) {
+        const startsArni = modificationSet.modifications.find(mod => (mod.action === 'add' || mod.action === 'swap') && mod.target?.med.drug_class === 'ARNI');
+        const aceAllergy = aceInhibitorAllergies(currentPatient);
+        if (startsArni && aceAllergy.length > 0) {
+            warnings.push(`ALLERGY CHECK: an allergy to ${aceAllergy.length > 2 ? 'ACE inhibitors' : aceAllergy.join(' and ')} is recorded without the type of reaction. ${startsArni.target!.med.name} is contraindicated if that reaction was angioedema: confirm before starting (an ARB is the alternative).`);
         }
     }
 

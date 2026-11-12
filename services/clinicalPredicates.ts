@@ -106,7 +106,8 @@ export function ivIronCreditTier(patient: Patient): 'full' | 'limited' | null {
 
 // CKD-EPI Creatinine Equation (2021 Refit)
 export const calculateCKDEPI = (scr: number, age: number, sex: 'Male' | 'Female'): number => {
-    if (!scr || !age) return 0;
+    // Blank, zero, negative or non-numeric input -> 0 (the blank sentinel), never NaN: a negative creatinine typed in the form produced NaN and froze the tab.
+    if (!(scr > 0) || !(age > 0)) return 0;
 
     // Kappa: 0.7 (female), 0.9 (male)
     const kappa = sex === 'Female' ? 0.7 : 0.9;

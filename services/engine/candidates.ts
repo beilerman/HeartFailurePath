@@ -3,10 +3,10 @@ import { Patient, Medication, RegimenMed, ModificationAction, RegimenModificatio
 import { drugFacts } from './drugFacts';
 import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient, congestionFindingCount } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup, isDiureticClass } from './registry';
-import { isCongestedAboveDryWeight, isLoopDiureticResistant, adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
+import { isCongestedAboveDryWeight, isLowOutputState, isLoopDiureticResistant, adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication, MRA_POOL_CLASSES } from './intolerance';
 import { assessCreatinineChange } from './renalChange';
-import { UP_TITRATION_MAX_DAILY_FACTOR, BINDER_HOLD_REDUCTION_K } from './thresholds';
+import { UP_TITRATION_MAX_DAILY_FACTOR, BINDER_HOLD_REDUCTION_K, RAAS_EGFR_REVIEW_BELOW } from './thresholds';
 import { regimenSatisfiesPillar, classifyPhenotype, isImprovedEF } from './domains';
 
 export interface RegimenAnalysis {
@@ -232,7 +232,9 @@ export function analyzeCurrentRegimen(
         const kUpBlock = kUptitrationBlock(current.med, patient);
 
         const diureticHold = isDiureticClass(current.med.drug_class) && noCongestion;
-        if (!isContraindicated && !isBBBlockedUp && reduceReason === undefined && !hrRule?.blockUp && !kUpBlock && !diureticHold) {
+        // Rule E20's counterpart for a drug in use: no RAAS inhibitor increase at a measured eGFR below 20 (the alert asks whether the fall is new).
+        const renalUpHold = RAAS_CLASSES.has(current.med.drug_class) && patient.egfr > 0 && patient.egfr < RAAS_EGFR_REVIEW_BELOW;
+        if (!isContraindicated && !isBBBlockedUp && reduceReason === undefined && !hrRule?.blockUp && !kUpBlock && !diureticHold && !renalUpHold) {
             // Sorted ASCENDING by dose index so consumers can rely on options[last] being the
             // highest tier (getDoseTiers construction order is [lowest, highest, middle, target],
             // which is NOT ascending — the compound add+titrate candidate previously picked a
@@ -317,7 +319,9 @@ export function analyzeCurrentRegimen(
         const TITRATE_NOT_SWAP = group !== 'RAAS Inhibitor';
         // Diuretic resistance (2026 ESC Supplementary Table S7: "consider switching furosemide to bumetanide or torasemide"): a loop may also be swapped when the patient
         // stays congested (more than 1 kg above dry weight) on a HIGH dose of the current loop, high dose = the entry's own alert level (facts.high_dose_threshold).
-        const loopResistant = isLoopDiureticResistant(patient, current);
+        // The switch is one-way, as the guideline states it: FROM furosemide (variable oral absorption; facts.resistance_switch_source) to bumetanide or torsemide.
+        // Offered from any loop, the tool switched torsemide to furosemide and back on alternate visits (adversarial review 3, 2026-11-12).
+        const loopResistant = isLoopDiureticResistant(patient, current) && drugFacts(current.med).resistance_switch_source === true;
         if (TITRATE_NOT_SWAP && !contraindicatedCurrentMeds.has(current.med.name) && !loopResistant) return;
         const sourceContraindicated = contraindicatedCurrentMeds.has(current.med.name);
         const groupTiers = (tiersByGroup.get(group) || []).filter(t => startTiers.includes(t));
@@ -344,7 +348,14 @@ export function analyzeCurrentRegimen(
             candidates = candidates.flatMap(t => {
                 if (seen.has(t.med.name)) return [];
                 seen.add(t.med.name);
-                const landed = fractionOfTargetTier(current, t.med, patient, forceDownBB);
+                // The switch must not undo a reduction the patient's state calls for: with a heart rate below the current agent's reduce threshold the fraction is
+                // taken from ONE STEP BELOW the current dose, and in a low-output state (or the forced reduction of acute decompensation with hypoperfusion) the
+                // new agent lands on its starting tier. Before 2026-11-12 the pregnancy switch ignored both and could land on the full target dose at heart rate 52
+                // with LVEF 15 (adversarial review 3).
+                const idx = current.med.available_doses.findIndex(d => String(d.strength) === String(current.dose.strength));
+                const stepDown = hrContinuationAction(current.med, patient)?.reduce === true && idx > 0
+                    ? { ...current, dose: current.med.available_doses[idx - 1] } : current;
+                const landed = fractionOfTargetTier(stepDown, t.med, patient, forceDownBB || isLowOutputState(patient));
                 return landed ? [landed] : [t];
             });
         }
@@ -904,15 +915,22 @@ export function generateCandidateModifications(
         }
     }
 
-    // Combine addition + titration
+    // Combine addition + titration. Every missing pillar's leading agents are paired with each available dose increase. Until 2026-11-12 only the FIRST
+    // agent of the FIRST pillar was paired (the ARNI when available), so when that one agent was over budget no "start a pillar and raise a dose" option
+    // existed at all, and making an unrelated drug unavailable changed the answer (adversarial review 3).
     if (pillarEntries.length > 0 && analysis.titratableUp.length > 0 && maxNewPerVisit >= 1) {
-        const topPillarMed = pillarEntries[0][1][0];
-        if (topPillarMed) {
+        const seenPair = new Set<string>();
+        // "first two agents" = the first agent of each of the pillar's first two drug classes (ARNI and an ACE inhibitor or ARB), so two options never differ
+        // only by a sibling of the same class.
+        const firstPerClass = (meds: RegimenMed[]) => meds.filter((m, i) => meds.findIndex(x => x.med.drug_class === m.med.drug_class) === i);
+        pillarEntries.forEach(([, meds]) => safeSlice(firstPerClass(meds), 2).forEach(pillarMed => {
             analysis.titratableUp.forEach(({ current, options }) => {
                 const bestHigher = options[options.length - 1]; // highest dose option (options sorted ascending by dose index in analyzeCurrentRegimen)
-                if (bestHigher) {
+                const key = `${pillarMed.med.name}|${pillarMed.dose.strength}|${current.med.name}`;
+                if (bestHigher && !seenPair.has(key)) {
+                    seenPair.add(key);
                     const mods: RegimenModification[] = [
-                        { action: 'add', target: topPillarMed, summary: `Add ${topPillarMed.med.name} ${formatDose(topPillarMed)}` },
+                        { action: 'add', target: pillarMed, summary: `Add ${pillarMed.med.name} ${formatDose(pillarMed)}` },
                         { action: 'titrate_up', source: current, target: bestHigher, summary: `Titrate ${current.med.name} ${current.dose.strength}→${bestHigher.dose.strength}${bestHigher.dose.unit}` }
                     ];
                     candidates.push({
@@ -921,7 +939,7 @@ export function generateCandidateModifications(
                     });
                 }
             });
-        }
+        }));
     }
 
     // Combine swap + addition
@@ -1153,7 +1171,9 @@ export function generateCandidateModifications(
             analysis.forcedBbDownTitrateNames.size === 0 ||
             Array.from(analysis.forcedBbDownTitrateNames).every(bbName =>
                 c.modifications.some(m =>
-                    (m.action === 'titrate_down' || m.action === 'remove') && m.source?.med.name === bbName
+                    // A forced SWITCH to another beta-blocker also satisfies it (the switch lands on the new agent's starting tier in this state). Without `swap`
+                    // every candidate was filtered out and the page was empty with no reason (pregnancy or allergy on carvedilol with hypoperfusion; review 3).
+                    (m.action === 'titrate_down' || m.action === 'remove' || m.action === 'swap') && m.source?.med.name === bbName
                 )
             );
         const satisfiesForcedReduction = Array.from(analysis.forcedReduceNames.keys()).every(name =>

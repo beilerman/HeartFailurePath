@@ -172,9 +172,12 @@ export function buildChartSummary(c: ChartInput): string {
     const top = c.results[0];
     if (top) {
         const ctx = getTargetDosePatientContext(top);
+        const n = c.results.length;
+        const others = n > 1 ? '; the other options are on screen' : '';
         lines.push('', isOverBudgetFallback(top)
-            ? `REGIMEN FOR DISCUSSION ONLY (option 1 of ${c.results.length}; over the stated budget, so the patient cannot carry it out as entered; the other options are on screen):`
-            : `RECOMMENDED REGIMEN (option 1 of ${c.results.length}; the other options are on screen):`);
+            ? `REGIMEN FOR DISCUSSION ONLY (option 1 of ${n}; over the stated budget, so the patient cannot carry it out as entered${others}):`
+            : `TOP-ORDERED REGIMEN (option 1 of ${n}${others}):`);
+        if (top.regimen.length === 0) lines.push('  - No heart failure drugs remain in this option (all current drugs are stopped; see changes below)');
         top.regimen.forEach(r => {
             const target = isTargetDoseForPatient(r, ctx) ? ' (target dose)' : '';
             lines.push(`  - ${r.med.name} ${r.dose.strength}${r.dose.unit} ${r.selected_frequency}${target}`);

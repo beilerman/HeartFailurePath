@@ -53,6 +53,8 @@ function App() {
     // disclosure/modal state) instead of positionally inheriting it across runs.
     const [runId, setRunId] = useState(0);
     const [runSnapshot, setRunSnapshot] = useState<RunSnapshot | undefined>(undefined);
+    // Bumped on every run attempt (success, engine error or blocked) so a latched render error never hides the newest outcome.
+    const [attempt, setAttempt] = useState(0);
     const [simError, setSimError] = useState<string | null>(null);
     const [drugPrices, setDrugPrices] = useState<Record<string, number>>({});
     const [pricesLoading, setPricesLoading] = useState(true);
@@ -127,6 +129,7 @@ function App() {
     };
 
     const runSimulation = () => {
+        setAttempt(a => a + 1);
         // Every entry point obeys the form's input errors (the "Re-run" button on the results used to bypass them).
         if (formHasErrors) {
             setSimError('Fix the highlighted input errors in the patient form, then run the analysis again.');
@@ -283,7 +286,7 @@ function App() {
                         <section aria-label="Results" className="flex-1 min-w-0 bg-slate-50 lg:overflow-y-auto p-4 sm:p-8 custom-scrollbar print:p-0 print:overflow-visible">
                             <div className="max-w-5xl mx-auto">
                                 {/* A render error in a result card must not replace the whole app and discard the entered patient. */}
-                                <ErrorBoundary compact key={runId}>
+                                <ErrorBoundary compact key={attempt}>
                                 <ResultsDisplay
                                     results={results}
                                     runId={runId}

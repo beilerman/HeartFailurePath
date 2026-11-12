@@ -36,7 +36,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     // eGFR and BMI are computed, not entered: one shared function (clinicalPredicates.derivedFields), which the sample-patient fixtures also satisfy.
     useEffect(() => {
         const d = derivedFields(patientData);
-        if (d.egfr !== patientData.egfr || d.bmi !== patientData.bmi) setPatientData(prev => ({ ...prev, egfr: d.egfr, bmi: d.bmi }));
+        // A non-finite derived value (e.g. a negative creatinine) is the blank sentinel 0; NaN never goes into state (NaN !== NaN would loop).
+        const egfr = Number.isFinite(d.egfr) ? d.egfr : 0;
+        const bmi = Number.isFinite(d.bmi) ? d.bmi : 0;
+        if (!Object.is(egfr, patientData.egfr) || !Object.is(bmi, patientData.bmi)) setPatientData(prev => ({ ...prev, egfr, bmi }));
     }, [patientData, setPatientData]);
 
     // Rhythm AFib records the atrial fibrillation history (the comorbidity) so the two cannot disagree.
@@ -182,6 +185,10 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         el?.scrollIntoView({ block: 'center' });
         (el as HTMLElement | null)?.focus();
     };
+    // The blank form keeps engine-required defaults the clinician has not chosen; say so until any of them is edited.
+    const showPrefilledNotice = selectedScenario === 'custom' && patientData.sex === 'Male' && patientData.race === 'White'
+        && patientData.insurance_tier === 'commercial' && patientData.max_affordable_cost === 100
+        && patientData.cost_sensitivity === 5 && patientData.complexity_tolerance === 5 && patientData.max_new_classes_per_visit === 2;
     const problemEntries = Object.entries(validationErrors);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -245,6 +252,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             </div>
 
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
+                {showPrefilledNotice && (
+                    <p role="status" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
+                        Pre-filled defaults to review: sex Male, race White, commercial insurance, budget $100/month, 2 new drug classes per visit.
+                    </p>
+                )}
                 <DemographicsSection patientData={patientData} onChange={handleInputChange} validationErrors={validationErrors} />
                 <SymptomsSection patientData={patientData} onChange={handleInputChange} validationErrors={validationErrors} clinicalWarnings={clinicalWarnings} />
                 <PhysicalExamSection

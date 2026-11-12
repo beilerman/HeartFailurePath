@@ -316,6 +316,8 @@ export interface MedFacts {
     cash_price_by_dose?: Record<string, number>;
     /** Plain-language warnings shown whenever this drug is in a recommended regimen (optionally only when `when(patient)`); informational, not score-penalized (text starts 'Drug note:'). */
     regimen_warnings?: { text: string | ((p: Patient) => string); when?: (p: Patient, regimen: RegimenMed[]) => boolean }[];
+    /** The loop a diuretic-resistance switch starts FROM (2026 ESC Supplementary Table S7: consider switching furosemide to bumetanide or torasemide). The reverse switch is never offered. */
+    resistance_switch_source?: boolean;
     /**
      * Places where the drug's label and the guideline give different numbers. Declared as data so the difference is shown on every option carrying the drug
      * (a "Drug note") and on the formulary card, with which source the tool follows and why, instead of living only in a code comment.

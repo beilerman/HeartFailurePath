@@ -5,7 +5,7 @@ import { auditInputs, raiseClinicalAlerts, checkSafetyHardStops } from './engine
 import { analyzeCurrentRegimen, generateCandidateModifications } from './engine/candidates';
 import { buildScoringContext, scoreCandidates, intensifiesRaasOrMra, labPrerequisiteBlank } from './engine/scoring';
 import { selectWithRanking } from './engine/selection';
-import { buildEligibleAdjuncts, assembleOutput, annotateGdmtGapsWithMraPotassium, annotateGdmtGapsWithRaasPotassium } from './engine/explain';
+import { buildEligibleAdjuncts, assembleOutput, reconcilePlanAlerts, annotateGdmtGapsWithMraPotassium, annotateGdmtGapsWithRaasPotassium } from './engine/explain';
 
 // Public facade: every symbol this module exported before the phase-4 split is re-exported here,
 // so nothing outside services/ needs an import change.
@@ -95,8 +95,16 @@ export function generateAndScoreModifications(
 
     // 7. Rank and select: affordability filter/fallback, display-safety floors, <= 3 distinct picks.
     const { picks, ranking } = selectWithRanking(results, patient, clinicalAlerts);
+    // An empty result always states a reason. The display-floor case raises NO DISPLAY-SAFE in selection; every other route to "no options" is named here
+    // (review 3: a forced beta-blocker switch in a low-output state left an empty page with only unrelated alerts).
+    if (picks.length === 0 && !clinicalAlerts.some(a => a.startsWith('NO DISPLAY-SAFE') || a.startsWith('NO OPTION'))) {
+        clinicalAlerts.push(`NO OPTION AVAILABLE: no change to the current regimen, and not the current regimen itself, passed this tool's rules for this patient (${candidateSets.length} candidate plans built, ${results.length} scored). ` +
+            'This is a limit of the tool, not a statement that nothing should be done: review the alerts above and the withheld drugs with their reasons, and decide clinically.');
+    }
     if (picks.length === 0) return { scoredRegimens: [], excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan: [], gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar: [], ranking };
 
     // 8. Explain: monitoring plan, projections, trade-offs, low-output cap, follow-up calendar.
+    const reconciled = reconcilePlanAlerts(clinicalAlerts, picks, patient);
+    clinicalAlerts.length = 0; clinicalAlerts.push(...reconciled);
     return assembleOutput(patient, picks, flags.lowOutput, { excludedMeds, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, ranking });
 }

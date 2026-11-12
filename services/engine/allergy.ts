@@ -17,7 +17,8 @@ import type { Medication } from '../../types';
 /** Class names -> formulary `drug_class` values (lower-case keys; a trailing "s" on what was typed is ignored). */
 export const ALLERGY_CLASS_ALIASES: Record<string, string[]> = {
     'ace inhibitor': ['ACEi'], 'acei': ['ACEi'], 'ace-i': ['ACEi'], 'ace': ['ACEi'], 'angiotensin converting enzyme inhibitor': ['ACEi'],
-    'arb': ['ARB'], 'angiotensin receptor blocker': ['ARB'], 'sartan': ['ARB'],
+    // The ARNI contains an ARB (valsartan), so an ARB-class allergy excludes it too (review 3: "ARBs" excluded valsartan and then offered sacubitril/valsartan).
+    'arb': ['ARB', 'ARNI'], 'angiotensin receptor blocker': ['ARB', 'ARNI'], 'sartan': ['ARB', 'ARNI'],
     'arni': ['ARNI'],
     'beta blocker': ['Beta Blocker'], 'beta-blocker': ['Beta Blocker'], 'betablocker': ['Beta Blocker'],
     'mra': ['MRA', 'nsMRA'], 'aldosterone antagonist': ['MRA'], 'mineralocorticoid receptor antagonist': ['MRA', 'nsMRA'],

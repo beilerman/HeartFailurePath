@@ -1,5 +1,5 @@
 
-import { Medication, Patient } from './types';
+import { Medication, Patient, RegimenMed } from './types';
 import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raasPotassiumChecks, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
     STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, mraStartEgfrCheck, creatinineRiseStopCheck, moderateCyp3aInhibitor,
     PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, EXTERNAL_POTASSIUM_RAISERS } from './services/engine/contraindications';
@@ -150,13 +150,15 @@ const SGLT2_S9_FACTS = { regimen_warnings: [
 ] };
 
 // 2026 ESC Supplementary Table S6 cautions for starting a beta-blocker (shared by the three agents).
-const BB_S6_START_NOTE = { text: 'Drug note (2026 ESC Supplementary Table S6): seek specialist advice before starting in NYHA IV or with a current or recent (under 4 weeks) exacerbation; achieve euvolemia first if congestion persists or systolic pressure is below 90. Asthma is a relative contraindication (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.' };
+const BB_S6_START_NOTE = { text: 'Drug note (2026 ESC Supplementary Table S6): seek specialist advice before starting in NYHA IV or with a current or recent (under 4 weeks) exacerbation; achieve euvolemia first if congestion persists or systolic pressure is below 90. Asthma is a relative contraindication (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.',
+    // Shown only on an option that STARTS a beta-blocker (it was attached to a beta-blocker the patient already takes: review 3).
+    when: (p: Patient, regimen: RegimenMed[]) => regimen.some(r => r.med.drug_class === 'Beta Blocker' && !(p.current_regimen ?? []).some(c => c.med.name === r.med.name)) };
 
 // Potassium rules for a RAAS inhibitor the patient is ALREADY on (2026 ESC heart failure guideline section 6.1; thresholds.ts): one dose step down from 5.5
 // (stopped if already at the lowest tier), stopped from 6.0, with the MRA reduced or stopped first when both are on board (yields_to). Increases are held above 5.2,
 // the same threshold that stages a new start (rule E18; a new start is blocked outright above 5.4 by raasPotassiumChecks). Abrupt withdrawal of an ACEi/ARNI risks deterioration, so a
 // current drug is reduced rather than removed in the 5.5-5.9 band. Before 2026-11-11 a current RAAS inhibitor was removed above 5.4 (engine policy).
-const MRA_K_FIRST_STEPS = 'Recheck potassium and kidney function in 1-2 weeks and look for other causes first (2026 ESC Supplementary Table S8: above 5.5 halve the dose; above 6.0 interrupt and seek specialist advice). ESC says therapy held for less than 14 days can usually restart at the previous dose; the US labels restart an MRA at a low dose once potassium is below 5.5, which is the stricter rule and is the one used.';
+const MRA_K_FIRST_STEPS = 'Recheck potassium and kidney function in 1-2 weeks and look for other causes first (2026 ESC Supplementary Table S8: above 5.5 halve the dose; above 6.0 interrupt and seek specialist advice). ESC says therapy held for less than 14 days can usually restart at the previous dose; the US labels restart a WITHHELD MRA at a low dose (not the previous dose) once potassium is below 5.5; this tool uses that label rule. A dose that was only reduced is not increased again until potassium is below 5.0.';
 
 const RAAS_K_FACTS = {
     k_continuation: { reduce_at: RAAS_REDUCE_K, withhold_at: RAAS_WITHHOLD_K, restart_below: RAAS_REDUCE_K, yields_to: 'mra' as const,
@@ -1161,6 +1163,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             effects_on_daily_dose: true,
             raises_uric_acid: true, // label: asymptomatic hyperuricemia can occur; gout may rarely be precipitated
             verified_furosemide_equivalent_per_mg: 1, // reference loop
+            resistance_switch_source: true, // 2026 ESC Supplementary Table S7: in diuretic resistance consider switching furosemide to bumetanide or torasemide (one-way)
             monitoring_items: [LOOP_LOW_EGFR_ITEM],
         },
         available_doses: [
@@ -1406,6 +1409,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         start_dose_for: () => '37.5/20',
         facts: {
             regimen_warnings: [
+                // A long-acting nitrate taken outside the formulary plus the isosorbide dinitrate in this tablet is duplicate nitrate therapy (review 3: no warning was shown).
+                { text: 'DDI WARNING: the patient already takes a long-acting nitrate; hydralazine/isosorbide dinitrate contains isosorbide dinitrate. Do not give both: replace the existing nitrate rather than adding to it, and watch for hypotension.',
+                  when: p => onLongActingNitrate(p) },
                 { text: 'Drug note: hydralazine can cause a drug-induced lupus-like syndrome (dose- and acetylator-dependent) and peripheral neuritis (pyridoxine / vitamin B6 is used for prevention or treatment) (BiDil label). Ask about joint pain, fever, rash and numbness or tingling at each visit.' },
                 { text: 'Drug note: hydralazine can cause tachycardia and hypotension that may worsen ischemia (BiDil label; hypotension 8% vs 4% in A-HeFT). Titrate from one tablet three times daily to two tablets three times daily over several days as tolerated.' },
             ],

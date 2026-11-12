@@ -6,12 +6,15 @@ import { HeartIcon, ActivityIcon, WarningIcon, BeakerIcon } from './icons';
 
 // Formulary encodes drops as positive values; a negative drop is an increase (e.g. GLP-1
 // mild tachycardia), so format the sign explicitly instead of hard-coding a leading minus.
+// Every displayed number is rounded to one decimal (trailing zero dropped).
+const r1 = (v: number) => Math.round(v * 10) / 10;
 const fmtDrop = (v: number, unit: string) =>
-    v > 0 ? `-${v.toFixed(0)} ${unit}` : v < 0 ? `+${Math.abs(v).toFixed(0)} ${unit}` : `0 ${unit}`;
+    r1(v) > 0 ? `-${r1(v)} ${unit}` : r1(v) < 0 ? `+${Math.abs(r1(v))} ${unit}` : `0 ${unit}`;
 
 const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
     // Get a representative dose (middle of range) for display purposes
-    const repDose = med.available_doses[Math.floor(med.available_doses.length / 2)].strength;
+    const repDoseEntry = med.available_doses[Math.floor(med.available_doses.length / 2)];
+    const repDose = repDoseEntry.strength;
     const chfEffects = med.chf_effects(repDose);
     const hemoEffects = med.hemodynamic_effects(repDose);
     const sideEffects = med.side_effects(repDose);
@@ -45,29 +48,30 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                     <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-1">
                         <HeartIcon className="w-3 h-3" /> Clinical Impact (Est.)
                     </h4>
+                    <p className="mb-2 text-[11px] text-slate-500">Modeled effect at {repDoseEntry.strength} {repDoseEntry.unit}</p>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                         <div className="bg-slate-50 p-2 rounded border border-slate-100">
                             <div className="text-slate-500 text-xs">LVEF</div>
-                            <div className={`font-bold ${chfEffects.lvef_improvement_absolute > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                {chfEffects.lvef_improvement_absolute > 0 ? `+${chfEffects.lvef_improvement_absolute}%` : 'Neutral'}
+                            <div className={`font-bold ${r1(chfEffects.lvef_improvement_absolute) > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                {r1(chfEffects.lvef_improvement_absolute) > 0 ? `+${r1(chfEffects.lvef_improvement_absolute)}%` : 'Neutral'}
                             </div>
                         </div>
                         <div className="bg-slate-50 p-2 rounded border border-slate-100">
                             <div className="text-slate-500 text-xs">Weight</div>
-                            <div className={`font-bold ${chfEffects.weight_reduction_kg > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                {chfEffects.weight_reduction_kg > 0 ? `-${chfEffects.weight_reduction_kg}kg` : 'Neutral'}
+                            <div className={`font-bold ${r1(chfEffects.weight_reduction_kg) > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                {r1(chfEffects.weight_reduction_kg) > 0 ? `-${r1(chfEffects.weight_reduction_kg)} kg` : 'Neutral'}
                             </div>
                         </div>
                          <div className="bg-slate-50 p-2 rounded border border-slate-100">
                             <div className="text-slate-500 text-xs">BNP Red.</div>
-                            <div className={`font-bold ${chfEffects.bnp_reduction_percent > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                {chfEffects.bnp_reduction_percent > 0 ? `-${(chfEffects.bnp_reduction_percent * 100).toFixed(0)}%` : 'Neutral'}
+                            <div className={`font-bold ${r1(chfEffects.bnp_reduction_percent * 100) > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                {r1(chfEffects.bnp_reduction_percent * 100) > 0 ? `-${r1(chfEffects.bnp_reduction_percent * 100)}%` : 'Neutral'}
                             </div>
                         </div>
                          <div className="bg-slate-50 p-2 rounded border border-slate-100">
                             <div className="text-slate-500 text-xs">KCCQ</div>
-                            <div className={`font-bold ${chfEffects.kccq_improvement > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                {chfEffects.kccq_improvement > 0 ? `+${chfEffects.kccq_improvement}` : 'Neutral'}
+                            <div className={`font-bold ${r1(chfEffects.kccq_improvement) > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                                {r1(chfEffects.kccq_improvement) > 0 ? `+${r1(chfEffects.kccq_improvement)}` : 'Neutral'}
                             </div>
                         </div>
                     </div>
@@ -89,7 +93,7 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                      <div className="text-sm text-slate-600 flex justify-between items-center">
                         <span>K+ Effect</span>
                         <span className={`font-medium ${hemoEffects.potassium_change > 0 ? 'text-amber-600' : hemoEffects.potassium_change < 0 ? 'text-blue-600' : 'text-slate-400'}`}>
-                            {hemoEffects.potassium_change > 0 ? '+' : ''}{hemoEffects.potassium_change.toFixed(1)}
+                            {r1(hemoEffects.potassium_change) > 0 ? '+' : ''}{r1(hemoEffects.potassium_change)}
                         </span>
                     </div>
                 </div>

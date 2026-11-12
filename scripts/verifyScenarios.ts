@@ -3961,6 +3961,7 @@ async function runVerification() {
                 const single = cur.med.facts?.single_course_dose === true;
                 const blockedUp = single || analysis.contraindicatedCurrentMeds.has(name) || analysis.redundantCurrentMeds.has(name) || analysis.forcedReduceNames.has(name)
                     || kUptitrationBlock(cur.med, P) !== null || hrContinuationAction(cur.med, P)?.blockUp === true
+                    || (['ACEi', 'ARB', 'ARNI'].includes(cur.med.drug_class) && P.egfr > 0 && P.egfr < 20) // rule E20: no RAAS increase at a measured eGFR below 20
                     || (cur.med.drug_class === 'Beta Blocker' && isAcutelyDecompensated(P))
                     || (isDiureticClass(cur.med.drug_class) && diureticHeldForNoCongestion(P));
                 const raises = (t: RegimenMed | undefined, dir: 1 | -1) => !!t && (Number.isNaN(dailyDose(t)) || Number.isNaN(dailyDose(cur)) || (dir === 1 ? dailyDose(t) > dailyDose(cur) : dailyDose(t) < dailyDose(cur)));

@@ -126,7 +126,7 @@ export function topDeltas(deltas: ScoreDelta[], n: number): { lower: ScoreDelta[
 }
 
 export const TIE_RULE_TEXT =
-    'When two options show the same whole-number score, the one covering more of the indicated therapy is listed first; if that is also equal, the one with the higher unrounded score; then the cheaper one.';
+    'When two options show the same whole-number score, the one covering more of the indicated therapy is listed first; if that is also equal, the one with the higher unrounded score; then the cheaper one; then the one with fewer changes to the current regimen; then alphabetical order of the drugs.';
 
 /** Shown beside the option-versus-option comparison when the foundational ranking mode is applied. */
 export const FOUNDATIONAL_ORDER_NOTE =

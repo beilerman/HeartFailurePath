@@ -24,7 +24,7 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ patientData, o
                 </div>
                 <div>
                     <Label htmlFor="kccq_score">KCCQ (0-100)</Label>
-                    <Input type="number" name="kccq_score" value={patientData.kccq_score ?? ''} onChange={onChange} error={validationErrors.kccq_score} />
+                    <Input type="number" min={0} name="kccq_score" value={patientData.kccq_score ?? ''} onChange={onChange} error={validationErrors.kccq_score} />
                 </div>
             </div>
 
@@ -38,7 +38,7 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ patientData, o
                 <div className="col-span-2">
                     <Label htmlFor="daily_step_count">Daily Step Count (Activity)</Label>
                     <Input
-                        type="number"
+                        type="number" min={0}
                         name="daily_step_count"
                         value={patientData.daily_step_count ?? ''}
                         onChange={onChange}

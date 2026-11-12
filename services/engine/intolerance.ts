@@ -80,7 +80,9 @@ export function deriveIntolerancePolicy(patient: Patient): IntolerancePolicy {
 
     // A structured "History of Angioedema" comorbidity is confirmed-tier evidence.
     const angioedema = signal(raasDiscontinued, 'angioedema');
-    if (patient.comorbidities.has("History of Angioedema")) {
+    // Angioedema typed in the ALLERGY box ("lisinopril angioedema", "angioedema with ACE inhibitor") is the same history: confirmed tier. Before 2026-11-12 only
+    // the comorbidity and the documented-intolerance entry were read, so an ACE inhibitor "allergy" was switched to sacubitril/valsartan (review 3).
+    if (patient.comorbidities.has("History of Angioedema") || [...patient.allergies].some(a => /angio-?(o)?edema/i.test(a))) {
         angioedema.suspected = true;
         angioedema.confirmed = true;
     }
@@ -246,4 +248,9 @@ export function intoleranceCautionsFor(patient: Patient, modifications: readonly
         });
     });
     return out;
+}
+
+/** ACE inhibitors the patient lists as an allergy (the resolved formulary names; see allergy.ts). Read by the ARNI allergy check in effects.ts. */
+export function aceInhibitorAllergies(patient: Patient): string[] {
+    return MEDICATION_FORMULARY.filter(m => m.drug_class === 'ACEi' && patient.allergies.has(m.name)).map(m => m.name);
 }

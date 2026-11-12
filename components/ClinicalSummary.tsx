@@ -2,6 +2,8 @@
 import React from 'react';
 import { Patient } from '../types';
 import { BNP_SCORE_TARGET } from '../services/simulationService';
+import { congestionFindingCount } from '../services/clinicalPredicates';
+import { isCongestedAboveDryWeight } from '../services/engine/regimenUtils';
 
 interface ClinicalSummaryProps {
     patient: Patient;
@@ -35,7 +37,8 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
     const weightDiff = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
     // Three-band status mirroring PhysicalExamSection: Overload > +1.0, Volume Depleted < -1.0, else Euvolemic.
     const hasWeightData = Number.isFinite(weightDiff);
-    const isOverloaded = hasWeightData && weightDiff > 1.0;
+    const isOverloaded = isCongestedAboveDryWeight(patient);
+    const hasFindings = congestionFindingCount(patient.volume_status.exam_findings) > 0;
     const isDehydrated = hasWeightData && weightDiff < -1.0;
     const weightStatus = !hasWeightData
         ? '—'
@@ -43,8 +46,8 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
             ? `+${weightDiff.toFixed(1)} kg`
             : isDehydrated
                 ? `${weightDiff.toFixed(1)} kg (Volume Depleted)`
-                : 'Euvolemic';
-    const weightColor = isOverloaded ? 'text-red-600' : isDehydrated ? 'text-amber-600' : 'text-emerald-600';
+                : hasFindings ? 'Weight at dry weight, but congestion findings recorded' : 'Euvolemic';
+    const weightColor = isOverloaded ? 'text-red-600' : (isDehydrated || hasFindings) ? 'text-amber-600' : 'text-emerald-600';
 
     // Renal Calculations
     const bunCrRatio = patient.creatinine > 0 && patient.bun != null ? patient.bun / patient.creatinine : 0;
@@ -110,7 +113,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                                  <span key={f} className="px-2 py-1 bg-red-50 text-red-600 text-xs font-bold uppercase rounded border border-red-100">{f}</span>
                              ))}
                          </div>
-                     ) : <p className="text-sm italic text-slate-400 mb-4">No congestion signs</p>}
+                     ) : <p className="text-sm italic text-slate-400 mb-4">{isOverloaded ? 'Above dry weight, no congestion findings recorded' : 'No congestion signs'}</p>}
 
                      {/* Renal / Azotemia Check */}
                      <div className="pt-4 border-t border-slate-100">

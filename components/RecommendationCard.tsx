@@ -8,6 +8,7 @@ import { useEvidenceLink } from './EvidenceContext';
 import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
 import { partitionWarnings, stripDrugNotePrefix, isOverBudgetFallback } from './resultsModel';
 import { DOMAIN_LABELS, DOMAIN_GROUPS, type ScoreDomainKey } from '../services/engine/scoreModel';
+import { drugFacts } from '../services/engine/drugFacts';
 import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 
 interface Props {
@@ -61,9 +62,14 @@ const tradeOffTone: Record<TradeOffLabel['tone'], string> = {
     bad: 'bg-red-100 text-red-800',
 };
 
-const getDosingRationale = (item: RegimenMed, patient: Patient): string => {
+/** `isNewStart`: the drug is started (added or swapped in) by this option, not already on the current regimen. */
+const getDosingRationale = (item: RegimenMed, patient: Patient, isNewStart: boolean): string => {
     const { med } = item;
     const isTarget = isTargetDoseForPatient(item, patient);
+
+    if (drugFacts(med).single_course_dose) {
+        return "Single course, dosed by weight and hemoglobin. Not titrated.";
+    }
 
     if (med.drug_class === 'SGLT2i') {
         return "Standard fixed dosing per DAPA-HF / EMPEROR-Reduced trials. No titration required.";
@@ -75,7 +81,9 @@ const getDosingRationale = (item: RegimenMed, patient: Patient): string => {
 
     if (med.drug_class === 'GLP-1 RA' || med.drug_class === 'GLP-1/GIP RA') {
         if (isTarget) return "Target dose for maximal weight loss and KCCQ benefit (STEP-HFpEF / SUMMIT).";
-        return "Initiation dose. Titrate monthly to target to minimize GI side effects.";
+        return isNewStart
+            ? "Initiation dose. Titrate monthly to target to minimize GI side effects."
+            : "Below target: titrate monthly as tolerated to minimize GI side effects.";
     }
 
     if (isTarget) {
@@ -85,7 +93,9 @@ const getDosingRationale = (item: RegimenMed, patient: Patient): string => {
         return "Achieves guideline-directed target dose.";
     } else {
         if (med.drug_class === 'Beta Blocker') return "Evidence-based starting/intermediate dose. Titrate q2 weeks to target as HR tolerates.";
-        if (med.drug_class === 'ARNI') return "Initiation dose. Titrate q2-4 weeks to target 97/103 mg BID.";
+        if (med.drug_class === 'ARNI') return isNewStart
+            ? "Initiation dose. Titrate q2-4 weeks to target 97/103 mg BID."
+            : "Below target: titrate q2-4 weeks as tolerated to 97/103 mg BID.";
         return "Effective therapeutic dose; titrate to target if tolerated.";
     }
 };
@@ -95,6 +105,9 @@ const getModForMed = (regimen: ScoredRegimen, item: RegimenMed): RegimenModifica
         (m.target?.med.name === item.med.name) ||
         (m.action === 'keep' && m.source?.med.name === item.med.name)
     );
+
+const isNewStartIn = (regimen: ScoredRegimen, item: RegimenMed): boolean =>
+    regimen.modification_set?.modifications.some(m => (m.action === 'add' || m.action === 'swap') && m.target?.med.name === item.med.name) ?? false;
 
 const getModBadge = (mod: RegimenModification | undefined): { text: string; className: string } | null => {
     if (!mod) return null;
@@ -201,7 +214,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                             return (
                                 <span key={i} className="text-sm text-slate-700 bg-slate-50 px-2.5 py-1 rounded border border-slate-200 font-semibold flex items-center gap-1">
                                     {isTarget && <><span className="h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true"></span><span className="sr-only">Target Dose</span></>}
-                                    {r.med.name} <span className="text-slate-500 font-normal ml-1">{r.dose.strength}{r.dose.unit}</span>
+                                    {r.med.name} <span className="text-slate-500 font-normal ml-1">{r.dose.strength}{r.dose.unit} {r.selected_frequency}</span>
                                     {badge && (
                                         <span className={`ml-1 text-[10px] font-bold px-1 py-0.5 rounded ${badge.className}`}>
                                             {badge.text}
@@ -310,7 +323,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-xs text-slate-700 font-medium leading-relaxed mb-1.5">
-                                            {getDosingRationale(item, targetDoseContext)}
+                                            {getDosingRationale(item, targetDoseContext, isNewStartIn(regimen, item))}
                                         </p>
                                         {evidenceRowsForDrug(item.med.name).length > 0 && (
                                             <button type="button" onClick={() => openEvidence(drugSearchTerm(item.med.name))} className="mb-1.5 text-xs font-bold text-indigo-700 underline hover:text-indigo-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">

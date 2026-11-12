@@ -37,7 +37,7 @@ exclusion carries that rule's id and name.
 | E05 | MRA after hyperkalemia |
 | E06 | MRA after gynecomastia (spironolactone and named offender only) |
 | E07 | Beta-blocker after bradycardia or AV block (new starts) |
-| E08 | Non-selective beta-blocker after bronchospasm |
+| E08 | Carvedilol after bronchospasm |
 | E09 | GLP-1 after GI intolerance (new starts) |
 | E10 | No nsMRA while staying on a steroidal MRA |
 | E11 | No steroidal MRA while staying on an nsMRA |
@@ -127,7 +127,8 @@ overall_score     = raw_score, clamped to 0-100 and rounded (then capped at 25 i
 1. Higher displayed score first.
 2. Same displayed whole-number score: the regimen covering more of the indicated therapy first, so
    a fraction of a point never drops a guideline pillar from the lead regimen.
-3. Still tied: higher unrounded score, then the cheaper regimen.
+3. Still tied: higher unrounded score, then the cheaper regimen, then fewer changes to the current regimen, then
+   alphabetical order of the regimen's drugs (so the answer never depends on the order the drugs were typed in).
 
 The UI shows this ledger under "How this score was calculated" on each recommendation card.
 
@@ -190,8 +191,8 @@ Still in engine code: adjunct initiation criteria for ivabradine, digoxin and H/
 
 | Check | Command | Guards |
 |---|---|---|
-| Golden master | `npm run golden` | Every scenario under three insurance tiers (1032 runs, 333 scenarios) is byte-identical |
-| Scenarios | `npm run verify` | 333 clinical scenarios plus 38 structural checks (371 pass on 2026-11-12) |
+| Golden master | `npm run golden` | Every scenario under three insurance tiers (1032 runs, 344 scenarios) is byte-identical |
+| Scenarios | `npm run verify` | 344 scenarios (`SCENARIOS`) plus the structural checks (371 pass on 2026-11-12; the printed count is authoritative) |
 | Audits | `npm run audit:hundred`, `audit:mistakes`, `audit:red` | Broad, treatment-error and adversarial sweeps |
 | Randomized sweep | `npm run fuzz` | 5,000 seeded random patients (`scripts/fuzzSweep.ts`): safety invariants written independently of the engine, plus consistency checks (regimen listed in another order gives the same answer; ranking mode and care priority change ordering only; a lower-case allergy still excludes the drug). Part of `gate` and `ci` |
 | All of the above | `npm run gate` | |
@@ -227,7 +228,7 @@ own commit that says why.
 - MRA initiation: K+ 5.0 or higher (E15) and eGFR 30 or lower (new spironolactone start) withhold a new start; spironolactone and eplerenone are capped at 25 mg and start at the lowest tier below eGFR 50 (2022 AHA/ACC/HFSA 7.3.3). Monitoring line: within 1 week, about 4 weeks, after the final titration, then every 4-6 months.
 - Baseline creatinine (optional `Patient.baseline_creatinine`; `services/engine/renalChange.ts`): `assessCreatinineChange` returns none / reduce / stop. Reduce (creatinine rise 50% or more, or CKD-EPI-derived eGFR fall over 30%) reuses the forced one-step reduction for a current RAAS inhibitor and MRA (`candidates.ts`) and blocks increases; stop (rise over 100%, or 50% or more with eGFR below 20) is `creatinineRiseStopCheck`, a contraindication check on every RAAS and MRA entry (removes a current drug, blocks a new start and an in-class swap). A `KIDNEY FUNCTION` alert states the change and the first steps. Blank baseline: no behaviour change.
 - Alerts only (`gates.ts`): device (ICD/CRT classes; asks to check QRS, LBBB, aetiology), advanced-HF referral (lists the markers that fired), atrial fibrillation (anticoagulation by CHA2DS2-VA, rate control). No ranking effect; top picks and exclusions identical.
-- Counts (2026-11-12): golden 1032 runs (333 scenarios), verify Passed 371.
+- Counts (2026-11-12): golden 1032 runs (344 scenarios), verify Passed 371.
 
 ## Adversarial review changes (2026-11-12)
 

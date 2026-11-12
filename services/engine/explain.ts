@@ -388,3 +388,35 @@ export function assembleOutput(
         ...(ranking ? { ranking } : {}),
     };
 }
+
+
+/**
+ * Alerts are raised before the options are built, and two of them say what "the plan" does to a named current drug (the heart-rate reduction and the pregnancy
+ * beta-blocker switch). They are reconciled here against the options actually shown, so an alert never states an action the plan does not take: review 3
+ * (2026-11-12) found "the plan reduces it ONE dose step; it is not removed" beside options that removed or replaced the drug, and "a switch is offered" beside
+ * options that kept it. Pure text; changes no option.
+ */
+export function reconcilePlanAlerts(clinicalAlerts: string[], picks: ScoredRegimen[], patient: Patient): string[] {
+    const actionsOn = (name: string): Set<string> => new Set(picks.map(r => {
+        const mod = (r.modification_set?.modifications ?? []).find(m => m.source?.med.name === name && m.action !== 'keep');
+        return mod ? mod.action : 'keep';
+    }));
+    return clinicalAlerts.map(alert => {
+        const current = (patient.current_regimen ?? []).find(r => alert.startsWith(`BRADYCARDIA ON ${r.med.name.toUpperCase()}:`) || alert.startsWith(`PREGNANCY: ${r.med.name} is non-selective.`));
+        if (!current || picks.length === 0) return alert;
+        const acts = actionsOn(current.med.name);
+        if (alert.startsWith('BRADYCARDIA ON')) {
+            const stated = 'The plan reduces it ONE dose step; it is not removed. ';
+            if (!alert.includes(stated) || acts.has('titrate_down')) return alert;
+            const actual = acts.has('swap') ? 'The options replace it with another agent for a separate reason stated on the option; the replacement dose is set one step lower for this heart rate. '
+                : acts.has('remove') ? 'The options stop it for a separate reason stated on the option (for a beta-blocker, taper over 1-2 weeks; do not stop abruptly). '
+                : 'The options shown keep the dose unchanged: review the dose against this heart rate. ';
+            return alert.replace(stated, actual);
+        }
+        const offered = '; a switch is offered.';
+        if (alert.includes(offered) && !acts.has('swap')) {
+            return alert.replace(offered, '; no switch could be offered for this patient today (a new beta-blocker cannot be started in the current state: see the withheld drugs and other alerts), so the current agent is kept until it can be.');
+        }
+        return alert;
+    });
+}

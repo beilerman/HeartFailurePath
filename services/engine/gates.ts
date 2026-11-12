@@ -1,7 +1,7 @@
 /** Input audit and safety gates (stages 1-3 of the pipeline). Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, RegimenMed, SimulationOutput } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown, congestionFindingCount } from '../clinicalPredicates';
+import { valueUnknown, congestionFindingCount, isAcutelyDecompensated } from '../clinicalPredicates';
 import { RAAS_CLASSES, MRA_POOL_CLASSES, getMedicationClassGroup } from './registry';
 import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold, hasAtrialFibrillationHistory } from '../clinicalPredicates';
 import { PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, EXTERNAL_POTASSIUM_SPARING_DIURETICS, potassiumRaisersTaken } from './contraindications';
@@ -196,7 +196,8 @@ export function auditInputs(patient: Patient, clinicalAlerts: string[]): InputAu
     // The gates are written as `value < limit`, which is FALSE for NaN: an unreadable eGFR or pulse would pass every limit as if normal. One sentinel only: 0.
     const blankToZero = (v: number | undefined): number => (v === undefined || v === null || Number.isNaN(v) || v < 0 ? 0 : v);
     patient.sbp = blankToZero(patient.sbp); patient.dbp = blankToZero(patient.dbp); patient.pulse = blankToZero(patient.pulse);
-    patient.potassium = blankToZero(patient.potassium); patient.egfr = blankToZero(patient.egfr); patient.creatinine = blankToZero(patient.creatinine);
+    // Potassium is read to ONE decimal everywhere (thresholds 5.0 / 5.2 / 5.5 / 6.0 / 6.5 and every message): 5.96 was shown as "6.0" but ruled as 5.5-5.9.
+    patient.potassium = Math.round(blankToZero(patient.potassium) * 10) / 10; patient.egfr = blankToZero(patient.egfr); patient.creatinine = blankToZero(patient.creatinine);
     patient.lvef = blankToZero(patient.lvef); patient.nt_pro_bnp = blankToZero(patient.nt_pro_bnp); patient.bun = blankToZero(patient.bun);
     patient.volume_status.dry_weight_kg = blankToZero(patient.volume_status.dry_weight_kg);
     patient.volume_status.current_weight_kg = blankToZero(patient.volume_status.current_weight_kg);
@@ -288,6 +289,13 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
         (patient.current_regimen || []).filter(r => r.med.drug_class === 'Beta Blocker' && !drugFacts(r.med).beta1_selective).forEach(r => {
             clinicalAlerts.push(`PREGNANCY: ${r.med.name} is non-selective. The 2026 ESC heart failure guideline (Class I, level C) says to switch non-selective beta-blockers to beta-1-selective ones (metoprolol, bisoprolol) in pregnancy; a switch is offered. Do not stop the beta-blocker abruptly.`);
         });
+    }
+
+    // --- A beta-blocker START is deferred in acute decompensation (candidates.ts drops the pillar): say so. Before 2026-11-12 the beta-blocker was simply
+    // absent from every option with no alert, no withheld-drug entry and no reason on the gap (review 3).
+    if (isAcutelyDecompensated(patient) && patient.lvef > 0 && patient.lvef < 50 && !(patient.current_regimen || []).some(r => r.med.drug_class === 'Beta Blocker')) {
+        const why = patient.nyha_class === 'IV' ? 'NYHA class IV' : 'NYHA class III with more than 2 kg above dry weight and at least two congestion findings';
+        clinicalAlerts.push(`BETA-BLOCKER START DEFERRED: ${why} is treated as acute decompensation, so no beta-blocker is started in any option (2022 AHA/ACC/HFSA: do not start during decompensation; 2026 ESC Supplementary Table S6: seek specialist advice in NYHA IV or a recent exacerbation, achieve euvolemia first). Start at a low dose once the patient is stable and decongested.`);
     }
 
     // --- Heart-rate rule on an established beta-blocker / ivabradine (facts.hr_continuation): the dose is reduced one step,

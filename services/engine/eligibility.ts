@@ -29,7 +29,7 @@ import { kContinuationAction } from './regimenUtils';
 import { valueUnknown } from '../clinicalPredicates';
 import { drugFacts } from './drugFacts';
 import { contraindicationReasons } from './contraindications';
-import { MRA_START_K_CEILING, RAAS_START_K_CAUTION } from './thresholds';
+import { MRA_START_K_CEILING, RAAS_START_K_CAUTION, RAAS_EGFR_REVIEW_BELOW } from './thresholds';
 import { assessCreatinineChange } from './renalChange';
 
 /** Everything the rules need, computed once per patient (not per drug). */
@@ -296,6 +296,20 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             const change = assessCreatinineChange(ctx.patient);
             return change ? [`${change.why}. The 2026 ESC guideline (Supplementary Tables S4/S5/S8) halves these drugs when already in use and allows no increase until kidney function is stable; not starting a new one in the same state is engine policy. Look for and stop other causes (NSAIDs, volume depletion), recheck in 1-2 weeks`] : [];
         },
+    },
+    {
+        id: 'E20', name: 'No new RAAS inhibitor, increase or switch at eGFR below 20',
+        summary: 'With a measured eGFR below 20, an ACE inhibitor, ARB or ARNI the patient does not already take is not started (this includes a switch within the class), and one already in use is not increased. A drug in use is kept, with the alert asking whether the fall is new.',
+        // Added 2026-11-12 (adversarial review 3): the tool's own alert says that below eGFR 20 a NEW fall means stop and seek specialist advice (2026 ESC Supplementary
+        // Table S4), yet option 1 doubled lisinopril at eGFR 14 and another option switched to the ARNI. The guideline text covers stopping after a fall; holding starts,
+        // increases and switches at the same level is ENGINE POLICY that follows from it. Blank eGFR (0) never triggers (rules E12/E16 cover missing data).
+        evaluate: (ctx, med) => RAAS_CLASSES.has(med.drug_class)
+            && ctx.patient.egfr > 0 && ctx.patient.egfr < RAAS_EGFR_REVIEW_BELOW
+            && !(ctx.patient.current_regimen ?? []).some(r => r.med.name === med.name)
+            ? `eGFR ${ctx.patient.egfr} is below ${RAAS_EGFR_REVIEW_BELOW}: not started without specialist advice` : null,
+        details: (ctx) => [
+            `eGFR ${ctx.patient.egfr} mL/min/1.73 m2 is below ${RAAS_EGFR_REVIEW_BELOW}. The 2026 ESC guideline (Supplementary Table S4) advises stopping an ACE inhibitor or ARB and seeking specialist advice when eGFR falls below 20; this tool therefore does not start, increase or switch one at this level (engine policy). A drug already in use is kept.`,
+        ],
     },
 ];
 

@@ -69,7 +69,7 @@ export function carryFrequency(tier: RegimenMed, current: RegimenMed, dailyCap?:
 }
 
 /**
- * Doses of `med` this patient may be offered (renal / interaction caps, declared daily maximum, the age > 80 lower-half rule), ascending in
+ * Doses of `med` this patient may be offered (renal / interaction caps, declared daily maximum), ascending in
  * ladder order. getDoseTiers samples from this list; titration also reads the immediate neighbours from it.
  */
 export function eligibleDoses(med: Medication, patient: Patient): MedicationDose[] {
@@ -86,10 +86,10 @@ export function eligibleDoses(med: Medication, patient: Patient): MedicationDose
         }
         return true;
     });
-    // P3: Age-adjusted dosing — elderly patients (>80) limited to lower dose tiers (start low, go slow)
-    if (patient.age > 80 && validDoses.length > 2) {
-        return validDoses.slice(0, Math.max(2, Math.ceil(validDoses.length / 2)));
-    }
+    // Age does NOT shorten the ladder. Until 2026-11-12 a patient over 80 was offered only the lower half of every drug's doses (a count rule with no source),
+    // so no one over 80 could reach a target dose (lisinopril stopped at 10 mg, carvedilol at 6.25 mg), a loop could not be raised past 40 mg in a congested
+    // patient, and ivabradine was offered because the beta-blocker "could not be increased" (adversarial review 3). "Start low, go slow" is kept where it belongs:
+    // new starts begin at the starting tier, a visit at most doubles a dose, and the elderly warnings in effects.ts ask for slower titration.
     return validDoses;
 }
 
@@ -233,7 +233,7 @@ export function kContinuationAction(med: Medication, patient: Patient): { action
         // MRA first: with an MRA on board that this potassium already reduces or withholds, a drug that yields takes no forced step (its dose is held, not raised).
         if (rule.yields_to === 'mra' && (patient.current_regimen ?? []).some(r => r.med !== med && MRA_POOL_CLASSES.has(r.med.drug_class)
             && (r.med.facts?.k_continuation?.yields_to === undefined) && patient.potassium >= (r.med.facts?.k_continuation?.reduce_at ?? Infinity))) return null;
-        return { action: 'reduce', reason: `potassium ${k} mEq/L is ${rule.reduce_at.toFixed(1)}-${(rule.withhold_at - 0.1).toFixed(1)}: reduce one dose step (withhold if already at the lowest dose); restart/titrate only once potassium is below ${(rule.restart_below ?? 5.0).toFixed(1)} (${rule.basis})` };
+        return { action: 'reduce', reason: `potassium ${k} mEq/L is ${rule.reduce_at.toFixed(1)}-${(rule.withhold_at - 0.1).toFixed(1)}: reduce one dose step (withhold if already at the lowest dose); do not increase the dose again until potassium is below ${(rule.restart_below ?? 5.0).toFixed(1)} (${rule.basis})` };
     }
     return null;
 }
@@ -384,7 +384,9 @@ export function dedupeCurrentRegimen(regimen: RegimenMed[]): { regimen: RegimenM
         if (!held) { best.set(item.med.name, item); return; }
         duplicateNames.add(item.med.name);
         if (daily(item) !== daily(held)) conflicting.add(item.med.name);
-        if (daily(item) > daily(held)) best.set(item.med.name, item);
+        // Higher daily dose wins; on an equal daily dose (40 mg once daily vs 20 mg twice daily) the entry with the larger strength, so the result never
+        // depends on the order the two entries were typed in.
+        if (daily(item) > daily(held) || (daily(item) === daily(held) && parseFloat(String(item.dose.strength)) > parseFloat(String(held.dose.strength)))) best.set(item.med.name, item);
     });
     const emitted = new Set<string>();
     const deduped: RegimenMed[] = [];

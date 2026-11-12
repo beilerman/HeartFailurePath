@@ -144,10 +144,10 @@ const tierIndex = (m: RegimenMed) => m.med.available_doses.findIndex(d => String
 const sig = (reg: RegimenMed[]) => reg.map(m => `${m.med.name}|${m.dose.strength}|${m.selected_frequency}`).sort().join(' + ');
 const describe = (reg: RegimenMed[]) => reg.map(m => `${m.med.name} ${m.dose.strength} ${m.selected_frequency}`).join(', ') || '(none)';
 
-/** One entry per drug name: the higher daily dose when a user lists the same drug twice (the engine's documented rule). */
+/** One entry per drug name: the higher daily dose when a user lists the same drug twice, then the larger strength (the engine's documented rule). */
 function currentByName(p: Patient): Map<string, RegimenMed> {
     const map = new Map<string, RegimenMed>();
-    for (const m of p.current_regimen) { const held = map.get(m.med.name); if (!held || daily(m) > daily(held)) map.set(m.med.name, m); }
+    for (const m of p.current_regimen) { const held = map.get(m.med.name); if (!held || daily(m) > daily(held) || (daily(m) === daily(held) && strengthNum(m) > strengthNum(held))) map.set(m.med.name, m); }
     return map;
 }
 
@@ -187,6 +187,9 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
         else if (/\bundefined\b|\bNaN\b|\[object |\bnull\b/.test(s)) add('BAD_TEXT', `${path}: ${s.slice(0, 160)}`);
     });
     if (regs.length === 0 && out.clinicalAlerts.length === 0 && (out.missingDataNotices ?? []).length === 0) add('SILENT_EMPTY', 'no options and no alert or notice');
+    // An empty page must NAME why: a hard stop, required data, the display floors, or the explicit "no option" alert (any unrelated alert used to satisfy this).
+    if (regs.length === 0 && !out.clinicalAlerts.some(x => /^(NO DISPLAY-SAFE|NO OPTION AVAILABLE|HEMODYNAMIC INSTABILITY|HYPERKALEMIC EMERGENCY|DATA REQUIRED|IMPLAUSIBLE VALUE)/i.test(x)))
+        add('EMPTY_WITHOUT_REASON', out.clinicalAlerts.map(x => x.slice(0, 40)).join(' | '));
     if (regs.length > 3) add('TOO_MANY_PICKS', String(regs.length));
     if (new Set(regs.map(r => sig(r.regimen))).size !== regs.length) add('DUPLICATE_PICKS', regs.map(r => sig(r.regimen)).join(' || '));
     if (known(p.sbp) && p.sbp < 90 && regs.length) add('HARDSTOP_SBP', `SBP ${p.sbp} but ${regs.length} options`);
@@ -294,6 +297,15 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
                 if (now && daily(now) >= daily(c) - 1e-9) add('BB_NOT_REDUCED_HR_LT_50', `${tag} ${name} still ${now.dose.strength} ${now.selected_frequency} at HR ${p.pulse}`);
             }
         }
+        // rules added in the second and third review passes, restated here
+        for (const m of r.regimen) {
+            const c = cur.get(m.med.name); const up = !!c && daily(m) > daily(c) + 1e-9; const down = !!c && daily(m) < daily(c) - 1e-9;
+            const isRaas = ['ACEi', 'ARB', 'ARNI'].includes(m.med.drug_class);
+            if (kKnown && K > 5.2 && up && isRaas) add('RAAS_INCREASE_ABOVE_5_2', `${tag} ${m.med.name} at K ${K}`);
+            if (kKnown && K >= 5.0 && down && m.med.drug_class === 'K+ Binder') add('BINDER_REDUCED_AT_K5', `${tag} ${m.med.name} at K ${K}`);
+            if (isRaas && known(p.egfr) && p.egfr < 20 && (up || !c)) add('RAAS_INTENSIFIED_EGFR_LT_20', `${tag} ${m.med.name} at eGFR ${p.egfr}`);
+        }
+        if (kKnown && r.projected_patient.potassium < 3.0 && r.projected_patient.potassium < K) add('PROJECTED_K_LT_3', `${tag} projected ${r.projected_patient.potassium} from ${K}`);
         // projected display floors
         const pp = r.projected_patient;
         if (pp.sbp < 85 && pp.sbp < p.sbp) add('PROJECTED_SBP_LT_85', `${tag} projected ${pp.sbp} from ${p.sbp}`);
@@ -364,6 +376,21 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
                 }
             }
         }
+    }
+    // Follow the top option visit after visit with the inputs unchanged: the plan must settle, and must never return to a regimen it has already left
+    // (review 3: loop diuretics were switched back and forth; an ACE inhibitor alternated 20 -> 40 -> 20).
+    if (top) {
+        const seen = [sig([...cur.values()])]; let q = clonePatient(p); let settled = false;
+        for (let visit = 0; visit < 30 && !settled; visit++) {
+            const o = visit === 0 ? out : safe(() => run(q), 'THROW_FOLLOW_UP');
+            const t = o?.scoredRegimens[0];
+            if (!o || !t) { settled = true; break; }
+            const s2 = sig(t.regimen);
+            if (s2 === seen[seen.length - 1]) { settled = true; break; }
+            if (seen.includes(s2)) { add('OSCILLATION', `visit ${visit + 1} returns to an earlier regimen: ${describe(t.regimen)}`); settled = true; break; }
+            seen.push(s2); q = clonePatient(p); q.current_regimen = t.regimen.map(m => ({ ...m }));
+        }
+        if (!settled) add('NO_FIXED_POINT_30_VISITS', describe(p.current_regimen));
     }
     return v;
 }
