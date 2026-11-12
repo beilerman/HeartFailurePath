@@ -114,3 +114,9 @@ export const CONGESTION_EXCESS_KG_ABOVE = 1.0;
  * alert. Engine policy, matching the MRA new-start boundary (MRA_START_K_CEILING); the Aldactone and Inspra labels warn about these agents without a number.
  */
 export const POTASSIUM_RAISER_REVIEW_K = 5.0;
+
+/**
+ * A potassium binder already in use is not reduced while the measured potassium is at or above this (engine policy; the same boundary that holds a new MRA start,
+ * MRA_START_K_CEILING). Below it the binder may be stepped down as usual.
+ */
+export const BINDER_HOLD_REDUCTION_K = 5.0;

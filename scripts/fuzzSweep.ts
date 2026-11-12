@@ -404,12 +404,9 @@ function main() {
         for (const x of list.slice(0, examples)) console.log(`   seed ${x.seed}: ${x.detail}`);
     }
     if (rows.length === 0) console.log('No violations.');
-    // WATCHED, not failing below a ceiling: the tool undoing its own first option when that option is entered as the current regimen. The known residue is
-    // rare (about 1 in 2,000 random patients, mostly the over-budget fallback and one-option outputs in extreme patients); a rise means a scoring
-    // inconsistency has come back. Every other code fails the run.
-    const WATCH: Record<string, number> = { ADVICE_REVERSED_NEXT_RUN: 0.002 };
-    const failing = rows.filter(([code, list]) => !(code in WATCH) || new Set(list.map(x => x.seed)).size / count > WATCH[code]);
-    if (rows.length && failing.length === 0) console.log('\nOnly watched codes, within their ceiling: PASS.');
+    // Every code fails the run, including ADVICE_REVERSED_NEXT_RUN (the tool undoing its own first option when that option is entered as the current regimen).
+    // It was a watched code with a ceiling of 1 in 500 until 2026-11-12; its four root causes were then fixed and 45,000 patients on three seeds show none.
+    const failing = rows;
     process.exit(failing.length ? 1 : 0);
 }
 

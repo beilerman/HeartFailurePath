@@ -6,7 +6,7 @@ import { RAAS_CLASSES, getMedicationClassGroup, isDiureticClass } from './regist
 import { isCongestedAboveDryWeight, isLoopDiureticResistant, adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication, MRA_POOL_CLASSES } from './intolerance';
 import { assessCreatinineChange } from './renalChange';
-import { UP_TITRATION_MAX_DAILY_FACTOR } from './thresholds';
+import { UP_TITRATION_MAX_DAILY_FACTOR, BINDER_HOLD_REDUCTION_K } from './thresholds';
 import { regimenSatisfiesPillar, classifyPhenotype, isImprovedEF } from './domains';
 
 export interface RegimenAnalysis {
@@ -258,7 +258,10 @@ export function analyzeCurrentRegimen(
 
         const lowerDoses = withNeighbour(allTiers.filter(t => tierIdx(t) < currentIdx).map(t => carryFrequency(t, current, dailyCapFor(current.med, patient))), adjacent.down).filter(t => changesDaily(t, -1)).sort((a, b) => tierIdx(a) - tierIdx(b));
         // A one-time label course (facts.single_course_dose: ferric carboxymaltose) is not a titratable dose: no up/down candidates.
-        if (lowerDoses.length > 0 && !drugFacts(current.med).single_course_dose) {
+        // A potassium binder is not reduced while the potassium that calls for it persists (measured potassium at or above BINDER_HOLD_REDUCTION_K): lowering it
+        // scored slightly better on the sodium note while raising projected potassium, so the tool lowered a binder it had added on the previous run.
+        const binderStillNeeded = drugFacts(current.med).rescue_role?.kind === 'k_binder' && patient.potassium > 0 && patient.potassium >= BINDER_HOLD_REDUCTION_K;
+        if (lowerDoses.length > 0 && !drugFacts(current.med).single_course_dose && !binderStillNeeded) {
             titratableDown.push({ current, options: lowerDoses });
             if (isBBForcedDown) {
                 forcedBbDownTitrateNames.add(current.med.name);
