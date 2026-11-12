@@ -59,7 +59,7 @@ HeartFailurePath/
   services/
     simulationService.ts          # public facade: 52-line staged orchestrator + re-exports
     engine/                       # the engine, one module per stage (see docs/scoring-architecture.md):
-                                  #   gates, eligibility (rules E01-E17), candidates, effects, domains,
+                                  #   gates, eligibility (rules E01-E18), candidates, effects, domains,
                                   #   scoreModel (weights + adjustments as data), scoring, selection,
                                   #   explain, registry, intolerance, regimenUtils, drugFacts
     clinicalPredicates.ts         # shared predicates (valueUnknown, hasHistoricalHFrEF,
@@ -163,7 +163,7 @@ Two phenotypes since 2026-11-11 (2026 ESC guideline; HFmrEF removed; `classifyPh
 - HFpEF (`>= 50` and never below 50): SGLT2i + MRA, both Class I (steroidal or finerenone); a RAAS inhibitor is Class IIb (small credit, never a gap, slot or new start)
 - HFimpEF preservation: continue full HFrEF logic when prior reduced EF (40 or lower) is known or strongly suspected
 - Drug-specific LVEF criteria keep their own evidence thresholds (digoxin/H-ISDN 40, ivabradine 35, vericiguat 45, GLP-1 45/50, IV iron < 50, finerenone label 40)
-- ESC alignment details (RAAS potassium and eGFR-20 rules, Table 11 doses, loops, heart-rate thresholds, no binder bonus): `docs/scoring-architecture.md` last section and `docs/evidence-matrix.md` rows HF-ESC-001..011. ESC Supplementary tables S3-S9 were read; S26, decompensated-HF tables and device/advanced-HF/arrhythmia sections were not
+- ESC alignment details (RAAS potassium rules, E18, the eGFR-20 alert, Table 11 doses, loops, heart-rate thresholds, no binder bonus): `docs/scoring-architecture.md` last section and `docs/evidence-matrix.md` rows HF-ESC-001..011. ESC Supplementary tables S3-S9 were read; S26, decompensated-HF tables and device/advanced-HF/arrhythmia sections were not
 
 ## Safety Logic and Hard Blocks
 
@@ -180,7 +180,7 @@ Implemented high-priority safeguards include:
 - Electrolyte safety:
   - hyperkalemic-emergency gate (6.0 alert and 6.5 alerts-only stop are ENGINE POLICY; a secondary source classes K+ > 6.0 as severe): baseline `K+ >= 6.0` fires a HYPERKALEMIC EMERGENCY alert (ECG and urgent repeat potassium; no RAAS/MRA start or increase at 6.0-6.4, a current MRA is withheld); `K+ >= 6.5` returns alerts only (parallel to the SBP < 90 gate); `K+ > 8.0` hard-stops as implausible
   - projected `K+ > 6.0` excluded from display
-  - K+ binder rescue (reactive, projected K+ above 5.3; never a co-start with a new MRA) counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
+  - K+ binder rescue (reactive, projected K+ above 5.3; attached only when every potassium-raising class in the candidate was already on the current regimen, so never a co-start with a new MRA or RAAS inhibitor; a candidate needing a binder for a NEW class is dropped) counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
 - Blank-data (sentinel) safety:
   - eGFR/creatinine or K+ of 0/blank = "not entered", never a value: it must never clear a safety gate AND never read as end-stage disease
   - blank renal data: current renal-gated meds are RETAINED (not force-removed); renal-gated new starts are excluded with reason "Renal data required — cannot assess renal safety (obtain BMP before initiation)"; candidates intensifying RAAS/MRA/SGLT2i carry a RENAL FUNCTION UNKNOWN warning + -15 penalty; renal-threshold warnings (eGFR<20 loop alert, Furoscix CKD caution, digoxin renal note) are suppressed
@@ -299,9 +299,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 314`):
+Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 322`):
 
-- 298 clinical scenarios + 16 structural checks (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
+- 306 clinical scenarios + 16 structural checks (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations
@@ -341,7 +341,7 @@ verification (`verified-*.md`, with URLs) and the measured effect of each correc
   (`dailyDose` in `regimenUtils.ts`), never the per-dose strength.
 - **Effects are treatment effects.** Use the placebo-adjusted trial difference, not the active-arm
   change (the GLP-1 quality-of-life values were corrected for this).
-- **A new MRA is not started above potassium 5.0, with or without a binder** (rule E15). The reactive binder rescue
+- **A new RAAS inhibitor is not started above potassium 5.2 and a new MRA not above 5.0, with or without a binder** (rules E18 and E15; the ESC "caution" thresholds, staging is engine policy). eGFR below 20 on a RAAS inhibitor is an ALERT only, never a stop (ESC S4 describes a fall from baseline; the tool has no baseline). The reactive binder rescue
   (projected K+ above 5.3) remains; patiromer is the preferred binder in heart failure (Lokelma carries a sodium load;
   automatic rescue is capped at 10 g). Pregnancy: new beta-blocker starts are beta-1-selective only (E17) and carvedilol is
   switched (2026 ESC Class I C).
