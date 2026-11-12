@@ -2,13 +2,12 @@
 import { Patient, RegimenMed, SimulationOutput } from '../../types';
 import { drugFacts } from './drugFacts';
 import { valueUnknown } from '../clinicalPredicates';
-import { RAAS_CLASSES, getMedicationClassGroup } from './registry';
+import { RAAS_CLASSES, MRA_POOL_CLASSES, getMedicationClassGroup } from './registry';
 import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold } from '../clinicalPredicates';
 import { PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './contraindications';
 import { taggedDiscontinuedMeds } from './eligibility';
-import { MRA_POOL_CLASSES } from './intolerance';
 import { buildMissingDataNotices, computeGdmtGaps } from './explain';
-import { dailyDose, dedupeCurrentRegimen, hrContinuationAction, kContinuationAction, kUptitrationBlock, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
+import { dailyDose, isLoopDiureticResistant, dedupeCurrentRegimen, hrContinuationAction, kContinuationAction, kUptitrationBlock, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 import { HYPOTENSION_SBP_BELOW, RAAS_EGFR_REVIEW_BELOW, CREATININE_RISE_ACCEPTABLE_PCT, EGFR_FLOOR_FOR_CREATININE_RISE } from './thresholds';
 import { assessCreatinineChange, creatinineRiseIsAcceptable } from './renalChange';
 
@@ -350,35 +349,70 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
         );
     }
 
-    // --- S3: Advanced HF referral trigger ---
-    const advancedHFCriteria = lowOutput ||
-        (patient.lvef <= 20 && patient.sbp < 90) ||
-        (patient.nyha_class === 'IV' && patient.nt_pro_bnp > 4000);
+    // --- S3: Advanced HF referral (2026 ESC Recommendation Table 11, Tables 14-15): early consultation with an advanced HF centre is Class I for patients with or at risk of
+    // advanced HF ("I NEED HELP" markers, any one; "rule of three"). ALERT ONLY, no ranking effect. Only markers the tool can see are tested; the others are named as "check".
+    // Numeric cut-offs are marked: NT-proBNP 4000 is the engine's longstanding advanced-HF value (previously NYHA IV only, now NYHA III-IV; persistence on treatment is not visible),
+    // pulse above 100 is the conventional tachycardia cut-off (engine policy; no source number). SBP below 90 is the engine's hypotension gate.
+    const advancedMarkers: string[] = [];
+    if (lowOutput) advancedMarkers.push('low-output state (LVEF below 20 with hypoperfusion markers)');
+    if (patient.lvef > 0 && patient.lvef < 20) advancedMarkers.push(`LVEF ${patient.lvef}% (below 20)`);
+    if ((patient.nyha_class === 'III' || patient.nyha_class === 'IV') && patient.nt_pro_bnp > 4000) advancedMarkers.push(`NYHA ${patient.nyha_class} with NT-proBNP ${patient.nt_pro_bnp} pg/mL (high; persistence on treatment is not visible to the tool)`);
+    if (patient.sbp > 0 && patient.sbp < HYPOTENSION_SBP_BELOW && patient.pulse > 100) advancedMarkers.push(`low blood pressure (${patient.sbp}) with a high heart rate (${patient.pulse})`);
+    const loopResistantNow = (patient.current_regimen ?? []).find(r => isLoopDiureticResistant(patient, r));
+    if (loopResistantNow) advancedMarkers.push(`diuretic resistance (congested on ${loopResistantNow.med.name} ${dailyDose(loopResistantNow)} mg/day, its high-dose level)`);
+    const foundationalClasses = new Set([...RAAS_CLASSES, ...MRA_POOL_CLASSES, 'Beta Blocker', 'SGLT2i']);
+    const foundationalIntolerance = patient.discontinued_meds.filter(m => foundationalClasses.has(m.drug_class));
+    if (foundationalIntolerance.length > 0) advancedMarkers.push(`documented stop or intolerance of foundational therapy (${foundationalIntolerance.map(m => m.name).join(', ')})`);
+    const advancedHFCriteria = advancedMarkers.length > 0;
+    // The pre-2026-11-11 severe criteria (INTERMACS-style); still the only ones that suppress the cardiac-rehabilitation prompt.
+    const severeAdvancedHF = lowOutput || (patient.lvef <= 20 && patient.sbp < 90) || (patient.nyha_class === 'IV' && patient.nt_pro_bnp > 4000);
     if (advancedHFCriteria) {
         clinicalAlerts.push(
-            'ADVANCED HEART FAILURE ALERT: This patient meets criteria for Advanced HF evaluation (INTERMACS 3-4). ' +
-            'Consider: IV inotropic support, mechanical circulatory support (LVAD/Impella), heart transplant evaluation, ' +
-            'CRT/ICD assessment, and palliative care discussion. Refer to Advanced HF specialist.'
+            'ADVANCED HEART FAILURE ALERT: early consultation with an advanced heart failure centre is Class I for patients with or at risk of advanced HF (2026 ESC Recommendation Table 11; "I NEED HELP" markers, any one is enough). ' +
+            `Markers present: ${advancedMarkers.join('; ')}. ` +
+            'The tool cannot see hospitalizations in the past year (two or more, or one needing inotropes, is a "rule of three" trigger; the form records only whether a recent worsening event occurred), inotrope use, end-organ dysfunction, defibrillator shocks or right-ventricular function: check them. ' +
+            'Consider IV inotropic support, mechanical circulatory support (LVAD), transplant evaluation and a palliative care discussion; device assessment is in the device alert when LVEF is 35 or below.'
         );
     }
 
-    // --- D4: ICD/CRT device eligibility screening (ACC/AHA 2022 §7.3.5, Class I) ---
-    const icdCrtEligible = patient.lvef <= 35 &&
-        (patient.nyha_class === 'II' || patient.nyha_class === 'III') &&
-        !advancedHFCriteria; // Advanced HF already triggers its own referral
+    // --- D4: ICD / CRT screening (2026 ESC Recommendation Tables 6 and 7). ALERT ONLY. The form has no QRS duration, LBBB morphology, aetiology or myocardial-infarction date, so the
+    // alert asks the clinician to check them; 'Coronary Artery Disease' is shown as the only (imperfect) ischaemic marker the form holds.
+    const icdCrtEligible = patient.lvef > 0 && patient.lvef <= 35 &&
+        (patient.nyha_class === 'II' || patient.nyha_class === 'III' || patient.nyha_class === 'IV');
+    // (not suppressed by the advanced-HF referral: a different topic, and candidacy for CRT/LVAD/transplant decides whether an ICD is appropriate in NYHA IV)
     if (icdCrtEligible) {
+        const cad = patient.comorbidities.has('Coronary Artery Disease');
+        const gaps = computeGdmtGaps(patient);
         clinicalAlerts.push(
-            'DEVICE THERAPY SCREENING: LVEF ≤ 35% with NYHA Class ' + patient.nyha_class + '. ' +
-            'Evaluate for ICD (primary prevention of sudden cardiac death) after ≥ 3 months of optimized GDMT. ' +
-            'If QRS ≥ 150ms with LBBB morphology, also evaluate for CRT (Class I, ACC/AHA 2022). ' +
-            'Refer to electrophysiology if not already assessed.'
+            `DEVICE THERAPY SCREENING: LVEF ${patient.lvef}% (35 or below) with NYHA Class ${patient.nyha_class}. ` +
+            (patient.nyha_class === 'IV'
+                ? 'An ICD is not recommended in NYHA IV refractory to drugs unless the patient is a candidate for CRT, LVAD or transplant (2026 ESC Recommendation Table 6). '
+                : 'ICD for primary prevention (NYHA II-III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy' +
+                  (gaps.length > 0 ? ` (not yet complete here: ${gaps.join(', ').toLowerCase()}); ` : '; ') +
+                  `Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is ${cad ? '' : 'not '}recorded; aetiology and infarction date are not captured: check them. `) +
+            (patient.rhythm === 'Sinus'
+                ? 'CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). '
+                : `CRT recommendations assume sinus rhythm; the recorded rhythm is ${patient.rhythm}, so specialist review is needed. `) +
+            'QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.'
+        );
+    }
+
+    // --- AF: anticoagulation and rate control (2026 ESC Recommendation Table 15). ALERT ONLY; one alert. The tool does not compute CHA2DS2-VA and the form has no anticoagulant
+    // field (the external-medication list holds none), so both are left to the clinician.
+    if (patient.rhythm === 'AFib' || patient.comorbidities.has('Atrial Fibrillation')) {
+        const hfref = patient.lvef > 0 && patient.lvef < 50;
+        const onBb = (patient.current_regimen ?? []).some(r => r.med.drug_class === 'Beta Blocker');
+        clinicalAlerts.push(
+            'ATRIAL FIBRILLATION: oral anticoagulation is Class I, chosen by the CHA2DS2-VA score; a DOAC is preferred over warfarin except with a mechanical valve or moderate-severe mitral stenosis (2026 ESC Recommendation Table 15). ' +
+            'The tool does not compute the score and has no anticoagulant field: confirm one is prescribed. ' +
+            (hfref ? `Rate control: a beta-blocker is first line in stable HFrEF with AF (Class I C)${onBb ? '' : ' and none is on board'}; digoxin should be considered when the rate stays high despite a beta-blocker or when it is not tolerated (Class IIa C).` : '')
         );
     }
 
     // --- D5: Cardiac rehabilitation referral (ACC/AHA 2022 §7.3.4, Class I) ---
     const cardiacRehabEligible = patient.lvef <= 40 &&
         (patient.nyha_class === 'II' || patient.nyha_class === 'III') &&
-        patient.sbp >= 90 && !advancedHFCriteria;
+        patient.sbp >= 90 && !severeAdvancedHF;
     if (cardiacRehabEligible) {
         clinicalAlerts.push(
             'CARDIAC REHABILITATION: HFrEF with NYHA Class ' + patient.nyha_class +

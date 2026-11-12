@@ -329,6 +329,16 @@ export function computeRedundantCurrentMeds(
 // H2 fix: Require ≥2 of 3 hypoperfusion markers to avoid false positives from a single
 // nonspecific finding (e.g., BUN/Cr > 20 alone from dehydration, not true low output).
 // Markers: (1) cool extremities, (2) narrow pulse pressure ≤ 25, (3) prerenal azotemia BUN/Cr > 20.
+/**
+ * Diuretic resistance as the engine defines it (2026 ESC Supplementary Table S7 context): the patient stays congested (more than 1 kg above dry weight) on a loop at its
+ * HIGH daily dose (the entry's own `facts.high_dose_threshold`). Shared by the loop-swap rule and the advanced-HF referral markers.
+ */
+export function isLoopDiureticResistant(patient: Patient, loop: RegimenMed): boolean {
+    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    return loop.med.drug_class === 'Loop Diuretic' && fluidExcess > 1.0
+        && (drugFacts(loop.med).high_dose_threshold ?? Infinity) <= dailyDose(loop);
+}
+
 export function isLowOutputState(patient: Patient): boolean {
     // Invalid BP input can create false pulse-pressure triggers. Treat as not-assessable here.
     if (patient.sbp <= patient.dbp) return false;

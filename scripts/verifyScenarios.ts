@@ -125,6 +125,7 @@ const ASSERTION_TITLE_MARKERS = [
     'HFpEF LVEF 60 No Fabricated Decline',
     'Dual MRA Unknown History Keeps nsMRA',
     'MRA-Source',
+    'Alert-Source',
     'RAAS-Source',
     'Rate-Source',
     'Adjunct-Source',
@@ -2500,6 +2501,53 @@ async function runVerification() {
                 }
             }
 
+
+            // ===== Device / advanced HF / atrial fibrillation alerts (2026 ESC Recommendation Tables 6, 7, 11, 15; alerts only) =====
+            if (scenario.title.includes('Alert-Source')) {
+                const t = scenario.title;
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const dev = clinicalAlerts.filter(a => a.startsWith('DEVICE THERAPY SCREENING'));
+                const adv = clinicalAlerts.filter(a => a.startsWith('ADVANCED HEART FAILURE ALERT'));
+                const af = clinicalAlerts.filter(a => a.startsWith('ATRIAL FIBRILLATION'));
+                if (dev.length > 1 || adv.length > 1 || af.length > 1) fail('more than one alert for the same topic');
+                if (t.includes('Device LVEF 30 NYHA II Ischaemic Sinus')) {
+                    if (dev.length !== 1) fail('no device alert'); else {
+                        const a = dev[0];
+                        if (!a.includes('Class I (B1) if the cardiomyopathy is ischaemic') || !a.includes('40 days') || !a.includes('IIa (B1) if non-ischaemic')) fail('ICD classes / 40-day wording missing');
+                        if (!a.includes('Coronary artery disease is recorded')) fail('does not state CAD is recorded');
+                        if (!a.includes('LBBB with QRS 150 ms or more Class I') || !a.includes('non-LBBB 130-149 ms IIb') || !a.includes('below 130 ms not recommended')) fail('CRT table wording missing');
+                        if (!a.includes('QRS duration and LBBB morphology are not captured')) fail('does not ask the clinician to check QRS / LBBB');
+                        if (!a.includes('at least 3 months of optimal foundational therapy')) fail('3-month optimal therapy wording missing');
+                    }
+                }
+                if (t.includes('Not Recorded Ischaemic')) {
+                    if (!dev[0]?.includes('Coronary artery disease is not recorded')) fail('should say CAD is not recorded and ask to check aetiology');
+                }
+                if (t.includes('NYHA III AFib CRT Needs Sinus')) {
+                    if (!dev[0]?.includes('CRT recommendations assume sinus rhythm')) fail('CRT sinus-rhythm caveat missing in AFib');
+                    if (dev[0]?.includes('LBBB with QRS 150 ms or more Class I')) fail('CRT table quoted for a non-sinus rhythm');
+                    if (af.length !== 1) fail('AF alert missing');
+                }
+                if (t.includes('NYHA IV Refractory')) {
+                    if (!dev[0]?.includes('not recommended in NYHA IV refractory to drugs unless')) fail('NYHA IV ICD exclusion missing');
+                }
+                if (t.includes('Device Not Raised At LVEF 40') && dev.length > 0) fail('device alert at LVEF 40');
+                if (t.includes('Advanced HF LVEF 18')) {
+                    if (adv.length !== 1 || !adv[0].includes('LVEF 18%')) fail('advanced HF alert does not list the LVEF marker');
+                    if (!adv[0].includes('hospitalizations in the past year')) fail('advanced alert does not ask to check hospitalizations');
+                }
+                if (t.includes('NYHA III High NT-proBNP') && (adv.length !== 1 || !adv[0].includes('NYHA III with NT-proBNP 4500'))) fail('NYHA III + high NT-proBNP marker missing');
+                if (t.includes('Diuretic Resistance Marker') && (adv.length !== 1 || !adv[0].includes('diuretic resistance'))) fail('diuretic resistance marker missing');
+                if (t.includes('Advanced HF Stable Not Raised') && adv.length > 0) fail('advanced HF alert raised for a stable NYHA II patient');
+                if (t.includes('AF HFrEF Anticoagulation And Rate Control')) {
+                    const a = af[0];
+                    if (!a || !a.includes('CHA2DS2-VA') || !a.includes('DOAC is preferred') || !a.includes('does not compute the score')) fail('anticoagulation wording / score disclaimer missing');
+                    if (!a?.includes('beta-blocker is first line') || !a.includes('digoxin should be considered') || a.includes('none is on board')) fail('rate-control wording wrong');
+                }
+                if (t.includes('No Beta-Blocker On Board') && !af[0]?.includes('none is on board')) fail('should say no beta-blocker is on board');
+                if (t.includes('AF HFpEF') && (af.length !== 1 || af[0].includes('Rate control'))) fail('HFpEF AF alert should carry anticoagulation only');
+                if (t.includes('No AF Alert In Sinus Rhythm') && af.length > 0) fail('AF alert raised in sinus rhythm');
+            }
 
             // ===== MRA / K+ binder source-verified corrections (verified-mra-binders.md; labels: Inspra, Kerendia, Aldactone, Veltassa, Lokelma) =====
             if (scenario.title.includes('MRA-Source')) {

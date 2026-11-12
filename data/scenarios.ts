@@ -3594,6 +3594,45 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'Lab-Prereq Both Labs Present Unchanged', patient: { ...base, current_regimen: onLisinopril } },
         ];
     })(),
+
+    // ===== Alerts aligned to the 2026 ESC device / advanced HF / atrial fibrillation tables (alerts only; no ranking effect) =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 62, sex: 'Male' as const, sbp: 118, dbp: 72, pulse: 70, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 62, nt_pro_bnp: 1400, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 70, creatinine: 1.1, bun: 20, potassium: 4.4,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            ever_lvef_le_40: 'yes' as const,
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const quad = buildCurrentRegimen([
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+            { name: 'Carvedilol', strength: 25, freq: 'bid' },
+            { name: 'Spironolactone', strength: 25, freq: 'qd' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        return [
+            { title: 'Alert-Source Device LVEF 30 NYHA II Ischaemic Sinus', patient: { ...base, comorbidities: new Set(['HFrEF', 'Coronary Artery Disease']), current_regimen: quad } },
+            { title: 'Alert-Source Device LVEF 30 NYHA II Not Recorded Ischaemic Sinus', patient: { ...base, current_regimen: quad } },
+            { title: 'Alert-Source Device LVEF 30 NYHA III AFib CRT Needs Sinus', patient: { ...base, nyha_class: 'III' as const, rhythm: 'AFib' as const, current_regimen: quad } },
+            { title: 'Alert-Source Device LVEF 30 NYHA IV Refractory', patient: { ...base, nyha_class: 'IV' as const, nt_pro_bnp: 1800, current_regimen: quad } },
+            { title: 'Alert-Source Device Not Raised At LVEF 40', patient: { ...base, lvef: 40, current_regimen: quad } },
+            { title: 'Alert-Source Advanced HF LVEF 18 Marker', patient: { ...base, lvef: 18, nyha_class: 'III' as const, current_regimen: quad } },
+            { title: 'Alert-Source Advanced HF NYHA III High NT-proBNP Marker', patient: { ...base, nyha_class: 'III' as const, nt_pro_bnp: 4500, current_regimen: quad } },
+            { title: 'Alert-Source Advanced HF Diuretic Resistance Marker', patient: { ...base, volume_status: { dry_weight_kg: 80, current_weight_kg: 83, exam_findings: new Set<string>(['Peripheral Edema']) },
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
+            { title: 'Alert-Source Advanced HF Stable Not Raised', patient: { ...base, current_regimen: quad } },
+            { title: 'Alert-Source AF HFrEF Anticoagulation And Rate Control', patient: { ...base, rhythm: 'AFib' as const, current_regimen: quad } },
+            { title: 'Alert-Source AF HFrEF No Beta-Blocker On Board', patient: { ...base, rhythm: 'AFib' as const, current_regimen: [] } },
+            { title: 'Alert-Source AF HFpEF Anticoagulation Only', patient: { ...base, lvef: 58, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFpEF', 'Atrial Fibrillation']), rhythm: 'AFib' as const, current_regimen: [] } },
+            { title: 'Alert-Source No AF Alert In Sinus Rhythm', patient: { ...base, current_regimen: quad } },
+        ];
+    })(),
 ];
 
 // The single clonePatient implementation lives in the engine (services/simulationService.ts)
