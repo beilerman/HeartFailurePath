@@ -131,7 +131,8 @@ const ASSERTION_TITLE_MARKERS = [
     'Diuretic-Source',
     'Final-Gaps',
     'Lab-Prereq',
-    'ESC26-Phenotype'
+    'ESC26-Phenotype',
+    'ESC26-Digoxin'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -352,12 +353,9 @@ async function runVerification() {
                 failures.push('Lokelma recommended without the heart-failure sodium/edema warning');
                 scenarioPassed = false;
             }
-            // Global invariant: the binder "enables RAAS/MRA" bonus never fires when no RAAS inhibitor or MRA is in the regimen.
-            const binderBonusWithoutRaasMra = scoredRegimens.some(r =>
-                !r.regimen.some(m => RAAS_CLASSES.has(m.med.drug_class) || m.med.drug_class === 'MRA' || m.med.drug_class === 'nsMRA')
-                && (r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.startsWith('Enables RAAS'))));
-            if (binderBonusWithoutRaasMra) {
-                failures.push('Binder "enables RAAS/MRA" bonus credited with no RAAS inhibitor or MRA in the regimen');
+            // Global invariant: no regimen is credited an "enables RAAS/MRA" binder bonus (removed 2026-11-11).
+            if (scoredRegimens.some(r => (r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.startsWith('Enables RAAS'))))) {
+                failures.push('A binder "enables RAAS/MRA" bonus was credited (it was removed: no outcome evidence)');
                 scenarioPassed = false;
             }
 
@@ -2299,6 +2297,16 @@ async function runVerification() {
                 if (t.includes('Excludes Finerenone') && excludedMedications.find(e => e.name === 'Finerenone (Kerendia)') === undefined) fail('finerenone must be excluded for improved EF (prior LVEF 35)');
             }
 
+            // 94f. 2026 ESC digoxin (Table 5, Class IIa B1): symptomatic NYHA II-IV, LVEF 40 or below, on optimized foundational therapy; any rhythm.
+            if (scenario.title.includes('ESC26-Digoxin')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const offered = (eligibleAdjuncts ?? []).some(a => /digoxin/i.test(a)) || scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Inotrope'));
+                if (t.includes('Is Offered') && !offered) fail('digoxin must be offered to a symptomatic NYHA II HFrEF patient on optimized foundational therapy');
+                if (t.includes('Is Not Offered') && offered) fail('digoxin offered outside symptomatic LVEF <= 40');
+                if (t.includes('Titratable') && offered) fail('digoxin offered while a pillar can still be up-titrated');
+            }
+
             // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,
             // ivabradine, SGLT2i not recommended, Class III C; a secondary review adds vericiguat). Beta-1 selectivity is read from facts.beta1_selective.
             if (scenario.title.includes('Pregnancy-Source')) {
@@ -3818,22 +3826,12 @@ async function runVerification() {
         }
     }
 
-    console.log('Checking structural invariant: binder "enables RAAS/MRA" bonus requires a RAAS inhibitor or MRA in the regimen...');
+    console.log('Checking structural invariant: potassium binders carry no positive evidence bonus (2026 ESC makes no recommendation; 2022 US Class 2b)...');
     {
-        const lok = MEDICATION_FORMULARY.find(m => m.name === 'Sodium Zirconium Cyclosilicate (Lokelma)')!;
-        const pat = MEDICATION_FORMULARY.find(m => m.name === 'Patiromer')!;
-        const lis = MEDICATION_FORMULARY.find(m => m.name === 'Lisinopril')!;
-        const carv = MEDICATION_FORMULARY.find(m => m.name === 'Carvedilol')!;
-        const mk = (med: typeof lok): { med: typeof lok; dose: typeof lok.available_doses[number]; selected_frequency: string } => ({ med, dose: med.available_doses[0], selected_frequency: 'qd' });
-        const hyperK = { ...SCENARIOS[0].patient, potassium: 5.4 };
-        let ok = true;
-        for (const binder of [lok, pat]) {
-            const f = binder.special_features!.find(x => x.feature.startsWith('Enables RAAS'))!;
-            if (f.criteria(hyperK, [mk(binder), mk(carv)])) ok = false;     // binder + beta-blocker only: no credit
-            if (!f.criteria(hyperK, [mk(binder), mk(lis)])) ok = false;     // binder + RAAS inhibitor: credit
-        }
-        if (!ok) { console.error('  [FAIL] binder bonus criterion does not depend on a RAAS inhibitor / MRA in the regimen'); failed++; }
-        else { console.log('  [PASS] binder bonus requires RAAS/MRA in the resulting regimen.'); passed++; }
+        const binders = MEDICATION_FORMULARY.filter(m => m.drug_class === 'K+ Binder');
+        const rewarded = binders.filter(b => (b.special_features ?? []).some(f => f.points > 0 || (f.points_for_dose && f.points_for_dose(b.available_doses[0].strength) > 0))).map(b => b.name);
+        if (binders.length === 0 || rewarded.length > 0) { console.error(`  [FAIL] binder(s) with a positive special-feature bonus: ${rewarded.join(', ') || '(no binder found)'}`); failed++; }
+        else { console.log(`  [PASS] ${binders.length} binders, none with a positive evidence bonus.`); passed++; }
     }
 
     console.log(`\nVerification Complete.`);

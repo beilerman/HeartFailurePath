@@ -409,11 +409,11 @@ export function analyzeCurrentRegimen(
         if (verStart) addableAdjuncts.push(verStart);
     }
 
-    // Digoxin (verified-rate-control.md rows 18-19; Lanoxin label; 2022 AHA/ACC/HFSA Class 2b, LOE B-R):
-    //  - Sinus rhythm: only for symptomatic HFrEF (LVEF <= 40, NYHA III-IV: engine policy for "symptomatic") that persists
-    //    on maximally tolerated GDMT, defined from the engine's own concepts: no pillar is still addable and no pillar can
-    //    still be titrated up (blocked or contraindicated pillars count as exhausted). A weak recommendation never competes
-    //    with an open guideline pillar. Not offered at LVEF >= 50.
+    // Digoxin (verified-rate-control.md rows 18-19; Lanoxin label; 2026 ESC Table 5: Class IIa, level B1, symptomatic HFrEF with LVEF 40 or below despite
+    // optimal foundational therapy; 2022 AHA/ACC/HFSA Class 2b):
+    //  - Any rhythm: symptomatic (NYHA II-IV) HFrEF with LVEF <= 40 that persists on maximally tolerated GDMT, defined from the engine's own concepts:
+    //    no pillar is still addable and no pillar can still be titrated up (blocked or contraindicated pillars count as exhausted). A weak
+    //    recommendation never competes with an open guideline pillar. Not offered above LVEF 40. (Before 2026-11-11: NYHA III-IV and non-AFib only.)
     //  - Atrial fibrillation: rate control is a labeled indication, offered once the beta-blocker is optimized (none
     //    addable, none titratable up). Offered for any LVEF.
     const GDMT_GROUPS = new Set(['RAAS Inhibitor', 'Beta Blocker', 'MRA', 'SGLT2i']);
@@ -425,7 +425,7 @@ export function analyzeCurrentRegimen(
     const gdmtExhausted = addablePillars.size === 0 && !pillarTitratable;
     const digoxinIndicated =
         (patient.rhythm === 'AFib' && bbOptimized) ||
-        (patient.rhythm !== 'AFib' && patient.lvef <= 40 && isNyhaIIIorIV && gdmtExhausted);
+        (patient.lvef <= 40 && patient.nyha_class !== 'I' && gdmtExhausted);
     if (digoxinIndicated) {
         const digTiers = medTiers.filter(r => r.med.drug_class === 'Inotrope');
         if (digTiers.length > 0 && !currentClasses.has('Inotrope')) {

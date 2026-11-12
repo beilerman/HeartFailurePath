@@ -3335,6 +3335,41 @@ export const SCENARIOS: TestScenario[] = [
         ];
     })(),
 
+    // ===== 2026 ESC digoxin (Table 5, Class IIa B1): symptomatic (NYHA II-IV) HFrEF with LVEF 40 or below despite optimal foundational therapy =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 64, sex: 'Male' as const, sbp: 122, dbp: 74, pulse: 66, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 60, nt_pro_bnp: 1100, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 70, creatinine: 1.1, bun: 18, potassium: 4.4,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            ever_lvef_le_40: 'yes' as const,
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const optimized = buildCurrentRegimen([
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+            { name: 'Carvedilol', strength: 25, freq: 'bid' },
+            { name: 'Spironolactone', strength: 50, freq: 'qd' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        const open = buildCurrentRegimen([
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+            { name: 'Carvedilol', strength: 6.25, freq: 'bid' },
+            { name: 'Spironolactone', strength: 50, freq: 'qd' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        return [
+            { title: 'ESC26-Digoxin NYHA II On Optimized Quad Is Offered', patient: { ...base, current_regimen: optimized } },
+            { title: 'ESC26-Digoxin NYHA I Is Not Offered', patient: { ...base, nyha_class: 'I' as const, current_regimen: optimized } },
+            { title: 'ESC26-Digoxin LVEF 45 Is Not Offered', patient: { ...base, lvef: 45, ever_lvef_le_40: 'no' as const, current_regimen: optimized } },
+            { title: 'ESC26-Digoxin Beta-Blocker Still Titratable Is Not Offered', patient: { ...base, current_regimen: open } },
+        ];
+    })(),
+
     // ===== Laboratory prerequisite (rule E16, 2026-11-11 physician-owner decision): potassium and renal function required before RAAS/MRA new starts and dose increases =====
     ...((): TestScenario[] => {
         const base = {

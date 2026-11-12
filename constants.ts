@@ -137,11 +137,6 @@ const LOKELMA_EDEMA_RATE = (dose: number | string): number => {
 // Wording for the RAAS pregnancy checks: all eight carry a boxed warning for fetal toxicity (replaces the obsolete "Category X").
 const BOXED_FETAL_TOXICITY = 'boxed warning: fetal toxicity';
 
-// A potassium binder's "enables RAAS/MRA optimization" credit only applies when a RAAS inhibitor or MRA is
-// actually in the resulting regimen (DIAMOND enrolled patients on RAASi; it showed enabling, not outcomes).
-const hasRaasOrMra = (regimen?: { med: { drug_class: string } }[]): boolean =>
-    (regimen ?? []).some(r => ['ARNI', 'ACEi', 'ARB', 'MRA', 'nsMRA'].includes(r.med.drug_class));
-
 /** Furoscix oral-furosemide-equivalent multiplier (verified-diuretics.md): infusor 99.6% of IV vs oral about 50-64% -> 2:1. */
 const FUROSCIX_ORAL_EQUIVALENT = 2.0;
 
@@ -1609,11 +1604,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // hyperkalemia, a different setting.
         hemodynamic_effects: (d) => ({ sbp_drop: 0, hr_drop: 0, potassium_change: -0.45 * Math.min(1, (typeof d === 'number' ? d : 8.4) / 25.2) }),
         side_effects: () => ({ hypomagnesemia: 0.053, constipation: 0.072 }), // Veltassa label (N=666): 5.3%, 7.2%
-        special_features: [
-            // DIAMOND supports "enables MRA/RAAS dosing", not outcome benefit; only meaningful with RAASi/MRA in the regimen.
-            // The 50 points are a calibration choice with no sourced basis (left unchanged).
-            { feature: 'Enables RAAS Optimization in Hyperkalemia (DIAMOND trial)', points: 50, criteria: (p, regimen) => p.potassium > 5.0 && hasRaasOrMra(regimen) }
-        ]
+        // No evidence bonus (2026-11-11): DIAMOND supports "enables MRA/RAAS dosing", not outcome benefit; the 2022 US guideline gives binders Class 2b and the
+        // 2026 ESC guideline makes no recommendation. The former 50-point "enables RAAS optimization" credit (about +12 after normalization) rewarded a binder as if
+        // it were outcome therapy. The reactive rescue (rule: projected K+ above 5.3) does not use special_features: it adds the binder from its potassium effect.
+        // A rescued regimen still carries the "Binder Required" residual-risk warning, so it ranks below an equal regimen that needs no rescue.
     },
     {
         name: 'Sodium Zirconium Cyclosilicate (Lokelma)',
@@ -1628,6 +1622,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 { text: 'Drug note (heart failure): Lokelma carries about 400 mg of sodium per 5 g (800 mg per 10 g) and causes dose-related edema (4.4% at 5 g, 5.9% at 10 g, 16.1% at 15 g; placebo 2.4%). Watch weight and edema, limit dietary sodium, and be ready to increase the diuretic.' },
                 { text: 'Drug note: take other oral medicines at least 2 hours before or after Lokelma (its effect on gastric pH changes absorption of some drugs, e.g. furosemide, atorvastatin, dabigatran, tacrolimus).' },
                 { text: 'Drug note: avoid Lokelma in severe constipation, bowel obstruction or impaction, or abnormal post-operative bowel motility (not studied).' },
+                { text: 'Drug note (2026 ESC heart failure guideline): REALIZE-K showed a signal of more heart failure deterioration with sodium zirconium cyclosilicate and the trial was not powered for outcomes; the guideline makes no recommendation for potassium binders. Use it to enable guideline therapy only with the sodium and edema monitoring above.' },
             ],
             monitoring_items: [{
                 test: 'Weight and edema (heart failure)',
@@ -1660,7 +1655,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // Dose-related edema from the label's placebo-controlled trials (placebo 2.4%); long-term uncontrolled 8-11%.
         side_effects: (dose) => ({ edema: LOKELMA_EDEMA_RATE(dose) }),
         special_features: [
-            { feature: 'Enables RAAS/MRA Optimization in Hyperkalemia (HARMONIZE)', points: 50, criteria: (p, regimen) => p.potassium > 5.0 && hasRaasOrMra(regimen) },
+            // No evidence bonus (2026-11-11), see Patiromer: HARMONIZE and DIAMOND show potassium control, not outcome benefit.
             // Sodium load in congested HF: -10 at the 10 g reference, scaled by the dose-related edema rate.
             {
                 feature: 'Sodium load risk in congested HF (about 400 mg sodium per 5 g; dose-related edema)',
@@ -1731,6 +1726,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
             hr_effect_only_in_rhythm: 'AFib',
             // Converted from hard contraindications (the Lanoxin label contraindicates only ventricular fibrillation and
             // hypersensitivity): these now carry a penalized warning and dosing guidance instead of excluding the drug.
+            // 2026 ESC Table 11 / section 6.1: dose to a serum concentration below 1.2 ng/mL (starting dose 62.5 mcg stays subject to the renal and age rules).
+            monitoring_items: [{
+                test: 'Serum digoxin concentration',
+                timing: 'After starting or changing the dose, after any renal change or interacting drug, and when toxicity is suspected (no interval is stated in the sections read)',
+                details: '2026 ESC heart failure guideline: target serum concentration below 1.2 ng/mL (the guideline gives the target; the plasma level guides dosing). Check potassium, magnesium and kidney function with it.',
+            }],
             regimen_warnings: [
                 { text: 'DIGOXIN SAFETY: Wolff-Parkinson-White / accessory pathway (Lanoxin label warning 5.1): in atrial fibrillation with an accessory pathway digoxin can accelerate conduction over the pathway and cause ventricular fibrillation. Avoid unless the pathway has been treated or a specialist directs it.', when: p => p.comorbidities.has(WPW) },
                 { text: 'DIGOXIN SAFETY: Potassium above 5.5 mEq/L. The label has no potassium contraindication (hypokalemia, hypomagnesemia and hypercalcemia are the toxicity predisposers); correct the hyperkalemia, check an ECG, and recheck the digoxin level before relying on this regimen.', when: p => p.potassium > 5.5 },
