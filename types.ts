@@ -219,6 +219,8 @@ export interface MedFacts {
     short_course_addon?: boolean;
     /** Factor converting this route's mg to ORAL furosemide-equivalent mg (Furoscix 2.0: SC/IV furosemide is about twice an oral dose). */
     oral_equivalent_multiplier?: number;
+    /** Chronic-use review prompt: shown (as an alert, never forcing removal) when a patient on this drug is stable and euvolemic (thiazide-type diuretics, 2026 ESC section 7.5.4). */
+    chronic_use_review?: string;
     /** Raises serum uric acid / may precipitate gout (label): a patient with Gout carries the uric-acid caution while this drug is in the regimen. */
     raises_uric_acid?: boolean;
     /** Warn (penalized caution) when this drug is ADDED and the known baseline K+ is below this value. Engine policy, not a label contraindication; `basis` states it. */

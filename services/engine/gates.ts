@@ -121,6 +121,13 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
         // facts.high_dose_threshold is a TOTAL DAILY dose (strength x doses per day), not the per-dose strength.
         return r.med.drug_class === 'Loop Diuretic' && t !== undefined && dailyDose(r) >= t;
     });
+    // Chronic-use review (facts.chronic_use_review, e.g. a thiazide-type diuretic): a stable euvolemic patient on it gets a prompt to review, never a forced removal.
+    if (euvolemic && patient.nyha_class !== 'IV') {
+        current.forEach(r => {
+            const note = drugFacts(r.med).chronic_use_review;
+            if (note) alerts.push(`DIURETIC REVIEW: ${r.med.name} in a stable euvolemic patient. ${note}`);
+        });
+    }
     if (euvolemic && highDoseLoop) {
         alerts.push(`LOOP DIURETIC OVER-TREATMENT: Patient appears euvolemic on a high-dose loop diuretic (${highDoseLoop.med.name} ${highDoseLoop.dose.strength}${highDoseLoop.dose.unit} ${highDoseLoop.selected_frequency} = ${dailyDose(highDoseLoop)} ${highDoseLoop.dose.unit}/day). Down-titrate to the lowest effective dose to avoid over-diuresis, hypovolemia, and prerenal AKI — particularly when initiating an SGLT2i (additive natriuresis).`);
     }

@@ -3274,11 +3274,17 @@ export const SCENARIOS: TestScenario[] = [
                 current_regimen: buildCurrentRegimen([{ name: 'Spironolactone', strength: 25, freq: 'qd' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }]) } },
             { title: 'Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased', patient: { ...base, lvef: 55, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFpEF']), potassium: 5.1,
                 current_regimen: buildCurrentRegimen([{ name: 'Finerenone (Kerendia)', strength: 20, freq: 'qd' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]) } },
-            { title: 'Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose', patient: { ...loopPatient,
+            // Loop-to-loop swaps are offered only when the current loop must go (2026-11-11: TRANSFORM-HF, no outcome difference). The three equivalent-dose scenarios
+            // below therefore declare an allergy to the current loop (a forced swap); the two "Not Swapped" scenarios are the same patients without a reason.
+            { title: 'Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose', patient: { ...loopPatient, allergies: new Set(['Furosemide']),
                 current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
-            { title: 'Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose', patient: { ...loopPatient,
+            { title: 'Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose', patient: { ...loopPatient, allergies: new Set(['Furosemide']),
                 current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
-            { title: 'Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose', patient: { ...loopPatient,
+            { title: 'Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose', patient: { ...loopPatient, allergies: new Set(['Torsemide']),
+                current_regimen: buildCurrentRegimen([{ name: 'Torsemide', strength: 20, freq: 'qd' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
+            { title: 'Final-Gaps Furosemide 80 mg bid Is Not Swapped Without A Reason', patient: { ...loopPatient,
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
+            { title: 'Final-Gaps Torsemide 20 mg qd Is Not Swapped Without A Reason', patient: { ...loopPatient,
                 current_regimen: buildCurrentRegimen([{ name: 'Torsemide', strength: 20, freq: 'qd' }, { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, ...rest]) } },
         ];
     })(),
@@ -3427,6 +3433,29 @@ export const SCENARIOS: TestScenario[] = [
             { title: 'ESC26-Table11 ARNI Start 49/51 After High-Dose ACEi eGFR 70', patient: { ...base, current_regimen: highLisinopril } },
             { title: 'ESC26-Table11 ARNI Start 24/26 At eGFR 45', patient: { ...base, egfr: 45, creatinine: 1.7, current_regimen: highLisinopril } },
             { title: 'ESC26-Table11 ARNI Start 24/26 With Chronic Hypotension', patient: { ...base, sbp: 104, dbp: 64, comorbidities: new Set(['HFrEF', 'Hypotension (Chronic)']), current_regimen: highLisinopril } },
+        ];
+    })(),
+
+    // ===== 2026 ESC thiazide-type diuretics (section 6.1 / 7.5.4): short-term add-on for persistent congestion on a loop; chronic use in a stable patient is reviewed, not forced off =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 70, sex: 'Female' as const, sbp: 126, dbp: 74, pulse: 70, rhythm: 'Sinus' as const,
+            nyha_class: 'III' as const, kccq_score: 50, nt_pro_bnp: 1800, lvef: 30,
+            egfr: 55, creatinine: 1.2, bun: 22, potassium: 4.3,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [],
+            ever_lvef_le_40: 'yes' as const,
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const onLoop = buildCurrentRegimen([{ name: 'Furosemide', strength: 80, freq: 'bid' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]);
+        return [
+            { title: 'ESC26-Diuretic Congested 5 kg On Loop Thiazide Is Short-Term', patient: { ...base, volume_status: { dry_weight_kg: 70, current_weight_kg: 75, exam_findings: new Set(['Edema (2+)']) }, current_regimen: onLoop } },
+            { title: 'ESC26-Diuretic Stable Euvolemic On Metolazone Gets Review', patient: { ...base, nyha_class: 'II' as const, volume_status: { dry_weight_kg: 70, current_weight_kg: 70.2, exam_findings: new Set<string>() },
+                current_regimen: buildCurrentRegimen([{ name: 'Furosemide', strength: 40, freq: 'qd' }, { name: 'Metolazone', strength: 2.5, freq: 'qd' }, { name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
+            { title: 'ESC26-Diuretic Congested Not On Loop No Thiazide', patient: { ...base, volume_status: { dry_weight_kg: 70, current_weight_kg: 75, exam_findings: new Set(['Edema (2+)']) }, current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }]) } },
         ];
     })(),
 

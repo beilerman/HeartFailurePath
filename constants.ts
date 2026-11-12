@@ -147,6 +147,10 @@ const RAAS_K_FACTS = {
 // Wording for the RAAS pregnancy checks: all eight carry a boxed warning for fetal toxicity (replaces the obsolete "Category X").
 const BOXED_FETAL_TOXICITY = 'boxed warning: fetal toxicity';
 
+// 2026 ESC heart failure guideline section 6.1 / 7.5.4: chronic thiazide use in stable patients should be avoided; metolazone 2.5-5 mg is for diuretic resistance or eGFR below 30, with close monitoring.
+const THIAZIDE_CHRONIC_USE_REVIEW = 'Thiazide-type diuretics are for short-term use in diuretic resistance (2026 ESC); chronic use in a stable, euvolemic patient should be avoided. Review whether it is still needed, with sodium, potassium and kidney function checked. This is a prompt to review, not an instruction to stop.';
+const THIAZIDE_SHORT_TERM_NOTE = 'Drug note (2026 ESC heart failure guideline): a thiazide-type diuretic is added for persistent congestion on a loop diuretic (diuretic resistance, or eGFR below 30 with close monitoring); it is short-term. Recheck electrolytes and kidney function within days and stop once decongested.';
+
 /** Furoscix oral-furosemide-equivalent multiplier (verified-diuretics.md): infusor 99.6% of IV vs oral about 50-64% -> 2:1. */
 const FUROSCIX_ORAL_EQUIVALENT = 2.0;
 
@@ -1808,7 +1812,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 timing: 'Within about 3-5 days of starting, then at regular intervals (the day count is practice-based, not label text)',
                 details: 'Label: rapid-onset severe hyponatremia and/or hypokalemia can occur, rarely even after the initial doses, and hyponatremia can occur at any time during long-term therapy; check potassium at regular intervals. Hypokalemia is dose-related and is a hazard with digoxin; adding it to a loop diuretic can cause large fluid and electrolyte losses.',
             }],
+            chronic_use_review: THIAZIDE_CHRONIC_USE_REVIEW,
             regimen_warnings: [
+                { text: THIAZIDE_SHORT_TERM_NOTE },
                 { text: 'Drug note: metolazone can cause severe hyponatremia and hypokalemia, sometimes within the first doses, especially added to a loop diuretic. Check sodium and potassium soon after starting and at regular intervals (Zaroxolyn label).' },
             ],
         },
@@ -1838,7 +1844,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Chlorthalidone',
         drug_class: 'Thiazide-like Diuretic',
-        facts: { raises_uric_acid: true }, // label: hyperuricemia, frank gout may be precipitated, dose-related uric acid rise
+        facts: { raises_uric_acid: true, chronic_use_review: THIAZIDE_CHRONIC_USE_REVIEW, regimen_warnings: [{ text: THIAZIDE_SHORT_TERM_NOTE }] }, // label: hyperuricemia, frank gout may be precipitated, dose-related uric acid rise
         // 12.5 mg is half of a 25 mg tablet (label tablets 25 and 50 mg; the edema dose on the label is 30-100 mg daily).
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'half of a 25 mg tablet', frequency_options: ['qd'] },
@@ -1865,7 +1871,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Hydrochlorothiazide',
         drug_class: 'Thiazide-like Diuretic',
-        facts: { raises_uric_acid: true }, // label: acute gout may be precipitated
+        facts: { raises_uric_acid: true, chronic_use_review: THIAZIDE_CHRONIC_USE_REVIEW, regimen_warnings: [{ text: THIAZIDE_SHORT_TERM_NOTE }] }, // label: acute gout may be precipitated
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // label strengths 12.5, 25, 50 mg
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },

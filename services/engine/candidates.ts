@@ -266,11 +266,12 @@ export function analyzeCurrentRegimen(
         // class is not how therapy is escalated — you up-titrate the existing agent. Offer such a
         // swap ONLY when the current agent is contraindicated (then it must be replaced). Otherwise
         // skip the swap so dose escalation happens via titrate_up of the current agent. (RAAS keeps
-        // swaps for the ACEi/ARB→ARNI guideline upgrade; loop diuretics keep swaps for diuretic
-        // resistance / Furoscix.)
+        // swaps for the ACEi/ARB→ARNI guideline upgrade in HFrEF.) Loop diuretics join the set (2026-11-11): TRANSFORM-HF found no outcome
+        // difference between torsemide and furosemide, so a loop is titrated to the volume response, not swapped; a loop-to-loop swap is offered only
+        // when the current loop must go (allergy, intolerance, contraindication). A short-course add-on (Furoscix) is never a swap target.
         // GLP-1 Therapy joins the set (verified-sglt2-glp1-adjuncts.md): a new GLP-1 start begins at its lowest labeled tier, so a lateral swap to the
         // other agent mid-escalation (e.g. semaglutide 1.7 mg -> tirzepatide 2.5 mg) is not how therapy is escalated; swap only when the current agent must go.
-        const TITRATE_NOT_SWAP_GROUPS = new Set(['Beta Blocker', 'MRA', 'SGLT2i', 'GLP-1 Therapy']);
+        const TITRATE_NOT_SWAP_GROUPS = new Set(['Beta Blocker', 'MRA', 'SGLT2i', 'GLP-1 Therapy', 'Loop Diuretic']);
         if (TITRATE_NOT_SWAP_GROUPS.has(group) && !contraindicatedCurrentMeds.has(current.med.name)) return;
         const sourceContraindicated = contraindicatedCurrentMeds.has(current.med.name);
         const groupTiers = (tiersByGroup.get(group) || []).filter(t => startTiers.includes(t));
@@ -289,8 +290,8 @@ export function analyzeCurrentRegimen(
         if (group === 'RAAS Inhibitor' && !sourceContraindicated) {
             candidates = isHFpEF ? [] : candidates.filter(t => t.med.drug_class === 'ARNI' && current.med.drug_class !== 'ARNI');
         }
-        // Loop-to-loop swap at an EQUIVALENT total daily dose (facts.verified_furosemide_equivalent_per_mg on both agents): the swap-in is the nearest
-        // tier at or just above the equivalent daily dose, not the new loop's lowest tier. An agent without a verified equivalence keeps its lowest tier.
+        // Forced loop-to-loop swap at an EQUIVALENT total daily dose (facts.verified_furosemide_equivalent_per_mg on both agents): the swap-in is the NEAREST
+        // tier to the equivalent daily dose (not the new loop's lowest tier), never above the drug's declared daily maximum. An agent without a verified equivalence keeps its lowest tier.
         const fromEquivalent = drugFacts(current.med).verified_furosemide_equivalent_per_mg;
         if (fromEquivalent !== undefined) {
             const equivalent = new Map<string, RegimenMed | null>();
@@ -517,9 +518,9 @@ export function analyzeCurrentRegimen(
 }
 
 /**
- * The tier of `to` nearest at or just above the furosemide-equivalent TOTAL DAILY dose of `from` (both agents declare
- * facts.verified_furosemide_equivalent_per_mg), at the current dosing frequency where the tier allows it and never above the declared daily
- * maximum. If no tier reaches the equivalent dose, the highest eligible one. Null when `to` has no verified equivalence.
+ * The tier of `to` NEAREST to the furosemide-equivalent TOTAL DAILY dose of `from` (both agents declare facts.verified_furosemide_equivalent_per_mg), at the
+ * current dosing frequency where the tier allows it and never above the declared daily maximum (frequenciesWithinMax). A tie between two tiers goes to the
+ * lower dose (the safer side). Null when `to` has no verified equivalence. (Before 2026-11-11: nearest at or above.)
  */
 export function equivalentSwapTier(from: RegimenMed, to: Medication, patient: Patient, fromEquivalent: number): RegimenMed | null {
     const toEquivalent = drugFacts(to).verified_furosemide_equivalent_per_mg;
@@ -527,18 +528,16 @@ export function equivalentSwapTier(from: RegimenMed, to: Medication, patient: Pa
     if (toEquivalent === undefined || Number.isNaN(fromDaily)) return null;
     const wantDaily = fromDaily * fromEquivalent / toEquivalent;
     const wantFreq = dosesPerDay(from.selected_frequency);
+    // Every allowed dose x frequency combination (within the declared daily maximum) is a candidate; the nearest total daily dose wins, a tie goes to the lower
+    // dose, then to the frequency closest to the current one.
     const options: RegimenMed[] = [];
     eligibleDoses(to, patient).forEach(dose => {
-        const allowed = frequenciesWithinMax(to, dose.frequency_options, dose.strength);
-        if (allowed.length === 0) return;
-        const notAbove = allowed.filter(f => dosesPerDay(f) <= wantFreq);
-        const f = notAbove.length > 0 ? notAbove.sort((a, b) => dosesPerDay(b) - dosesPerDay(a))[0] : allowed.sort((a, b) => dosesPerDay(a) - dosesPerDay(b))[0];
-        options.push({ med: to, dose, selected_frequency: f });
+        frequenciesWithinMax(to, dose.frequency_options, dose.strength).forEach(f => options.push({ med: to, dose, selected_frequency: f }));
     });
     if (options.length === 0) return null;
     const daily = (r: RegimenMed) => dailyDose(r);
-    const atOrAbove = options.filter(r => daily(r) >= wantDaily - 1e-9).sort((a, b) => daily(a) - daily(b));
-    return atOrAbove[0] ?? options.sort((a, b) => daily(b) - daily(a))[0];
+    return [...options].sort((a, b) => Math.abs(daily(a) - wantDaily) - Math.abs(daily(b) - wantDaily) || daily(a) - daily(b)
+        || Math.abs(dosesPerDay(a.selected_frequency) - wantFreq) - Math.abs(dosesPerDay(b.selected_frequency) - wantFreq))[0];
 }
 
 export const safeSlice = (arr: RegimenMed[], n = 2) => arr.slice(0, n);

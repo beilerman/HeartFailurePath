@@ -134,7 +134,8 @@ const ASSERTION_TITLE_MARKERS = [
     'ESC26-Phenotype',
     'ESC26-Digoxin',
     'ESC26-RAAS-K',
-    'ESC26-Table11'
+    'ESC26-Table11',
+    'ESC26-Diuretic'
 ];
 
 function classGroupForVisitLimit(drugClass: string): string {
@@ -2357,6 +2358,24 @@ async function runVerification() {
                 if (t.includes('Chronic Hypotension') && (arni.length === 0 || arni.some(x => x !== '24/26'))) fail(`ARNI start with chronic hypotension must be 24/26, got ${arni.join(',')}`);
             }
 
+            // 94i. 2026 ESC thiazide-type diuretics: a short-term add-on only for persistent congestion on a loop; a stable euvolemic patient on one is prompted to review, never forced off.
+            if (scenario.title.includes('ESC26-Diuretic')) {
+                const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
+                const t = scenario.title;
+                const thiazideOffered = (eligibleAdjuncts ?? []).some(a => /thiazide|metolazone|chlorthalidone/i.test(a)) || anyRegimenHasClass('Thiazide-like Diuretic');
+                if (t.includes('Thiazide Is Short-Term')) {
+                    if (!thiazideOffered) fail('a thiazide-type add-on must be available for persistent congestion on a loop');
+                    const texts = scoredRegimens.filter(r => r.regimen.some(m => m.med.drug_class === 'Thiazide-like Diuretic')).flatMap(r => r.warnings ?? []);
+                    if (texts.length > 0 && !texts.some(w => /short-term/.test(w) && /electrolytes and kidney function/.test(w))) fail('a regimen with a thiazide lacks the short-term / recheck electrolytes and kidney function note');
+                }
+                if (t.includes('Gets Review')) {
+                    if (!clinicalAlerts.some(a => a.startsWith('DIURETIC REVIEW: Metolazone'))) fail('a stable euvolemic patient on metolazone must get the review prompt');
+                    if (excludedMedications.some(e => e.name === 'Metolazone')) fail('the review prompt must not turn into an exclusion of the thiazide');
+                }
+                if (t.includes('Not On Loop No Thiazide') && thiazideOffered) fail('a thiazide-type add-on is offered without a loop diuretic on board');
+                if (!t.includes('Gets Review') && clinicalAlerts.some(a => a.startsWith('DIURETIC REVIEW'))) fail('the review prompt fired for a patient who is not stable and euvolemic on a thiazide');
+            }
+
             // 94d. Pregnancy (2026 ESC heart failure guideline Table 27: switch non-selective beta-blockers to beta-1-selective, Class I C; RAAS inhibitors, MRAs,
             // ivabradine, SGLT2i not recommended, Class III C; a secondary review adds vericiguat). Beta-1 selectivity is read from facts.beta1_selective.
             if (scenario.title.includes('Pregnancy-Source')) {
@@ -3252,6 +3271,24 @@ async function runVerification() {
                 if (t.includes('Finerenone 20 mg Potassium 5.1 Not Increased')) {
                     if (upOf('Finerenone (Kerendia)').length > 0) fail('Finerenone 20 mg is offered an increase at potassium 5.1 (label: increase to 40 mg only if potassium is below 5.0)');
                     if (!clinicalAlerts.some(a => a.startsWith('POTASSIUM HOLD ON FINERENONE') && a.includes('Kerendia label'))) fail('No finerenone potassium-hold alert citing the label');
+                }
+                if (t.includes('Is Not Swapped Without A Reason')) {
+                    // TRANSFORM-HF: no outcome difference between torsemide and furosemide, so a loop is titrated, not swapped, unless it must go.
+                    if (analysis.swappable.some(x => x.from.med.drug_class === 'Loop Diuretic')) fail('A loop-to-loop swap is offered although the current loop need not change');
+                    if (scoredRegimens.some(r => r.modification_set?.modifications.some(m => m.action === 'swap' && m.source?.med.drug_class === 'Loop Diuretic'))) fail('A displayed option swaps one loop for another without a reason');
+                }
+                if (t.includes('To Bumetanide Equivalent Daily Dose') || t.includes('To Torsemide Equivalent Daily Dose') || t.includes('To Furosemide Equivalent Daily Dose')) {
+                    // Nearest tier to the equivalent dose, never above the declared daily maximum (checked for every loop pair below and by the daily-maximum invariant).
+                    const nearestDiffers = equivalentSwapTier(rm('Bumetanide', 2, 'tid'), med('Torsemide'), P, 40);
+                    if (!nearestDiffers || dailyDose(nearestDiffers) !== 100) fail(`Bumetanide 2 mg tid (240 mg furosemide) -> torsemide must take the NEAREST tier to the equivalent 120 mg/day (100 mg daily; at-or-above would give 200), found ${nearestDiffers ? dailyDose(nearestDiffers) : 'none'}`);
+                    const tie = equivalentSwapTier(rm('Torsemide', 100, 'qd'), med('Furosemide'), P, 2);
+                    if (!tie || dailyDose(tie) !== 160) fail(`Torsemide 100 mg daily (200 mg furosemide) -> furosemide: a tie between 160 and 240 goes to the lower dose, found ${tie ? dailyDose(tie) : 'none'}`);
+                    for (const from of ['Furosemide', 'Torsemide', 'Bumetanide']) for (const to of ['Furosemide', 'Torsemide', 'Bumetanide']) {
+                        if (from === to) continue;
+                        const top = med(from).available_doses[med(from).available_doses.length - 1];
+                        const sw = equivalentSwapTier({ med: med(from), dose: top, selected_frequency: top.frequency_options[top.frequency_options.length - 1] }, med(to), P, med(from).facts!.verified_furosemide_equivalent_per_mg!);
+                        if (sw && dailyDose(sw) > (med(to).facts!.max_daily_dose ?? Infinity)) fail(`${from} -> ${to} swap lands above ${to}'s declared maximum daily dose`);
+                    }
                 }
                 if (t.includes('To Bumetanide Equivalent Daily Dose')) {
                     const swaps = analysis.swappable.find(x => x.from.med.name === 'Furosemide');

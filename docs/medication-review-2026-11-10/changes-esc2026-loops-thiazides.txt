@@ -1,0 +1,30 @@
+# Ranking change: loop diuretics titrate, do not swap; nearest-tier forced swaps; thiazide notes, 2026-11-11
+
+Changes: (1) Loop diuretics join the "titrate, do not swap" groups: a loop-to-loop swap is offered only when the current loop must go (allergy, intolerance,
+contraindication). TRANSFORM-HF found no outcome difference between torsemide and furosemide, yet furosemide to torsemide swaps were winning by fractions of a
+point on an unverified effect curve. (2) A forced swap takes the tier NEAREST to the equivalent total daily dose (every allowed dose x frequency within the
+declared daily maximum; ties go to the lower dose), not "at or above". (3) Thiazide-type diuretics: short-term / recheck electrolytes and kidney function note on
+every thiazide entry; a stable euvolemic patient (NYHA I-III, within 1 kg of dry weight) on one gets a DIURETIC REVIEW alert, never a forced removal. The add-on stays
+limited to more than 4 kg above dry weight with a loop on board.
+
+`npm run ranking:diff` against the golden snapshot before the update (861 runs). Top pick changed in 52 runs, all LVEF <= 40 and all in the Diuretic-Source and
+Final-Gaps loop scenarios or the new ones: the leading regimen now keeps the patient's own loop (furosemide 40/80 mg, bumetanide 2 mg bid) where the previous
+commit's equivalence work had made a torsemide swap lead (for example "Furosemide 80 mg tid High-Dose Alert": torsemide 100 mg bid -> furosemide 80 mg tid kept).
+Fixture note: the three "Final-Gaps ... Equivalent Daily Dose" scenarios now declare an allergy to the current loop (so the swap is forced); that also removes
+Furoscix (furosemide) from their lists, which explains the lost Furoscix in their leads. Eligibility/alert differences are those allergy fixtures (9 runs) plus the
+new scenario keys; per-regimen warnings changed in 6 regimens (the new thiazide short-term note).
+Nothing clinically odd found: no pillar lost; no loop above its declared maximum (a verify check covers every loop pair).
+
+
+Ranking diff vs golden snapshot: 861 runs
+  (a) top pick identical:        809 / 861
+  (b) displayed pick set same:   795 / 861
+  (c) pick order identical:      795 / 861
+  (d) eligibility + alerts identical: NO (39 differences)
+  (e) per-regimen warnings identical: NO (6 regimens)
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 52 of 696 runs
+    LVEF >= 50: 0 of 108 runs
