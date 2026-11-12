@@ -11,10 +11,7 @@ all of 6.1 (medical therapy, Table 11 doses, Recommendation Table 5), 7.1-7.2 an
 (decompensated HF definition, ambulatory decongestion), 10.1-10.4 (obesity, diabetes, CKD, iron),
 10.9 (other comorbidities), 12.1 (pregnancy).
 
-**What was NOT read:** the Supplementary Data file, which holds the practical-guidance tables S4-S9
-(per-drug cautions, what to do for low heart rate, potassium and creatinine thresholds). Sections on
-devices, advanced HF, arrhythmia, valves and amyloidosis were not read. Anything below marked
-"supplement" is therefore still unverified.
+**What was NOT read:** Supplementary Table S26 (pregnancy care), the decompensated-HF practical tables, and the guideline's sections on devices, advanced HF, arrhythmia, valves and amyloidosis. The Supplementary practical tables S3-S9 WERE read later the same day (section at the end of this file); they state that they are expert opinion.
 
 These are paraphrased notes, not quotations, except where short phrases are in quotation marks.
 
@@ -137,3 +134,72 @@ recommendation there rests on subgroup and meta-analysis data.
 - The US guideline gives potassium binders Class 2b; ESC 2026 gives no recommendation.
 - The US guideline's MRA start criterion is potassium below 5.0 and eGFR above 30; ESC 2026 says
   caution at 5.0 or above and notes no trial data below eGFR 25.
+
+## Supplementary Data: practical guidance tables S3-S9 (read 2026-11-11)
+
+Downloaded from the publisher's article page (`ehag100_supplementary_data.pdf`, 49 pages) and read:
+Tables S3 (MRA characteristics), S4 (ACEi/ARB), S5 (ARNI), S6 (beta-blockers), S7 (diuretics),
+S8 (MRA), S9 (SGLT2i). The tables state that they are expert opinion based on trials and clinical
+experience. This replaces the "supplement not read" caveat above for these tables only; Table S26
+(pregnancy care) and the decompensated-HF tables were not read.
+
+**ACEi/ARB (S4) and ARNI (S5)**
+- Cautions / seek specialist advice: potassium above 5.2; eGFR below 30; symptomatic or severe
+  asymptomatic hypotension (systolic below 90). ARNI lists symptomatic hypotension or systolic below
+  90 as a contraindication (PARADIGM-HF enrolled above 95).
+- Check renal function and electrolytes before starting; recheck 1-2 weeks after initiation and 1-2
+  weeks after the final titration; then every 4-6 months.
+- Without close monitoring, double the dose at intervals of not less than 2 weeks.
+- Acceptable after starting: an eGFR decrease of less than 30%; potassium up to 5.5.
+- Greater rises that persist after stopping other offending drugs: halve the dose and recheck in 1-2
+  weeks. ACEi/ARB: stop and seek specialist advice if potassium rises above 5.5, creatinine rises by
+  more than 100%, or eGFR falls below 20. (The table gives both "halve" and "stop" for potassium
+  above 5.5; the main text says down-titration or discontinuation for "above 5.5 or above 6".)
+- "Very rarely necessary" to stop; clinical deterioration is likely on withdrawal.
+- Asymptomatic low blood pressure usually needs no change.
+- ARNI start: 24/26 or 49/51 mg bid if ACEi/ARB-naive (by clinical assessment); 49/51 if on a target
+  ACEi/ARB dose; 24/26 if not on a target dose; consider 24/26 at systolic 100-110, in naive patients,
+  and in CKD.
+- Diltiazem and verapamil are potentially harmful in HFrEF. Renin inhibitors are not recommended.
+  ACEi + ARB + MRA triple combination is not recommended.
+
+**Beta-blockers (S6)**
+- Contraindications: second- or third-degree AV block without a pacemaker; critical limb ischaemia;
+  asthma is a relative contraindication (cardioselective agents under specialist supervision); COPD
+  is not a contraindication.
+- Cautions / seek specialist advice before starting: NYHA IV; current or recent (under 4 weeks)
+  exacerbation; heart block; heart rate below 50; persisting congestion or systolic below 90 (achieve
+  euvolaemia first).
+- Low heart rate on treatment: "if below 50 b.p.m. and worsening symptoms", lower the dose (stop only
+  for severe deterioration, rarely necessary); review other rate-slowing drugs; ECG to exclude heart
+  block. Do not stop suddenly.
+- Worsening congestion: increase the diuretic first; halve the beta-blocker if that fails.
+- Without close monitoring, double the dose at intervals of not less than 2 weeks.
+
+**Diuretics (S7)**
+- Loop first. Long-term thiazide use should be avoided. Metolazone or a thiazide with a loop is
+  "usually only needed for a short period" with careful blood chemistry monitoring.
+- Usual daily doses: furosemide 40-240 mg (start 20-40); bumetanide 1-5 mg (start 0.5-1);
+  torasemide 10-20 mg (start 5-10); metolazone 2.5-10 mg; hydrochlorothiazide 12.5-100 mg.
+- Cautions: potassium 3.5 or below; eGFR below 30; systolic below 90.
+- Recheck chemistry 1-2 weeks after starting and after any increase.
+- Diuretic resistance: increase dose; consider switching furosemide to bumetanide or torasemide; add
+  or increase an MRA; add a thiazide/metolazone; dose twice daily.
+- Rising creatinine: withhold the MRA if eGFR falls below 20; stop the thiazide if on loop + thiazide.
+- Gout: consider allopurinol prophylaxis; colchicine for acute gout; avoid NSAIDs.
+
+**MRA (S8, S3)**
+- Caution before initiation: potassium above 5.0 ("extremely important to adhere to these cautions
+  and doses to avoid serious hyperkalaemia"); eGFR below 30 (steroidal) or below 25 (finerenone).
+- If potassium rises above 5.5: halve the dose and monitor closely. Above 6.0: interrupt immediately
+  and seek specialist advice.
+- If eGFR decreases by more than 30%: halve the dose and monitor closely.
+- Recheck chemistry 1-2 weeks after initiation and after the final titration; then every 4-6 months.
+- Strong CYP3A4 inhibitors interact with eplerenone. Gynaecomastia on spironolactone: consider
+  switching to eplerenone or finerenone.
+
+**SGLT2i (S9)**
+- Contraindications: eGFR below 20; type 1 diabetes (not approved); pregnancy and breastfeeding.
+- Caution: symptomatic hypotension with systolic below 95.
+- If eGFR falls below 20 on treatment: look for other causes; continuation is advised with close
+  monitoring.

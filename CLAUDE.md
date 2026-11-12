@@ -18,7 +18,7 @@ npm run test             # alias for verify
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone QA, not in CI)
-npm run golden           # golden master: every scenario x 3 insurance tiers (744 runs) must be byte-identical
+npm run golden           # golden master: every scenario x 3 insurance tiers (894 runs) must be byte-identical
 npm run gate             # typecheck + golden + verify + all three audits (full pre-release gate)
 npm run ci               # typecheck + build + golden + verify
 npm run preview          # preview production build
@@ -149,7 +149,7 @@ Full description: `docs/scoring-architecture.md`. All numbers live in `services/
   eligible adjuncts; 60% credit below target dose). "Achievable" excludes therapies filtered out
   of the formulary — never penalize a contraindicated therapy.
 - Special-feature `points` calibration: outcome-level benefits are large (A-HeFT 60, FINEARTS 45,
-  GLP-1 40 (both agents), iron 40 (20 at LVEF 41-49), binders 50, TOPCAT HFpEF 18); intra-class tolerability tiebreakers are
+  GLP-1 40 (both agents), iron 40 (20 at LVEF 41-49), binders 0 (no bonus since 2026-11-11), TOPCAT HFpEF 18); intra-class tolerability tiebreakers are
   small (eplerenone "no gynecomastia" 3). The `/regimenLength` normalization amplifies a lone
   special drug, so a tolerability footnote must stay small.
 - Scores before and after 2026-11-10 are not comparable (the old scale had 30 points of headroom
@@ -157,10 +157,13 @@ Full description: `docs/scoring-architecture.md`. All numbers live in `services/
 
 Guideline domain behavior:
 
-- HFrEF (`LVEF <= 40`): quad pillars (RAAS, BB, MRA, SGLT2i)
-- HFmrEF (`41-49`): weighted hybrid scoring
-- HFpEF (`>= 50`): SGLT2i-first pathway with adjunct logic
-- HFimpEF preservation: continue full HFrEF logic when prior reduced EF is known or strongly suspected
+Two phenotypes since 2026-11-11 (2026 ESC guideline; HFmrEF removed; `classifyPhenotype` in `services/engine/domains.ts`):
+
+- HFrEF (`LVEF < 50`, improved EF, or current LVEF >= 50 with a recorded numeric prior LVEF < 50): quad pillars (RAAS, BB, MRA, SGLT2i), all Class I. LVEF 41-49 is treated as reduced EF per the 2026 ESC guideline; the 2022 AHA/ACC/HFSA guideline keeps a separate mildly reduced category with weaker recommendations
+- HFpEF (`>= 50` and never below 50): SGLT2i + MRA, both Class I (steroidal or finerenone); a RAAS inhibitor is Class IIb (small credit, never a gap, slot or new start)
+- HFimpEF preservation: continue full HFrEF logic when prior reduced EF (40 or lower) is known or strongly suspected
+- Drug-specific LVEF criteria keep their own evidence thresholds (digoxin/H-ISDN 40, ivabradine 35, vericiguat 45, GLP-1 45/50, IV iron < 50, finerenone label 40)
+- ESC alignment details (RAAS potassium and eGFR-20 rules, Table 11 doses, loops, heart-rate thresholds, no binder bonus): `docs/scoring-architecture.md` last section and `docs/evidence-matrix.md` rows HF-ESC-001..011. ESC Supplementary tables S3-S9 were read; S26, decompensated-HF tables and device/advanced-HF/arrhythmia sections were not
 
 ## Safety Logic and Hard Blocks
 
@@ -205,7 +208,7 @@ Implemented high-priority safeguards include:
   - continuation: `facts.k_continuation` on spironolactone/eplerenone/finerenone: K+ 5.5-5.9 forces a ONE-STEP reduction (withhold at the lowest dose), K+ >= 6.0 withholds (removal); restart low once K+ < 5.5
   - eplerenone/finerenone contraindicated with strong CYP3A inhibitors (`STRONG_CYP3A_INHIBITORS`); eplerenone capped at 25 mg with a moderate inhibitor (`interaction_dose_cap`) and contraindicated at eGFR <= 30; finerenone/spironolactone contraindicated in adrenal insufficiency
   - `Medication.start_dose_for(patient)` is the opt-in per-drug cap on the dose a NEW START may begin at (finerenone 10/20 mg by eGFR, spironolactone 12.5/25 mg by eGFR); finerenone's target comes from `is_target_dose_for` (20 mg if eGFR < 60, else 40 mg)
-  - binders: prevention potassium effects (patiromer -0.1; Lokelma -0.3/-0.6/-0.7 at 5/10/15 g), tried lowest dose first across binders; the "+50 enables RAAS/MRA" bonus needs a RAASi/MRA in the regimen; drug-data warnings/monitoring come from `facts.regimen_warnings` / `facts.monitoring_items` (warning text starts "Drug note" and is not score-penalized)
+  - binders: prevention potassium effects (patiromer -0.1; Lokelma -0.3/-0.6/-0.7 at 5/10/15 g), tried lowest dose first across binders; binders carry no evidence bonus (removed 2026-11-11); drug-data warnings/monitoring come from `facts.regimen_warnings` / `facts.monitoring_items` (warning text starts "Drug note" and is not score-penalized)
 - RAAS rules (2026-11-10, `docs/medication-review-2026-11-10/verified-raas.md`):
   - every ACEi/ARB/ARNI declares `start_dose_for` (new starts begin at the lowest tier; the ARNI uses `facts.start_dose_exact`: 24/26 mg bid when not on an ACEi/ARB or on a low dose (`facts.low_dose_max_daily_mg`), eGFR < 30/blank, or Child-Pugh B; otherwise 49/51; 97/103 only by titration) and verify fails any RAAS add/swap-in above it (root cause of the old "Add 97/103" bug: `restrictToStartTiers` passed through any drug without the hook)
   - hepatic: "Liver Disease (Child-Pugh B/C)" excludes the ARNI (severity unknown); the extra option "Liver Disease: Child-Pugh B confirmed (not C)" lifts it with a reduced start; all other liver-gated drugs treat either option as liver disease (`hasChildPughBorC`)
@@ -214,10 +217,10 @@ Implemented high-priority safeguards include:
   - generic sacubitril/valsartan pricing (cash ~$60 with a discount card)
 - Rate-control rules (2026-11-10, `docs/medication-review-2026-11-10/verified-rate-control.md`):
   - `facts.hr_continuation` (`hrContinuationAction` in `regimenUtils.ts`): HR below `reduce_below` on an established beta-blocker/ivabradine forces a ONE-STEP reduction via `forcedReduceNames` (exact next-lower strength on the full ladder, `forcedReduceExactStep`), withhold at the lowest dose; no up-titration below `no_uptitration_below`; skipped in a "Paced" rhythm; alert `BRADYCARDIA ON <DRUG>` from `gates.ts`. Beta-blockers: 55/60 (carvedilol 55 is the label's; the rest is engine policy). Ivabradine: 50/61 (label)
-  - beta-blocker NEW-start block below HR 55 is initiation-only (`bbStartBradycardiaCheck`, engine policy); AV block 2/3 and sick sinus syndrome without a pacemaker (`SICK_SINUS` comorbidity) still force removal
+  - beta-blocker NEW-start block is initiation-only (`bbStartBradycardiaCheck`): below HR 55 for carvedilol (label), below 50 for metoprolol succinate and bisoprolol (2026 ESC S6); the up-titration hold below 60 is engine policy; AV block 2/3 and sick sinus syndrome without a pacemaker (`SICK_SINUS` comorbidity) still force removal
   - carvedilol effect ratio capped at 25 mg bid; carvedilol/metoprolol/bisoprolol equal at target (lvef 9, NT-proBNP -22%, KCCQ 6, LVEDD -10%, structure 35); carvedilol hepatic CI only for unspecified B/C (B confirmed = caution); metoprolol has no hepatic CI; bisoprolol tiers 2.5/5/10 (1.25 dropped, US strengths)
   - ivabradine: label contraindications in `constants.ts`, exact start tier via `start_dose_for` (2.5 mg for conduction defect / amiodarone / digoxin, else 5), "maximally tolerated" beta-blocker in `candidates.ts` (`bbMaxTolerated`), HR >= 70 is initiation only (bonus kept while on the drug)
-  - digoxin: indication gate in `candidates.ts` (sinus: LVEF <= 40, NYHA III-IV, no addable/below-target pillar; AFib: beta-blocker optimized); VF is the CI; WPW, K+ > 5.5, eGFR < 15 are penalized warnings; `facts.hr_effect_only_in_rhythm: 'AFib'`; NT-proBNP effect 0
+  - digoxin: indication gate in `candidates.ts` (any rhythm: LVEF <= 40, NYHA II-IV, no addable/below-target pillar, ESC IIa B1; AFib: beta-blocker optimized); VF is the CI; WPW, K+ > 5.5, eGFR < 15 are penalized warnings; `facts.hr_effect_only_in_rhythm: 'AFib'`; NT-proBNP effect 0
 - SGLT2i / GLP-1 / vericiguat / IV iron / H-ISDN rules (2026-11-10, `docs/medication-review-2026-11-10/verified-sglt2-glp1-adjuncts.md`; numbers marked engine policy or interpolated are listed in `docs/evidence-matrix.md`):
   - effects are PLACEBO-ADJUSTED: semaglutide KCCQ 7.8 (7.3 in type 2 diabetes), tirzepatide 6.9; GLP-1 weight is `weight_reduction_percent` of the patient's weight (`patientChfEffects` in `effects.ts`, `facts.t2dm_scale`); SGLT2i KCCQ 2.5 / 2.0; vericiguat KCCQ 0.5
   - GLP-1 doses: every labeled tier is offered (`facts.titrate_one_step`: the tier sampler returns all tiers and `titratableUp` offers only the next one); a new start is the exact lowest tier (`start_dose_for` + `start_dose_exact`); GLP-1 Therapy is in `TITRATE_NOT_SWAP_GROUPS`; tirzepatide uses a saturating dose map, semaglutide keeps the linear one; both agents are offered (no cross-trial "best" pick)
@@ -296,9 +299,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 263`):
+Current regression scope (the harness's printed count is authoritative — on 2026-11-11 `Passed: 314`):
 
-- 248 clinical scenarios + 15 structural invariants (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
+- 298 clinical scenarios + 16 structural checks (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a one-step titration always exists unless a rule blocks it)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations

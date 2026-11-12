@@ -132,7 +132,7 @@ const domainDetails: Record<ScoreDomainKey, { color: string; description: string
     guideline: {
         color: 'text-rose-700',
         description: 'Phenotype-specific alignment with major HF guideline pathways, with extra credit for target doses.',
-        bullets: ['HFrEF: RAAS inhibitor + beta-blocker + MRA + SGLT2 inhibitor', 'HFmrEF: weighted hybrid of the pillars', 'HFpEF: SGLT2 inhibitor first, with adjuncts'],
+        bullets: ['Reduced EF (LVEF below 50, improved EF, or a prior LVEF below 50): RAAS inhibitor + beta-blocker + MRA + SGLT2 inhibitor, all Class I (2026 ESC)', 'HFpEF (LVEF 50 or higher and never below 50): SGLT2 inhibitor + MRA, both Class I; a RAAS inhibitor is Class IIb and earns only a small credit', 'LVEF 41-49 is treated as reduced EF per the 2026 ESC guideline; the 2022 AHA/ACC/HFSA guideline keeps a separate mildly reduced category with weaker recommendations; no large trial tested beta-blockers or RAAS inhibitors only in this range'],
     },
     completeness: {
         color: 'text-purple-700',
@@ -253,7 +253,7 @@ export const FAQ: React.FC<FAQProps> = ({ evidenceQuery, onEvidenceQueryChange, 
                         Clinical Logic, Safety, and Evidence
                     </h2>
                     <p className="text-slate-500 mt-2 text-lg leading-relaxed">
-                        HeartFailurePATH uses a deterministic eight-domain simulation engine for regimen optimization across HFrEF, HFmrEF, HFpEF, and HFimpEF-preservation pathways.
+                        HeartFailurePATH uses a deterministic eight-domain simulation engine for regimen optimization across reduced-EF (LVEF below 50, including improved EF) and HFpEF pathways, following the 2026 ESC guideline (HFmrEF is no longer a separate phenotype).
                     </p>
                     <p className="text-slate-600 mt-2 text-sm" data-testid="faq-scope">{SCOPE_STATEMENT}</p>
                     <nav aria-label="On this page" className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm font-semibold">

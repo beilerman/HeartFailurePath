@@ -48,7 +48,7 @@ Supported actions:
 
 Candidate generation includes:
 
-- phenotype-aware pillar logic (HFrEF/HFmrEF/HFpEF/HFimpEF)
+- phenotype-aware pillar logic (reduced EF including improved EF / HFpEF; HFmrEF removed per the 2026 ESC guideline)
 - contraindication and allergy filtering
 - adjunct eligibility checks (Ivabradine, Vericiguat, GLP-1, DIAMOND binder logic, IV iron)
 - class-group visit limit (`max_new_classes_per_visit`, default 2)

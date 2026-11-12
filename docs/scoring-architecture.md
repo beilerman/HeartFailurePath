@@ -1,6 +1,6 @@
 # How HeartFailurePath reaches a recommendation
 
-Written 2026-11-10; updated 2026-11-11 (rule E16, ranking mode, current counts). The engine follows the same five-step shape as GlucosePATH: describe the
+Written 2026-11-10; updated 2026-11-11 (rule E16, ranking mode, current counts, alignment with the 2026 ESC guideline: see the section near the end). The engine follows the same five-step shape as GlucosePATH: describe the
 patient and the drugs, exclude what cannot be used, generate options, score them against clinical
 goals and patient values, and show the arithmetic.
 
@@ -89,12 +89,12 @@ answer to "What matters most to this patient?" (`patient.care_priority`) selects
 The profile changes only these eight weights. Exclusions, alerts, safety deductions, display floors
 and the budget filter are identical under every profile; `npm run verify` checks this for every
 scenario under every profile, and checks that each row sums to 100%. The non-default rows are a
-first calibration and have not been clinically reviewed. On the 241 scenarios that produce a top pick under the default weights (248 scenarios in all, per `npm run verify`),
+first calibration and have not been clinically reviewed. On the 241 scenarios that produced a top pick under the default weights when this was measured (the suite then had 248 scenarios),
 they change the top pick in 11 (outcomes), 12 (cost) and 13 (simplicity) cases; "simple" can lead with SGLT2i alone.
 
 Therapy completeness is a domain, not a bonus: its score is the fraction of achievable
 indicated slots attained x 100. If a patient had no achievable slots the domain scores 0 (the
-breakdown line carries a note); across the 744 golden runs (248 scenarios x 3 insurance tiers) no displayed regimen hit that case.
+breakdown line carries a note); across the golden runs when this was measured (744, then 248 scenarios x 3 insurance tiers) no displayed regimen hit that case.
 
 Only named adjustments sit on top of the weighted sum. Every magnitude is in `SCORE_ADJUSTMENTS`
 and each is a visible line item in the breakdown, in this order.
@@ -137,7 +137,7 @@ The UI shows this ledger under "How this score was calculated" on each recommend
 gaps, adjuncts, notices, the budget filter and the display floors are identical in both modes (a verify invariant checks this for
 every scenario and tier). Balanced is exactly `byScoreThenCost` above.
 
-`foundational_first` applies only to HFrEF and HFimpEF (`classifyPhenotype` reports both as HFrEF). For HFmrEF and HFpEF it is
+`foundational_first` applies to reduced EF (`classifyPhenotype` = HFrEF: LVEF below 50, improved EF, or a prior LVEF below 50; since 2026-11-11 this includes LVEF 41-49). For HFpEF it is
 a no-op and `SimulationOutput.ranking.reason_not_applied` says so. When it applies, regimens are ordered:
 
 1. Regimens that do not cause a severe projected-safety problem first. A regimen is set aside only if it trips
@@ -182,18 +182,33 @@ Still in engine code: adjunct initiation criteria for ivabradine, digoxin and H/
 
 | Check | Command | Guards |
 |---|---|---|
-| Golden master | `npm run golden` | Every scenario under three insurance tiers (744 runs) is byte-identical |
-| Scenarios | `npm run verify` | 248 clinical scenarios plus 15 structural invariants (263 checks pass) |
+| Golden master | `npm run golden` | Every scenario under three insurance tiers (894 runs, 298 scenarios) is byte-identical |
+| Scenarios | `npm run verify` | 298 clinical scenarios plus 16 structural checks (314 pass on 2026-11-11) |
 | Audits | `npm run audit:hundred`, `audit:mistakes`, `audit:red` | Broad, treatment-error and adversarial sweeps |
 | All of the above | `npm run gate` | |
 
-The 15 structural invariants: every drug has a price; every score breakdown reconciles; weight profiles never change
+The structural invariants (the harness count is authoritative): every drug has a price; every score breakdown reconciles; weight profiles never change
 safety output; weight profiles move the top pick in the stated direction; the ranking mode changes order only; every weight
 profile covers every domain and sums to 100%; titration never skips the next step; every RAAS new start is at or below its
 starting tier; no displayed regimen exceeds a declared maximum total daily dose; eligibility rule ids are unique and ascending
 and every exclusion carries one; no drug name appears as a literal in engine code; no engine module imports the facade;
-contraindication checks are the single source of each drug's boolean; every E13 exclusion carries a why-detail; the binder
-"enables RAAS/MRA" bonus requires a RAAS inhibitor or MRA in the regimen.
+contraindication checks are the single source of each drug's boolean; every E13 exclusion carries a why-detail; potassium binders carry no
+positive evidence bonus (replaced the "enables RAAS/MRA" check on 2026-11-11).
+
+## Alignment with the 2026 ESC guideline (2026-11-11)
+
+Sources: `docs/medication-review-2026-11-10/esc-2026-reading-notes.md` (main text sections and Table 5, 11, 27 read directly; Supplementary practical tables S3-S9 were read; Table S26 and the
+decompensated-HF tables, and the device, advanced-HF, arrhythmia, valve and amyloidosis sections, were not). Ranking effects are in `docs/medication-review-2026-11-10/changes-esc2026-*.txt`.
+
+- Phenotype: two, not three. `classifyPhenotype`: HFrEF = LVEF below 50, improved EF (prior LVEF 40 or lower, or presumed), or current LVEF 50 or higher with a recorded numeric prior LVEF below 50; HFpEF = LVEF 50 or higher and never below 50.
+  The guideline table is `CONCORDANCE_TABLE` (reduced EF: four Class I pillars, 20 + 5 at target; HFpEF: SGLT2i 45 + 10, MRA 30 + 5, RAAS inhibitor 4 as Class IIb, volume 10). HFpEF's MRA is now a pillar (gap, slot, candidate), a RAAS inhibitor in HFpEF is never added or swapped.
+  Finerenone fills the MRA slot from LVEF 41 up unless the prior LVEF was 40 or lower (`nsMraFillsMraSlot`). Drug LVEF criteria keep their own thresholds.
+- Digoxin: symptomatic NYHA II-IV, LVEF 40 or below, no pillar addable or up-titratable, any rhythm (IIa B1). Potassium binders carry no evidence bonus (no ESC recommendation; REALIZE-K note).
+- RAAS potassium: new start blocked above 5.4; a current inhibitor goes one step down from 5.5 (stopped at the lowest tier), is stopped from 6.0, MRA first (`facts.k_continuation.yields_to`); stopped class-wide at eGFR below 20 (current eGFR only, no baseline in the tool).
+- Doses (Table 11): spironolactone target 50 mg (25 mg at eGFR 45 or below); ARNI starts 24/26 below eGFR 60 or with chronic hypotension (stricter than the label).
+- Loops: titrate, do not swap, except forced swaps and diuretic resistance (congested on a loop at its high-dose alert level); forced swaps land on the nearest equivalent daily dose, never above the declared maximum. Thiazides: short-term note, review prompt, never forced removal.
+- Pregnancy beta-blocker switch lands at the same fraction of the Table 11 target (engine policy). Beta-blocker heart rate: 55 carvedilol (label), 50 metoprolol succinate and bisoprolol (S6); up-titration hold below 60 is engine policy.
+- Text: up-titration every 1-2 weeks (not faster than 2-weekly without close monitoring), chemistry 1-2 weeks after starting and after the final titration then every 4-6 months, creatinine rise under 50% acceptable with eGFR above 15 (was 30%).
 
 Update the golden snapshot (`npm run golden:update`) only for an intended clinical change, in its
 own commit that says why.

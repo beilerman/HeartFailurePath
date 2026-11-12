@@ -24,6 +24,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                         LVEF (%)
                     </Label>
                     <Input type="number" name="lvef" value={patientData.lvef ?? ''} onChange={onChange} error={validationErrors.lvef} />
+                    <p className="mt-1 text-xs text-slate-500">LVEF 41-49 is treated as reduced EF per the 2026 ESC guideline; the 2022 AHA/ACC/HFSA guideline keeps a separate mildly reduced category with weaker recommendations; no large trial tested beta-blockers or RAAS inhibitors only in this range.</p>
                 </div>
                 <div>
                     <Label htmlFor="nt_pro_bnp">NT-proBNP (pg/mL)</Label>
@@ -42,6 +43,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 </div>
                 <div>
                     <Label htmlFor="previous_lvef">Prior Lowest LVEF (%)</Label>
+                    <p className="mb-1 text-xs text-slate-500">A prior value below 50 keeps a current LVEF of 50 or higher in the reduced-EF group (2026 ESC: HFpEF needs an LVEF that was never below 50).</p>
                     <Input
                         type="number"
                         name="previous_lvef"

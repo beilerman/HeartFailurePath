@@ -10,7 +10,7 @@ sources, and the confirmed ones were corrected in the engine.
 | Review (from memory) | 7 high, 48 medium, about 83 low findings |
 | Source verification | 91 confirmed, 55 partly confirmed, 4 refuted, 32 not verified |
 | Corrections | Confirmed and partly confirmed findings implemented; refuted and unverified ones left unchanged |
-| Tests | 241 scenarios (136 added), 14 structural invariants, three audits, all passing |
+| Tests | 241 scenarios (136 added), 14 structural invariants, three audits, all passing (2026-11-11 after the ESC alignment: 298 scenarios, 314 checks) |
 
 Sources that could be opened: FDA labels on DailyMed, trial abstracts (PubMed E-utilities, Europe
 PMC), a full-text mirror of the 2022 guideline for one group. The AHA/ACC and ESC guideline pages
@@ -87,15 +87,15 @@ sourced, and findings left unchanged because no source could be opened.
 - Torsemide 1 mg = furosemide 2 mg from the TRANSFORM-HF protocol (a trial protocol; registry text says 2-4 mg); the "prescriber must convert" fallback is removed. New issues this exposed are listed below under Still open.
 - Pregnancy beta-blockers: beta-1-selective only for new starts, carvedilol switch offered (ESC 2026 Class I C, primary). Pregnancy alert wording corrected.
 - Monitoring timings follow the labels and secondary guideline text; no numeric lab-recency window (none sourced).
-- Reviewed 2026-11-11 and unchanged: beta-blocker heart-rate 55 (policy), low-output handling (not verifiable), spironolactone BP effect ("no effect" refuted, magnitude unknown), spironolactone potassium rise, digoxin LVEF credit (magnitudes not verified).
+- Reviewed 2026-11-11: beta-blocker heart rate is now ESC-sourced for metoprolol succinate and bisoprolol (50, Supplementary Table S6; the up-titration 60 stays policy); unchanged: low-output handling (not verifiable), spironolactone BP effect ("no effect" refuted, magnitude unknown), spironolactone potassium rise, digoxin LVEF credit (magnitudes not verified).
 
-**Still open after the 2026-11-11 source pass**
-- Torsemide equivalent swaps now lead in several loop scenarios (torsemide's higher weight-loss curve at equal equivalent dose, an engine calibration, plus the swap landing at an equivalent dose); and the "at or above" rule can overshoot on sparse tiers (furosemide 240 mg/day -> torsemide 200 mg/day). Options: treat non-forced loop swaps like GLP-1 (titrate, do not swap), equalize the curves, or choose the nearest tier on either side.
-- A pregnancy beta-blocker switch lands at the new agent's starting dose (no sourced beta-blocker dose equivalence).
-- A RAAS inhibitor already on board is removed at K+ above 5.4 (engine policy, stricter than any verified source; ESC 2026 text says down-titration or discontinuation at severe hyperkalemia with details in the unread supplement). Hyperkalemia top picks at 6.0-6.4 also still up-titrate carvedilol.
-- The creatinine-rise hold (30%) is engine policy; ESC 2026 accepts a rise under 50% while eGFR stays above 15.
-- The 2022 AHA/ACC/HFSA and 2021 ESC guideline pages could not be opened; the 2026 ESC Supplementary practical tables (S4-S9) were not read. Primary guideline pages were not opened for the US guideline, so US-guideline numbers are secondary.
-- The 2026 ESC guideline's larger changes (HFmrEF removed, foundational medical therapy, Table 11 doses, restart rules) are not applied; a separate pass is planned.
+**Still open after the 2026-11-11 source pass and the 2026 ESC alignment (same day)**
+- The tool has no baseline creatinine or eGFR, so the ESC kidney bands that need a change from baseline (eGFR fall under 30% acceptable, halve the MRA/RAAS inhibitor beyond it, stop at a creatinine rise above 100%) are text only; only "eGFR below 20 on a RAAS inhibitor" is applied, to the current value (a stable CKD 4 patient on an ARNI is stopped: odd, per instruction). A baseline-creatinine input would make the bands implementable.
+- Beta-blocker heart rate is ESC-sourced for metoprolol succinate and bisoprolol (50, Supplementary Table S6) and the carvedilol label (55); the engine reduces on heart rate alone because it has no worsening-symptoms qualifier. The up-titration hold below 60 is the only remaining engine-policy heart-rate number. The S6 "recent exacerbation under 4 weeks" caution is a note (no field).
+- The RAAS potassium split (reduce from 5.5, stop from 6.0, MRA first) is engine policy: the ESC text and Supplementary Tables S4/S5 disagree with each other (see the evidence matrix, HF-ESC-004).
+- A pregnant patient on a full-dose carvedilol is switched to a full target dose of metoprolol in one step (fraction-of-target policy, no sourced equivalence); the ACEi to ARNI switch at eGFR 30-59 is now less attractive because the ARNI starts at 24/26 (ESC optional, stricter kept).
+- Not read: the 2026 ESC Supplementary Table S26 and the decompensated-HF tables, and the guideline's device, advanced-HF, arrhythmia, valve and amyloidosis sections. The 2022 AHA/ACC/HFSA and 2021 ESC guideline pages could not be opened, so US-guideline numbers are secondary.
+- Open clinical questions not decided here: bisoprolol 1.25 mg start (no US tablet), losartan 150 mg above the US label maximum (already offered), digoxin 250 mcg tier, GLP-1 LVEF threshold for tirzepatide (ESC 45, engine 50).
 
 **Closed 2026-11-11 (commit `e671e93`, golden regenerated in `d75b5cc`; changes: `changes-ramipril-daily-dose.txt`)**
 - Ramipril effects now use the total daily dose (`facts.effects_on_daily_dose`), so 5 mg twice daily and 10 mg once daily are credited alike.

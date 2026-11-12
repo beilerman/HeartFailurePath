@@ -33,7 +33,7 @@ Define the foundational reasoning model that HeartFailurePath should follow inde
 ### Principle 3: Guideline class completeness
 
 - HFrEF pathway rewards presence of RAAS + BB + MRA + SGLT2i.
-- HFmrEF/HFpEF are scored with phenotype-adjusted expectations.
+- Reduced EF (LVEF below 50) and HFpEF are scored with phenotype-adjusted expectations (2026 ESC; HFmrEF is no longer a phenotype).
 - HFimpEF preservation avoids premature withdrawal of disease-modifying classes.
 
 ### Principle 4: Multi-domain tradeoff visibility

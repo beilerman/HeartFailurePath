@@ -10,7 +10,7 @@ Deterministic heart-failure regimen simulation and ranking UI built with React +
 
 HeartFailurePATH simulates projected effects of medication changes for adults with chronic heart failure and ranks regimens using a weighted multi-domain model.
 
-- Supports HFrEF, HFmrEF, HFpEF, and HFimpEF preservation logic.
+- Follows the 2026 ESC phenotypes: reduced EF (LVEF below 50, including improved EF) and HFpEF (LVEF 50 or higher, never below 50); HFmrEF is no longer a separate phenotype.
 - Includes formulary-level contraindication checks, renal dose constraints, and interaction warnings.
 - Supports outpatient loop strategy escalation, including `Furoscix (SC Furosemide)` eligibility and safety messaging.
 
