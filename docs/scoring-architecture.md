@@ -44,7 +44,7 @@ exclusion carries that rule's id and name.
 | E12 | Renal data required (blank eGFR/creatinine, renal-gated start) |
 | E13 | Clinical contraindication (the drug's own `contraindications(patient)`) |
 | E14 | Renal dosing contraindication |
-| E15 | New MRA start above K+ 5.0 is staged: withheld with or without a K+ binder, recheck and start once K+ is 5.0 or lower (initiation only; decision 2026-11-11). The MRA GDMT gap states the reason and the monitoring plan adds "repeat potassium; start MRA if 5.0 or lower". No binder is co-started with a new MRA (the DIAMOND co-start was removed); the reactive rescue (projected K+ above 5.3) remains |
+| E15 | New MRA start at K+ 5.0 or higher is staged: withheld with or without a K+ binder, recheck and start once K+ is below 5.0 (initiation only; decision 2026-11-11; boundary 5.0-or-higher from the 2022 US text, second pass). A new spironolactone start at eGFR 30 or lower is a contraindication (E13, `mraStartEgfrCheck`). The MRA GDMT gap states the reason and the monitoring plan adds "repeat potassium; start MRA once below 5.0". No binder is co-started with a new MRA (the DIAMOND co-start was removed); the reactive rescue (projected K+ above 5.3) remains |
 | E16 | Potassium and renal function required: a NEW ACE inhibitor, ARB, ARNI or MRA is not started while potassium or renal function is blank |
 | E17 | Pregnancy: a NEW beta-blocker start is limited to beta-1-selective agents (`facts.beta1_selective`); a pregnant patient on a non-selective one is offered a switch with the reason (2026 ESC Class I C) |
 | E18 | New RAAS inhibitor start above K+ 5.2 is staged: a NEW ACE inhibitor, ARB or ARNI (patient on none of them) is withheld with or without a K+ binder, recheck and start once K+ is 5.2 or lower (ESC S4/S5 caution threshold; staged start is engine policy). The RAAS GDMT gap states the reason and the monitoring plan adds "repeat potassium; start RAAS inhibitor if 5.2 or lower". A swap within the RAAS pool is not a new start. E13 still blocks a new start above 5.4 |
@@ -183,8 +183,8 @@ Still in engine code: adjunct initiation criteria for ivabradine, digoxin and H/
 
 | Check | Command | Guards |
 |---|---|---|
-| Golden master | `npm run golden` | Every scenario under three insurance tiers (894 runs, 298 scenarios) is byte-identical |
-| Scenarios | `npm run verify` | 298 clinical scenarios plus 16 structural checks (314 pass on 2026-11-11) |
+| Golden master | `npm run golden` | Every scenario under three insurance tiers (996 runs, 332 scenarios) is byte-identical |
+| Scenarios | `npm run verify` | 332 clinical scenarios plus 16 structural checks (348 pass on 2026-11-11) |
 | Audits | `npm run audit:hundred`, `audit:mistakes`, `audit:red` | Broad, treatment-error and adversarial sweeps |
 | All of the above | `npm run gate` | |
 
@@ -213,3 +213,11 @@ decompensated-HF tables, and the device, advanced-HF, arrhythmia, valve and amyl
 
 Update the golden snapshot (`npm run golden:update`) only for an intended clinical change, in its
 own commit that says why.
+
+### Second pass (2026-11-11): primary US text, baseline creatinine, device/AF alerts
+
+- MRA initiation: K+ 5.0 or higher (E15) and eGFR 30 or lower (new spironolactone start) withhold a new start; spironolactone and eplerenone are capped at 25 mg and start at the lowest tier below eGFR 50 (2022 AHA/ACC/HFSA 7.3.3). Monitoring line: within 1 week, about 4 weeks, after the final titration, then every 4-6 months.
+- Baseline creatinine (optional `Patient.baseline_creatinine`; `services/engine/renalChange.ts`): `assessCreatinineChange` returns none / reduce / stop. Reduce (creatinine rise 50% or more, or CKD-EPI-derived eGFR fall over 30%) reuses the forced one-step reduction for a current RAAS inhibitor and MRA (`candidates.ts`) and blocks increases; stop (rise over 100%, or 50% or more with eGFR below 20) is `creatinineRiseStopCheck`, a contraindication check on every RAAS and MRA entry (removes a current drug, blocks a new start and an in-class swap). A `KIDNEY FUNCTION` alert states the change and the first steps. Blank baseline: no behaviour change.
+- Alerts only (`gates.ts`): device (ICD/CRT classes; asks to check QRS, LBBB, aetiology), advanced-HF referral (lists the markers that fired), atrial fibrillation (anticoagulation by CHA2DS2-VA, rate control). No ranking effect; top picks and exclusions identical.
+- Counts: golden 996 runs (332 scenarios), verify Passed 348.
+

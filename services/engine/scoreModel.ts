@@ -228,9 +228,7 @@ export const NON_PENALIZED_WARNING_MARKERS: readonly string[] = [
     // ARNI upgrade (docking it vs merely up-titrating the ACEi), the taper guidance on every
     // BB removal, and the base Furoscix device instruction on every Furoscix regimen.
     // (FUROSCIX CKD CAUTION / FUROSCIX TRIAGE remain penalized — they flag genuine patient
-    // risk states. 'MRA INITIATION AT THE POTASSIUM START LIMIT' also remains penalized: it is the
-    // residual-hyperkalemia-risk marker for an MRA start at potassium exactly 5.0, parallel to
-    // 'Binder Required' on the reactive rescue path.)
+    // risk states. 'Binder Required' on the reactive rescue path also remains penalized.)
     'MANDATORY: 36-hour washout', 'BETA-BLOCKER DISCONTINUATION', 'FUROSCIX SAFETY:',
     // Drug-data warnings (facts.regimen_warnings: dose-spacing, GI caution, interaction monitoring, Lokelma
     // sodium load in HF). Informational by design: the real risk is already priced by the dose-scaled Lokelma

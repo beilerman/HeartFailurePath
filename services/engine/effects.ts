@@ -592,20 +592,7 @@ export function simulateModificationEffect(
         }
     }
 
-    // D2: MRA initiation at the potassium start limit. A NEW MRA above potassium 5.0 never reaches here (rule E15 withholds it with or
-    // without a binder; verified-clinical-decisions-2026-11-11.md rows 1, 2a, 2c); a start at exactly 5.0 is the highest the guideline start
-    // criterion (K < 5.0, secondary reproduction) and the labels (K <= 5.0) allow, so it carries the monitoring instruction. Counted as a
-    // residual-risk warning (penalized).
-    const isMraInitiation = modificationSet.modifications.some(m =>
-        m.action === 'add' && m.target && (m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
-    );
-    if (isMraInitiation && currentPatient.potassium >= 5.0 && currentPatient.potassium <= 5.5) {
-        warnings.push(
-            'MRA INITIATION AT THE POTASSIUM START LIMIT: Baseline potassium is ' + currentPatient.potassium.toFixed(1) +
-            ' mEq/L, the highest at which the labels and the guideline start criterion allow an MRA start. ' +
-            'Check potassium within 1 week and again at about 4 weeks (labels and guideline); reduce the MRA one dose step if potassium rises above 5.5 and withhold it at 6.0 or above.'
-        );
-    }
+    // (The former D2 warning for an MRA start at potassium exactly 5.0 was removed 2026-11-11: rule E15 now withholds a new MRA at 5.0 or higher, so no new start reaches here at 5.0-5.5.)
 
     // Drug-specific regimen warnings declared as data on the formulary entry (facts.regimen_warnings).
     resultingRegimen.forEach(r => {
