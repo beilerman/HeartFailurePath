@@ -3,8 +3,9 @@ import { Patient, RegimenMed, SimulationOutput } from '../../types';
 import { drugFacts } from './drugFacts';
 import { valueUnknown, congestionFindingCount } from '../clinicalPredicates';
 import { RAAS_CLASSES, MRA_POOL_CLASSES, getMedicationClassGroup } from './registry';
-import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold } from '../clinicalPredicates';
-import { PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './contraindications';
+import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold, hasAtrialFibrillationHistory } from '../clinicalPredicates';
+import { PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, EXTERNAL_POTASSIUM_SPARING_DIURETICS, potassiumRaisersTaken } from './contraindications';
+import { POTASSIUM_RAISER_REVIEW_K } from './thresholds';
 import { taggedDiscontinuedMeds } from './eligibility';
 import { buildMissingDataNotices, computeGdmtGaps } from './explain';
 import { dailyDose, isLoopDiureticResistant, dedupeCurrentRegimen, hrContinuationAction, kContinuationAction, kUptitrationBlock, isLowOutputState, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
@@ -116,6 +117,18 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     const harmfulDiabetic = TZD_SAXAGLIPTIN_EXTERNAL.filter(n => ext.has(n));
     if (harmfulDiabetic.length > 0) {
         alerts.push(`INAPPROPRIATE THERAPY: ${harmfulDiabetic.join(', ')} is contraindicated in heart failure (2026 ESC section 10.2: thiazolidinediones and saxagliptin). Replace it, preferably with an SGLT2 inhibitor.`);
+    }
+
+    // Potassium-raising co-medications (list: EXTERNAL_POTASSIUM_RAISERS). A measured potassium of 5.0 or more with one of them is a reason to review it first;
+    // a blank potassium is not a value. A potassium supplement with a LOW potassium is appropriate and raises nothing.
+    const kRaisers = potassiumRaisersTaken(patient);
+    if (kRaisers.length > 0 && !valueUnknown(patient.potassium) && patient.potassium >= POTASSIUM_RAISER_REVIEW_K) {
+        alerts.push(`POTASSIUM-RAISING MEDICATION: potassium is ${patient.potassium} mEq/L (${POTASSIUM_RAISER_REVIEW_K} or higher) and the patient takes ${kRaisers.join(', ')}: stop or review ${kRaisers.join(', ')} before adjusting heart failure drugs. Spironolactone and eplerenone labels warn against potassium supplements and potassium-sparing diuretics; trimethoprim causes hyperkalemia, most with RAAS inhibitors.`);
+    }
+    const sparing = EXTERNAL_POTASSIUM_SPARING_DIURETICS.filter(n => ext.has(n));
+    const onMraNow = allMra.length > 0;
+    if (sparing.length > 0 && onMraNow) {
+        alerts.push(`TWO POTASSIUM-SPARING AGENTS: ${sparing.join(', ')} together with ${allMra.map(r => r.med.name).join(' + ')} (an MRA) markedly raises hyperkalemia risk. Stop or review ${sparing.join(', ')}, or the MRA, and check potassium within days (spironolactone and eplerenone labels).`);
     }
 
     // NT-proBNP above 5000 pg/mL with worsening symptoms or congestion: very high risk, admission generally recommended (2026 ESC section 7.2). Alert only; no ranking effect.
@@ -436,7 +449,7 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
 
     // --- AF: anticoagulation and rate control (2026 ESC Recommendation Table 15). ALERT ONLY; one alert. The tool does not compute CHA2DS2-VA and the form has no anticoagulant
     // field (the external-medication list holds none), so both are left to the clinician.
-    if (patient.rhythm === 'AFib' || patient.comorbidities.has('Atrial Fibrillation')) {
+    if (hasAtrialFibrillationHistory(patient)) {
         const hfref = patient.lvef > 0 && patient.lvef < 50;
         const onBb = (patient.current_regimen ?? []).some(r => r.med.drug_class === 'Beta Blocker');
         clinicalAlerts.push(

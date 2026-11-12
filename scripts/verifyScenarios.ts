@@ -13,6 +13,8 @@ import { ELIGIBILITY_RULES, ELIGIBILITY_RULE_IDS } from '../services/engine/elig
 import { getDrugPrices, DRUG_PRICES } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
+import { checkOptionScenario } from './optionScenarioChecks';
+import { runOptionInvariants } from './optionInvariants';
 import { WARNINGS_PRICED_BY_NAMED_ADJUSTMENT, SCORE_ADJUSTMENTS, WEIGHT_PROFILES, DOMAIN_KEYS, WEIGHT_PROFILE_NAMES, type WeightProfileName } from '../services/engine/scoreModel';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
@@ -136,6 +138,9 @@ const ASSERTION_TITLE_MARKERS = [
     'Diuretic-Source',
     'Final-Gaps',
     'Lab-Prereq',
+    'Intol-Table',
+    'AF-History',
+    'K-Raiser',
     'ESC26-Phenotype',
     'ESC26-Digoxin',
     'ESC26-RAAS-K',
@@ -3439,6 +3444,11 @@ async function runVerification() {
                 }
             }
 
+            if (/^(Intol-Table|AF-History|K-Raiser)/.test(scenario.title)) {
+                const optionFailures = checkOptionScenario(scenario, { scoredRegimens, excludedMedications, clinicalAlerts }, scenarioPrices);
+                if (optionFailures.length > 0) { failures.push(...optionFailures); scenarioPassed = false; }
+            }
+
             // ===== Final engine gaps: daily-dose target, one-step titration, MRA K+ up-titration gate, equivalent loop swaps =====
             if (scenario.title.includes('Final-Gaps')) {
                 const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
@@ -4289,6 +4299,11 @@ async function runVerification() {
         const drift = SCENARIOS.filter(sc => { const d = derivedFields(sc.patient); return d.egfr !== sc.patient.egfr || d.bmi !== sc.patient.bmi; }).map(sc => sc.title);
         if (drift.length > 0) { console.error(`  [FAIL] ${drift.length} fixture(s) the form would change on load: ${drift.slice(0, 5).join('; ')}`); failed++; }
         else { console.log(`  [PASS] ${SCENARIOS.length} fixtures load in the form unchanged.`); passed++; }
+    }
+
+    {
+        const o = runOptionInvariants();
+        passed += o.passed; failed += o.failed;
     }
 
     console.log(`\nVerification Complete.`);

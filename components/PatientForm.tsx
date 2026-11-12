@@ -39,6 +39,13 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         if (d.egfr !== patientData.egfr || d.bmi !== patientData.bmi) setPatientData(prev => ({ ...prev, egfr: d.egfr, bmi: d.bmi }));
     }, [patientData, setPatientData]);
 
+    // Rhythm AFib records the atrial fibrillation history (the comorbidity) so the two cannot disagree.
+    useEffect(() => {
+        if (patientData.rhythm === 'AFib' && !patientData.comorbidities.has('Atrial Fibrillation')) {
+            setPatientData(prev => ({ ...prev, comorbidities: new Set(prev.comorbidities).add('Atrial Fibrillation') }));
+        }
+    }, [patientData.rhythm, patientData.comorbidities, setPatientData]);
+
     // --- 2a. Physiologic validation bounds ---
     // LVEF max 80 matches the engine hard-stop (validatePhysiologicBounds flags > 80 as implausible).
     const VALIDATION_BOUNDS: Record<string, { min: number; max: number; label: string }> = {

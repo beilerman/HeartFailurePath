@@ -2,7 +2,7 @@
 import { Medication, Patient } from './types';
 import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raasPotassiumChecks, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
     STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, mraStartEgfrCheck, creatinineRiseStopCheck, moderateCyp3aInhibitor,
-    PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL } from './services/engine/contraindications';
+    PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, EXTERNAL_POTASSIUM_RAISERS } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
 import { valueUnknown, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
 import { MRA_HALVE_DOSE_EGFR_BELOW, BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_MAX, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
@@ -78,7 +78,6 @@ export const RELEVANT_COMORBIDITIES = [
     "Type 1 Diabetes Mellitus",
     "Diabetes Mellitus Type 2",
     "Prior DKA / Euglycemic DKA",
-    "Chronic Kidney Disease",
     "Severe Asthma / Bronchospasm",
     "Asthma (Mild/Moderate)",
     "COPD",
@@ -90,7 +89,6 @@ export const RELEVANT_COMORBIDITIES = [
     "Hypotension (Chronic)",
     LIVER_BC,
     LIVER_B_CONFIRMED,
-    "Obesity (BMI > 30)",
     "Pulmonary Hypertension",
     "Chronic NSAID Use",
     // GLP-1 / GIP label warnings (Wegovy and Zepbound W&P): caution-level notes, not contraindications.
@@ -129,7 +127,15 @@ export const RELEVANT_EXTERNAL_MEDICATIONS = [
     // Corlanor label: telithromycin is a named strong CYP3A4 inhibitor (contraindicated); CYP3A4 inducers are to be avoided.
     ...IVABRADINE_STRONG_CYP3A4.filter(n => !STRONG_CYP3A_INHIBITORS.includes(n)),
     ...CYP3A4_INDUCERS,
+    // Potassium-raising co-medications (alerts and an option warning; single-sourced in contraindications.ts).
+    ...EXTERNAL_POTASSIUM_RAISERS,
 ];
+
+/**
+ * Selectable options that no engine or formulary code reads, each with the reason it is shown anyway. Empty by design: an input the clinician can pick
+ * must change something. `npm run verify` fails for a selectable option that is neither read by engine/formulary code nor listed here (and for a listed one that is read).
+ */
+export const DISPLAY_ONLY_OPTIONS: Readonly<Record<string, string>> = {};
 
 // Lokelma label: edema 4.4% / 5.9% / 16.1% at 5 / 10 / 15 g in placebo-controlled trials.
 const LOKELMA_EDEMA_RATE = (dose: number | string): number => {
@@ -1457,6 +1463,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // Starting dose (Corlanor label 2.2): 5 mg bid; 2.5 mg bid for a history of conduction defects or others in whom
             // bradycardia could cause hemodynamic compromise (the label does not name the elderly). The start tier is exact.
             start_dose_exact: true,
+            af_signal_note: 'Drug note: the Corlanor label reports more atrial fibrillation on ivabradine than on placebo. This patient has atrial fibrillation on record and is in sinus rhythm now; monitor the rhythm and stop if atrial fibrillation becomes persistent.',
             // Titration (label): HR above 60 -> up 2.5 mg bid (max 7.5 mg bid); 50-60 -> hold; below 50 or symptoms -> reduce one
             // step, and stop if already at 2.5 mg bid. All three numbers are the label's (pulse is whole bpm, so "above 60" is 61+).
             hr_continuation: { reduce_below: 50, no_uptitration_below: 61, basis: 'Corlanor label: reduce 2.5 mg bid if heart rate is below 50 or symptomatic, stop at 2.5 mg bid; increase only if heart rate is above 60' },

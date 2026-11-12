@@ -108,3 +108,9 @@ export const UP_TITRATION_MAX_DAILY_FACTOR = 2;
  * diuretic-resistance rule (regimenUtils.ts) and the congestion-coverage selection step (selection.ts) all read it. Policy, unchanged from the earlier literal 1.0.
  */
 export const CONGESTION_EXCESS_KG_ABOVE = 1.0;
+
+/**
+ * A measured potassium at or above this, with a potassium-raising co-medication (supplement, amiloride, triamterene, trimethoprim), raises the "stop or review"
+ * alert. Engine policy, matching the MRA new-start boundary (MRA_START_K_CEILING); the Aldactone and Inspra labels warn about these agents without a number.
+ */
+export const POTASSIUM_RAISER_REVIEW_K = 5.0;

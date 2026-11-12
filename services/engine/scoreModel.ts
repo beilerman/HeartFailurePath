@@ -245,6 +245,8 @@ export const NON_PENALIZED_WARNING_MARKERS: readonly string[] = [
     // sodium load in HF). Informational by design: the real risk is already priced by the dose-scaled Lokelma
     // sodium special feature, the projected-K+ gates and the borderline-K+ MRA warning, which stay penalized.
     'Drug note',
+    // Intolerance-history cautions (intolerance.ts table) name a past reaction on a same-class drug; informational, never a rank penalty.
+    'Intolerance history:',
 ];
 
 /**

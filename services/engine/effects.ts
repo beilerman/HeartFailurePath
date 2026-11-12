@@ -1,13 +1,16 @@
 /** Delta simulation: the marginal effect of a modification set on the observed patient. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, ModificationSet, ChfEffects, RegimenMed } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown } from '../clinicalPredicates';
+import { valueUnknown, hasGoutHistory, hasAtrialFibrillationHistory } from '../clinicalPredicates';
 import { hasChildPughBorC, hasChildPughBConfirmed, onPde5Inhibitor as onPde5InhibitorPatient } from './contraindications';
 import { RAAS_CLASSES, getDbpRatio, getMedicationClassGroup, isDiureticClass } from './registry';
 import { clonePatient, dailyDose, effectDose, isTargetDoseForPatient } from './regimenUtils';
 import { URIC_ACID_GOUT_POINTS } from './scoreModel';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
 import { HYPOKALEMIA_K_BELOW } from './thresholds';
+import { MRA_POOL_CLASSES } from './registry';
+import { EXTERNAL_POTASSIUM_RAISERS, potassiumRaisersTaken } from './contraindications';
+import { intoleranceCautionsFor } from './intolerance';
 import { classifyPhenotype } from './domains';
 
 /**
@@ -396,7 +399,7 @@ export function simulateModificationEffect(
         }
 
         // Uric-acid caution as data: any drug declaring facts.raises_uric_acid (loops and thiazide-type diuretics; labels: may precipitate gout).
-        if (drugFacts(r.med).raises_uric_acid && currentPatient.comorbidities.has('Gout')) {
+        if (drugFacts(r.med).raises_uric_acid && hasGoutHistory(currentPatient)) {
             const feature = 'Caution in Gout (uric acid retention)';
             rationale.push(`+ ${r.med.name}: ${feature}`);
             specialFeatureBonus += URIC_ACID_GOUT_POINTS;
@@ -798,6 +801,31 @@ export function simulateModificationEffect(
     // DDI-2: RAAS + chronic NSAID use → AKI risk (extremely common outpatient DDI)
     if (hasRAASDrug && currentPatient.comorbidities.has('Chronic NSAID Use')) {
         warnings.push('DDI WARNING: RAAS inhibitor + chronic NSAID use significantly increases AKI risk. Discontinue NSAIDs if possible. If unavoidable, monitor creatinine and potassium weekly.');
+    }
+
+    // DDI-8: potassium-raising co-medication (list EXTERNAL_POTASSIUM_RAISERS) + an option that STARTS or INCREASES a RAAS inhibitor or MRA: additive hyperkalemia
+    // (Aldactone and Inspra labels: potassium supplements and potassium-sparing diuretics; Bactrim label: trimethoprim, mostly with RAAS inhibitors). Penalized.
+    // A potassium supplement is appropriate when potassium is projected LOW, so it alone draws no warning then; the sparing diuretics and trimethoprim always do.
+    const raisedKDrug = modificationSet.modifications.find(mod =>
+        (mod.action === 'add' || mod.action === 'swap' || mod.action === 'titrate_up') && mod.target
+        && (RAAS_CLASSES.has(mod.target.med.drug_class) || MRA_POOL_CLASSES.has(mod.target.med.drug_class)));
+    if (raisedKDrug?.target) {
+        const lowK = !kUnknown && proj.potassium < HYPOKALEMIA_K_BELOW;
+        const raisers = potassiumRaisersTaken(currentPatient).filter(n => !(lowK && n === EXTERNAL_POTASSIUM_RAISERS[0]));
+        if (raisers.length > 0) {
+            warnings.push(`DDI WARNING: ${raisers.join(', ')} with ${raisedKDrug.target.med.name} (${raisedKDrug.action === 'titrate_up' ? 'dose increase' : 'new start'}): additive hyperkalemia risk; recheck potassium within 1 week.`);
+        }
+    }
+
+    // Intolerance history cautions (intolerance.ts table): a NEW start of a drug in an affected class names the history. Informational, not score-penalized.
+    intoleranceCautionsFor(currentPatient, modificationSet.modifications).forEach(w => { if (!warnings.includes(w)) warnings.push(w); });
+
+    // Ivabradine (and any drug declaring facts.af_signal_note) STARTED in a patient with AF history who is in sinus rhythm today (paroxysmal AF): the label reports more AF.
+    if (hasAtrialFibrillationHistory(currentPatient) && currentPatient.rhythm === 'Sinus') {
+        modificationSet.modifications.forEach(mod => {
+            const note = (mod.action === 'add' || mod.action === 'swap') && mod.target ? drugFacts(mod.target.med).af_signal_note : undefined;
+            if (note && !warnings.includes(note)) warnings.push(note);
+        });
     }
 
     // DDI-3: Digoxin + loop diuretic without K+ protection → toxicity

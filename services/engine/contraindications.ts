@@ -150,8 +150,20 @@ export const MODERATE_CYP3A_INHIBITORS: readonly string[] = ['Verapamil', 'Dilti
 export const NSAID_COX2_EXTERNAL: readonly string[] = ['Ibuprofen', 'Naproxen', 'Diclofenac', 'Meloxicam', 'Celecoxib'];
 export const TZD_SAXAGLIPTIN_EXTERNAL: readonly string[] = ['Pioglitazone', 'Rosiglitazone', 'Saxagliptin'];
 
+/**
+ * Co-medications that raise potassium. Sources (paraphrased): the spironolactone (Aldactone) and eplerenone (Inspra) labels warn against potassium supplements
+ * and potassium-sparing diuretics with the drug; the Bactrim (trimethoprim) label warns of hyperkalemia, most with RAAS inhibitors. One list: the alerts and the
+ * option warning in gates.ts / effects.ts read it, with no per-drug code. The sparing diuretics are listed apart because two of them with an MRA is its own alert.
+ */
+export const EXTERNAL_POTASSIUM_SPARING_DIURETICS: readonly string[] = ['Amiloride', 'Triamterene'];
+export const EXTERNAL_POTASSIUM_RAISERS: readonly string[] = [
+    'Potassium supplement (KCl)', ...EXTERNAL_POTASSIUM_SPARING_DIURETICS, 'Trimethoprim (incl. TMP-SMX)',
+];
+
 export const onAny = (p: Patient, names: readonly string[]): boolean =>
     names.some(n => p.external_medications?.has(n) ?? false);
+/** Names from EXTERNAL_POTASSIUM_RAISERS the patient takes (list order). */
+export const potassiumRaisersTaken = (p: Patient): string[] => EXTERNAL_POTASSIUM_RAISERS.filter(n => p.external_medications?.has(n) ?? false);
 export const strongCyp3a4Inhibitor = (p: Patient): boolean => onAny(p, STRONG_CYP3A_INHIBITORS);
 export const moderateCyp3aInhibitor = (p: Patient): boolean =>
     onAny(p, MODERATE_CYP3A_INHIBITORS) || p.comorbidities.has('On Verapamil/Diltiazem');

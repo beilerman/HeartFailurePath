@@ -3634,6 +3634,49 @@ const AUTHORED_SCENARIOS: TestScenario[] = [
             { title: 'Alert-Source No AF Alert In Sinus Rhythm', patient: { ...base, current_regimen: quad } },
         ];
     })(),
+
+    // ===== Declared effect of every selectable option (2026-11-12): intolerance table, atrial fibrillation history, potassium-raising co-medications =====
+    ...((): TestScenario[] => {
+        const base = {
+            ...INITIAL_PATIENT,
+            age: 62, sex: 'Male' as const, sbp: 126, dbp: 78, pulse: 78, rhythm: 'Sinus' as const,
+            nyha_class: 'II' as const, kccq_score: 62, nt_pro_bnp: 1400, lvef: 30,
+            volume_status: { dry_weight_kg: 80, current_weight_kg: 80.5, exam_findings: new Set<string>() },
+            egfr: 70, creatinine: 1.1, bun: 18, potassium: 4.4,
+            comorbidities: new Set(['HFrEF']),
+            external_medications: new Set<string>(),
+            allergies: new Set<string>(), discontinued_meds: [] as Patient['discontinued_meds'],
+            ever_lvef_le_40: 'yes' as const,
+            current_regimen: [] as RegimenMed[],
+            max_affordable_cost: 20000, cost_sensitivity: 1, insurance_tier: 'cash' as const,
+            complexity_tolerance: 10, max_new_classes_per_visit: 2,
+        };
+        const congested = { dry_weight_kg: 80, current_weight_kg: 84, exam_findings: new Set<string>(['Peripheral Edema']) };
+        const quad = buildCurrentRegimen([
+            { name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' },
+            { name: 'Carvedilol', strength: 25, freq: 'bid' },
+            { name: 'Spironolactone', strength: 25, freq: 'qd' },
+            { name: 'Dapagliflozin', strength: 10, freq: 'qd' },
+        ]);
+        const stopped = (name: string, drug_class: string, reason: string) => [{ name, drug_class, reason }];
+        return [
+            // Intolerance table: caution on new starts of the affected class, nothing elsewhere, no score change.
+            { title: 'Intol-Table Hypotension On Lisinopril Caution On Other RAAS', patient: { ...base, discontinued_meds: stopped('Lisinopril', 'ACEi', 'Hypotension') } },
+            { title: 'Intol-Table Potassium Reason On Lisinopril Caution On Other RAAS', patient: { ...base, discontinued_meds: stopped('Lisinopril', 'ACEi', 'Hyperkalemia') } },
+            { title: 'Intol-Table Renal AKI On Spironolactone Caution On RAAS And MRA', patient: { ...base, discontinued_meds: stopped('Spironolactone', 'MRA', 'Renal Impairment / AKI') } },
+            { title: 'Intol-Table Rash On Furosemide Caution On Loop And Thiazide Only', patient: { ...base, volume_status: congested, discontinued_meds: stopped('Furosemide', 'Loop Diuretic', 'Rash / Hypersensitivity') } },
+            { title: 'Intol-Table Gout Reason Counts As Gout History', patient: { ...base, volume_status: congested, discontinued_meds: stopped('Hydrochlorothiazide', 'Thiazide-like Diuretic', 'Gout / Hyperuricemia') } },
+            // Atrial fibrillation history versus today's rhythm.
+            { title: 'AF-History Paroxysmal Sinus Ivabradine Start Note', patient: { ...base, comorbidities: new Set(['HFrEF', 'Atrial Fibrillation']), current_regimen: quad } },
+            { title: 'AF-History No Comorbidity Sinus No Ivabradine Note', patient: { ...base, current_regimen: quad } },
+            // Potassium-raising co-medications.
+            { title: 'K-Raiser Potassium Supplement With K 5.2 Alert', patient: { ...base, potassium: 5.2, external_medications: new Set(['Potassium supplement (KCl)']) } },
+            { title: 'K-Raiser Triamterene With Spironolactone Alert', patient: { ...base, potassium: 4.6, external_medications: new Set(['Triamterene']),
+                current_regimen: buildCurrentRegimen([{ name: 'Carvedilol', strength: 12.5, freq: 'bid' }, { name: 'Spironolactone', strength: 25, freq: 'qd' }]) } },
+            { title: 'K-Raiser Trimethoprim Warns On RAAS And MRA Starts', patient: { ...base, external_medications: new Set(['Trimethoprim (incl. TMP-SMX)']) } },
+            { title: 'K-Raiser Potassium Supplement With Low Potassium No Warning', patient: { ...base, potassium: 3.2, external_medications: new Set(['Potassium supplement (KCl)']) } },
+        ];
+    })(),
 ];
 
 /**
