@@ -388,26 +388,40 @@ export function countNewClassGroups(candidate: RegimenMed[], current: RegimenMed
 }
 
 /**
- * Fraction (0-1+) of this patient's target TOTAL DAILY dose that the regimen entry delivers, or undefined when no numeric target can be derived.
+ * Progress (0-1) of the regimen entry from the patient's labeled STARTING dose to the patient's TARGET dose, in total daily dose; undefined when no numeric target can
+ * be derived. 0 at or below the start tier, 1 at or above the target, linear in between; 1 when start and target coincide.
  * Target source, in order: `facts.target_daily_dose`; else the lowest listed strength that `is_target_dose_for(strength, patient)` accepts; else the strength flagged
- * `is_target_dose`. Strengths are compared at the entry's own frequency (a combination strength such as "49/51" uses its leading component).
+ * `is_target_dose`. Start = the tier `start_dose_for(patient)` names, else the lowest listed tier. Strengths are compared at the entry's own frequency (a
+ * combination strength such as "49/51" uses its leading component).
  */
-export function doseFractionOfTarget(r: RegimenMed, patient: Patient): number | undefined {
+export function doseProgressToTarget(r: RegimenMed, patient: Patient): number | undefined {
     const lead = (v: number | string) => { const n = parseFloat(String(v)); return Number.isNaN(n) ? undefined : n; };
+    const doses = r.med.available_doses;
+    const startTier = r.med.start_dose_for ? r.med.start_dose_for(patient) : doses[0]?.strength;
+    const start = startTier === undefined ? undefined : lead(startTier);
+    let target: number | undefined, current: number | undefined;
     const dailyTarget = drugFacts(r.med).target_daily_dose;
     if (dailyTarget !== undefined) {
         const d = dailyDose(r);
-        return Number.isNaN(d) || dailyTarget <= 0 ? undefined : d / dailyTarget;
+        target = dailyTarget;
+        current = Number.isNaN(d) ? undefined : d;
+        // The start tier is a per-dose strength: compare it at the entry's own frequency.
+        if (start !== undefined) return finishProgress(start * dosesPerDay(r.selected_frequency), target, current);
+        return undefined;
     }
-    const doses = r.med.available_doses;
     const perPatient = r.med.is_target_dose_for;
     const targetDose = perPatient
         ? doses.find(d => { const s = Number(d.strength); return !Number.isNaN(s) && perPatient(s, patient); })
         : doses.find(d => d.is_target_dose);
-    const target = targetDose ? lead(targetDose.strength) : undefined;
-    const current = lead(r.dose.strength);
-    if (target === undefined || target <= 0 || current === undefined) return undefined;
-    return current / target;
+    target = targetDose ? lead(targetDose.strength) : undefined;
+    current = lead(r.dose.strength);
+    return finishProgress(start, target, current);
+}
+
+function finishProgress(start: number | undefined, target: number | undefined, current: number | undefined): number | undefined {
+    if (start === undefined || target === undefined || current === undefined || target <= 0) return undefined;
+    if (target <= start) return 1;
+    return Math.max(0, Math.min(1, (current - start) / (target - start)));
 }
 
 /**

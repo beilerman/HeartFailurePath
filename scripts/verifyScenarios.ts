@@ -1,7 +1,7 @@
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
 import { isProjectedSafetyClean } from '../services/engine/selection';
-import { getDoseTiers, dailyDose, doseFractionOfTarget, isCongestedAboveDryWeight, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
+import { getDoseTiers, dailyDose, doseProgressToTarget, isCongestedAboveDryWeight, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
 import { isAcutelyDecompensated } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
 import { UP_TITRATION_MAX_DAILY_FACTOR } from '../services/engine/thresholds';
@@ -4033,14 +4033,16 @@ async function runVerification() {
         }
     }
 
-    console.log('Checking structural invariant: below-target dose credit is graded by the share of the patient target daily dose...');
+    console.log('Checking structural invariant: below-target dose credit is progress from the starting dose to the target dose...');
     {
         const P = SCENARIOS[0].patient;
-        const cv = MEDICATION_FORMULARY.find(m => m.drug_class === 'Beta Blocker' && m.name === 'Carvedilol')!;
-        const at = (s: number) => doseFractionOfTarget({ med: cv, dose: cv.available_doses.find(d => Number(d.strength) === s)!, selected_frequency: 'bid' }, P);
-        const a = at(3.125), b = at(6.25), c = at(25);
-        if (a === undefined || b === undefined || c === undefined || !(a < b && b < c) || Math.abs(c - 1) > 1e-9) { console.error(`  [FAIL] carvedilol dose fractions not graded to target: ${a}, ${b}, ${c}`); failed++; }
-        else { console.log(`  [PASS] carvedilol 3.125 / 6.25 / 25 mg bid = ${a.toFixed(3)} / ${b.toFixed(3)} / ${c.toFixed(3)} of the target daily dose.`); passed++; }
+        const medOf = (n: string) => MEDICATION_FORMULARY.find(m => m.name === n)!;
+        const at = (n: string, s: number, f: string) => { const m = medOf(n); return doseProgressToTarget({ med: m, dose: m.available_doses.find(d => Number(d.strength) === s)!, selected_frequency: f }, P); };
+        const a = at('Carvedilol', 3.125, 'bid'), b = at('Carvedilol', 6.25, 'bid'), c = at('Carvedilol', 25, 'bid');
+        const spiro = at('Spironolactone', 12.5, 'qd'), eple = at('Eplerenone', 25, 'qd');
+        if (a !== 0 || b === undefined || !(b > 0 && b < 1) || c !== 1) { console.error(`  [FAIL] carvedilol progress not 0 at start, between, 1 at target: ${a}, ${b}, ${c}`); failed++; }
+        else if (spiro !== 0 || eple !== 0) { console.error(`  [FAIL] a new start must sit at the start anchor (credit never picks an agent): spironolactone 12.5 = ${spiro}, eplerenone 25 = ${eple}`); failed++; }
+        else { console.log(`  [PASS] carvedilol 3.125 / 6.25 / 25 mg bid = ${a} / ${b.toFixed(3)} / ${c} of the way from start to target; spironolactone 12.5 and eplerenone 25 (their starts) = 0.`); passed++; }
     }
 
     console.log('Checking structural invariant: a congested patient on a loop with a possible increase is shown a loop increase...');

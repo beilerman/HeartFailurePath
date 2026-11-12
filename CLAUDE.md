@@ -134,7 +134,7 @@ Full description: `docs/scoring-architecture.md`. All numbers live in `services/
   `foundational_first` applies to HFrEF/HFimpEF only and changes ONLY the order, never scores, exclusions, alerts, the
   budget filter or display floors (verify enforces it). Order: (a) regimens that do not push SBP, HR or K+ into a severe
   projected range the harmful way from baseline first (`PROJECTED_SBP_LT_85/_LT_90`, `_HR_LT_50`, `_K_GT_5_5`);
-  (b) higher `foundational_coverage` (RAAS, beta-blocker, MRA, SGLT2i slots; 1.0 at target, graded 0.5 + 0.5 x dose/target below (0.6 if no numeric target); explanation-only,
+  (b) higher `foundational_coverage` (RAAS, beta-blocker, MRA, SGLT2i slots; 1.0 at target, 0.6 at the starting tier rising to 1.0 at target (0.6 if no numeric target); explanation-only,
   never scored); (c) the Balanced order. `SimulationOutput.ranking` reports mode, whether it applied and what Balanced would
   have led with. It is separate from `care_priority`, which changes the weights. Known limit: a fully dosed single pillar
   outranks a different pillar at starting dose.
@@ -146,7 +146,7 @@ Full description: `docs/scoring-architecture.md`. All numbers live in `services/
 - Renal dose caps: an arriving dose above a cap is force-reduced one step; `facts.renal_cap_is_daily` (ramipril) compares the
   total daily dose, otherwise the per-dose strength (captopril, valsartan: undecided, see the medication-review README).
 - Therapy completeness = achievable indicated therapies present / achievable total (pillars +
-  eligible adjuncts; graded credit below target dose: `COMPLETENESS_GRADED_CREDIT_BASE/_SPAN` in scoreModel.ts, 0.5 + 0.5 x min(1, daily dose / patient target daily dose), 0.6 if no numeric target; engine policy, ESC 6.1.6 for the direction only). "Achievable" excludes therapies filtered out
+  eligible adjuncts; graded credit below target dose: `COMPLETENESS_SUBTARGET_CREDIT` / `_GRADED_CREDIT_SPAN` in scoreModel.ts, 0.6 + 0.4 x progress from the labeled starting tier to the patient's target (`doseProgressToTarget`), 0.6 if no numeric target; new starts score as before; engine policy, ESC 6.1.6 for the direction only). "Achievable" excludes therapies filtered out
   of the formulary — never penalize a contraindicated therapy.
 - Special-feature `points` calibration: outcome-level benefits are large (A-HeFT 60, FINEARTS 45,
   GLP-1 40 (both agents), iron 40 (20 at LVEF 41-49), binders 0 (no bonus since 2026-11-11), TOPCAT HFpEF 18); intra-class tolerability tiebreakers are
@@ -329,7 +329,7 @@ Read `docs/scoring-architecture.md` before changing the engine. Rules that keep 
 verification (`verified-*.md`, with URLs) and the measured effect of each correction
 (`changes-*.txt`). `docs/evidence-matrix.md` maps each rule to its source. Rules that came out of it:
 
-- **Congestion coverage is a selection step, not a score** (`ensureCongestionCoverage`, `selection.ts`, after distinct-pick selection): congested (`isCongestedAboveDryWeight`, > `CONGESTION_EXCESS_KG_ABOVE` kg over dry weight) and no displayed option raises/starts a loop -> the best-ranked display-safe candidate that does replaces the last pick (or is appended); option 1 is never displaced; `shown_because` is explanation-only (golden `ADDITIVE_KEYS`; card + chart text). Below-target dose credit is graded (0.5 + 0.5 x dose/target). Two same-drug-set picks are distinct only when both are solely up-titrations of different drugs.
+- **Congestion coverage is a selection step, not a score** (`ensureCongestionCoverage`, `selection.ts`, after distinct-pick selection): congested (`isCongestedAboveDryWeight`, > `CONGESTION_EXCESS_KG_ABOVE` kg over dry weight) and no displayed option raises/starts a loop -> the best-ranked display-safe candidate that does replaces the last pick (or is appended); option 1 is never displaced; `shown_because` is explanation-only (golden `ADDITIVE_KEYS`; card + chart text). Below-target dose credit is progress from the starting dose to target (0.6 to 1.0). Two same-drug-set picks are distinct only when both are solely up-titrations of different drugs.
 - **Up-titration is capped at double the total daily dose per visit** (`UP_TITRATION_MAX_DAILY_FACTOR`, `higherDoses` in `candidates.ts`; the adjacent tier is always kept). ESC 2026 S4-S6/S8 source it for RAAS/BB/MRA; for loops (S7, no step size) and other classes it is engine policy. Anything reading `titratableUp[].options[last]` gets the capped maximum, by intent.
 - **Starting versus continuing.** A threshold that blocks a NEW start must not remove a drug the
   patient already takes. Continuation rules are data on the entry: `facts.k_continuation` (MRAs:

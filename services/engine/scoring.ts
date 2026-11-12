@@ -10,13 +10,12 @@ import {
     DOMAIN_KEYS, DOMAIN_LABELS, WEIGHT_PROFILES, resolveWeightProfile, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS,
     ScoreBreakdown, ScoreBreakdownAdjustment, ScoreBreakdownDomainLine, ScoreBreakdownOverride, ScoreDomainKey,
     COMPLETENESS_SUBTARGET_CREDIT,
-    COMPLETENESS_GRADED_CREDIT_BASE,
     COMPLETENESS_GRADED_CREDIT_SPAN,
 } from './scoreModel';
 import { drugFacts } from './drugFacts';
 import { ivIronCreditTier } from '../clinicalPredicates';
 import { RAAS_CLASSES, MRA_POOL_CLASSES, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES, getMedicationClassGroup } from './registry';
-import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, isTargetDoseForPatient, doseFractionOfTarget, restrictToStartTiers } from './regimenUtils';
+import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, isTargetDoseForPatient, doseProgressToTarget, restrictToStartTiers } from './regimenUtils';
 import { calculateAdherenceScore, calculateCostScore, calculateFunctionalScore, calculateGuidelineConcordanceScore, calculateNeurohormonalScore, calculateStructureScore, calculateVolumeScore, classifyPhenotype, describeConcordance, nsMraFillsMraSlot, Phenotype } from './domains';
 import { simulateModificationEffect } from './effects';
 import { IntolerancePolicy } from './intolerance';
@@ -235,9 +234,9 @@ export function gdmtCompletenessFraction(activeModSet: ModificationSet, ctx: Sco
             const atCap = !!cap && Number(r.dose.strength) >= cap.max_dose;
             const full = atTarget || atMax || atCap;
             if (!full) {
-                // Below target: graded by the share of the patient's target total daily dose when one can be derived (scoreModel.ts), else the flat credit.
-                const frac = doseFractionOfTarget(r, patient);
-                best = Math.max(best, frac === undefined ? SUBTARGET_CREDIT : COMPLETENESS_GRADED_CREDIT_BASE + COMPLETENESS_GRADED_CREDIT_SPAN * Math.max(0, Math.min(1, frac)));
+                // Below target: SUBTARGET_CREDIT at or below the labeled starting tier, rising linearly to 1 at target (scoreModel.ts); the flat credit where no numeric target exists.
+                const progress = doseProgressToTarget(r, patient);
+                best = Math.max(best, progress === undefined ? SUBTARGET_CREDIT : SUBTARGET_CREDIT + COMPLETENESS_GRADED_CREDIT_SPAN * progress);
             }
             return full;
         });
