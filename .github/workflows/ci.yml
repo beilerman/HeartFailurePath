@@ -31,6 +31,10 @@ jobs:
 
       - name: Verify scenarios
         run: npm run verify
+
+      - name: Verify clinical UI content
+        run: npm run verify:ui
+
       - name: Pricing audit
         run: npm run audit:pricing
 

@@ -86,12 +86,12 @@ export function calculateNeurohormonalScore(bnp: number): number {
  * KCCQ: 0-100 direct.
  * Steps: <2000 (Low), >5000 (High).
  */
-export function calculateFunctionalScore(nyha: string, kccq: number, steps?: number): number {
+export function calculateFunctionalScore(nyha: string, kccq: number | undefined, steps?: number): number {
     const nyhaScore = NYHA_SCORE_MAP[nyha] || 0;
 
     // KCCQ is a 0-100 scale: a projected value pushed below 0 (several removals at once) used to drive this domain negative.
-    let totalScore = nyhaScore + Math.max(0, Math.min(100, kccq));
-    let divisor = 2;
+    let totalScore = nyhaScore + (kccq === undefined ? 0 : Math.max(0, Math.min(100, kccq)));
+    let divisor = kccq === undefined ? 1 : 2;
 
     if (steps !== undefined) {
         // Map steps: 0 steps = 0 pts, 7000 steps = 100 pts.

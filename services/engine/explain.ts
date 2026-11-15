@@ -1,3 +1,4 @@
+import { buildTreatmentAssessment } from './treatmentAssessment';
 /** Display/explanation builders: monitoring plan, qualitative projections, trade-offs, follow-up calendar. Moved verbatim from simulationService.ts (phase 4). */
 import { assessCreatinineChange } from './renalChange';
 import { Patient, Medication, ScoredRegimen, ExcludedMedication, SimulationOutput, RegimenMed, ModificationSet, MonitoringPlanItem, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores, RankingInfo } from '../../types';
@@ -58,7 +59,7 @@ export function buildMonitoringPlan(
         plan.push({
             test: 'BMP (creatinine, eGFR)',
             timing: '2-4 weeks after SGLT2i initiation',
-            details: 'SGLT2i causes an expected hemodynamic eGFR dip of 5-10% (tubuloglomerular feedback). This is reversible and NOT a reason to discontinue. Recheck to confirm stabilization.'
+            details: 'An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.'
         });
         if (currentPatient.egfr < 45) {
             plan.push({
@@ -181,8 +182,18 @@ export const RAAS_POTASSIUM_STAGED_MONITORING: MonitoringPlanItem = {
     details: 'A new ACE inhibitor, ARB or ARNI is withheld while potassium is above 5.2 (2026 ESC Supplementary Tables S4/S5: caution and specialist advice above 5.2; the engine applies it as a staged start). First stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes, then recheck potassium and start once it is 5.2 or lower. Potassium binders carry a Class 2b recommendation in the 2022 US guideline for hyperkalaemia that develops while on a RAAS inhibitor; the 2026 ESC guideline makes no recommendation for them, so the tool does not start a RAAS inhibitor together with a binder.',
 };
 
+/** Staged monitoring for therapy deferred by rule E15 (new MRA) or E18 (new RAAS inhibitor); not specific to any one option. */
+export function deferredTherapyMonitoring(excludedMeds: ExcludedMedication[]): MonitoringPlanItem[] {
+    return [
+        ...(excludedMeds.some(m => m.rule_id === 'E15') ? [MRA_POTASSIUM_STAGED_MONITORING] : []),
+        ...(excludedMeds.some(m => m.rule_id === 'E18') ? [RAAS_POTASSIUM_STAGED_MONITORING] : []),
+    ];
+}
+
 export function buildMissingDataNotices(patient: Patient): string[] {
     const notices: string[] = [];
+    if (patient.kccq_score === undefined) notices.push('KCCQ not measured — eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.');
+    if (valueUnknown(patient.bun)) notices.push('BUN not entered — the BUN/creatinine perfusion marker is unassessed, not normal.');
     if (patient.lvedd === undefined && patient.lavi === undefined) {
         notices.push('No LVEDD or LAVI entered — chamber remodeling is not assessed. Structural inference is limited to LVEF alone.');
     }
@@ -198,11 +209,11 @@ export function buildMissingDataNotices(patient: Patient): string[] {
         } else if (ivIronCreditTier(patient) === null) {
             notices.push('Iron deficiency present, but IV iron is not added automatically: the evidence is in HFrEF (LVEF below 50) with NYHA II-III and a TSAT below 20% identifies the patients most likely to benefit. A clinician may still choose it (the label HF indication, NYHA II/III, has no LVEF limit).');
         } else if (patient.hemoglobin === undefined) {
-            notices.push('Hemoglobin not entered: the ferric carboxymaltose dose (label table by weight and hemoglobin) is shown for both hemoglobin bands. Enter hemoglobin to fix the dose.');
+            notices.push('Hemoglobin not entered: a new ferric carboxymaltose dose is withheld because the label table depends on weight and hemoglobin. Obtain hemoglobin; a recorded existing course still needs prescribing review.');
         }
     }
     if (patient.daily_step_count === undefined) {
-        notices.push('No activity / step data entered — functional status is based on NYHA and KCCQ only.');
+        notices.push(patient.kccq_score === undefined ? 'No activity / step data or KCCQ entered — functional scoring is based on recorded NYHA only.' : 'No activity / step data entered — functional status is based on NYHA and KCCQ only.');
     }
     if (patient.lvef > 40 && hasUnknownHistoricalHFrEF(patient)) {
         notices.push('Prior LVEF (ever ≤ 40%?) is undocumented — HFimpEF vs HFpEF classification is uncertain. Clarify prior echocardiograms before de-escalating.');
@@ -218,47 +229,17 @@ export function buildFollowUpCalendar(modSet: ModificationSet | undefined): Moni
     );
     if (!initiatesOrTitrates) return [];
     return [
-        { test: 'Clinical review + BMP (K+, creatinine, eGFR) + BP/HR', timing: 'Day 7 (±2)', details: 'STRONG-HF model: assess tolerance and labs within ~1 week of any GDMT initiation or up-titration. Reduce one step if K+ is above 5.5 (stop at 6.0 or above) or if creatinine rises 50% or more above baseline (2026 ESC; the former 30% was engine policy).' },
-        { test: 'BMP + BP/HR + congestion check; up-titrate if tolerated', timing: 'Week 2', details: 'Advance toward target doses if BP, HR, renal function and K+ permit; up-titrate every 1-2 weeks (2026 ESC Table 5), and not faster than every 2 weeks without close monitoring (Supplementary Tables S4-S6, S8). Reinforce daily-weight self-monitoring and adherence.' },
-        { test: 'BMP + BP/HR; continue stepwise titration', timing: 'Week 4', details: 'Continue up-titration of each pillar toward guideline target / maximally tolerated dose.' },
-        { test: 'NT-proBNP + clinical assessment; confirm target doses', timing: 'Week 6', details: 'Confirm quadruple therapy at target/maximally tolerated doses. Document residual gaps and any device/referral needs.' }
+        { test: 'Clinical review + relevant chemistry + BP/HR', timing: 'About 1 week; sooner if indicated', details: 'Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.' },
+        { test: 'BP/HR, congestion and laboratory review as indicated', timing: 'About 2 weeks', details: 'Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.' },
+        { test: 'Reassess remaining treatment gaps and tolerance', timing: 'About 4 weeks', details: 'Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.' },
+        { test: 'Review progress, residual gaps and referral needs', timing: 'About 6 weeks', details: 'Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.' }
+
     ];
 }
 
-export function buildQualitativeProjections(baseline: Patient, projected: Patient, hasMraInRegimen: boolean): QualitativeProjection[] {
-    const out: QualitativeProjection[] = [];
-
-    const lvefDelta = projected.lvef - baseline.lvef;
-    if (lvefDelta >= 3) out.push({ label: 'Reverse remodeling', direction: 'improve', detail: 'Meaningful EF improvement likely over months with disease-modifying therapy.' });
-    else if (lvefDelta >= 1) out.push({ label: 'Reverse remodeling', direction: 'improve', detail: 'Modest EF improvement possible.' });
-    else if (lvefDelta <= -2) out.push({ label: 'Reverse remodeling', direction: 'caution', detail: 'EF may decline if disease-modifying therapy is reduced or removed.' });
-    else out.push({ label: 'Reverse remodeling', direction: 'stable', detail: 'EF expected to remain broadly stable.' });
-
-    const baseExcess = baseline.volume_status.current_weight_kg - baseline.volume_status.dry_weight_kg;
-    const projExcess = projected.volume_status.current_weight_kg - projected.volume_status.dry_weight_kg;
-    if (projExcess < baseExcess - 1) out.push({ label: 'Congestion', direction: 'improve', detail: 'Decongestion expected; monitor for over-diuresis.' });
-    else if (baseExcess > 1.5) out.push({ label: 'Congestion', direction: 'caution', detail: 'Residual volume overload — diuretic strategy may need adjustment.' });
-    else out.push({ label: 'Congestion', direction: 'stable', detail: 'Near-euvolemic / stable volume status.' });
-
-    // Not stated when NT-proBNP was not entered (a blank value projects to the model's floor and read as a "rise").
-    if (!(baseline.nt_pro_bnp > 0)) { /* no line */ }
-    else if (projected.nt_pro_bnp < baseline.nt_pro_bnp * 0.85) out.push({ label: 'Neurohormonal stress', direction: 'improve', detail: 'Natriuretic-peptide burden expected to fall.' });
-    else if (projected.nt_pro_bnp > Math.max(baseline.nt_pro_bnp * 1.1, 60)) out.push({ label: 'Neurohormonal stress', direction: 'caution', detail: 'Natriuretic-peptide burden may rise — reassess.' });
-    else out.push({ label: 'Neurohormonal stress', direction: 'stable', detail: 'Little change in natriuretic-peptide burden expected.' });
-
-    // Conservative projected SBP (post safety change — compensation excluded from this value)
-    if (projected.sbp < 95) out.push({ label: 'Blood pressure', direction: 'caution', detail: 'Hypotension risk — monitor BP and symptoms closely; consider staggered initiation.' });
-    else if (projected.sbp < 105) out.push({ label: 'Blood pressure', direction: 'stable', detail: 'Mild BP reduction expected; generally tolerated.' });
-    else out.push({ label: 'Blood pressure', direction: 'stable', detail: 'Minimal BP impact expected.' });
-
-    if (!(projected.potassium > 0) || Number.isNaN(projected.potassium)) out.push({ label: 'Potassium', direction: 'caution', detail: 'Potassium not entered — obtain a BMP before RAAS / MRA changes.' });
-    else if (projected.potassium > 5.5) out.push({ label: 'Potassium', direction: 'worsen', detail: 'Hyperkalemia risk — binder and close monitoring required.' });
-    else if (projected.potassium > 5.0) out.push({ label: 'Potassium', direction: 'caution', detail: 'Borderline potassium — recheck BMP within ~1 week.' });
-    else if (projected.potassium < 3.5) out.push({ label: 'Potassium', direction: 'caution', detail: 'Hypokalemia risk — replete and monitor (esp. with diuretics / digoxin).' });
-    else if (hasMraInRegimen) out.push({ label: 'Potassium', direction: 'stable', detail: 'Potassium expected acceptable; routine MRA monitoring applies.' });
-    else out.push({ label: 'Potassium', direction: 'stable', detail: 'Potassium expected stable.' });
-
-    return out;
+/** Compatibility helper: measurements alone cannot identify an individual treatment response. */
+export function buildQualitativeProjections(_current: Patient, _projected: Patient, _hasMra: boolean): QualitativeProjection[] {
+    return [{ label: 'Treatment response', direction: 'caution', detail: 'Individual response is not quantified. Use medication-specific considerations and measured reassessment.' }];
 }
 
 // Human label + evidence for a criteria-met adjunct, so guideline-indicated add-ons are surfaced
@@ -295,11 +276,11 @@ export function buildTradeOffLabels(domain: DomainScores): TradeOffLabel[] {
         s >= 80 ? { label: good, tone: 'good' } : s >= 50 ? { label: mid, tone: 'neutral' } : { label: bad, tone: 'bad' };
     // The cost domain measures cost against the STATED BUDGET, so the label says so: "Low cost" described a $953/month regimen under a large budget (review 2026-11-12).
     const cost = band(domain.cost, 'Well within budget', 'Near the budget limit', 'Over budget / financial-toxicity risk');
-    const burden = band(domain.adherence, 'Low pill burden', 'Moderate complexity', 'High complexity / adherence risk');
+    const burden = band(domain.adherence, 'Lower dosing burden', 'Moderate complexity', 'High complexity / adherence risk');
     const evidence = band(domain.guideline, 'Strong guideline concordance', 'Partial concordance', 'Limited concordance');
     return [
         { dimension: 'Cost', label: cost.label, tone: cost.tone },
-        { dimension: 'Pill burden', label: burden.label, tone: burden.tone },
+        { dimension: 'Dosing burden', label: burden.label, tone: burden.tone },
         { dimension: 'Evidence', label: evidence.label, tone: evidence.tone }
     ];
 }
@@ -331,10 +312,13 @@ export function assembleOutput(
 
     // Populate the deferred display-only artifacts for the ≤ 3 picks actually returned.
     distinctPicks.forEach(r => {
-        const hasMra = r.regimen.some(x => x.med.drug_class === 'MRA' || x.med.drug_class === 'nsMRA');
         if (r.modification_set) r.monitoring_plan = buildMonitoringPlan(patient, r.projected_patient, r.modification_set);
-        r.qualitative_projections = buildQualitativeProjections(patient, r.projected_patient, hasMra);
+        if (r.modification_set) r.treatment_assessment = buildTreatmentAssessment(patient, r.modification_set);
+        r.qualitative_projections = r.treatment_assessment?.considerations ?? [];
         r.trade_offs = buildTradeOffLabels(r.domain_scores);
+        if (r.score_breakdown?.domains.some(d => d.key === 'cost' && d.assessed === false)) {
+            r.trade_offs = r.trade_offs.map(t => t.dimension === 'Cost' ? { dimension: 'Cost', label: 'Affordability not assessed', tone: 'neutral' } : t);
+        }
     });
 
     // H2: Low-output state — still show recommendations but with mandatory warnings and capped scores.
@@ -378,8 +362,7 @@ export function assembleOutput(
         clinicalAlerts,
         monitoringPlan: [
             ...(topPick.monitoring_plan || []),
-            ...(excludedMeds.some(m => m.rule_id === 'E15') ? [MRA_POTASSIUM_STAGED_MONITORING] : []),
-            ...(excludedMeds.some(m => m.rule_id === 'E18') ? [RAAS_POTASSIUM_STAGED_MONITORING] : []),
+            ...deferredTherapyMonitoring(excludedMeds),
         ],
         gdmtGaps,
         eligibleAdjuncts,

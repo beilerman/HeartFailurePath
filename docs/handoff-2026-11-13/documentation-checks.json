@@ -1,0 +1,30 @@
+{
+  "documentation_only": true,
+  "modified_existing_docs": [
+    "CLAUDE.md",
+    "README.md",
+    "docs/HANDOFF-2026-11-12.md",
+    "docs/adversarial-review-2026-11-12.md",
+    "docs/adversarial-systemic-2026-11-12/README.md",
+    "docs/clinical-decisions-2026-11-11.md",
+    "docs/incomplete-data-2026-11-12/README.md",
+    "docs/medication-properties-2026-11-12/README.md",
+    "docs/medication-repair-loop-2026-11-12/README.md",
+    "docs/medication-review-2026-11-10/README.md",
+    "docs/repair-2026-11-12/README.md",
+    "docs/ui-adversarial-2026-11-12/README.md",
+    "memory.md"
+  ],
+  "local_links_checked": 41,
+  "link_errors": [],
+  "saved_receipts_checked": true,
+  "browser_workflows_recorded": 7,
+  "full_gate_rerun_for_documentation": false,
+  "preexisting_non_documentation_files_unchanged": true,
+  "created_handoff_files": [
+    "docs/HANDOFF-2026-11-13.md",
+    "docs/handoff-2026-11-13/documentation-checks.json",
+    "docs/handoff-2026-11-13/working-tree.json"
+  ],
+  "git_diff_check": "passed"
+}

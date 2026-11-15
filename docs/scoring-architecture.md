@@ -4,14 +4,23 @@ Written 2026-11-10; updated 2026-11-12 (rule E19, adversarial review changes, cu
 patient and the drugs, exclude what cannot be used, generate options, score them against clinical
 goals and patient values, and show the arithmetic.
 
-`generateAndScoreModifications` in `services/simulationService.ts` is a 55-line orchestrator (signature to closing brace, comments included). Each
+`generateAndScoreModifications` in `services/simulationService.ts` is the staged orchestrator. Each
 numbered comment in it is one stage below.
+
+## Medication transitions and the observed baseline
+
+Rule set .8: [medication transition repair](medication-repair-loop-2026-11-12/README.md). The observed patient is never replaced by an inferred untreated or future patient. Net transitions drive medication-specific considerations, cost, burden and explicit safety/eligibility rules. CHF/hemodynamic coefficient functions are audit-only and cannot influence clinical output. Neurohormonal, functional, volume and structure scores are unassessed with zero weight; remaining weights are rescaled (cost also excluded when unknown).
+
+The legacy `projected_patient` field contains unchanged observed physiology and a proposed regimen. Its `assessment_basis` is `proposed_regimen`; the public facade rejects it as follow-up input. Changed-dose metadata is not carried forward as evidence of established exposure. New observed data and reconciled actual treatment must come from a subsequent clinical assessment.
+
+Exposure history distinguishes active, uncertain, held and completed therapy. Related increases/swaps need confirmed current use; increases additionally need explicit time-at-dose/tolerance review. Held/repeat-course changes have their own review prerequisites. No automatic binder rescue, numerical synergies, withdrawal subtraction or compensation remains. Known urgent findings remain unresolved until reassessed. Historical numerical-model descriptions later in this document are superseded by this contract and the .8 report.
 
 ## The pipeline
 
 | # | Stage | Module (`services/engine/`) | What it decides |
 |---|---|---|---|
-| 1 | Audit inputs | `gates.ts` | Missing or implausible data. Can stop with alerts only |
+| 0 | Validate and assess available information | `inputContract.ts`, `decisionReadiness.ts` | Invalid data stop calculation; missing core observations yield a focused review; missing medication prerequisites withhold dependent changes |
+| 1 | Audit inputs | `gates.ts` | Implausible observations and arriving-regimen concerns. Can stop with alerts only |
 | 2 | Raise alerts | `gates.ts` | Pregnancy, low output, referrals, volume depletion |
 | 3 | Safety hard stops | `gates.ts` | SBP < 90 or K+ ≥ 6.5: alerts only, no regimens |
 | 4 | Eligibility | `eligibility.ts` | Which drugs cannot be offered, by numbered rule |
@@ -41,7 +50,7 @@ exclusion carries that rule's id and name.
 | E09 | GLP-1 after GI intolerance (new starts) |
 | E10 | No nsMRA while staying on a steroidal MRA |
 | E11 | No steroidal MRA while staying on an nsMRA |
-| E12 | Renal data required (blank eGFR/creatinine, renal-gated start) |
+| E12 | Decision-specific information required: missing clinical prerequisites withhold dependent new starts; existing E16 RAAS/MRA lab handling is preserved |
 | E13 | Clinical contraindication (the drug's own `contraindications(patient)`) |
 | E14 | Renal dosing contraindication |
 | E15 | New MRA start at K+ 5.0 or higher is staged: withheld with or without a K+ binder, recheck and start once K+ is below 5.0 (initiation only; decision 2026-11-11; boundary 5.0-or-higher from the 2022 US text, second pass). A new spironolactone start at eGFR 30 or lower is a contraindication (E13, `mraStartEgfrCheck`). The MRA GDMT gap states the reason and the monitoring plan adds "repeat potassium; start MRA once below 5.0". No binder is co-started with a new MRA (the DIAMOND co-start was removed); the reactive rescue (projected K+ above 5.3) remains |
@@ -62,7 +71,9 @@ required", not "contraindicated"), and E10/E11 ignore a current MRA that is bein
 
 ## Stage 6: the score
 
-The score is a true weighted sum. Each candidate's projected state is scored in eight domains, each
+Missing-data behavior is defined in [the incomplete-information review](incomplete-data-2026-11-12/README.md). Measured KCCQ is optional: functional scoring averages only the recorded NYHA, KCCQ and activity components. Unmeasured BNP and unassessed affordability are `assessed: false` with zero weight; the remaining domain weights are proportionally rescaled. No baseline or projected measurement is invented. Scores across differing information completeness are not directly comparable. These are model policies, not validated outcome estimates.
+
+With all scoring inputs available, the score is a weighted sum. Each candidate's projected state is scored in eight domains, each
 0-100, and the eight weights sum to 100%, so a regimen that is perfect on every domain scores 100.
 The domains are grouped (`DOMAIN_GROUPS`) as clinical outcomes, guideline-directed therapy, and
 patient values. What a score of 100 means for each is in `DOMAIN_GOALS` (`domains.ts`).
@@ -103,14 +114,14 @@ and each is a visible line item in the breakdown, in this order.
 
 | Code | Effect |
 |---|---|
-| `SPECIAL_FEATURES` | Per-drug evidence bonuses, normalized by max(regimen size, number of indicated foundational therapies) (x 2.3), clamped to -8..+12. The line lists each feature that fired (`items`) |
+| `SPECIAL_FEATURES` | Per-drug evidence bonuses, normalized by max(1, number of indicated foundational therapies) (x 2.3), clamped to -8..+12. The denominator is fixed across a patient's candidates; adding a neutral drug cannot dilute the existing evidence bonus. The line lists each feature that fired (`items`) |
 | `VOLUME_DEPLETION_DEESCALATION` | +15 for reducing diuretics in a volume-depleted patient |
 | `PROJECTED_SBP_LT_85` | Override: score set to 0 |
 | `PROJECTED_SBP_LT_90` / `_LT_95` | -20 / -6. The SBP and HR bands read the LOWER of the projected and the entered value (2026-11-12), so a dose reduction is not rewarded for leaving a band |
 | `PROJECTED_HR_LT_50` | -40 (same lower-of-projected-and-entered rule) |
 | `PROJECTED_K_GT_5_5` | -40 |
 | `DANGEROUS_WARNINGS` | -8 per residual-risk warning. Penalized warnings that are already true of the current regimen (`baselineDangerWarnings` in `scoring.ts`) are charged to every option, so none beats "no change" by cutting a drug until a state warning stops firing (2026-11-12) |
-| `UNKNOWN_RENAL` | -12 when the option starts or increases an SGLT2 inhibitor with kidney function blank. This is the only remaining unknown-lab deduction: `UNKNOWN_POTASSIUM` was removed on 2026-11-11 because a RAAS/MRA start or increase can no longer reach scoring with potassium or renal function blank (E16 and the candidate drop) |
+| `UNKNOWN_RENAL` (retired) | No longer applied as of rule set .6. Renal-dependent starts, increases and switches are withheld before scoring, including SGLT2 inhibitors. A penalty cannot replace missing safety prerequisites. The constant remains for historical ledger compatibility. |
 | `SCORE_CLAMP`, `LOW_OUTPUT_CAP` | Overrides on the displayed score: guard clamp to 0-100 (listed only when it changes the value); cap at 25 in low output |
 
 Every `ScoredRegimen` carries `score_breakdown` with these lines. The contract, checked for every
@@ -160,7 +171,7 @@ HFrEF/HFimpEF runs (744 runs in all). In 2 runs the foundational lead has lower 
 because the balanced lead is set aside by step 1: `Jane Smith (Dry & Cold)` under commercial and Medicare pricing (balanced lead
 carvedilol 3.125 mg bid + dapagliflozin, 40% coverage; foundational lead lisinopril 2.5 mg, 15%).
 
-Graded dose credit (2026-11-11, final pass): the old flat 0.6 for any dose below target gave a titration step (carvedilol 3.125 to 6.25 mg) no credit, so it lost to unrelated changes. The credit is now progress from the starting dose to the target dose: 0.6 at or below the patient's labeled starting tier for that drug (`start_dose_for(patient)`, else the lowest tier), 1.0 at target, maximum, cap or single dose (also where start equals target), and linear in total daily dose in between: 0.6 + 0.4 x (dose - start) / (target - start) (`COMPLETENESS_SUBTARGET_CREDIT` and `COMPLETENESS_GRADED_CREDIT_SPAN`, `scoreModel.ts`; `doseProgressToTarget`). Anchoring at the start means a NEW start scores exactly as before, so the credit never chooses between agents (spironolactone 12.5 mg and eplerenone 25 mg are both "at start"); only up-titration steps gain. Basis: higher doses give lower event rates (2026 ESC section 6.1.6: composite event rates were lower with target than lower doses); the linear shape is engine policy. The target is patient-specific (`facts.target_daily_dose`, else the lowest strength `is_target_dose_for` accepts, else the `is_target_dose` flag). The guideline-concordance domain still uses the at-target boolean. The distinct-pick rule also treats two regimens with the same drugs as distinct when each consists solely of up-titrations of different drugs (titrate carvedilol versus titrate spironolactone), so a one-step beta-blocker titration is not hidden behind another titration. Against the pre-graded-credit golden, 8 of 999 top picks differ (`changes-final-anchored-credit.txt`): 3 semaglutide 0.25 to 0.5 steps and 5 beta-blocker heart-rate one-step reductions. Earlier version of this change (0.5 + 0.5 x dose/target): `changes-final-graded-dose-credit.txt`.
+Graded dose credit (2026-11-11, final pass): the old flat 0.6 for any dose below target gave a titration step (carvedilol 3.125 to 6.25 mg) no credit, so it lost to unrelated changes. The credit is now progress from the starting dose to the target dose: 0.6 at or below the patient's labeled starting tier for that drug (`start_dose_for(patient)`, else the lowest tier), 1.0 at target, maximum, cap or single dose (also where start equals target), and linear in total daily dose in between: 0.6 + 0.4 x (dose - start) / (target - start) (`COMPLETENESS_SUBTARGET_CREDIT` and `COMPLETENESS_GRADED_CREDIT_SPAN`, `scoreModel.ts`; `doseProgressToTarget`). With no dose cap, a NEW start stays at the start anchor. As of rule set 2026-11-12.4, a known renal cap also bounds the attainable target on its declared daily/per-dose basis: a starting dose that is already the renal maximum earns full completeness credit (eplerenone 25 mg at eGFR 40). Unknown renal labs do not confer this credit. This is scoring policy, not an additional efficacy claim. Basis: higher doses give lower event rates (2026 ESC section 6.1.6: composite event rates were lower with target than lower doses); the linear shape is engine policy. The target is patient-specific (`facts.target_daily_dose`, else the lowest strength `is_target_dose_for` accepts, else the `is_target_dose` flag). The guideline-concordance domain still uses the at-target boolean. The distinct-pick rule also treats two regimens with the same drugs as distinct when each consists solely of up-titrations of different drugs (titrate carvedilol versus titrate spironolactone), so a one-step beta-blocker titration is not hidden behind another titration. Against the pre-graded-credit golden, 8 of 999 top picks differ (`changes-final-anchored-credit.txt`): 3 semaglutide 0.25 to 0.5 steps and 5 beta-blocker heart-rate one-step reductions. Earlier version of this change (0.5 + 0.5 x dose/target): `changes-final-graded-dose-credit.txt`.
 
 Known limit: a fully dosed pillar can still outrank a different pillar at its starting dose.
 

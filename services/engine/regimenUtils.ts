@@ -107,12 +107,9 @@ export function renalCapExceeded(r: RegimenMed, patient: Patient): { cap: number
     return Number.isNaN(amount) || amount <= cap ? null : { cap, amount, basis: daily ? 'daily' : 'dose' };
 }
 
-/** The daily cap (renal / interaction) used to stop a carried frequency from exceeding it; undefined when none. */
+/** Only an explicitly DAILY cap limits frequency. Per-dose renal and interaction caps are enforced by eligibleDoses. */
 export function dailyCapFor(med: Medication, patient: Patient): number | undefined {
-    const adjustment = med.renal_adjustment ? med.renal_adjustment(patient.egfr, patient) : {};
-    const interactionCap = med.interaction_dose_cap?.(patient)?.max_dose;
-    const caps = [adjustment.max_dose, interactionCap].filter((x): x is number => typeof x === 'number');
-    return caps.length ? Math.min(...caps) : undefined;
+    return drugFacts(med).renal_cap_is_daily ? med.renal_adjustment?.(patient.egfr, patient).max_dose : undefined;
 }
 
 /**
@@ -426,9 +423,22 @@ export function doseProgressToTarget(r: RegimenMed, patient: Patient): number | 
     const start = startTier === undefined ? undefined : lead(startTier);
     let target: number | undefined, current: number | undefined;
     const dailyTarget = drugFacts(r.med).target_daily_dose;
+    // Completeness measures progress to the patient's attainable target. A known renal cap limits
+    // that target on its declared basis (ramipril: daily; eplerenone: per dose). These are existing
+    // formulary caps, not new clinical thresholds. Unknown labs must not confer capped-target credit.
+    const renalCap = !valueUnknown(patient.egfr) && !valueUnknown(patient.creatinine)
+        ? r.med.renal_adjustment?.(patient.egfr, patient).max_dose : undefined;
+    const capTarget = (value: number | undefined, daily: boolean): number | undefined => {
+        if (value === undefined || renalCap === undefined) return value;
+        const frequency = dosesPerDay(r.selected_frequency);
+        const cap = drugFacts(r.med).renal_cap_is_daily
+            ? (daily ? renalCap : renalCap / frequency)
+            : (daily ? renalCap * frequency : renalCap);
+        return Math.min(value, cap);
+    };
     if (dailyTarget !== undefined) {
         const d = dailyDose(r);
-        target = dailyTarget;
+        target = capTarget(dailyTarget, true);
         current = Number.isNaN(d) ? undefined : d;
         // The start tier is a per-dose strength: compare it at the entry's own frequency.
         if (start !== undefined) return finishProgress(start * dosesPerDay(r.selected_frequency), target, current);
@@ -438,7 +448,7 @@ export function doseProgressToTarget(r: RegimenMed, patient: Patient): number | 
     const targetDose = perPatient
         ? doses.find(d => { const s = Number(d.strength); return !Number.isNaN(s) && perPatient(s, patient); })
         : doses.find(d => d.is_target_dose);
-    target = targetDose ? lead(targetDose.strength) : undefined;
+    target = capTarget(targetDose ? lead(targetDose.strength) : undefined, false);
     current = lead(r.dose.strength);
     return finishProgress(start, target, current);
 }
@@ -506,7 +516,7 @@ export function clonePatient(p: Patient): Patient {
         external_medications: new Set(p.external_medications || []),
         allergies: new Set(p.allergies),
         discontinued_meds: p.discontinued_meds.map(m => ({ ...m })),
-        current_regimen: p.current_regimen ? p.current_regimen.map(r => ({ ...r, dose: { ...r.dose } })) : []
+        current_regimen: p.current_regimen ? p.current_regimen.map(r => ({ ...r, dose: { ...r.dose }, ...(r.exposure ? { exposure: { ...r.exposure } } : {}) })) : []
     };
 }
 

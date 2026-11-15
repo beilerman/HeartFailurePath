@@ -1,5 +1,7 @@
 # Adversarial review, 2026-11-12
 
+> Historical record. Start with the [consolidated 2026-11-13 handoff](HANDOFF-2026-11-13.md) for current behavior, completed follow-on repairs, validation coverage and remaining decisions. Earlier numerical-model descriptions and open lists below are stage-specific.
+
 Scope: the whole tool on branch `refactor/glucosepath-alignment` (PR #1). Method: (1) a seeded randomized-patient sweep with invariants written independently of the engine (`scripts/fuzzSweep.ts`, now `npm run fuzz` and part of the gate); (2) four independent read-only reviews (safety rules, scoring and ranking, formulary data, form and documentation). Every item below was reproduced before it was fixed.
 
 ## How the sweep works
@@ -95,7 +97,7 @@ Method: four independent read-only reviewers (safety rules, scoring and ranking,
 
 Top recommendation changed in 45 of 1,032 reference runs. Sweep after the fixes: 5,000 (gate seed) and 15,000 (fresh seed) patients, no violations.
 
-### Reproduced, NOT fixed (open)
+### Third-pass open findings (original list; follow-on status below)
 
 Ordered by how much they matter. Reviewer probe scripts were in a session scratch directory and are not in the repo; each item below has enough detail to reproduce.
 
@@ -116,3 +118,22 @@ Ordered by how much they matter. Reviewer probe scripts were in a session scratc
 15. **Lisinopril 20 to 40 mg is offered as the top option** although 20 mg is already at target (ESC table: 20 to 35 mg).
 16. **At potassium 6.0 to 6.4 with nothing potassium-raising left to stop**, the next visit shows no options (the display floor is absolute). An alert is present; whether to show potassium-neutral options is a design decision.
 17. **Tests still to write** for the third-pass fixes marked "not yet a scenario" above.
+
+
+## Codex follow-on repair batch, 2026-11-12
+
+Current status supersedes the original open list for these items only:
+
+| Item | Status | Change |
+|---|---|---|
+| 1 | Partially fixed | Automatic rescue no longer attaches a binder when all RAAS/MRA changes are reductions/removals, including an unchanged sibling. The flat RAAS potassium model and its penalty behavior remain unresolved; no invented numerical dose-response curve. |
+| 3 | Fixed locally | Completeness progress uses the existing renal-capped target when renal labs are known, on the declared daily/per-dose basis. |
+| 4 | Fixed locally | Reduction selects the nearest eligible lower daily dose, including frequency-only changes. All titration summaries include both frequencies. Existing mandatory heart-rate rules remain. |
+| 5 | Fixed locally | An all-options low-potassium conflict names the shared potassium-raising drug removal. Neither display floor nor MRA continuation threshold is relaxed. |
+| 17 | Partially covered | Ten new regression groups include ARB and angioedema allergy handling; other third-pass scenario/UI gaps remain. |
+
+See `repair-2026-11-12/README.md` for evidence boundaries, validation, ranking changes and remaining work. No release or clinical activation.
+
+## Systemic follow-on review (.5, 2026-11-12)
+
+The current disposition of **all 17 findings** and new boundary/projection/selection/harness findings is in [`adversarial-systemic-2026-11-12/README.md`](adversarial-systemic-2026-11-12/README.md). Items 7, 8 and 10 are now fixed; formulation descriptions (13) were corrected from labels, with spironolactone preparation explicitly requiring pharmacist confirmation. Digoxin exposure text (11) and durable regression coverage (17) improved, but individualized dosing and browser verification remain open. Gate: 399 passed, 1,032 golden runs, all audits/build pass. Sixteen further lead changes versus the .4 local snapshot were reviewed and recorded. Local work only; no release or clinical-readiness claim.

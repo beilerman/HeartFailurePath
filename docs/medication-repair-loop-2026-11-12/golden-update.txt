@@ -1,0 +1,7 @@
+
+> heartfailurepath@0.1.0 golden:update
+> tsx scripts/goldenMaster.ts --update
+
+Golden master written: 1032 runs -> /Users/bradeilerman/Projects/HeartFailurePath/data/golden/engine-output.json.gz
+(node:56747) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)

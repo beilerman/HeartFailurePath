@@ -31,6 +31,7 @@ import { drugFacts } from './drugFacts';
 import { contraindicationReasons } from './contraindications';
 import { MRA_START_K_CEILING, RAAS_START_K_CAUTION, RAAS_EGFR_REVIEW_BELOW } from './thresholds';
 import { assessCreatinineChange } from './renalChange';
+import { missingForMedicationChange, knownMedicationChangeHold } from './decisionReadiness';
 
 /** Everything the rules need, computed once per patient (not per drug). */
 export interface EligibilityContext {
@@ -178,16 +179,19 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             ? 'Dual MRA prevention: current nsMRA in regimen' : null,
     },
     {
-        id: 'E12', name: 'Renal data required',
-        summary: 'A renal-gated drug is not started when kidney function is blank; obtain a BMP first.',
+        id: 'E12', name: 'Decision-specific information required',
+        summary: 'Missing safety or dosing prerequisites withhold a new drug; they do not establish intolerance or a contraindication.',
         // Must precede E13: both fire on the same contraindications() result, and a blank-renal
         // trip is labeled honestly instead of as a hard clinical contraindication.
-        evaluate: (ctx, med) => med.contraindications && med.contraindications(ctx.patient)
-            && ctx.renalDataUnknown && isRenalOnlyContraindication(med, ctx.patient)
-            ? 'Renal data required — cannot assess renal safety (obtain BMP before initiation)' : null,
-        details: (_ctx, med) => [
-            `eGFR is blank (not entered): ${med.name} has a renal-gated contraindication that cannot be assessed without it — obtain a BMP first`,
-        ],
+        evaluate: (ctx, med) => {
+            const missing = ctx.patient.current_regimen.some(r => r.med.name === med.name) ? [] : missingForMedicationChange(ctx.patient, med)
+                // Preserve the established E12 renal-gate / E16 laboratory-prerequisite explanation for RAAS/MRA.
+                .filter(field => !(RAAS_CLASSES.has(med.drug_class) || MRA_POOL_CLASSES.has(med.drug_class)) || !['serum potassium','renal function'].includes(field));
+            if (missing.length) return `Information required before starting: ${missing.join(', ')}`;
+            return med.contraindications && med.contraindications(ctx.patient)
+                && ctx.renalDataUnknown && isRenalOnlyContraindication(med, ctx.patient)
+                ? 'Renal data required — cannot assess renal safety (obtain BMP before initiation)' : null;
+        },
     },
     {
         id: 'E13', name: 'Clinical contraindication',
@@ -311,6 +315,11 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             `eGFR ${ctx.patient.egfr} mL/min/1.73 m2 is below ${RAAS_EGFR_REVIEW_BELOW}. The 2026 ESC guideline (Supplementary Table S4) advises stopping an ACE inhibitor or ARB and seeking specialist advice when eGFR falls below 20; this tool therefore does not start, increase or switch one at this level (engine policy). A drug already in use is kept.`,
         ],
     },
+    {
+        id: 'E21', name: 'Correct low potassium before diuretic intensification',
+        summary: 'A new potassium-lowering diuretic waits for correction of recorded hypokalemia; existing therapy is reviewed separately.',
+        evaluate: (ctx, med) => ctx.patient.current_regimen.some(r => r.med.name === med.name) ? null : knownMedicationChangeHold(ctx.patient, med),
+    },
 ];
 
 export const ELIGIBILITY_RULE_IDS: ReadonlySet<string> = new Set(ELIGIBILITY_RULES.map(r => r.id));
@@ -377,11 +386,18 @@ export function runEligibilityStage(
         clinicalAlerts.push('BETA-BLOCKER INTOLERANCE: Prior bradycardia/AV block on a beta-blocker. New beta-blocker initiation is deferred; if a beta-blocker is essential, evaluate for pacing. An existing beta-blocker should be reduced, not abruptly stopped.');
     }
     const { formulary, excludedMeds } = filterEligibleMedications(eligibility, availableMedNames);
-    // (Per-class exclusion tracking is derived from the filtered formulary where needed —
-    // e.g. allBBExcluded below — rather than a parallel excludedClasses set, which drifted.)
+    // An unchecked formulary item or a missing prerequisite is not evidence that a
+    // patient cannot take a class. Adjunct pathways require actual clinical exclusions.
+    const clinicallyExcluded = (m: Medication) => missingForMedicationChange(patient, m).length === 0
+        && excludedMeds.some(e => e.name === m.name);
+    const allBBExcluded = MEDICATION_FORMULARY.filter(m => m.drug_class === 'Beta Blocker').every(clinicallyExcluded);
+    const allRAASExcluded = MEDICATION_FORMULARY.filter(m => RAAS_CLASSES.has(m.drug_class)).every(clinicallyExcluded);
+    const unresolvedFoundationalClass = ['RAAS Inhibitor', 'Beta Blocker', 'MRA', 'SGLT2i'].some(group => {
+        const matches = (m: Medication) => group === 'RAAS Inhibitor' ? RAAS_CLASSES.has(m.drug_class)
+            : group === 'MRA' ? MRA_POOL_CLASSES.has(m.drug_class) : m.drug_class === group;
+        return !patient.current_regimen.some(r => matches(r.med))
+            && MEDICATION_FORMULARY.filter(matches).some(m => !clinicallyExcluded(m));
+    });
 
-    // Check if ALL beta blockers were excluded (not just one)
-    const allBBExcluded = !formulary.some(m => m.drug_class === 'Beta Blocker');
-
-    return { formulary, excludedMeds, intolerancePolicy, allBBExcluded };
+    return { formulary, excludedMeds, intolerancePolicy, allBBExcluded, allRAASExcluded, unresolvedFoundationalClass };
 }

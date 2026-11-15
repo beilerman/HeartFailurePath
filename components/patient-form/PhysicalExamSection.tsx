@@ -1,8 +1,9 @@
+import { PATIENT_RHYTHMS } from '../../types';
 import React from 'react';
 import { ActivityIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
-import { congestionFindingCount } from '../../services/clinicalPredicates';
+import { volumeDescription } from '../clinicalPresentation';
 import { isCongestedAboveDryWeight } from '../../services/engine/regimenUtils';
 
 interface PhysicalExamSectionProps {
@@ -28,14 +29,7 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
     const isOverloaded = isCongestedAboveDryWeight(patientData);
     const isDehydrated = weightDiff < -1.0;
     const hasWeights = Number.isFinite(weightDiff);
-    const hasFindings = congestionFindingCount(patientData.volume_status.exam_findings) > 0;
-    const weightStatusText = !hasWeights
-        ? 'Enter both weights'
-        : isOverloaded
-        ? (hasFindings ? `+${weightDiff.toFixed(1)} kg (Overload)` : `Above dry weight (+${weightDiff.toFixed(1)} kg), no congestion findings recorded`)
-        : isDehydrated
-            ? `${weightDiff.toFixed(1)} kg (Volume Depleted)`
-            : hasFindings ? 'Weight at dry weight, but congestion findings recorded' : 'Euvolemic';
+    const weightStatusText = volumeDescription(patientData);
 
     const weightStatusColor = !hasWeights
         ? 'text-slate-600 bg-slate-50 border-slate-200'
@@ -43,14 +37,14 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
         ? 'text-red-700 bg-red-50 border-red-200'
         : isDehydrated
             ? 'text-amber-700 bg-amber-50 border-amber-200'
-            : hasFindings ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-emerald-700 bg-emerald-50 border-emerald-200';
+            : 'text-slate-700 bg-slate-50 border-slate-200';
 
     const findingsList = ['Edema (1+)', 'Edema (2+)', 'Edema (3+)', 'JVP Elevated', 'Orthopnea', 'Crackles', 'Ascites', 'Cool Extremities'];
 
     return (
-        <section>
+        <section id="patient-exam" tabIndex={-1}>
             <h3 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                <ActivityIcon className="w-5 h-5 text-emerald-600" aria-hidden="true" /> Physical Exam
+                <ActivityIcon className="w-5 h-5 text-emerald-600" aria-hidden="true" /> Physical exam
             </h3>
 
             {/* Hemodynamics */}
@@ -63,26 +57,17 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
                     </div>
                 </div>
                 <div>
-                    <Label required>Pulse / SpO2</Label>
-                    <div className="flex gap-2">
-                        <div className="relative w-full">
-                            <Input type="number" min={0} name="pulse" value={patientData.pulse ?? ''} onChange={onChange} placeholder="BPM" aria-label="Pulse rate" error={validationErrors.pulse} />
-                            <span className="absolute right-2 top-2 text-xs text-slate-400">bpm</span>
-                        </div>
-                        <div className="relative w-full">
-                            <Input type="number" min={0} name="oxygen_saturation" value={patientData.oxygen_saturation ?? ''} onChange={onChange} placeholder="%" aria-label="Oxygen saturation" error={validationErrors.oxygen_saturation} />
-                            <span className="absolute right-2 top-2 text-xs text-slate-400">%</span>
-                        </div>
-                    </div>
+                    <Label htmlFor="pulse">Pulse (bpm, required)</Label>
+                    <Input type="number" min={0} name="pulse" value={patientData.pulse ?? ''} onChange={onChange} placeholder="bpm" error={validationErrors.pulse} />
                 </div>
-                <div className="col-span-2">
+                <div>
+                    <Label htmlFor="oxygen_saturation">SpO2 (%, optional)</Label>
+                    <Input type="number" min={0} name="oxygen_saturation" value={patientData.oxygen_saturation ?? ''} onChange={onChange} placeholder="%" error={validationErrors.oxygen_saturation} />
+                </div>
+                <div>
                     <Label htmlFor="rhythm">Rhythm</Label>
-                    <Select name="rhythm" value={patientData.rhythm} onChange={onChange}>
-                        <option value="Sinus">Sinus</option>
-                        <option value="AFib">AFib</option>
-                        <option value="Paced">Paced</option>
-                        <option value="2nd Degree AV Block">2nd Degree AV Block</option>
-                        <option value="3rd Degree AV Block">3rd Degree AV Block</option>
+                    <Select name="rhythm" value={patientData.rhythm} onChange={onChange} placeholder="Select rhythm" error={validationErrors.rhythm}>
+                        {PATIENT_RHYTHMS.map(rhythm => <option key={rhythm} value={rhythm}>{rhythm}</option>)}
                     </Select>
                 </div>
             </div>
@@ -110,13 +95,13 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
 
             {/* Volume Status */}
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 mb-2">
-                <div className="flex justify-between items-center mb-2">
-                    <Label>Weight Status</Label>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded border ${weightStatusColor}`}>{weightStatusText}</span>
+                <div className="space-y-1 mb-2">
+                    <Label>Weight status</Label>
+                    <p className={`text-xs font-medium px-2 py-1 rounded border ${weightStatusColor}`}>{weightStatusText}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 mb-2">
                     <div>
-                        <Label htmlFor="dry_weight_kg">Dry Wt (kg)</Label>
+                        <Label htmlFor="dry_weight_kg">Estimated dry weight (kg)</Label>
                         <Input type="number" min={0} name="dry_weight_kg" value={patientData.volume_status.dry_weight_kg ?? ''} onChange={(e) => onVolumeChange('dry_weight_kg', Number(e.target.value))} error={validationErrors.dry_weight_kg} />
                     </div>
                     <div>
@@ -126,7 +111,7 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
                 </div>
             </div>
 
-            <Label>Exam Findings</Label>
+            <Label>Exam findings</Label>
             <div className="grid grid-cols-2 gap-2 mt-1">
                 {findingsList.map(finding => (
                     <button

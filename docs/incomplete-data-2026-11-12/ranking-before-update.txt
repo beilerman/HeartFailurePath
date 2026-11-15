@@ -1,0 +1,114 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1038 runs
+  (a) top pick identical:        1023 / 1038
+  (b) displayed pick set same:   1014 / 1038
+  (c) pick order identical:      1014 / 1038
+  (d) eligibility + alerts identical: NO (1002 differences)
+  (e) per-regimen warnings identical: NO (16 regimens)
+  top-pick overall_score  old: min 19 / median 78 / max 100
+  top-pick overall_score  new: min 19 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 9 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+    unknown: 6 of 6 runs
+
+Top pick changed in 15 runs:
+  Sinus Tachycardia (No BB Available) - Ivabradine Fallback :: cash
+     old: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 83, raw 83.43]
+     new: (no pick)
+  Sinus Tachycardia (No BB Available) - Ivabradine Fallback :: commercial
+     old: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 83.83]
+     new: (no pick)
+  Sinus Tachycardia (No BB Available) - Ivabradine Fallback :: medicare
+     old: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 83, raw 83.47]
+     new: (no pick)
+  Adjunct-Source IV Iron Hemoglobin Not Entered Both Bands :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 91, raw 90.56]
+     new: (no pick)
+  Adjunct-Source IV Iron Hemoglobin Not Entered Both Bands :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 91, raw 90.67]
+     new: (no pick)
+  Adjunct-Source IV Iron Hemoglobin Not Entered Both Bands :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 91, raw 90.64]
+     new: (no pick)
+  Lab-Prereq Naive HFrEF Blank Renal :: cash
+     old: Carvedilol 3.125mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 71, raw 70.77]
+     new: Metoprolol Succinate 12.5mg qd [overall 69, raw 69.07]
+  Lab-Prereq Naive HFrEF Blank Renal :: commercial
+     old: Carvedilol 3.125mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 71, raw 70.77]
+     new: Metoprolol Succinate 12.5mg qd [overall 69, raw 69.07]
+  Lab-Prereq Naive HFrEF Blank Renal :: medicare
+     old: Carvedilol 3.125mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 71, raw 70.77]
+     new: Metoprolol Succinate 12.5mg qd [overall 69, raw 69.07]
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: cash
+     old: (no pick)
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 83, raw 83.43]
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: commercial
+     old: (no pick)
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 83.83]
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: medicare
+     old: (no pick)
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 83, raw 83.47]
+  Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.96]
+  Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+  Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.96]
+
+BUGS (eligibility/alerts must not change):
+  John Doe (Wet & Warm) :: cash: excludedMedications differ
+  John Doe (Wet & Warm) :: commercial: excludedMedications differ
+  John Doe (Wet & Warm) :: medicare: excludedMedications differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: excludedMedications differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: excludedMedications differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: excludedMedications differ
+  Jane Smith (Dry & Cold) :: cash: excludedMedications differ
+  Jane Smith (Dry & Cold) :: commercial: excludedMedications differ
+  Jane Smith (Dry & Cold) :: medicare: excludedMedications differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: excludedMedications differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: excludedMedications differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: excludedMedications differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: excludedMedications differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: excludedMedications differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: excludedMedications differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: excludedMedications differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: excludedMedications differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: excludedMedications differ
+  Severe Asthma - Selective BB Only :: cash: excludedMedications differ
+  Severe Asthma - Selective BB Only :: commercial: excludedMedications differ
+  Severe Asthma - Selective BB Only :: medicare: excludedMedications differ
+  African American (A-HeFT Indication) :: cash: excludedMedications differ
+  African American (A-HeFT Indication) :: commercial: excludedMedications differ
+  African American (A-HeFT Indication) :: medicare: excludedMedications differ
+  Gout & Congestion - Diuretic Caution :: cash: excludedMedications differ
+  Gout & Congestion - Diuretic Caution :: commercial: excludedMedications differ
+  Gout & Congestion - Diuretic Caution :: medicare: excludedMedications differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: cash: excludedMedications differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: commercial: excludedMedications differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: medicare: excludedMedications differ
+
+Warning differences:
+  Iron-Deficient HFrEF :: commercial: Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Iron-Deficient HFrEF :: commercial: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once
+  Iron-Deficient HFrEF :: commercial: Ferric Carboxymaltose 1000mg once + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Iron-Deficient HFrEF :: medicare: Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Iron-Deficient HFrEF :: medicare: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once
+  Iron-Deficient HFrEF :: medicare: Ferric Carboxymaltose 1000mg once + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Adjunct-Source IV Iron Limited Evidence LVEF 45 :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Adjunct-Source IV Iron Limited Evidence LVEF 45 :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Adjunct-Source IV Iron Limited Evidence LVEF 45 :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Adjunct-Source IV Iron Price Amortized Per Course :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd
+  Adjunct-Source IV Iron Price Amortized Per Course :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Adjunct-Source IV Iron Price Amortized Per Course :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  Adjunct-Source IV Iron Price Amortized Per Course :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd
+  Adjunct-Source IV Iron Price Amortized Per Course :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd
+  Adjunct-Source IV Iron Price Amortized Per Course :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Adjunct-Source IV Iron Price Amortized Per Course :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd

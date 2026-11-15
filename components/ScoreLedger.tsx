@@ -68,7 +68,7 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (d
         <section aria-labelledby="score-ledger-heading" className="space-y-2">
             <h4 id="score-ledger-heading" className="text-sm font-bold text-slate-800">How this score was calculated</h4>
             <p className="text-xs text-slate-600 leading-snug">
-                <span className="font-bold">Weighting: {meta.label}.</span> {meta.description} Each of the eight factors is scored 0–100, multiplied by its weight, and added up. A few named adjustments are then applied.
+                <span className="font-bold">Weighting: {meta.label}.</span> {meta.description} Assessed factors are scored 0–100 and weighted. Unassessed domains have zero weight; remaining weights are rescaled. Scores from different sets of available inputs are not directly comparable. Named adjustments then apply.
             </p>
             <div className="overflow-x-auto rounded border border-slate-200">
                 <table className="w-full text-sm min-w-[18.5rem]">
@@ -89,11 +89,11 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (d
                                     <tr key={d.key}>
                                         <th scope="row" className="py-1.5 px-2 text-left font-medium text-slate-700 align-top">
                                             {d.label}
-                                            <div className="text-[11px] font-normal text-slate-500 leading-snug">100 = {goalAfterEquals(DOMAIN_GOALS[d.key])}</div>
+                                            {d.assessed !== false && <div className="text-[11px] font-normal text-slate-500 leading-snug">100 = {goalAfterEquals(DOMAIN_GOALS[d.key])}</div>}
                                             {d.detail && <div className="text-[11px] font-normal text-amber-800">{d.detail}</div>}
-                                            <ScoreBar score={d.score} />
+                                            {d.assessed !== false && <ScoreBar score={d.score} />}
                                         </th>
-                                        <td className="py-1.5 px-2 text-right tabular-nums align-top">{num(d.score)}</td>
+                                        <td className="py-1.5 px-2 text-right tabular-nums align-top">{d.assessed === false ? 'Not assessed' : num(d.score)}</td>
                                         <td className="py-1.5 px-2 text-right tabular-nums text-slate-600 align-top">{pct(d.weight)}</td>
                                         <td className="py-1.5 px-2 text-right tabular-nums align-top">{num(d.contribution)}</td>
                                     </tr>

@@ -20,7 +20,7 @@ function reg(seeds: { name: string; strength: number | string; freq?: string }[]
         const dose = med.available_doses.find(d => String(d.strength) === String(s.strength));
         if (!dose) throw new Error(`no dose ${s.name} ${s.strength}`);
         const freq = s.freq && dose.frequency_options.includes(s.freq) ? s.freq : dose.frequency_options[0];
-        return { med, dose, selected_frequency: freq };
+        return { med, dose, selected_frequency: freq, exposure: { status: 'active', adherence: 'consistent', dose_interval_reviewed: true } };
     });
 }
 
@@ -173,7 +173,7 @@ const S: Scenario[] = [
         const removesPillar = a.regs[0] && (a.regs[0].modification_set?.modifications ?? []).some(m => m.action === 'remove' && (RAAS.has(m.source?.med.drug_class ?? '') || m.source?.med.drug_class === 'Beta Blocker' || m.source?.med.drug_class === 'MRA' || m.source?.med.drug_class === 'SGLT2i')); if (removesPillar) e.push('HFimpEF top pick deprescribes a pillar (should continue)'); return e; } },
     { title: '45 Obese HFpEF, no GLP-1', patient: base({ lvef: 56, bmi: 34, ever_lvef_le_40: 'no', comorbidities: new Set(['HFpEF']), current_regimen: reg([{ name: 'Dapagliflozin', strength: 10 }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (!a.hasClassInAny(c => c === 'GLP-1 RA' || c === 'GLP-1/GIP RA') && !a.adjunct('glp-1')) e.push('GLP-1 not surfaced for obese HFpEF'); return e; } },
-    { title: '46 Iron deficient (ferritin 40) on full GDMT', patient: base({ ferritin: 40, tsat: 15, current_regimen: reg([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Spironolactone', strength: 25 }, { name: 'Dapagliflozin', strength: 10 }]) }),
+    { title: '46 Iron deficient (ferritin 40) on full GDMT', patient: base({ ferritin: 40, tsat: 15, hemoglobin: 12, iron_course_review: 'first_course', phosphate_review: 'not_indicated', current_regimen: reg([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Spironolactone', strength: 25 }, { name: 'Dapagliflozin', strength: 10 }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (!a.hasClassInAny(c => c === 'IV Iron') && !a.adjunct('iron')) e.push('IV iron not surfaced despite iron deficiency'); return e; } },
     { title: '47 Black NYHA III HFrEF on quad, no H/ISDN', patient: base({ race: 'Black', nyha_class: 'III', kccq_score: 45, current_regimen: reg([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Spironolactone', strength: 25 }, { name: 'Dapagliflozin', strength: 10 }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (!a.hasClassInAny(c => c === 'Vasodilator') && !a.adjunct('hydralazine')) e.push('H/ISDN not surfaced for Black NYHA III on GDMT'); return e; } },
@@ -201,5 +201,6 @@ async function run() {
         console.log(`\nPOTENTIAL ERRORS (${problems.length} scenarios):`);
         problems.forEach(p => { console.log(`\n• ${p.title}`); p.errs.forEach(e => console.log(`    ✗ ${e}`)); });
     }
+    process.exitCode = problems.length ? 1 : 0;
 }
 run();

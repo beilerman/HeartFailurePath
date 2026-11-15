@@ -1,6 +1,22 @@
 # CLAUDE.md - HeartFailurePath
 
-**Taking this project over? Start with `docs/HANDOFF-2026-11-12.md`** (state, how to run and check, what was done, what is open).
+**Taking this project over? Start with `docs/HANDOFF-2026-11-13.md`** (consolidated current state, all review stages, receipts, unresolved decisions and reproduction).
+
+**2026-11-15 (local, uncommitted), guided entry:** the app now opens in a **Guided** view (Start with six curated synthetic examples / seven steps / Results under a patient bar); the original layout is the **Full form** (header switch, or `?view=form`). One implementation of every field: `components/patient-form/usePatientFormModel.tsx` (state, validation, hints, handlers, `FormSection`) feeds both `PatientForm` and `components/guided/*`. Engine, `constants.ts`, `data/` and rule set untouched; golden byte-identical. `verify:ui` is now 52 checks. Browser check: `docs/guided-entry-2026-11-15/`. The saved 2026-11-12 browser script needs `HF_BASE_URL` ending in `?view=form`.
+
+**2026-11-15 (local, uncommitted):** the draft note and "Visit review" panel follow a clinician-selected option (default option 1; radio group + per-card button; resets each run). `planForOption` in `components/resultsModel.ts` is the single source for the selected option's monitoring/follow-up; `buildChartSummary(c, selectedIndex)` is byte-identical to before for option 1. Rule set **2026-11-15.1**. Earlier text below that says the note is option-1-only is superseded.
+
+**Current contract overrides historical notes below:** rule set .8 preserves observed physiology, makes no individual response/untreated-state estimate and has no automatic binder rescue. Older projection coefficients, synergy, withdrawal equations and stage-specific open lists are historical. See the handoff for the current limits and exact browser coverage.
+
+Latest: **`docs/medication-repair-loop-2026-11-12/README.md`**, rule set **2026-11-12.8**. Repeated review repaired all identified runtime medication-model and interface defects by removing unsupported individual forecasts, adding exposure/course/interval prerequisites and preserving observed physiology. All 32 drugs / 122 dose-frequency entries covered. Gate/build: 442 engine groups, 29 UI groups, 1,032 golden runs, 100/100 + 51/51 audits, red team/pricing and two 5,000-case sweeps pass. Local Chromium workflow and desktop/mobile visuals verified. Ranking changed intentionally (472/1,032 leads); pre-update review and old snapshot retained. No validated untreated-state or longitudinal response model is claimed. Local, uncommitted, unpushed and undeployed; clinical validation remains separate.
+
+Prior medication-property repair: `docs/medication-properties-2026-11-12/README.md`, rule set .7. All 32 drugs / 121 dose-frequency entries audited. Net-exposure transitions fix identity and swap-versus-remove/add discrepancies; projected regimen identity and numeric bounds are repaired. Gate/build pass: 423 engine checks, 27 UI groups, 1,032 golden runs and audits/fuzz. Rankings and safety outputs unchanged across all golden runs. Time-aware effects, withdrawal, flat dose responses and trial/instrument comparability remain open. Local only; no clinical validation.
+
+Prior incomplete-information repair: `docs/incomplete-data-2026-11-12/README.md`, rule set .6. Missing observations narrow decisions rather than blocking all review. Shared change prerequisites, focused safety review, optional measured KCCQ, unassessed BNP/cost domains, no false intolerance inference and explicit screen/draft scope are implemented. Known urgent findings remain visible during input correction. Gate/build pass: 415 engine checks, 27 UI content groups, 1,032 golden runs and the existing audits/fuzz. Browser and clinical validation remain open; local only.
+
+Prior systemic repair: `docs/adversarial-systemic-2026-11-12/README.md` (rule set .5). Canonical input validation precedes cloning; safety selection precedes affordability; no-change preserves observations; evidence normalization is independent of regimen length. Gate/build and 35,000 distinct synthetic seeds pass; browser verification remains blocked and clinical/model decisions remain open.
+
+Prior UI review: `docs/ui-adversarial-2026-11-12/README.md`. Stale/error options are suppressed, unfinished medication/history entries block runs, new cases start blank, option-specific monitoring and actual drug/dose differences are visible, and shared wording distinguishes observations from model claims. `verify:ui` has 23 passing server-rendered checks (all 344 scenario result states); browser layout and interactions remain unverified. All changes remain local and undeployed.
 
 Heart failure clinical decision-support simulation tool. Vite + React + TypeScript.
 
@@ -15,8 +31,9 @@ npm run dev              # start Vite dev server (default 3000)
 npm run build            # production build
 npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
-                         #   (currently: Passed 371 on 2026-11-12; the printed count is authoritative)
+                         #   (latest saved receipt: Passed 442; the printed count is authoritative)
 npm run test             # alias for verify
+npm run verify:ui        # 52 clinical UI content checks, including all 344 scenario result states; not browser tests
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone QA, not in CI)
@@ -24,14 +41,14 @@ npm run golden           # golden master: every scenario x 3 insurance tiers (10
 npm run golden:update    # rewrite the golden snapshot after an intended output change (review `npm run ranking:diff` first)
 npm run ranking:diff     # compare the current engine with the golden snapshot; reports ranking changes
 npm run fuzz             # seeded randomized-patient sweep (5,000 patients): safety invariants written independently of the engine + consistency checks (regimen order, ranking mode / care priority change ordering only, lower-case allergy still excludes). Part of gate and ci
-npm run gate             # typecheck + golden + verify + all three audits + audit:pricing + fuzz (full pre-release gate)
-npm run ci               # typecheck + build + golden + verify + audit:pricing + fuzz
+npm run gate             # typecheck + golden + verify + verify:ui + all three audits + audit:pricing + fuzz (full pre-release gate)
+npm run ci               # typecheck + build + golden + verify + verify:ui + audit:pricing + fuzz
 npm run preview          # preview production build
 ```
 
 There is no `lint` script (a misleading one was removed 2026-07-05).
 
-CI workflow: `.github/workflows/ci.yml` runs `npm ci -> typecheck -> build -> golden -> verify` (then `audit:pricing` and `fuzz`, matching `npm run ci`).
+CI workflow: `.github/workflows/ci.yml` runs `npm ci -> typecheck -> build -> golden -> verify -> verify:ui` (then `audit:pricing` and `fuzz`, matching `npm run ci`). These local workflow edits have not yet run remotely.
 
 QA harnesses (full pre-release gate — all four must be green):
 
@@ -62,9 +79,9 @@ HeartFailurePath/
     RecommendationCard.tsx        # regimen card rendering
     patient-form/                 # form subsections
   services/
-    simulationService.ts          # public facade: 55-line staged orchestrator + re-exports
+    simulationService.ts          # public facade: staged orchestrator + re-exports
     engine/                       # the engine, one module per stage (see docs/scoring-architecture.md):
-                                  #   gates, eligibility (rules E01-E20), candidates, effects, domains,
+                                  #   inputContract, decisionReadiness, gates, eligibility (rules E01-E20), candidates, effects, domains,
                                   #   scoreModel (weights + adjustments as data), scoring, selection,
                                   #   explain, registry, intolerance, regimenUtils, drugFacts
     clinicalPredicates.ts         # shared predicates (valueUnknown, hasHistoricalHFrEF,
@@ -96,6 +113,7 @@ generateAndScoreModifications(patient, availableMedNames, prices)
 
 Output contract (`SimulationOutput`, types.ts):
 
+- `decisionReadiness?` — review scope, missing observations, available and deferred decisions
 - `scoredRegimens` (up to 3 display candidates)
 - `excludedMedications`
 - `clinicalAlerts`
@@ -119,7 +137,7 @@ Engine characteristics:
 
 Full description: `docs/scoring-architecture.md`. All numbers live in `services/engine/scoreModel.ts`.
 
-- Score = Σ (eight factor scores, each 0-100) × weights that sum to 100%, plus named adjustments.
+- Score = Σ (assessed domain scores, each 0-100) × weights that sum to 100%, plus named adjustments. Missing BNP or cost assessment removes that domain and rescales the remaining weights. Missing KCCQ is omitted from the functional average, never imputed. Scores across input completeness are not directly comparable.
 - Balanced weights: Neurohormonal 15, Functional 12, Volume 12, Structure 8 (clinical outcomes);
   Guideline concordance 12, Therapy completeness 22 (guideline-directed therapy); Cost 12,
   Adherence 7 (patient values).
@@ -128,10 +146,10 @@ Full description: `docs/scoring-architecture.md`. All numbers live in `services/
   weights — never eligibility, alerts, adjustments, display floors or the budget filter (verify
   enforces this for every scenario × profile). The non-default rows are a first calibration, not
   yet clinically reviewed.
-- Adjustments (visible ledger lines): patient-specific evidence bonus `clamp(sum/len × 2.3, −8, +12)`;
+- Adjustments (visible ledger lines): patient-specific evidence bonus `clamp(sum/max(1, indicated foundational slots) × 2.3, −8, +12)`;
   volume-depletion de-escalation +15; projected SBP < 90 −20, < 95 −6, < 85 sets the score to 0;
-  projected HR < 50 −40; projected K+ > 5.5 −40; −8 per residual-risk warning; unknown eGFR −12
-  (`UNKNOWN_RENAL`, only when an SGLT2 inhibitor is started or increased); low-output cap 25.
+  projected HR < 50 −40; projected K+ > 5.5 −40; −8 per residual-risk warning; low-output cap 25.
+  Missing renal prerequisites withhold dependent changes, including SGLT2 starts/increases/switches; the former `UNKNOWN_RENAL` deduction is retired.
   There is NO unknown-potassium deduction (`UNKNOWN_POTASSIUM` removed 2026-11-11): see rule E16 below.
 - Ranking (Balanced, the default): displayed score → therapy completeness → unrounded score → cost. The completeness
   tie-break is deliberate (anti-softness): a fraction of a point must not drop a guideline pillar.
@@ -185,10 +203,10 @@ Implemented high-priority safeguards include:
 - Electrolyte safety:
   - hyperkalemic-emergency gate (6.0 alert and 6.5 alerts-only stop are ENGINE POLICY; a secondary source classes K+ > 6.0 as severe): baseline `K+ >= 6.0` fires a HYPERKALEMIC EMERGENCY alert (ECG and urgent repeat potassium; no RAAS/MRA start or increase at 6.0-6.4, a current MRA is withheld); `K+ >= 6.5` returns alerts only (parallel to the SBP < 90 gate); `K+ > 8.0` hard-stops as implausible
   - projected `K+ > 6.0` excluded from display
-  - K+ binder rescue (reactive, projected K+ above 5.3; attached only when every potassium-raising class in the candidate was already on the current regimen AND the candidate keeps, up-titrates or within-class-swaps a RAAS-pool drug or MRA/nsMRA from the current regimen (`keepsCurrentPotassiumRaiser`; a candidate with none, e.g. a new beta-blocker start, gets no binder and is scored on its own projected potassium; 2026-11-11 final pass), so never a co-start with a new MRA or RAAS inhibitor; a candidate needing a binder for a NEW class is dropped) counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
+  - K+ binder rescue (reactive, projected K+ above 5.3; never auto-attached to reduction/removal-only changes of RAAS/MRA therapy; attached only when every potassium-raising class in the candidate was already on the current regimen AND the candidate keeps, up-titrates or within-class-swaps a RAAS-pool drug or MRA/nsMRA from the current regimen (`keepsCurrentPotassiumRaiser`; a candidate with none, e.g. a new beta-blocker start, gets no binder and is scored on its own projected potassium; 2026-11-11 final pass), so never a co-start with a new MRA or RAAS inhibitor; a candidate needing a binder for a NEW class is dropped) counts as a residual-risk warning penalty (rescue enables consideration, never erases risk in ranking)
 - Blank-data (sentinel) safety:
   - eGFR/creatinine or K+ of 0/blank = "not entered", never a value: it must never clear a safety gate AND never read as end-stage disease
-  - blank renal data: current renal-gated meds are RETAINED (not force-removed); renal-gated new starts are excluded with reason "Renal data required — cannot assess renal safety (obtain BMP before initiation)"; candidates intensifying RAAS/MRA/SGLT2i carry a RENAL FUNCTION UNKNOWN warning + -15 penalty; renal-threshold warnings (eGFR<20 loop alert, Furoscix CKD caution, digoxin renal note) are suppressed
+  - blank renal data: current therapy is not stopped solely because data are absent; renal-dependent starts, increases and switches are withheld through shared prerequisites. Renal-threshold warnings are suppressed when the measurement is unknown. Missing lab safety cannot be replaced by a score penalty.
   - blank potassium: projected K+ preserves the unknown sentinel; hypo-/hyperkalemia warning bands, the digoxin K-band warning, and DDI-3's interpolated K+ are suppressed (prompts for a BMP instead); digoxin's K+ < 3.5 contraindication has a > 0 guard
 - Drug-interaction hard gates:
   - nitrate (H/ISDN) is contraindicated with confirmed PDE5 inhibitor exposure (Sildenafil/Tadalafil/Vardenafil/Avanafil in external medications) or riociguat — excluded from formulary and force-removed from arriving regimens
@@ -304,9 +322,9 @@ Formulary modeling notes (2026-07-05 audit):
 
 `scripts/verifyScenarios.ts` executes scenario assertions against `data/scenarios.ts`.
 
-Current regression scope (the harness's printed count is authoritative — on 2026-11-12 `Passed: 371`):
+Current regression scope (the harness's printed count is authoritative — on 2026-11-12 `Passed: 415`):
 
-- 344 scenarios (`SCENARIOS.length`) + structural checks, 371 passes in total on 2026-11-12 (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a congested patient with a possible loop increase is shown one; below-target dose credit is graded; no displayed titrate-up more than doubles the total daily dose except the adjacent tier (`UP_TITRATION_MAX_DAILY_FACTOR`; sourced for RAAS/BB/MRA by ESC 2026 S4-S6/S8, engine policy for loops and others); a one-step titration always exists unless a rule blocks it)
+- 344 scenarios (`SCENARIOS.length`) + structural checks, 415 passes in total on 2026-11-12 (the ranking mode changes order only; every med has a `DRUG_PRICES` entry; every `score_breakdown` reconciles to `raw_score`; every exclusion carries a known eligibility `rule_id`; no formulary drug name appears as a literal in engine code; no `services/engine/` module imports the facade; every weight profile sums to 100%; weight profiles never change exclusions/alerts/safety floors; profile direction checks; contraindication checks equal the boolean; every E13 exclusion states why; no new MRA start above potassium 5.0 (with or without a binder); monitoring timings follow the sources; every standing loop declares a furosemide equivalence; no new start above the declared starting dose; no regimen above a declared maximum daily dose; a congested patient with a possible loop increase is shown one; below-target dose credit is graded; no displayed titrate-up more than doubles the total daily dose except the adjacent tier (`UP_TITRATION_MAX_DAILY_FACTOR`; sourced for RAAS/BB/MRA by ESC 2026 S4-S6/S8, engine policy for loops and others); a one-step titration always exists unless a rule blocks it)
 - safety invariants (dual-class prevention, score bounds, display floors)
 - contraindication logic
 - phenotype-specific recommendations

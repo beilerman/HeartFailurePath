@@ -1,5 +1,7 @@
 # CHF PATH clinical decisions and next implementation plan
 
+> Historical record. Start with the [consolidated 2026-11-13 handoff](HANDOFF-2026-11-13.md) for current behavior, completed follow-on repairs, validation coverage and remaining decisions. Earlier numerical-model descriptions and open lists below are stage-specific.
+
 Recorded November 11, 2026. Source inspected: local branch `refactor/glucosepath-alignment`, commit `376b516` (November 10). This is a documentation-only handoff. No engine, interface, thresholds, tests, deployment or clinical-release status changed.
 
 ## Conversation evidence

@@ -152,7 +152,7 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     // when an SGLT2i is being added (additive diuresis). (Volume DEPLETION below dry weight is
     // handled separately by the volume-depletion alert.)
     const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
-    const euvolemic = Math.abs(fluidExcess) <= 1.0;
+    const euvolemic = Math.abs(fluidExcess) <= 1.0 && congestionFindingCount(patient.volume_status.exam_findings) === 0;
     const highDoseLoop = current.find(r => {
         const t = drugFacts(r.med).high_dose_threshold;
         // facts.high_dose_threshold is a TOTAL DAILY dose (strength x doses per day), not the per-dose strength.

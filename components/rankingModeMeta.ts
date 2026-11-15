@@ -7,11 +7,11 @@ import type { RankingMode } from '../types';
 export const RANKING_MODE_META: Record<RankingMode, { label: string; description: string }> = {
     balanced: {
         label: 'Balanced',
-        description: 'Options are ordered by the overall score, which weighs outcomes, guideline therapy, cost and regimen burden.',
+        description: 'Options are ordered by the overall score, which weighs treatment evidence, therapy completeness, cost and dosing burden.',
     },
     foundational_first: {
         label: 'Prioritize foundational therapy',
-        description: 'For reduced ejection fraction: options that cover more of the four foundational therapies (RAAS inhibitor, beta-blocker, MRA, SGLT2 inhibitor) come first, unless the option would push blood pressure, heart rate or potassium into a severe range. The budget limit still applies. No effect in mildly reduced or preserved ejection fraction.',
+        description: 'For the reduced-EF pathway, including LVEF 41–49 in this tool: options that cover more foundational therapies come first unless they worsen a severe safety concern. Safety and budget checks still apply. This ordering does not apply to the preserved-EF pathway.',
     },
 };
 

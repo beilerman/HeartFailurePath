@@ -22,7 +22,7 @@ import { getDrugPrices } from '../services/pricingService';
 import { SCENARIOS } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
 
-const ADDITIVE_KEYS = new Set<string>(['score_breakdown', 'rule_id', 'rule_name', 'facts', 'care_priority', 'ranking_mode', 'ranking', 'foundational_coverage', 'shown_because', 'why', 'contraindication_checks']);
+const ADDITIVE_KEYS = new Set<string>(['score_breakdown', 'rule_id', 'rule_name', 'facts', 'care_priority', 'ranking_mode', 'ranking', 'foundational_coverage', 'shown_because', 'why', 'contraindication_checks', 'decisionReadiness']);
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const SNAPSHOT = join(here, '..', 'data', 'golden', 'engine-output.json.gz');
@@ -57,7 +57,11 @@ export async function capture(): Promise<Record<string, unknown>> {
             const prices = await getDrugPrices(names, tier as never);
             const key = `${scenario.title} :: ${tier}`;
             try {
-                result[key] = normalize(generateAndScoreModifications(scenario.patient, available, prices));
+                // Both the pricing table and patient context must use this tier: dose-specific
+                // cash prices are selected from patient.insurance_tier inside the engine.
+                const output = generateAndScoreModifications({ ...scenario.patient, insurance_tier: tier }, available, prices);
+                if (output.scoredRegimens.some(r => r.projected_patient.insurance_tier !== tier)) throw new Error('Snapshot insurance context does not match requested tier');
+                result[key] = normalize(output);
             } catch (error) {
                 result[key] = { THREW: (error as Error).message };
             }
@@ -81,6 +85,12 @@ function firstDiff(a: unknown, b: unknown, path: string): string | null {
 async function main() {
     const update = process.argv.includes('--update');
     const actual = await capture();
+    // A captured exception is evidence of a broken run, never an acceptable golden result.
+    const thrown = Object.entries(actual).filter(([, run]) => run && typeof run === 'object' && 'THREW' in run);
+    if (thrown.length) {
+        console.error('Golden capture failed:', thrown);
+        process.exit(1);
+    }
     if (update || !existsSync(SNAPSHOT)) {
         writeFileSync(SNAPSHOT, gzipSync(JSON.stringify(actual)));
         console.log(`Golden master written: ${Object.keys(actual).length} runs -> ${SNAPSHOT}`);

@@ -1,4 +1,5 @@
 import type { ScoredRegimen } from '../types';
+import { costLabel } from './clinicalPresentation';
 import {
     DOMAIN_KEYS, DOMAIN_LABELS, SCORE_ADJUSTMENTS,
     type ScoreBreakdown, type ScoreBreakdownAdjustment, type ScoreBreakdownOverride, type ScoreDomainKey,
@@ -24,13 +25,13 @@ export function describeAdjustment(a: ScoreBreakdownAdjustment): { title: string
         case T.VOLUME_DEPLETION_DEESCALATION.code:
             return { title: 'Bonus for reducing diuretics in a volume-depleted patient', lines: [] };
         case T.PROJECTED_SBP_LT_90.code:
-            return { title: `Safety deduction: projected systolic BP below ${T.PROJECTED_SBP_LT_90.threshold}`, lines: a.detail ? [a.detail.replace('projected SBP', 'Projected systolic BP')] : [] };
+            return { title: `Safety deduction: recorded systolic BP below ${T.PROJECTED_SBP_LT_90.threshold}`, lines: a.detail ? [a.detail.replace('projected SBP', 'Recorded systolic BP')] : [] };
         case T.PROJECTED_SBP_LT_95.code:
-            return { title: `Safety deduction: projected systolic BP below ${T.PROJECTED_SBP_LT_95.threshold}`, lines: a.detail ? [a.detail.replace('projected SBP', 'Projected systolic BP')] : [] };
+            return { title: `Safety deduction: recorded systolic BP below ${T.PROJECTED_SBP_LT_95.threshold}`, lines: a.detail ? [a.detail.replace('projected SBP', 'Recorded systolic BP')] : [] };
         case T.PROJECTED_HR_LT_50.code:
-            return { title: `Safety deduction: projected heart rate below ${T.PROJECTED_HR_LT_50.threshold}`, lines: a.detail ? [a.detail.replace('projected HR', 'Projected heart rate')] : [] };
+            return { title: `Safety deduction: recorded heart rate below ${T.PROJECTED_HR_LT_50.threshold}`, lines: a.detail ? [a.detail.replace('projected HR', 'Projected heart rate')] : [] };
         case T.PROJECTED_K_GT_5_5.code:
-            return { title: `Safety deduction: projected potassium above ${T.PROJECTED_K_GT_5_5.threshold}`, lines: a.detail ? [a.detail.replace('projected K+', 'Projected potassium')] : [] };
+            return { title: `Safety deduction: recorded potassium above ${T.PROJECTED_K_GT_5_5.threshold}`, lines: a.detail ? [a.detail.replace('projected K+', 'Projected potassium')] : [] };
         case T.DANGEROUS_WARNINGS.code: {
             const warnings = a.detail ? a.detail.split(' | ') : [];
             return {
@@ -49,7 +50,7 @@ export function describeAdjustment(a: ScoreBreakdownAdjustment): { title: string
 export function describeOverride(o: ScoreBreakdownOverride): { title: string; detail?: string } {
     switch (o.code) {
         case T.PROJECTED_SBP_LT_85.code:
-            return { title: `Projected systolic BP below ${T.PROJECTED_SBP_LT_85.threshold}: score set to zero`, detail: o.detail?.replace('projected SBP', 'Projected systolic BP') };
+            return { title: `Recorded systolic BP below ${T.PROJECTED_SBP_LT_85.threshold}: score set to zero`, detail: o.detail?.replace('projected SBP', 'Recorded systolic BP') };
         case T.SCORE_CLAMP.code:
             return { title: `Score limited to the ${T.SCORE_CLAMP.min}–${T.SCORE_CLAMP.max} range` };
         case T.LOW_OUTPUT_CAP.code:
@@ -85,7 +86,7 @@ function adjustmentTotals(b: ScoreBreakdown): Map<string, { points: number; adj?
 const adjustmentName = (code: string, adj?: ScoreBreakdownAdjustment): string => {
     if (code === T.SPECIAL_FEATURES.code) return 'patient-specific evidence bonus';
     if (code === T.VOLUME_DEPLETION_DEESCALATION.code) return 'diuretic reduction bonus';
-    if (code === T.PROJECTED_SBP_LT_85.code) return `disqualifying projected systolic BP below ${T.PROJECTED_SBP_LT_85.threshold}`;
+    if (code === T.PROJECTED_SBP_LT_85.code) return `disqualifying recorded systolic BP below ${T.PROJECTED_SBP_LT_85.threshold}`;
     if (adj) {
         const t = describeAdjustment(adj).title.replace(/^Safety deduction: /, '');
         const base = `safety deduction (${t.replace(/ \(.* each\)$/, '')})`;
@@ -137,7 +138,7 @@ export function tieSentence(self: ScoredRegimen, leader: ScoredRegimen, leaderRa
     if (self.overall_score !== leader.overall_score) return null;
     const sc = Math.round((self.gdmt_completeness ?? 0) * 100);
     const lc = Math.round((leader.gdmt_completeness ?? 0) * 100);
-    return `Option ${leaderRank} shows the same score (${leader.overall_score}). ${TIE_RULE_TEXT} Here: therapy coverage ${sc}% vs ${lc}%, unrounded score ${num(self.raw_score ?? self.overall_score)} vs ${num(leader.raw_score ?? leader.overall_score)}, monthly cost $${self.cost} vs $${leader.cost}.`;
+    return `Option ${leaderRank} shows the same score (${leader.overall_score}). ${TIE_RULE_TEXT} Here: therapy coverage ${sc}% vs ${lc}%, unrounded score ${num(self.raw_score ?? self.overall_score)} vs ${num(leader.raw_score ?? leader.overall_score)}, cost ${costLabel(self.cost)} vs ${costLabel(leader.cost)}. Equal scores do not establish equivalent clinical benefit.`;
 }
 
 /** Lowercase the first letter of a goal sentence, unless it starts an acronym (NYHA, NT-proBNP). */

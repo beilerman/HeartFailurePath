@@ -1,0 +1,83 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1016 / 1032
+  (b) displayed pick set same:   1004 / 1032
+  (c) pick order identical:      995 / 1032
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: NO (15 regimens)
+  top-pick overall_score  old: min 19 / median 78 / max 100
+  top-pick overall_score  new: min 19 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 16 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+
+Top pick changed in 16 runs:
+  Duplicate Current Medications (Safety Dedup) :: cash
+     old: Dapagliflozin 10mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 68, raw 68.26]
+     new: Dapagliflozin 10mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 66, raw 66.03]
+  Duplicate Current Medications (Safety Dedup) :: commercial
+     old: Dapagliflozin 10mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 69, raw 68.50]
+     new: Dapagliflozin 10mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 66, raw 66.27]
+  Duplicate Current Medications (Safety Dedup) :: medicare
+     old: Dapagliflozin 10mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 68, raw 68.35]
+     new: Dapagliflozin 10mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 66, raw 66.12]
+  BB Intolerance Defer New Initiation :: cash
+     old: Dapagliflozin 10mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 72, raw 71.51]
+     new: Dapagliflozin 10mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 70, raw 69.70]
+  BB Intolerance Defer New Initiation :: commercial
+     old: Dapagliflozin 10mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 72, raw 71.75]
+     new: Dapagliflozin 10mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 70, raw 69.94]
+  BB Intolerance Defer New Initiation :: medicare
+     old: Dapagliflozin 10mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 72, raw 71.60]
+     new: Dapagliflozin 10mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 70, raw 69.79]
+  Gynecomastia on Current Spironolactone :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 10mg qd [overall 82, raw 82.46]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 20mg qd [overall 79, raw 78.74]
+  Gynecomastia on Current Spironolactone :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 10mg qd [overall 83, raw 82.81]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 20mg qd [overall 79, raw 79.08]
+  Gynecomastia on Current Spironolactone :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 10mg qd [overall 83, raw 82.66]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 20mg qd [overall 79, raw 78.93]
+  MRA-Source Kidney-Baseline Rise 30% No Change :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd + Spironolactone 25mg qd [overall 83, raw 82.57]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 85, raw 84.81]
+  MRA-Source Kidney-Baseline Rise 30% No Change :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd + Spironolactone 25mg qd [overall 83, raw 82.51]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 85, raw 84.64]
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 70, raw 69.55]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 72, raw 72.34]
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 70, raw 69.52]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 72, raw 72.31]
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 5mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 85, raw 84.95]
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 5mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 85, raw 84.95]
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 5mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 85, raw 84.95]
+
+Warning differences:
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: cash: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: cash: Carvedilol 12.5mg bid + Digoxin 125mcg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: commercial: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: commercial: Carvedilol 12.5mg bid + Digoxin 125mcg qd + Furosemide 80mg qd
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: medicare: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: medicare: Carvedilol 12.5mg bid + Digoxin 125mcg qd + Furosemide 80mg qd
+  Rate-Source Digoxin Amiodarone Dose Reduction Text :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Rate-Source Digoxin Amiodarone Dose Reduction Text :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Eplerenone 25mg qd
+  Rate-Source Digoxin Amiodarone Dose Reduction Text :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Lisinopril 2.5mg qd
+  Rate-Source Digoxin Amiodarone Dose Reduction Text :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Rate-Source Digoxin Amiodarone Dose Reduction Text :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Eplerenone 25mg qd
+  Rate-Source Digoxin Amiodarone Dose Reduction Text :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Lisinopril 2.5mg qd
+  Rate-Source Digoxin Amiodarone Dose Reduction Text :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Rate-Source Digoxin Amiodarone Dose Reduction Text :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Eplerenone 25mg qd
+  Rate-Source Digoxin Amiodarone Dose Reduction Text :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Lisinopril 2.5mg qd

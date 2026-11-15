@@ -14,9 +14,9 @@ interface SocialSectionProps {
     clinicalWarnings?: Record<string, string>;
 }
 
-export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onChange, setPatientData, validationErrors = {}, clinicalWarnings = {} }) => {
+export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onChange, validationErrors = {}, clinicalWarnings = {} }) => {
     return (
-        <section>
+        <section id="patient-social" tabIndex={-1}>
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-3">
                 <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1"><BanknotesIcon className="w-4 h-4" aria-hidden="true" /> Patient values and practical limits</h4>
                 <p className="text-xs text-slate-500">These change how the options are ordered and which are affordable. They never change safety exclusions or alerts.</p>
@@ -25,6 +25,8 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                     <Select
                         name="insurance_tier"
                         value={patientData.insurance_tier}
+                        placeholder="Select pricing profile"
+                        error={validationErrors.insurance_tier}
                         onChange={onChange}
                     >
                         <option value="cash">Uninsured / Cash Price</option>
@@ -133,23 +135,10 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                         <span className="text-xs font-bold text-slate-500">6</span>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                        Current: {patientData.max_new_classes_per_visit} (default 2). A potassium binder or IV iron added alongside counts toward this limit.
+                        Current: {patientData.max_new_classes_per_visit} (default 2). Any additional drug class, including IV iron, counts toward this limit.
                     </p>
                 </div>
 
-                {patientData.sex === 'Female' && (
-                    <div>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={patientData.is_pregnant === true}
-                                onChange={(e) => setPatientData(prev => ({ ...prev, is_pregnant: e.target.checked || undefined }))}
-                                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <span className="text-sm font-semibold text-slate-700">Pregnant</span>
-                        </label>
-                    </div>
-                )}
                 {/* Rendered outside the sex gate so a set pregnancy flag is never invisible. */}
                 {clinicalWarnings.pregnancy && (
                     <div className="mt-2 px-3 py-2 rounded-md bg-red-50 border border-red-300 text-red-800 text-xs font-medium">

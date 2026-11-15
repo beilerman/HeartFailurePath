@@ -1,0 +1,2 @@
+Randomized sweep: 5000 patients (seed 20271112), 3595 with options, 5.8 s
+No violations.

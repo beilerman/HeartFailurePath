@@ -14,6 +14,7 @@ import { STRUCTURE_BLEND_WEIGHTS, DOMAIN_GOALS } from '../services/simulationSer
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 import { ScoreLedger } from './ScoreLedger';
+import { costLabel } from './clinicalPresentation';
 import { useEvidenceLink } from './EvidenceContext';
 import { ScoreComparisonDetail } from './ScoreComparison';
 import { goalAfterEquals } from './scoreExplain';
@@ -50,20 +51,21 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
     const profileLabel = regimen.score_breakdown ? WEIGHT_PROFILE_META[regimen.score_breakdown.weight_profile].label : WEIGHT_PROFILE_META.default.label;
 
     const renderContent = () => {
+        if (domainLine?.assessed === false) return <p className="text-sm text-slate-700">{domainLine.detail}</p>;
         switch (domain) {
             case 'neurohormonal':
                 const bnp = Math.round(p.nt_pro_bnp);
                 return (
                     <div className="space-y-3">
                         <div className="bg-slate-50 p-3 rounded border border-slate-200">
-                            <div className="text-xs text-slate-500 uppercase font-bold">Projected Value</div>
+                            <div className="text-xs text-slate-500 uppercase font-bold">Modeled value</div>
                             <div className="text-2xl font-black text-slate-900">{bnp.toLocaleString()} <span className="text-sm font-medium text-slate-500">pg/mL</span></div>
                         </div>
                         <ul className="text-sm text-slate-600 space-y-2">
-                            <li><strong>Target:</strong> &le; {BNP_SCORE_TARGET} pg/mL (100 pts)</li>
-                            <li><strong>Critical:</strong> &ge; {BNP_SCORE_CRITICAL.toLocaleString()} pg/mL (0 pts)</li>
+                            <li><strong>Full-credit model reference:</strong> &le; {BNP_SCORE_TARGET} pg/mL (100 pts)</li>
+                            <li><strong>Zero-credit model reference:</strong> &ge; {BNP_SCORE_CRITICAL.toLocaleString()} pg/mL (0 pts)</li>
                             <li className="pt-2 border-t border-slate-100">
-                                <strong>Calculation:</strong> Linear interpolation between target and critical thresholds.
+                                <strong>Calculation:</strong> Linear interpolation between the model reference values.
                             </li>
                         </ul>
                     </div>
@@ -74,9 +76,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 const stepPts = p.daily_step_count !== undefined
                     ? Math.min(100, (p.daily_step_count / FUNCTIONAL_STEPS_FULL_CREDIT) * 100)
                     : undefined;
-                const functionalTerms = stepPts !== undefined
-                    ? [nyhaPts, Math.round(p.kccq_score), Math.round(stepPts)]
-                    : [nyhaPts, Math.round(p.kccq_score)];
+                const functionalTerms = [nyhaPts, ...(p.kccq_score === undefined ? [] : [Math.round(p.kccq_score)]), ...(stepPts === undefined ? [] : [Math.round(stepPts)])];
                 return (
                     <div className="space-y-3">
                         <div className="grid grid-cols-3 gap-3">
@@ -86,7 +86,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                             </div>
                             <div className="bg-slate-50 p-3 rounded border border-slate-200">
                                 <div className="text-xs text-slate-500 uppercase font-bold">KCCQ Score</div>
-                                <div className="text-xl font-black text-slate-900">{Math.round(p.kccq_score)} <span className="text-sm font-medium text-slate-500">pts</span></div>
+                                <div className="text-xl font-black text-slate-900">{p.kccq_score === undefined ? 'Not measured' : Math.round(p.kccq_score)}</div>
                             </div>
                             <div className="bg-slate-50 p-3 rounded border border-slate-200">
                                 <div className="text-xs text-slate-500 uppercase font-bold">Steps</div>
@@ -94,7 +94,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                             </div>
                         </div>
                         <div className="text-sm text-slate-600">
-                            <strong>Formula:</strong> Average of NYHA, KCCQ, and step score when step data is entered.
+                            <strong>Formula:</strong> Average of recorded NYHA, KCCQ when measured, and activity when entered. Missing inputs are omitted, not scored as normal.
                             <div className="font-mono bg-slate-100 p-2 mt-1 rounded text-xs">
                                 ({functionalTerms.join(' + ')}) / {functionalTerms.length} = {score}
                             </div>
@@ -117,11 +117,11 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                     <div className="space-y-3">
                         <div className="bg-slate-50 p-3 rounded border border-slate-200">
                             <div className="flex justify-between mb-1">
-                                <span className="text-sm text-slate-600">Fluid Excess:</span>
+                                <span className="text-sm text-slate-600">Weight relative to estimated dry weight:</span>
                                 <span className={`font-bold ${diff > 1 ? 'text-red-600' : 'text-slate-900'}`}>{diff > 0 ? '+' : ''}{diff.toFixed(1)} kg</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-sm text-slate-600">Exam Findings:</span>
+                                <span className="text-sm text-slate-600">Recorded congestion findings:</span>
                                 <span className="font-bold text-slate-900">{findingsCount}</span>
                             </div>
                             <div className="flex justify-between border-t border-slate-200 pt-1 mt-1">
@@ -175,7 +175,8 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 const budget = p.max_affordable_cost;
                 const sens = p.cost_sensitivity;
                 const isZeroBudget = budget <= 0;
-                const utilization = isZeroBudget ? null : (regimen.cost / budget) * 100;
+                const costKnown = Number.isFinite(regimen.cost) && regimen.cost >= 0;
+                const utilization = isZeroBudget || !costKnown ? null : (regimen.cost / budget) * 100;
                 const hasOutOfPocketCost = regimen.cost > 0;
 
                 return (
@@ -183,7 +184,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         <div className="bg-slate-50 p-3 rounded border border-slate-200">
                             <div className="flex justify-between mb-1">
                                 <span className="text-sm text-slate-600">Regimen Cost:</span>
-                                <span className="font-bold text-slate-900">${regimen.cost}/mo</span>
+                                <span className="font-bold text-slate-900">{costLabel(regimen.cost)}</span>
                             </div>
                             <div className="flex justify-between mb-1">
                                 <span className="text-sm text-slate-600">Budget:</span>
@@ -191,7 +192,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                             </div>
                             <div className="flex justify-between border-t border-slate-200 pt-1 mt-1">
                                 <span className="text-sm text-slate-600">Budget Used:</span>
-                                {isZeroBudget ? (
+                                {!costKnown ? <span className="font-bold text-slate-900">Cannot assess without pricing</span> : isZeroBudget ? (
                                     <span className={`font-bold ${hasOutOfPocketCost ? 'text-red-600' : 'text-emerald-600'}`}>
                                         {hasOutOfPocketCost ? 'Out of budget' : 'No-cost regimen'}
                                     </span>
@@ -204,7 +205,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         </div>
                         <div className="text-sm text-slate-600">
                             <p className="mb-2"><strong>Sensitivity Level:</strong> {sens}/10</p>
-                            {isZeroBudget ? (
+                            {!costKnown ? <p className="text-xs leading-relaxed text-slate-500">Confirm actual cost and coverage before assessing affordability.</p> : isZeroBudget ? (
                                 <p className="text-xs leading-relaxed text-slate-500">
                                     Zero budget mode is active. Only $0/month regimens are considered in-budget.
                                 </p>
@@ -242,7 +243,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                                 : " Regimen exceeds your stated complexity tolerance, reducing the score."}
                         </p>
                         <p className="text-xs text-slate-400 mt-2">
-                            (QD=1, BID=2, TID=4, Injection=2)
+                            (Once daily=1, twice daily=2, three times daily=4, injection=2 model points)
                         </p>
                     </div>
                 );
@@ -359,6 +360,8 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
 
     useEffect(() => {
         previousFocusRef.current = document.activeElement;
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
 
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -369,9 +372,9 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
             if (e.key === 'Tab') {
                 const dialog = dialogRef.current;
                 if (!dialog) return;
-                const focusable = dialog.querySelectorAll<HTMLElement>(
+                const focusable = [...dialog.querySelectorAll<HTMLElement>(
                     'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-                );
+                )].filter(el => !el.hasAttribute('disabled') && !el.closest('[hidden]') && el.getClientRects().length > 0);
                 if (focusable.length === 0) return;
                 const first = focusable[0];
                 const last = focusable[focusable.length - 1];
@@ -397,6 +400,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
 
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
+            document.body.style.overflow = previousOverflow;
             if (previousFocusRef.current instanceof HTMLElement) {
                 previousFocusRef.current.focus();
             }
@@ -414,22 +418,23 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
             <div
                 ref={dialogRef}
                 tabIndex={-1}
-                className={`bg-white rounded-xl shadow-2xl w-full ${domain === 'overall' ? 'max-w-xl max-h-[90vh] flex flex-col' : 'max-w-sm'} overflow-hidden outline-none`}
+                className={`bg-white rounded-xl shadow-2xl w-full max-h-[90dvh] flex flex-col ${domain === 'overall' ? 'max-w-xl' : 'max-w-sm'} overflow-hidden outline-none`}
                 onClick={e => e.stopPropagation()}
             >
-                <div className="bg-indigo-600 p-4 flex justify-between items-center">
+                <div className="bg-indigo-600 p-4 flex justify-between items-center shrink-0">
                     <h3 id="score-modal-title" className="font-bold text-white text-lg">{title} Score{domain === 'overall' && rank > 1 ? ` — Option ${rank}` : ''}</h3>
                     <button onClick={onClose} className="text-white/80 hover:text-white" aria-label="Close score details">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-                <div className={`p-4 sm:p-6 ${domain === 'overall' ? 'overflow-y-auto' : ''}`}>
+                <div className="p-4 sm:p-6 overflow-y-auto min-h-0">
+                    <p className="text-sm text-slate-700 mb-4">Internal model score. These software weights and reference values are unvalidated; they are not individual treatment targets or a prognosis.</p>
                     <div className="flex justify-center mb-4 sm:mb-6">
                         <div className="h-20 w-20 rounded-full border-4 border-indigo-100 flex items-center justify-center bg-indigo-50">
-                            <span className="text-3xl font-black text-indigo-600">{score}</span>
+                            <span className="text-xl font-black text-indigo-600">{domainLine?.assessed === false ? 'N/A' : score}</span>
                         </div>
                     </div>
-                    {domain !== 'overall' && (
+                    {domain !== 'overall' && domainLine?.assessed !== false && (
                         <p className="text-xs text-slate-600 mb-3 leading-snug">
                             <span className="font-bold">100 =</span> {goalAfterEquals(DOMAIN_GOALS[domain])}
                         </p>
@@ -441,7 +446,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         </p>
                     )}
                 </div>
-                <div className="bg-slate-50 p-3 text-center border-t border-slate-100">
+                <div className="bg-slate-50 p-3 text-center border-t border-slate-100 shrink-0">
                     <button onClick={onClose} className="text-sm font-bold text-indigo-600 hover:text-indigo-800" aria-label="Close score details">Close</button>
                 </div>
             </div>

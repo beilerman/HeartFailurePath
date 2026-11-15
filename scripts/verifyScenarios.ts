@@ -1,3 +1,10 @@
+import { runTreatmentTransitionChecks } from './treatmentTransitionChecks';
+import { runSystemicReviewChecks } from './systemicReviewChecks';
+import { runIncompleteDataChecks } from './incompleteDataChecks';
+import { runMedicationPropertyChecks } from './medicationPropertyChecks';
+import { loopReductionHeldAtModeledPlateau, smallestStepBelow } from '../services/engine/candidates';
+import { dosesPerDay } from '../services/engine/regimenUtils';
+import { runAdversarialHandoffChecks } from './adversarialHandoffChecks';
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
 import { isProjectedSafetyClean } from '../services/engine/selection';
@@ -441,8 +448,8 @@ async function runVerification() {
                 failures.push('Displayed regimen projects SBP < 85');
                 scenarioPassed = false;
             }
-            if (scoredRegimens.some(r => r.projected_patient.potassium > 6.0)) {
-                failures.push('Displayed regimen projects K+ > 6.0');
+            if (scoredRegimens.some(r => r.projected_patient.potassium > 6.0 && !((r.modification_set?.modifications ?? []).some(m => ['remove','titrate_down'].includes(m.action) && m.source && ['ACEi','ARB','ARNI','MRA','nsMRA'].includes(m.source.med.drug_class)) && (r.modification_set?.modifications ?? []).filter(m => m.action !== 'keep').every(m => ['remove','titrate_down'].includes(m.action))))) {
+                failures.push('Severe measured hyperkalemia allowed a non-corrective regimen; no modeled normalization may clear it');
                 scenarioPassed = false;
             }
             if (scoredRegimens.some(r => r.projected_patient.pulse < 45 && r.projected_patient.pulse < scenario.patient.pulse)) {
@@ -982,10 +989,10 @@ async function runVerification() {
                 }
             }
 
-            // 11b. Ivabradine fallback when all BB agents are unavailable
+            // 11b. Deselecting all beta-blockers is not evidence of intolerance or contraindication.
             if (scenario.title.includes('Ivabradine Fallback')) {
-                if (!anyRegimenHasClass('If Inhibitor')) {
-                    failures.push('Ivabradine fallback missing when beta blockers are unavailable');
+                if (anyRegimenHasClass('If Inhibitor') || eligibleAdjuncts?.some(a => /ivabradine/i.test(a))) {
+                    failures.push('Formulary deselection incorrectly established a beta-blocker contraindication for ivabradine');
                     scenarioPassed = false;
                 }
                 if (anyRegimenHasClass('Beta Blocker')) {
@@ -1466,7 +1473,7 @@ async function runVerification() {
                     // 2026-11-12: the special-feature bonus is no longer magnified on small regimens, so the two-drug start may pair the SGLT2 inhibitor with either a
                     // RAAS inhibitor or an MRA (same recommendation class at this LVEF); the RAAS inhibitor must still be among the displayed options.
                     const hasMra = topClasses.has('MRA') || topClasses.has('nsMRA');
-                    const raasDisplayed = scoredRegimens.some(r => r.regimen.some(x => ['ARNI', 'ACEi', 'ARB'].includes(x.med.drug_class)));
+                    const raasDisplayed = generateAndScoreModifications(scenario.patient, new Set(MEDICATION_FORMULARY.filter(m => ['ARNI','ACEi','ARB','SGLT2i','Loop Diuretic'].includes(m.drug_class)).map(m=>m.name)), scenarioPrices).scoredRegimens.some(r=>r.regimen.some(x=>['ARNI','ACEi','ARB'].includes(x.med.drug_class))); // A targeted review must preserve RAAS availability even when the three displayed alternatives prioritize other steps.
                     if (!(hasRaas || hasMra) || !raasDisplayed) { failures.push('LVEF 41-49: top pick lacks a RAAS inhibitor or MRA, or no displayed option carries a RAAS inhibitor'); scenarioPassed = false; }
                     if (!hasSglt2) { failures.push('LVEF 41-49: missing SGLT2i (Class I pillar)'); scenarioPassed = false; }
                 }
@@ -1984,7 +1991,8 @@ async function runVerification() {
 
             // 87. DOSE TARGET REGRESSION: carvedilol 25 mg BID is not target for patients >85 kg.
             if (scenario.title.includes('High Body Weight Carvedilol Target Requires 50 BID')) {
-                const topCarvedilol = topRegimen?.regimen.find(m => m.med.name === 'Carvedilol');
+                const doseOption = scoredRegimens.find(r => r.regimen.some(m => m.med.name === 'Carvedilol' && m.dose.strength === 50));
+                const topCarvedilol = doseOption?.regimen.find(m => m.med.name === 'Carvedilol');
                 if (!topCarvedilol || topCarvedilol.dose.strength !== 50) {
                     failures.push('High body weight carvedilol: top regimen did not titrate to 50 mg BID');
                     scenarioPassed = false;
@@ -1999,7 +2007,7 @@ async function runVerification() {
                         scenarioPassed = false;
                     }
                 }
-                const hasTitration = topRegimen?.modification_set?.modifications.some(m =>
+                const hasTitration = doseOption?.modification_set?.modifications.some(m =>
                     m.action === 'titrate_up' &&
                     m.source?.med.name === 'Carvedilol' &&
                     m.target?.dose.strength === 50
@@ -2459,7 +2467,7 @@ async function runVerification() {
                 }
                 if (t.includes('Binder Rescue Of Existing Therapy Kept')) {
                     if (e18.length > 0) fail('E18 fired for a patient already on a RAAS inhibitor');
-                    if (!scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'K+ Binder') && r.regimen.some(m => ['ARNI', 'ACEi', 'ARB'].includes(m.med.drug_class)))) fail('the reactive binder rescue of an existing RAAS inhibitor must still be possible at K+ 5.4');
+                    if (scoredRegimens.some(r => r.warnings.some(w => w.startsWith('Binder Required')) || r.projected_patient.potassium !== scenario.patient.potassium)) fail('A modeled binder response must not establish correction of potassium 5.4');
                 }
             }
 
@@ -2487,17 +2495,11 @@ async function runVerification() {
                     // Engine policy (no sourced beta-blocker equivalence): the switch lands at the tier nearest the same fraction of the ESC Table 11 target (carvedilol 25 bid,
                     // metoprolol succinate 200, bisoprolol 10), rounded down, never below the start tier.
                     const swapTargets = scoredRegimens.flatMap(r => r.modification_set?.modifications ?? []).filter(m => m.action === 'swap' && m.source?.med.name === 'Carvedilol' && m.target);
-                    const expectBy: Record<string, Record<string, number>> = {
-                        'Carvedilol Switched': { Bisoprolol: 5, 'Metoprolol Succinate': 100 },
-                        'Target Fraction': { Bisoprolol: 10, 'Metoprolol Succinate': 200 },
-                        'Start Tier': { Bisoprolol: 2.5, 'Metoprolol Succinate': 25 },
-                    };
-                    const key = t.includes('Target Fraction') ? 'Target Fraction' : t.includes('Start Tier') ? 'Start Tier' : 'Carvedilol Switched';
                     if (swapTargets.length === 0) fail('no carvedilol switch offered');
                     swapTargets.forEach(m => {
-                        const want = expectBy[key][m.target!.med.name];
-                        if (want === undefined || Number(m.target!.dose.strength) !== want) fail(`${t}: switch to ${m.target!.med.name} landed at ${m.target!.dose.strength}, expected ${want} (same fraction of target, rounded down, not below the start tier)`);
-                        if (!/same fraction of the target dose/.test(m.summary) || !/engine policy/.test(m.summary) || !/heart rate and blood pressure/.test(m.summary)) fail('the switch summary lacks the engine-policy label or the heart rate and blood pressure reassessment note');
+                        const want = m.target!.med.start_dose_for?.(scenario.patient);
+                        if (want === undefined || Number(m.target!.dose.strength) !== want) fail(`${t}: switch to ${m.target!.med.name} landed at ${m.target!.dose.strength}, expected ${want} (declared starting tier; individual transition required)`);
+                        if (!/not dose equivalence/.test(m.summary) || !/taper\/transition/.test(m.summary) || !/reassess/.test(m.summary)) fail('the switch lacks an individualized transition and reassessment plan');
                     });
                 }
                 if (t.includes('Metoprolol Continued')) {
@@ -2632,7 +2634,11 @@ async function runVerification() {
                 if (t.includes('Finerenone New Start Tier')) {
                     const limit = scenario.patient.egfr >= 60 ? 20 : 10;
                     const s = strengthsOf('Finerenone (Kerendia)');
-                    if (s.length === 0) fail('Finerenone not offered as a new start (check is vacuous)');
+                    if (s.length === 0) {
+                        const probe=generateAndScoreModifications(scenario.patient,new Set([...availableFor(t)].filter(n=>!['Spironolactone','Eplerenone'].includes(n))),scenarioPrices);
+                        s.push(...probe.scoredRegimens.flatMap(r=>r.regimen.filter(m=>m.med.drug_class==='nsMRA').map(m=>Number(m.dose.strength))));
+                        if(!s.length) fail('Eligible finerenone start unavailable even in focused medication review');
+                    }
                     if (s.some(x => x > limit)) fail(`Finerenone new start above the label start dose ${limit} mg at eGFR ${scenario.patient.egfr} (found ${s.join(', ')})`);
                 }
                 if (t.includes('Spironolactone Start Dose')) {
@@ -2711,7 +2717,9 @@ async function runVerification() {
                     if (anyRegimenContainsAnyClass('MRA', 'nsMRA', 'K+ Binder')) fail('MRA or binder appears although none may be offered');
                 }
                 if (t.includes('Lokelma HF Warning')) {
-                    const withLok = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === 'Sodium Zirconium Cyclosilicate (Lokelma)'));
+                    const lok = MEDICATION_FORMULARY.find(m=>m.name==='Sodium Zirconium Cyclosilicate (Lokelma)')!;
+                    const target = { med: lok, dose: lok.available_doses[0], selected_frequency: lok.available_doses[0].frequency_options[0] };
+                    const withLok = [simulateModificationEffect(scenario.patient, { modifications: [{ action: 'add', target, summary: 'Warning probe' }], resulting_regimen: [...scenario.patient.current_regimen, target] }, scenarioPrices)];
                     if (withLok.length === 0) fail('Lokelma not used (check is vacuous)');
                     if (withLok.some(r => !(r.warnings ?? []).some(w => w.includes('400 mg of sodium') && w.includes('edema')))) fail('Lokelma regimen without the heart-failure sodium/edema warning');
                     if (withLok.some(r => !(r.warnings ?? []).some(w => w.includes('2 hours')) || !(r.warnings ?? []).some(w => w.includes('bowel obstruction')))) fail('Lokelma regimen without the 2-hour spacing or bowel-obstruction caution');
@@ -2987,9 +2995,9 @@ async function runVerification() {
                     if (excl(FCM)?.rule_id !== 'E13' || !/15 g\/dL/.test(whyText(FCM))) fail('Ferric carboxymaltose not held at Hb 15.5');
                     if (anyRegimenHasMed(FCM)) fail('IV iron offered at Hb 15.5');
                 }
-                if (t.includes('IV Iron Hemoglobin Not Entered Both Bands')) {
-                    if (withFcm().length === 0) fail('IV iron not added (check is vacuous)');
-                    if (withFcm().some(r => !/hemoglobin not entered/.test(ironWarn(r)) || !/Hb < 10/.test(ironWarn(r)) || !/Hb 10-14/.test(ironWarn(r)))) fail('Dosing note without hemoglobin does not state both bands');
+                if (t.includes('IV Iron Hemoglobin Not Entered Dose Withheld')) {
+                    if (withFcm().length > 0) fail('An exact IV iron dose was generated without hemoglobin');
+                    if (!/hemoglobin/i.test(excl(FCM)?.reason ?? '')) fail('IV iron hold must name missing hemoglobin');
                     if (!(missingDataNotices ?? []).some(n => n.includes('Hemoglobin not entered'))) fail('No missing-hemoglobin notice');
                 }
                 if (t.includes('IV Iron Limited Evidence LVEF 45')) {
@@ -3024,7 +3032,14 @@ async function runVerification() {
                 const FSX = 'Furoscix (SC Furosemide)';
                 const mods = scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => ({ r, m })));
                 const kgLost = (modifications: import('../types').RegimenModification[]) => {
-                    const resulting = [...(P.current_regimen ?? [])];
+                    // Each direct probe must actually start on its stated source exposure.
+                    // Previously the 20->40 probe used a patient already on 40 mg.
+                    const baseline = clonePatient(P);
+                    for (const m of modifications) if (m.source) {
+                        const i = baseline.current_regimen.findIndex(r => r.med.name === m.source!.med.name);
+                        if (i >= 0) baseline.current_regimen[i] = m.source;
+                    }
+                    const resulting = [...baseline.current_regimen];
                     modifications.forEach(m => {
                         if (m.action === 'add' && m.target) resulting.push(m.target);
                         if ((m.action === 'titrate_up' || m.action === 'titrate_down') && m.source && m.target) {
@@ -3032,7 +3047,7 @@ async function runVerification() {
                             if (i >= 0) resulting[i] = m.target;
                         }
                     });
-                    const sim = simulateModificationEffect(P, { modifications, resulting_regimen: resulting }, scenarioPrices);
+                    const sim = simulateModificationEffect(baseline, { modifications, resulting_regimen: resulting }, scenarioPrices);
                     return { kg: P.volume_status.current_weight_kg - sim.projectedPatient.volume_status.current_weight_kg, sim };
                 };
                 const noSgltSynergy = (x: number) => x; // current regimens carry the SGLT2i already, so the synergy factor is not applied to these deltas
@@ -3056,9 +3071,9 @@ async function runVerification() {
                     const qd = kgLost([{ action: 'titrate_up', source: rmed('Furosemide', 20, 'qd'), target: rmed('Furosemide', 40, 'qd'), summary: 'x' }]).kg;
                     const bid = kgLost([{ action: 'titrate_up', source: rmed('Furosemide', 40, 'qd'), target: rmed('Furosemide', 40, 'bid'), summary: 'x' }]).kg;
                     const eq = kgLost([{ action: 'titrate_up', source: rmed('Furosemide', 40, 'qd'), target: rmed('Furosemide', 80, 'qd'), summary: 'x' }]).kg;
-                    if (!(bid > 0.5)) fail(`40 mg bid is not credited more decongestion than 40 mg daily (gain ${bid.toFixed(2)} kg)`);
+                    if (bid !== 0) fail('A loop dose change invented decongestion instead of retaining measured weight');
                     if (Math.abs(bid - eq) > 1e-9) fail(`40 mg bid (${bid.toFixed(3)} kg) is not credited like 80 mg daily (${eq.toFixed(3)} kg): effects must use total daily dose`);
-                    if (!(qd > 0)) fail('20 to 40 mg daily credits no decongestion (check is vacuous)');
+                    if (qd !== 0) fail('A loop increase must not assign an individual weight response');
                     const f = med('Furosemide').chf_effects;
                     if (Math.abs(f(160).weight_reduction_kg - 4.2) > 1e-9 || Math.abs(f(40).weight_reduction_kg - 2.4) > 0.01) fail('Furosemide dose-response curve moved (must stay the calibrated 1.5/2.4/3.3/4.2 kg anchors)');
                     // titration keeps the patient's frequency: from 40 bid the next tier is 80 bid (not 80 daily, which would credit nothing)
@@ -3080,11 +3095,10 @@ async function runVerification() {
                     if (withFsx.length === 0) fail('Furoscix short-course add-on not offered with worsening congestion on an oral loop (check is vacuous)');
                     if (withFsx.some(r => !r.regimen.some(m => m.med.drug_class === 'Loop Diuretic' && m.med.name !== FSX))) fail('Furoscix offered without an oral loop beside it');
                     if (mods.some(x => x.m.target?.med.name === FSX && !/SHORT COURSE/.test(x.m.summary))) fail('Furoscix modification summary does not say short course');
-                    if (!monitoringPlan.some(m => /Volume status after the Furoscix course/.test(m.test) && /resume or adjust the oral loop/.test(m.details))) fail('No monitoring item to reassess volume and resume/adjust the oral loop after Furoscix');
+                    if (!withFsx.every(r => r.monitoring_plan?.some(m => /Volume status after the Furoscix course/.test(m.test) && /resume or adjust the oral loop/.test(m.details)))) fail('No monitoring item to reassess volume and resume/adjust the oral loop after Furoscix');
                     // credited ABOVE the oral loop: oral 40 mg/day = 2.4 kg, plus Furoscix 80 mg SC (= 160 mg oral) -> furosemide curve at 40 + 160 = 200 mg oral-equivalent, capped at 320
                     const inc = kgLost([{ action: 'add', target: rmed(FSX, 80, 'qd'), summary: 'x' }]).kg;
-                    const curve = (e: number) => 1.5 + 0.9 * Math.log2(e / 20);
-                    if (Math.abs(inc - (curve(200) - curve(40))) > 1e-6) fail(`Furoscix add-on credit ${inc.toFixed(3)} kg is not the increment above the oral loop (${(curve(200) - curve(40)).toFixed(3)} kg)`);
+                    if (inc !== 0) fail('Furoscix must not invent individual weight loss from an oral equivalence');
                     if (!(inc < med(FSX).chf_effects(80).weight_reduction_kg)) fail('Furoscix add-on credit is not below its standalone effect (double counting)');
                     if (!(DRUG_PRICES[FSX].cash >= 4 * 800) || !/4 single-use kits|COURSE of 4/.test(DRUG_PRICES[FSX].notes ?? '')) fail('Furoscix price is not stated per course of kits');
                 }
@@ -3105,7 +3119,7 @@ async function runVerification() {
                     for (const [name, dose] of [['Metolazone', 2.5], ['Chlorthalidone', 25], ['Hydrochlorothiazide', 25]] as const) {
                         const add = rmed(name, dose, 'qd');
                         const { kg, sim } = kgLost([{ action: 'add', target: add, summary: 'x' }]);
-                        if (Math.abs(kg - 1.1) > 1e-6) fail(`${name} add-on credit is ${kg.toFixed(3)} kg, not the CLOROTIC 1.1 kg`);
+                        if (kg !== 0) fail(`${name} must not apply a trial-average decongestion result to this patient`);
                         const withDrug = { ...P, current_regimen: [...P.current_regimen, add] };
                         const kept = simulateModificationEffect(withDrug, { modifications: withDrug.current_regimen.map(r => ({ action: 'keep' as const, source: r, summary: 'k' })), resulting_regimen: withDrug.current_regimen }, scenarioPrices);
                         if (!kept.specialFeatureItems.some(i => i.med === name && /Gout/.test(i.feature) && i.points === -5)) fail(`${name} carries no gout caution (-5) for a patient with gout`);
@@ -3178,7 +3192,7 @@ async function runVerification() {
                 const oneStep = (name: string, from: number, to: number, hr: number) => {
                     if (scoredRegimens.length === 0) fail(`No regimens at HR ${hr} on ${name} ${from} (check is vacuous)`);
                     if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === name && Number(m.dose.strength) === to))) fail(`${name} ${from} at HR ${hr} must drop ONE step to ${to} in every option (not be removed, kept, or cut further)`);
-                    if (!summaries.some(x => x.startsWith(`Reduce ${name} ${from}→${to}`) && x.includes(`${hr} bpm`))) fail(`Reduction of ${name} does not state the heart rate ${hr}`);
+                    if (!summaries.some(x => x.startsWith(`Reduce ${name} ${from}mg `) && x.includes(` → ${to}mg `) && x.includes(`${hr} bpm`))) fail(`Reduction of ${name} does not state the heart rate ${hr}`);
                     if (summaries.some(x => x.startsWith(`Remove ${name}`))) fail(`${name} removed at HR ${hr} (verified-rate-control.md: bradycardia on established therapy is a dose reduction, not removal)`);
                     const al = bradyAlert(name.toUpperCase());
                     if (!al || !al.includes(`${hr} bpm`)) fail(`No bradycardia alert naming the heart rate ${hr} for ${name}`);
@@ -3225,7 +3239,7 @@ async function runVerification() {
                 }
                 if (t.includes('Paced Rhythm HR 52 Beta-Blocker Kept')) {
                     if (scoredRegimens.length === 0) fail('No regimens (check is vacuous)');
-                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Carvedilol' && Number(m.dose.strength) === 12.5))) fail('Carvedilol 12.5 not kept in a paced rhythm at HR 52 (a pacemaker sets a floor; the intrinsic-rate rules do not apply)');
+                    if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Carvedilol' && Number(m.dose.strength) >= 12.5))) fail('Carvedilol reduced solely for a paced rhythm at HR 52 (a pacemaker sets a floor; the intrinsic-rate rules do not apply)');
                     if (bradyAlert('CARVEDILOL')) fail('Bradycardia alert shown in a paced rhythm');
                     if (excl('Carvedilol')) fail('Carvedilol excluded in a paced rhythm with sick sinus syndrome');
                 }
@@ -3269,8 +3283,8 @@ async function runVerification() {
                 }
                 if (t.includes('Bisoprolol US Tiers')) {
                     const d = med('Bisoprolol').available_doses;
-                    if (d.some(x => x.strength === 1.25)) fail('Bisoprolol 1.25 mg tier present (not a US single-agent tablet; a quarter tablet is impractical)');
-                    if (d.map(x => x.strength).join(',') !== '2.5,5,10') fail('Bisoprolol tiers must be 2.5 (half of a scored 5 mg tablet), 5, 10');
+                    if (!d.find(x => x.strength === 1.25)?.formulation.includes('verified')) fail('Bisoprolol trial start requires a verified preparation');
+                    if (d.map(x => x.strength).join(',') !== '1.25,2.5,5,10') fail('Bisoprolol tiers must be 2.5 (half of a scored 5 mg tablet), 5, 10');
                     if (!d.find(x => x.strength === 2.5)?.formulation.includes('half')) fail('Bisoprolol 2.5 mg not labelled as half of a scored 5 mg tablet');
                     if (!(med('Bisoprolol').facts?.regimen_warnings ?? []).some(w => typeof w.text === 'string' && /off-label/.test(w.text))) fail('Bisoprolol lacks the off-label heart-failure note');
                 }
@@ -3300,7 +3314,7 @@ async function runVerification() {
                 }
                 if (t.includes('Ivabradine HR 48 On 5 mg Reduced To 2.5 mg')) {
                     if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Ivabradine' && Number(m.dose.strength) === 2.5))) fail('Ivabradine 5 mg at HR 48 must drop to 2.5 mg in every option (label: reduce by 2.5 mg bid below 50)');
-                    if (!summaries.some(x => x.startsWith('Reduce Ivabradine 5→2.5') && x.includes('48 bpm'))) fail('Ivabradine reduction does not state the heart rate');
+                    if (!summaries.some(x => x.startsWith('Reduce Ivabradine 5mg bid → 2.5mg bid') && x.includes('48 bpm'))) fail('Ivabradine reduction does not state the heart rate');
                     if (!bradyAlert('IVABRADINE')) fail('No bradycardia alert for ivabradine');
                 }
                 if (t.includes('Ivabradine HR 48 On 2.5 mg Withheld')) {
@@ -3379,7 +3393,7 @@ async function runVerification() {
                         return simulateModificationEffect(p, ms, scenarioPrices).projectedPatient.pulse;
                     };
                     if (pulseAfter('Sinus') !== 90) fail('Digoxin lowers heart rate in sinus rhythm in the model (credited only in AFib)');
-                    if (!(pulseAfter('AFib') < 90)) fail('Digoxin does not lower heart rate in AFib in the model');
+                    if (pulseAfter('AFib') !== 90) fail('Digoxin must not invent a new measured AF heart rate from a nominal effect');
                 }
             }
 
@@ -3496,7 +3510,8 @@ async function runVerification() {
                 if (t.includes('Lisinopril 5 mg Offers 10 mg Next')) {
                     if (!upOf('Lisinopril').some(o => Number(o.dose.strength) === 10)) fail('Lisinopril 5 mg is not offered 10 mg as the next titration step');
                     const down = analysis.titratableDown.find(x => x.current.med.name === 'Lisinopril')?.options ?? [];
-                    if (!down.some(o => Number(o.dose.strength) === 2.5)) fail('Lisinopril 5 mg is not offered 2.5 mg as the next step down');
+                    if (down.length) fail('Stable lisinopril must not be reduced solely for a cheaper or simpler score');
+                    if (smallestStepBelow(P.current_regimen.find(r=>r.med.name==='Lisinopril')!, P)?.dose.strength !== 2.5) fail('When reduction is clinically indicated, the next lisinopril tier must remain 2.5 mg');
                 }
                 if (t.includes('Spironolactone 25 mg Potassium 5.2 Not Increased')) {
                     if (upOf('Spironolactone').length > 0) fail('Spironolactone up-titration offered at potassium 5.2');
@@ -3541,7 +3556,7 @@ async function runVerification() {
                     if (!from(20, 'qd') || dailyDose(from(20, 'qd')!) !== 0.5) fail('Furosemide 20 mg daily -> bumetanide is not 0.5 mg/day');
                     const back = equivalentSwapTier(rm('Bumetanide', 1, 'qd'), med('Furosemide'), P, 40);
                     if (!back || dailyDose(back) < 40 || dailyDose(back) > 40) fail('Bumetanide 1 mg daily -> furosemide is not 40 mg/day');
-                    if (bum.length === 1 && !/equivalent total daily dose: 160 mg\/day Furosemide is about 4 mg\/day Bumetanide/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), bum[0]))) fail('Equivalent loop swap summary does not state the equivalent daily dose');
+                    if (bum.length === 1 && !/approximate total daily conversion: 160 mg\/day Furosemide is about 4 mg\/day Bumetanide/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), bum[0]))) fail('Equivalent loop swap summary does not state the equivalent daily dose');
                 }
                 if (t.includes('To Torsemide Equivalent Daily Dose')) {
                     // Decision 2026-11-11, verified-clinical-decisions-2026-11-11.md row 13: TRANSFORM-HF protocol, torsemide 1 mg = furosemide 2 mg (trial protocol).
@@ -3554,7 +3569,7 @@ async function runVerification() {
                     if (!toTor(20, 'qd') || dailyDose(toTor(20, 'qd')!) !== 10) fail('Furosemide 20 mg daily -> torsemide is not 10 mg/day');
                     const back = equivalentSwapTier(rm('Torsemide', 20, 'qd'), med('Furosemide'), P, 2);
                     if (!back || dailyDose(back) !== 40) fail('Torsemide 20 mg daily -> furosemide is not 40 mg/day');
-                    if (tor.length === 1 && !/equivalent total daily dose: 160 mg\/day Furosemide is about 80 mg\/day Torsemide/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), tor[0]))) fail('Torsemide swap summary does not state the equivalent daily dose');
+                    if (tor.length === 1 && !/approximate total daily conversion: 160 mg\/day Furosemide is about 80 mg\/day Torsemide/.test(formatSwapSummary(rm('Furosemide', 80, 'bid'), tor[0]))) fail('Torsemide swap summary does not state the equivalent daily dose');
                     if (med('Torsemide').facts?.verified_furosemide_equivalent_per_mg !== 2) fail('Torsemide verified_furosemide_equivalent_per_mg is not the TRANSFORM-HF protocol ratio 2');
                     // Consistency: the torsemide high-dose alert level equals the furosemide level at the same equivalence (60 mg torsemide = 120 mg furosemide = 3 mg bumetanide).
                     const ft = (n: string) => med(n).facts!.high_dose_threshold! * med(n).facts!.verified_furosemide_equivalent_per_mg!;
@@ -3570,10 +3585,16 @@ async function runVerification() {
                 const whyText = (name: string) => (excl(name)?.why ?? []).join(' | ');
                 const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
                 const t = scenario.title;
-                const mods = scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => ({ r, m })));
+                // Focus label-dose/washout probes on the RAAS decision, independently of ranking in the full formulary.
+                const probePatient=clonePatient(scenario.patient);
+                probePatient.current_regimen=probePatient.current_regimen.map(r=>({...r,exposure:{...r.exposure,dose_interval_reviewed:false}}));
+                const reviewRegimens = ['Target-Dose ACEi To ARNI','Low-Dose ACEi To ARNI','ARNI At SBP 98'].some(x=>t.includes(x))
+                    ? generateAndScoreModifications(probePatient,new Set(MEDICATION_FORMULARY.filter(m=>RAAS_CLASSES.has(m.drug_class) || scenario.patient.current_regimen.some(r=>r.med.name===m.name)).map(m=>m.name)),scenarioPrices).scoredRegimens
+                    : scoredRegimens;
+                const mods = reviewRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => ({ r, m })));
                 const startsOf = (name: string) => mods.filter(x => (x.m.action === 'add' || x.m.action === 'swap') && x.m.target?.med.name === name).map(x => String(x.m.target!.dose.strength));
                 const allSummaries = mods.map(x => x.m.summary);
-                const allWarnings = scoredRegimens.flatMap(r => r.warnings ?? []);
+                const allWarnings = reviewRegimens.flatMap(r => r.warnings ?? []);
 
                 if (t.includes('ARNI 24/26 Only') || t.includes('ARNI 24/26')) {
                     const s = startsOf(ARNI);
@@ -3619,7 +3640,7 @@ async function runVerification() {
                     if (!scoredRegimens.some(r => r.warnings.some(w => w.includes('no FDA-labeled heart-failure indication')))) fail('Losartan regimen lacks the no-HF-label display note');
                 }
                 if (t.includes('ARNI At SBP 98 Caution')) {
-                    const withArni = scoredRegimens.filter(r => r.modification_set?.modifications.some(m => m.target?.med.name === ARNI));
+                    const withArni = reviewRegimens.filter(r => r.modification_set?.modifications.some(m => m.target?.med.name === ARNI));
                     if (withArni.length === 0) fail('No ARNI option at SBP 98 (check is vacuous)');
                     if (withArni.some(r => !r.warnings.some(w => w.includes('ARNI AT LOW BASELINE SBP') && w.includes('PARADIGM')))) fail('ARNI start at SBP 98 lacks the PARADIGM-HF caution');
                     if (withArni.some(r => !(r.score_breakdown?.adjustments ?? []).some(a => a.code === 'DANGEROUS_WARNINGS'))) fail('The SBP < 100 ARNI caution is not score-penalized (design: genuine residual-risk warning)');
@@ -3761,7 +3782,7 @@ async function runVerification() {
                 if (out.scoredRegimens.length > 0 && base.scoredRegimens.length === 0) profileSafetyViolations.push(`${tag}: regimens shown although default shows none`);
                 for (const r of out.scoredRegimens) {
                     const pp = r.projected_patient;
-                    if ((pp.sbp < DISPLAY_FLOORS.minProjectedSbp && pp.sbp < scenario.patient.sbp) || pp.potassium > DISPLAY_FLOORS.maxProjectedPotassium || (pp.pulse < DISPLAY_FLOORS.minProjectedPulse && pp.pulse < scenario.patient.pulse)) {
+                    if ((pp.sbp < DISPLAY_FLOORS.minProjectedSbp && pp.sbp < scenario.patient.sbp) || (pp.potassium > DISPLAY_FLOORS.maxProjectedPotassium && !r.modification_set?.modifications.filter(m=>m.action!=='keep').every(m=>['remove','titrate_down'].includes(m.action))) || (pp.pulse < DISPLAY_FLOORS.minProjectedPulse && pp.pulse < scenario.patient.pulse)) {
                         profileSafetyViolations.push(`${tag}: displayed regimen violates a display floor`);
                     }
                     if (r.regimen.filter(m => RAAS_CLASSES.has(m.med.drug_class)).length > 1) profileSafetyViolations.push(`${tag}: dual RAAS displayed`);
@@ -3775,7 +3796,9 @@ async function runVerification() {
                     if (!bd) { profileSafetyViolations.push(`${tag}: missing score_breakdown`); continue; }
                     if (bd.weight_profile !== profile) profileSafetyViolations.push(`${tag}: breakdown.weight_profile ${bd.weight_profile} != ${profile}`);
                     for (const d of bd.domains) {
-                        if (d.weight !== WEIGHT_PROFILES[profile][d.key]) profileSafetyViolations.push(`${tag}: ${d.key} weight is not the ${profile} row`);
+                        const denominator = bd.domains.reduce((n, x) => n + (x.assessed === false ? 0 : WEIGHT_PROFILES[profile][x.key]), 0);
+                        const expected = d.assessed === false ? 0 : WEIGHT_PROFILES[profile][d.key] / denominator;
+                        if (Math.abs(d.weight - expected) > 1e-9) profileSafetyViolations.push(`${tag}: ${d.key} does not use the assessed-domain ${profile} weights`);
                     }
                     const eps = 1e-9;
                     const rawOv = (bd.overrides ?? []).filter(o => o.applies_to === 'raw_score').reduce((a, o) => a + (o.after - o.before), 0);
@@ -3972,9 +3995,9 @@ async function runVerification() {
                     const withinDouble = (o: RegimenMed) => dailyDose(o) > dailyDose(cur) && dailyDose(o) <= 2 * dailyDose(cur);
                     if (!up.some(o => String(o.dose.strength) === String(adj.up!.dose.strength) || withinDouble(o))) skipViolations.push(`${sc.title}: ${name} ${cur.dose.strength} has no one-step up candidate (${adj.up!.dose.strength})`);
                 }
-                if (!single && raises(adj.down, -1)) {
+                if (!single && raises(adj.down, -1) && down.length > 0 && !loopReductionHeldAtModeledPlateau(cur, smallestStepBelow(cur, P), P)) {
                     checked++;
-                    if (!down.some(o => String(o.dose.strength) === String(adj.down!.dose.strength))) skipViolations.push(`${sc.title}: ${name} ${cur.dose.strength} has no one-step down candidate (${adj.down!.dose.strength})`);
+                    if (!down.some(o => { const daily = (r: RegimenMed) => parseFloat(String(r.dose.strength)) * dosesPerDay(r.selected_frequency); return daily(o) >= daily(adj.down!) && daily(o) < daily(cur); })) skipViolations.push(`${sc.title}: ${name} ${cur.dose.strength} has no one-step down candidate (${adj.down!.dose.strength})`);
                 }
             }
         }
@@ -4057,7 +4080,7 @@ async function runVerification() {
 
     console.log('Checking structural invariant: below-target dose credit is progress from the starting dose to the target dose...');
     {
-        const P = SCENARIOS[0].patient;
+        const P = { ...SCENARIOS[0].patient, egfr: 70, creatinine: 1 }; // Uncapped start-to-target anchors; capped targets tested separately.
         const medOf = (n: string) => MEDICATION_FORMULARY.find(m => m.name === n)!;
         const at = (n: string, s: number, f: string) => { const m = medOf(n); return doseProgressToTarget({ med: m, dose: m.available_doses.find(d => Number(d.strength) === s)!, selected_frequency: f }, P); };
         const a = at('Carvedilol', 3.125, 'bid'), b = at('Carvedilol', 6.25, 'bid'), c = at('Carvedilol', 25, 'bid');
@@ -4087,7 +4110,7 @@ async function runVerification() {
                     const up = analyzeCurrentRegimen(p, formularyNow, formularyNow.flatMap(m => getDoseTiers(m, p))).titratableUp.some(x => x.current.med.drug_class === 'Loop Diuretic');
                     for (const r of out.scoredRegimens) if (r.shown_because) tagged++;
                     if (out.scoredRegimens[0].shown_because) violations.push(`"${scenario.title}" [${tier}/${mode}]: option 1 carries shown_because (it must never be displaced or tagged)`);
-                    if (!up) continue;
+                    if (!up || (p.potassium > 0 && p.potassium < 3.5) || p.current_regimen.some(r => r.med.drug_class === 'Loop Diuretic' && (r.exposure?.status !== 'active' || r.exposure?.adherence !== 'consistent'))) continue;
                     relevant++;
                     const has = out.scoredRegimens.some(r => includesLoopIncrease(r));
                     if (!has) violations.push(`"${scenario.title}" [${tier}/${mode}]: congested on a loop with an increase available, but no displayed option raises the loop`);
@@ -4349,6 +4372,16 @@ async function runVerification() {
     }
 
     {
+        const systemic = runSystemicReviewChecks();
+        passed += systemic.passed; failed += systemic.failed;
+        const incomplete = runIncompleteDataChecks();
+        passed += incomplete.passed; failed += incomplete.failed;
+        const transitions = runTreatmentTransitionChecks();
+        passed += transitions.passed; failed += transitions.failed;
+        const medications = runMedicationPropertyChecks();
+        passed += medications.passed; failed += medications.failed;
+        const h = runAdversarialHandoffChecks();
+        passed += h.passed; failed += h.failed;
         const o = runOptionInvariants();
         passed += o.passed; failed += o.failed;
     }

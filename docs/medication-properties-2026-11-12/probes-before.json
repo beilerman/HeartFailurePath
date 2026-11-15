@@ -1,0 +1,1900 @@
+{
+  "tierCount": 121,
+  "selfReplace": [
+    {
+      "drug": "Sacubitril/Valsartan (Entresto)",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 135.2
+        },
+        "dbp": {
+          "a": 80,
+          "b": 82.6
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "drug": "Lisinopril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.57
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.79
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "drug": "Enalapril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.57
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.79
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "drug": "Ramipril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.66
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.83
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "drug": "Captopril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.66
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.83
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "drug": "Valsartan",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.47
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.73
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "drug": "Candesartan",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.03
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.52
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "drug": "Losartan",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.25
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.63
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "drug": "Carvedilol",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.66
+        },
+        "dbp": {
+          "a": 80,
+          "b": 82.56
+        }
+      }
+    },
+    {
+      "drug": "Metoprolol Succinate",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 132.11
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.48
+        }
+      }
+    },
+    {
+      "drug": "Bisoprolol",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 132.28
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.59
+        }
+      }
+    },
+    {
+      "drug": "Spironolactone",
+      "delta": {
+        "K": {
+          "a": 4.3,
+          "b": 4.4
+        }
+      }
+    },
+    {
+      "drug": "Eplerenone",
+      "delta": {
+        "K": {
+          "a": 4.3,
+          "b": 4.37
+        }
+      }
+    },
+    {
+      "drug": "Finerenone (Kerendia)",
+      "delta": {
+        "K": {
+          "a": 4.3,
+          "b": 4.36
+        }
+      }
+    }
+  ],
+  "swapRepresentation": [
+    {
+      "from": "Sacubitril/Valsartan (Entresto)",
+      "to": "Lisinopril",
+      "delta": {
+        "sbp": {
+          "a": 132.5,
+          "b": 136.07
+        },
+        "dbp": {
+          "a": 81.25,
+          "b": 83.04
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Sacubitril/Valsartan (Entresto)",
+      "to": "Enalapril",
+      "delta": {
+        "sbp": {
+          "a": 132.5,
+          "b": 136.07
+        },
+        "dbp": {
+          "a": 81.25,
+          "b": 83.04
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Sacubitril/Valsartan (Entresto)",
+      "to": "Ramipril",
+      "delta": {
+        "sbp": {
+          "a": 132.38,
+          "b": 136.03
+        },
+        "dbp": {
+          "a": 81.19,
+          "b": 83.02
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Sacubitril/Valsartan (Entresto)",
+      "to": "Captopril",
+      "delta": {
+        "sbp": {
+          "a": 132.38,
+          "b": 136.03
+        },
+        "dbp": {
+          "a": 81.19,
+          "b": 83.02
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Sacubitril/Valsartan (Entresto)",
+      "to": "Valsartan",
+      "delta": {
+        "sbp": {
+          "a": 132.67,
+          "b": 136.13
+        },
+        "dbp": {
+          "a": 81.33,
+          "b": 83.07
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Sacubitril/Valsartan (Entresto)",
+      "to": "Candesartan",
+      "delta": {
+        "sbp": {
+          "a": 133.33,
+          "b": 136.37
+        },
+        "dbp": {
+          "a": 81.67,
+          "b": 83.18
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Sacubitril/Valsartan (Entresto)",
+      "to": "Losartan",
+      "delta": {
+        "sbp": {
+          "a": 133,
+          "b": 136.25
+        },
+        "dbp": {
+          "a": 81.5,
+          "b": 83.13
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Lisinopril",
+      "to": "Sacubitril/Valsartan (Entresto)",
+      "delta": {
+        "sbp": {
+          "a": 127.5,
+          "b": 132.7
+        },
+        "dbp": {
+          "a": 78.75,
+          "b": 81.35
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Lisinopril",
+      "to": "Enalapril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.57
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.79
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Lisinopril",
+      "to": "Ramipril",
+      "delta": {
+        "sbp": {
+          "a": 129.88,
+          "b": 133.53
+        },
+        "dbp": {
+          "a": 79.94,
+          "b": 81.77
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Lisinopril",
+      "to": "Captopril",
+      "delta": {
+        "sbp": {
+          "a": 129.88,
+          "b": 133.53
+        },
+        "dbp": {
+          "a": 79.94,
+          "b": 81.77
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Lisinopril",
+      "to": "Valsartan",
+      "delta": {
+        "sbp": {
+          "a": 130.17,
+          "b": 133.63
+        },
+        "dbp": {
+          "a": 80.08,
+          "b": 81.82
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Lisinopril",
+      "to": "Candesartan",
+      "delta": {
+        "sbp": {
+          "a": 130.83,
+          "b": 133.87
+        },
+        "dbp": {
+          "a": 80.42,
+          "b": 81.93
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Lisinopril",
+      "to": "Losartan",
+      "delta": {
+        "sbp": {
+          "a": 130.5,
+          "b": 133.75
+        },
+        "dbp": {
+          "a": 80.25,
+          "b": 81.88
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Enalapril",
+      "to": "Sacubitril/Valsartan (Entresto)",
+      "delta": {
+        "sbp": {
+          "a": 127.5,
+          "b": 132.7
+        },
+        "dbp": {
+          "a": 78.75,
+          "b": 81.35
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Enalapril",
+      "to": "Lisinopril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.57
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.79
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Enalapril",
+      "to": "Ramipril",
+      "delta": {
+        "sbp": {
+          "a": 129.88,
+          "b": 133.53
+        },
+        "dbp": {
+          "a": 79.94,
+          "b": 81.77
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Enalapril",
+      "to": "Captopril",
+      "delta": {
+        "sbp": {
+          "a": 129.88,
+          "b": 133.53
+        },
+        "dbp": {
+          "a": 79.94,
+          "b": 81.77
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Enalapril",
+      "to": "Valsartan",
+      "delta": {
+        "sbp": {
+          "a": 130.17,
+          "b": 133.63
+        },
+        "dbp": {
+          "a": 80.08,
+          "b": 81.82
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Enalapril",
+      "to": "Candesartan",
+      "delta": {
+        "sbp": {
+          "a": 130.83,
+          "b": 133.87
+        },
+        "dbp": {
+          "a": 80.42,
+          "b": 81.93
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Enalapril",
+      "to": "Losartan",
+      "delta": {
+        "sbp": {
+          "a": 130.5,
+          "b": 133.75
+        },
+        "dbp": {
+          "a": 80.25,
+          "b": 81.88
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Ramipril",
+      "to": "Sacubitril/Valsartan (Entresto)",
+      "delta": {
+        "sbp": {
+          "a": 127.63,
+          "b": 132.82
+        },
+        "dbp": {
+          "a": 78.81,
+          "b": 81.41
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Ramipril",
+      "to": "Lisinopril",
+      "delta": {
+        "sbp": {
+          "a": 130.13,
+          "b": 133.7
+        },
+        "dbp": {
+          "a": 80.06,
+          "b": 81.85
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Ramipril",
+      "to": "Enalapril",
+      "delta": {
+        "sbp": {
+          "a": 130.13,
+          "b": 133.7
+        },
+        "dbp": {
+          "a": 80.06,
+          "b": 81.85
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Ramipril",
+      "to": "Captopril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.66
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.83
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Ramipril",
+      "to": "Valsartan",
+      "delta": {
+        "sbp": {
+          "a": 130.29,
+          "b": 133.76
+        },
+        "dbp": {
+          "a": 80.15,
+          "b": 81.88
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Ramipril",
+      "to": "Candesartan",
+      "delta": {
+        "sbp": {
+          "a": 130.96,
+          "b": 133.99
+        },
+        "dbp": {
+          "a": 80.48,
+          "b": 82
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Ramipril",
+      "to": "Losartan",
+      "delta": {
+        "sbp": {
+          "a": 130.63,
+          "b": 133.88
+        },
+        "dbp": {
+          "a": 80.31,
+          "b": 81.94
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Captopril",
+      "to": "Sacubitril/Valsartan (Entresto)",
+      "delta": {
+        "sbp": {
+          "a": 127.63,
+          "b": 132.82
+        },
+        "dbp": {
+          "a": 78.81,
+          "b": 81.41
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Captopril",
+      "to": "Lisinopril",
+      "delta": {
+        "sbp": {
+          "a": 130.13,
+          "b": 133.7
+        },
+        "dbp": {
+          "a": 80.06,
+          "b": 81.85
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Captopril",
+      "to": "Enalapril",
+      "delta": {
+        "sbp": {
+          "a": 130.13,
+          "b": 133.7
+        },
+        "dbp": {
+          "a": 80.06,
+          "b": 81.85
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Captopril",
+      "to": "Ramipril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.66
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.83
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        }
+      }
+    },
+    {
+      "from": "Captopril",
+      "to": "Valsartan",
+      "delta": {
+        "sbp": {
+          "a": 130.29,
+          "b": 133.76
+        },
+        "dbp": {
+          "a": 80.15,
+          "b": 81.88
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Captopril",
+      "to": "Candesartan",
+      "delta": {
+        "sbp": {
+          "a": 130.96,
+          "b": 133.99
+        },
+        "dbp": {
+          "a": 80.48,
+          "b": 82
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Captopril",
+      "to": "Losartan",
+      "delta": {
+        "sbp": {
+          "a": 130.63,
+          "b": 133.88
+        },
+        "dbp": {
+          "a": 80.31,
+          "b": 81.94
+        },
+        "K": {
+          "a": 4.25,
+          "b": 4.28
+        }
+      }
+    },
+    {
+      "from": "Valsartan",
+      "to": "Sacubitril/Valsartan (Entresto)",
+      "delta": {
+        "sbp": {
+          "a": 127.33,
+          "b": 132.53
+        },
+        "dbp": {
+          "a": 78.67,
+          "b": 81.27
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Valsartan",
+      "to": "Lisinopril",
+      "delta": {
+        "sbp": {
+          "a": 129.83,
+          "b": 133.41
+        },
+        "dbp": {
+          "a": 79.92,
+          "b": 81.7
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Valsartan",
+      "to": "Enalapril",
+      "delta": {
+        "sbp": {
+          "a": 129.83,
+          "b": 133.41
+        },
+        "dbp": {
+          "a": 79.92,
+          "b": 81.7
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Valsartan",
+      "to": "Ramipril",
+      "delta": {
+        "sbp": {
+          "a": 129.71,
+          "b": 133.36
+        },
+        "dbp": {
+          "a": 79.85,
+          "b": 81.68
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Valsartan",
+      "to": "Captopril",
+      "delta": {
+        "sbp": {
+          "a": 129.71,
+          "b": 133.36
+        },
+        "dbp": {
+          "a": 79.85,
+          "b": 81.68
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Valsartan",
+      "to": "Candesartan",
+      "delta": {
+        "sbp": {
+          "a": 130.67,
+          "b": 133.7
+        },
+        "dbp": {
+          "a": 80.33,
+          "b": 81.85
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Valsartan",
+      "to": "Losartan",
+      "delta": {
+        "sbp": {
+          "a": 130.33,
+          "b": 133.58
+        },
+        "dbp": {
+          "a": 80.17,
+          "b": 81.79
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Candesartan",
+      "to": "Sacubitril/Valsartan (Entresto)",
+      "delta": {
+        "sbp": {
+          "a": 126.67,
+          "b": 131.87
+        },
+        "dbp": {
+          "a": 78.33,
+          "b": 80.93
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Candesartan",
+      "to": "Lisinopril",
+      "delta": {
+        "sbp": {
+          "a": 129.17,
+          "b": 132.74
+        },
+        "dbp": {
+          "a": 79.58,
+          "b": 81.37
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Candesartan",
+      "to": "Enalapril",
+      "delta": {
+        "sbp": {
+          "a": 129.17,
+          "b": 132.74
+        },
+        "dbp": {
+          "a": 79.58,
+          "b": 81.37
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Candesartan",
+      "to": "Ramipril",
+      "delta": {
+        "sbp": {
+          "a": 129.04,
+          "b": 132.7
+        },
+        "dbp": {
+          "a": 79.52,
+          "b": 81.35
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Candesartan",
+      "to": "Captopril",
+      "delta": {
+        "sbp": {
+          "a": 129.04,
+          "b": 132.7
+        },
+        "dbp": {
+          "a": 79.52,
+          "b": 81.35
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Candesartan",
+      "to": "Valsartan",
+      "delta": {
+        "sbp": {
+          "a": 129.33,
+          "b": 132.8
+        },
+        "dbp": {
+          "a": 79.67,
+          "b": 81.4
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Candesartan",
+      "to": "Losartan",
+      "delta": {
+        "sbp": {
+          "a": 129.67,
+          "b": 132.92
+        },
+        "dbp": {
+          "a": 79.83,
+          "b": 81.46
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Losartan",
+      "to": "Sacubitril/Valsartan (Entresto)",
+      "delta": {
+        "sbp": {
+          "a": 127,
+          "b": 132.2
+        },
+        "dbp": {
+          "a": 78.5,
+          "b": 81.1
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Losartan",
+      "to": "Lisinopril",
+      "delta": {
+        "sbp": {
+          "a": 129.5,
+          "b": 133.07
+        },
+        "dbp": {
+          "a": 79.75,
+          "b": 81.54
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Losartan",
+      "to": "Enalapril",
+      "delta": {
+        "sbp": {
+          "a": 129.5,
+          "b": 133.07
+        },
+        "dbp": {
+          "a": 79.75,
+          "b": 81.54
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Losartan",
+      "to": "Ramipril",
+      "delta": {
+        "sbp": {
+          "a": 129.38,
+          "b": 133.03
+        },
+        "dbp": {
+          "a": 79.69,
+          "b": 81.52
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Losartan",
+      "to": "Captopril",
+      "delta": {
+        "sbp": {
+          "a": 129.38,
+          "b": 133.03
+        },
+        "dbp": {
+          "a": 79.69,
+          "b": 81.52
+        },
+        "K": {
+          "a": 4.36,
+          "b": 4.39
+        }
+      }
+    },
+    {
+      "from": "Losartan",
+      "to": "Valsartan",
+      "delta": {
+        "sbp": {
+          "a": 129.67,
+          "b": 133.13
+        },
+        "dbp": {
+          "a": 79.83,
+          "b": 81.57
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Losartan",
+      "to": "Candesartan",
+      "delta": {
+        "sbp": {
+          "a": 130.33,
+          "b": 133.37
+        },
+        "dbp": {
+          "a": 80.17,
+          "b": 81.68
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        }
+      }
+    },
+    {
+      "from": "Carvedilol",
+      "to": "Metoprolol Succinate",
+      "delta": {
+        "sbp": {
+          "a": 132.38,
+          "b": 134.49
+        },
+        "dbp": {
+          "a": 81.66,
+          "b": 83.14
+        }
+      }
+    },
+    {
+      "from": "Carvedilol",
+      "to": "Bisoprolol",
+      "delta": {
+        "sbp": {
+          "a": 132.13,
+          "b": 134.4
+        },
+        "dbp": {
+          "a": 81.49,
+          "b": 83.08
+        }
+      }
+    },
+    {
+      "from": "Metoprolol Succinate",
+      "to": "Carvedilol",
+      "delta": {
+        "sbp": {
+          "a": 127.63,
+          "b": 131.28
+        },
+        "dbp": {
+          "a": 78.34,
+          "b": 80.9
+        }
+      }
+    },
+    {
+      "from": "Metoprolol Succinate",
+      "to": "Bisoprolol",
+      "delta": {
+        "sbp": {
+          "a": 129.75,
+          "b": 132.03
+        },
+        "dbp": {
+          "a": 79.83,
+          "b": 81.42
+        }
+      }
+    },
+    {
+      "from": "Bisoprolol",
+      "to": "Carvedilol",
+      "delta": {
+        "sbp": {
+          "a": 127.88,
+          "b": 131.53
+        },
+        "dbp": {
+          "a": 78.51,
+          "b": 81.07
+        }
+      }
+    },
+    {
+      "from": "Bisoprolol",
+      "to": "Metoprolol Succinate",
+      "delta": {
+        "sbp": {
+          "a": 130.25,
+          "b": 132.36
+        },
+        "dbp": {
+          "a": 80.18,
+          "b": 81.65
+        }
+      }
+    },
+    {
+      "from": "Spironolactone",
+      "to": "Eplerenone",
+      "delta": {
+        "K": {
+          "a": 4.13,
+          "b": 4.19
+        }
+      }
+    },
+    {
+      "from": "Spironolactone",
+      "to": "Finerenone (Kerendia)",
+      "delta": {
+        "K": {
+          "a": 4.09,
+          "b": 4.14
+        }
+      }
+    },
+    {
+      "from": "Eplerenone",
+      "to": "Spironolactone",
+      "delta": {
+        "K": {
+          "a": 4.51,
+          "b": 4.58
+        }
+      }
+    },
+    {
+      "from": "Eplerenone",
+      "to": "Finerenone (Kerendia)",
+      "delta": {
+        "K": {
+          "a": 4.26,
+          "b": 4.32
+        }
+      }
+    },
+    {
+      "from": "Finerenone (Kerendia)",
+      "to": "Spironolactone",
+      "delta": {
+        "K": {
+          "a": 4.56,
+          "b": 4.61
+        }
+      }
+    },
+    {
+      "from": "Finerenone (Kerendia)",
+      "to": "Eplerenone",
+      "delta": {
+        "K": {
+          "a": 4.35,
+          "b": 4.4
+        }
+      }
+    }
+  ],
+  "roundTrip": [
+    {
+      "drug": "Sacubitril/Valsartan (Entresto)",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 135.2
+        },
+        "dbp": {
+          "a": 80,
+          "b": 82.6
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        },
+        "EF": {
+          "a": 35,
+          "b": 36.00654925249739
+        }
+      }
+    },
+    {
+      "drug": "Lisinopril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.57
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.79
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.662442004996365
+        }
+      }
+    },
+    {
+      "drug": "Enalapril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.57
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.79
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.662442004996365
+        }
+      }
+    },
+    {
+      "drug": "Ramipril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.66
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.83
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.662442004996365
+        }
+      }
+    },
+    {
+      "drug": "Captopril",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.66
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.83
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.34
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.71929335673787
+        }
+      }
+    },
+    {
+      "drug": "Valsartan",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.46
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.74
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.79441763639199
+        }
+      }
+    },
+    {
+      "drug": "Candesartan",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.04
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.51
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.73265383968382
+        }
+      }
+    },
+    {
+      "drug": "Losartan",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.25
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.63
+        },
+        "K": {
+          "a": 4.3,
+          "b": 4.33
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.662442004996365
+        }
+      }
+    },
+    {
+      "drug": "Carvedilol",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 133.66
+        },
+        "dbp": {
+          "a": 80,
+          "b": 82.56
+        },
+        "EF": {
+          "a": 35,
+          "b": 36.00638077837133
+        }
+      }
+    },
+    {
+      "drug": "Metoprolol Succinate",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 132.11
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.48
+        },
+        "pulse": {
+          "a": 85,
+          "b": 85.01
+        },
+        "EF": {
+          "a": 35,
+          "b": 36.00421442418056
+        }
+      }
+    },
+    {
+      "drug": "Bisoprolol",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 132.28
+        },
+        "dbp": {
+          "a": 80,
+          "b": 81.59
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.971218849378886
+        }
+      }
+    },
+    {
+      "drug": "Spironolactone",
+      "delta": {
+        "K": {
+          "a": 4.3,
+          "b": 4.4
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.77071385414033
+        }
+      }
+    },
+    {
+      "drug": "Eplerenone",
+      "delta": {
+        "K": {
+          "a": 4.3,
+          "b": 4.37
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.662442004996365
+        }
+      }
+    },
+    {
+      "drug": "Finerenone (Kerendia)",
+      "delta": {
+        "K": {
+          "a": 4.3,
+          "b": 4.35
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.60006194830809
+        }
+      }
+    },
+    {
+      "drug": "Dapagliflozin",
+      "delta": {
+        "EF": {
+          "a": 35,
+          "b": 35.662442004996365
+        }
+      }
+    },
+    {
+      "drug": "Empagliflozin",
+      "delta": {
+        "EF": {
+          "a": 35,
+          "b": 35.662442004996365
+        }
+      }
+    },
+    {
+      "drug": "Semaglutide (Wegovy)",
+      "delta": {
+        "EF": {
+          "a": 35,
+          "b": 35.103972978005245
+        },
+        "weight": {
+          "a": 120,
+          "b": 119.91413250000001
+        },
+        "dry": {
+          "a": 90,
+          "b": 89.95706625
+        }
+      }
+    },
+    {
+      "drug": "Tirzepatide (Zepbound)",
+      "delta": {
+        "EF": {
+          "a": 35,
+          "b": 35.15360317435179
+        },
+        "weight": {
+          "a": 120,
+          "b": 119.89200000000001
+        },
+        "dry": {
+          "a": 90,
+          "b": 89.946
+        }
+      }
+    },
+    {
+      "drug": "Furosemide",
+      "delta": {
+        "K": {
+          "a": 4.3,
+          "b": 4.31
+        }
+      }
+    },
+    {
+      "drug": "Torsemide",
+      "delta": {
+        "dbp": {
+          "a": 80,
+          "b": 80.01
+        }
+      }
+    },
+    {
+      "drug": "Bumetanide",
+      "delta": {
+        "K": {
+          "a": 4.3,
+          "b": 4.31
+        }
+      }
+    },
+    {
+      "drug": "Hydralazine/Isosorbide Dinitrate",
+      "delta": {
+        "EF": {
+          "a": 35,
+          "b": 35.857645059892214
+        }
+      }
+    },
+    {
+      "drug": "Ivabradine",
+      "delta": {
+        "EF": {
+          "a": 35,
+          "b": 35.662442004996365
+        }
+      }
+    },
+    {
+      "drug": "Vericiguat",
+      "delta": {
+        "sbp": {
+          "a": 130,
+          "b": 130.01
+        },
+        "EF": {
+          "a": 35,
+          "b": 35.248220590366614
+        }
+      }
+    },
+    {
+      "drug": "Chlorthalidone",
+      "delta": {
+        "dbp": {
+          "a": 80,
+          "b": 80.01
+        }
+      }
+    }
+  ],
+  "invalidRanges": [
+    {
+      "drug": "Sacubitril/Valsartan (Entresto)",
+      "EF": -4,
+      "KCCQ": -6
+    },
+    {
+      "drug": "Lisinopril",
+      "EF": -1,
+      "KCCQ": -2.125
+    },
+    {
+      "drug": "Enalapril",
+      "EF": -1,
+      "KCCQ": -2.25
+    },
+    {
+      "drug": "Ramipril",
+      "EF": -1,
+      "KCCQ": -2.25
+    },
+    {
+      "drug": "Captopril",
+      "EF": -1.25,
+      "KCCQ": -2.25
+    },
+    {
+      "drug": "Valsartan",
+      "EF": -1.625,
+      "KCCQ": -2.75
+    },
+    {
+      "drug": "Candesartan",
+      "EF": -1.3125,
+      "KCCQ": -2.375
+    },
+    {
+      "drug": "Losartan",
+      "EF": -1,
+      "KCCQ": -2.3333333333333335
+    },
+    {
+      "drug": "Carvedilol",
+      "EF": -4.0625,
+      "KCCQ": -1.5
+    },
+    {
+      "drug": "Metoprolol Succinate",
+      "EF": -4.25,
+      "KCCQ": -2.1875
+    },
+    {
+      "drug": "Bisoprolol",
+      "EF": -5,
+      "KCCQ": -2.75
+    },
+    {
+      "drug": "Spironolactone",
+      "EF": -1.5,
+      "KCCQ": -1
+    },
+    {
+      "drug": "Eplerenone",
+      "EF": -1,
+      "KCCQ": -1
+    },
+    {
+      "drug": "Finerenone (Kerendia)",
+      "EF": -0.75,
+      "KCCQ": -2.75
+    },
+    {
+      "drug": "Dapagliflozin",
+      "EF": -1,
+      "KCCQ": -1.5
+    },
+    {
+      "drug": "Empagliflozin",
+      "EF": -1,
+      "KCCQ": -1
+    },
+    {
+      "drug": "Semaglutide (Wegovy)",
+      "EF": 0.75,
+      "KCCQ": -0.95
+    },
+    {
+      "drug": "Tirzepatide (Zepbound)",
+      "EF": 0.625,
+      "KCCQ": -0.7250000000000001
+    },
+    {
+      "drug": "Furosemide",
+      "EF": 1,
+      "KCCQ": -4
+    },
+    {
+      "drug": "Furoscix (SC Furosemide)",
+      "EF": 1,
+      "KCCQ": -8.4
+    },
+    {
+      "drug": "Torsemide",
+      "EF": 1,
+      "KCCQ": -4.5
+    },
+    {
+      "drug": "Bumetanide",
+      "EF": 1,
+      "KCCQ": -4
+    },
+    {
+      "drug": "Hydralazine/Isosorbide Dinitrate",
+      "EF": -2,
+      "KCCQ": -3
+    },
+    {
+      "drug": "Ivabradine",
+      "EF": -1,
+      "KCCQ": -1
+    },
+    {
+      "drug": "Ferric Carboxymaltose",
+      "EF": 1,
+      "KCCQ": -7
+    },
+    {
+      "drug": "Digoxin",
+      "EF": 1,
+      "KCCQ": -1
+    },
+    {
+      "drug": "Metolazone",
+      "EF": 1,
+      "KCCQ": -2
+    },
+    {
+      "drug": "Chlorthalidone",
+      "EF": 1,
+      "KCCQ": -1.5
+    },
+    {
+      "drug": "Hydrochlorothiazide",
+      "EF": 1,
+      "KCCQ": -1.25
+    }
+  ],
+  "other": [
+    {
+      "kind": "projected regimen identity",
+      "expected": "Valsartan",
+      "actual": [
+        "Lisinopril"
+      ]
+    }
+  ]
+}

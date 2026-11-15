@@ -10,6 +10,7 @@ import { classifyPhenotype } from './domains';
 import { SCORE_ADJUSTMENTS } from './scoreModel';
 import { formatDose, isCongestedAboveDryWeight } from './regimenUtils';
 import { CONGESTION_EXCESS_KG_ABOVE } from './thresholds';
+import { budgetKnown } from './decisionReadiness';
 
 /**
  * Hard display floors on the PROJECTED state: a regimen that projects past any of these is never
@@ -29,11 +30,19 @@ export const DISPLAY_FLOORS = {
  * The potassium floor stays ABSOLUTE: at a baseline of 6.0-6.4 only an option that brings projected potassium to 6.0 or lower is shown.
  */
 export function brokenDisplayFloors(r: ScoredRegimen, baseline: Patient): string[] {
-    const p = r.projected_patient, out: string[] = [];
+    const p = r.risk_screen ? { ...r.projected_patient,
+        sbp: Math.min(r.projected_patient.sbp, r.risk_screen.sbp),
+        pulse: Math.min(r.projected_patient.pulse, r.risk_screen.pulse),
+        potassium: Math.max(r.projected_patient.potassium, r.risk_screen.potassium_high),
+    } : r.projected_patient, out: string[] = [];
     const known = (v: number | undefined) => v !== undefined && !Number.isNaN(v) && v > 0;
     if (p.sbp < DISPLAY_FLOORS.minProjectedSbp && p.sbp < baseline.sbp) out.push('severe hypotension (projected systolic BP below 85)');
-    if (p.potassium > DISPLAY_FLOORS.maxProjectedPotassium) out.push('severe hyperkalemia (projected potassium above 6.0)');
-    if (known(baseline.potassium) && p.potassium < DISPLAY_FLOORS.minProjectedPotassium && p.potassium < baseline.potassium) out.push('marked hypokalemia (projected potassium below 3.0)');
+    const changes = r.modification_set?.modifications.filter(m => m.action !== 'keep') ?? [];
+    const removesPotassiumRaiser = changes.some(m => ['remove','titrate_down'].includes(m.action)
+        && m.source && ['ACEi','ARB','ARNI','MRA','nsMRA'].includes(m.source.med.drug_class));
+    const correctiveOnly = removesPotassiumRaiser && changes.every(m => ['remove','titrate_down'].includes(m.action));
+    if (p.potassium > DISPLAY_FLOORS.maxProjectedPotassium && !correctiveOnly) out.push('recorded severe hyperkalemia (potassium above 6.0; correction not established)');
+    if (known(baseline.potassium) && (r.risk_screen?.potassium_low ?? p.potassium) < DISPLAY_FLOORS.minProjectedPotassium && (r.risk_screen?.potassium_low ?? p.potassium) < baseline.potassium) out.push('marked hypokalemia (projected potassium below 3.0)');
     if (known(baseline.pulse) && p.pulse < DISPLAY_FLOORS.minProjectedPulse && p.pulse < baseline.pulse) out.push('severe bradycardia (projected heart rate below 45)');
     return out;
 }
@@ -79,10 +88,10 @@ export function resolveRankingMode(patient: { ranking_mode?: string }): RankingM
  * The mild projected SBP < 95 tier does not demote (it still costs score points, which feeds the final tie-break).
  */
 export const SEVERE_PROJECTED_SAFETY: ReadonlyArray<{ code: string; harmful: (r: ScoredRegimen, baseline: Patient) => boolean }> = [
-    { code: SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.code, harmful: (r, b) => r.projected_patient.sbp < b.sbp },
-    { code: SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.code, harmful: (r, b) => r.projected_patient.sbp < b.sbp },
-    { code: SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.code, harmful: (r, b) => r.projected_patient.pulse < b.pulse },
-    { code: SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.code, harmful: (r, b) => r.projected_patient.potassium > b.potassium },
+    { code: SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.code, harmful: (r, b) => (r.risk_screen?.sbp ?? r.projected_patient.sbp) < b.sbp },
+    { code: SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_90.code, harmful: (r, b) => (r.risk_screen?.sbp ?? r.projected_patient.sbp) < b.sbp },
+    { code: SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.code, harmful: (r, b) => (r.risk_screen?.pulse ?? r.projected_patient.pulse) < b.pulse },
+    { code: SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.code, harmful: (r, b) => (r.risk_screen?.potassium_high ?? r.projected_patient.potassium) > b.potassium },
 ];
 
 /**
@@ -121,25 +130,36 @@ export function rankingComparator(mode: RankingMode, patient: Patient): (a: Scor
 export function chooseDisplayPicks(
     results: ScoredRegimen[], patient: Patient, cmp: (a: ScoredRegimen, b: ScoredRegimen) => number,
 ): { picks: ScoredRegimen[]; allUnsafe: boolean; unsafeReasons: string[] } {
+    // Safety precedes affordability in EVERY path. An unsafe cheap candidate must not suppress
+    // the discussion-only fallback for a safe candidate above budget.
+    const safeResults = results.filter(r => brokenDisplayFloors(r, patient).length === 0);
+    const allUnsafe = results.length > 0 && safeResults.length === 0;
+    const unsafeReasons = allUnsafe ? [...new Set(results.flatMap(r => brokenDisplayFloors(r, patient)))] : [];
+    if (allUnsafe) return { picks: [], allUnsafe, unsafeReasons };
+    results = safeResults;
     const affordableRegimens = results.filter(r => r.cost <= patient.max_affordable_cost);
     let outputRegimens: ScoredRegimen[] = [];
     let extraPool: ScoredRegimen[] = [];
+    let displayOrder = cmp;
 
-    if (affordableRegimens.length > 0) {
+    if (!budgetKnown(patient) || results.some(r => !Number.isFinite(r.cost))) {
+        // An absent budget/price is not zero affordability and not proof of an over-budget regimen.
+        // Keep safety filtering and clinical ordering; explicitly withhold affordability conclusions.
+        outputRegimens = [...results].sort(cmp).map(r => ({ ...r, warnings: [
+            'AFFORDABILITY UNASSESSED: budget or price data are unavailable. Confirm actual coverage and out-of-pocket cost before implementing this option.', ...r.warnings,
+        ] }));
+    } else if (affordableRegimens.length > 0) {
         outputRegimens = affordableRegimens.sort(cmp);
     } else if (results.length > 0) {
-        // Nothing fits the budget. Surface the lowest-cost candidates (closest to affordable), but
-        // order THEM by clinical value so the best-benefit near-affordable option leads — among
-        // equal benefit the cheaper wins (byScoreThenCost ends in cost). Pure cost-ascending
-        // would lead with a thin monotherapy / symptomatic-only regimen over a higher-benefit
-        // sibling at the same price.
+        // Nothing fits the budget. Surface the lowest-cost candidates (closest to affordable).
+        // Cost-first preserves cost order; other preferences apply their clinical comparator
+        // within this near-affordable pool. Every option remains discussion-only.
         // An option the tool scores 0 (it projects harm) is not offered merely because it is cheap, unless nothing else exists.
-        // The display-safety floors are applied BEFORE taking the cheapest five: otherwise five cheap unsafe options hid a safe one, and whether anything was
-        // shown could depend on the patient's care-priority weighting.
-        const safePool = results.filter(r => brokenDisplayFloors(r, patient).length === 0);
-        const fallbackPool = safePool.length > 0 ? safePool : results;
-        const worthShowing = fallbackPool.some(r => r.overall_score > 0) ? fallbackPool.filter(r => r.overall_score > 0) : fallbackPool;
-        const cheapest = [...worthShowing].sort((a, b) => a.cost - b.cost || cmp(a, b)).slice(0, 5).sort(cmp);
+        const worthShowing = results.some(r => r.overall_score > 0) ? results.filter(r => r.overall_score > 0) : results;
+        const fallbackOrder = patient.care_priority === 'cost_first'
+            ? (a: ScoredRegimen, b: ScoredRegimen) => a.cost - b.cost || cmp(a, b) : cmp;
+        displayOrder = fallbackOrder;
+        const cheapest = [...worthShowing].sort((a, b) => a.cost - b.cost || cmp(a, b)).slice(0, 5).sort(fallbackOrder);
         const budgetMessage = patient.max_affordable_cost <= 0
             ? 'No zero-copay regimen found. Add covered medications or raise budget.'
             : 'Increase budget to find valid options.';
@@ -154,15 +174,6 @@ export function chooseDisplayPicks(
         extraPool = results.filter(r => !cheapestSigs.has(r)).sort((a, b) => a.cost - b.cost || cmp(a, b)).map(flagOverBudget);
     }
 
-    // Display-safety floors mirror the graduated score penalties: penalties begin at SBP < 95,
-    // K+ > 5.5, HR < 50; the more extreme floors below are hard display gates — a projected
-    // state past them is never shown, regardless of how well the regimen scores elsewhere.
-    const displaySafe = (r: ScoredRegimen) => brokenDisplayFloors(r, patient).length === 0;
-    const displaySafeRegimens = outputRegimens.filter(displaySafe);
-    const allUnsafe = outputRegimens.length > 0 && displaySafeRegimens.length === 0;
-    const unsafeReasons = allUnsafe ? [...new Set(outputRegimens.flatMap(r => brokenDisplayFloors(r, patient)))] : [];
-    outputRegimens = displaySafeRegimens;
-
     const topPick = outputRegimens[0];
     if (!topPick) return { picks: [], allUnsafe, unsafeReasons };
 
@@ -176,6 +187,16 @@ export function chooseDisplayPicks(
         if (distinctPicks.length >= 3) break;
 
         const isDistinct = distinctPicks.every(existing => {
+            // Equivalent same-family drug choices must not crowd out a different treatment step.
+            const family = (m: RegimenMed) => m.med.facts?.pick_distinctness_key === 'ARNI' ? 'ARNI' : m.med.drug_class === 'nsMRA' ? 'nsMRA' : getMedicationClassGroup(m.med.drug_class);
+            const strategy = (x: ScoredRegimen) => [
+                [...new Set(x.regimen.map(family))].sort().join(','),
+                [...new Set((x.modification_set?.modifications ?? []).filter(m => m.action !== 'keep')
+                    .map(m => `${m.action}:${family((m.target ?? m.source)!)}`))].sort().join(','),
+            ].join('|');
+            if (strategy(r) === strategy(existing)) return false;
+            const changedSteps = (x: ScoredRegimen) => (x.modification_set?.modifications ?? []).filter(m => m.action !== 'keep').map(m => `${m.action}:${family((m.target ?? m.source)!)}`).sort().join(',');
+            if (changedSteps(r) !== changedSteps(existing)) return true;
             const costDiff = Math.abs(r.cost - existing.cost);
             const rNames = new Set(r.regimen.map(x => x.med.name));
             const eNames = new Set(existing.regimen.map(x => x.med.name));
@@ -218,7 +239,10 @@ export function chooseDisplayPicks(
         }
     }
 
-    return { picks: ensureCongestionCoverage(distinctPicks, [...outputRegimens, ...extraPool.filter(displaySafe)], patient), allUnsafe, unsafeReasons };
+    const covered = ensureCongestionCoverage(distinctPicks, [...outputRegimens, ...extraPool], patient);
+    // Coverage adds an explicitly explained alternative without displacing the selected lead.
+    // The remaining options must still be in the configured order after that insertion.
+    return { picks: [covered[0], ...covered.slice(1).sort(displayOrder)], allUnsafe, unsafeReasons };
 }
 
 /** True when the regimen raises a standing loop diuretic's dose or starts one (a short-course add-on beside the oral loop is neither). */
@@ -276,8 +300,18 @@ export function selectWithRanking(
     const applies = foundationalModeApplies(patient);
     const { picks, allUnsafe, unsafeReasons } = chooseDisplayPicks(results, patient, rankingComparator(mode, patient));
     if (allUnsafe) {
+        // Explain a constraint conflict without relaxing either safety rule. A shared removal of a
+        // potassium-raising drug can push every option below the low-potassium display floor (review item 5).
+        const commonKRemovals = unsafeReasons.some(r => r.includes('hypokalemia'))
+            ? (results[0]?.modification_set?.modifications ?? []).filter(m => m.action === 'remove' && m.source
+                && ['ACEi','ARB','ARNI','MRA','nsMRA'].includes(m.source.med.drug_class)
+                && results.every(r => r.modification_set?.modifications.some(other => other.action === 'remove' && other.source?.med.name === m.source!.med.name)))
+                .map(m => m.source!.med.name) : [];
+        const conflict = commonKRemovals.length
+            ? `All candidates include removal of ${[...new Set(commonKRemovals)].join(', ')}, which contributes to the modeled potassium fall. Review the removal requirement and correct/recheck potassium before choosing a regimen. ` : '';
         clinicalAlerts.push(
             `NO DISPLAY-SAFE REGIMEN: every candidate regimen projected ${unsafeReasons.join(' or ')}. ` +
+            conflict +
             'Stabilize and reassess before oral intensification.'
         );
     }

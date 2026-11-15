@@ -114,10 +114,10 @@ export const WEIGHT_PROFILES: Record<WeightProfileName, Record<ScoreDomainKey, n
 
 /** Clinician-facing name and one-line description of each weight profile. */
 export const WEIGHT_PROFILE_META: Record<WeightProfileName, { label: string; description: string }> = {
-    default: { label: 'Balanced', description: 'Standard weighting of outcomes, guideline therapy, cost and regimen burden.' },
-    outcomes_first: { label: 'Maximize outcomes', description: 'Cost and regimen burden count for less; disease-modifying therapy counts for more.' },
+    default: { label: 'Balanced', description: 'Balances treatment evidence, therapy completeness, cost and dosing burden.' },
+    outcomes_first: { label: 'Prioritize treatment evidence', description: 'Cost and regimen burden count for less; disease-modifying therapy counts for more.' },
     cost_first: { label: 'Keep cost low', description: 'Out-of-pocket cost counts double. The budget limit still applies separately.' },
-    simplicity_first: { label: 'Keep the regimen simple', description: 'Pill burden and dosing complexity count for more.' },
+    simplicity_first: { label: 'Keep the regimen simple', description: 'Dosing burden and dosing complexity count for more.' },
 };
 
 /** Profiles in display order (first is the default). */
@@ -181,27 +181,27 @@ export const SCORE_ADJUSTMENTS = {
     },
     PROJECTED_SBP_LT_85: {
         code: 'PROJECTED_SBP_LT_85',
-        label: 'Projected SBP < 85: score disqualified (set to 0)',
+        label: 'Recorded SBP < 85: score disqualified (set to 0)',
         threshold: 85,
     },
     PROJECTED_SBP_LT_90: {
         code: 'PROJECTED_SBP_LT_90',
-        label: 'Projected SBP < 90 penalty',
+        label: 'Recorded SBP < 90 penalty',
         threshold: 90, points: -20,
     },
     PROJECTED_SBP_LT_95: {
         code: 'PROJECTED_SBP_LT_95',
-        label: 'Projected SBP < 95 penalty',
+        label: 'Recorded SBP < 95 penalty',
         threshold: 95, points: -6,
     },
     PROJECTED_HR_LT_50: {
         code: 'PROJECTED_HR_LT_50',
-        label: 'Projected heart rate < 50 penalty',
+        label: 'Recorded heart rate < 50 penalty',
         threshold: 50, points: -40,
     },
     PROJECTED_K_GT_5_5: {
         code: 'PROJECTED_K_GT_5_5',
-        label: 'Projected potassium > 5.5 penalty',
+        label: 'Recorded potassium > 5.5 penalty',
         threshold: 5.5, points: -40,
     },
     DANGEROUS_WARNINGS: {
@@ -268,6 +268,8 @@ export interface ScoreBreakdownDomainLine {
     contribution: number;
     /** Optional note on how the score was derived (e.g. the completeness domain with no achievable slots). */
     detail?: string;
+    /** Missing input: excluded from weighting and displayed as not assessed, never as a measured zero. */
+    assessed?: boolean;
 }
 
 export interface ScoreBreakdownAdjustment {

@@ -1,0 +1,116 @@
+{
+  "base": "http://localhost:5177/",
+  "ranAt": "2026-11-15T18:59:40.666Z",
+  "widths": {
+    "390": [
+      {
+        "name": "Start screen: six synthetic example cards, New patient, no overflow",
+        "ok": true
+      },
+      {
+        "name": "Example card opens results with options shown, focus on results, not marked out of date",
+        "ok": true
+      },
+      {
+        "name": "\"N other options\" link text reads correctly",
+        "ok": true
+      },
+      {
+        "name": "Edit inputs returns to the Review step with the entered values",
+        "ok": true
+      },
+      {
+        "name": "stale handling: an input changed after a run hides the old options; Re-run restores them",
+        "ok": true
+      },
+      {
+        "name": "New patient from results goes to Start; New patient there opens a blank step 1",
+        "ok": true
+      },
+      {
+        "name": "Blank Review lists missing core items, offers the run button, and every step is clickable",
+        "ok": true
+      },
+      {
+        "name": "An invalid value marks its step, is named on Review with a working link, and blocks the run",
+        "ok": true
+      },
+      {
+        "name": "Walk Next through all seven steps entering a minimal case; focus lands on each step heading",
+        "ok": true
+      },
+      {
+        "name": "Run from Review: results appear with options or a focused review, focus on results, bar shows entries",
+        "ok": true
+      },
+      {
+        "name": "Full form and back loses nothing and keeps the results",
+        "ok": true
+      },
+      {
+        "name": "?view=form loads the original layout and its sample dropdown still works",
+        "ok": true
+      },
+      {
+        "name": "No page errors or console errors",
+        "ok": true
+      }
+    ],
+    "1440": [
+      {
+        "name": "Start screen: six synthetic example cards, New patient, no overflow",
+        "ok": true
+      },
+      {
+        "name": "Example card opens results with options shown, focus on results, not marked out of date",
+        "ok": true
+      },
+      {
+        "name": "\"N other options\" link text reads correctly",
+        "ok": true
+      },
+      {
+        "name": "Edit inputs returns to the Review step with the entered values",
+        "ok": true
+      },
+      {
+        "name": "stale handling: an input changed after a run hides the old options; Re-run restores them",
+        "ok": true
+      },
+      {
+        "name": "New patient from results goes to Start; New patient there opens a blank step 1",
+        "ok": true
+      },
+      {
+        "name": "Blank Review lists missing core items, offers the run button, and every step is clickable",
+        "ok": true
+      },
+      {
+        "name": "An invalid value marks its step, is named on Review with a working link, and blocks the run",
+        "ok": true
+      },
+      {
+        "name": "Walk Next through all seven steps entering a minimal case; focus lands on each step heading",
+        "ok": true
+      },
+      {
+        "name": "Run from Review: results appear with options or a focused review, focus on results, bar shows entries",
+        "ok": true
+      },
+      {
+        "name": "Full form and back loses nothing and keeps the results",
+        "ok": true
+      },
+      {
+        "name": "?view=form loads the original layout and its sample dropdown still works",
+        "ok": true
+      },
+      {
+        "name": "No page errors or console errors",
+        "ok": true
+      }
+    ]
+  },
+  "passed": 26,
+  "failed": 0
+}

@@ -34,7 +34,9 @@ export function analyzeCurrentRegimen(
     patient: Patient,
     formulary: Medication[],
     medTiers: RegimenMed[],
-    allBBExcluded?: boolean
+    allBBExcluded = false,
+    allRAASExcluded = false,
+    unresolvedFoundationalClass = false
 ): RegimenAnalysis {
     const currentRegimen = patient.current_regimen || [];
 
@@ -150,7 +152,7 @@ export function analyzeCurrentRegimen(
         if (patient.is_pregnant === true && r.med.drug_class === 'Beta Blocker' && !drugFacts(r.med).beta1_selective && !intolerableCurrentMeds.has(r.med.name)
             && formulary.some(m => m.drug_class === 'Beta Blocker' && drugFacts(m).beta1_selective)) {
             contraindicatedCurrentMeds.add(r.med.name);
-            intolerableCurrentMeds.set(r.med.name, 'Pregnancy: switch to a beta-1-selective beta-blocker (2026 ESC heart failure guideline, Class I C); the new dose is set at the same fraction of the target dose (engine policy: no sourced equivalence between beta-blockers) and heart rate and blood pressure should be reassessed after the switch');
+            intolerableCurrentMeds.set(r.med.name, 'Pregnancy: switch to a beta-1-selective beta-blocker (2026 ESC heart failure guideline, Class I C); the suggested starting tier is not a dose equivalence; individualize the transition and reassess heart rate, blood pressure and tolerance');
             if (drugFacts(r.med).target_reference_dose !== undefined) fractionOfTargetSwapNames.add(r.med.name);
         }
         // A current med matching a documented ALLERGY by name must not be kept or up-titrated.
@@ -258,7 +260,18 @@ export function analyzeCurrentRegimen(
             }
         }
 
-        const lowerDoses = withNeighbour(allTiers.filter(t => tierIdx(t) < currentIdx).map(t => carryFrequency(t, current, dailyCapFor(current.med, patient))), adjacent.down).filter(t => changesDaily(t, -1)).sort((a, b) => tierIdx(a) - tierIdx(b));
+        // One visit offers the gentlest eligible reduction in TOTAL daily dose, including a frequency-only
+        // reduction. Sampling strengths alone skipped 80 mg tid -> 80 mg bid and offered 40 mg bid (a 2/3 cut).
+        // Required renal/interaction caps still constrain the destination; the exact heart-rate step below is retained.
+        const gentlerDown = smallestStepBelow(current, patient);
+        // A capped effect curve does not establish that a smaller loop dose is equally effective.
+        // In ongoing congestion, do not offer an elective reduction solely within that modeled plateau:
+        // it gained adherence points and immediately reversed a resistance switch on the next run.
+        // Mandatory safety reductions are preserved; decongested patients can still step down.
+        const plateauInCongestion = loopReductionHeldAtModeledPlateau(current, gentlerDown, patient);
+        // Unquantified loss of benefit cannot justify reducing established therapy for a cheaper or simpler score.
+        const reductionIndicated = reduceReason !== undefined || isBBForcedDown || (isDiureticClass(current.med.drug_class) && noCongestion);
+        const lowerDoses = gentlerDown && reductionIndicated && !(plateauInCongestion && reduceReason === undefined) ? [gentlerDown] : [];
         // A one-time label course (facts.single_course_dose: ferric carboxymaltose) is not a titratable dose: no up/down candidates.
         // A potassium binder is not reduced while the potassium that calls for it persists (measured potassium at or above BINDER_HOLD_REDUCTION_K): lowering it
         // scored slightly better on the sodium note while raising projected potassium, so the tool lowered a binder it had added on the previous run.
@@ -343,7 +356,7 @@ export function analyzeCurrentRegimen(
         }
         // Forced pregnancy beta-blocker switch: the swap-in is the tier nearest (rounding down, never below the start tier) the SAME FRACTION OF THE TARGET DOSE
         // (facts.target_reference_dose, 2026 ESC Table 11 per-dose targets). ENGINE POLICY: no source gives a beta-blocker dose equivalence.
-        if (fractionOfTargetSwapNames.has(current.med.name)) {
+        if (current.med.drug_class === 'Beta Blocker') {
             const seen = new Set<string>();
             candidates = candidates.flatMap(t => {
                 if (seen.has(t.med.name)) return [];
@@ -384,7 +397,7 @@ export function analyzeCurrentRegimen(
             candidates.forEach(t => { if (!firstTierByMed.has(t.med.name)) firstTierByMed.set(t.med.name, t); });
             const firstTiers = [...firstTierByMed.values()];
             const prioritizedCandidates = [...firstTiers, ...candidates.filter(t => !firstTiers.includes(t))];
-            swappable.push({ from: current, candidates: prioritizedCandidates });
+            if (current.exposure?.status === 'active' && current.exposure?.adherence === 'consistent') swappable.push({ from: current, candidates: prioritizedCandidates });
         }
     });
 
@@ -434,9 +447,9 @@ export function analyzeCurrentRegimen(
     //  - Class 2b (LOE C-LD): any race, when RAAS inhibitors cannot be taken (every ARNI/ACEi/ARB filtered from the formulary by
     //    contraindication/intolerance/allergy: intolerance, hypotension or renal insufficiency). Merely "not currently on RAAS" is NOT enough:
     //    a treatment-naive patient should get RAAS first, not have H/ISDN offered while ARNI is proposed as the missing pillar.
-    const allRAASExcluded = !formulary.some(m => RAAS_CLASSES.has(m.drug_class));
+    // Class-wide inability comes from actual exclusions, not missing data or deselected drugs.
     const raasOrUnable = hasRAASInCurrent || allRAASExcluded;
-    const bbOrUnable = currentClasses.has('Beta Blocker') || allBBExcluded === true;
+    const bbOrUnable = currentClasses.has('Beta Blocker') || (patient.pulse > 0 && allBBExcluded === true);
     const isHFrEFByEf = patient.lvef <= 40;
     const hisdnClass1 = isBlack && isNyhaIIIorIV && raasOrUnable && bbOrUnable;
     const hisdnClass2b = !hasRAASInCurrent && allRAASExcluded;
@@ -492,9 +505,11 @@ export function analyzeCurrentRegimen(
     // "Titratable" means below the patient's target dose with a higher tier on offer (a drug at target is not unfinished GDMT).
     const belowTargetAndTitratable = (t: { current: RegimenMed }) => !isTargetDoseForPatient(t.current, patient);
     const pillarTitratable = titratableUp.some(t => GDMT_GROUPS.has(getMedicationClassGroup(t.current.med.drug_class)) && belowTargetAndTitratable(t));
-    const bbOptimized = !addablePillars.has('Beta Blocker')
+    const bbOptimized = (currentClasses.has('Beta Blocker') || allBBExcluded || isAcutelyDecompensated) && !addablePillars.has('Beta Blocker')
         && !titratableUp.some(t => t.current.med.drug_class === 'Beta Blocker' && belowTargetAndTitratable(t));
-    const gdmtExhausted = addablePillars.size === 0 && !pillarTitratable;
+    const gdmtExhausted = patient.potassium > 0 && patient.egfr > 0 && patient.creatinine > 0 && patient.pulse > 0
+        && !(patient.sex === 'Female' && patient.is_pregnant === undefined)
+        && !unresolvedFoundationalClass && addablePillars.size === 0 && !pillarTitratable;
     const digoxinIndicated =
         (patient.rhythm === 'AFib' && bbOptimized) ||
         (patient.lvef <= 40 && patient.nyha_class !== 'I' && gdmtExhausted);
@@ -616,6 +631,29 @@ export function smallestStepAbove(current: RegimenMed, patient: Patient, current
     return options.sort((a, b) => comparableDailyDose(a) - comparableDailyDose(b) || dosesPerDay(a.selected_frequency) - dosesPerDay(b.selected_frequency))[0];
 }
 
+/** A flat model above its calibration ceiling does not prove dose equivalence during ongoing congestion. */
+export function loopReductionHeldAtModeledPlateau(current: RegimenMed, lower: RegimenMed | null, patient: Patient): boolean {
+    return current.med.drug_class === 'Loop Diuretic' && lower !== null
+        && (isCongestedAboveDryWeight(patient) || congestionFindingCount(patient.volume_status.exam_findings) > 0)
+;
+}
+
+/** Engine sequencing policy: nearest lower allowed daily dose, never a higher strength; ties prefer
+ * the current frequency, then fewer administrations. The same declared dose caps as increases apply.
+ */
+export function smallestStepBelow(current: RegimenMed, patient: Patient): RegimenMed | null {
+    // eligibleDoses already applies per-dose caps. Only an explicitly DAILY renal cap limits frequency.
+    const cap = drugFacts(current.med).renal_cap_is_daily ? dailyCapFor(current.med, patient) : undefined;
+    const currentDaily = comparableDailyDose(current);
+    const options = eligibleDoses(current.med, patient).flatMap(dose =>
+        frequenciesWithinMax(current.med, dose.frequency_options, dose.strength).map(selected_frequency => ({ med: current.med, dose, selected_frequency }))
+    ).filter(r => parseFloat(String(r.dose.strength)) <= parseFloat(String(current.dose.strength))
+        && comparableDailyDose(r) < currentDaily - 1e-9 && (cap === undefined || comparableDailyDose(r) <= cap));
+    return options.sort((a, b) => comparableDailyDose(b) - comparableDailyDose(a)
+        || Number(b.selected_frequency === current.selected_frequency) - Number(a.selected_frequency === current.selected_frequency)
+        || dosesPerDay(a.selected_frequency) - dosesPerDay(b.selected_frequency))[0] ?? null;
+}
+
 /**
  * Structural problems that make a regimen unprescribable whatever its score: the same drug listed twice, two agents of one class group (a short-course add-on
  * beside its oral loop is the one allowed pair), or a short-course add-on with no oral loop to sit beside. Every candidate is checked AFTER the forced edits,
@@ -641,26 +679,12 @@ export function structuralProblems(regimen: RegimenMed[]): string[] {
     return problems;
 }
 
-/**
- * Forced beta-blocker switch dose by FRACTION OF TARGET (both agents declare facts.target_reference_dose, the 2026 ESC Table 11 per-dose target): the highest
- * eligible tier of `to` at or below the same fraction of its target (the fraction is capped at 1), never below the drug's start tier. ENGINE POLICY: no
- * source gives a dose equivalence between beta-blockers. Null when either agent lacks a reference target.
- */
-export function fractionOfTargetTier(from: RegimenMed, to: Medication, patient: Patient, landAtStart = false): RegimenMed | null {
-    const fromRef = drugFacts(from.med).target_reference_dose, toRef = drugFacts(to).target_reference_dose;
-    const fromStrength = Number(from.dose.strength);
-    if (fromRef === undefined || toRef === undefined || Number.isNaN(fromStrength)) return null;
-    const want = Math.min(1, fromStrength / fromRef) * toRef;
-    const startStrength = to.start_dose_for ? Number(to.start_dose_for(patient)) : -Infinity;
-    const eligible = eligibleDoses(to, patient).filter(d => typeof d.strength === 'number').sort((a, b) => Number(a.strength) - Number(b.strength));
-    if (eligible.length === 0) return null;
-    const atOrAboveStart = eligible.filter(d => Number(d.strength) >= startStrength);
-    const pool = atOrAboveStart.length > 0 ? atOrAboveStart : eligible;
-    const below = pool.filter(d => Number(d.strength) <= want + 1e-9);
-    // `landAtStart`: the patient's state forces a beta-blocker dose REDUCTION (acute decompensation with hypoperfusion), so the switch lands on the new agent's
-    // starting tier; landing by fraction of target put it one step above what the same rule then reduced on the next run.
-    const dose = landAtStart ? pool[0] : below.length > 0 ? below[below.length - 1] : pool[0];
-    return { med: to, dose, selected_frequency: pickPreferredFrequency(to, dose.frequency_options, patient, dose.strength) };
+/** Conservative switch proposal: start tier, never a claimed cross-drug dose equivalence.
+ * An individualized transition/taper plan must be reviewed before implementation. */
+export function fractionOfTargetTier(_from: RegimenMed, to: Medication, patient: Patient, _landAtStart = false): RegimenMed | null {
+    const eligible = eligibleDoses(to, patient).filter(d => typeof d.strength === 'number').sort((a,b) => Number(a.strength)-Number(b.strength));
+    const dose = eligible.find(d => Number(d.strength) === Number(to.start_dose_for?.(patient))) ?? eligible[0];
+    return dose ? { med: to, dose, selected_frequency: pickPreferredFrequency(to, dose.frequency_options, patient, dose.strength) } : null;
 }
 
 /**
@@ -731,6 +755,7 @@ export function addSummary(adj: RegimenMed): string {
 }
 
 export function formatSwapSummary(from: RegimenMed, to: RegimenMed): string {
+    if (from.med.drug_class === 'Beta Blocker' && to.med.drug_class === 'Beta Blocker') return `Consider transition from ${from.med.name} ${formatDose(from)} to ${to.med.name} ${formatDose(to)}; starting tier only, not dose equivalence. Confirm individualized taper/transition and reassessment before implementation.`;
     if (from.med.drug_class === 'ACEi' && to.med.drug_class === 'ARNI') {
         return `STOP ${from.med.name}. WAIT 36 hours. THEN start ${to.med.name} ${formatDose(to)}`;
     }
@@ -742,7 +767,7 @@ export function formatSwapSummary(from: RegimenMed, to: RegimenMed): string {
         const fe = drugFacts(from.med).verified_furosemide_equivalent_per_mg, te = drugFacts(to.med).verified_furosemide_equivalent_per_mg;
         // Every non-add-on loop declares an equivalence (verify invariant), so an equivalent-dose summary is always available.
         if (fe !== undefined && te !== undefined) {
-            return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (equivalent total daily dose: ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name} is about ${dailyDose(from) * fe / te} ${to.dose.unit}/day ${to.med.name}; nearest tier)`;
+            return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (approximate total daily conversion: ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name} is about ${dailyDose(from) * fe / te} ${to.dose.unit}/day ${to.med.name}; nearest tier, reassess response)`;
         }
     }
     return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)}`;
@@ -779,7 +804,7 @@ export function generateCandidateModifications(
                 action: 'titrate_up',
                 source: current,
                 target: higher,
-                summary: `Titrate ${current.med.name} ${current.dose.strength}→${higher.dose.strength}${higher.dose.unit} ${higher.selected_frequency}`
+                summary: `Titrate ${current.med.name} ${formatDose(current)} → ${formatDose(higher)}`
             }];
             candidates.push({
                 modifications: mods,
@@ -795,7 +820,7 @@ export function generateCandidateModifications(
                 action: 'titrate_down',
                 source: current,
                 target: lower,
-                summary: `Reduce ${current.med.name} ${current.dose.strength}→${lower.dose.strength}${lower.dose.unit} ${lower.selected_frequency}`
+                summary: `Reduce ${current.med.name} ${formatDose(current)} → ${formatDose(lower)}`
             }];
             candidates.push({
                 modifications: mods,
@@ -931,7 +956,7 @@ export function generateCandidateModifications(
                     seenPair.add(key);
                     const mods: RegimenModification[] = [
                         { action: 'add', target: pillarMed, summary: `Add ${pillarMed.med.name} ${formatDose(pillarMed)}` },
-                        { action: 'titrate_up', source: current, target: bestHigher, summary: `Titrate ${current.med.name} ${current.dose.strength}→${bestHigher.dose.strength}${bestHigher.dose.unit}` }
+                        { action: 'titrate_up', source: current, target: bestHigher, summary: `Titrate ${current.med.name} ${formatDose(current)} → ${formatDose(bestHigher)}` }
                     ];
                     candidates.push({
                         modifications: mods,
@@ -1068,6 +1093,10 @@ export function generateCandidateModifications(
                 const alreadySwapped = c.modifications.some(m =>
                     m.action === 'swap' && m.source?.med.name === forced.source!.med.name
                 );
+                if (alreadyRemoved) {
+                    const removal = c.modifications.find(m => m.action === 'remove' && m.source?.med.name === forced.source!.med.name)!;
+                    removal.summary = forced.summary; // Preserve the specific mandatory reason, not an earlier generic removal label.
+                }
                 if (!alreadyRemoved && !alreadySwapped) {
                     // Coherence: a med that is being force-removed must not also carry a
                     // titrate/keep modification in the same candidate (would render as the
@@ -1119,7 +1148,7 @@ export function generateCandidateModifications(
                     action: 'titrate_down',
                     source: td.current,
                     target: lower,
-                    summary: `Reduce ${bbName} ${td.current.dose.strength}→${lower.dose.strength}${lower.dose.unit} ${lower.selected_frequency} (acute decompensation with hypoperfusion)`
+                    summary: `Reduce ${bbName} ${formatDose(td.current)} → ${formatDose(lower)} (acute decompensation with hypoperfusion)`
                 });
                 c.resulting_regimen = c.resulting_regimen.map(r => (r.med.name === bbName ? lower : r));
             });
@@ -1154,7 +1183,7 @@ export function generateCandidateModifications(
                     action: 'titrate_down',
                     source: td.current,
                     target: lower,
-                    summary: `Reduce ${medName} ${td.current.dose.strength}→${lower.dose.strength}${lower.dose.unit} ${lower.selected_frequency} (${reason})`
+                    summary: `Reduce ${medName} ${formatDose(td.current)} → ${formatDose(lower)} (${reason})`
                 });
                 c.resulting_regimen = c.resulting_regimen.map(r => (r.med.name === medName ? lower : r));
             });

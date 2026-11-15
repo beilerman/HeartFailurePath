@@ -369,10 +369,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'ACEi',
         // New starts begin at 6.25 mg tid (2022 Table 14). "Low dose" for the ARNI conversion rule: <= 75 mg/day
         // (judgment: the dose-equivalent of the enalapril 10 mg/day reference; see raasStart.ts).
-        facts: { ...RAAS_K_FACTS, low_dose_max_daily_mg: 75 },
+        facts: { ...RAAS_K_FACTS, low_dose_max_daily_mg: 75, renal_change_review_below: 30 },
         start_dose_for: () => 6.25,
         available_doses: [
-            { strength: 6.25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] }, // Starting dose
+            { strength: 6.25, unit: 'mg', formulation: 'half of a scored 12.5 mg tablet', frequency_options: ['tid'] }, // DailyMed captopril label; source in systemic review
             { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] }, // label start in diuretic-treated / hyponatremic patients
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] },
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], is_target_dose: true }, // ACC/AHA target
@@ -394,8 +394,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
         side_effects: () => ({ cough: 0.12, hypotension: 0.10, hyperkalemia: 0.06, angioedema: 0.01, taste_disturbance: 0.05 }),
         ...ci([CI_ANGIOEDEMA, ...raasPotassiumChecks('Captopril'), pregnancyCheck(BOXED_FETAL_TOXICITY), CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES]),
         renal_adjustment: (egfr) => {
-            if (egfr < 30) return { max_dose: 6.25, caution: true };
-            if (egfr < 45) return { max_dose: 25, caution: true };
+            // Label requires individualized reduction and slow titration, not a fixed eGFR maximum.
+            if (egfr < 45) return { caution: true };
             return {};
         },
     },
@@ -404,12 +404,12 @@ export const MEDICATION_FORMULARY: Medication[] = [
         drug_class: 'ARB',
         // New starts begin at 40 mg bid (Diovan HF label). "Low dose" for the ARNI conversion rule: <= 160 mg/day
         // (the Entresto label's valsartan reference).
-        facts: { ...RAAS_K_FACTS, low_dose_max_daily_mg: 160 },
+        facts: { ...RAAS_K_FACTS, low_dose_max_daily_mg: 160, renal_change_review_below: 30 },
         start_dose_for: () => 40,
         available_doses: [
-            { strength: 40, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'] }, // Starting dose
-            { strength: 80, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'] },
-            { strength: 160, unit: 'mg', formulation: 'capsule', frequency_options: ['bid'], is_target_dose: true }, // Val-HeFT/ACC target
+            { strength: 40, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] }, // DailyMed valsartan label
+            { strength: 80, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
+            { strength: 160, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true }, // Val-HeFT/ACC target
         ],
         chf_effects: (dose) => {
             // Val-HeFT: Mortality/morbidity reduction in HFrEF
@@ -428,9 +428,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: (dose) => ({ sbp_drop: 4 + Number(dose) / 30, hr_drop: 0, potassium_change: 0.15 }),
         side_effects: () => ({ hypotension: 0.06, hyperkalemia: 0.04, dizziness: 0.05 }),
         ...ci([...raasPotassiumChecks('Valsartan'), pregnancyCheck(BOXED_FETAL_TOXICITY), CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES]),
-        // Kept (verified-raas.md V2): Diovan label has no adjustment for GFR 30-90 and no data below 30; the 80 mg cap is conservative.
+        // Label: no adjustment for GFR 30-90; severe impairment requires individual review, not an invented maximum.
         renal_adjustment: (egfr) => {
-            if (egfr < 30) return { max_dose: 80, caution: true };
+            if (egfr < 30) return { caution: true };
             return {};
         },
     },
@@ -541,7 +541,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             { strength: 6.25, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
             { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'] },
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true },
-            { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['bid'], is_target_dose: true },
+            { strength: 50, unit: 'mg', formulation: 'two 25 mg tablets', frequency_options: ['bid'], is_target_dose: true }, // DailyMed carvedilol strengths
         ],
         chf_effects: (dose) => {
             // Efficacy is credited up to 25 mg BID only: MOCHA (6.25/12.5/25 mg BID) is the dose-response data and 25 mg BID was
@@ -596,7 +596,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         // is_best_in_class removed: the three beta-blockers are modeled as equal at target (verified-rate-control.md); no verified source ranks one above the others.
         available_doses: [
-            { strength: 12.5, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] }, // Starting dose for NYHA III-IV (MERIT-HF)
+            { strength: 12.5, unit: 'mg', formulation: 'half of a scored 25 mg ER tablet (do not crush or chew)', frequency_options: ['qd'] }, // DailyMed metoprolol succinate administration
             { strength: 25, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] },
             { strength: 50, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] },
             { strength: 100, unit: 'mg', formulation: 'ER tablet', frequency_options: ['qd'] },
@@ -632,8 +632,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Bisoprolol',
         drug_class: 'Beta Blocker',
-        // CIBIS-II started at 1.25 mg; the lowest US tablet-derived tier here is 2.5 mg (half a scored 5 mg tablet).
-        start_dose_for: () => 2.5,
+        // CIBIS-II initiation dose; a suitable 1.25 mg product/preparation must be confirmed locally.
+        start_dose_for: () => 1.25,
         facts: {
             beta1_selective: true, most_cardioselective: true, target_reference_dose: 10, // 2026 ESC Table 11: bisoprolol target 10 mg daily
             // The US label gives no heart-rate number ("marked sinus bradycardia" is a contraindication). Below 55 bpm as the reduction
@@ -641,12 +641,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
             hr_continuation: { reduce_below: BB_HR_BELOW_ESC, no_uptitration_below: 60, basis: '2026 ESC Supplementary Table S6: lower the dose if heart rate is below 50 with worsening symptoms (the bisoprolol label gives no number); no up-titration below 60 is ENGINE POLICY (no source)' },
             regimen_warnings: [
                 BB_S6_START_NOTE,
-                { text: 'Drug note: the US bisoprolol label is for hypertension only and lists overt cardiac failure as a contraindication, so heart-failure use is off-label (guideline-supported: CIBIS-II, target 10 mg daily). US single-agent tablets are 5 mg and 10 mg; 2.5 mg is half of a scored 5 mg tablet, and the CIBIS-II 1.25 mg starting dose is not obtainable (a quarter tablet is impractical).' },
+                { text: 'Drug note: the US bisoprolol label is for hypertension only and lists overt cardiac failure as a contraindication, so heart-failure use is off-label (guideline-supported: CIBIS-II, target 10 mg daily). US single-agent tablets are 5 mg and 10 mg; 2.5 mg is half of a scored 5 mg tablet, the CIBIS-II 1.25 mg starting dose requires confirmation of a suitable product or pharmacy preparation. Do not assume a 5 mg tablet can be quartered accurately.' },
             ],
         },
         // US single-agent strengths are 5 mg and 10 mg (Sun label; PD-Rx repackages 10 mg). 2.5 mg is kept as half of the scored 5 mg
-        // tablet; the CIBIS-II 1.25 mg start (a quarter tablet, a non-US strength) is dropped (verified-rate-control.md row 9).
+        // tablet. The 1.25 mg trial starting dose requires a separately verified product or preparation.
         available_doses: [
+            { strength: 1.25, unit: 'mg', formulation: 'verified 1.25 mg product or pharmacy preparation required', frequency_options: ['qd'] },
             { strength: 2.5, unit: 'mg', formulation: 'half of a scored 5 mg tablet', frequency_options: ['qd'] },
             { strength: 5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 10, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
@@ -713,7 +714,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         is_target_dose_for: (strength, patient) => strength >= (patient.egfr < MRA_HALVE_DOSE_EGFR_BELOW ? 25 : 50),
         is_best_in_class: true,
         available_doses: [
-            { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
+            { strength: 12.5, unit: 'mg', formulation: '12.5 mg dose; confirm preparation with pharmacist (25 mg tablets may be unscored)', frequency_options: ['qd'] }, // DailyMed formulation varies by manufacturer; not a single 12.5 mg tablet
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
             { strength: 50, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'], is_target_dose: true },
         ],
@@ -1410,7 +1411,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         facts: {
             regimen_warnings: [
                 // A long-acting nitrate taken outside the formulary plus the isosorbide dinitrate in this tablet is duplicate nitrate therapy (review 3: no warning was shown).
-                { text: 'DDI WARNING: the patient already takes a long-acting nitrate; hydralazine/isosorbide dinitrate contains isosorbide dinitrate. Do not give both: replace the existing nitrate rather than adding to it, and watch for hypotension.',
+                { text: p => `DDI WARNING: the patient already takes ${LONG_ACTING_NITRATES.filter(n => p.external_medications?.has(n)).join(' and ')}; hydralazine/isosorbide dinitrate contains isosorbide dinitrate. This is duplicate nitrate therapy. Replace the existing nitrate rather than adding to it, and watch for hypotension.`,
                   when: p => onLongActingNitrate(p) },
                 { text: 'Drug note: hydralazine can cause a drug-induced lupus-like syndrome (dose- and acetylator-dependent) and peripheral neuritis (pyridoxine / vitamin B6 is used for prevention or treatment) (BiDil label). Ask about joint pain, fever, rash and numbness or tingling at each visit.' },
                 { text: 'Drug note: hydralazine can cause tachycardia and hypotension that may worsen ischemia (BiDil label; hypotension 8% vs 4% in A-HeFT). Titrate from one tablet three times daily to two tablets three times daily over several days as tolerated.' },
@@ -1422,7 +1423,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         },
         available_doses: [
             { strength: '37.5/20', unit: 'mg', formulation: 'tablet', frequency_options: ['tid'] },
-            { strength: '75/40', unit: 'mg', formulation: 'tablet', frequency_options: ['tid'], is_target_dose: true },
+            { strength: '75/40', unit: 'mg', formulation: 'two 37.5/20 mg tablets', frequency_options: ['tid'], is_target_dose: true }, // BiDil label
         ],
         chf_effects: (dose) => {
             const level = dose === '75/40' ? 2 : 1;

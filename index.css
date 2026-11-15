@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Guided steps reuse the sidebar form's sections, which were laid out for a 360 px column. In the wide guided view
+   their two-column field groups flow into as many columns as fit (one on a phone); wide items span the row. */
+.guided-fields .grid-cols-2.gap-4 { grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+.guided-fields .grid-cols-2.gap-4 > .col-span-2 { grid-column: 1 / -1; }
+/* Menus and number boxes keep a sensible width instead of stretching across the whole step. */
+.guided-fields div.relative.w-full { max-width: 24rem; }
+.guided-fields input[type="number"] { max-width: 16rem; }
+
 /* Print: results only. The form, status panel and header are hidden by `print:hidden` classes; here we
    release the fixed-height, scroll-clipped app shell so the whole result list flows across pages. */
 @media print {

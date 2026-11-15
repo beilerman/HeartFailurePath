@@ -37,6 +37,9 @@ const getInitialRegimen = (): RegimenMed[] => {
 
 // Initial State: John Doe (Warm and Wet HFrEF)
 export const INITIAL_PATIENT: Patient = {
+    // Authored synthetic baseline: pregnancy is assessed as no/not applicable.
+    // Unknown-status tests explicitly set undefined; blank real-case drafts never inherit this fixture.
+    is_pregnant: false,
     age: 65,
     sex: 'Male',
     race: 'White',
@@ -310,6 +313,7 @@ const AUTHORED_SCENARIOS: TestScenario[] = [
         patient: {
             age: 62,
             sex: 'Female',
+            is_pregnant: false, // Authored synthetic assessment; never defaulted for a real case.
             race: 'White',
             height_cm: 160,
             bmi: 35.0,
@@ -346,6 +350,7 @@ const AUTHORED_SCENARIOS: TestScenario[] = [
         title: 'Iron-Deficient HFrEF',
         patient: {
             ...INITIAL_PATIENT,
+            hemoglobin: 12, // Synthetic dosing prerequisite, not an imputed value in the clinical engine.
             age: 55,
             sex: 'Female',
             height_cm: 165,
@@ -443,7 +448,7 @@ const AUTHORED_SCENARIOS: TestScenario[] = [
         }
     },
     {
-        title: 'Sinus Tachycardia (No BB Available) - Ivabradine Fallback',
+        title: 'Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback',
         patient: {
             ...INITIAL_PATIENT,
             age: 57,
@@ -2982,7 +2987,7 @@ const AUTHORED_SCENARIOS: TestScenario[] = [
             { title: 'MRA-Source MRA Start K+ 5.3 Staged, Not Co-Started With A Binder', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
             { title: 'MRA-Source MRA Start K+ 5.3 No Binder Available', patient: { ...base, potassium: 5.3, current_regimen: noMra } },
             { title: 'MRA-Source Lokelma HF Warning (No Patiromer Available)', patient: { ...base, potassium: 5.4, current_regimen: arniStepUp } },
-            { title: 'MRA-Source Patiromer Warnings (No Lokelma Available)', patient: { ...base, potassium: 5.4, current_regimen: arniStepUp } },
+            { title: 'MRA-Source Patiromer Warnings (No Lokelma Available)', patient: { ...base, potassium: 5.4, current_regimen: [...arniStepUp, ...buildCurrentRegimen([{ name: 'Patiromer', strength: 8.4, freq: 'qd' }])] } },
         ];
     })(),
 
@@ -3154,7 +3159,7 @@ const AUTHORED_SCENARIOS: TestScenario[] = [
         };
         const sglt = buildCurrentRegimen([{ name: 'Dapagliflozin', strength: 10, freq: 'qd' }]);
         const onGlp = (name: string, strength: number) => buildCurrentRegimen([{ name, strength, freq: 'weekly' }, { name: 'Dapagliflozin', strength: 10, freq: 'qd' }]);
-        const iron = { ...hfref, ferritin: 60, tsat: 15, current_regimen: quad };
+        const iron = { ...hfref, ferritin: 60, tsat: 15, hemoglobin: 12, current_regimen: quad };
         return [
             // GLP-1
             { title: 'Adjunct-Source GLP-1 KCCQ And Weight Placebo-Adjusted', patient: hfpef },
@@ -3215,7 +3220,7 @@ const AUTHORED_SCENARIOS: TestScenario[] = [
             { title: 'Adjunct-Source IV Iron Dose 85 kg Hb 9', patient: { ...iron, hemoglobin: 9, volume_status: { dry_weight_kg: 85, current_weight_kg: 85.5, exam_findings: new Set<string>() } } },
             { title: 'Adjunct-Source IV Iron Dose Hb 14.5 Is 500 mg', patient: { ...iron, hemoglobin: 14.5 } },
             { title: 'Adjunct-Source IV Iron Held At Hb 15.5', patient: { ...iron, hemoglobin: 15.5 } },
-            { title: 'Adjunct-Source IV Iron Hemoglobin Not Entered Both Bands', patient: iron },
+            { title: 'Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld', patient: { ...iron, hemoglobin: undefined } },
             { title: 'Adjunct-Source IV Iron Limited Evidence LVEF 45', patient: { ...iron, lvef: 45, ever_lvef_le_40: 'no' as const, comorbidities: new Set(['HFrEF']) } },
             { title: 'Adjunct-Source IV Iron Price Amortized Per Course', patient: iron },
         ];
@@ -3728,7 +3733,15 @@ export function reconcileDerivedFields(patient: Patient): Patient {
     return p;
 }
 
-export const SCENARIOS: TestScenario[] = AUTHORED_SCENARIOS.map(sc => ({ ...sc, patient: reconcileDerivedFields(sc.patient) }));
+// Authored synthetic cases explicitly confirm medication use and iron prerequisites. These are not real-case defaults.
+export const SCENARIOS: TestScenario[] = AUTHORED_SCENARIOS.map(sc => {
+    const p = reconcileDerivedFields(sc.patient);
+    p.current_regimen = p.current_regimen.map(r => ({ ...r, exposure: { status: 'active', adherence: 'consistent', dose_interval_reviewed: true, ...r.exposure } }));
+    if (p.hemoglobin !== undefined && (p.ferritin !== undefined || p.tsat !== undefined)) {
+        p.iron_course_review ??= 'first_course'; p.phosphate_review ??= 'not_indicated';
+    }
+    return { ...sc, patient: p };
+});
 
 // The single clonePatient implementation lives in the engine (services/simulationService.ts)
 // and is re-exported here for existing import sites. The two previous copies had already

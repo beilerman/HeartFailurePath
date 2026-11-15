@@ -1,0 +1,70 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1016 / 1032
+  (b) displayed pick set same:   1006 / 1032
+  (c) pick order identical:      1003 / 1032
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: NO (2 regimens)
+  top-pick overall_score  old: min 19 / median 78 / max 100
+  top-pick overall_score  new: min 19 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 15 of 864 runs
+    LVEF >= 50: 1 of 111 runs
+
+Top pick changed in 16 runs:
+  GLP-1 Continuation Carve-Out (BMI 28) :: cash
+     old: Dapagliflozin 10mg qd + Tirzepatide (Zepbound) 15mg weekly [overall 72, raw 71.61]
+     new: Dapagliflozin 10mg qd + Spironolactone 25mg qd + Tirzepatide (Zepbound) 15mg weekly [overall 93, raw 92.57]
+  MRA-Source Lokelma HF Warning (No Patiromer Available) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 49/51mg bid [overall 64, raw 64.44]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 66, raw 66.42]
+  MRA-Source Lokelma HF Warning (No Patiromer Available) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 49/51mg bid [overall 64, raw 63.91]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 66, raw 66.28]
+  MRA-Source Patiromer Warnings (No Lokelma Available) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid [overall 72, raw 72.29]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 49/51mg bid [overall 64, raw 63.84]
+  Final-Gaps Ramipril 5 mg bid eGFR 40 Exceeds Renal Cap :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 84, raw 84.10]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 2.5mg bid + Spironolactone 25mg qd [overall 84, raw 84.06]
+  Final-Gaps Ramipril 5 mg bid eGFR 40 Exceeds Renal Cap :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 84, raw 84.11]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 2.5mg bid + Spironolactone 25mg qd [overall 84, raw 84.06]
+  Final-Gaps Ramipril 5 mg bid eGFR 40 Exceeds Renal Cap :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 84, raw 84.10]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 2.5mg bid + Spironolactone 25mg qd [overall 84, raw 84.06]
+  Final-Gaps Ramipril 2.5 mg bid eGFR 40 At Renal Cap :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 84, raw 84.38]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 2.5mg bid + Spironolactone 25mg qd [overall 84, raw 84.49]
+  Final-Gaps Ramipril 2.5 mg bid eGFR 40 At Renal Cap :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 84, raw 84.38]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 2.5mg bid + Spironolactone 25mg qd [overall 84, raw 84.49]
+  Final-Gaps Ramipril 2.5 mg bid eGFR 40 At Renal Cap :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 84, raw 84.38]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 2.5mg bid + Spironolactone 25mg qd [overall 84, raw 84.49]
+  ESC26-RAAS-K K+ 5.6 Lisinopril 10 Reduced One Step :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 5mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 74, raw 74.26]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 5mg qd [overall 42, raw 42.27]
+  ESC26-RAAS-K K+ 5.6 Lisinopril 10 Reduced One Step :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 5mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 74, raw 74.27]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 5mg qd [overall 42, raw 42.27]
+  ESC26-RAAS-K K+ 5.6 Lisinopril 10 Reduced One Step :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 5mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 74, raw 74.27]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 5mg qd [overall 42, raw 42.27]
+  ESC26-RAAS-K K+ 5.6 With MRA Reduces The MRA First :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 5g qd + Spironolactone 12.5mg qd [overall 78, raw 78.50]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd + Spironolactone 12.5mg qd [overall 79, raw 78.51]
+  ESC26-RAAS-K K+ 5.6 With MRA Reduces The MRA First :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 5g qd + Spironolactone 12.5mg qd [overall 79, raw 78.51]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd + Spironolactone 12.5mg qd [overall 79, raw 78.51]
+  ESC26-RAAS-K K+ 5.6 With MRA Reduces The MRA First :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 5g qd + Spironolactone 12.5mg qd [overall 79, raw 78.51]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd + Spironolactone 12.5mg qd [overall 79, raw 78.51]
+
+Warning differences:
+  MRA-Source Patiromer Warnings (No Lokelma Available) :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 49/51mg bid
+  MRA-Source Patiromer Warnings (No Lokelma Available) :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 49/51mg bid

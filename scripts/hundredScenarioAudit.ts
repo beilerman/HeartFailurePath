@@ -40,7 +40,7 @@ function reg(seeds: { name: string; strength: number | string; freq?: string }[]
         const selected_frequency = seed.freq && dose.frequency_options.includes(seed.freq)
             ? seed.freq
             : dose.frequency_options[0];
-        return { med, dose, selected_frequency };
+        return { med, dose, selected_frequency, exposure: { status: 'active', adherence: 'consistent', dose_interval_reviewed: true } };
     });
 }
 
@@ -435,7 +435,7 @@ const S: Scenario[] = [
     { title: '096 Elderly age 87, start low and avoid excessive dosing', tags: ['elderly'], patient: base({ age: 87, sbp: 116, egfr: 48, current_regimen: [] }), expect: [expectRegimen(), output => output.scoredRegimens.some(r => r.warnings.some(w => /elderly|start low|frail/i.test(w))) ? [] : ['elderly dosing caution not surfaced']] },
     { title: '097 Recent worsening HFrEF, vericiguat eligible', tags: ['adjunct'], patient: base({ lvef: 32, nyha_class: 'III', nt_pro_bnp: 2600, recent_hf_worsening_within_6mo: 'yes', current_regimen: reg(hfrEFPillars) }), expect: [expectAnyMedOrAdjunct(['Vericiguat'], 'vericiguat', 'vericiguat not displayed or surfaced')] },
     { title: '098 No recent worsening, vericiguat not eligible', tags: ['adjunct'], patient: base({ lvef: 32, nyha_class: 'III', nt_pro_bnp: 2600, recent_hf_worsening_within_6mo: 'no', current_regimen: reg(hfrEFPillars) }), expect: [expectRegimen(), expectNoMed('Vericiguat', 'vericiguat displayed without recent worsening HF')] },
-    { title: '099 Iron-deficient HFrEF', tags: ['adjunct'], patient: base({ ferritin: 60, tsat: 15, nyha_class: 'III', current_regimen: reg(hfrEFPillars) }), expect: [expectAnyMedOrAdjunct(['Ferric Carboxymaltose'], 'iron', 'IV iron not displayed or surfaced in iron deficiency')] },
+    { title: '099 Iron-deficient HFrEF', tags: ['adjunct'], patient: base({ ferritin: 60, tsat: 15, hemoglobin: 12, iron_course_review: 'first_course', phosphate_review: 'not_indicated', nyha_class: 'III', current_regimen: reg(hfrEFPillars) }), expect: [expectAnyMedOrAdjunct(['Ferric Carboxymaltose'], 'iron', 'IV iron not displayed or surfaced in iron deficiency')] },
     { title: '100 Low peak flow without known COPD/asthma', tags: ['pulmonary', 'data'], patient: base({ peak_flow_lpm: 280, comorbidities: new Set(['HFrEF']) }), expect: [expectRegimen(), output => output.scoredRegimens.some(r => r.rationale.some(x => /peak flow|copd\/asthma/i.test(x))) ? [] : ['low peak-flow screening rationale missing']] },
 ];
 

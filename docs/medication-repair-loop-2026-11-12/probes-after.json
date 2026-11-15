@@ -1,0 +1,16 @@
+{
+  "tierCount": 122,
+  "selfReplace": [],
+  "swapRepresentation": [],
+  "roundTrip": [],
+  "invalidRanges": [],
+  "other": [
+    {
+      "kind": "projected regimen identity",
+      "expected": "Valsartan",
+      "actual": [
+        "Valsartan"
+      ]
+    }
+  ]
+}

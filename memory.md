@@ -1,6 +1,64 @@
 # HeartFailurePath — Cross-Session Memory
 
+Current consolidated handoff: [docs/HANDOFF-2026-11-13.md](docs/HANDOFF-2026-11-13.md). It reconciles the historical sections below and records the local working tree, latest receipts and remaining clinical/workflow work. This is repository documentation; no personal Codex memory was updated.
+
 ## Architecture / Clinical-Safety Decisions
+
+### Guided entry view (2026-11-15, local, uncommitted)
+- Default view is Guided (Start / steps / Results); `?view=form` or the header switch gives the original Full form. Both edit the same App state; only one is mounted, and the form host clears `pendingEntry` on unmount (an unfinished medication/history draft is lost on a view switch by design).
+- One implementation of fields: `usePatientFormModel` + `FormSection`. Step panels all stay mounted (hidden) so drafts survive step changes. `.guided-fields` CSS in `index.css` reflows the sidebar sections' `grid-cols-2.gap-4` groups to fit the wide layout.
+- Example cards run only after the scenario's pricing tier has loaded (`pricesSettledTier`); `pricesLoading` is cleared in the same batch as the prices, or the run is marked out of date the moment prices arrive.
+- Curated examples are keyed by scenario title in `components/guided/demoCases.ts`; card facts are read from the patient. A verify:ui check requires their eGFR/BMI to equal the derived values so opening the form never marks results stale.
+- Receipt, screenshots and `browser-checks.mjs`: `docs/guided-entry-2026-11-15/`.
+
+### Repeated medication-transition repair (.8, local)
+Latest: **`medication-repair-loop-2026-11-12/README.md`**, rule set **2026-11-12.8**. Repeated review repaired all identified runtime medication-model and interface defects by removing unsupported individual forecasts, adding exposure/course/interval prerequisites and preserving observed physiology. All 32 drugs / 122 dose-frequency entries covered. Gate/build: 442 engine groups, 29 UI groups, 1,032 golden runs, 100/100 + 51/51 audits, red team/pricing and two 5,000-case sweeps pass. Local Chromium workflow and desktop/mobile visuals verified. Ranking changed intentionally (472/1,032 leads); pre-update review and old snapshot retained. No validated untreated-state or longitudinal response model is claimed. Local, uncommitted, unpushed and undeployed; clinical validation remains separate.
+
+The .7 model descriptions below are historical. CHF/hemodynamic functions are audit-only and mutation-tested as disconnected from clinical evaluation. Do not re-enable them or infer treatment response from unchanged observed fields. Proposed snapshots carry assessment_basis=proposed_regimen and cannot be submitted as observed follow-up. Dose increases require actual-use and interval/tolerance review; completed/held entries are excluded from active exposure.
+
+### Medication properties and transition repair (2026-11-12, Codex, local)
+- Record: `docs/medication-properties-2026-11-12/README.md`; rule set .7. All 32 drugs / 121 dose-frequency entries inspected; focused fresh primary-source checks, not all labels newly revalidated. Gate/build pass: 423 engine checks, 27 UI groups, golden 1,032, all audits/pricing/fuzz. No commit, push or deployment.
+- GlucosePath live source `src_common/patient.cpp` explicitly adds estimated current-drug A1c reduction to measured A1c. HeartFailurePath instead uses observed treated baseline plus marginal changes; do not call its `baseline_*` fields untreated measurements.
+- `regimenTransition.ts` canonicalizes net exposure for physiology, preserving original clinical instructions. Identity/self-replacement and swaps versus separate remove/add are invariant. Projected patient must carry resulting regimen; mutable dose records are copied.
+- KCCQ bounded 0–100, EF cannot become negative; nonpositive unbounded EF has explicit MODEL LIMIT warning. This is not validation of a zero-EF prediction. Unknown KCCQ stays unknown.
+- Open: incompatible trial comparators/instruments, unvalidated effect slopes, asymmetric initiation/withdrawal and combination effects, flat ivabradine/metolazone dose effects, episodic iron/Furoscix, exposure dates/adherence/actual response. Sequential add/remove non-inversion remains in diagnostics; do not force clinical reversibility or invent replacement coefficients.
+- All 1,032 existing fixture rankings/sets/orders and eligibility/alerts/matched warnings unchanged before golden refresh. New regressions cover missing identity/split-representation cases. Browser/clinical validation remain open.
+
+### Incomplete-information repair (2026-11-12, Codex, local)
+- Record: `docs/incomplete-data-2026-11-12/README.md`; ruleset .6. Gate/build pass with 415 engine checks, 27 UI content groups, golden 1,032, audits/pricing/fuzz. Local only; browser and clinical validation remain open.
+- Missing observations are separate from invalid entries. Core-model gaps produce focused safety findings; individual missing medication prerequisites only withhold dependent starts/increases/switches. Apply checks before and after rescue additions. Missing data alone do not stop established medication.
+- KCCQ remains measured or unknown; functional scoring averages recorded components only. Unknown BNP/unassessed cost have no weight; remaining weights are rescaled. N/A on screen; scores across different information completeness are not comparable.
+- Missing labs and deselected formulary items do not establish class intolerance or exhausted treatment. Exact IV iron dosing waits for hemoglobin. Known urgent BP/K/oxygenation findings remain visible even during unrelated input correction.
+- Draft notes carry assessment scope. Real cases never inherit synthetic pregnancy/Hb inputs. All 512 missing-core subsets preserve a known urgent potassium finding.
+
+
+### Clinical UI adversarial repair (2026-11-12, Codex, local)
+- Record: `docs/ui-adversarial-2026-11-12/README.md`. Twenty-three UI content groups pass, including all 344 scenario result states; gate/build pass. Browser control unavailable: visual layout, keyboard behavior, copy/paste and print remain unverified. Local only; no push/merge/deployment.
+- New cases are explicit blank drafts independent of samples. Required choices do not inherit clinical facts. Model preference defaults are displayed. Example origin belongs in both results and draft notes.
+- Stale/error output must omit old medication cards and note actions, including printable markup. Case identity is part of the input fingerprint. Pending medication/history drafts block analysis and hide prior options until saved or cleared.
+- `clinicalPresentation.ts` owns no-change, dose-frequency, cost and observation wording. No-change is a proposal, not a declaration of complete therapy. Unchecked findings mean not recorded. Weight relative to estimated dry weight does not establish euvolemia.
+- Actual drug/dose differences and each alternative's own monitoring must be visible without deciphering scores. Model coefficients and scores are unvalidated, not predicted patient outcomes or treatment targets.
+- `formValidation.ts` is shared by labels, errors and all run paths. `monthlyMedicationCost` is shared by current-regimen display and engine; golden .5 output remains byte-identical.
+- Selected-option note (2026-11-15, local): `planForOption`/`buildChartSummary(c, i)` in `resultsModel.ts`; option 1 note text must stay byte-identical (diffed over all 344 scenarios); selection state lives in `ResultsDisplay` and resets on `runId`; option k>1 monitoring = its own `monitoring_plan` + `deferredTherapyMonitoring(excluded)`, follow-up = `buildFollowUpCalendar(its modification_set)`. Rule set 2026-11-15.1.
+- `verify:ui` is in gate/ci/workflow and uses Vite SSR, not a browser. The subsequent incomplete-information review supersedes the KCCQ requirement with an explicit omission/rescaling policy; never impute a measured value. Note preview/copy currently covers option 1 only.
+
+### Systemic adversarial repair (2026-11-12, Codex, local)
+- Latest record: `docs/adversarial-systemic-2026-11-12/README.md`, rule set `2026-11-12.5`; 399 verification checks plus golden/audits/build pass. No commit, push, merge or deployment. Browser control unavailable; UI unverified.
+- `inputContract.ts` precedes cloning and rejects malformed controls, collections, history and medication identities. Clinical medication functions and dose metadata come from the canonical formulary, never caller-supplied objects. Rhythm options/type/validator share `PATIENT_RHYTHMS`.
+- No-change must preserve measured physiology and observed exam. Removed unsupported BNP multipliers and automatic exam clearing; do not infer resolution of crackles or hypoperfusion solely from weight.
+- Safety filters precede affordability; cost-first fallback sorts by cost. Coverage insertion preserves the selected lead and reorders only alternatives. Evidence bonus denominator is indicated foundational slots, independent of drug count.
+- Only explicitly daily renal caps restrict daily totals; per-dose caps stay per-dose. Negative prices are unavailable, never negative costs.
+- Digoxin exposure text requires checking prior adjustment and levels; no unconditional repeated reduction or individualized-dose claim without those inputs. Dose/formulation descriptions are source-linked in the review.
+- Golden capture supplies matching patient/price insurance tiers and refuses captured exceptions. Fuzz seeds enumerate consecutive patient seeds: two starts less than the count apart overlap; do not claim they are independent coverage.
+- Remaining third-pass decisions and defects are mapped in the latest review, which supersedes older open lists below.
+
+### First handoff repair batch (2026-11-12, Codex, local)
+- Record and validation: `docs/repair-2026-11-12/README.md`; rule set `2026-11-12.4`. No push, merge or deployment.
+- Third-pass #3/#4/#5 fixed: renal-capped completeness; gentlest eligible daily-dose reduction with both frequencies in summaries; low-potassium conflict identifies the shared drug removal.
+- #1 is PARTIAL: no automatic binder when all RAAS/MRA changes reduce/remove therapy (an unchanged sibling does not override this). Flat RAAS potassium projections and their residual penalties remain. DailyMed supports dose-related hyperkalemia risk but not a calibrated individual potassium curve; do not infer one from adverse-event percentages.
+- #17 is PARTIAL: ten durable regression groups added, including the prior ARB/angioedema allergy fixes. Remaining third-pass test gaps and unverified UI remain in the review.
+- MRA continuation thresholds remain unchanged pending the owner's decision; all other unresolved items stay open.
+
 
 ### Outpatient scope, laboratory prerequisites and ranking toggle (2026-11-11)
 Brad's exact reply, the questions it answers, and a proposed implementation plan are recorded in

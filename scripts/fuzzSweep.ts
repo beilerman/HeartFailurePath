@@ -188,7 +188,7 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
     });
     if (regs.length === 0 && out.clinicalAlerts.length === 0 && (out.missingDataNotices ?? []).length === 0) add('SILENT_EMPTY', 'no options and no alert or notice');
     // An empty page must NAME why: a hard stop, required data, the display floors, or the explicit "no option" alert (any unrelated alert used to satisfy this).
-    if (regs.length === 0 && !out.clinicalAlerts.some(x => /^(NO DISPLAY-SAFE|NO OPTION AVAILABLE|HEMODYNAMIC INSTABILITY|HYPERKALEMIC EMERGENCY|DATA REQUIRED|IMPLAUSIBLE VALUE)/i.test(x)))
+    if (regs.length === 0 && !out.clinicalAlerts.some(x => /^(NO DISPLAY-SAFE|NO OPTION AVAILABLE|HEMODYNAMIC INSTABILITY|HYPERKALEMIC EMERGENCY|DATA REQUIRED|IMPLAUSIBLE VALUE|INPUT ERROR)/i.test(x)))
         add('EMPTY_WITHOUT_REASON', out.clinicalAlerts.map(x => x.slice(0, 40)).join(' | '));
     if (regs.length > 3) add('TOO_MANY_PICKS', String(regs.length));
     if (new Set(regs.map(r => sig(r.regimen))).size !== regs.length) add('DUPLICATE_PICKS', regs.map(r => sig(r.regimen)).join(' || '));
@@ -309,7 +309,11 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
         // projected display floors
         const pp = r.projected_patient;
         if (pp.sbp < 85 && pp.sbp < p.sbp) add('PROJECTED_SBP_LT_85', `${tag} projected ${pp.sbp} from ${p.sbp}`);
-        if (kKnown && pp.potassium > 6.0) add('PROJECTED_K_GT_6', `${tag} projected ${pp.potassium} from ${K}`);
+        if (kKnown && pp.potassium > 6.0) {
+            const changes=(r.modification_set?.modifications ?? []).filter(m=>m.action!=='keep');
+            if (!changes.length || !changes.every(m=>['remove','titrate_down'].includes(m.action)) || !changes.some(m=>m.source&&['ACEi','ARB','ARNI','MRA','nsMRA'].includes(m.source.med.drug_class)) || !out.clinicalAlerts.some(a=>a.includes('HYPERKALEMIC EMERGENCY'))) add('UNSAFE_HIGH_K_PLAN', `${tag} K ${K}`);
+        }
+        if (pp.sbp!==p.sbp || pp.potassium!==p.potassium || pp.lvef!==p.lvef) add('FABRICATED_RESPONSE',tag);
         if (known(p.pulse) && pp.pulse < 45 && pp.pulse < p.pulse) add('PROJECTED_HR_LT_45', `${tag} projected ${pp.pulse} from ${p.pulse}`);
     });
 
@@ -317,6 +321,11 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
     if (p.ranking_mode !== 'foundational_first') {
         for (let i = 1; i < regs.length; i++) {
             if (regs[i].shown_because || regs[i - 1].shown_because) continue;
+            const costFallback = p.care_priority === 'cost_first' && regs.every(r => r.warnings.some(w => w.startsWith('BUDGET EXCEEDED:')));
+            if (costFallback) {
+                if (regs[i].cost < regs[i - 1].cost) add('FALLBACK_COST_ORDER', `opt${i} $${regs[i - 1].cost} before opt${i + 1} $${regs[i].cost}`);
+                continue;
+            }
             if (regs[i].overall_score > regs[i - 1].overall_score) add('RANK_ORDER', `opt${i} ${regs[i - 1].overall_score} before opt${i + 1} ${regs[i].overall_score}`);
         }
     }

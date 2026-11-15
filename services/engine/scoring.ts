@@ -21,6 +21,8 @@ import { simulateModificationEffect } from './effects';
 import { IntolerancePolicy } from './intolerance';
 import { RegimenAnalysis } from './candidates';
 import { CriticalDataAudit, ClinicalFlags } from './gates';
+import { budgetKnown, candidateHasMissingPrerequisite } from './decisionReadiness';
+import { monthlyMedicationCost } from '../medicationCost';
 
 type Simulation = ReturnType<typeof simulateModificationEffect>;
 
@@ -47,6 +49,7 @@ export interface ScoringContext {
     indicatedFoundationalSlots: GdmtSlot[];
     /** Penalized warnings already true of the CURRENT regimen with nothing changed (number-free keys -> text). See `warningKey`. */
     baselineDangerWarnings: Map<string, string>;
+    costAssessed: boolean;
 }
 
 /** A warning's identity without its numbers ("Low Perfusion Pressure (MAP 62 mmHg)" and "(MAP 63 mmHg)" are the same warning). */
@@ -135,6 +138,8 @@ export function buildScoringContext(
     return {
         patient, prices, intolerancePolicy, dataAudit, phenotype, isVolumeDepleted, hasDiureticInCurrent,
         rescueBinders, ivIron, ironDeficient, maxNewPerVisit, achievableSlots, indicatedFoundationalSlots, baselineDangerWarnings,
+        costAssessed: budgetKnown(patient) && [...formulary, ...current.map(r => r.med)].every(m => m.available_doses.every(dose =>
+            monthlyMedicationCost({ med: m, dose, selected_frequency: dose.frequency_options[0] }, patient.insurance_tier, prices) !== undefined)),
     };
 }
 
@@ -149,6 +154,17 @@ export function addsNewPotassiumRaisingClass(modSet: ModificationSet, patient: P
 export function keepsCurrentPotassiumRaiser(modSet: ModificationSet, patient: Patient): boolean {
     const currentGroups = new Set((patient.current_regimen ?? []).filter(r => K_RAISING_CLASSES.has(r.med.drug_class)).map(r => getMedicationClassGroup(r.med.drug_class)));
     return modSet.resulting_regimen.some(r => K_RAISING_CLASSES.has(r.med.drug_class) && currentGroups.has(getMedicationClassGroup(r.med.drug_class)));
+}
+
+/** A reduction/removal-only change to RAAS/MRA therapy must stand on its own, without an automatic binder.
+ * Unchanged sibling drugs do not turn de-escalation into intensification. Engine policy, review item 1.
+ * Baseline potassium alerts, penalties and display floors still apply; this does not imply potassium has normalized.
+ */
+export function onlyDeescalatesPotassiumRaisers(modSet: ModificationSet): boolean {
+    const changes = modSet.modifications.filter(m => m.action !== 'keep'
+        && ((m.source && K_RAISING_CLASSES.has(m.source.med.drug_class))
+            || (m.target && K_RAISING_CLASSES.has(m.target.med.drug_class))));
+    return changes.length > 0 && changes.every(m => m.action === 'titrate_down' || m.action === 'remove');
 }
 
 /**
@@ -167,7 +183,7 @@ export function keepsCurrentPotassiumRaiser(modSet: ModificationSet, patient: Pa
  * caller discards it. E15/E18 already stop most such starts at baseline; this covers a start whose baseline is below the ceiling but whose modeled rise is not.
  */
 export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContext): { activeModSet: ModificationSet; sim: Simulation; dropped?: true } {
-    const { patient, prices, intolerancePolicy, rescueBinders, ivIron, ironDeficient } = ctx;
+    const { patient, prices, intolerancePolicy, ivIron, ironDeficient } = ctx;
     // Iron rescue depends only on patient-level invariants and the candidate's contents, so it is appended BEFORE
     // the single simulation (previously every candidate was simulated twice for iron-deficient patients).
     // Only the reactive K+ > 5.3 binder rescue below needs the projected potassium.
@@ -194,24 +210,6 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
         };
     }
 
-    // Try each binder tier in order and keep the first whose simulation brings projected K+ into 3.5-5.3 (the lowest effective dose).
-    const withBinder = (base: ModificationSet, binder: RegimenMed): ModificationSet => ({
-        modifications: [...base.modifications, {
-            action: 'add' as const, target: binder,
-            summary: `Add ${binder.med.name} ${formatDose(binder)}`,
-        }],
-        resulting_regimen: [...base.resulting_regimen, binder],
-    });
-    const tryBinders = (base: ModificationSet) => {
-        for (const binder of rescueBinders) {
-            const set = withBinder(base, binder);
-            const trial = simulateModificationEffect(patient, set, prices, intolerancePolicy);
-            const k = trial.projectedPatient.potassium;
-            if (k < 5.3 && k > 3.5) return { set, sim: trial };
-        }
-        return undefined;
-    };
-
     let sim: Simulation = simulateModificationEffect(patient, activeModSet, prices, intolerancePolicy);
     // The automatic iron add-on must not be the reason a regimen exceeds the stated budget: when the regimen fits without it, it is offered without it and
     // iron stays in the "also eligible" list (2026-11-12: one iron-deficient cash patient with a $100 budget was shown only over-budget options at $284
@@ -221,24 +219,9 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
         if (plain.cost <= patient.max_affordable_cost) { activeModSet = modSet; sim = plain; }
     }
 
-    // H7+H8: Binder rescue: if K+ > 5.3, try adding a K+ binder (Patiromer preferred, then Lokelma, lowest effective dose)
-    // H8 fix: Use activeModSet (which includes iron if appended) not original modSet
-    if (sim.projectedPatient.potassium > 5.3 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder') && addsNewPotassiumRaisingClass(activeModSet, patient)) {
-        return { activeModSet, sim, dropped: true };
-    }
-    // The binder is attached ONLY to potassium-raising therapy the patient already takes (RAAS pool, MRA, nsMRA kept, up-titrated or swapped within the class). A candidate with
-    // no such drug on board (for example a new beta-blocker start, modeled with a small potassium effect) gets no binder and is scored on its own projected potassium.
-    if (sim.projectedPatient.potassium > 5.3 && rescueBinders.length > 0 && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'K+ Binder') && keepsCurrentPotassiumRaiser(activeModSet, patient)) {
-        const rescued = tryBinders(activeModSet);
-        // Same rule for the stated budget as for iron above: the binder is not attached when it alone takes an affordable regimen over budget.
-        const binderBreaksBudget = !!rescued && sim.cost <= patient.max_affordable_cost && rescued.sim.cost > patient.max_affordable_cost;
-        if (rescued && !(baseWithinLimit && !withinVisitLimit(rescued.set)) && !binderBreaksBudget) {
-            sim = rescued.sim;
-            sim.warnings.push(`Binder Required: ${rescued.set.resulting_regimen[rescued.set.resulting_regimen.length - 1].med.name} added to manage Hyperkalemia.`);
-            activeModSet = rescued.set;
-        }
-    }
-
+    // A modeled potassium fall cannot authorize a co-start or establish correction.
+    // Binder selection remains available through measured-state eligibility, never an automatic
+    // dose search against an unvalidated response curve. Do not credit a binder as risk clearance.
     return { activeModSet, sim };
 }
 
@@ -300,13 +283,12 @@ export function scoreDomains(
     const { patient, dataAudit, phenotype } = ctx;
     const p = sim.projectedPatient;
 
-    // Unknown baseline NT-proBNP → neutral 50, not a false 100 (it would otherwise
-    // read as "perfect neurohormonal status" simply because the field was blank).
-    const s_neuro = dataAudit.unknownBnp ? 50 : calculateNeurohormonalScore(p.nt_pro_bnp);
+    // Unassessed domains carry zero weight, not an imputed "normal" or "neutral" clinical observation.
+    const s_neuro = dataAudit.unknownBnp ? 0 : calculateNeurohormonalScore(p.nt_pro_bnp);
     const s_func = calculateFunctionalScore(p.nyha_class, p.kccq_score, p.daily_step_count);
     const s_vol = calculateVolumeScore(p.volume_status.dry_weight_kg, p.volume_status.current_weight_kg, p.volume_status.exam_findings, p.oxygen_saturation);
     const s_struc = calculateStructureScore(p.lvef, p.lvedd, p.lavi, patient.lvef, patient.lvedd, patient.lavi);
-    const s_cost = calculateCostScore(sim.cost, patient.max_affordable_cost, patient.cost_sensitivity);
+    const s_cost = ctx.costAssessed ? calculateCostScore(sim.cost, patient.max_affordable_cost, patient.cost_sensitivity) : 0;
     const s_adhere = calculateAdherenceScore(sim.complexity, patient.complexity_tolerance);
     const s_guide = calculateGuidelineConcordanceScore(activeModSet.resulting_regimen, patient, phenotype);
     const completeness = gdmtCompletenessFraction(activeModSet, ctx);
@@ -344,10 +326,15 @@ export function aggregateScore(
     completenessSlots: number = ctx.achievableSlots.length
 ): { overall: number; raw: number; breakdown: ScoreBreakdown; normalizedSFBonus: number; gdmtCompleteness: number } {
     const { dataAudit, isVolumeDepleted } = ctx;
-    const p = sim.projectedPatient;
+    const p = { ...sim.projectedPatient, ...sim.riskScreen, potassium: sim.riskScreen.potassium_high };
     // Resolve the patient-selected weight profile once; it affects ONLY the eight domain weights below.
     const weightProfile = resolveWeightProfile(ctx.patient);
     const weights = WEIGHT_PROFILES[weightProfile];
+    const unassessed = new Set<ScoreDomainKey>(['neurohormonal', 'functional', 'volume', 'structure']);
+    if (dataAudit.unknownBnp) unassessed.add('neurohormonal');
+    if (!ctx.costAssessed) unassessed.add('cost');
+    const assessedWeight = unassessed.size ? DOMAIN_KEYS.reduce((sum, key) => sum + (unassessed.has(key) ? 0 : weights[key]), 0) : 1;
+    const effectiveWeight = (key: ScoreDomainKey) => unassessed.has(key) ? 0 : weights[key] / assessedWeight;
 
     // Weighted sum of the eight domains (weights sum to 100%), from the patient's WEIGHT_PROFILES row,
     // accumulated left-to-right in DOMAIN_KEYS order.
@@ -355,8 +342,10 @@ export function aggregateScore(
         key,
         label: DOMAIN_LABELS[key],
         score: unroundedDomainScores[key],
-        weight: weights[key],
-        contribution: unroundedDomainScores[key] * weights[key],
+        weight: effectiveWeight(key),
+        contribution: unroundedDomainScores[key] * effectiveWeight(key),
+        ...(unassessed.has(key) ? { assessed: false, detail: ['neurohormonal','functional','volume','structure'].includes(key) ? 'Not assessed: treatment response is not quantified. Observed measurements do not establish the effect of this proposed regimen; this domain has zero ranking weight.' : 'Not assessed: required input is unavailable; excluded and remaining domain weights rescaled.' } : {}),
+        ...(key === 'functional' && !unassessed.has(key) && ctx.patient.kccq_score === undefined ? { detail: 'KCCQ not measured: average uses recorded NYHA and activity only; no KCCQ value or response is assumed.' } : {}),
         ...(key === 'completeness' && completenessSlots === 0
             ? { detail: 'No achievable indicated therapies for this patient - scored 0' }
             : {}),
@@ -374,11 +363,10 @@ export function aggregateScore(
         });
     };
 
-    // Special-feature bonus: the average per drug, where the divisor is never smaller than the number of foundational therapies indicated for the patient.
-    // Dividing by the regimen size alone made a 3-point note worth about 7 points on a one-drug regimen, so one drug could out-rank a three-pillar start
-    // (adversarial review 2026-11-12). Clamped to the SPECIAL_FEATURES bounds.
+    // Normalize evidence by the patient's indicated foundational slots, a fixed denominator across
+    // candidates. An unrelated fifth drug must not dilute evidence for the first four (review item 8).
     const regimenLength = activeModSet.resulting_regimen.length;
-    const sfDivisor = Math.max(regimenLength, ctx.indicatedFoundationalSlots.length);
+    const sfDivisor = Math.max(1, ctx.indicatedFoundationalSlots.length);
     const normalizedSFBonus = regimenLength > 0
         ? Math.max(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.min, Math.min(SCORE_ADJUSTMENTS.SPECIAL_FEATURES.max, sim.specialFeatureBonus / sfDivisor * SCORE_ADJUSTMENTS.SPECIAL_FEATURES.factor))
         : 0;
@@ -406,7 +394,7 @@ export function aggregateScore(
     // is not credited with leaving the band. Otherwise, at an entered SBP of 93, "halve the beta-blocker" out-scored "no change" (which carries the band penalty)
     // while "double the beta-blocker" also out-scored it on completeness, and the tool reversed its own advice on the next run (adversarial review 2026-11-12).
     const sbpForBand = Math.min(p.sbp, ctx.patient.sbp > 0 ? ctx.patient.sbp : p.sbp);
-    const sbpDetail = sbpForBand < p.sbp ? `entered SBP ${ctx.patient.sbp} (projected ${p.sbp}; a dose reduction is not credited with leaving this band)` : `projected SBP ${p.sbp}`;
+    const sbpDetail = sbpForBand < p.sbp ? `entered SBP ${ctx.patient.sbp} (projected ${p.sbp}; a dose reduction is not credited with leaving this band)` : `recorded SBP ${p.sbp}`;
     if (p.sbp < SCORE_ADJUSTMENTS.PROJECTED_SBP_LT_85.threshold) {
         // Projected severe hypotension — disqualify (also display-filtered). Non-additive: recorded as an override.
         // NOTE: later adjustments (HR, K+, warnings, unknown-lab) still apply on top of this zeroed total.
@@ -416,7 +404,7 @@ export function aggregateScore(
             applies_to: 'raw_score',
             before: overall,
             after: 0,
-            detail: `projected SBP ${p.sbp}`,
+            detail: `recorded SBP ${p.sbp}`,
         });
         overall = 0;
     }
@@ -426,8 +414,8 @@ export function aggregateScore(
     // for leaving the band (a rate below the reduce threshold already forces the reduction in every option; a paced patient at 49 is not helped by it).
     const hrKnown = ctx.patient.pulse > 0;
     const hrForBand = Math.min(p.pulse, hrKnown ? ctx.patient.pulse : p.pulse);
-    if (hrKnown && hrForBand < SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50, SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.points, hrForBand < p.pulse ? `entered HR ${ctx.patient.pulse} (projected ${p.pulse}; a dose reduction is not credited with leaving this band)` : `projected HR ${p.pulse}`);
-    if (p.potassium > SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5, SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.points, `projected K+ ${p.potassium}`);
+    if (hrKnown && hrForBand < SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50, SCORE_ADJUSTMENTS.PROJECTED_HR_LT_50.points, hrForBand < p.pulse ? `entered HR ${ctx.patient.pulse} (projected ${p.pulse}; a dose reduction is not credited with leaving this band)` : `recorded HR ${p.pulse}`);
+    if (p.potassium > SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.threshold) addAdjustment(SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5, SCORE_ADJUSTMENTS.PROJECTED_K_GT_5_5.points, `recorded K+ ${p.potassium}`);
 
     // "Binder Required" deliberately COUNTS here: a regimen that needs a rescue binder to
     // stay under the K+ ceiling carries residual hyperkalemia risk. The binder enables the
@@ -451,20 +439,8 @@ export function aggregateScore(
     // blank - eligibility rule E16 withholds new starts and scoreCandidates drops dose increases (2026-11-11
     // physician-owner decision), so the old -12 caution (UNKNOWN_POTASSIUM) was removed as unreachable.
 
-    // Unknown renal function: RAAS/MRA intensification is dropped before scoring (E16 + scoreCandidates), so only
-    // SGLT2i remains reachable here. Renal-gated current meds are retained (not force-removed on blank data) and
-    // renal-gated new starts are withheld (E12) - but a candidate that adds or up-titrates an SGLT2i must carry an
-    // explicit caution and ranking penalty until a BMP is obtained.
-    if (dataAudit.unknownRenal) {
-        const intensifiesRenalGated = activeModSet.modifications.some(m =>
-            (m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap') &&
-            m.target && m.target.med.drug_class === 'SGLT2i'
-        );
-        if (intensifiesRenalGated) {
-            addAdjustment(SCORE_ADJUSTMENTS.UNKNOWN_RENAL, SCORE_ADJUSTMENTS.UNKNOWN_RENAL.points);
-            sim.warnings.push('RENAL FUNCTION UNKNOWN: eGFR/creatinine was not entered. Obtain a BMP before initiating or up-titrating SGLT2i therapy — renal dosing and safety cannot be assessed.');
-        }
-    }
+    // Missing renal prerequisites now withhold dependent changes before scoring, including
+    // SGLT2 starts/increases/switches. A score penalty must never substitute for those data.
 
     const finalOverall = Math.round(Math.min(SCORE_ADJUSTMENTS.SCORE_CLAMP.max, Math.max(SCORE_ADJUSTMENTS.SCORE_CLAMP.min, overall)));
     const wasClamped = overall < SCORE_ADJUSTMENTS.SCORE_CLAMP.min || overall > SCORE_ADJUSTMENTS.SCORE_CLAMP.max;
@@ -515,6 +491,7 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
         // Laboratory prerequisite (engine policy, physician-owner decision 2026-11-11): with potassium or renal
         // function blank, any candidate that adds, swaps to or up-titrates a RAAS inhibitor / MRA is dropped.
         if (labPrerequisiteBlank(ctx.dataAudit) && intensifiesRaasOrMra(modSet)) return;
+        if (candidateHasMissingPrerequisite(patient, modSet)) return;
 
         const requiresDiureticFirst = isVolumeDepleted && hasDiureticInCurrent;
         if (requiresDiureticFirst) {
@@ -528,6 +505,7 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
         // Rescue appends + the single simulation (+ reactive K+ binder re-simulation), then the new-class cap.
         const { activeModSet, sim, dropped } = applyRescueAdditions(modSet, ctx);
         if (dropped) return; // a new potassium-raising class that would need a binder to stay in range is not offered
+        if (candidateHasMissingPrerequisite(patient, activeModSet)) return;
 
         if (countNewClassGroups(activeModSet.resulting_regimen, patient.current_regimen || []) > maxNewPerVisit) {
             return;
@@ -538,6 +516,7 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
         results.push({
             regimen: activeModSet.resulting_regimen,
             projected_patient: sim.projectedPatient,
+            risk_screen: sim.riskScreen,
             baseline_lvef: patient.lvef,
             baseline_lvedd: patient.lvedd,
             baseline_lavi: patient.lavi,

@@ -12,9 +12,9 @@ interface DiagnosticsSectionProps {
 
 export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientData, onChange, validationErrors = {}, clinicalWarnings = {} }) => {
     return (
-        <section>
+        <section id="patient-diagnostics" tabIndex={-1}>
             <h3 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                <CalculationIcon className="w-5 h-5 text-blue-600" aria-hidden="true" /> Diagnostics (Labs & Echo)
+                <CalculationIcon className="w-5 h-5 text-blue-600" aria-hidden="true" /> Diagnostics (labs and echo)
             </h3>
 
             {/* Cardiac Structure */}
@@ -42,7 +42,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                     </Select>
                 </div>
                 <div>
-                    <Label htmlFor="previous_lvef">Prior Lowest LVEF (%)</Label>
+                    <Label htmlFor="previous_lvef">Prior lowest LVEF (%)</Label>
                     <p className="mb-1 text-xs text-slate-500">A prior value below 50 keeps a current LVEF of 50 or higher in the reduced-EF group (2026 ESC: HFpEF needs an LVEF that was never below 50).</p>
                     <Input
                         type="number" min={0}
@@ -94,7 +94,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                     <Input type="number" min={0} step="0.1" name="creatinine" value={patientData.creatinine || ''} placeholder="mg/dL" onChange={onChange} error={validationErrors.creatinine} />
                 </div>
                 <div className="relative">
-                    <Label htmlFor="egfr">eGFR (Calc)</Label>
+                    <Label htmlFor="egfr">eGFR (calculated)</Label>
                     <Input
                         type="number"
                         name="egfr"
@@ -143,10 +143,22 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                     <p className="text-[11px] text-slate-500 mt-0.5">Sets the IV iron label dose; held at 15 or higher</p>
                 </div>
                 <div>
-                    <Label htmlFor="peak_flow_lpm">Peak Flow (L/min, if lung disease)</Label>
+                    <Label htmlFor="peak_flow_lpm">Peak flow (L/min, if lung disease)</Label>
                     <Input type="number" min={0} name="peak_flow_lpm" value={patientData.peak_flow_lpm ?? ''} onChange={onChange} placeholder="e.g. 400" error={validationErrors.peak_flow_lpm} />
                 </div>
             </div>
+            <details className="mt-4 text-sm">
+                <summary className="cursor-pointer font-semibold text-slate-700">IV iron course and phosphate safety review</summary>
+                <p className="my-2 text-xs text-slate-600">Needed for an exact iron option; other medication decisions can proceed. Confirm prior infusions and phosphate testing when indicated by the boxed warning.</p>
+                <Label htmlFor="iron_course_review">Course assessment</Label>
+                <Select id="iron_course_review" name="iron_course_review" value={patientData.iron_course_review ?? ''} onChange={onChange}>
+                    <option value="">Not assessed</option><option value="unknown">Prior course history unknown</option><option value="first_course">First course confirmed</option><option value="repeat_reviewed">Repeat course: prior dosing and interval reviewed</option>
+                </Select>
+                <Label htmlFor="phosphate_review">Phosphate safety assessment</Label>
+                <Select id="phosphate_review" name="phosphate_review" value={patientData.phosphate_review ?? ''} onChange={onChange}>
+                    <option value="">Not assessed</option><option value="unknown">Assessment incomplete</option><option value="not_indicated">Testing not indicated after risk review</option><option value="acceptable">Phosphate assessed and acceptable</option><option value="low">Low phosphate — correct before iron</option>
+                </Select>
+            </details>
         </section>
     );
 };

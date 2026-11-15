@@ -1,0 +1,73 @@
+{
+  "renamedFixtures": 2,
+  "runs": 1032,
+  "topIdentical": 1026,
+  "changes": [
+    {
+      "case": "Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld :: cash",
+      "old": "[[\"Carvedilol\",25,\"bid\"],[\"Dapagliflozin\",10,\"qd\"],[\"Ferric Carboxymaltose\",1000,\"once\"],[\"Sacubitril/Valsartan (Entresto)\",\"97/103\",\"bid\"],[\"Spironolactone\",25,\"qd\"],[\"Vericiguat\",5,\"qd\"]]",
+      "new": "[[\"Carvedilol\",25,\"bid\"],[\"Dapagliflozin\",10,\"qd\"],[\"Ivabradine\",5,\"bid\"],[\"Sacubitril/Valsartan (Entresto)\",\"97/103\",\"bid\"],[\"Spironolactone\",25,\"qd\"]]"
+    },
+    {
+      "case": "Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld :: commercial",
+      "old": "[[\"Carvedilol\",25,\"bid\"],[\"Dapagliflozin\",10,\"qd\"],[\"Ferric Carboxymaltose\",1000,\"once\"],[\"Sacubitril/Valsartan (Entresto)\",\"97/103\",\"bid\"],[\"Spironolactone\",25,\"qd\"],[\"Vericiguat\",5,\"qd\"]]",
+      "new": "[[\"Carvedilol\",25,\"bid\"],[\"Dapagliflozin\",10,\"qd\"],[\"Ivabradine\",5,\"bid\"],[\"Sacubitril/Valsartan (Entresto)\",\"97/103\",\"bid\"],[\"Spironolactone\",25,\"qd\"]]"
+    },
+    {
+      "case": "Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld :: medicare",
+      "old": "[[\"Carvedilol\",25,\"bid\"],[\"Dapagliflozin\",10,\"qd\"],[\"Ferric Carboxymaltose\",1000,\"once\"],[\"Sacubitril/Valsartan (Entresto)\",\"97/103\",\"bid\"],[\"Spironolactone\",25,\"qd\"],[\"Vericiguat\",5,\"qd\"]]",
+      "new": "[[\"Carvedilol\",25,\"bid\"],[\"Dapagliflozin\",10,\"qd\"],[\"Ivabradine\",5,\"bid\"],[\"Sacubitril/Valsartan (Entresto)\",\"97/103\",\"bid\"],[\"Spironolactone\",25,\"qd\"]]"
+    },
+    {
+      "case": "Lab-Prereq Naive HFrEF Blank Renal :: cash",
+      "old": "[[\"Carvedilol\",3.125,\"bid\"],[\"Hydralazine/Isosorbide Dinitrate\",\"37.5/20\",\"tid\"]]",
+      "new": "[[\"Metoprolol Succinate\",12.5,\"qd\"]]"
+    },
+    {
+      "case": "Lab-Prereq Naive HFrEF Blank Renal :: commercial",
+      "old": "[[\"Carvedilol\",3.125,\"bid\"],[\"Hydralazine/Isosorbide Dinitrate\",\"37.5/20\",\"tid\"]]",
+      "new": "[[\"Metoprolol Succinate\",12.5,\"qd\"]]"
+    },
+    {
+      "case": "Lab-Prereq Naive HFrEF Blank Renal :: medicare",
+      "old": "[[\"Carvedilol\",3.125,\"bid\"],[\"Hydralazine/Isosorbide Dinitrate\",\"37.5/20\",\"tid\"]]",
+      "new": "[[\"Metoprolol Succinate\",12.5,\"qd\"]]"
+    }
+  ],
+  "changedExclusionReasons": [
+    [
+      "Information required before starting: hemoglobin for dose selection (previous captured reason: none)",
+      981
+    ],
+    [
+      "Information required before starting: serum potassium (previous captured reason: none)",
+      81
+    ],
+    [
+      "Information required before starting: serum potassium (previous captured reason: Clinical Contraindication)",
+      9
+    ],
+    [
+      "Information required before starting: renal function (previous captured reason: Renal data required — cannot assess renal safety (obtain BMP before initiation))",
+      72
+    ],
+    [
+      "Information required before starting: renal function (previous captured reason: none)",
+      36
+    ],
+    [
+      "Information required before starting: renal function (previous captured reason: Clinical Contraindication)",
+      12
+    ]
+  ],
+  "addedAlerts": [
+    [
+      "PARTIAL REVIEW: Complete medication options are withheld. Review the supported findings below and obtain the listed missing observations. Absence of a finding here is not a safety clearance.",
+      3
+    ],
+    [
+      "DATA REQUIRED: Complete medication-regimen generation waits for: LVEF. This model limitation does not prevent the focused safety review.",
+      3
+    ]
+  ]
+}

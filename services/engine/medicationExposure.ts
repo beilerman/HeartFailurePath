@@ -1,0 +1,25 @@
+import type { MedicationExposure, RegimenMed } from '../../types';
+
+const validDate = (s: unknown): s is string => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
+    && !Number.isNaN(Date.parse(`${s}T12:00:00Z`)) && new Date(`${s}T12:00:00Z`).toISOString().slice(0, 10) === s;
+
+export function exposureErrors(e: MedicationExposure | undefined): string[] {
+    if (e === undefined) return [];
+    if (!e || typeof e !== 'object' || Array.isArray(e)) return ['Exposure history must be an object.'];
+    const errors: string[] = [];
+    if (e.status !== undefined && !['active','held','completed','unknown'].includes(e.status)) errors.push('Select an exposure status.');
+    if (e.adherence !== undefined && !['consistent','partial','unknown'].includes(e.adherence)) errors.push('Select a medication-use assessment.');
+    for (const k of ['started_on','dose_changed_on','last_dose_on'] as const) if (e[k] !== undefined && !validDate(e[k])) errors.push(`${k} must be a valid calendar date.`);
+    if (e.started_on && e.dose_changed_on && e.started_on > e.dose_changed_on) errors.push('The dose-change date precedes the start date.');
+    if (e.last_dose_on && e.started_on && e.last_dose_on < e.started_on) errors.push('The last dose precedes the start date.');
+    if (e.last_dose_on && e.dose_changed_on && e.last_dose_on < e.dose_changed_on) errors.push('The last dose precedes the current-dose date.');
+    if (e.dose_interval_reviewed !== undefined && typeof e.dose_interval_reviewed !== 'boolean') errors.push('Dose interval review must be an explicit yes/no assessment.');
+    for (const k of ['started_on','dose_changed_on','last_dose_on'] as const) if (validDate(e[k]) && e[k]! > new Date().toISOString().slice(0,10)) errors.push(`${k} cannot be a future exposure date.`);
+    if (e.restart_or_repeat_reviewed !== undefined && typeof e.restart_or_repeat_reviewed !== 'boolean') errors.push('Restart/repeat review must be an explicit yes/no assessment.');
+    return errors;
+}
+
+export const isActiveExposure = (r: RegimenMed) => r.exposure?.status !== 'held' && r.exposure?.status !== 'completed';
+export const copyExposure = (e: MedicationExposure | undefined): MedicationExposure | undefined => e ? {
+    status: e.status, adherence: e.adherence, started_on: e.started_on, dose_changed_on: e.dose_changed_on, last_dose_on: e.last_dose_on, restart_or_repeat_reviewed: e.restart_or_repeat_reviewed, dose_interval_reviewed: e.dose_interval_reviewed,
+} : undefined;

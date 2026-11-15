@@ -1,24 +1,15 @@
+import { medicationEffectContext } from '../services/simulationService';
 
 import React, { useState } from 'react';
 import { MEDICATION_FORMULARY } from '../constants';
 import { Medication } from '../types';
-import { HeartIcon, ActivityIcon, WarningIcon, BeakerIcon } from './icons';
+import { WarningIcon, BeakerIcon } from './icons';
 
 // Formulary encodes drops as positive values; a negative drop is an increase (e.g. GLP-1
 // mild tachycardia), so format the sign explicitly instead of hard-coding a leading minus.
 // Every displayed number is rounded to one decimal (trailing zero dropped).
-const r1 = (v: number) => Math.round(v * 10) / 10;
-const fmtDrop = (v: number, unit: string) =>
-    r1(v) > 0 ? `-${r1(v)} ${unit}` : r1(v) < 0 ? `+${Math.abs(r1(v))} ${unit}` : `0 ${unit}`;
-
 const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
-    // Get a representative dose (middle of range) for display purposes
-    const repDoseEntry = med.available_doses[Math.floor(med.available_doses.length / 2)];
-    const repDose = repDoseEntry.strength;
-    const chfEffects = med.chf_effects(repDose);
-    const hemoEffects = med.hemodynamic_effects(repDose);
-    const sideEffects = med.side_effects(repDose);
-
+    const sideEffects = med.side_effects(med.available_doses[0].strength);
     return (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col">
             <div className="p-4 border-b border-slate-100 bg-slate-50/50">
@@ -29,74 +20,19 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                             {med.drug_class}
                         </span>
                     </div>
-                    {med.is_best_in_class && (
-                        <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100 uppercase">Top Tier</span>
-                    )}
                 </div>
                 <div className="flex flex-wrap gap-1 mt-2">
                     {med.available_doses.map((d, i) => (
                         <span key={i} className="text-xs text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                            {d.strength}{d.unit}
+                            {d.strength} {d.unit} — {d.formulation}
                         </span>
                     ))}
                 </div>
             </div>
 
             <div className="p-4 space-y-4 flex-1">
-                {/* CHF Impact */}
-                <div>
-                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-1">
-                        <HeartIcon className="w-3 h-3" /> Clinical Impact (Est.)
-                    </h4>
-                    <p className="mb-2 text-[11px] text-slate-500">Modeled effect at {repDoseEntry.strength} {repDoseEntry.unit}</p>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <div className="text-slate-500 text-xs">LVEF</div>
-                            <div className={`font-bold ${r1(chfEffects.lvef_improvement_absolute) > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                {r1(chfEffects.lvef_improvement_absolute) > 0 ? `+${r1(chfEffects.lvef_improvement_absolute)}%` : 'Neutral'}
-                            </div>
-                        </div>
-                        <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <div className="text-slate-500 text-xs">Weight</div>
-                            <div className={`font-bold ${r1(chfEffects.weight_reduction_kg) > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                {r1(chfEffects.weight_reduction_kg) > 0 ? `-${r1(chfEffects.weight_reduction_kg)} kg` : 'Neutral'}
-                            </div>
-                        </div>
-                         <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <div className="text-slate-500 text-xs">BNP Red.</div>
-                            <div className={`font-bold ${r1(chfEffects.bnp_reduction_percent * 100) > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                {r1(chfEffects.bnp_reduction_percent * 100) > 0 ? `-${r1(chfEffects.bnp_reduction_percent * 100)}%` : 'Neutral'}
-                            </div>
-                        </div>
-                         <div className="bg-slate-50 p-2 rounded border border-slate-100">
-                            <div className="text-slate-500 text-xs">KCCQ</div>
-                            <div className={`font-bold ${r1(chfEffects.kccq_improvement) > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>
-                                {r1(chfEffects.kccq_improvement) > 0 ? `+${r1(chfEffects.kccq_improvement)}` : 'Neutral'}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Hemodynamics */}
-                <div>
-                    <h4 className="text-xs font-bold text-slate-400 uppercase mb-2 flex items-center gap-1">
-                        <ActivityIcon className="w-3 h-3" /> Hemodynamics
-                    </h4>
-                    <div className="text-sm text-slate-600 flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
-                        <span>SBP Effect</span>
-                        <span className="font-medium">{fmtDrop(hemoEffects.sbp_drop, 'mmHg')}</span>
-                    </div>
-                    <div className="text-sm text-slate-600 flex justify-between items-center border-b border-slate-100 pb-1 mb-1">
-                        <span>HR Effect</span>
-                        <span className="font-medium">{fmtDrop(hemoEffects.hr_drop, 'bpm')}</span>
-                    </div>
-                     <div className="text-sm text-slate-600 flex justify-between items-center">
-                        <span>K+ Effect</span>
-                        <span className={`font-medium ${hemoEffects.potassium_change > 0 ? 'text-amber-600' : hemoEffects.potassium_change < 0 ? 'text-blue-600' : 'text-slate-400'}`}>
-                            {r1(hemoEffects.potassium_change) > 0 ? '+' : ''}{r1(hemoEffects.potassium_change)}
-                        </span>
-                    </div>
-                </div>
+                <p className="text-sm text-slate-700">{medicationEffectContext(med)}</p>
+                <p className="text-xs text-slate-600">Individual dose response and withdrawal effects are not quantified. Trial evidence and label-based dose guidance do not establish head-to-head physiological equivalence.</p>
 
                 {/* Side Effects & Cautions */}
                 <div>
@@ -109,9 +45,9 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                                 {se.replace(/_/g, ' ')}
                             </span>
                         ))}
-                        {Object.keys(sideEffects).length === 0 && <span className="text-xs text-slate-400 italic">Generally well tolerated</span>}
+                        {Object.keys(sideEffects).length === 0 && <span className="text-xs text-slate-400 italic">No adverse effects listed in this model; consult the label</span>}
                     </div>
-                    <p className="mt-1 text-[10px] text-slate-400">Listed effects only. Ranking uses the dose-scaled effects on blood pressure, heart rate and potassium.</p>
+                    <p className="mt-1 text-[10px] text-slate-400">Listed effects only; consult the current label. Observed-state safety checks cannot establish the individual response to a new dose.</p>
                     {(med.facts?.source_differences ?? []).map(d => (
                         <p key={d.topic} className="mt-2 text-[11px] text-slate-600"><span className="font-semibold">Sources differ ({d.topic}).</span> Label: {d.label}. Guideline: {d.guideline}. This tool follows the {d.tool_follows}: {d.why}.</p>
                     ))}
@@ -155,7 +91,7 @@ export const MedicationLibrary: React.FC = () => {
                             Medication Library
                         </h2>
                         <p className="text-slate-500 mt-2 text-lg">
-                            Evidence-based characteristics of formulary agents for HFrEF optimization.
+                            Drug entries and safety rules used by this tool. Dose-specific effects are unvalidated model parameters; consult the source evidence and product label before treatment.
                         </p>
                     </div>
                     

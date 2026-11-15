@@ -1,9 +1,10 @@
-import type { ExcludedMedication, MonitoringPlanItem, ScoredRegimen, RankingInfo } from '../types';
+import type { ExcludedMedication, MonitoringPlanItem, ScoredRegimen, RankingInfo, DecisionReadiness } from '../types';
 import { RANKING_MODE_META } from './rankingModeMeta';
-import { PILLAR_LABELS } from '../services/engine/explain';
+import { PILLAR_LABELS, buildFollowUpCalendar, deferredTherapyMonitoring } from '../services/engine/explain';
 import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
 import { pillarFamilyOf, getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 import type { PillarKey } from '../services/simulationService';
+import { clinicalSentence, doseLabel, NO_CHANGE_TEXT, optionDifferences } from './clinicalPresentation';
 
 // Display-side organisation of the engine's output. Nothing here changes what the engine says: it
 // only decides where each existing string is shown. Unknown kinds always fall on the safety side.
@@ -13,6 +14,7 @@ import type { PillarKey } from '../services/simulationService';
 /** Alert headers that are care-gap prompts rather than safety stops. Everything else is treated as urgent. */
 const ADVISORY_ALERT_HEADS: readonly string[] = [
     'DEVICE THERAPY SCREENING', 'CARDIAC REHABILITATION', 'VERICIGUAT ELIGIBILITY WARNING', 'DATA NOTE',
+    'PARTIAL REVIEW', 'DATA REQUIRED', 'LABS REQUIRED', 'MEDICATION USE REVIEW', 'DOSE TIMING REVIEW', 'EXPOSURE HISTORY',
 ];
 
 export interface SplitAlert { head: string | null; body: string; raw: string }
@@ -133,14 +135,17 @@ export function exclusionsForGap(gap: string, groups: ExclusionGroup[]): Exclusi
     return pillar ? groups.find(g => g.key === pillar) : undefined;
 }
 
-/** Does option 1 start or switch to a drug in this gap's family? Returns the drug names. */
-export function startedByTopOption(gap: string, top?: ScoredRegimen): string[] {
+/** Does this option start or switch to a drug in the gap's family? Returns the drug names. */
+export function startedByOption(gap: string, option?: ScoredRegimen): string[] {
     const pillar = pillarOfGap(gap);
-    if (!pillar || !top?.modification_set) return [];
-    return top.modification_set.modifications
+    if (!pillar || !option?.modification_set) return [];
+    return option.modification_set.modifications
         .filter(m => (m.action === 'add' || m.action === 'swap') && m.target && pillarOfDrugClass(m.target.med.drug_class) === pillar)
         .map(m => m.target!.med.name);
 }
+
+/** Kept for existing callers: the same test applied to option 1. */
+export const startedByTopOption = startedByOption;
 
 export const entryReasonText = (e: ExclusionEntry): string =>
     e.why.length > 0 ? e.why.join('; ') : (e.reason.trim().toLowerCase() === (e.ruleName ?? '').trim().toLowerCase() ? '' : e.reason);
@@ -157,52 +162,87 @@ export interface ChartInput {
     monitoringPlan: MonitoringPlanItem[];
     excludedMedications: ExcludedMedication[];
     ranking?: RankingInfo;
+    decisionReadiness?: DecisionReadiness;
 }
 
 const bullets = (title: string, items: string[]): string[] => items.length === 0 ? [] : ['', `${title}:`, ...items.map(i => `  - ${i}`)];
 
+/** An invalid, negative, fractional or out-of-range choice means option 1. */
+export const normalizeOptionIndex = (count: number, index?: number): number =>
+    typeof index === 'number' && Number.isInteger(index) && index > 0 && index < count ? index : 0;
+
+export interface OptionPlan { option: ScoredRegimen | undefined; number: number; monitoring: MonitoringPlanItem[]; followUp: MonitoringPlanItem[] }
+
+/**
+ * The monitoring and follow-up that belong with the chosen option. Option 1 uses the engine's top-level lists unchanged.
+ * Any other option uses its own monitoring plan, the deferred-therapy items (which describe the whole result set) and a
+ * follow-up calendar built from its own changes. The screen and the note both call this so they cannot disagree.
+ */
+export function planForOption(c: ChartInput, selectedIndex = 0): OptionPlan {
+    const index = normalizeOptionIndex(c.results.length, selectedIndex);
+    const option = c.results[index];
+    if (index === 0) return { option, number: 1, monitoring: c.monitoringPlan, followUp: c.followUpCalendar };
+    return {
+        option, number: index + 1,
+        monitoring: [...(option.monitoring_plan ?? []), ...deferredTherapyMonitoring(c.excludedMedications)],
+        followUp: buildFollowUpCalendar(option.modification_set),
+    };
+}
+
 /** Plain-text plan to paste into a note. Built from the same structured output as the screen; never includes the internal score. */
-export function buildChartSummary(c: ChartInput): string {
+export function buildChartSummary(c: ChartInput, selectedIndex = 0): string {
+    const plan = planForOption(c, selectedIndex);
+    const k = plan.number;
     const { urgent, advisory } = partitionAlerts(c.clinicalAlerts);
-    const lines: string[] = ['HEART FAILURE GDMT PLAN (decision-support output; verify before acting)'];
+    const lines: string[] = ['HEART FAILURE MEDICATION REVIEW — DRAFT (research decision support; clinician review required)'];
     lines.push(...bullets('SAFETY ALERTS', urgent.map(a => a.raw)));
+    if (c.decisionReadiness) {
+        lines.push('', `ASSESSMENT SCOPE: ${c.decisionReadiness.mode === 'limited_review' ? 'Focused review only; complete medication options withheld' : 'Medication options with recorded prerequisites'}`);
+        lines.push(...bullets('WHAT CAN BE REVIEWED', c.decisionReadiness.available));
+        lines.push(...bullets('DECISIONS WAITING FOR INFORMATION', c.decisionReadiness.deferred));
+        lines.push('  Not recorded does not mean normal or absent. Retained medications are not certified safe by this assessment.');
+    }
     const modeLines = rankingModeLines(c.ranking);
     if (modeLines.length > 0) lines.push('', ...modeLines);
 
-    const top = c.results[0];
+    const top = plan.option;
     if (top) {
         const ctx = getTargetDosePatientContext(top);
         const n = c.results.length;
         const others = n > 1 ? '; the other options are on screen' : '';
-        lines.push('', isOverBudgetFallback(top)
-            ? `REGIMEN FOR DISCUSSION ONLY (option 1 of ${n}; over the stated budget, so the patient cannot carry it out as entered${others}):`
-            : `TOP-ORDERED REGIMEN (option 1 of ${n}${others}):`);
-        if (top.regimen.length === 0) lines.push('  - No heart failure drugs remain in this option (all current drugs are stopped; see changes below)');
+        lines.push('', !Number.isFinite(top.cost) ? `PRICING UNAVAILABLE — DISCUSSION ONLY (option ${k} of ${n}; verify costs before choosing${others}):` : isOverBudgetFallback(top)
+            ? `REGIMEN FOR DISCUSSION ONLY (option ${k} of ${n}; over the stated budget, so the patient cannot carry it out as entered${others}):`
+            : k === 1 ? `TOP-ORDERED REGIMEN (option 1 of ${n}${others}):`
+            : `CLINICIAN-SELECTED ALTERNATIVE (option ${k} of ${n}; the tool ordered option 1 first; the other options are on screen):`);
+        if (top.regimen.length === 0) lines.push('  - No heart-failure medication is included in this option; review any changes below.');
         top.regimen.forEach(r => {
             const target = isTargetDoseForPatient(r, ctx) ? ' (target dose)' : '';
-            lines.push(`  - ${r.med.name} ${r.dose.strength}${r.dose.unit} ${r.selected_frequency}${target}`);
+            lines.push(`  - ${r.med.name} ${doseLabel(r)}${target}`);
         });
         const changes = (top.modification_set?.modifications ?? []).filter(m => m.action !== 'keep');
         lines.push(...(changes.length > 0
-            ? bullets('CHANGES THIS VISIT', changes.map(m => m.summary))
-            : ['', 'CHANGES THIS VISIT:', '  - None: continue the current regimen.']));
+            ? bullets(`PROPOSED CHANGES IN OPTION ${k}`, changes.map(m => clinicalSentence(m.summary)))
+            : ['', `PROPOSED CHANGES IN OPTION ${k}:`, `  - ${NO_CHANGE_TEXT}`]));
+        if (k > 1) lines.push(...bullets('DIFFERENCES FROM OPTION 1 (ordered first by the tool)', optionDifferences(top, c.results[0])));
+        lines.push(...bullets('TREATMENT CONSIDERATIONS', (top.treatment_assessment?.considerations ?? []).map(x=>`${x.label}: ${x.detail}`)));
+        lines.push(...bullets('ASSESSMENT LIMITS', top.treatment_assessment?.limitations ?? ['Individual response is not quantified; reassess actual response after implementation.']));
         const { safety, notes } = partitionWarnings(top.warnings);
-        lines.push(...bullets('SAFETY WARNINGS FOR THIS OPTION', safety));
+        lines.push(...bullets('SAFETY WARNINGS FOR THIS OPTION', safety.map(clinicalSentence)));
         lines.push(...bullets('PRESCRIBING NOTES', notes.map(stripDrugNotePrefix)));
         const shownBecause = c.results.map((r, i) => (r.shown_because ? `option ${i + 1}: ${r.shown_because}` : '')).filter(Boolean);
         lines.push(...bullets('OTHER OPTIONS SHOWN FOR A SPECIFIC REASON', shownBecause));
     } else {
-        lines.push('', 'No regimen was generated (see safety alerts).');
+        lines.push('', 'No medication option was generated. Review the safety checks, missing data and exclusions.');
     }
 
     // Withheld drugs that explain an indicated-but-missing class, with the specific reasons.
     const groups = groupExclusions(c.excludedMedications);
     const gapLines: string[] = [];
     for (const gap of c.gdmtGaps) {
-        const started = startedByTopOption(gap, top);
+        const started = startedByOption(gap, top);
         const g = exclusionsForGap(gap, groups);
         const parts: string[] = [];
-        if (started.length > 0) parts.push(`started in option 1 (${started.join(', ')})`);
+        if (started.length > 0) parts.push(`started in option ${k} (${started.join(', ')})`);
         g?.entries.forEach(e => parts.push(`${e.names.join(', ')} withheld${e.ruleName ? ` (${e.ruleName})` : ''}${entryReasonText(e) ? `: ${entryReasonText(e)}` : ''}`));
         gapLines.push(`${gap}${parts.length > 0 ? ` - ${parts.join(' | ')}` : ''}`);
     }
@@ -210,7 +250,7 @@ export function buildChartSummary(c: ChartInput): string {
     lines.push(...bullets('ELIGIBLE ADJUNCTS TO CONSIDER', c.eligibleAdjuncts));
     lines.push(...bullets('OTHER CARE PROMPTS', advisory.map(a => a.raw)));
     lines.push(...bullets('DATA NOT ENTERED (conclusions withheld)', c.missingDataNotices));
-    lines.push(...bullets('MONITORING', c.monitoringPlan.map(i => `${i.test} (${i.timing}): ${i.details}`)));
-    lines.push(...bullets('FOLLOW-UP (STRONG-HF)', c.followUpCalendar.map(i => `${i.timing}: ${i.test}. ${i.details}`)));
+    lines.push(...bullets('MONITORING', plan.monitoring.map(i => `${i.test} (${i.timing}): ${i.details}`)));
+    lines.push(...bullets('FOLLOW-UP REVIEW PROMPTS (individualize timing)', plan.followUp.map(i => `${i.timing}: ${i.test}. ${i.details}`)));
     return lines.join('\n');
 }

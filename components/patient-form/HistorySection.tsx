@@ -1,5 +1,5 @@
 import { resolveAllergy } from '../../services/engine/allergy';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WarningIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import { MEDICATION_FORMULARY, COMMON_SIDE_EFFECTS, RELEVANT_COMORBIDITIES, RELEVANT_EXTERNAL_MEDICATIONS } from '../../constants';
@@ -51,9 +51,10 @@ const EXTERNAL_MED_GROUPS: readonly OptionGroup[] = [
 interface HistorySectionProps {
     patientData: Patient;
     setPatientData: React.Dispatch<React.SetStateAction<Patient>>;
+    onPendingChange?: (pending: boolean) => void;
 }
 
-export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, setPatientData }) => {
+export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, setPatientData, onPendingChange }) => {
     // State for Allergies & Intolerances
     const [allergyInput, setAllergyInput] = useState('');
     const [intoleranceDrug, setIntoleranceDrug] = useState('');
@@ -62,6 +63,8 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
     const [intoleranceDate, setIntoleranceDate] = useState('');
     const [selectedComorbidity, setSelectedComorbidity] = useState('');
     const [selectedExternalMedication, setSelectedExternalMedication] = useState('');
+    const pending = !!(allergyInput.trim() || intoleranceDrug || intoleranceReason || intoleranceDetail.trim() || intoleranceDate || selectedComorbidity || selectedExternalMedication);
+    useEffect(() => { onPendingChange?.(pending); }, [pending, onPendingChange]);
 
     const handleAddComorbidity = () => {
         if (!selectedComorbidity) return;
@@ -147,9 +150,10 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
     };
 
     return (
-        <section>
+        <section id="patient-history" tabIndex={-1}>
+            {pending && <p role="status" className="mb-3 text-xs text-amber-800">An entry below has not been added to the chart. Add it, or clear the entry, before running.</p>}
             <h3 className="text-base font-bold text-slate-900 mb-4 pb-2 border-b border-slate-100 flex items-center gap-2">
-                <WarningIcon className="w-5 h-5 text-amber-600" aria-hidden="true" /> Clinical Context & Risks
+                <WarningIcon className="w-5 h-5 text-amber-600" aria-hidden="true" /> Clinical context and risks
             </h3>
 
             {/* Comorbidities */}
@@ -275,7 +279,7 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                         {MEDICATION_FORMULARY.map(m => <option key={m.name} value={m.name}>{m.name}</option>)}
                     </Select>
                     <Select value={intoleranceReason} onChange={(e) => setIntoleranceReason(e.target.value)} aria-label="Intolerance side effect">
-                        <option value="">Side Effect...</option>
+                        <option value="">Side effect...</option>
                         {COMMON_SIDE_EFFECTS.map(se => <option key={se} value={se}>{se}</option>)}
                     </Select>
                 </div>

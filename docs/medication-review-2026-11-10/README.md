@@ -1,5 +1,7 @@
 # Medication model review and corrections — 2026-11-10
 
+> Historical stage report. The [consolidated handoff](../HANDOFF-2026-11-13.md) reconciles subsequent fixes, retired response calculations, latest verification and remaining work. Preserve this report as evidence of its review stage.
+
 All 32 formulary drugs were reviewed at every dose tier, the findings were checked against primary
 sources, and the confirmed ones were corrected in the engine.
 

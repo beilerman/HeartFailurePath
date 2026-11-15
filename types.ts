@@ -34,7 +34,11 @@ export type RecentHFWorseningStatus = 'yes' | 'no' | 'unknown';
 // a compile error — the A-HeFT race criterion lives in clinicalPredicates.isBlackRace.
 export type Race = 'White' | 'Black' | 'Asian' | 'Hispanic' | 'Other';
 
+export const PATIENT_RHYTHMS = ['Sinus', 'AFib', 'Paced', '2nd Degree AV Block', '3rd Degree AV Block'] as const;
+
 export interface Patient {
+    /** Proposed regimen snapshots cannot be reused as newly observed follow-up data. */
+    assessment_basis?: 'observed' | 'proposed_regimen';
     // Demographics
     age: number;
     sex: 'Male' | 'Female';
@@ -47,12 +51,13 @@ export interface Patient {
     dbp: number;
     pulse: number;
     oxygen_saturation?: number; // SpO2 %
-    rhythm: 'Sinus' | 'AFib' | 'Paced' | '2nd Degree AV Block' | '3rd Degree AV Block';
+    rhythm: typeof PATIENT_RHYTHMS[number];
 
     // CHF Domains & Remote Functional
     nt_pro_bnp: number; // pg/mL
     nyha_class: 'I' | 'II' | 'III' | 'IV';
-    kccq_score: number; // 0-100
+    kccq_score?: number; // 0-100; undefined means not measured, never imputed
+    kccq_instrument?: 'CSS' | 'TSS' | 'OSS' | 'unknown';
     daily_step_count?: number; // Activity Level
     peak_flow_lpm?: number; // Strength of exhalation
 
@@ -73,6 +78,8 @@ export interface Patient {
     tsat?: number;
     /** Hemoglobin g/dL (optional): sets the ferric carboxymaltose label dose and holds it at >= 15 (no label data). */
     hemoglobin?: number;
+    iron_course_review?: 'first_course' | 'repeat_reviewed' | 'unknown';
+    phosphate_review?: 'not_indicated' | 'acceptable' | 'low' | 'unknown';
 
     comorbidities: Set<string>;
     // Active non-formulary/concurrent medications relevant to DDI checks.
@@ -92,6 +99,8 @@ export interface Patient {
 
     // Constraints
     current_regimen: RegimenMed[];
+    /** Engine-owned canonical record, including held/completed entries; never trusted from a caller. */
+    recorded_medication_exposures?: RegimenMed[];
     max_affordable_cost: number;
     cost_sensitivity: number; // 0 (Spend freely) to 10 (Every dollar counts)
     insurance_tier: InsuranceTier; // 'cash' | 'commercial' | 'medicare'
@@ -154,14 +163,15 @@ export interface Medication {
     drug_class: string; // e.g., 'ARNI', 'BB', 'MRA', 'SGLT2i', 'Loop' — must have a DRUG_CLASS_REGISTRY row in simulationService
     available_doses: MedicationDose[];
 
-    // Pharmacodynamics
+    // Historical coefficient archive: never use for clinical evaluation or presentation.
+    /** @deprecated Audit-only, not a patient-response model. */
     chf_effects: (dose: number | string) => ChfEffects;
+    /** @deprecated Audit-only; safety checks use recorded findings and explicit restrictions. */
     hemodynamic_effects: (dose: number | string) => { sbp_drop: number; hr_drop: number; potassium_change: number };
 
     /**
      * DISPLAY ONLY: the adverse effects listed on the formulary card, with an approximate rate at the usual dose (label or trial figure where the entry cites one).
-     * Most entries ignore `dose`, so these numbers must never feed scoring or selection: dose-dependent harm enters the ranking through hemodynamic_effects(dose)
-     * (blood pressure, heart rate, potassium), special_features and the projected-state penalties. `npm run verify` fails if engine code reads this field.
+     * Most entries ignore `dose`; these numbers must never feed scoring or selection. Safety uses recorded findings, explicit contraindications, interactions and medication-specific monitoring. `npm run verify` fails if engine code reads this field.
      */
     side_effects: (dose: number | string) => { [key: string]: number };
     renal_adjustment?: (egfr: number, patient?: Patient) => { start_dose_modifier?: number; max_dose?: number; caution?: boolean, contraindicated?: boolean };
@@ -272,6 +282,8 @@ export interface MedFacts {
      * strength x doses per day. Without it the cap is a per-dose strength (the other entries' caps).
      */
     renal_cap_is_daily?: boolean;
+    /** Conservative prerequisite when no validated numeric renal maximum exists. */
+    renal_change_review_below?: number;
     /**
      * VERIFIED oral furosemide-equivalent mg per mg of this loop (furosemide 1; bumetanide 40, label; torsemide 2, TRANSFORM-HF protocol). A swap
      * between two loops lands on the nearest tier at or above the equivalent TOTAL DAILY dose; it also converts an oral loop for crediting a
@@ -331,6 +343,35 @@ export interface RegimenMed {
     med: Medication;
     dose: MedicationDose;
     selected_frequency: string;
+    exposure?: MedicationExposure;
+}
+
+export interface MedicationExposure {
+    status?: 'active' | 'held' | 'completed' | 'unknown';
+    adherence?: 'consistent' | 'partial' | 'unknown';
+    started_on?: string;
+    dose_changed_on?: string;
+    last_dose_on?: string;
+    restart_or_repeat_reviewed?: boolean;
+    /** Clinician assessed drug-specific minimum time at dose and tolerability. */
+    dose_interval_reviewed?: boolean;
+}
+
+/** Recorded findings for safety review; not a future measurement or safety clearance. */
+export interface MedicationRiskScreen {
+    basis: 'observed_state_only';
+    sbp: number;
+    dbp: number;
+    pulse: number;
+    potassium_high: number;
+    potassium_low: number;
+}
+
+export interface TreatmentAssessment {
+    basis: 'observed_treated_state';
+    quantitative_response: 'not_estimated';
+    considerations: QualitativeProjection[];
+    limitations: string[];
 }
 
 export interface DomainScores {
@@ -375,10 +416,12 @@ export interface ScoredRegimen {
 
     // Projected Clinical State
     projected_patient: Patient;
-    baseline_lvef?: number; // Pre-treatment LVEF for reverse remodeling calculations
-    baseline_lvedd?: number; // Pre-treatment LVEDD for structural scoring explanation
-    baseline_lavi?: number; // Pre-treatment LAVI for structural scoring explanation
-    baseline_dry_weight_kg?: number; // Pre-treatment dry weight for weight-based target-dose checks
+    risk_screen?: MedicationRiskScreen;
+    treatment_assessment?: TreatmentAssessment;
+    baseline_lvef?: number; // Observed LVEF before this proposed change; may already be on treatment
+    baseline_lvedd?: number; // Observed LVEDD before this proposed change
+    baseline_lavi?: number; // Observed LAVI before this proposed change
+    baseline_dry_weight_kg?: number; // Recorded dry weight before this proposed change
 
     // Scores
     overall_score: number;
@@ -422,6 +465,15 @@ export interface SimulationOutput {
     missingDataNotices?: string[];   // inputs not entered → dependent inference withheld
     followUpCalendar?: MonitoringPlanItem[]; // STRONG-HF high-intensity follow-up schedule
     ranking?: RankingInfo;           // which ranking mode was used, and what Balanced would have led with (explanation only)
+    decisionReadiness?: DecisionReadiness;
+}
+
+/** Explicit scope of an assessment made from incomplete observations; never a safety clearance. */
+export interface DecisionReadiness {
+    mode: 'medication_options' | 'limited_review';
+    missing: { field: string; label: string; consequence: string }[];
+    available: string[];
+    deferred: string[];
 }
 
 // --- Delta-from-Current Modification Types ---

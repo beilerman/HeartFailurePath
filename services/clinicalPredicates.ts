@@ -107,7 +107,7 @@ export function ivIronCreditTier(patient: Patient): 'full' | 'limited' | null {
 // CKD-EPI Creatinine Equation (2021 Refit)
 export const calculateCKDEPI = (scr: number, age: number, sex: 'Male' | 'Female'): number => {
     // Blank, zero, negative or non-numeric input -> 0 (the blank sentinel), never NaN: a negative creatinine typed in the form produced NaN and froze the tab.
-    if (!(scr > 0) || !(age > 0)) return 0;
+    if (!(scr > 0) || !(age > 0) || !['Male', 'Female'].includes(sex)) return 0;
 
     // Kappa: 0.7 (female), 0.9 (male)
     const kappa = sex === 'Female' ? 0.7 : 0.9;
@@ -138,11 +138,11 @@ export const calculateBMI = (heightCm: number | undefined, weightKg: number | un
 /**
  * The two fields the form computes rather than accepts: eGFR (from creatinine, age, sex) and BMI (from height and current weight). One function, used by the form
  * and by the sample-patient fixtures, so a sample patient loaded in the browser is the patient the regression suite checked (adversarial review 2026-11-12:
- * 314 of 333 fixtures carried an eGFR the form replaced on load). BMI keeps its entered value when height or weight is blank, as the form does.
+ * 314 of 333 fixtures carried an eGFR the form replaced on load). Missing source values clear the derived value; an old BMI or assumed sex is never reused.
  */
 export function derivedFields(p: { creatinine: number; age: number; sex: 'Male' | 'Female'; height_cm: number; bmi: number; volume_status: { current_weight_kg: number } }): { egfr: number; bmi: number } {
     const bmi = calculateBMI(p.height_cm, p.volume_status.current_weight_kg);
-    return { egfr: calculateCKDEPI(p.creatinine, p.age, p.sex), bmi: bmi > 0 ? bmi : p.bmi };
+    return { egfr: calculateCKDEPI(p.creatinine, p.age, p.sex), bmi };
 }
 
 /** Structured intolerance reason that records hyperuricemia / gout on a drug (the form's side-effect list). */

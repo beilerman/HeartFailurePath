@@ -1,7 +1,9 @@
+import { isActiveExposure } from '../services/engine/medicationExposure';
 
 import React from 'react';
 import { Patient } from '../types';
-import { BNP_SCORE_TARGET } from '../services/simulationService';
+import { monthlyMedicationCost } from '../services/medicationCost';
+import { volumeDescription } from './clinicalPresentation';
 import { congestionFindingCount } from '../services/clinicalPredicates';
 import { isCongestedAboveDryWeight } from '../services/engine/regimenUtils';
 
@@ -10,56 +12,26 @@ interface ClinicalSummaryProps {
     drugPrices: Record<string, number>;
 }
 
-const DomainBar = ({ label, value, max, colorClass }: { label: string, value: number | undefined, max: number, colorClass: string }) => {
-    // Cleared form fields arrive as undefined — render a placeholder instead of crashing.
-    const percent = value != null ? Math.min(100, (value / max) * 100) : 0;
-    return (
-        <div className="mb-3">
-            <div className="flex justify-between text-xs font-bold uppercase text-slate-500 mb-1.5 tracking-wide">
-                <span>{label}</span>
-                <span>{value != null ? value.toFixed(0) : '—'} <span className="text-[10px] font-normal text-slate-400">/ {max}</span></span>
-            </div>
-            <div
-                className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden"
-                role="progressbar"
-                aria-valuenow={value != null ? Math.round(value) : 0}
-                aria-valuemin={0}
-                aria-valuemax={max}
-                aria-label={`${label}: ${value != null ? value.toFixed(0) : 'not entered'} of ${max}`}
-            >
-                <div className={`h-full ${colorClass}`} style={{ width: `${percent}%` }}></div>
-            </div>
-        </div>
-    );
-};
-
 export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugPrices }) => {
     const weightDiff = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
     // Three-band status mirroring PhysicalExamSection: Overload > +1.0, Volume Depleted < -1.0, else Euvolemic.
-    const hasWeightData = Number.isFinite(weightDiff);
     const isOverloaded = isCongestedAboveDryWeight(patient);
     const hasFindings = congestionFindingCount(patient.volume_status.exam_findings) > 0;
-    const isDehydrated = hasWeightData && weightDiff < -1.0;
-    const weightStatus = !hasWeightData
-        ? '—'
-        : isOverloaded
-            ? `+${weightDiff.toFixed(1)} kg`
-            : isDehydrated
-                ? `${weightDiff.toFixed(1)} kg (Volume Depleted)`
-                : hasFindings ? 'Weight at dry weight, but congestion findings recorded' : 'Euvolemic';
-    const weightColor = isOverloaded ? 'text-red-600' : (isDehydrated || hasFindings) ? 'text-amber-600' : 'text-emerald-600';
+    const isDehydrated = Number.isFinite(weightDiff) && weightDiff < -1.0;
+    const weightStatus = volumeDescription(patient);
+    const weightColor = isOverloaded ? 'text-red-600' : (isDehydrated || hasFindings) ? 'text-amber-600' : 'text-slate-700';
 
     // Renal Calculations
     const bunCrRatio = patient.creatinine > 0 && patient.bun != null ? patient.bun / patient.creatinine : 0;
     const isPrerenal = bunCrRatio > 20;
 
     // Calculate Current Cost & Complexity
-    const currentPrices = patient.current_regimen.map(curr => drugPrices[curr.med.name]);
+    const currentPrices = patient.current_regimen.filter(isActiveExposure).map(curr => monthlyMedicationCost(curr, patient.insurance_tier, drugPrices));
     const hasUnknownCurrentCost = currentPrices.some(price => price === undefined || !Number.isFinite(price));
     const currentCost = hasUnknownCurrentCost
         ? null
-        : currentPrices.reduce((acc, price) => acc + (price ?? 0), 0);
-    const currentComplexity = patient.current_regimen.reduce((acc, curr) => {
+        : currentPrices.reduce<number>((acc, price) => acc + (price ?? 0), 0);
+    const currentComplexity = patient.current_regimen.filter(isActiveExposure).reduce((acc, curr) => {
         let val = 1;
         if (curr.dose.formulation.includes('SQ')) val = 2;
         else if (curr.selected_frequency === 'bid') val = 2;
@@ -79,10 +51,10 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-xs font-bold text-indigo-500 uppercase mb-3 tracking-wide">Natriuretic peptide</h3>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-slate-900">{patient.nt_pro_bnp != null ? patient.nt_pro_bnp.toLocaleString() : '—'}</span>
+                        <span className="text-3xl font-black text-slate-900">{patient.nt_pro_bnp > 0 ? patient.nt_pro_bnp.toLocaleString() : 'Not entered'}</span>
                         <span className="text-sm text-slate-500 font-bold">pg/mL</span>
                     </div>
-                    <div className="mt-2 text-sm text-slate-500 font-medium">Scoring target: at or below {BNP_SCORE_TARGET} pg/mL</div>
+                    <div className="mt-2 text-sm text-slate-500 font-medium">Measured value as entered; interpret with the clinical assessment.</div>
                 </div>
 
                 {/* Functional */}
@@ -95,7 +67,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                         </div>
                         <div className="h-10 w-px bg-slate-100 mx-2"></div>
                         <div className="text-center flex-1">
-                            <div className="text-2xl font-black text-slate-900">{patient.kccq_score ?? '—'}</div>
+                            <div className="text-2xl font-black text-slate-900">{patient.kccq_score ?? '—'}</div><p className="text-xs text-slate-500">{patient.kccq_instrument ?? 'Instrument not recorded'}</p>
                             <div className="text-xs font-bold text-slate-400 uppercase mt-1">KCCQ Score</div>
                         </div>
                      </div>
@@ -104,7 +76,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                 {/* Volume */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                      <h3 className="text-xs font-bold text-emerald-500 uppercase mb-3 tracking-wide">Volume status</h3>
-                     <div className={`text-2xl font-black ${weightColor} mb-1`}>{weightStatus}</div>
+                     <p className={`text-sm font-semibold leading-relaxed ${weightColor} mb-1`}>{weightStatus}</p>
                      <div className="text-sm text-slate-500 mb-4 font-medium">{patient.volume_status.dry_weight_kg != null ? `vs dry weight (${patient.volume_status.dry_weight_kg} kg)` : 'Dry weight not entered'}</div>
                      
                      {patient.volume_status.exam_findings.size > 0 ? (
@@ -113,7 +85,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                                  <span key={f} className="px-2 py-1 bg-red-50 text-red-600 text-xs font-bold uppercase rounded border border-red-100">{f}</span>
                              ))}
                          </div>
-                     ) : <p className="text-sm italic text-slate-400 mb-4">{isOverloaded ? 'Above dry weight, no congestion findings recorded' : 'No congestion signs'}</p>}
+                     ) : <p className="text-sm text-slate-600 mb-4">No examination findings recorded.</p>}
 
                      {/* Renal / Azotemia Check */}
                      <div className="pt-4 border-t border-slate-100">
@@ -123,7 +95,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                         </div>
                         {isPrerenal && (
                             <div className="bg-amber-50 border border-amber-100 text-amber-800 text-xs px-2 py-1.5 rounded font-bold mt-1 text-center">
-                                Suggests Prerenal Azotemia
+                                Elevated BUN/creatinine ratio — assess perfusion and other causes
                             </div>
                         )}
                      </div>
@@ -132,7 +104,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                 {/* Structure */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                      <h3 className="text-xs font-bold text-amber-500 uppercase mb-3 tracking-wide">Heart structure</h3>
-                     <DomainBar label="LVEF" value={patient.lvef} max={60} colorClass="bg-amber-500" />
+                     <p className="text-sm text-slate-700">LVEF <strong className="text-2xl text-slate-900">{patient.lvef > 0 ? `${patient.lvef}%` : 'Not entered'}</strong></p>
                      {patient.lvedd && (
                          <div className="text-sm font-medium text-slate-500 mt-2">LVEDD: <span className="text-slate-800">{patient.lvedd} mm</span></div>
                      )}
@@ -140,7 +112,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
 
                 {/* Cost */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 tracking-wide">Cost of current regimen</h3>
+                    <h3 className="text-xs font-bold text-slate-500 uppercase mb-3 tracking-wide">Estimated current medication cost</h3>
                      <div className="flex items-baseline gap-2">
                         <span className={`text-2xl font-black ${currentCost !== null && currentCost > patient.max_affordable_cost ? 'text-red-600' : 'text-slate-900'}`}>
                             {currentCost === null ? 'Unavailable' : `$${currentCost}`}
