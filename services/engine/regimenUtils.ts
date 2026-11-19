@@ -1,9 +1,10 @@
 /** Small regimen/patient helpers shared by the candidate, effects and scoring stages. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, MedicationDose, ScoredRegimen, RegimenMed, ModificationSet } from '../../types';
-import { hasUnknownHistoricalHFrEF, valueUnknown } from '../clinicalPredicates';
+import { hasUnknownHistoricalHFrEF, valueUnknown, congestionFindingCount } from '../clinicalPredicates';
 import { getMedicationClassGroup, isDiureticClass, MRA_POOL_CLASSES } from './registry';
 import { drugFacts } from './drugFacts';
 import { LOW_OUTPUT, CONGESTION_EXCESS_KG_ABOVE } from './thresholds';
+import { COMPLETENESS_SUBTARGET_CREDIT, COMPLETENESS_GRADED_CREDIT_SPAN } from './scoreModel';
 
 // --- Helper Functions ---
 const DOSES_PER_DAY: Record<string, number> = { qd: 1, bid: 2, tid: 3 };
@@ -20,6 +21,21 @@ export function dosesPerDay(frequency: string): number {
  */
 export function dailyDose(r: RegimenMed): number {
     return Number(r.dose.strength) * dosesPerDay(r.selected_frequency);
+}
+
+/**
+ * ONE numeric total daily dose for a regimen entry, including combination strengths ("24/26", "37.5/20"): `facts.combination_daily_dose` says whether the
+ * components add ('sum', sacubitril + valsartan) or the first component counts ('first', the hydralazine in hydralazine/isosorbide dinitrate). The single shared
+ * helper for dose-evidence credit and the harm-rate dose interpolation; `dailyDose` keeps returning NaN for a combination (loop and cap logic rely on that).
+ */
+export function numericStrength(med: Medication, strength: number | string): number {
+    if (typeof strength === 'number') return strength;
+    const parts = String(strength).split('/').map(x => parseFloat(x));
+    if (parts.length === 0 || parts.some(Number.isNaN)) return NaN;
+    return drugFacts(med).combination_daily_dose === 'sum' ? parts.reduce((a, b) => a + b, 0) : parts[0];
+}
+export function numericDailyDose(r: RegimenMed): number {
+    return numericStrength(r.med, r.dose.strength) * dosesPerDay(r.selected_frequency);
 }
 
 /** The dose the entry's effect functions are evaluated at: the daily dose when `facts.effects_on_daily_dose`, else the strength. */
@@ -176,6 +192,13 @@ export function getDoseTiers(med: Medication, patient: Patient): RegimenMed[] {
     const targetDose = dosesForTiering.find(d => d.is_target_dose);
     if (targetDose) tiers.push(targetDose);
 
+    // The patient's LABEL STARTING dose is always a tier (F3, 2026-11-16): the sampler above can skip it (metoprolol succinate: 12.5, 50, 200 sampled, start 25), which
+    // left a new start on the lowest tablet tier instead of the label start.
+    if (med.start_dose_for) {
+        const startDose = dosesForTiering.find(d => String(d.strength) === String(med.start_dose_for!(patient)));
+        if (startDose) tiers.push(startDose);
+    }
+
     // Unique only
     tiers = [...new Set(tiers)];
 
@@ -206,7 +229,9 @@ export function restrictToStartTiers(tiers: RegimenMed[], patient: Patient): Reg
         const order = med.available_doses;
         const idx = (t: RegimenMed) => order.findIndex(d => d.strength === t.dose.strength);
         const startIdx = order.findIndex(d => String(d.strength) === String(med.start_dose_for!(patient)));
-        const exact = drugFacts(med).start_dose_exact === true;
+        // Controller ruling 2026-11-16 (F3; not ruled by the owner): a new start is offered at the patient's LABEL starting dose (start_dose_for already carries the renal and NYHA safety rules), never a lower
+        // tablet tier by default ('start low, go slow' is not a stated safety rule). Before this, spironolactone at eGFR above 50 and metoprolol succinate at NYHA I-II started below label.
+        const exact = true;
         const allowed = startIdx < 0 ? [] : medTiers.filter(t => exact ? idx(t) === startIdx : idx(t) <= startIdx);
         if (allowed.length > 0) { allowed.forEach(t => keep.add(t)); return; }
         keep.add([...medTiers].sort((a, b) => idx(a) - idx(b))[0]);
@@ -337,6 +362,15 @@ export function computeRedundantCurrentMeds(
 // H2 fix: Require ≥2 of 3 hypoperfusion markers to avoid false positives from a single
 // nonspecific finding (e.g., BUN/Cr > 20 alone from dehydration, not true low output).
 // Markers: (1) cool extremities, (2) narrow pulse pressure ≤ 25, (3) prerenal azotemia BUN/Cr > 20.
+/**
+ * Congestion as the engine already uses it to hold a loop reduction at the modeled plateau (`loopReductionHeldAtModeledPlateau`): current weight more than
+ * CONGESTION_EXCESS_KG_ABOVE above dry weight (the criterion congestion coverage uses) OR any congestion finding on examination (`congestionFindingCount`, the criterion the
+ * congestion alerts and the diuretic hold use). The loop-diuretic evidence population (`congested`) and its dose credit read this one predicate.
+ */
+export function hasCongestion(patient: Patient): boolean {
+    return isCongestedAboveDryWeight(patient) || congestionFindingCount(patient.volume_status.exam_findings) > 0;
+}
+
 /** Congested by the engine's weight criterion: current weight more than CONGESTION_EXCESS_KG_ABOVE kg above dry weight. */
 export function isCongestedAboveDryWeight(patient: Patient): boolean {
     return patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg > CONGESTION_EXCESS_KG_ABOVE;
@@ -453,6 +487,16 @@ export function doseProgressToTarget(r: RegimenMed, patient: Patient): number | 
     return finishProgress(start, target, current);
 }
 
+/**
+ * The patient's labelled starting TOTAL daily dose for this regimen entry, using the same start logic as doseProgressToTarget (start_dose_for, else the lowest tier,
+ * read at the entry's own frequency). undefined when no numeric start exists.
+ */
+export function startingDailyDose(r: RegimenMed, patient: Patient): number | undefined {
+    const startTier = r.med.start_dose_for ? r.med.start_dose_for(patient) : r.med.available_doses[0]?.strength;
+    const n = startTier === undefined ? NaN : numericStrength(r.med, startTier);
+    return Number.isNaN(n) ? undefined : n * dosesPerDay(r.selected_frequency);
+}
+
 function finishProgress(start: number | undefined, target: number | undefined, current: number | undefined): number | undefined {
     if (start === undefined || target === undefined || current === undefined || target <= 0) return undefined;
     if (target <= start) return 1;
@@ -541,4 +585,24 @@ export function hasDiureticDeEscalation(modificationSet: ModificationSet): boole
 
 export function formatDose(r: RegimenMed): string {
     return `${r.dose.strength}${r.dose.unit} ${r.selected_frequency}`;
+}
+
+/**
+ * Dose credit (0-1) for one regimen entry: how much of the drug's attainable benefit the current dose is credited with. Shared by the GDMT-completeness
+ * domain (scoring.ts) and the outcome-benefit module (outcomeBenefit.ts) so both read the same dose scale.
+ * 1.0 for a single-dose drug, a dose at the patient's target, at the maximum available strength, or at an interaction dose cap (e.g. eplerenone 25 mg with a
+ * moderate CYP3A inhibitor). Otherwise COMPLETENESS_SUBTARGET_CREDIT (0.6) at or below the starting tier, rising linearly to 1.0 at target
+ * (doseProgressToTarget); a flat 0.6 where no numeric target exists.
+ */
+export function therapyDoseCredit(r: RegimenMed, patient: Patient): number {
+    const doses = r.med.available_doses;
+    if (doses.length === 1) return 1;
+    const atTarget = isTargetDoseForPatient(r, patient);
+    const strengths = doses.map(d => Number(d.strength)).filter(n => !Number.isNaN(n));
+    const atMax = strengths.length > 0 && Number(r.dose.strength) >= Math.max(...strengths);
+    const cap = r.med.interaction_dose_cap?.(patient);
+    const atCap = !!cap && Number(r.dose.strength) >= cap.max_dose;
+    if (atTarget || atMax || atCap) return 1;
+    const progress = doseProgressToTarget(r, patient);
+    return progress === undefined ? COMPLETENESS_SUBTARGET_CREDIT : COMPLETENESS_SUBTARGET_CREDIT + COMPLETENESS_GRADED_CREDIT_SPAN * progress;
 }

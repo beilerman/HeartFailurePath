@@ -1,0 +1,1106 @@
+[
+ {
+  "id": "acei-reduced-death",
+  "drug_class": "ACEi",
+  "drugs": [
+   "Lisinopril",
+   "Enalapril",
+   "Ramipril",
+   "Captopril"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.8,
+  "ci_low": 0.74,
+  "ci_high": 0.87,
+  "measure": "OR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Flather ACE-inhibitor individual-patient overview",
+   "citation": "Flather MD et al. ACE-Inhibitor Myocardial Infarction Collaborative Group. Lancet 2000;355:1575-81",
+   "pmid": "10821360"
+  },
+  "population": "Five long-term ACEi-vs-placebo trials (SAVE, AIRE, TRACE, SOLVD-T, SOLVD-P), LV dysfunction or HF, 3 of 5 post-MI; 12,763 patients",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "For all five trials the ACE inhibitor group had lower rates of death than the placebo group (1,467/6,391 [23.0%] vs 1,710/6,372 [26.8%]; 0.80 [0.74-0.87]) and lower rates of reinfarction (571 [8.9%] vs 703 [11.0%]; 0.79 [0.70-0.89]), readmission for heart failure (876 [13.7%] vs 1202 [18.9%]; 0.67 [0.61-0.74]), and the composite of these events (2161 [33.8%] vs 2610 [41.0%]; 0.72 [0.67-0.78]; all p<0.0001).",
+  "extrapolation": "",
+  "notes": "Peto odds ratio (not a hazard ratio), all-cause death, average follow-up 35 months. Shared by lisinopril, enalapril, ramipril and captopril per the class rule (no placebo-controlled lisinopril trial exists). Three of five trials were post-infarction; only SOLVD-T/P enrolled chronic HF."
+ },
+ {
+  "id": "acei-reduced-hfh",
+  "drug_class": "ACEi",
+  "drugs": [
+   "Lisinopril",
+   "Enalapril",
+   "Ramipril",
+   "Captopril"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.67,
+  "ci_low": 0.61,
+  "ci_high": 0.74,
+  "measure": "OR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Flather ACE-inhibitor individual-patient overview",
+   "citation": "Flather MD et al. ACE-Inhibitor Myocardial Infarction Collaborative Group. Lancet 2000;355:1575-81",
+   "pmid": "10821360"
+  },
+  "population": "Five long-term ACEi-vs-placebo trials (SAVE, AIRE, TRACE, SOLVD-T, SOLVD-P), LV dysfunction or HF, 3 of 5 post-MI; 12,763 patients",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "For all five trials the ACE inhibitor group had lower rates of death than the placebo group (1,467/6,391 [23.0%] vs 1,710/6,372 [26.8%]; 0.80 [0.74-0.87]) and lower rates of reinfarction (571 [8.9%] vs 703 [11.0%]; 0.79 [0.70-0.89]), readmission for heart failure (876 [13.7%] vs 1202 [18.9%]; 0.67 [0.61-0.74]), and the composite of these events (2161 [33.8%] vs 2610 [41.0%]; 0.72 [0.67-0.78]; all p<0.0001).",
+  "extrapolation": "",
+  "notes": "Peto odds ratio for readmission for heart failure (patients readmitted, a first-event-type count, not a recurrent-event rate). Shared by all four ACE inhibitors."
+ },
+ {
+  "id": "acei-mildly-reduced-death",
+  "drug_class": "ACEi",
+  "drugs": [
+   "Lisinopril",
+   "Enalapril",
+   "Ramipril",
+   "Captopril"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.91,
+  "ci_low": 0.83,
+  "ci_high": 1.0,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "CHARM-Overall (candesartan vs placebo, all EF)",
+   "citation": "Pfeffer MA et al. Lancet 2003;362:759-66",
+   "pmid": "13678868"
+  },
+  "population": "CHARM programme, LVEF <=40 and >40, candesartan vs placebo",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "886 (23%) patients in the candesartan and 945 (25%) in the placebo group died (unadjusted hazard ratio 0.91 [95% CI 0.83-1.00], p=0.055; covariate adjusted 0.90 [0.82-0.99], p=0.032)",
+  "extrapolation": "No ACE-inhibitor placebo trial enrolled LVEF 41-49%. A band-specific all-cause death HR for LVEF 40-49 (Lund 2018, Eur J Heart Fail 29431256) is in the full text, which was not retrievable (paywalled, not in PMC); the Lund abstract and the secondary sources found give no all-cause figure for this band. Used the programme-wide HR, whose abstract states 'Ejection fraction or treatment at baseline did not alter these effects'. ACEi value is carried over from the ARB (CHARM) estimate as the nearest evidence.",
+  "notes": "Unadjusted HR; covariate-adjusted 0.90 (0.82-0.99). Weak for this band: all-EF average, not LVEF 40-49. Young 2004 (EF<=40) all-cause HR 0.88 (0.79-0.98); Cochrane 2021 ARB at EF>40 RR 1.01 (0.92-1.11), so the true band value lies between."
+ },
+ {
+  "id": "acei-mildly-reduced-hfh",
+  "drug_class": "ACEi",
+  "drugs": [
+   "Lisinopril",
+   "Enalapril",
+   "Ramipril",
+   "Captopril"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.72,
+  "ci_low": 0.55,
+  "ci_high": 0.95,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "CHARM pooled by EF (Lund 2018), time-to-first HF hospitalization, quoted via ESC Heart Fail 2023 network meta-analysis",
+   "citation": "Lund LH et al. Eur J Heart Fail 2018;20:1230-9 (29431256); quoted in Leite M et al. ESC Heart Fail 2023;10:1822-34",
+   "pmid": "36896801"
+  },
+  "population": "CHARM, HFmrEF (EF 40-49%), n=1322, candesartan vs placebo",
+  "comparator": "placebo",
+  "verification": "secondary_source_quote",
+  "quote": "Candesartan significantly reduced the composite endpoint of CV death or HF hospitalization (HR 0.76, 95% CI 0.61-0.96; P = 0.02), first HF hospitalization (HR 0.72, 95% CI 0.55-0.95; P = 0.02), and HF hospitalization recurrence (HR 0.48, 95% CI 0.33-0.70; P < 0.001) in HFmrEF subgroup.",
+  "extrapolation": "No ACEi placebo trial in LVEF 41-49%; the ARB (candesartan, CHARM) estimate is applied as the nearest evidence. Time-to-first HF hospitalization HR chosen over the recurrent-event rate ratio 0.48 (0.33-0.70) per the rule.",
+  "notes": "Post hoc EF split of a trial; 1322 patients. Lund 2018 abstract itself gives only the recurrent-event rate ratio (0.48 (0.33-0.70)) and the first-event composite HR 0.76 (0.61-0.96); the first-HFH HR 0.72 comes from the 2023 network meta-analysis text, not the Lund full text."
+ },
+ {
+  "id": "arb-mildly-reduced-death",
+  "drug_class": "ARB",
+  "drugs": [
+   "Valsartan",
+   "Candesartan",
+   "Losartan"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.91,
+  "ci_low": 0.83,
+  "ci_high": 1.0,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "CHARM-Overall (candesartan vs placebo, all EF)",
+   "citation": "Pfeffer MA et al. Lancet 2003;362:759-66",
+   "pmid": "13678868"
+  },
+  "population": "CHARM programme, LVEF <=40 and >40, candesartan vs placebo",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "886 (23%) patients in the candesartan and 945 (25%) in the placebo group died (unadjusted hazard ratio 0.91 [95% CI 0.83-1.00], p=0.055; covariate adjusted 0.90 [0.82-0.99], p=0.032)",
+  "extrapolation": "A band-specific all-cause death HR for LVEF 40-49 (Lund 2018, Eur J Heart Fail 29431256) is in the full text, which was not retrievable (paywalled, not in PMC); the Lund abstract and the secondary sources found give no all-cause figure for this band. Used the programme-wide HR, whose abstract states 'Ejection fraction or treatment at baseline did not alter these effects'.",
+  "notes": "Unadjusted HR; covariate-adjusted 0.90 (0.82-0.99). Weak for this band: all-EF average, not LVEF 40-49. Young 2004 (EF<=40) all-cause HR 0.88 (0.79-0.98); Cochrane 2021 ARB at EF>40 RR 1.01 (0.92-1.11), so the true band value lies between."
+ },
+ {
+  "id": "arb-mildly-reduced-hfh",
+  "drug_class": "ARB",
+  "drugs": [
+   "Valsartan",
+   "Candesartan",
+   "Losartan"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.72,
+  "ci_low": 0.55,
+  "ci_high": 0.95,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "CHARM pooled by EF (Lund 2018), time-to-first HF hospitalization, quoted via ESC Heart Fail 2023 network meta-analysis",
+   "citation": "Lund LH et al. Eur J Heart Fail 2018;20:1230-9 (29431256); quoted in Leite M et al. ESC Heart Fail 2023;10:1822-34",
+   "pmid": "36896801"
+  },
+  "population": "CHARM, HFmrEF (EF 40-49%), n=1322, candesartan vs placebo",
+  "comparator": "placebo",
+  "verification": "secondary_source_quote",
+  "quote": "Candesartan significantly reduced the composite endpoint of CV death or HF hospitalization (HR 0.76, 95% CI 0.61-0.96; P = 0.02), first HF hospitalization (HR 0.72, 95% CI 0.55-0.95; P = 0.02), and HF hospitalization recurrence (HR 0.48, 95% CI 0.33-0.70; P < 0.001) in HFmrEF subgroup.",
+  "extrapolation": "Time-to-first HF hospitalization HR chosen over the recurrent-event rate ratio 0.48 (0.33-0.70) per the rule.",
+  "notes": "Post hoc EF split of a trial; 1322 patients. Lund 2018 abstract itself gives only the recurrent-event rate ratio (0.48 (0.33-0.70)) and the first-event composite HR 0.76 (0.61-0.96); the first-HFH HR 0.72 comes from the 2023 network meta-analysis text, not the Lund full text."
+ },
+ {
+  "id": "arb-reduced-death",
+  "drug_class": "ARB",
+  "drugs": [
+   "Valsartan",
+   "Candesartan",
+   "Losartan"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.88,
+  "ci_low": 0.79,
+  "ci_high": 0.98,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "CHARM low-LVEF pool (CHARM-Alternative + CHARM-Added)",
+   "citation": "Young JB et al. Circulation 2004;110:2618-26 (CHARM low-LVEF trials)",
+   "pmid": "15492298"
+  },
+  "population": "CHARM-Alternative + CHARM-Added, LVEF <=40, n=4576 (2289 candesartan, 2287 placebo); CHARM-Alternative = ACE-inhibitor-intolerant, CHARM-Added = on ACE inhibitor",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "Of the patients in the candesartan group, 817 (35.7%) experienced cardiovascular death or a CHF hospitalization as compared with 944 (41.3%) in the placebo group (HR 0.82; 95% CI 0.74 to 0.90; P<0.001) with reduced risk for both cardiovascular deaths (521 [22.8%] versus 599 [26.2%]; HR 0.84 [95% CI 0.75 to 0.95]; P=0.005) and CHF hospitalizations (516 [22.5%] versus 642 [28.1%]; HR 0.76 [95% CI 0.68 to 0.85]; P<0.001). It is important to note that all-cause mortality also was significantly reduced by candesartan (642 [28.0%] versus 708 [31.0%]; HR 0.88 [95% CI 0.79 to 0.98]; P=0.018).",
+  "extrapolation": "CHARM-Alternative alone (ACEi-intolerant) is the preferred class evidence, but its abstract (Granger 2003, PMID 13678870) gives only the composite HR 0.77 (0.67-0.89) and 'each component ... was reduced'; the component HRs are in the paywalled full text. Fell back to the prespecified CHARM low-LVEF pool (Young 2004), as the rule allows. Cross-check: dividing the McMurray 2015 putative-placebo all-cause figure referenced to CHARM-Alternative (0.74 (0.61-0.89)) by PARADIGM-HF vs enalapril (0.84 (0.76-0.93)) on the log scale gives about 0.88 (0.75-1.03) for CHARM-Alternative, in line with 0.88.",
+  "notes": "Time-to-first-event analysis, all-cause death, a secondary endpoint in the pooled analysis. Val-HeFT (valsartan, ~93% on an ACE inhibitor; 'Overall mortality was similar in the two groups', abstract gives no ratio) recorded but not used. Shared by valsartan, candesartan, losartan (no placebo-controlled losartan trial)."
+ },
+ {
+  "id": "arb-reduced-hfh",
+  "drug_class": "ARB",
+  "drugs": [
+   "Valsartan",
+   "Candesartan",
+   "Losartan"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.76,
+  "ci_low": 0.68,
+  "ci_high": 0.85,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "CHARM low-LVEF pool (CHARM-Alternative + CHARM-Added)",
+   "citation": "Young JB et al. Circulation 2004;110:2618-26 (CHARM low-LVEF trials)",
+   "pmid": "15492298"
+  },
+  "population": "CHARM-Alternative + CHARM-Added, LVEF <=40, n=4576 (2289 candesartan, 2287 placebo); CHARM-Alternative = ACE-inhibitor-intolerant, CHARM-Added = on ACE inhibitor",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "Of the patients in the candesartan group, 817 (35.7%) experienced cardiovascular death or a CHF hospitalization as compared with 944 (41.3%) in the placebo group (HR 0.82; 95% CI 0.74 to 0.90; P<0.001) with reduced risk for both cardiovascular deaths (521 [22.8%] versus 599 [26.2%]; HR 0.84 [95% CI 0.75 to 0.95]; P=0.005) and CHF hospitalizations (516 [22.5%] versus 642 [28.1%]; HR 0.76 [95% CI 0.68 to 0.85]; P<0.001). It is important to note that all-cause mortality also was significantly reduced by candesartan (642 [28.0%] versus 708 [31.0%]; HR 0.88 [95% CI 0.79 to 0.98]; P=0.018).",
+  "extrapolation": "CHARM-Alternative alone (ACEi-intolerant) is the preferred class evidence, but its abstract (Granger 2003, PMID 13678870) gives only the composite HR 0.77 (0.67-0.89) and 'each component ... was reduced'; the component HRs are in the paywalled full text. Fell back to the prespecified CHARM low-LVEF pool (Young 2004), as the rule allows. Cross-check: dividing the McMurray 2015 putative-placebo all-cause figure referenced to CHARM-Alternative (0.74 (0.61-0.89)) by PARADIGM-HF vs enalapril (0.84 (0.76-0.93)) on the log scale gives about 0.88 (0.75-1.03) for CHARM-Alternative, in line with 0.88.",
+  "notes": "Time-to-first CHF hospitalization HR, chosen over the recurrent-event rate ratio 0.68 (0.58-0.80) (Lund 2018). Val-HeFT: 455 (18.2%) placebo vs 346 (13.8%) valsartan patients hospitalized for HF; the ratio and interval in the earlier table (0.72) are not in the abstract and are not used."
+ },
+ {
+  "id": "acei-preserved-death",
+  "drug_class": "ACEi",
+  "drugs": [
+   "Lisinopril",
+   "Enalapril",
+   "Ramipril",
+   "Captopril"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "rr": 1.04,
+  "ci_low": 0.75,
+  "ci_high": 1.45,
+  "measure": "RR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Cochrane review, ACE inhibitors vs placebo/no treatment, LVEF >40%",
+   "citation": "Martin N et al. Cochrane Database Syst Rev 2021;5:CD012721",
+   "pmid": "34022072"
+  },
+  "population": "5 RCTs, 1187 patients, LVEF >40% (3 placebo-controlled, others usual-care comparator); includes PEP-CHF, Hong Kong DHF, Zi 2003",
+  "comparator": "placebo or no treatment",
+  "verification": "abstract_quote",
+  "quote": "Pooled analyses with moderate-certainty evidence suggest that ACEI treatment likely has little or no effect on cardiovascular mortality (RR 0.93, 95% CI 0.61 to 1.42; 945 participants; two studies), all-cause mortality (RR 1.04, 95% CI 0.75 to 1.45; 1187 participants; five studies) and heart failure hospitalisation (RR 0.86, 95% CI 0.64 to 1.15; 1019 participants; three studies)",
+  "extrapolation": "",
+  "notes": "Risk ratio on patients dying; PEP-CHF alone HR 1.09 (0.75-1.58). Population is LVEF >40, not >=50. Replaces the earlier assumed-neutral 1.0 with a published randomized estimate; it is neutral-leaning and imprecise."
+ },
+ {
+  "id": "acei-preserved-hfh",
+  "drug_class": "ACEi",
+  "drugs": [
+   "Lisinopril",
+   "Enalapril",
+   "Ramipril",
+   "Captopril"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "rr": 0.86,
+  "ci_low": 0.64,
+  "ci_high": 1.15,
+  "measure": "RR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Cochrane review, ACE inhibitors vs placebo/no treatment, LVEF >40%",
+   "citation": "Martin N et al. Cochrane Database Syst Rev 2021;5:CD012721",
+   "pmid": "34022072"
+  },
+  "population": "3 RCTs, 1019 patients (Hong Kong DHF, PEP-CHF, Zi 2003), LVEF >40%",
+  "comparator": "placebo or no treatment",
+  "verification": "abstract_quote",
+  "quote": "Pooled analyses with moderate-certainty evidence suggest that ACEI treatment likely has little or no effect on cardiovascular mortality (RR 0.93, 95% CI 0.61 to 1.42; 945 participants; two studies), all-cause mortality (RR 1.04, 95% CI 0.75 to 1.45; 1187 participants; five studies) and heart failure hospitalisation (RR 0.86, 95% CI 0.64 to 1.15; 1019 participants; three studies)",
+  "extrapolation": "",
+  "notes": "Risk ratio on patients with an HF hospitalization, not time-to-first (no pooled HR available). PEP-CHF 1-year HF-hospitalization HR 0.628 (0.408-0.966) (Cleland 2006, 16963472) and its full-follow-up composite HR 0.919 (0.700-1.208) are not used because the pooled randomized estimate is preferred."
+ },
+ {
+  "id": "arb-preserved-death",
+  "drug_class": "ARB",
+  "drugs": [
+   "Valsartan",
+   "Candesartan",
+   "Losartan"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "rr": 1.01,
+  "ci_low": 0.92,
+  "ci_high": 1.11,
+  "measure": "RR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Cochrane review, ARBs vs placebo/no treatment, LVEF >40% (driven by CHARM-Preserved and I-PRESERVE)",
+   "citation": "Martin N et al. Cochrane Database Syst Rev 2021;5:CD012721",
+   "pmid": "34022072"
+  },
+  "population": "4 RCTs, 7964 patients, LVEF >40%",
+  "comparator": "placebo or no treatment",
+  "verification": "abstract_quote",
+  "quote": "Pooled analyses with high certainty of evidence suggest that ARB treatment has little or no effect on cardiovascular mortality (RR 1.02, 95% 0.90 to 1.14; 7254 participants; three studies), all-cause mortality (RR 1.01, 95% CI 0.92 to 1.11; 7964 participants; four studies), heart failure hospitalisation (RR 0.92, 95% CI 0.83 to 1.02; 7254 participants; three studies)",
+  "extrapolation": "",
+  "notes": "Risk ratio; high-certainty. Population LVEF >40 (CHARM-Preserved) and >=45 (I-PRESERVE)."
+ },
+ {
+  "id": "arb-preserved-hfh",
+  "drug_class": "ARB",
+  "drugs": [
+   "Valsartan",
+   "Candesartan",
+   "Losartan"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "rr": 0.9,
+  "ci_low": 0.8,
+  "ci_high": 1.01,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Cochrane review, ARBs vs placebo, time-to-first HF hospitalization (CHARM-Preserved + I-PRESERVE)",
+   "citation": "Martin N et al. Cochrane Database Syst Rev 2021;5:CD012721",
+   "pmid": "34022072"
+  },
+  "population": "2 RCTs, 7148 patients, LVEF >40%",
+  "comparator": "placebo",
+  "verification": "full_text_quote",
+  "quote": "Two studies (CHARM-Preserved; I-PRESERVE) were also pooled for analysis of hazard ratio (HR 0.90, 95% CI 0.80 to 1.01; 7148 participants; Analysis 4.4).",
+  "extrapolation": "",
+  "notes": "Time-to-first HR (RR over three studies 0.92 (0.83-1.02)). CHARM-HFpEF recurrent-event rate ratio 0.78 (0.59-1.03) (Lund 2018) not used (recurrent events, one trial)."
+ },
+ {
+  "id": "arni-reduced-death",
+  "drug_class": "ARNI",
+  "drugs": [
+   "Sacubitril/Valsartan (Entresto)"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.72,
+  "ci_low": 0.61,
+  "ci_high": 0.85,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "PARADIGM-HF putative-placebo analysis (reference: SOLVD-T enalapril vs placebo)",
+   "citation": "McMurray J et al. Eur Heart J 2015;36:434-9",
+   "pmid": "25416329"
+  },
+  "population": "PARADIGM-HF (LVEF <=40) vs enalapril, indirectly referenced to placebo",
+  "comparator": "putative placebo (indirect)",
+  "verification": "abstract_quote",
+  "quote": "For the primary composite outcome of cardiovascular death or heart failure hospitalization in PARADIGM-HF, the relative risk reduction with LCZ696 vs. a putative placebo from SOLVD-T was 43% (95%CI 34-50%; P < 0.0001) with similarly large effects on cardiovascular death (34%, 21-44%; P < 0.0001) and heart failure hospitalization (49%, 39-58%; P < 0.0001). For all-cause mortality, the reduction compared with a putative placebo was 28% (95%CI 15-39%; P < 0.0001).",
+  "extrapolation": "Published indirect comparison: product of LCZ696-vs-enalapril HR (death 0.84 (0.76-0.93), PMID 25176015) and SOLVD-T enalapril-vs-placebo; converted from a 28% reduction (15-39%) to 0.72 (0.61-0.85).",
+  "notes": "Not a randomized placebo comparison. Referenced to CHARM-Alternative instead: 26% (11-39%) = 0.74 (0.61-0.89). It uses SOLVD-T, whereas the ACEi class row uses the Flather overview (0.80), so ARNI-vs-ACEi in the engine is 0.72 vs 0.80, slightly larger than the randomized 0.84."
+ },
+ {
+  "id": "arni-reduced-hfh",
+  "drug_class": "ARNI",
+  "drugs": [
+   "Sacubitril/Valsartan (Entresto)"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.51,
+  "ci_low": 0.42,
+  "ci_high": 0.61,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "PARADIGM-HF putative-placebo analysis (reference: SOLVD-T enalapril vs placebo)",
+   "citation": "McMurray J et al. Eur Heart J 2015;36:434-9",
+   "pmid": "25416329"
+  },
+  "population": "PARADIGM-HF (LVEF <=40) vs enalapril, indirectly referenced to placebo",
+  "comparator": "putative placebo (indirect)",
+  "verification": "abstract_quote",
+  "quote": "For the primary composite outcome of cardiovascular death or heart failure hospitalization in PARADIGM-HF, the relative risk reduction with LCZ696 vs. a putative placebo from SOLVD-T was 43% (95%CI 34-50%; P < 0.0001) with similarly large effects on cardiovascular death (34%, 21-44%; P < 0.0001) and heart failure hospitalization (49%, 39-58%; P < 0.0001). For all-cause mortality, the reduction compared with a putative placebo was 28% (95%CI 15-39%; P < 0.0001).",
+  "extrapolation": "Converted from a 49% reduction (39-58%) to 0.51 (0.42-0.61). Time-to-first HF hospitalization.",
+  "notes": "Indirect. CHARM-Alternative-referenced: 46% (33-56%) = 0.54 (0.44-0.67)."
+ },
+ {
+  "id": "arni-mildly-reduced-death",
+  "drug_class": "ARNI",
+  "drugs": [
+   "Sacubitril/Valsartan (Entresto)"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.8,
+  "ci_low": 0.71,
+  "ci_high": 0.91,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "Solomon 2020 pooled PARADIGM-HF + PARAGON-HF (ARNI vs RAS inhibitor) x CHARM-Overall (RAS blocker vs placebo)",
+   "citation": "Solomon SD et al. Circulation 2020;141:352-61; Pfeffer MA et al. Lancet 2003;362:759-66",
+   "pmid": "31736342"
+  },
+  "population": "PARADIGM+PARAGON pooled, all EF (n=13,195) vs ACEi/ARB; times candesartan vs placebo (all EF)",
+  "comparator": "placebo (product of two comparisons)",
+  "verification": "computed_from_verified",
+  "quote": "Overall sacubitril/valsartan was superior to renin-angiotensin-aldosterone-system inhibition for first cardiovascular death or heart failure hospitalization (Hazard Ratio [HR] 0.84 [95% CI, 0.78-0.90]), cardiovascular death (HR 0.84 [95% CI, 0.76-0.92]), heart failure hospitalization (HR 0.84 [95% CI, 0.77-0.91]), and all-cause mortality (HR 0.88 [95% CI, 0.81-0.96]).",
+  "extrapolation": "Log-scale product. (a) ARNI vs RAS inhibitor, all-cause death 0.88 (0.81-0.96): ln=-0.1278, se=(ln0.96-ln0.81)/3.92=0.0433. (b) ACEi/ARB vs placebo, mildly reduced band, all-cause death 0.91 (0.83-1.00) (CHARM-Overall, row ARB-mildly_reduced-death): ln=-0.0943, se=(ln1.00-ln0.83)/3.92=0.0475. Sum ln=-0.2221, combined se=sqrt(0.0433^2+0.0475^2)=0.0643; rr=exp(-0.2221)=0.80, interval exp(-0.2221 +/- 1.96*0.0643)=0.71-0.91.",
+  "notes": "Arithmetic matches the first researcher. Both components are all-EF averages (band-specific HRs for Solomon 2020 are in figures not retrievable; the abstract says benefit is 'primarily below the normal range' and effect varies by LVEF, interaction P=0.02). Independence assumed. Weakest ARNI death cell."
+ },
+ {
+  "id": "arni-mildly-reduced-hfh",
+  "drug_class": "ARNI",
+  "drugs": [
+   "Sacubitril/Valsartan (Entresto)"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.6,
+  "ci_low": 0.45,
+  "ci_high": 0.81,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "Solomon 2020 pooled PARADIGM-HF + PARAGON-HF (ARNI vs RAS inhibitor) x CHARM HFmrEF first-HFH (RAS blocker vs placebo)",
+   "citation": "Solomon SD et al. Circulation 2020;141:352-61; Lund LH et al. Eur J Heart Fail 2018 as quoted in Leite M et al. ESC Heart Fail 2023",
+   "pmid": "31736342"
+  },
+  "population": "PARADIGM+PARAGON pooled, all EF, first HF hospitalization vs ACEi/ARB; times candesartan HFmrEF first-HFH vs placebo",
+  "comparator": "placebo (product of two comparisons)",
+  "verification": "computed_from_verified",
+  "quote": "Overall sacubitril/valsartan was superior to renin-angiotensin-aldosterone-system inhibition for first cardiovascular death or heart failure hospitalization (Hazard Ratio [HR] 0.84 [95% CI, 0.78-0.90]), cardiovascular death (HR 0.84 [95% CI, 0.76-0.92]), heart failure hospitalization (HR 0.84 [95% CI, 0.77-0.91]), and all-cause mortality (HR 0.88 [95% CI, 0.81-0.96]).",
+  "extrapolation": "Log-scale product. (a) ARNI vs RAS inhibitor, first HF hospitalization 0.84 (0.77-0.91): ln=-0.1744, se=(ln0.91-ln0.77)/3.92=0.0426. (b) ACEi/ARB vs placebo, mildly reduced, time-to-first HF hospitalization 0.72 (0.55-0.95): ln=-0.3285, se=(ln0.95-ln0.55)/3.92=0.1394. Sum ln=-0.5029, se=sqrt(0.0426^2+0.1394^2)=0.1458; rr=exp(-0.5029)=0.605, interval exp(-0.5029 +/- 1.96*0.1458)=0.45-0.81.",
+  "notes": "Corrects the first researcher's 0.40 (0.27-0.59), whose arithmetic was right but which multiplied in the recurrent-event rate ratio 0.48 instead of the first-event HR 0.72. Component (a) is an all-EF average dominated by PARADIGM-HF (HFrEF); the abstract says HFH benefit extends to mildly reduced EF. Still the weakest-grounded ARNI cell: two indirect factors, one from a post hoc subgroup."
+ },
+ {
+  "id": "arni-preserved-death",
+  "drug_class": "ARNI",
+  "drugs": [
+   "Sacubitril/Valsartan (Entresto)"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "rr": 0.98,
+  "ci_low": 0.83,
+  "ci_high": 1.16,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "Cochrane 2021 ARNI vs usual care/valsartan (PARAGON-HF, PARAMOUNT, PARALLAX) x Cochrane 2021 ARB vs placebo (all-cause death)",
+   "citation": "Martin N et al. Cochrane Database Syst Rev 2021;5:CD012721",
+   "pmid": "34022072"
+  },
+  "population": "HFpEF/LVEF >40-45, ARNI vs valsartan or usual care (7663 patients); times ARB vs placebo (7964 patients)",
+  "comparator": "placebo (product of two comparisons)",
+  "verification": "computed_from_verified",
+  "quote": "The three studies reported data for all-cause mortality (RR 0.97, 95% CI 0.84 to 1.11; 7663 participants; three studies; high-certainty evidence; Analysis 5.5).",
+  "extrapolation": "Log-scale product. (a) ARNI vs valsartan/usual care, all-cause death RR 0.97 (0.84-1.11): ln=-0.0305, se=(ln1.11-ln0.84)/3.92=0.0711. (b) ARB vs placebo, preserved band, all-cause death RR 1.01 (0.92-1.11) (row ARB-preserved-death): ln=0.0100, se=(ln1.11-ln0.92)/3.92=0.0479. Sum ln=-0.0206, se=sqrt(0.0711^2+0.0479^2)=0.0857; rr=exp(-0.0206)=0.98, interval exp(-0.0206 +/- 1.96*0.0857)=0.83-1.16.",
+  "notes": "Replaces the first researcher's CV-death proxy 0.95 (0.79-1.16) with all-cause death. PARALLAX's comparator was individualized medical therapy, not purely an ARB. Pooled PARADIGM+PARAGON all-EF death 0.88 (0.81-0.96) not used here because it is dominated by HFrEF."
+ },
+ {
+  "id": "arni-preserved-hfh",
+  "drug_class": "ARNI",
+  "drugs": [
+   "Sacubitril/Valsartan (Entresto)"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "rr": 0.78,
+  "ci_low": 0.66,
+  "ci_high": 0.93,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "Cochrane 2021 ARNI vs usual care/valsartan (PARAGON-HF + PARALLAX, first HFH) x Cochrane 2021 ARB vs placebo (first HFH)",
+   "citation": "Martin N et al. Cochrane Database Syst Rev 2021;5:CD012721",
+   "pmid": "34022072"
+  },
+  "population": "ARNI vs valsartan/usual care, 7362 patients, EF >40-45; times ARB vs placebo, 7148 patients",
+  "comparator": "placebo (product of two comparisons)",
+  "verification": "computed_from_verified",
+  "quote": "PARAGON-HF and PARALLAX also reported HRs for time to first hospitalisation due to HF, which gives a pooled effect of HR 0.87 (95% CI 0.76 to 0.99; 7362 participants; two studies; I² = 82%; Analysis 5.3).",
+  "extrapolation": "Log-scale product. (a) ARNI vs valsartan/usual care, time to first HF hospitalization HR 0.87 (0.76-0.99): ln=-0.1393, se=(ln0.99-ln0.76)/3.92=0.0674. (b) ARB vs placebo, preserved, time-to-first HR 0.90 (0.80-1.01) (row ARB-preserved-hfh): ln=-0.1054, se=(ln1.01-ln0.80)/3.92=0.0595. Sum ln=-0.2447, se=sqrt(0.0674^2+0.0595^2)=0.0899; rr=exp(-0.2447)=0.78, interval exp(-0.2447 +/- 1.96*0.0899)=0.66-0.93.",
+  "notes": "Replaces 0.66 (0.48-0.92), which multiplied two recurrent-event rate ratios (PARAGON total HFH 0.85 x CHARM 0.78). Heterogeneity between the two ARNI trials is large (I2=82%). Vaduganathan 2023 (PARAGLIDE-HF + PARAGON-HF, PMID 37210743) reports only the composite of total worsening-HF events and CV death (all participants RR 0.86 (0.75-0.98)), no separate HFH or death figure, so it is not usable for these cells."
+ },
+ {
+  "id": "beta-blocker-reduced-death",
+  "drug_class": "Beta Blocker",
+  "drugs": [
+   "Carvedilol",
+   "Metoprolol Succinate",
+   "Bisoprolol"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.66,
+  "ci_low": 0.58,
+  "ci_high": 0.74,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Fixed-effect pool of CIBIS-II (bisoprolol), MERIT-HF (metoprolol CR/XL), COPERNICUS (carvedilol)",
+   "citation": "CIBIS-II Lancet 1999;353:9-13; MERIT-HF Lancet 1999;353:2001-7; COPERNICUS N Engl J Med 2001;344:1651-8",
+   "pmid": "10023943; 10376614; 11386263"
+  },
+  "population": "LVEF <=35 (CIBIS-II), <=40 (MERIT-HF), <25 (COPERNICUS); NYHA II-IV, on ACEi/diuretic",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "CIBIS-II: All-cause mortality was significantly lower with bisoprolol than on placebo (156 [11.8%] vs 228 [17.3%] deaths with a hazard ratio of 0.66 (95% CI 0.54-0.81, p<0.0001). MERIT-HF: ... relative risk 0.66 [95% CI 0.53-0.81] ... COPERNICUS: ... a 35 percent decrease in the risk of death with carvedilol (95 percent confidence interval, 19 to 48 percent ...).",
+  "extrapolation": "Inverse-variance fixed-effect pool on the log scale. Inputs: CIBIS-II 0.66 (0.54-0.81), se=0.1034; MERIT-HF 0.66 (0.53-0.81), se=0.1082; COPERNICUS 0.65 (0.52-0.81; from a 35% decrease, 19-48%), se=0.1131. Weights 1/se^2: 93.5, 85.4, 78.2; pooled ln = -0.4202, se=0.0624; rr=0.657, interval 0.58-0.74.",
+  "notes": "No published class pool at LVEF <40 quotable as a single number: Cleland 2018 (29040525) reports sinus-rhythm strata only; pooling its four strata <40 (<20, 20-25, 26-34, 35-39, adjusted HRs) gives 0.73 (0.67-0.80), weaker because that IPD set also contains bucindolol (BEST), nebivolol (SENIORS) and others. Shibata 2001 (Eur J Heart Fail, 11378007): 22 trials, death OR 0.63 (0.55-0.72) (Peto OR). The three formulary drugs are the three pooled trials, so their pool is used. Same estimate for carvedilol, metoprolol succinate and bisoprolol (class rule)."
+ },
+ {
+  "id": "beta-blocker-reduced-hfh",
+  "drug_class": "Beta Blocker",
+  "drugs": [
+   "Carvedilol",
+   "Metoprolol Succinate",
+   "Bisoprolol"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.64,
+  "ci_low": 0.53,
+  "ci_high": 0.79,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "CIBIS-II (bisoprolol), applied to the class",
+   "citation": "CIBIS-II Investigators. Lancet 1999;353:9-13",
+   "pmid": "10023943"
+  },
+  "population": "LVEF <=35, NYHA III-IV, on ACEi/diuretic",
+  "comparator": "placebo",
+  "verification": "secondary_source_quote",
+  "quote": "Hospitalizations for worsening heart failure were also decreased by 32% (18% placebo v 12% bisoprolol, hazard ratio .64; 95% CI, .53 to .79; P< .0001).",
+  "extrapolation": "MERIT-HF and COPERNICUS HF-hospitalization-alone ratios with intervals could not be retrieved (MERIT-HF abstract: total mortality or HF hospitalization 311 vs 439 events, risk reduction 31% (20-40%), HF hospitalizations 317 vs 451 events; COPERNICUS abstract: death or HF hospitalization reduced 31%, P=0.000004, no interval), so no pool was possible.",
+  "notes": "NOT directly verified: the quote is from a protocol document surfaced by search that cites CIBIS-II; the CIBIS-II Lancet abstract has no hospitalization figure and the full text is paywalled. Corroboration from verified sources: Shibata 2001 (11378007) class OR for HF admissions 0.63 (11.3% vs 17.1%; CI not in abstract); MERIT-HF crude event ratio 317/451 = 0.70. Time-to-first HR. Same value for carvedilol, metoprolol succinate, bisoprolol."
+ },
+ {
+  "id": "beta-blocker-mildly-reduced-death",
+  "drug_class": "Beta Blocker",
+  "drugs": [
+   "Carvedilol",
+   "Metoprolol Succinate",
+   "Bisoprolol"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.59,
+  "ci_low": 0.34,
+  "ci_high": 1.03,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Beta-blockers in Heart Failure Collaborative Group IPD meta-analysis (Cleland 2018), sinus rhythm, LVEF 40-49%",
+   "citation": "Cleland JGF et al. Eur Heart J 2018;39:26-35",
+   "pmid": "29040525"
+  },
+  "population": "Sinus rhythm, LVEF 40-49%, n=575, 11 double-blind placebo-controlled trials",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "For LVEF 40-49%, death occurred in 21/292 [7.2%] randomized to beta-blockers compared to 35/283 [12.4%] with placebo; adjusted hazard ratio (HR) 0.59 [95% confidence interval (CI) 0.34-1.03].",
+  "extrapolation": "",
+  "notes": "Adjusted HR. Interval crosses 1 and is used as is. Cardiovascular death HR 0.48 (0.24-0.97). 44% of the band came from SENIORS (nebivolol); atrial fibrillation excluded (no benefit in AF)."
+ },
+ {
+  "id": "beta-blocker-mildly-reduced-hfh",
+  "drug_class": "Beta Blocker",
+  "drugs": [
+   "Carvedilol",
+   "Metoprolol Succinate",
+   "Bisoprolol"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.92,
+  "ci_low": 0.52,
+  "ci_high": 1.6,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "Cleland 2018 Table 2 (sinus rhythm), scaled by the HF-hospitalization/CV-hospitalization exponent from the reduced band",
+   "citation": "Cleland JGF et al. Eur Heart J 2018;39:26-35 (Table 2, open-access full text)",
+   "pmid": "29040525"
+  },
+  "population": "Sinus rhythm, LVEF 40-49%, n=566 (CV hospitalization)",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "Table 2, LVEF 40-49%, cardiovascular hospitalization: 144/566 events, HR 0.95 (0.68-1.32); P = 0.76.",
+  "extrapolation": "Reduced band: pool of the four sinus-rhythm strata below 40% for cardiovascular hospitalization (<20: 0.70 (0.60-0.81); 20-25: 0.75 (0.66-0.85); 26-34: 0.84 (0.74-0.94); 35-39: 0.75 (0.61-0.91)), inverse-variance on the log scale = 0.768 (0.716-0.824). HF-hospitalization HR in the reduced band = 0.64 (row Beta Blocker-reduced-hfh). k = ln(0.64)/ln(0.768) = -0.4463/-0.2640 = 1.693. Apply to the 40-49 band: 0.95^1.693 = 0.917; 0.68^1.693 = 0.521; 1.32^1.693 = 1.600. Result 0.92 (0.52-1.60).",
+  "notes": "Replaces the first researcher's carried-over 0.64. First-principles estimate that assumes the HF-specific effect scales with the CV-hospitalization effect in the same way as in HFrEF; it inherits the unverified 0.64 numerator. The 40-49 CV-hospitalization HR (0.95) is the only in-band hospitalization datum and has a wide interval; the 40-49 mortality benefit is nonetheless large (0.59), so benefit on HF admissions cannot be ruled out."
+ },
+ {
+  "id": "beta-blocker-preserved-death",
+  "drug_class": "Beta Blocker",
+  "drugs": [
+   "Carvedilol",
+   "Metoprolol Succinate",
+   "Bisoprolol"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "rr": 1.0,
+  "ci_low": 0.65,
+  "ci_high": 4.1,
+  "measure": "HR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "Cleland 2018 IPD (LVEF >=50, sinus rhythm) vs Zheng 2018 and Cochrane 2021 (LVEF >40/>=40) meta-analyses",
+   "citation": "Cleland JGF et al. Eur Heart J 2018;39:26-35; Zheng SL et al. Heart 2018;104:407-15; Martin N et al. Cochrane 2021;CD012721",
+   "pmid": "29040525; 28780577; 34022072"
+  },
+  "population": "Sinus rhythm LVEF >=50 (n=241 analysed) and trials with LVEF >=40/>40 (SENIORS subgroup EF >35%, J-DHF, small RCTs)",
+  "comparator": "placebo",
+  "verification": "full_text_quote",
+  "quote": "Cleland Table 2, sinus rhythm, LVEF >=50%: 24/241 events, all-cause mortality HR 1.79 (0.78-4.10); P = 0.17. Zheng 2018: All-cause mortality was reduced with beta-blocker therapy compared with placebo (RR: 0.78, 95%CI 0.65 to 0.94, p=0.008). Cochrane 2021: There may be little to no effect on all-cause mortality (RR 0.82, 95% CI 0.67 to 1.00; 1105 participants; four studies; low-certainty evidence).",
+  "extrapolation": "Randomized evidence conflicts in direction: the only band-specific double-blind IPD (LVEF >=50, 24 deaths) points to harm, 1.79 (0.78-4.10); the pooled LVEF >40/>=40 randomized analyses point to benefit, 0.78 (0.65-0.94) and 0.82 (0.67-1.00), and are driven by the SENIORS LVEF >35% subgroup (all-cause HR 0.92 (0.61-1.36), n=643) and open-label J-DHF, which cover LVEF 36-49 as much as >=50. Cleland's interval and Cochrane's both include 1; Zheng's does not (0.94 upper). Ruling: rr set to 1.0 (assumed neutral).",
+  "notes": "ci_low 0.65 and ci_high 4.10 are the envelope of the lowest and highest quoted limits (Zheng lower, Cleland upper), not a statistical CI. Strict reading of the ruling (every interval includes 1) is not met because Zheng's pooled interval is 0.65-0.94; neutrality is chosen because the only LVEF >=50 data conflict with the pools that mix in LVEF 36-49. Zheng/Cochrane would give 0.78-0.82 as an alternative."
+ },
+ {
+  "id": "beta-blocker-preserved-hfh",
+  "drug_class": "Beta Blocker",
+  "drugs": [
+   "Carvedilol",
+   "Metoprolol Succinate",
+   "Bisoprolol"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "rr": 0.73,
+  "ci_low": 0.47,
+  "ci_high": 1.13,
+  "measure": "RR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Cochrane 2021, beta-blockers vs placebo or no treatment, LVEF >40%",
+   "citation": "Martin N et al. Cochrane Database Syst Rev 2021;5:CD012721",
+   "pmid": "34022072"
+  },
+  "population": "4 RCTs, 449 patients (J-DHF, Shu 2005, SWEDIC, Takeda 2004), LVEF >40%; 2 of 4 open-label/usual-care comparator",
+  "comparator": "placebo or no treatment",
+  "verification": "full_text_quote",
+  "quote": "Data from four studies (J-DHF; Shu 2005; SWEDIC; Takeda 2004) contributed to the meta-analysis (RR 0.73, 95% CI 0.47 to 1.13; 449 participants; I² = 22%; very low-certainty evidence; Analysis 1.2).",
+  "extrapolation": "",
+  "notes": "Risk ratio on patients hospitalized, very low certainty, interval includes 1. Same direction as Zheng 2018 (HF hospitalisation RR 0.67 (0.42-1.07), n=382, 28780577) and Cleland 2018 LVEF >=50 cardiovascular hospitalization HR 0.66 (0.37-1.18); the directions agree, so the neutral ruling for conflicting evidence is not triggered. Used as the best estimate, not neutral; very imprecise."
+ },
+ {
+  "id": "mra-reduced-death",
+  "drug_class": "MRA",
+  "drugs": [
+   "Spironolactone",
+   "Eplerenone"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.73,
+  "ci_low": 0.65,
+  "ci_high": 0.83,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFrEF trials (RALES + EMPHASIS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "RALES (spironolactone, LVEF <=35, NYHA III-IV) + EMPHASIS-HF (eplerenone, LVEF <=30-35, NYHA II)",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "",
+  "notes": "Pooled individual-patient estimate, first hospitalization / time to death. Separate trials: RALES death 0.70 (0.60-0.82), HFH 0.65 (0.54-0.77); EMPHASIS-HF death 0.76 (0.62-0.93). Shared by spironolactone and eplerenone."
+ },
+ {
+  "id": "mra-reduced-hfh",
+  "drug_class": "MRA",
+  "drugs": [
+   "Spironolactone",
+   "Eplerenone"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.63,
+  "ci_low": 0.55,
+  "ci_high": 0.72,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFrEF trials (RALES + EMPHASIS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "RALES (spironolactone, LVEF <=35, NYHA III-IV) + EMPHASIS-HF (eplerenone, LVEF <=30-35, NYHA II)",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "",
+  "notes": "Pooled individual-patient estimate, first hospitalization / time to death. Separate trials: RALES death 0.70 (0.60-0.82), HFH 0.65 (0.54-0.77); EMPHASIS-HF death 0.76 (0.62-0.93). Shared by spironolactone and eplerenone."
+ },
+ {
+  "id": "mra-mildly-reduced-death",
+  "drug_class": "MRA",
+  "drugs": [
+   "Spironolactone",
+   "Eplerenone"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.94,
+  "ci_low": 0.85,
+  "ci_high": 1.03,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFmrEF/HFpEF trials (TOPCAT + FINEARTS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "TOPCAT (spironolactone, EF >=45) + FINEARTS-HF (finerenone, EF >=40), about 8,800 patients",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Band-specific values are not given and TOPCAT contains few patients at 40-49; the pooled LVEF >=40 figure is used for both bands. No steroidal MRA trial at >=40 other than TOPCAT; the pool includes finerenone (nonsteroidal).",
+  "notes": "Pool is dominated by LVEF >=50 patients. Cochrane 2021 (34022072) MRA at LVEF >40: HFH RR 0.82 (0.69-0.98), all-cause death RR 0.91 (0.78-1.06). TOPCAT alone HFH 0.83 (0.69-0.99)."
+ },
+ {
+  "id": "mra-mildly-reduced-hfh",
+  "drug_class": "MRA",
+  "drugs": [
+   "Spironolactone",
+   "Eplerenone"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.82,
+  "ci_low": 0.74,
+  "ci_high": 0.91,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFmrEF/HFpEF trials (TOPCAT + FINEARTS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "TOPCAT (spironolactone, EF >=45) + FINEARTS-HF (finerenone, EF >=40), about 8,800 patients",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Band-specific values are not given and TOPCAT contains few patients at 40-49; the pooled LVEF >=40 figure is used for both bands. No steroidal MRA trial at >=40 other than TOPCAT; the pool includes finerenone (nonsteroidal).",
+  "notes": "Pool is dominated by LVEF >=50 patients. Cochrane 2021 (34022072) MRA at LVEF >40: HFH RR 0.82 (0.69-0.98), all-cause death RR 0.91 (0.78-1.06). TOPCAT alone HFH 0.83 (0.69-0.99)."
+ },
+ {
+  "id": "mra-preserved-death",
+  "drug_class": "MRA",
+  "drugs": [
+   "Spironolactone",
+   "Eplerenone"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "rr": 0.94,
+  "ci_low": 0.85,
+  "ci_high": 1.03,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFmrEF/HFpEF trials (TOPCAT + FINEARTS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "TOPCAT (spironolactone, EF >=45) + FINEARTS-HF (finerenone, EF >=40), about 8,800 patients",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Band-specific values are not given and TOPCAT contains few patients at 40-49; the pooled LVEF >=40 figure is used for both bands. No steroidal MRA trial at >=40 other than TOPCAT; the pool includes finerenone (nonsteroidal).",
+  "notes": "Pool is dominated by LVEF >=50 patients. Cochrane 2021 (34022072) MRA at LVEF >40: HFH RR 0.82 (0.69-0.98), all-cause death RR 0.91 (0.78-1.06). TOPCAT alone HFH 0.83 (0.69-0.99)."
+ },
+ {
+  "id": "mra-preserved-hfh",
+  "drug_class": "MRA",
+  "drugs": [
+   "Spironolactone",
+   "Eplerenone"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "rr": 0.82,
+  "ci_low": 0.74,
+  "ci_high": 0.91,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFmrEF/HFpEF trials (TOPCAT + FINEARTS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "TOPCAT (spironolactone, EF >=45) + FINEARTS-HF (finerenone, EF >=40), about 8,800 patients",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Band-specific values are not given and TOPCAT contains few patients at 40-49; the pooled LVEF >=40 figure is used for both bands. No steroidal MRA trial at >=40 other than TOPCAT; the pool includes finerenone (nonsteroidal).",
+  "notes": "Pool is dominated by LVEF >=50 patients. Cochrane 2021 (34022072) MRA at LVEF >40: HFH RR 0.82 (0.69-0.98), all-cause death RR 0.91 (0.78-1.06). TOPCAT alone HFH 0.83 (0.69-0.99)."
+ },
+ {
+  "id": "nsmra-reduced-death",
+  "drug_class": "nsMRA",
+  "drugs": [
+   "Finerenone (Kerendia)"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.73,
+  "ci_low": 0.65,
+  "ci_high": 0.83,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFrEF trials (RALES + EMPHASIS-HF), steroidal MRAs",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "RALES (spironolactone) + EMPHASIS-HF (eplerenone), LVEF <=35 (<=30 EMPHASIS), n about 5,000",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Finerenone has no HFrEF trial (FINEARTS-HF enrolled LVEF >=40). The steroidal MRA HFrEF pooled estimate is applied to the class as the nearest evidence.",
+  "notes": "Largest single assumption in the MRA block: a nonsteroidal MRA assumed to match the steroidal effect in HFrEF."
+ },
+ {
+  "id": "nsmra-reduced-hfh",
+  "drug_class": "nsMRA",
+  "drugs": [
+   "Finerenone (Kerendia)"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.63,
+  "ci_low": 0.55,
+  "ci_high": 0.72,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFrEF trials (RALES + EMPHASIS-HF), steroidal MRAs",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "RALES (spironolactone) + EMPHASIS-HF (eplerenone), LVEF <=35 (<=30 EMPHASIS), n about 5,000",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Finerenone has no HFrEF trial (FINEARTS-HF enrolled LVEF >=40). The steroidal MRA HFrEF pooled estimate is applied to the class as the nearest evidence.",
+  "notes": "Largest single assumption in the MRA block: a nonsteroidal MRA assumed to match the steroidal effect in HFrEF."
+ },
+ {
+  "id": "nsmra-mildly-reduced-death",
+  "drug_class": "nsMRA",
+  "drugs": [
+   "Finerenone (Kerendia)"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.94,
+  "ci_low": 0.85,
+  "ci_high": 1.03,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFmrEF/HFpEF trials (TOPCAT + FINEARTS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "TOPCAT (spironolactone, EF >=45) + FINEARTS-HF (finerenone, EF >=40)",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Band-specific values are not given; the pooled LVEF >=40 figure is used for both bands.",
+  "notes": "FINEARTS-HF alone (39225278): CV death HR 0.93 (0.78-1.11); total worsening-HF events (first or recurrent hospitalization or urgent visit) rate ratio 0.82 (0.71-0.94). FINEARTS-HF's all-cause death HR is not in its abstract, so the pooled figure is used for both outcomes as the ruling directs."
+ },
+ {
+  "id": "nsmra-preserved-death",
+  "drug_class": "nsMRA",
+  "drugs": [
+   "Finerenone (Kerendia)"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "rr": 0.94,
+  "ci_low": 0.85,
+  "ci_high": 1.03,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFmrEF/HFpEF trials (TOPCAT + FINEARTS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "TOPCAT (spironolactone, EF >=45) + FINEARTS-HF (finerenone, EF >=40)",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Band-specific values are not given; the pooled LVEF >=40 figure is used for both bands.",
+  "notes": "FINEARTS-HF alone (39225278): CV death HR 0.93 (0.78-1.11); total worsening-HF events (first or recurrent hospitalization or urgent visit) rate ratio 0.82 (0.71-0.94). FINEARTS-HF's all-cause death HR is not in its abstract, so the pooled figure is used for both outcomes as the ruling directs."
+ },
+ {
+  "id": "nsmra-mildly-reduced-hfh",
+  "drug_class": "nsMRA",
+  "drugs": [
+   "Finerenone (Kerendia)"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.82,
+  "ci_low": 0.74,
+  "ci_high": 0.91,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFmrEF/HFpEF trials (TOPCAT + FINEARTS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "TOPCAT (spironolactone, EF >=45) + FINEARTS-HF (finerenone, EF >=40)",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Band-specific values are not given; the pooled LVEF >=40 figure is used for both bands.",
+  "notes": "FINEARTS-HF alone (39225278): CV death HR 0.93 (0.78-1.11); total worsening-HF events (first or recurrent hospitalization or urgent visit) rate ratio 0.82 (0.71-0.94). FINEARTS-HF's all-cause death HR is not in its abstract, so the pooled figure is used for both outcomes as the ruling directs."
+ },
+ {
+  "id": "nsmra-preserved-hfh",
+  "drug_class": "nsMRA",
+  "drugs": [
+   "Finerenone (Kerendia)"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "rr": 0.82,
+  "ci_low": 0.74,
+  "ci_high": 0.91,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "MRA IPD meta-analysis, HFmrEF/HFpEF trials (TOPCAT + FINEARTS-HF)",
+   "citation": "Jhund PS et al. Lancet 2024;404:1119-31",
+   "pmid": "39232490"
+  },
+  "population": "TOPCAT (spironolactone, EF >=45) + FINEARTS-HF (finerenone, EF >=40)",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "We observed significant reductions in heart failure hospitalisation in the HFrEF trials (0·63 [0·55-0·72]) and the HFmrEF or HFpEF trials (0·82 [0·74-0·91]). ... All-cause death was also reduced in the HFrEF trials (0·73 [0·65-0·83]) but not in the HFmrEF or HFpEF trials (0·94 [0·85-1·03]).",
+  "extrapolation": "Band-specific values are not given; the pooled LVEF >=40 figure is used for both bands.",
+  "notes": "FINEARTS-HF alone (39225278): CV death HR 0.93 (0.78-1.11); total worsening-HF events (first or recurrent hospitalization or urgent visit) rate ratio 0.82 (0.71-0.94). FINEARTS-HF's all-cause death HR is not in its abstract, so the pooled figure is used for both outcomes as the ruling directs."
+ },
+ {
+  "id": "sglt2i-reduced-death",
+  "drug_class": "SGLT2i",
+  "drugs": [
+   "Dapagliflozin",
+   "Empagliflozin"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.87,
+  "ci_low": 0.77,
+  "ci_high": 0.98,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "DAPA-HF + EMPEROR-Reduced pooled (Zannad 2020)",
+   "citation": "Zannad F et al. Lancet 2020;396:819-29",
+   "pmid": "32877652"
+  },
+  "population": "LVEF <=40, 8474 patients, with or without diabetes",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "Among 8474 patients combined from both trials, the estimated treatment effect was a 13% reduction in all-cause death (pooled HR 0·87, 95% CI 0·77-0·98; p=0·018) and 14% reduction in cardiovascular death (0·86, 0·76-0·98; p=0·027).",
+  "extrapolation": "",
+  "notes": "Time to all-cause death (the prespecified primary endpoint of the meta-analysis). Shared by dapagliflozin and empagliflozin."
+ },
+ {
+  "id": "sglt2i-reduced-hfh",
+  "drug_class": "SGLT2i",
+  "drugs": [
+   "Dapagliflozin",
+   "Empagliflozin"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.72,
+  "ci_low": 0.67,
+  "ci_high": 0.78,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "Five-trial SGLT2i meta-analysis (DAPA-HF, EMPEROR-Reduced, DELIVER, EMPEROR-Preserved, SOLOIST-WHF), first HF hospitalization",
+   "citation": "Vaduganathan M et al. Lancet 2022;400:757-67",
+   "pmid": "36041474"
+  },
+  "population": "21,947 patients, all EF (about 8,500 with LVEF <=40)",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "In the broader context of the five trials of 21 947 participants, SGLT2 inhibitors reduced the risk of composite cardiovascular death or hospitalisation for heart failure (0·77 [0·72-0·82]), cardiovascular death (0·87 [0·79-0·95]), first hospitalisation for heart failure (0·72 [0·67-0·78]), and all-cause mortality (0·92 [0·86-0·99]).",
+  "extrapolation": "Zannad 2020 (the specified source) abstract gives all-cause death and composites but no first-HFH HR for the two HFrEF trials alone, and its full text is paywalled. The five-trial first-HFH pool is the nearest quotable class estimate; the paper reports consistent effects across EF and trials, and the LVEF >40 pool is 0.74.",
+  "notes": "Time-to-first HF hospitalization. Single-trial figures that include other events are not used: DAPA-HF first worsening-HF event (including urgent visits) 0.70 (0.59-0.83); EMPEROR-Reduced total (first and recurrent) HF hospitalizations 0.70 (0.58-0.85). Reduced-band-only figure not retrievable."
+ },
+ {
+  "id": "sglt2i-mildly-reduced-death",
+  "drug_class": "SGLT2i",
+  "drugs": [
+   "Dapagliflozin",
+   "Empagliflozin"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "rr": 0.97,
+  "ci_low": 0.89,
+  "ci_high": 1.07,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "EMPEROR-Preserved by LVEF (41-49 and >=50) + DAPA-HF/DELIVER pooled strata >44-51, >51-60, >60",
+   "citation": "Butler J / Anker SD et al. (EMPEROR-Preserved by LVEF, 36471037); Jhund PS et al. Nat Med 2022 (36030328)",
+   "pmid": "36471037; 36030328"
+  },
+  "population": "LVEF >40 (EMPEROR-Preserved) and LVEF >44 strata of DAPA-HF+DELIVER",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "Empagliflozin had no significant effect on time to all-cause mortality in patients with LVEF >= 50% (HR 1.02; 95% CI: 0.86-1.21, P = 0.84) or in patients with LVEF 41-49% (HR 0.96; 95% CI: 0.78-1.19, P = 0.72; P = 0.68 for the interaction between treatment and baseline LVEF category).",
+  "extrapolation": "Vaduganathan 2022 reports first HFH and CV death for the LVEF >40 pool but its abstract has no all-cause death figure for LVEF >40, and the paper is paywalled. Fixed-effect inverse-variance pool on the log scale of five independent strata: empagliflozin 41-49 0.96 (0.78-1.19); empagliflozin >=50 1.02 (0.86-1.21); dapagliflozin LVEF >44-51 0.94 (0.75-1.17); >51-60 1.02 (0.82-1.27); >60 0.86 (0.65-1.13) (Jhund Table 2, all-cause death). Pooled ln = -0.0275, se = 0.0484; rr = 0.973, interval 0.89-1.07. The same pooled value is applied to both bands (the paper gives no band split).",
+  "notes": "Differs from the first researcher, who used the all-EF dapagliflozin pool 0.90 (0.82-0.99) for dapagliflozin and band HRs for empagliflozin. Class pool of LVEF >40-45 data; the five-trial all-EF figure 0.92 (0.86-0.99) is driven by HFrEF. Empagliflozin-only LVEF >40 pool 1.00 (0.87-1.14)."
+ },
+ {
+  "id": "sglt2i-mildly-reduced-hfh",
+  "drug_class": "SGLT2i",
+  "drugs": [
+   "Dapagliflozin",
+   "Empagliflozin"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "rr": 0.74,
+  "ci_low": 0.67,
+  "ci_high": 0.83,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "DELIVER + EMPEROR-Preserved meta-analysis (Vaduganathan 2022), first HF hospitalization",
+   "citation": "Vaduganathan M et al. Lancet 2022;400:757-67",
+   "pmid": "36041474"
+  },
+  "population": "DELIVER + EMPEROR-Preserved, LVEF >40, 12,251 patients",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "Among 12 251 participants from DELIVER and EMPEROR-Preserved, SGLT2 inhibitors reduced composite cardiovascular death or first hospitalisation for heart failure (hazard ratio 0·80 [95% CI 0·73-0·87]) with consistent reductions in both components: cardiovascular death (0·88 [0·77-1·00]) and first hospitalisation for heart failure (0·74 [0·67-0·83]).",
+  "extrapolation": "The paper gives the LVEF >40 pooled figure only in its abstract; used for both bands as the ruling directs.",
+  "notes": "Band-specific single-trial data differ: EMPEROR-Preserved first HFH HR 0.58 (0.44-0.77) at LVEF 41-49 and 0.78 (0.64-0.95) at >=50 (interaction not significant); DELIVER >40 worsening-HF HR 0.79 (0.69-0.91) (includes urgent visits). Time-to-first HFH."
+ },
+ {
+  "id": "sglt2i-preserved-death",
+  "drug_class": "SGLT2i",
+  "drugs": [
+   "Dapagliflozin",
+   "Empagliflozin"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "rr": 0.97,
+  "ci_low": 0.89,
+  "ci_high": 1.07,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "EMPEROR-Preserved by LVEF (41-49 and >=50) + DAPA-HF/DELIVER pooled strata >44-51, >51-60, >60",
+   "citation": "Butler J / Anker SD et al. (EMPEROR-Preserved by LVEF, 36471037); Jhund PS et al. Nat Med 2022 (36030328)",
+   "pmid": "36471037; 36030328"
+  },
+  "population": "LVEF >40 (EMPEROR-Preserved) and LVEF >44 strata of DAPA-HF+DELIVER",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "Empagliflozin had no significant effect on time to all-cause mortality in patients with LVEF >= 50% (HR 1.02; 95% CI: 0.86-1.21, P = 0.84) or in patients with LVEF 41-49% (HR 0.96; 95% CI: 0.78-1.19, P = 0.72; P = 0.68 for the interaction between treatment and baseline LVEF category).",
+  "extrapolation": "Vaduganathan 2022 reports first HFH and CV death for the LVEF >40 pool but its abstract has no all-cause death figure for LVEF >40, and the paper is paywalled. Fixed-effect inverse-variance pool on the log scale of five independent strata: empagliflozin 41-49 0.96 (0.78-1.19); empagliflozin >=50 1.02 (0.86-1.21); dapagliflozin LVEF >44-51 0.94 (0.75-1.17); >51-60 1.02 (0.82-1.27); >60 0.86 (0.65-1.13) (Jhund Table 2, all-cause death). Pooled ln = -0.0275, se = 0.0484; rr = 0.973, interval 0.89-1.07. The same pooled value is applied to both bands (the paper gives no band split).",
+  "notes": "Differs from the first researcher, who used the all-EF dapagliflozin pool 0.90 (0.82-0.99) for dapagliflozin and band HRs for empagliflozin. Class pool of LVEF >40-45 data; the five-trial all-EF figure 0.92 (0.86-0.99) is driven by HFrEF. Empagliflozin-only LVEF >40 pool 1.00 (0.87-1.14)."
+ },
+ {
+  "id": "sglt2i-preserved-hfh",
+  "drug_class": "SGLT2i",
+  "drugs": [
+   "Dapagliflozin",
+   "Empagliflozin"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "rr": 0.74,
+  "ci_low": 0.67,
+  "ci_high": 0.83,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "DELIVER + EMPEROR-Preserved meta-analysis (Vaduganathan 2022), first HF hospitalization",
+   "citation": "Vaduganathan M et al. Lancet 2022;400:757-67",
+   "pmid": "36041474"
+  },
+  "population": "DELIVER + EMPEROR-Preserved, LVEF >40, 12,251 patients",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "Among 12 251 participants from DELIVER and EMPEROR-Preserved, SGLT2 inhibitors reduced composite cardiovascular death or first hospitalisation for heart failure (hazard ratio 0·80 [95% CI 0·73-0·87]) with consistent reductions in both components: cardiovascular death (0·88 [0·77-1·00]) and first hospitalisation for heart failure (0·74 [0·67-0·83]).",
+  "extrapolation": "The paper gives the LVEF >40 pooled figure only in its abstract; used for both bands as the ruling directs.",
+  "notes": "Band-specific single-trial data differ: EMPEROR-Preserved first HFH HR 0.58 (0.44-0.77) at LVEF 41-49 and 0.78 (0.64-0.95) at >=50 (interaction not significant); DELIVER >40 worsening-HF HR 0.79 (0.69-0.91) (includes urgent visits). Time-to-first HFH."
+ }
+]

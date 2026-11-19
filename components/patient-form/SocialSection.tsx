@@ -3,6 +3,7 @@ import { BanknotesIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
 import { WEIGHT_PROFILE_NAMES, WEIGHT_PROFILE_META, resolveWeightProfile } from '../../services/engine/scoreModel';
+import { profileDescription } from '../rankingModeMeta';
 import { resolveRankingMode } from '../../services/engine/selection';
 import { RANKING_MODE_META, RANKING_MODE_NAMES, RANKING_MODE_VS_PRIORITY_NOTE } from '../rankingModeMeta';
 
@@ -47,7 +48,7 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                         ))}
                     </Select>
                     <p id="care_priority-help" className="mt-1 text-xs text-slate-500">
-                        {WEIGHT_PROFILE_META[resolveWeightProfile(patientData)].description}
+                        {profileDescription(resolveWeightProfile(patientData))}
                     </p>
                 </div>
                 <div>

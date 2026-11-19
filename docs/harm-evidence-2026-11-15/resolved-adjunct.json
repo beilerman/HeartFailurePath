@@ -1,0 +1,1922 @@
+{
+ "rows": [
+  {
+   "id": "iva-af",
+   "drug_class": "If Inhibitor",
+   "drugs": [
+    "Ivabradine"
+   ],
+   "effect": "atrialFibrillation",
+   "layer": "harmRow",
+   "one_year_excess_pct": 1.1,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SHIFT (label)",
+    "citation": "CORLANOR (ivabradine) prescribing information, DailyMed set 92018a65-38f6-45f7-91d4-a34921b81d0d, sections 5.2, 5.3, 6.1"
+   },
+   "population": "SHIFT: chronic HFrEF, LVEF <=35%, sinus rhythm HR >=70; safety set 3260 vs 3278; median exposure 21.5 months",
+   "control_type": "placebo",
+   "definition_used": "New or recurrent atrial fibrillation reported as adverse event, per patient-year (label)",
+   "verification": "verified_label",
+   "quote": "the rate of atrial fibrillation was 5.0% per patient-year in patients treated with Corlanor and 3.9% per patient-year in patients treated with placebo",
+   "notes": "Exposure-adjusted yearly rate already (5.0 - 3.9 = 1.1); no conversion. The cumulative label figure (8.3% vs 6.6% over median 21.5 months) and the registry (8.88% vs 7.03%, 287/3232 vs 229/3260 serious+other events) are the same data; not added. Dose relation not measured."
+  },
+  {
+   "id": "iva-avb-advanced",
+   "drug_class": "If Inhibitor",
+   "drugs": [
+    "Ivabradine"
+   ],
+   "effect": "avBlockAdvanced",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.261,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SHIFT (registry)",
+    "citation": "ClinicalTrials.gov NCT02441218 adverse events module (serious + other events, safety set 3232 vs 3260)"
+   },
+   "population": "SHIFT, median follow-up 22.9 months",
+   "control_type": "placebo",
+   "definition_used": "Serious adverse events: AV block complete + third degree + second degree (24 of 3232 vs 8 of 3260)",
+   "verification": "computed_from_verified",
+   "quote": "Atrioventricular block complete 9 vs 2; second degree 7 vs 4; third degree 8 vs 2 (patients with event, ivabradine vs placebo)",
+   "notes": "24/3232 = 0.743% vs 8/3260 = 0.245%; converted over 1.908 y: 1-(1-p)^(1/T) = 0.390% vs 0.128%, excess 0.261. UPPER BOUND on the definition: complete and third-degree block are near-synonyms and were summed (17 vs 4 without second degree). Bradycardia leading to hospitalization is not added. Sinoatrial block 1 vs 0 not added."
+  },
+  {
+   "id": "iva-avb-first",
+   "drug_class": "If Inhibitor",
+   "drugs": [
+    "Ivabradine"
+   ],
+   "effect": "avBlockFirstDegree",
+   "layer": "harmRow",
+   "one_year_excess_pct": -0.011,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SHIFT (registry)",
+    "citation": "ClinicalTrials.gov NCT02441218 adverse events module (serious + other events, safety set 3232 vs 3260)"
+   },
+   "population": "SHIFT, median follow-up 22.9 months",
+   "control_type": "placebo",
+   "definition_used": "Reported adverse event \"Atrioventricular block first degree\" (not a PR-interval threshold)",
+   "verification": "computed_from_verified",
+   "quote": "Atrioventricular block first degree: ivabradine 35 of 3232, placebo 36 of 3260 (other events)",
+   "notes": "1.083% vs 1.104%, converted over 1.908 y, excess -0.011 (floors to 0). Definition mismatch: investigator-reported, not PR above 0.2 s; probably understates (R2)."
+  },
+  {
+   "id": "iva-brady-symptomatic",
+   "drug_class": "If Inhibitor",
+   "drugs": [
+    "Ivabradine"
+   ],
+   "effect": "bradycardiaSymptomatic",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 1.938,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SHIFT",
+    "citation": "Swedberg K et al. Lancet 2010;376:875-85",
+    "pmid": "20801500"
+   },
+   "population": "SHIFT, 3241 vs 3264 analysed, median follow-up 22.9 months",
+   "control_type": "placebo",
+   "definition_used": "Symptomatic bradycardia",
+   "verification": "verified_abstract",
+   "quote": "150 (5%) of ivabradine patients had symptomatic bradycardia compared with 32 (1%) of the placebo group",
+   "notes": "150/3241 = 4.628% vs 32/3264 = 0.980%; converted over 1.908 y: 2.452% vs 0.515%, excess 1.938. The label figure (bradycardia 6.0% vs 1.3% per patient-year, 2.7% symptomatic) counts asymptomatic bradycardia and is not used."
+  },
+  {
+   "id": "iva-phosphenes",
+   "drug_class": "If Inhibitor",
+   "drugs": [
+    "Ivabradine"
+   ],
+   "effect": "visualPhosphenes",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 1.175,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SHIFT",
+    "citation": "Swedberg K et al. Lancet 2010;376:875-85",
+    "pmid": "20801500"
+   },
+   "population": "SHIFT, 3241 vs 3264 analysed",
+   "control_type": "placebo",
+   "definition_used": "Visual side-effects (phosphenes)",
+   "verification": "verified_abstract",
+   "quote": "Visual side-effects (phosphenes) were reported by 89 (3%) of patients on ivabradine and 17 (1%) on placebo",
+   "notes": "89/3241 = 2.746% vs 17/3264 = 0.521%, converted over 1.908 y, excess 1.175. Label 2.8% vs 0.5% agrees."
+  },
+  {
+   "id": "iva-dizziness",
+   "drug_class": "If Inhibitor",
+   "drugs": [
+    "Ivabradine"
+   ],
+   "effect": "dizziness",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 0.17,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SHIFT (registry)",
+    "citation": "ClinicalTrials.gov NCT02441218 adverse events module (serious + other events, safety set 3232 vs 3260)"
+   },
+   "population": "SHIFT",
+   "control_type": "placebo",
+   "definition_used": "Dizziness (other adverse events table, reported)",
+   "verification": "computed_from_verified",
+   "quote": "Dizziness: 55 of 3232 vs 45 of 3260",
+   "notes": "Converted over 1.908 y. Registry lists only events above its frequency threshold."
+  },
+  {
+   "id": "iva-hypotension",
+   "drug_class": "If Inhibitor",
+   "drugs": [
+    "Ivabradine"
+   ],
+   "effect": "hypotensionSymptomatic",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": -0.365,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SHIFT (registry)",
+    "citation": "ClinicalTrials.gov NCT02441218 adverse events module (serious + other events, safety set 3232 vs 3260)"
+   },
+   "population": "SHIFT",
+   "control_type": "placebo",
+   "definition_used": "Reported \"Hypotension\" (not \"symptomatic\")",
+   "verification": "computed_from_verified",
+   "quote": "Hypotension: 59 of 3232 vs 82 of 3260 (other events)",
+   "notes": "Fewer events on ivabradine; excess -0.365 floors to 0."
+  },
+  {
+   "id": "iva-creatinine",
+   "drug_class": "If Inhibitor",
+   "drugs": [
+    "Ivabradine"
+   ],
+   "effect": "creatinineRise",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.137,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SHIFT (registry)",
+    "citation": "ClinicalTrials.gov NCT02441218 adverse events module (serious + other events, safety set 3232 vs 3260)"
+   },
+   "population": "SHIFT",
+   "control_type": "placebo",
+   "definition_used": "Reported \"Blood creatinine increased\" (not a 0.5 mg/dL threshold)",
+   "verification": "computed_from_verified",
+   "quote": "Blood creatinine increased: 55 of 3232 vs 47 of 3260 (other events)",
+   "notes": "Converted over 1.908 y. Definition mismatch (reported event, probably understates, R2)."
+  },
+  {
+   "id": "ver-anemia",
+   "drug_class": "sGC Stimulator",
+   "drugs": [
+    "Vericiguat"
+   ],
+   "effect": "anemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 3.0,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "VICTORIA (label)",
+    "citation": "VERQUVO (vericiguat) prescribing information, DailyMed set 17056d73-1b1b-4bf2-9c07-b7a9367f0d6d, Table 1"
+   },
+   "population": "VICTORIA: HFrEF LVEF <45% with recent worsening; 2519 vs 2515 treated; median 10.8 months",
+   "control_type": "placebo",
+   "definition_used": "Adverse drug reaction \"Anemia\" (no haemoglobin threshold)",
+   "verification": "verified_label",
+   "quote": "Adverse Drug Reaction VERQUVO % N = 2,519 Placebo % N = 2,515 Hypotension 16 15 Anemia 10 7",
+   "notes": "Excess 10 - 7 = 3 points, whole-number label figures (true excess could be 2 to 4), under one year so used as observed. Registry cross-check (Anaemia, serious+other, may double count a patient): 206/2519 = 8.2% vs 158/2515 = 6.3%, excess 1.9. Definition mismatch: reported event, not a fall of more than 2 g/dL."
+  },
+  {
+   "id": "ver-syncope",
+   "drug_class": "sGC Stimulator",
+   "drugs": [
+    "Vericiguat"
+   ],
+   "effect": "syncope",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.5,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "VICTORIA",
+    "citation": "Armstrong PW et al. N Engl J Med 2020;382:1883-93",
+    "pmid": "32222134"
+   },
+   "population": "VICTORIA, median 10.8 months",
+   "control_type": "placebo",
+   "definition_used": "Syncope",
+   "verification": "verified_abstract",
+   "quote": "syncope occurred in 4.0% of the patients in the vericiguat group and in 3.5% of the patients in the placebo group (P = 0.30)",
+   "notes": "Median follow-up 10.8 months (under a year): used as observed, 4.0 - 3.5 = 0.5."
+  },
+  {
+   "id": "ver-hypotension",
+   "drug_class": "sGC Stimulator",
+   "drugs": [
+    "Vericiguat"
+   ],
+   "effect": "hypotensionSymptomatic",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 1.414,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "VICTOR",
+    "citation": "Butler J et al. Lancet 2025;406:1341-50",
+    "pmid": "40897189"
+   },
+   "population": "VICTOR: HFrEF LVEF <=40% without recent worsening; 3049 vs 3049 safety population; median 18.5 months",
+   "control_type": "placebo",
+   "definition_used": "Symptomatic hypotension",
+   "verification": "verified_abstract",
+   "quote": "The most common adverse event was symptomatic hypotension (345 [11.3%] patients in the vericiguat group and 281 [9.2%] in the placebo group)",
+   "notes": "11.3% vs 9.2% converted over 18.5/12 = 1.542 y: 7.48% vs 6.07%, excess 1.414. Chosen over VICTORIA (9.1 vs 7.9, 0.9 y) because it has more patients and a longer follow-up."
+  },
+  {
+   "id": "ver-dizziness",
+   "drug_class": "sGC Stimulator",
+   "drugs": [
+    "Vericiguat"
+   ],
+   "effect": "dizziness",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 0.665,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "VICTORIA (registry)",
+    "citation": "ClinicalTrials.gov NCT02861534 adverse events module"
+   },
+   "population": "VICTORIA",
+   "control_type": "placebo",
+   "definition_used": "Dizziness (other events, reported)",
+   "verification": "computed_from_verified",
+   "quote": "Dizziness: vericiguat 169 of 2519, placebo 152 of 2515",
+   "notes": "6.709% vs 6.044%; median follow-up 0.9 y, used as observed."
+  },
+  {
+   "id": "ver-gi",
+   "drug_class": "sGC Stimulator",
+   "drugs": [
+    "Vericiguat"
+   ],
+   "effect": "giUpset",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 0.27,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "VICTORIA (registry)",
+    "citation": "ClinicalTrials.gov NCT02861534 adverse events module"
+   },
+   "population": "VICTORIA",
+   "control_type": "placebo",
+   "definition_used": "Diarrhoea (other events); nausea and vomiting below the registry threshold",
+   "verification": "computed_from_verified",
+   "quote": "Diarrhoea: vericiguat 127 of 2519, placebo 120 of 2515",
+   "notes": "5.042% vs 4.771%; near-synonyms: largest excess (diarrhoea). Non-serious events under the registry threshold are invisible."
+  },
+  {
+   "id": "vas-headache",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "headache",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 29,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "A-HeFT: self-identified Black patients with NYHA III-IV HFrEF; BiDil N=517 vs placebo N=527; follow-up not stated in the label (trial stopped early, about 10 months)",
+   "control_type": "placebo",
+   "definition_used": "Adverse reaction >=2% higher on BiDil (50% vs 21%)",
+   "verification": "verified_label",
+   "quote": "Headache 50 21 Dizziness 32 14 Asthenia 14 11 Nausea 10 6 Hypotension 8 4 Sinusitis 4 2 Ventricular tachycardia 4 2 Paresthesia 4 2 Vomiting 4 2 Amblyopia 3 1",
+   "notes": "50% vs 21%; follow-up not stated, under about a year, used as observed."
+  },
+  {
+   "id": "vas-dizziness",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "dizziness",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 18,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "A-HeFT: self-identified Black patients with NYHA III-IV HFrEF; BiDil N=517 vs placebo N=527; follow-up not stated in the label (trial stopped early, about 10 months)",
+   "control_type": "placebo",
+   "definition_used": "Adverse reaction >=2% higher on BiDil (32% vs 14%)",
+   "verification": "verified_label",
+   "quote": "Headache 50 21 Dizziness 32 14 Asthenia 14 11 Nausea 10 6 Hypotension 8 4 Sinusitis 4 2 Ventricular tachycardia 4 2 Paresthesia 4 2 Vomiting 4 2 Amblyopia 3 1",
+   "notes": "32% vs 14%; follow-up not stated, under about a year, used as observed."
+  },
+  {
+   "id": "vas-hypotension",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "hypotensionSymptomatic",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 4,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "A-HeFT: self-identified Black patients with NYHA III-IV HFrEF; BiDil N=517 vs placebo N=527; follow-up not stated in the label (trial stopped early, about 10 months)",
+   "control_type": "placebo",
+   "definition_used": "Adverse reaction >=2% higher on BiDil (8% vs 4%)",
+   "verification": "verified_label",
+   "quote": "Headache 50 21 Dizziness 32 14 Asthenia 14 11 Nausea 10 6 Hypotension 8 4 Sinusitis 4 2 Ventricular tachycardia 4 2 Paresthesia 4 2 Vomiting 4 2 Amblyopia 3 1",
+   "notes": "8% vs 4%; follow-up not stated, under about a year, used as observed."
+  },
+  {
+   "id": "vas-fatigue",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "fatigue",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 3,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "A-HeFT: self-identified Black patients with NYHA III-IV HFrEF; BiDil N=517 vs placebo N=527; follow-up not stated in the label (trial stopped early, about 10 months)",
+   "control_type": "placebo",
+   "definition_used": "Adverse reaction >=2% higher on BiDil (asthenia 14% vs 11%)",
+   "verification": "verified_label",
+   "quote": "Headache 50 21 Dizziness 32 14 Asthenia 14 11 Nausea 10 6 Hypotension 8 4 Sinusitis 4 2 Ventricular tachycardia 4 2 Paresthesia 4 2 Vomiting 4 2 Amblyopia 3 1",
+   "notes": "asthenia 14% vs 11%; follow-up not stated, under about a year, used as observed."
+  },
+  {
+   "id": "vas-giupset",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "giUpset",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 4,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "A-HeFT: self-identified Black patients with NYHA III-IV HFrEF; BiDil N=517 vs placebo N=527; follow-up not stated in the label (trial stopped early, about 10 months)",
+   "control_type": "placebo",
+   "definition_used": "Nausea 10% vs 6%, vomiting 4% vs 2% (near-synonyms: largest excess, 4)",
+   "verification": "verified_label",
+   "quote": "Headache 50 21 Dizziness 32 14 Asthenia 14 11 Nausea 10 6 Hypotension 8 4 Sinusitis 4 2 Ventricular tachycardia 4 2 Paresthesia 4 2 Vomiting 4 2 Amblyopia 3 1",
+   "notes": "Used as observed."
+  },
+  {
+   "id": "vas-vision",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "visualPhosphenes",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 2,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "A-HeFT: self-identified Black patients with NYHA III-IV HFrEF; BiDil N=517 vs placebo N=527; follow-up not stated in the label (trial stopped early, about 10 months)",
+   "control_type": "placebo",
+   "definition_used": "Amblyopia 3% vs 1% (blurred vision, near-synonym of the definition)",
+   "verification": "verified_label",
+   "quote": "Headache 50 21 Dizziness 32 14 Asthenia 14 11 Nausea 10 6 Hypotension 8 4 Sinusitis 4 2 Ventricular tachycardia 4 2 Paresthesia 4 2 Vomiting 4 2 Amblyopia 3 1",
+   "notes": "Added by the verifier (the collector omitted it). Used as observed."
+  },
+  {
+   "id": "vas-vt",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "ventricularArrhythmia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 2,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "A-HeFT: self-identified Black patients with NYHA III-IV HFrEF; BiDil N=517 vs placebo N=527; follow-up not stated in the label (trial stopped early, about 10 months)",
+   "control_type": "placebo",
+   "definition_used": "Adverse reaction \"Ventricular tachycardia\" 4% vs 2%",
+   "verification": "verified_label",
+   "quote": "Headache 50 21 Dizziness 32 14 Asthenia 14 11 Nausea 10 6 Hypotension 8 4 Sinusitis 4 2 Ventricular tachycardia 4 2 Paresthesia 4 2 Vomiting 4 2 Amblyopia 3 1",
+   "notes": "Used as observed."
+  },
+  {
+   "id": "vas-lupus",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "lupusLikeSyndrome",
+   "layer": "harmRow",
+   "one_year_excess_pct": 3.594,
+   "dose_related": true,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Cameron & Ramsay hydralazine cohort",
+    "citation": "Cameron HA, Ramsay LE. Br Med J 1984;289:410-2",
+    "pmid": "6432120"
+   },
+   "population": "281 patients starting hydralazine for hypertension (not heart failure); 3-year life-table incidence, dose achieved 200 mg/day",
+   "control_type": "none",
+   "definition_used": "Drug-induced lupus syndrome",
+   "verification": "verified_abstract",
+   "quote": "The incidence was dose dependent, with no cases recorded in patients taking 50 mg daily and incidences of 5.4% with 100 mg daily and of 10.4% with 200 mg daily.",
+   "notes": "Step 3/4: no control arm; placebo rate assumed 0 (not measured; background lupus is rare). 10.4% over 3 years at 200 mg: 1-(1-0.104)^(1/3) = 3.594% a year. 200 mg/day is the group nearest the BiDil target (225 mg hydralazine). NOT given as dose_groups because the engine computes NaN for the combination strength \"37.5/20\" and would then pick the lowest group (0). Other groups: 50 mg 0; 100 mg 5.4% over 3 y = 1.8% a year. Overall (all doses) 6.7% over 3 y = 2.285% a year. The original collector row (6.7% overall) understates the target dose."
+  },
+  {
+   "id": "vas-syncope",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "syncope",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.5,
+   "dose_related": null,
+   "level": "extrapolated",
+   "upper_bound": true,
+   "source": {
+    "trial": "VICTORIA",
+    "citation": "Armstrong PW et al. N Engl J Med 2020;382:1883-93",
+    "pmid": "32222134"
+   },
+   "population": "Upper bound: largest placebo-controlled syncope excess in this part of the table (VICTORIA vericiguat)",
+   "control_type": "placebo",
+   "definition_used": "Syncope (label warns lightheadedness \"or even syncope\"; no trial rate)",
+   "verification": "verified_abstract",
+   "quote": "syncope occurred in 4.0% of the patients in the vericiguat group and in 3.5% of the patients in the placebo group",
+   "notes": "Step 6 upper bound (BiDil label has no syncope rate; the trial list shows hypotension only). The foundational table may hold a larger syncope excess; the controller should take the larger."
+  },
+  {
+   "id": "vas-dae",
+   "drug_class": "Vasodilator",
+   "drugs": [
+    "Hydralazine/Isosorbide Dinitrate"
+   ],
+   "effect": "discontinuationForAdverseEvent",
+   "layer": "crossCheck",
+   "one_year_excess_pct": 9,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "A-HeFT: self-identified Black patients with NYHA III-IV HFrEF; BiDil N=517 vs placebo N=527; follow-up not stated in the label (trial stopped early, about 10 months)",
+   "control_type": "placebo",
+   "definition_used": "Discontinued for adverse reactions",
+   "verification": "verified_label",
+   "quote": "In A-HeFT, 21% of the patients discontinued BiDil for adverse reactions compared to 12% who discontinued placebo",
+   "notes": "Cross-check only."
+  },
+  {
+   "id": "dig-toxicity-hosp",
+   "drug_class": "Inotrope",
+   "drugs": [
+    "Digoxin"
+   ],
+   "effect": "digoxinToxicityHospitalization",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.798,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DIG, first-year post hoc",
+    "citation": "Ahmed A et al. Am J Cardiol 2009;103:82-7 (PMC2900803)",
+    "pmid": "19101235"
+   },
+   "population": "DIG main + ancillary trials: 3889 digoxin vs 3899 placebo, chronic HF in sinus rhythm; first 12 months after randomization",
+   "control_type": "placebo",
+   "definition_used": "Hospitalization for suspected or confirmed digoxin toxicity, first hospitalization of each patient",
+   "verification": "verified_fulltext",
+   "quote": "Hospitalization due to digoxin toxicity occurred in 13 patients in the placebo group and 44 patients in the digoxin group during the first year of follow up (HR, 3.38; 95% CI, 1.82-6.28; P <0.0001)",
+   "notes": "44/3889 = 1.131% vs 13/3899 = 0.333%, excess 0.798 over exactly one year (no conversion). Rate per 10,000 person-years 120 vs 36 gives 0.85, same. Whole-trial label figure (2.0% vs 0.9% over 37 months) converts to 0.653% vs 0.292% a year, excess 0.36; the first-year figure is higher, consistent with early risk. CHOSEN by sourceChoice (same trial, follow-up up to a year, definition spelled out). Follow-up settled: the label \"37-week\" is a typo; the DIG NEJM abstract says \"average follow-up, 37 months\"."
+  },
+  {
+   "id": "dig-vent-arrhythmia",
+   "drug_class": "Inotrope",
+   "drugs": [
+    "Digoxin"
+   ],
+   "effect": "ventricularArrhythmia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.209,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DIG, first-year post hoc",
+    "citation": "Ahmed A et al. Am J Cardiol 2009;103:82-7 (PMC2900803)",
+    "pmid": "19101235"
+   },
+   "population": "DIG main + ancillary trials: 3889 digoxin vs 3899 placebo, chronic HF in sinus rhythm; first 12 months after randomization",
+   "control_type": "placebo",
+   "definition_used": "Hospitalization for ventricular arrhythmia / cardiac arrest, first hospitalization",
+   "verification": "verified_fulltext",
+   "quote": "Ventricular arrhythmia/cardiac arrest: 122 (41%) 157 (57/3635) 178 (65/3654) + 21 1.14 (0.80-1.62) 0.485",
+   "notes": "65/3889 = 1.671% vs 57/3899 = 1.462%, excess 0.209; not significant (HR 1.14, 0.80-1.62). Hospitalization, so toward the severe end. Step 1. DECISION (low-dose digoxin, 36.5 months, treatment-related SAE) agrees in direction: VT 4 vs 3."
+  },
+  {
+   "id": "dig-av-block",
+   "drug_class": "Inotrope",
+   "drugs": [
+    "Digoxin"
+   ],
+   "effect": "avBlockAdvanced",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.232,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DIG, first-year post hoc",
+    "citation": "Ahmed A et al. Am J Cardiol 2009;103:82-7 (PMC2900803)",
+    "pmid": "19101235"
+   },
+   "population": "DIG main + ancillary trials: 3889 digoxin vs 3899 placebo, chronic HF in sinus rhythm; first 12 months after randomization",
+   "control_type": "placebo",
+   "definition_used": "Hospitalization for atrioventricular block or bradyarrhythmia, first hospitalization",
+   "verification": "verified_fulltext",
+   "quote": "Hospitalization due to atrioventricular block or bradyarrhythmia toxicity occurred in 2 patients in the placebo group and 11 patients in the digoxin group during the first year of follow up (HR, 5.47; 95% CI, 1.21-24.69; P=0.027)",
+   "notes": "11/3889 = 0.283% vs 2/3899 = 0.051%, excess 0.232 over one year. DECISION treatment-related SAE: AV block 2 vs 1."
+  },
+  {
+   "id": "dig-gi",
+   "drug_class": "Inotrope",
+   "drugs": [
+    "Digoxin"
+   ],
+   "effect": "giUpset",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 0.629,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DECISION",
+    "citation": "van Veldhuisen DJ et al. Nat Med 2026 (PMC13375525), Extended Data Table 4 (patient-reported side effects)",
+    "pmid": "42108270"
+   },
+   "population": "DECISION: 500 digoxin vs 501 placebo, HFrEF/HFmrEF LVEF <=50%, target serum digoxin 0.5-0.9 ng/mL; median follow-up 36.5 months",
+   "control_type": "placebo",
+   "definition_used": "Patient-reported side effect (excluding those occurring >30 days after study-drug discontinuation)",
+   "verification": "verified_image_table",
+   "quote": "Diarrhea 48 (9.6%) vs 39 (7.8%); nausea 29 (5.8) vs 28 (5.6); vomiting 12 (2.4) vs 13 (2.6)",
+   "notes": "9.6% vs 7.8% treated as cumulative over the median follow-up of 36.5 months (table does not say; assumption) and converted over 3.042 y, excess 0.629. No difference was significant in the paper (P 0.25 to 0.89). Low-dose digoxin (about 0.6 ng/mL), so likely understates the label-dose burden. GI: diarrhoea is the largest excess of the near-synonyms."
+  },
+  {
+   "id": "dig-dizziness",
+   "drug_class": "Inotrope",
+   "drugs": [
+    "Digoxin"
+   ],
+   "effect": "dizziness",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 1.053,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DECISION",
+    "citation": "van Veldhuisen DJ et al. Nat Med 2026 (PMC13375525), Extended Data Table 4 (patient-reported side effects)",
+    "pmid": "42108270"
+   },
+   "population": "DECISION: 500 digoxin vs 501 placebo, HFrEF/HFmrEF LVEF <=50%, target serum digoxin 0.5-0.9 ng/mL; median follow-up 36.5 months",
+   "control_type": "placebo",
+   "definition_used": "Patient-reported side effect (excluding those occurring >30 days after study-drug discontinuation)",
+   "verification": "verified_image_table",
+   "quote": "Dizziness 98 (19.6%) vs 84 (16.8%)",
+   "notes": "19.6% vs 16.8% treated as cumulative over the median follow-up of 36.5 months (table does not say; assumption) and converted over 3.042 y, excess 1.053. No difference was significant in the paper (P 0.25 to 0.89). Low-dose digoxin (about 0.6 ng/mL), so likely understates the label-dose burden. GI: diarrhoea is the largest excess of the near-synonyms."
+  },
+  {
+   "id": "dig-headache",
+   "drug_class": "Inotrope",
+   "drugs": [
+    "Digoxin"
+   ],
+   "effect": "headache",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 0.626,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DECISION",
+    "citation": "van Veldhuisen DJ et al. Nat Med 2026 (PMC13375525), Extended Data Table 4 (patient-reported side effects)",
+    "pmid": "42108270"
+   },
+   "population": "DECISION: 500 digoxin vs 501 placebo, HFrEF/HFmrEF LVEF <=50%, target serum digoxin 0.5-0.9 ng/mL; median follow-up 36.5 months",
+   "control_type": "placebo",
+   "definition_used": "Patient-reported side effect (excluding those occurring >30 days after study-drug discontinuation)",
+   "verification": "verified_image_table",
+   "quote": "Headaches 45 (9.0%) vs 36 (7.2%)",
+   "notes": "9.0% vs 7.2% treated as cumulative over the median follow-up of 36.5 months (table does not say; assumption) and converted over 3.042 y, excess 0.626. No difference was significant in the paper (P 0.25 to 0.89). Low-dose digoxin (about 0.6 ng/mL), so likely understates the label-dose burden. GI: diarrhoea is the largest excess of the near-synonyms."
+  },
+  {
+   "id": "dig-vision",
+   "drug_class": "Inotrope",
+   "drugs": [
+    "Digoxin"
+   ],
+   "effect": "visualPhosphenes",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 0.48,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DECISION",
+    "citation": "van Veldhuisen DJ et al. Nat Med 2026 (PMC13375525), Extended Data Table 4 (patient-reported side effects)",
+    "pmid": "42108270"
+   },
+   "population": "DECISION: 500 digoxin vs 501 placebo, HFrEF/HFmrEF LVEF <=50%, target serum digoxin 0.5-0.9 ng/mL; median follow-up 36.5 months",
+   "control_type": "placebo",
+   "definition_used": "Patient-reported side effect (excluding those occurring >30 days after study-drug discontinuation)",
+   "verification": "verified_image_table",
+   "quote": "Blurred/Yellow Vision 34 (6.8%) vs 27 (5.4%)",
+   "notes": "6.8% vs 5.4% treated as cumulative over the median follow-up of 36.5 months (table does not say; assumption) and converted over 3.042 y, excess 0.480. No difference was significant in the paper (P 0.25 to 0.89). Low-dose digoxin (about 0.6 ng/mL), so likely understates the label-dose burden. GI: diarrhoea is the largest excess of the near-synonyms."
+  },
+  {
+   "id": "dig-rash",
+   "drug_class": "Inotrope",
+   "drugs": [
+    "Digoxin"
+   ],
+   "effect": "rash",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 0.548,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DECISION",
+    "citation": "van Veldhuisen DJ et al. Nat Med 2026 (PMC13375525), Extended Data Table 4 (patient-reported side effects)",
+    "pmid": "42108270"
+   },
+   "population": "DECISION: 500 digoxin vs 501 placebo, HFrEF/HFmrEF LVEF <=50%, target serum digoxin 0.5-0.9 ng/mL; median follow-up 36.5 months",
+   "control_type": "placebo",
+   "definition_used": "Patient-reported side effect (excluding those occurring >30 days after study-drug discontinuation)",
+   "verification": "verified_image_table",
+   "quote": "Skin Rashes 33 (6.6%) vs 25 (5.0%)",
+   "notes": "6.6% vs 5.0% treated as cumulative over the median follow-up of 36.5 months (table does not say; assumption) and converted over 3.042 y, excess 0.548. No difference was significant in the paper (P 0.25 to 0.89). Low-dose digoxin (about 0.6 ng/mL), so likely understates the label-dose burden. GI: diarrhoea is the largest excess of the near-synonyms."
+  },
+  {
+   "id": "loop-hypokalemia",
+   "drug_class": "Loop Diuretic",
+   "drugs": [],
+   "effect": "hypokalemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": -1.5,
+   "dose_related": true,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Torsemide label",
+    "citation": "Torsemide prescribing information, DailyMed set 5eeca7b4-92ac-bb1f-e063-6394a90a036a, section 6.1"
+   },
+   "population": "US hypertension trials, torsemide 5 or 10 mg daily, median treatment 41 days (step 4; applied to every loop by sibling assumption, step 5)",
+   "control_type": "placebo",
+   "definition_used": "Serum potassium below 3.5 mEq/L at any time",
+   "verification": "verified_label",
+   "quote": "The percentage of patients who had a serum potassium level below 3.5 mEq/L at any time during the studies was 1.5% on torsemide and 3% on placebo.",
+   "notes": "Step 4 is the best step reached: no heart-failure or higher-dose placebo-controlled loop figure exists in anything fetched (labels, DOSE, TRANSFORM-HF has no adverse-event data, CLOROTIC abstract gives only \"similar\"). The measured excess is below zero (floors to 0). The same label says that at heart-failure doses \"hypokalemia was observed with greater frequency, in a dose-related manner\" with no number, so this row probably understates. Alternatives left to the controller: thiazide SHEP 6.2 (step 5 across classes) or a step-6 bound (largest placebo-controlled hypokalemia excess in the table: SZC 15 g, 10.7). Bumetanide label (uncontrolled): hypokalemia 14.7% of patients tested, threshold not stated."
+  },
+  {
+   "id": "loop-hyponatremia",
+   "drug_class": "Loop Diuretic",
+   "drugs": [],
+   "effect": "hyponatremia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 2.165,
+   "dose_related": null,
+   "level": "extrapolated",
+   "upper_bound": true,
+   "source": {
+    "trial": "Widaplik label",
+    "citation": "WIDAPLIK prescribing information, DailyMed set a30ff81d-420b-40ea-83d8-670260a93fff, Table 1 (Study 1)"
+   },
+   "population": "Upper bound from a thiazide-like diuretic (indapamide combination) in hypertension, 4 weeks; loops have no sodium row in any label incidence table",
+   "control_type": "placebo",
+   "definition_used": "Sodium below 135 mmol/L at week 4 (definition says 130)",
+   "verification": "verified_label",
+   "quote": "Sodium <135 mmol/L at week 4, n (%) 4 (3.5%) 1 (0.8%) 0 (0%)",
+   "notes": "STEP 6 upper bound: largest placebo-controlled hyponatremia excess in this part of the table (thiazide-like). 5 of 231 on indapamide combinations vs 0 of 62 placebo = 2.165, 4 weeks, as observed. Threshold mismatch (135 not 130) overstates. Bumetanide label (uncontrolled): hyponatremia 9.2% of patients tested."
+  },
+  {
+   "id": "loop-hypomagnesemia",
+   "drug_class": "Loop Diuretic",
+   "drugs": [],
+   "effect": "hypomagnesemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 21.596,
+   "dose_related": null,
+   "level": "extrapolated",
+   "upper_bound": true,
+   "source": {
+    "trial": "PEARL-HF",
+    "citation": "Pitt B et al. Eur Heart J 2011;32:820-8 (PMC3069389)",
+    "pmid": "21208974"
+   },
+   "population": "Upper bound from a potassium binder (patiromer 30 g/day) in HF, 4 weeks; no loop-diuretic magnesium rate was found",
+   "control_type": "placebo",
+   "definition_used": "Serum magnesium below 1.8 mg/dL during treatment",
+   "verification": "verified_fulltext",
+   "quote": "Serum magnesium <1.8 mg/dL during the treatment period was seen in 13 (24%) RLY5016-treated patients and 1 (2.1%) placebo-treated patient",
+   "notes": "STEP 6 upper bound: the largest placebo-controlled hypomagnesemia excess in this part of the table is a binder that chelates magnesium; it is almost surely far above the loop-diuretic rate. Marked upper bound so the controller can drop it. Torsemide, Furoscix and bumetanide labels all warn of hypomagnesemia without a rate."
+  },
+  {
+   "id": "loop-hyperglycemia",
+   "drug_class": "Loop Diuretic",
+   "drugs": [],
+   "effect": "hyperglycemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 1.86,
+   "dose_related": null,
+   "level": "extrapolated",
+   "upper_bound": true,
+   "source": {
+    "trial": "Elliott & Meyer network meta-analysis",
+    "citation": "Elliott WJ, Meyer PM. Lancet 2007;369:201-7",
+    "pmid": "17240286"
+   },
+   "population": "Hypertension trials, diuretics (mostly thiazide-type); upper bound for a loop",
+   "control_type": "placebo",
+   "definition_used": "Incident diabetes",
+   "verification": "computed_from_verified",
+   "quote": "Initial drug therapy ... diuretic (998 of 18,699, or 5.34%) ... placebo (1686 of 24,767, or 6.81%) ... placebo (nine groups) 0.77 (0.63-0.94, p = 0.009)",
+   "notes": "STEP 6 upper bound (thiazide-type figure applied to loops). Odds of diuretic vs placebo = 1/0.77 = 1.30; placebo odds 0.0681/0.9319 = 0.07308; x1.30 = 0.0949, p = 8.67%; excess 8.67 - 6.81 = 1.86. Follow-up not given in the abstract (trials of several years), so no one-year conversion was made; this overstates a yearly rate. Loop labels: hyperglycemia warned; bumetanide label 6.6% of patients tested (uncontrolled)."
+  },
+  {
+   "id": "loop-gout",
+   "drug_class": "Loop Diuretic",
+   "drugs": [],
+   "effect": "hyperuricemiaGout",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.572,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Choi 2012",
+    "citation": "Choi HK et al. BMJ 2012;344:d8190 (PMC3257215)",
+    "pmid": "22240117"
+   },
+   "population": "UK primary-care case-control, patients with hypertension, current diuretic use (loop and thiazide pooled)",
+   "control_type": "none",
+   "definition_used": "Incident gout (observational, not a randomized placebo contrast)",
+   "verification": "verified_fulltext",
+   "quote": "The respective absolute risk differences were 572, 218, 109, and 132 cases per 100 000 person years.",
+   "notes": "Diuretics RR 2.36 (2.21 to 2.52); absolute difference 572 per 100,000 person-years = 0.572% a year. Observational and adjusted; not specific to loops."
+  },
+  {
+   "id": "loop-hypotension",
+   "drug_class": "Loop Diuretic",
+   "drugs": [],
+   "effect": "hypotensionSymptomatic",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 4.0,
+   "dose_related": null,
+   "level": "extrapolated",
+   "upper_bound": true,
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "Upper bound: largest placebo-controlled symptomatic-hypotension excess in this part of the table (BiDil, A-HeFT)",
+   "control_type": "placebo",
+   "definition_used": "Hypotension reported as adverse reaction",
+   "verification": "verified_label",
+   "quote": "Hypotension 8 4",
+   "notes": "STEP 6 upper bound. Loop labels warn of hypotension and volume depletion without a controlled rate (bumetanide label, uncontrolled: hypotension 0.8%, dizziness 1.1%, muscle cramps 1.1%)."
+  },
+  {
+   "id": "torsemide-urinary-frequency",
+   "drug_class": "Loop Diuretic",
+   "drugs": [
+    "Torsemide"
+   ],
+   "effect": "urinaryFrequency",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 14,
+   "dose_related": true,
+   "dose_groups": [
+    {
+     "daily_mg": 5,
+     "one_year_excess_pct": 3
+    },
+    {
+     "daily_mg": 10,
+     "one_year_excess_pct": 14
+    }
+   ],
+   "level": "extrapolated",
+   "source": {
+    "trial": "Torsemide label",
+    "citation": "Torsemide prescribing information, DailyMed set 5eeca7b4-92ac-bb1f-e063-6394a90a036a, section 6.1"
+   },
+   "population": "US hypertension trials, 5 and 10 mg daily, median treatment 41 days",
+   "control_type": "placebo",
+   "definition_used": "Excessive urination",
+   "verification": "verified_label",
+   "quote": "In the placebo-controlled hypertension studies excessive urination was dose related; 1% of patients receiving placebo, 4% of those treated with 5 mg of daily torsemide, and 15% of those treated with 10 mg.",
+   "notes": "Dose groups: 5 mg 4 - 1 = 3, 10 mg 15 - 1 = 14 (flat above 10 mg and below 5 mg). The label also says excessive urination \"was generally not reported as an adverse event among patients who received torsemide for cardiac, renal, or hepatic failure\", so this probably overstates in heart failure. Replaces the collector row (6.7 vs 2.2, 4.5 overall)."
+  },
+  {
+   "id": "furoscix-injection-site",
+   "drug_class": "Loop Diuretic",
+   "drugs": [
+    "Furoscix (SC Furosemide)"
+   ],
+   "effect": "injectionSiteReaction",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 6.0,
+   "dose_related": null,
+   "level": "extrapolated",
+   "upper_bound": true,
+   "source": {
+    "trial": "Zepbound label",
+    "citation": "ZEPBOUND prescribing information, DailyMed set 487cd7e7-434c-4925-99fa-aa80b1cc776b, Table 2"
+   },
+   "population": "Upper bound from tirzepatide 10 or 15 mg (obesity trials); Furoscix label lists administration-site reactions (erythema, bruising, edema, pain) with no incidence table",
+   "control_type": "placebo",
+   "definition_used": "Injection site reactions",
+   "verification": "verified_label",
+   "quote": "Injection Site Reactions d 2 6 8 8",
+   "notes": "STEP 6 upper bound. Furoscix takes the oral furosemide class rows (hypokalemia, hyponatremia, magnesium, glucose, gout, hypotension) by sibling assumption, because its label has no incidence table, and adds its own site reaction. Charged per administration in practice (R6); the trial-year figure used."
+  },
+  {
+   "id": "thiazide-hypokalemia",
+   "drug_class": "Thiazide-like Diuretic",
+   "drugs": [],
+   "effect": "hypokalemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 6.2,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "SHEP",
+    "citation": "Franse LV et al. Hypertension 2000;35:1025-30",
+    "pmid": "10818057"
+   },
+   "population": "SHEP: isolated systolic hypertension, age 60+, chlorthalidone-based treatment, 4126 analysed, after 1 year",
+   "control_type": "placebo",
+   "definition_used": "Serum potassium below 3.5 mmol/L at the 1-year visit",
+   "verification": "verified_abstract",
+   "quote": "After 1 year of treatment, 7.2% of the participants randomized to active treatment had a serum potassium <3.5 mmol/L compared with 1% of the participants randomized to placebo",
+   "notes": "7.2 - 1.0 = 6.2 at one year (a prevalence at one visit). Chlorthalidone figure applied to the whole class (step 4 for chlorthalidone, sibling for the others). Widaplik 12-week (indapamide, vs a combination without it): 6.8% vs 0%, consistent."
+  },
+  {
+   "id": "thiazide-hyponatremia",
+   "drug_class": "Thiazide-like Diuretic",
+   "drugs": [],
+   "effect": "hyponatremia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 2.165,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Widaplik label",
+    "citation": "WIDAPLIK prescribing information, DailyMed set a30ff81d-420b-40ea-83d8-670260a93fff, Table 1 (Study 1)"
+   },
+   "population": "Hypertension, 4 weeks, indapamide-containing combinations vs placebo (231 vs 62)",
+   "control_type": "placebo",
+   "definition_used": "Sodium below 135 mmol/L at week 4 (definition says 130)",
+   "verification": "verified_label",
+   "quote": "Sodium <135 mmol/L at week 4, n (%) 4 (3.5%) 1 (0.8%) 0 (0%)",
+   "notes": "(4+1)/231 = 2.165 vs 0/62, as observed (4 weeks). Placebo-controlled rows are preferred to the 12-week Study 2 contrast (Widaplik 7.3% vs 3.2% without indapamide, excess 4.1). Threshold mismatch (135 not 130) overstates the severe event. Combination drug; sibling extension to chlorthalidone, HCTZ, metolazone."
+  },
+  {
+   "id": "thiazide-hyperglycemia",
+   "drug_class": "Thiazide-like Diuretic",
+   "drugs": [],
+   "effect": "hyperglycemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 1.86,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Elliott & Meyer network meta-analysis",
+    "citation": "Elliott WJ, Meyer PM. Lancet 2007;369:201-7",
+    "pmid": "17240286"
+   },
+   "population": "Hypertension trials, 143,153 participants without diabetes, diuretic-based initial therapy",
+   "control_type": "placebo",
+   "definition_used": "Incident diabetes",
+   "verification": "computed_from_verified",
+   "quote": "placebo (nine groups) 0.77 (0.63-0.94, p = 0.009)",
+   "notes": "Computed: odds diuretic vs placebo = 1/0.77 = 1.30 applied to the placebo 6.81%: 8.67%; excess 1.86. Follow-up not stated (several years); no conversion, so overstates a yearly rate."
+  },
+  {
+   "id": "thiazide-gout",
+   "drug_class": "Thiazide-like Diuretic",
+   "drugs": [],
+   "effect": "hyperuricemiaGout",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.572,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Choi 2012",
+    "citation": "Choi HK et al. BMJ 2012;344:d8190",
+    "pmid": "22240117"
+   },
+   "population": "UK primary-care case-control; diuretics pooled",
+   "control_type": "none",
+   "definition_used": "Incident gout (observational)",
+   "verification": "verified_fulltext",
+   "quote": "The respective absolute risk differences were 572, 218, 109, and 132 cases per 100 000 person years.",
+   "notes": "0.572% a year."
+  },
+  {
+   "id": "thiazide-hypomagnesemia",
+   "drug_class": "Thiazide-like Diuretic",
+   "drugs": [],
+   "effect": "hypomagnesemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 21.596,
+   "dose_related": null,
+   "level": "extrapolated",
+   "upper_bound": true,
+   "source": {
+    "trial": "PEARL-HF",
+    "citation": "Pitt B et al. Eur Heart J 2011;32:820-8",
+    "pmid": "21208974"
+   },
+   "population": "Upper bound from a potassium binder, 4 weeks",
+   "control_type": "placebo",
+   "definition_used": "Serum magnesium below 1.8 mg/dL",
+   "verification": "verified_fulltext",
+   "quote": "Serum magnesium <1.8 mg/dL during the treatment period was seen in 13 (24%) RLY5016-treated patients and 1 (2.1%) placebo-treated patient",
+   "notes": "STEP 6 upper bound (see the loop row): thiazide labels warn of hypomagnesemia without a rate."
+  },
+  {
+   "id": "thiazide-hypotension",
+   "drug_class": "Thiazide-like Diuretic",
+   "drugs": [],
+   "effect": "hypotensionSymptomatic",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 4.0,
+   "dose_related": null,
+   "level": "extrapolated",
+   "upper_bound": true,
+   "source": {
+    "trial": "A-HeFT (label)",
+    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+   },
+   "population": "Upper bound (BiDil, A-HeFT)",
+   "control_type": "placebo",
+   "definition_used": "Hypotension",
+   "verification": "verified_label",
+   "quote": "Hypotension 8 4",
+   "notes": "STEP 6 upper bound. Widaplik symptomatic hypotension (3.5 to 5.1% vs 0%) is a three-drug combination and not attributable to the diuretic."
+  },
+  {
+   "id": "hctz-creatinine",
+   "drug_class": "Thiazide-like Diuretic",
+   "drugs": [
+    "Hydrochlorothiazide"
+   ],
+   "effect": "creatinineRise",
+   "layer": "harmRow",
+   "one_year_excess_pct": 29.3,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "CLOROTIC",
+    "citation": "Trullas JC et al. Eur Heart J 2023;44:411-21",
+    "pmid": "36423214"
+   },
+   "population": "CLOROTIC: acute decompensated HF, 230 patients, age 83, HCTZ vs placebo added to IV furosemide, 72 hours",
+   "control_type": "placebo",
+   "definition_used": "Increase in creatinine >=26.5 micromol/L (0.3 mg/dL) or fall in eGFR, within 72 hours (definition says 0.5 mg/dL)",
+   "verification": "verified_abstract",
+   "quote": "impaired renal function (increase in creatinine 26.5 moL/L or decrease in eGFR 50; 46.5 vs. 17.2; P 0.001)",
+   "notes": "46.5% vs 17.2% over 72 hours, used as observed (under a year); 29.3 points. An acute, inpatient add-on figure: charged as a yearly rate it dominates the scale (14.7 points). Threshold 0.3 not 0.5 (overstates)."
+  },
+  {
+   "id": "metolazone-creatinine",
+   "drug_class": "Thiazide-like Diuretic",
+   "drugs": [
+    "Metolazone"
+   ],
+   "effect": "creatinineRise",
+   "layer": "harmRow",
+   "one_year_excess_pct": 8.175,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "MELT-HF",
+    "citation": "ClinicalTrials.gov NCT02620384 adverse events module",
+    "pmid": "NCT02620384"
+   },
+   "population": "MELT-HF: acute decompensated HF, metolazone 72 vs placebo 70 added to loop, adverse events collected for the first 48 hours",
+   "control_type": "placebo",
+   "definition_used": "Reported acute kidney injury in 48 hours",
+   "verification": "computed_from_verified",
+   "quote": "Acute Kidney Injury: Placebo 4 of 70, Metolazone 10 of 72",
+   "notes": "13.889% vs 5.714% over 48 hours, as observed. Reported event (R2 mismatch)."
+  },
+  {
+   "id": "chlorthalidone-creatinine",
+   "drug_class": "Thiazide-like Diuretic",
+   "drugs": [
+    "Chlorthalidone"
+   ],
+   "effect": "creatinineRise",
+   "layer": "harmRow",
+   "one_year_excess_pct": 29.3,
+   "dose_related": null,
+   "level": "siblingProxy",
+   "source": {
+    "trial": "CLOROTIC",
+    "citation": "Trullas JC et al. Eur Heart J 2023;44:411-21",
+    "pmid": "36423214"
+   },
+   "population": "Sibling proxy: HCTZ, CLOROTIC (larger of the two thiazide-like add-on trials)",
+   "control_type": "placebo",
+   "definition_used": "As the HCTZ row",
+   "verification": "verified_abstract",
+   "quote": "impaired renal function (increase in creatinine 26.5 moL/L or decrease in eGFR 50; 46.5 vs. 17.2; P 0.001)",
+   "notes": "Step 5 sibling (R4: more patients, 230 vs 142). Chlorthalidone has no add-on trial; applying an acute inpatient figure to an outpatient drug probably overstates. Flagged."
+  },
+  {
+   "id": "patiromer-hypokalemia",
+   "drug_class": "K+ Binder",
+   "drugs": [
+    "Patiromer"
+   ],
+   "effect": "hypokalemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 5.455,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "PEARL-HF",
+    "citation": "Pitt B et al. Eur Heart J 2011;32:820-8 (PMC3069389)",
+    "pmid": "21208974"
+   },
+   "population": "PEARL-HF: HF patients on spironolactone with prior hyperkalaemia or CKD, patiromer (RLY5016) 30 g/day vs placebo, 4 weeks, 55 vs 49",
+   "control_type": "placebo",
+   "definition_used": "Serum potassium below 3.5 mEq/L (laboratory)",
+   "verification": "verified_fulltext",
+   "quote": "Serum potassium <3.5 mEq/L 3 (6) 0 (0) 0.094",
+   "notes": "3/55 = 5.455% vs 0/49, 4 weeks both arms (R3 met), used as observed. Laboratory definition preferred to DIAMOND reported events (15.0% vs 10.7%, excess 4.3, 27 weeks) by R2. Dose 30 g/day is above the formulary maximum of 25.2 g; dose relation not measured."
+  },
+  {
+   "id": "patiromer-hypomagnesemia",
+   "drug_class": "K+ Binder",
+   "drugs": [
+    "Patiromer"
+   ],
+   "effect": "hypomagnesemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 21.596,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "PEARL-HF",
+    "citation": "Pitt B et al. Eur Heart J 2011;32:820-8 (PMC3069389)",
+    "pmid": "21208974"
+   },
+   "population": "PEARL-HF: HF patients on spironolactone with prior hyperkalaemia or CKD, patiromer (RLY5016) 30 g/day vs placebo, 4 weeks, 55 vs 49",
+   "control_type": "placebo",
+   "definition_used": "Serum magnesium below 1.8 mg/dL (laboratory)",
+   "verification": "verified_fulltext",
+   "quote": "Serum magnesium <1.8 mg/dL during the treatment period was seen in 13 (24%) RLY5016-treated patients and 1 (2.1%) placebo-treated patient",
+   "notes": "13/55 = 23.636% vs 1/49 = 2.041%, excess 21.595, 4 weeks, as observed. R2 applied: the laboratory row (24% vs 2%) is preferred to DIAMOND (4.3% vs 5.0% reported events, excess -0.7, 27 weeks). The dose in the formulary (8.4 to 25.2 g) is below the 30 g/day studied, so this probably overstates at 8.4 to 16.8 g. Label: hypomagnesemia 5.3% (uncontrolled), 9% with Mg below 1.4 mg/dL."
+  },
+  {
+   "id": "patiromer-constipation",
+   "drug_class": "K+ Binder",
+   "drugs": [
+    "Patiromer"
+   ],
+   "effect": "constipation",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 1.367,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DIAMOND",
+    "citation": "Butler J et al. Eur Heart J 2022;43:4362-73 (PMC9622299)",
+    "pmid": "35900838"
+   },
+   "population": "DIAMOND: HFrEF, 439 vs 439, median follow-up 27 weeks",
+   "control_type": "placebo",
+   "definition_used": "Constipation (reported)",
+   "verification": "verified_fulltext",
+   "quote": "Constipation 11 (2.5) 5 (1.1)",
+   "notes": "2.506% vs 1.139%, 27 weeks, as observed."
+  },
+  {
+   "id": "patiromer-gi",
+   "drug_class": "K+ Binder",
+   "drugs": [
+    "Patiromer"
+   ],
+   "effect": "giUpset",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 0.911,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DIAMOND",
+    "citation": "Butler J et al. Eur Heart J 2022;43:4362-73",
+    "pmid": "35900838"
+   },
+   "population": "DIAMOND",
+   "control_type": "placebo",
+   "definition_used": "Diarrhea (largest excess of diarrhea, nausea)",
+   "verification": "verified_fulltext",
+   "quote": "Diarrhea 19 (4.3) 15 (3.4) Nausea 4 (0.9) 4 (0.9)",
+   "notes": "4.328% vs 3.417%. Flatulence (label) is not in the definition."
+  },
+  {
+   "id": "patiromer-edema",
+   "drug_class": "K+ Binder",
+   "drugs": [
+    "Patiromer"
+   ],
+   "effect": "peripheralEdema",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": -0.683,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DIAMOND (registry)",
+    "citation": "ClinicalTrials.gov NCT03888066 adverse events module"
+   },
+   "population": "DIAMOND",
+   "control_type": "placebo",
+   "definition_used": "Oedema peripheral",
+   "verification": "computed_from_verified",
+   "quote": "Oedema peripheral: patiromer 2 of 439, placebo 5 of 439",
+   "notes": "Negative; floors to 0."
+  },
+  {
+   "id": "patiromer-dae",
+   "drug_class": "K+ Binder",
+   "drugs": [
+    "Patiromer"
+   ],
+   "effect": "discontinuationForAdverseEvent",
+   "layer": "crossCheck",
+   "one_year_excess_pct": 0.228,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "DIAMOND",
+    "citation": "Butler J et al. Eur Heart J 2022;43:4362-73",
+    "pmid": "35900838"
+   },
+   "population": "DIAMOND",
+   "control_type": "placebo",
+   "definition_used": "Adverse events leading to withdrawal",
+   "verification": "verified_fulltext",
+   "quote": "Adverse events leading to withdrawal, n (%) 12 (2.7) 11 (2.5)",
+   "notes": "Cross-check only."
+  },
+  {
+   "id": "szc-hypokalemia",
+   "drug_class": "K+ Binder",
+   "drugs": [
+    "Sodium Zirconium Cyclosilicate (Lokelma)"
+   ],
+   "effect": "hypokalemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 9.804,
+   "dose_related": true,
+   "dose_groups": [
+    {
+     "daily_mg": 5,
+     "one_year_excess_pct": 0
+    },
+    {
+     "daily_mg": 10,
+     "one_year_excess_pct": 9.804
+    },
+    {
+     "daily_mg": 15,
+     "one_year_excess_pct": 10.714
+    }
+   ],
+   "level": "extrapolated",
+   "source": {
+    "trial": "HARMONIZE",
+    "citation": "Kosiborod M et al. JAMA 2014;312:2223-33",
+    "pmid": "25402495"
+   },
+   "population": "HARMONIZE: outpatients with hyperkalemia (not heart-failure-specific), SZC 5, 10, 15 g/day vs placebo (45, 51, 56 vs 85), 28 days",
+   "control_type": "placebo",
+   "definition_used": "Hypokalemia (laboratory; threshold K below 3.5 per the label programme, methods text not retrieved)",
+   "verification": "verified_abstract",
+   "quote": "Hypokalemia developed in 5/51 (10%) and 6/56 patients (11%) in the 10-g and 15-g zirconium cyclosilicate groups, vs none in the 5-g or placebo groups.",
+   "notes": "Dose groups by grams a day (the engine daily dose for this drug is in grams): 5 g 0, 10 g 5/51 = 9.804, 15 g 6/56 = 10.714; placebo 0; 28 days, as observed. R2 applied: this laboratory row (step 4) is preferred to REALIZE-K (HF, reported event: 6 of 101 other + 1 serious vs 0 of 101, 5.9 to 6.9% over 6.5 months, step 1). The laboratory threshold itself was not confirmed from the abstract."
+  },
+  {
+   "id": "szc-edema",
+   "drug_class": "K+ Binder",
+   "drugs": [
+    "Sodium Zirconium Cyclosilicate (Lokelma)"
+   ],
+   "effect": "peripheralEdema",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 13.7,
+   "dose_related": true,
+   "dose_groups": [
+    {
+     "daily_mg": 5,
+     "one_year_excess_pct": 2.0
+    },
+    {
+     "daily_mg": 10,
+     "one_year_excess_pct": 3.5
+    },
+    {
+     "daily_mg": 15,
+     "one_year_excess_pct": 13.7
+    }
+   ],
+   "level": "extrapolated",
+   "source": {
+    "trial": "Lokelma label",
+    "citation": "LOKELMA prescribing information, DailyMed set 90bf8e28-748d-4e4b-a19f-9cf483370eff, section 6.1"
+   },
+   "population": "Placebo-controlled trials in patients not on dialysis, hyperkalemia with CKD, heart failure and diabetes (n=1,009), up to 28 days",
+   "control_type": "placebo",
+   "definition_used": "Edema reported",
+   "verification": "verified_label",
+   "quote": "edema was reported in 4.4% of patients receiving 5 g, 5.9% of patients receiving 10 g and 16.1% of patients receiving 15 g LOKELMA compared to 2.4% of patients receiving placebo",
+   "notes": "Dose groups (excess over placebo 2.4): 5 g 2.0, 10 g 3.5, 15 g 13.7; up to 28 days, as observed. Mixed population, so step 4 rather than the heart-failure-only REALIZE-K (5.941% vs 1.98%, 3.96 excess, 6.5 months, doses not stated), which agrees at about 10 g. The doseRelation rule (measured dose groups) was applied."
+  },
+  {
+   "id": "szc-constipation",
+   "drug_class": "K+ Binder",
+   "drugs": [
+    "Sodium Zirconium Cyclosilicate (Lokelma)"
+   ],
+   "effect": "constipation",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 9.0,
+   "dose_related": true,
+   "dose_groups": [
+    {
+     "daily_mg": 5,
+     "one_year_excess_pct": 5
+    },
+    {
+     "daily_mg": 10,
+     "one_year_excess_pct": 9
+    }
+   ],
+   "level": "extrapolated",
+   "source": {
+    "trial": "Lokelma label",
+    "citation": "LOKELMA prescribing information, section 6.1"
+   },
+   "population": "Pooled Asian-population studies; no placebo cases",
+   "control_type": "placebo",
+   "definition_used": "Constipation",
+   "verification": "verified_label",
+   "quote": "constipation occurred in patients receiving LOKELMA with an estimated incidence of 9% and 5% for the 10 g and 5 g dose respectively ... No cases of constipation were reported in patients receiving placebo.",
+   "notes": "Dose groups 5 g 5, 10 g 9 (placebo 0); flat at 15 g. Estimated incidence, not a randomized figure."
+  },
+  {
+   "id": "fcm-hypophosphatemia",
+   "drug_class": "IV Iron",
+   "drugs": [
+    "Ferric Carboxymaltose"
+   ],
+   "effect": "hypophosphatemia",
+   "layer": "harmRow",
+   "one_year_excess_pct": 66.35,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "PHOSPHARE-IDA trials A and B",
+    "citation": "Wolf M et al. JAMA 2020;323:432-43",
+    "pmid": "32016310"
+   },
+   "population": "Iron-deficiency anemia (not heart failure), 245 patients, FCM 750 mg on days 0 and 7 vs iron isomaltoside 1000 mg; 35 days",
+   "control_type": "active",
+   "definition_used": "Serum phosphate below 2.0 mg/dL between baseline and day 35",
+   "verification": "verified_abstract",
+   "quote": "trial A: 7.9% vs 75.0% ... trial B: 8.1% vs 73.7%",
+   "notes": "FCM 74.35% (pooled 75.0 and 73.7) minus comparator 8.0% = 66.35, 35 days (one course), as observed. Step 3 by R5 would add the comparator placebo excess, which is unknown, so the difference alone is used and understates if iron isomaltoside also lowers phosphate. HF trials report only serious hypophosphatemia (HEART-FID 1 vs 0). Label: laboratory phosphorus <2 mg/dL in 27% (440/1638) of patients (uncontrolled), reported AE 2.1% vs 0.1% (comparators). Courses a year in HF: about one to two (R6); one course used. LARGEST single charge in this part (33 points). Boxed warning (08/2026)."
+  },
+  {
+   "id": "fcm-hypersensitivity",
+   "drug_class": "IV Iron",
+   "drugs": [
+    "Ferric Carboxymaltose"
+   ],
+   "effect": "hypersensitivitySerious",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.196,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "HEART-FID (registry)",
+    "citation": "ClinicalTrials.gov NCT03037931 adverse events module; Ezekowitz JA et al. N Engl J Med 2023",
+    "pmid": "37632463"
+   },
+   "population": "HEART-FID: HFrEF with iron deficiency, 1532 vs 1533, doses every 6 months as needed",
+   "control_type": "placebo",
+   "definition_used": "Serious adverse event \"Hypersensitivity\"",
+   "verification": "computed_from_verified",
+   "quote": "Hypersensitivity: ferric carboxymaltose 3 of 1532, placebo 0 of 1533 (serious events)",
+   "notes": "0.196%, follow-up per patient not stated (registry timeframe up to 67.5 months), used as observed (overstates a yearly rate if follow-up is long; R6 per-administration not computable). Label: serious anaphylactic/anaphylactoid reactions 0.1% (2/1,775), other serious hypersensitivity-type reactions 1.5% (26/1,775), uncontrolled."
+  },
+  {
+   "id": "fcm-site-reaction",
+   "drug_class": "IV Iron",
+   "drugs": [
+    "Ferric Carboxymaltose"
+   ],
+   "effect": "injectionSiteReaction",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 4.605,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "CONFIRM-HF",
+    "citation": "Ponikowski P et al. Eur Heart J 2015;36:657-68 (PMC4359359)",
+    "pmid": "25176939"
+   },
+   "population": "CONFIRM-HF: HFrEF with iron deficiency, 152 vs 152, 52 weeks",
+   "control_type": "placebo",
+   "definition_used": "Drug-related adverse events in \"General disorders and administration site conditions\" (includes feeling hot; injection site discolouration 2)",
+   "verification": "verified_fulltext",
+   "quote": "General disorders and administration site conditions 9 (5.9) 9 2 (1.3) 2",
+   "notes": "9/152 = 5.921% vs 2/152 = 1.316%, 52 weeks. CORRECTED definition: the collector called it injection-site reactions; it is the system-organ class of drug-related events (two were injection-site discolouration, four feeling hot). Label: injection site reactions 3% vs 3.2% for comparators (not placebo)."
+  },
+  {
+   "id": "fcm-gi",
+   "drug_class": "IV Iron",
+   "drugs": [
+    "Ferric Carboxymaltose"
+   ],
+   "effect": "giUpset",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 1.316,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "CONFIRM-HF",
+    "citation": "Ponikowski P et al. Eur Heart J 2015;36:657-68",
+    "pmid": "25176939"
+   },
+   "population": "CONFIRM-HF",
+   "control_type": "placebo",
+   "definition_used": "Drug-related gastrointestinal disorders",
+   "verification": "verified_fulltext",
+   "quote": "Gastro-intestinal disorders 2 (1.3) 3 0 (0.0) 0",
+   "notes": "1.316% vs 0, 52 weeks. Only drug-related events are tabulated, so this probably understates. Label (comparators, not placebo): nausea 7.2% vs 2%."
+  },
+  {
+   "id": "fcm-dae",
+   "drug_class": "IV Iron",
+   "drugs": [
+    "Ferric Carboxymaltose"
+   ],
+   "effect": "discontinuationForAdverseEvent",
+   "layer": "crossCheck",
+   "one_year_excess_pct": -3.3,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "CONFIRM-HF",
+    "citation": "Ponikowski P et al. Eur Heart J 2015;36:657-68",
+    "pmid": "25176939"
+   },
+   "population": "CONFIRM-HF",
+   "control_type": "placebo",
+   "definition_used": "AE leading to study drug withdrawal",
+   "verification": "verified_fulltext",
+   "quote": "Subject with at least one AE leading to study drug withdrawal 14 (9.2) 14 19 (12.5) 19",
+   "notes": "Cross-check only."
+  },
+  {
+   "id": "sema-pancreatitis",
+   "drug_class": "GLP-1 RA",
+   "drugs": [
+    "Semaglutide (Wegovy)"
+   ],
+   "effect": "pancreatitis",
+   "layer": "harmRow",
+   "one_year_excess_pct": -0.0,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "STEP-HFpEF and STEP-HFpEF DM (registry)",
+    "citation": "ClinicalTrials.gov NCT04788511 and NCT04916470 adverse events modules; Kosiborod MN et al. N Engl J Med 2023 and Lancet 2024",
+    "pmid": "37622681;38587233"
+   },
+   "population": "STEP-HFpEF (263 vs 266) and STEP-HFpEF DM (310 vs 306): HFpEF with obesity, semaglutide 2.4 mg weekly, 57 weeks",
+   "control_type": "placebo",
+   "definition_used": "Pancreatitis, serious events",
+   "verification": "computed_from_verified",
+   "quote": "Pancreatitis acute: 1 vs 0 (DM trial); Obstructive pancreatitis 0 vs 1 (HFpEF trial)",
+   "notes": "1/573 vs 1/572, excess -0.0003; too few events to estimate a rate, but it is the heart-failure placebo-controlled row (sourceChoice). Wegovy label (obesity, adjudicated): 0.2 vs less than 0.1 cases per 100 patient-years, excess at least 0.1; the controller may prefer it."
+  },
+  {
+   "id": "sema-gallbladder",
+   "drug_class": "GLP-1 RA",
+   "drugs": [
+    "Semaglutide (Wegovy)"
+   ],
+   "effect": "gallbladderDisease",
+   "layer": "harmRow",
+   "one_year_excess_pct": 1.3,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Wegovy label",
+    "citation": "WEGOVY prescribing information, DailyMed set ee06186f-2aa3-4990-a760-757579d8f77b, section 5.3"
+   },
+   "population": "Adult weight-reduction trials (obesity), follow-up not stated",
+   "control_type": "placebo",
+   "definition_used": "Cholelithiasis plus cholecystitis reported as adverse events",
+   "verification": "verified_label",
+   "quote": "cholelithiasis was reported by 1.6% of WEGOVY injection-treated patients and 0.7% of placebo injection-treated patients ... Cholecystitis was reported by 0.6% of WEGOVY injection-treated adult patients and 0.2% of placebo- treated patients.",
+   "notes": "(1.6 + 0.6) - (0.7 + 0.2) = 1.3, no stated follow-up (used as observed; the trials ran about 68 weeks); patients with both may be counted twice. CORRECTED: the collector omitted cholecystitis (0.9). Chosen over the STEP-HFpEF registry (5/573 vs 3/572, excess 0.35) because the registry lists only serious events, a definition mismatch (R2)."
+  },
+  {
+   "id": "sema-gi",
+   "drug_class": "GLP-1 RA",
+   "drugs": [
+    "Semaglutide (Wegovy)"
+   ],
+   "effect": "giUpset",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 13.081,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "STEP-HFpEF and STEP-HFpEF DM (registry)",
+    "citation": "ClinicalTrials.gov NCT04788511 and NCT04916470 adverse events modules; Kosiborod MN et al. N Engl J Med 2023 and Lancet 2024",
+    "pmid": "37622681;38587233"
+   },
+   "population": "STEP-HFpEF (263 vs 266) and STEP-HFpEF DM (310 vs 306): HFpEF with obesity, semaglutide 2.4 mg weekly, 57 weeks",
+   "control_type": "placebo",
+   "definition_used": "Nausea (largest excess of nausea, diarrhoea, vomiting), other events table",
+   "verification": "computed_from_verified",
+   "quote": "Nausea: semaglutide 45 of 263 and 55 of 310; placebo 7 of 266 and 18 of 306",
+   "notes": "100/573 = 17.452% vs 25/572 = 4.371%, excess 13.081 as observed over 57 weeks (R6: events concentrated in the first weeks are not annualised; the rate falls after the first year)."
+  },
+  {
+   "id": "sema-constipation",
+   "drug_class": "GLP-1 RA",
+   "drugs": [
+    "Semaglutide (Wegovy)"
+   ],
+   "effect": "constipation",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 3.832,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "STEP-HFpEF (registry)",
+    "citation": "ClinicalTrials.gov NCT04788511"
+   },
+   "population": "STEP-HFpEF, 57 weeks",
+   "control_type": "placebo",
+   "definition_used": "Constipation",
+   "verification": "computed_from_verified",
+   "quote": "Constipation: semaglutide 17 of 263, placebo 7 of 266",
+   "notes": "6.464% vs 2.632%, as observed (R6)."
+  },
+  {
+   "id": "sema-inj",
+   "drug_class": "GLP-1 RA",
+   "drugs": [
+    "Semaglutide (Wegovy)"
+   ],
+   "effect": "injectionSiteReaction",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 0.4,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Wegovy label",
+    "citation": "WEGOVY prescribing information, section 6.1"
+   },
+   "population": "Obesity trials",
+   "control_type": "placebo",
+   "definition_used": "Injection site reactions",
+   "verification": "verified_label",
+   "quote": "1.4% of WEGOVY-treated patients and 1% of patients receiving placebo experienced injection site reactions",
+   "notes": "1.4 vs 1.0, follow-up not stated, as observed."
+  },
+  {
+   "id": "sema-aki",
+   "drug_class": "GLP-1 RA",
+   "drugs": [
+    "Semaglutide (Wegovy)"
+   ],
+   "effect": "renalSeriousEvent",
+   "layer": "harmRow",
+   "one_year_excess_pct": 1.393,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "STEP-HFpEF (registry)",
+    "citation": "ClinicalTrials.gov NCT04788511"
+   },
+   "population": "STEP-HFpEF, 57 weeks",
+   "control_type": "placebo",
+   "definition_used": "Serious adverse event \"Acute kidney injury\"",
+   "verification": "computed_from_verified",
+   "quote": "Acute kidney injury: semaglutide 5 of 263, placebo 1 of 266 (serious)",
+   "notes": "1.901% vs 0.376% converted over 1.096 y, excess 1.393. Added by the verifier (Wegovy label warns of acute kidney injury due to volume depletion; label obesity rate 0.4 vs 0.2 per 100 patient-years)."
+  },
+  {
+   "id": "tirz-pancreatitis",
+   "drug_class": "GLP-1/GIP RA",
+   "drugs": [
+    "Tirzepatide (Zepbound)"
+   ],
+   "effect": "pancreatitis",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.413,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SUMMIT (registry)",
+    "citation": "ClinicalTrials.gov NCT04847557 adverse events module; Packer M et al. N Engl J Med 2025;392:427-37",
+    "pmid": "39555826"
+   },
+   "population": "SUMMIT: HFpEF with obesity, tirzepatide up to 15 mg weekly, 364 vs 367, median follow-up 104 weeks",
+   "control_type": "placebo",
+   "definition_used": "Serious pancreatitis (obstructive 2, acute 1)",
+   "verification": "computed_from_verified",
+   "quote": "Obstructive pancreatitis 2 vs 0; Pancreatitis acute 1 vs 0 (tirzepatide vs placebo)",
+   "notes": "3/364 = 0.824% vs 0/367 converted over 2 y: 0.413. Three events; very imprecise."
+  },
+  {
+   "id": "tirz-gallbladder",
+   "drug_class": "GLP-1/GIP RA",
+   "drugs": [
+    "Tirzepatide (Zepbound)"
+   ],
+   "effect": "gallbladderDisease",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.6,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Zepbound label",
+    "citation": "ZEPBOUND prescribing information, DailyMed set 487cd7e7-434c-4925-99fa-aa80b1cc776b, section 5.4"
+   },
+   "population": "Weight-reduction Studies 1 and 2 (obesity), follow-up not stated (72 weeks)",
+   "control_type": "placebo",
+   "definition_used": "Cholelithiasis plus cholecystitis reported as adverse events",
+   "verification": "verified_label",
+   "quote": "cholelithiasis was reported in 1.1% of ZEPBOUND-treated patients and 1% of placebo-treated patients, cholecystitis was reported in 0.7% of ZEPBOUND-treated patients and 0.2% of placebo-treated patients",
+   "notes": "(1.1 + 0.7) - (1.0 + 0.2) = 0.6, as observed. Chosen over SUMMIT (serious events only visible, 9/364 vs 5/367, 0.56 a year) by definition match (R2); the two agree."
+  },
+  {
+   "id": "tirz-gi",
+   "drug_class": "GLP-1/GIP RA",
+   "drugs": [
+    "Tirzepatide (Zepbound)"
+   ],
+   "effect": "giUpset",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 11.59,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SUMMIT (registry)",
+    "citation": "ClinicalTrials.gov NCT04847557 adverse events module; Packer M et al. N Engl J Med 2025;392:427-37",
+    "pmid": "39555826"
+   },
+   "population": "SUMMIT: HFpEF with obesity, tirzepatide up to 15 mg weekly, 364 vs 367, median follow-up 104 weeks",
+   "control_type": "placebo",
+   "definition_used": "Diarrhoea (largest excess of diarrhoea, nausea, vomiting), other events",
+   "verification": "computed_from_verified",
+   "quote": "Diarrhoea 65 of 364 vs 23 of 367; Nausea 62 vs 23; Vomiting 38 vs 7",
+   "notes": "17.857% vs 6.267%, excess 11.59 as observed over the trial (R6). A 2-year annualisation would give 6.18; not used."
+  },
+  {
+   "id": "tirz-constipation",
+   "drug_class": "GLP-1/GIP RA",
+   "drugs": [
+    "Tirzepatide (Zepbound)"
+   ],
+   "effect": "constipation",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 8.841,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SUMMIT (registry)",
+    "citation": "ClinicalTrials.gov NCT04847557 adverse events module; Packer M et al. N Engl J Med 2025;392:427-37",
+    "pmid": "39555826"
+   },
+   "population": "SUMMIT: HFpEF with obesity, tirzepatide up to 15 mg weekly, 364 vs 367, median follow-up 104 weeks",
+   "control_type": "placebo",
+   "definition_used": "Constipation",
+   "verification": "computed_from_verified",
+   "quote": "Constipation 54 of 364 vs 22 of 367",
+   "notes": "14.835% vs 5.995%, excess 8.841 as observed (R6, gastrointestinal on dose escalation; a 2-year annualisation would give 4.67)."
+  },
+  {
+   "id": "tirz-dizziness",
+   "drug_class": "GLP-1/GIP RA",
+   "drugs": [
+    "Tirzepatide (Zepbound)"
+   ],
+   "effect": "dizziness",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 2.302,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SUMMIT (registry)",
+    "citation": "ClinicalTrials.gov NCT04847557 adverse events module; Packer M et al. N Engl J Med 2025;392:427-37",
+    "pmid": "39555826"
+   },
+   "population": "SUMMIT: HFpEF with obesity, tirzepatide up to 15 mg weekly, 364 vs 367, median follow-up 104 weeks",
+   "control_type": "placebo",
+   "definition_used": "Dizziness (other events)",
+   "verification": "computed_from_verified",
+   "quote": "Dizziness 34 of 364 vs 18 of 367",
+   "notes": "9.341% vs 4.905% converted over 2 y, excess 2.302."
+  },
+  {
+   "id": "tirz-hypotension",
+   "drug_class": "GLP-1/GIP RA",
+   "drugs": [
+    "Tirzepatide (Zepbound)"
+   ],
+   "effect": "hypotensionSymptomatic",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 1.697,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SUMMIT (registry)",
+    "citation": "ClinicalTrials.gov NCT04847557 adverse events module; Packer M et al. N Engl J Med 2025;392:427-37",
+    "pmid": "39555826"
+   },
+   "population": "SUMMIT: HFpEF with obesity, tirzepatide up to 15 mg weekly, 364 vs 367, median follow-up 104 weeks",
+   "control_type": "placebo",
+   "definition_used": "Hypotension (other events)",
+   "verification": "computed_from_verified",
+   "quote": "Hypotension 22 of 364 vs 10 of 367",
+   "notes": "6.044% vs 2.725% converted over 2 y, excess 1.697."
+  },
+  {
+   "id": "tirz-inj",
+   "drug_class": "GLP-1/GIP RA",
+   "drugs": [
+    "Tirzepatide (Zepbound)"
+   ],
+   "effect": "injectionSiteReaction",
+   "layer": "symptomFigure",
+   "one_year_excess_pct": 6,
+   "dose_related": true,
+   "dose_groups": [
+    {
+     "daily_mg": 5,
+     "one_year_excess_pct": 4
+    },
+    {
+     "daily_mg": 10,
+     "one_year_excess_pct": 6
+    },
+    {
+     "daily_mg": 15,
+     "one_year_excess_pct": 6
+    }
+   ],
+   "level": "extrapolated",
+   "source": {
+    "trial": "Zepbound label",
+    "citation": "ZEPBOUND prescribing information, Table 2"
+   },
+   "population": "Weight-reduction trials, placebo N=958, 5/10/15 mg N=630/948/941",
+   "control_type": "placebo",
+   "definition_used": "Injection site reactions (grouped term)",
+   "verification": "verified_label",
+   "quote": "Injection Site Reactions d 2 6 8 8",
+   "notes": "Dose groups (weekly mg): 5 mg 6 - 2 = 4, 10 mg 8 - 2 = 6, 15 mg 8 - 2 = 6; follow-up not stated."
+  },
+  {
+   "id": "tirz-aki",
+   "drug_class": "GLP-1/GIP RA",
+   "drugs": [
+    "Tirzepatide (Zepbound)"
+   ],
+   "effect": "renalSeriousEvent",
+   "layer": "harmRow",
+   "one_year_excess_pct": 0.3,
+   "dose_related": null,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Zepbound label",
+    "citation": "ZEPBOUND prescribing information, section 6.1"
+   },
+   "population": "Studies 1 and 2 (obesity)",
+   "control_type": "placebo",
+   "definition_used": "Acute kidney injury reported",
+   "verification": "verified_label",
+   "quote": "acute kidney injury was reported in 0.5% of ZEPBOUND-treated patients compared to 0.2% of placebo-treated patients",
+   "notes": "Added by the verifier; as observed, follow-up not stated."
+  },
+  {
+   "id": "tirz-dae",
+   "drug_class": "GLP-1/GIP RA",
+   "drugs": [
+    "Tirzepatide (Zepbound)"
+   ],
+   "effect": "discontinuationForAdverseEvent",
+   "layer": "crossCheck",
+   "one_year_excess_pct": 2.527,
+   "dose_related": null,
+   "level": "drug",
+   "source": {
+    "trial": "SUMMIT (registry)",
+    "citation": "ClinicalTrials.gov NCT04847557 adverse events module; Packer M et al. N Engl J Med 2025;392:427-37",
+    "pmid": "39555826"
+   },
+   "population": "SUMMIT: HFpEF with obesity, tirzepatide up to 15 mg weekly, 364 vs 367, median follow-up 104 weeks",
+   "control_type": "placebo",
+   "definition_used": "Adverse events leading to discontinuation of trial drug",
+   "verification": "verified_abstract",
+   "quote": "Adverse events (mainly gastrointestinal) leading to discontinuation of the trial drug occurred in 23 patients (6.3%) in the tirzepatide group and in 5 patients (1.4%) in the placebo group.",
+   "notes": "6.319% vs 1.362% converted over 2 y. Cross-check only."
+  }
+ ],
+ "multipliers": [
+  {
+   "id": "mult-hydralazine-lupus-female",
+   "effect": "lupusLikeSyndrome",
+   "applies_to_classes": [
+    "Vasodilator"
+   ],
+   "condition": {
+    "kind": "sex",
+    "value": "female"
+   },
+   "ratio": 1.731,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Cameron & Ramsay hydralazine cohort",
+    "citation": "Cameron HA, Ramsay LE. Br Med J 1984;289:410-2",
+    "pmid": "6432120"
+   },
+   "quote": "The incidence was higher in women (11.6%) than in men (2.8%).",
+   "notes": "Ratio = women 11.6% / overall 6.7% = 1.731, on the 3-year cumulative drug-arm rate (no control arm). The base row is the OVERALL dose-specific rate (the source gives no men-only rate at 200 mg), so the reference group is mixed-sex, stated honestly. Women at 200 mg/day: 19.4%."
+  },
+  {
+   "id": "mult-hydralazine-lupus-male",
+   "effect": "lupusLikeSyndrome",
+   "applies_to_classes": [
+    "Vasodilator"
+   ],
+   "condition": {
+    "kind": "sex",
+    "value": "male"
+   },
+   "ratio": 0.418,
+   "level": "extrapolated",
+   "source": {
+    "trial": "Cameron & Ramsay hydralazine cohort",
+    "citation": "Cameron HA, Ramsay LE. Br Med J 1984;289:410-2",
+    "pmid": "6432120"
+   },
+   "quote": "The incidence was higher in women (11.6%) than in men (2.8%).",
+   "notes": "Ratio = men 2.8% / overall 6.7% = 0.418; drug-arm rate; mixed-sex base row. Use the female and male multipliers as a pair; never both together (conditions are exclusive)."
+  }
+ ],
+ "multipliers_not_representable": [
+  {
+   "effect": "lupusLikeSyndrome",
+   "drug_class": "Vasodilator",
+   "description": "Hydralazine dose: 0% at 50 mg, 5.4% at 100 mg, 10.4% at 200 mg a day over 3 years; women at 200 mg 19.4%",
+   "why": "The engine daily dose for the BiDil combination strength \"37.5/20\" is NaN, so dose_groups cannot be evaluated; the 200 mg figure is the base row.",
+   "source": "Cameron & Ramsay, PMID 6432120"
+  },
+  {
+   "effect": "creatinineRise",
+   "drug_class": "Loop Diuretic",
+   "description": "Furosemide IV high dose (2.5x oral) vs low dose (1.0x): worsening renal function 23% vs 14% over 72 hours",
+   "why": "A dose contrast, not a base rate; no loop creatinine row is charged (withheld). Not a vocabulary kind.",
+   "source": "DOSE, PMID 21366472, quote: \"which occurred in 23% of the patients in the high-dose group, as compared with 14% in the low-dose group (P = 0.04)\""
+  },
+  {
+   "effect": "electrolyte abnormality (not potassium specific)",
+   "drug_class": "Thiazide-like Diuretic",
+   "description": "Metolazone added to loop: electrolyte abnormalities requiring intervention 4 of 72 vs 2 of 70 over 48 hours",
+   "why": "Not potassium-specific, 6 events; cannot be a hypokalemia multiplier.",
+   "source": "MELT-HF, NCT02620384"
+  },
+  {
+   "effect": "hypokalemia",
+   "drug_class": "Thiazide-like Diuretic",
+   "description": "Thiazide added to a loop: CLOROTIC reports hypokalaemia \"similar between groups\" without numbers",
+   "why": "No numbers in the abstract; full text not open. Not estimated.",
+   "source": "CLOROTIC, PMID 36423214"
+  }
+ ],
+ "multipliers_not_measured": [
+  "Digoxin toxicity by eGFR, age or sex: DIG post hoc papers retrieved (Ahmed one-year analysis, Europe PMC searches) give age and renal function as risk factors in words only, no rates by stratum; not estimated.",
+  "Ivabradine bradycardia or atrial fibrillation by baseline heart rate: not found in anything reachable (searches returned reviews only); not estimated.",
+  "Vericiguat hypotension by baseline systolic pressure: not found; not estimated.",
+  "Hypokalemia with a thiazide added to a loop: CLOROTIC abstract says \"similar\"; no rates; not estimated."
+ ],
+ "listed_not_scored": [
+  {
+   "drug": "Furosemide, Furoscix, Torsemide, Bumetanide",
+   "harm": "creatinineRise and renalSeriousEvent (worsening renal function, azotemia)",
+   "reason": "No placebo-controlled loop rate. The only step-6 candidates are 48 to 72 hour inpatient add-on figures (CLOROTIC 29.3, MELT-HF 8.2) that cannot stand for a yearly outpatient rate; DOSE shows 14% worsening renal function even at the low dose. Withheld, not charged. Controller decision: if charged, the step-6 figure would be 29.3 (14.7 points per loop)."
+  },
+  {
+   "drug": "Furosemide, Furoscix, Torsemide, Bumetanide",
+   "harm": "ototoxicity (tinnitus, hearing loss)",
+   "reason": "No effect id in the definitions; labels give no incidence except bumetanide impaired hearing 0.5% (uncontrolled)."
+  },
+  {
+   "drug": "Ivabradine",
+   "harm": "blood pressure increased (8.9% vs 7.8%), sinus arrest, embryo-fetal toxicity (contraindicated)",
+   "reason": "No effect id; pregnancy is a contraindication handled elsewhere."
+  },
+  {
+   "drug": "Vericiguat",
+   "harm": "embryo-fetal toxicity",
+   "reason": "Contraindicated in pregnancy; no effect id."
+  },
+  {
+   "drug": "Hydralazine/Isosorbide Dinitrate",
+   "harm": "peripheral neuritis (paresthesia 4% vs 2%), sinusitis (4% vs 2%), worsening ischemic heart disease",
+   "reason": "No effect id in the definitions."
+  },
+  {
+   "drug": "Digoxin",
+   "harm": "gynecomastia, thrombocytopenia, intestinal ischemia, CNS effects",
+   "reason": "Label: \"occasionally observed\" / \"rarely observed\", no rate. Gynecomastia could take the step-6 bound from the foundational table (spironolactone); this part has none."
+  },
+  {
+   "drug": "Ferric Carboxymaltose",
+   "harm": "hypertension (4% vs 2%), flushing (4% vs 0.2%), hypotension, extravasation",
+   "reason": "Comparators were other iron products, not placebo; no matching effect ids."
+  },
+  {
+   "drug": "Semaglutide, Tirzepatide",
+   "harm": "severe hypoglycemia, gastroparesis/ileus, retinopathy complications, aspiration, suicidal ideation, heart rate increase",
+   "reason": "No placebo-controlled rate matching the definition retrieved (tirzepatide label: glucose below 54 mg/dL 4.2% vs 1.3% in type 2 diabetes, not needing assistance); no effect id for the rest."
+  },
+  {
+   "drug": "Semaglutide, Tirzepatide",
+   "harm": "hypersensitivitySerious (anaphylaxis, angioedema)",
+   "reason": "Labels name it with no rate; tirzepatide label hypersensitivity reactions 5% vs 3% are mostly skin reactions and not serious."
+  },
+  {
+   "drug": "Patiromer, Sodium Zirconium Cyclosilicate",
+   "harm": "serious hypersensitivity, bowel obstruction, hypocalcemia",
+   "reason": "Patiromer hypersensitivity 0.3% mild to moderate (uncontrolled); others have no rate or effect id."
+  },
+  {
+   "drug": "Metolazone, Chlorthalidone, Hydrochlorothiazide",
+   "harm": "hypersensitivity/photosensitivity, hypercalcemia, hyperlipidemia, pancreatitis",
+   "reason": "No effect id or no incidence in labels."
+  }
+ ]
+}

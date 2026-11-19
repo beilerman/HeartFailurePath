@@ -19,8 +19,8 @@ export function describeAdjustment(a: ScoreBreakdownAdjustment): { title: string
     switch (a.code) {
         case T.SPECIAL_FEATURES.code:
             return {
-                title: 'Patient-specific evidence bonus',
-                lines: [`Credit for medication features with trial evidence that applies to this patient. Scaled to the size of the regimen and limited to between ${signed(T.SPECIAL_FEATURES.min)} and ${signed(T.SPECIAL_FEATURES.max)}.`],
+                title: 'Bonus for replacing a contraindicated or intolerance-documented drug (hand-set points)',
+                lines: [`The only hand-set bonus left: +15 before scaling for a mandatory swap. Scaled to the size of the regimen and limited to between ${signed(T.SPECIAL_FEATURES.min)} and ${signed(T.SPECIAL_FEATURES.max)}.`],
             };
         case T.VOLUME_DEPLETION_DEESCALATION.code:
             return { title: 'Bonus for reducing diuretics in a volume-depleted patient', lines: [] };
@@ -84,7 +84,7 @@ function adjustmentTotals(b: ScoreBreakdown): Map<string, { points: number; adj?
 }
 
 const adjustmentName = (code: string, adj?: ScoreBreakdownAdjustment): string => {
-    if (code === T.SPECIAL_FEATURES.code) return 'patient-specific evidence bonus';
+    if (code === T.SPECIAL_FEATURES.code) return 'mandatory-swap bonus';
     if (code === T.VOLUME_DEPLETION_DEESCALATION.code) return 'diuretic reduction bonus';
     if (code === T.PROJECTED_SBP_LT_85.code) return `disqualifying recorded systolic BP below ${T.PROJECTED_SBP_LT_85.threshold}`;
     if (adj) {
@@ -127,7 +127,7 @@ export function topDeltas(deltas: ScoreDelta[], n: number): { lower: ScoreDelta[
 }
 
 export const TIE_RULE_TEXT =
-    'When two options show the same whole-number score, the one covering more of the indicated therapy is listed first; if that is also equal, the one with the higher unrounded score; then the cheaper one; then the one with fewer changes to the current regimen; then alphabetical order of the drugs.';
+    'When two options show the same whole-number score, the one with the higher unrounded score is listed first; then the cheaper one; then the one with fewer changes to the current regimen; then alphabetical order of the drugs.';
 
 /** Shown beside the option-versus-option comparison when the foundational ranking mode is applied. */
 export const FOUNDATIONAL_ORDER_NOTE =
@@ -136,9 +136,7 @@ export const FOUNDATIONAL_ORDER_NOTE =
 /** One sentence on how a tie against the leader was settled, or null when the displayed scores differ. */
 export function tieSentence(self: ScoredRegimen, leader: ScoredRegimen, leaderRank: number): string | null {
     if (self.overall_score !== leader.overall_score) return null;
-    const sc = Math.round((self.gdmt_completeness ?? 0) * 100);
-    const lc = Math.round((leader.gdmt_completeness ?? 0) * 100);
-    return `Option ${leaderRank} shows the same score (${leader.overall_score}). ${TIE_RULE_TEXT} Here: therapy coverage ${sc}% vs ${lc}%, unrounded score ${num(self.raw_score ?? self.overall_score)} vs ${num(leader.raw_score ?? leader.overall_score)}, cost ${costLabel(self.cost)} vs ${costLabel(leader.cost)}. Equal scores do not establish equivalent clinical benefit.`;
+    return `Option ${leaderRank} shows the same score (${leader.overall_score}). ${TIE_RULE_TEXT} Here: unrounded score ${num(self.raw_score ?? self.overall_score)} vs ${num(leader.raw_score ?? leader.overall_score)}, cost ${costLabel(self.cost)} vs ${costLabel(leader.cost)}. Equal scores do not establish equivalent clinical benefit.`;
 }
 
 /** Lowercase the first letter of a goal sentence, unless it starts an acronym (NYHA, NT-proBNP). */

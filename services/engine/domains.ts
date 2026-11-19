@@ -59,6 +59,10 @@ export const adherenceComplexityThreshold = (tolerance: number): number => 2 + t
  * scoreModel.ts, because scoreModel has no imports and these constants live in this module.)
  */
 export const DOMAIN_GOALS: Record<ScoreDomainKey, string> = {
+    mortality: 'Trial relative risk of death from any cause is 0 (no regimen reaches this; the score is the percent risk reduction versus no disease-modifying therapy).',
+    symptoms: 'Credit-weighted KCCQ gain of 20 points (a large change) from drugs with measured quality-of-life effects.',
+    side_effects: 'No measured one-year harm from any drug in the regimen (score = 100 minus the harm burden divided by 2).',
+    hf_hospitalization: 'Trial relative risk of heart-failure hospitalization is 0 (no regimen reaches this; the score is the percent risk reduction versus no disease-modifying therapy).',
     neurohormonal: `NT-proBNP is at or below ${BNP_SCORE_TARGET} pg/mL (0 at ${BNP_SCORE_CRITICAL} or above).`,
     functional: `NYHA class I, a full KCCQ score of 100, and ${FUNCTIONAL_STEPS_FULL_CREDIT.toLocaleString('en-US')} or more daily steps.`,
     volume: 'At dry weight with no congestion findings on exam and normal oxygen saturation.',

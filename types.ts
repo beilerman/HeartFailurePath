@@ -180,7 +180,13 @@ export interface Medication {
     /** Human-readable "not offered when" checks; `contraindications` is exactly `checks.some(c => c.when(p))`. */
     contraindication_checks?: ContraindicationCheck[];
     /** `points_for_dose`, when present, replaces `points` for the dose actually in the regimen (dose-related effects, e.g. Lokelma edema). */
-    special_features?: { feature: string; points: number; criteria: (p: Patient, regimen?: RegimenMed[]) => boolean; points_for_dose?: (dose: number | string) => number }[];
+    special_features?: { feature: string; points: number; criteria: (p: Patient, regimen?: RegimenMed[]) => boolean; points_for_dose?: (dose: number | string) => number;
+        /**
+         * Every special feature now adds 0 bonus points (owner ruling 2026-11-16: no hand-set points); the text stays in the rationale. Says where its benefit or harm is (or is not) modelled:
+         * 'outcome' (data/outcomeEvidence.json), 'symptom' (symptomEvidence.json), 'harm' (harmEvidence.json), 'adherence' (the dosing-burden domain), 'not_modelled' (noted, not scored).
+         * `points` is kept only as documentation of the retired figure.
+         */
+        replaced_by: 'outcome' | 'symptom' | 'harm' | 'adherence' | 'not_modelled' }[];
     is_best_in_class?: boolean;
 
     /**
@@ -310,6 +316,8 @@ export interface MedFacts {
      * 24/26 or 49/51 mg, never the other). Default false: lower tiers are also allowed ("start low, go slow").
      */
     start_dose_exact?: boolean;
+    /** How a combination strength such as "24/26" becomes ONE daily mg figure: 'sum' adds the components (sacubitril + valsartan), 'first' uses the first component (the hydralazine in hydralazine/isosorbide dinitrate). Read by numericDailyDose (regimenUtils.ts). */
+    combination_daily_dose?: 'sum' | 'first';
     /**
      * Weekly GLP-1 / GLP-1-GIP agents: titration moves exactly ONE labeled tier at a time (the dose-tier sampler offers every tier, and
      * `titratableUp` offers only the next one), never skipping the label's escalation steps.
@@ -375,6 +383,13 @@ export interface TreatmentAssessment {
 }
 
 export interface DomainScores {
+    /** Expected outcome benefit from trial relative risks (percent risk reduction versus no disease-modifying therapy); see services/engine/outcomeBenefit.ts. */
+    mortality: number;
+    hf_hospitalization: number;
+    /** Symptoms and quality of life: credit-weighted KCCQ points, 0-100 (symptomBenefit.ts). */
+    symptoms: number;
+    /** Side effects: 100 minus the measured-harm burden, 0-100 (harmBurden.ts). */
+    side_effects: number;
     neurohormonal: number;
     functional: number;
     volume: number;
@@ -383,6 +398,55 @@ export interface DomainScores {
     completeness: number;
     cost: number;
     adherence: number;
+}
+
+/** One drug's contribution to an outcome estimate, with the evidence it rests on (display and audit; never alters a measurement). */
+export interface OutcomeContributorView {
+    medication: string;
+    drug_class: string;
+    row_id: string;
+    /** The value USED for ranking: the published relative risk pulled toward no effect by its precision (services/engine/shrinkage.ts). */
+    rr: number;
+    rr_published: number;
+    ci_low_published: number | null;
+    ci_high_published: number | null;
+    /** B = tau2 / (tau2 + se^2); 1 = unchanged. */
+    shrinkage_b: number;
+    interval_imputed: boolean;
+    credit: number;
+    dose_adjusted_rr: number;
+    basis: 'trial' | 'meta_analysis' | 'extrapolated' | 'assumed_neutral';
+    trial: string;
+    citation: string;
+    /** True only when the row's basis is `extrapolated` (carried from another population or EF band). */
+    extrapolated: boolean;
+    /** True when the row assumes no effect (relative risk 1) because no outcome trial exists. */
+    assumed_neutral: boolean;
+    /** True when the option starts or increases this drug and it is valued as titrated to the trial-achieved dose (plan credit). */
+    valued_as_titrated: boolean;
+}
+
+/** Expected relative risk of an outcome for a resulting regimen: a population average from randomized trials, not a prediction for this patient. */
+export interface OutcomeEstimateView {
+    outcome: 'all_cause_death' | 'hf_hospitalization';
+    label: string;
+    /** Relative risk versus no disease-modifying therapy, with an approximate 95% interval (independent-estimates assumption). */
+    rr: number;
+    ci_low: number;
+    ci_high: number;
+    /** `rr` is the ranking value: the option valued as the plan it starts (new starts and increases at the trial-achieved dose). Both views are kept: */
+    as_planned: { rr: number; ci_low: number; ci_high: number };
+    /** Every drug valued at today's dose. */
+    as_prescribed: { rr: number; ci_low: number; ci_high: number };
+    /** Relative risk of this option (as planned) versus the patient's current (active) regimen as dosed today; below 1 favors the option. */
+    vs_current: { rr: number; ci_low: number; ci_high: number };
+    /** Display only, never scored: the same regimen with every counted drug at full dose credit, versus no disease-modifying therapy. */
+    at_target: { rr: number; ci_low: number; ci_high: number };
+    /** Display only: that at-target regimen versus the current regimen as dosed today. */
+    at_target_vs_current: { rr: number; ci_low: number; ci_high: number };
+    contributors: OutcomeContributorView[];
+    not_counted: (OutcomeContributorView & { reason: string; counted_instead: string })[];
+    contributors_without_interval: string[];
 }
 
 export interface MonitoringPlanItem {
@@ -434,6 +498,11 @@ export interface ScoredRegimen {
     /** Explanation only (never scored): why this option is on screen when it was not chosen by the normal ranking (the congestion-coverage selection step). */
     shown_because?: string;
     gdmt_completeness?: number; // Fraction (0-1) of indicated, achievable GDMT therapies present — display tiebreaker
+    /** Trial relative-risk estimates behind the two outcome domains, with the comparison against the current regimen. Display-only artifact, populated for the options returned. */
+    outcome_estimates?: OutcomeEstimateView[];
+    /** Display-only artifacts for the options returned: the KCCQ estimate behind the symptoms domain and the measured-harm lines behind the side-effects domain. */
+    symptom_estimate?: import('./services/engine/symptomBenefit').SymptomEstimate;
+    harm_burden?: import('./services/engine/harmBurden').HarmBurden;
     score_breakdown?: ScoreBreakdown; // Reconciling arithmetic behind overall_score/raw_score (see services/engine/scoreModel.ts)
     raw_score?: number; // Uncapped pre-clamp score — preserves differentiation lost to the 100 cap (display tiebreaker)
 

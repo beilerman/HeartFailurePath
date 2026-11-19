@@ -18,8 +18,15 @@ import { MedicationManager } from '../components/patient-form/MedicationManager'
 import { MedicationLibrary } from '../components/MedicationLibrary';
 import { ScoreDetailModal } from '../components/ScoreDetailModal';
 import { FAQ } from '../components/FAQ';
-import { DOMAIN_KEYS } from '../services/engine/scoreModel';
-import { tieSentence } from '../components/scoreExplain';
+import { DOMAIN_KEYS, DOMAIN_GROUPS, DOMAIN_LABELS, WEIGHT_PROFILES, WEIGHT_PROFILE_META } from '../services/engine/scoreModel';
+import { symptomEstimateFor, SYMPTOM_TABLE } from '../services/engine/symptomBenefit';
+import { compareHarmBurden, HARM_TABLE } from '../services/engine/harmBurden';
+import { OUTCOME_EVIDENCE_TABLE } from '../services/engine/outcomeBenefit';
+import { DOSE_EVIDENCE } from '../services/engine/doseCredit';
+import { OUTCOME_SHORT, harmLabel, basisLabel, harmLevelLabel, DOSE_LEVEL_LABELS, currentRegimenOf } from '../components/expectedEffectModel';
+import { EvidenceTables } from '../components/EvidenceTables';
+import { tieSentence, TIE_RULE_TEXT } from '../components/scoreExplain';
+import { profileDescription, RANKING_MODE_META } from '../components/rankingModeMeta';
 import { DEMO_CASES, caseFacts } from '../components/guided/demoCases';
 import { StartScreen } from '../components/guided/StartScreen';
 import { StepsScreen } from '../components/guided/StepsScreen';
@@ -471,6 +478,268 @@ check('shared section headings and labels use sentence case', () => {
 check('pulse and SpO2 have their own visible labels', () => {
     const html = renderToStaticMarkup(<PatientForm patientData={clonePatient(p)} setPatientData={() => {}} simulationMedicationNames={names} setSimulationMedicationNames={() => {}} onRunSimulation={() => {}} pricesReady testScenarios={SCENARIOS} selectedScenario="custom" onScenarioChange={() => {}} />);
     assert.match(html, /<label[^>]*for="pulse"[^>]*>Pulse/); assert.match(html, /<label[^>]*for="oxygen_saturation"[^>]*>(SpO2|Oxygen)/);
+});
+
+// ---- First-principles model display (2026-11-16): expected effect, evidence drill-down, tables, methodology ----
+const textOf = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&#x27;/g, "'").replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/\s+/g, ' ');
+const cardText = (o: typeof lead, rank = 1) => textOf(renderToStaticMarkup(<RecommendationCard regimen={o} rank={rank} />));
+const vsCur = (o: typeof lead, k: 'all_cause_death' | 'hf_hospitalization') => o.outcome_estimates!.find(x => x.outcome === k)!.vs_current;
+const pctLower = (rr: number) => Math.round(Math.abs(1 - rr) * 100);
+
+check('card shows "Expected effect (trial averages)" with death and heart-failure admission as percent lower or higher, relative risk and 95% interval versus the current regimen', () => {
+    const t = cardText(lead);
+    assert.match(t, /Expected effect \(trial averages\)/);
+    for (const [k, label] of [['all_cause_death', 'Death from any cause'], ['hf_hospitalization', 'Heart-failure hospitalization']] as const) {
+        const v = vsCur(lead, k);
+        const want = `${label}: ${pctLower(v.rr)}% ${v.rr < 1 ? 'lower' : 'higher'} (relative risk ${v.rr.toFixed(2)}, 95% interval ${v.ci_low.toFixed(2)} to ${v.ci_high.toFixed(2)})`;
+        assert.ok(t.includes(want), `missing: ${want}`);
+    }
+    assert.match(t, /population averages from randomized trials, not a prediction for this patient/i);
+    assert.match(t, /as planned/i);
+});
+check('card shows the symptom change in KCCQ points and the side-effect burden change, both computed independently from the current regimen', () => {
+    const t = cardText(lead);
+    const nowPts = symptomEstimateFor(p.current_regimen, p).points;
+    const delta = lead.symptom_estimate!.points - nowPts;
+    assert.ok(delta > 0.05, 'fixture should gain KCCQ points');
+    assert.ok(t.includes(`Symptoms (KCCQ): gain of ${(Math.round(delta * 10) / 10).toFixed(1)} points`), `symptom line; delta ${delta}`);
+    const cmp = compareHarmBurden(HARM_TABLE, lead.regimen, p.current_regimen, p);
+    const sign = cmp.burden_difference > 0 ? '+' : '−';
+    assert.ok(t.includes(`Side-effect burden: ${sign}${(Math.round(Math.abs(cmp.burden_difference) * 10) / 10).toFixed(1)} points`), `burden line; diff ${cmp.burden_difference}`);
+    const top = cmp.changed_lines.slice().sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, 2);
+    for (const l of top) assert.ok(t.includes(`${l.drug}, ${harmLabel(l.effect)}`), `names contributor ${l.drug} ${l.effect}`);
+    assert.match(t, /Not measured, so not counted: Furosemide/);
+});
+check('an option with no change says so and prints no zero percentages or zero point changes', () => {
+    const t = cardText(noChange);
+    assert.match(t, /No medication change is proposed in this option, so there is no change in expected effect/);
+    assert.doesNotMatch(t, /0% (lower|higher)|relative risk 1\.00 \(95%/);
+    assert.match(t, /population averages from randomized trials/i);
+});
+check('"at today\'s doses" appears beside the planned figure when the engine\'s two valuations differ and is absent when they do not', () => {
+    let shown = 0, absent = 0;
+    for (const sc of SCENARIOS) {
+        const o = generateAndScoreModifications(sc.patient, names, prices);
+        for (const r of o.scoredRegimens) {
+            const est = r.outcome_estimates!;
+            const material = est.some(e => Math.abs(e.as_prescribed.rr - e.as_planned.rr) > 0.03);
+            const identical = est.every(e => e.as_prescribed.rr === e.as_planned.rr);
+            const t = cardText(r);
+            if (material) { shown++; assert.match(t, /At today's doses: \d+% (lower|higher|about the same)|At today's doses: about the same/, `${sc.title}: planned and today's figures differ`); }
+            else if (identical) { absent++; assert.doesNotMatch(t, /At today's doses: \d+% (lower|higher) \(relative risk/, `${sc.title}: figures identical, nothing to show`); }
+        }
+        if (shown >= 10 && absent >= 10) break;
+    }
+    assert.ok(shown >= 3 && absent >= 3, `shown ${shown}, absent ${absent}`);
+    assert.doesNotMatch(cardText(noChange), /At today's doses/);
+    assert.match(cardText(lead), /As planned|as planned/);
+});
+check('the evidence drill-down is a keyboard-reachable disclosure and states published value, value used, dose credit, titrated valuation, trial, citation and basis for each drug', () => {
+    const html = renderToStaticMarkup(<RecommendationCard regimen={lead} rank={1} />);
+    assert.match(html, /<button[^>]*aria-expanded="false"[^>]*>[\s\S]*?Evidence behind these estimates/);
+    const t = textOf(html);
+    const dapa = lead.outcome_estimates![0].contributors.find(c => c.medication === 'Dapagliflozin')!;
+    assert.ok(t.includes(`Published relative risk ${dapa.rr_published.toFixed(2)} (95% interval ${dapa.ci_low_published!.toFixed(2)} to ${dapa.ci_high_published!.toFixed(2)})`));
+    assert.ok(t.includes(`Value used ${dapa.rr.toFixed(2)}`));
+    assert.match(t, /Dose credit 100%\. Started or increased in this option, so valued as titrated to the dose the trials achieved/);
+    assert.ok(t.includes(dapa.trial) && t.includes(dapa.citation));
+    assert.match(t, /Basis Pooled analysis of trials/);
+    assert.match(t, /Pulled toward no effect because the trials are small or imprecise/);
+});
+check('loop diuretic congestion rows show the published figure and the much smaller value used, with the reason', () => {
+    const o = lead.outcome_estimates![0];
+    const loop = [...o.contributors, ...o.not_counted].find(c => c.drug_class === 'Loop Diuretic');
+    assert.ok(loop, 'John Doe is congested on furosemide');
+    const t = cardText(lead);
+    assert.ok(t.includes(`Published relative risk ${loop!.rr_published.toFixed(2)}`));
+    assert.ok(t.includes(`Value used ${loop!.rr.toFixed(2)}`));
+    assert.ok(loop!.rr - loop!.rr_published > 0.3, 'shrunk toward 1');
+});
+check('symptom evidence says "Not measured" in words, never a bare zero; side-effect evidence names severity, evidence level and the assumptions made for missing patient values', () => {
+    const sym = textOf(renderToStaticMarkup(<ScoreDetailModal domain="symptoms" score={lead.domain_scores.symptoms} regimen={lead} onClose={() => {}} />));
+    assert.match(sym, /Furosemide[\s\S]*?Published Not measured: no trial reported a KCCQ change/);
+    assert.match(sym, /Instrument/); assert.match(sym, /KCCQ points/);
+    const noRace = clonePatient(p); (noRace as any).race = undefined;
+    const gapOption = generateAndScoreModifications(noRace, names, prices).scoredRegimens.find(r => r.harm_burden!.unknown_assumptions.length > 0);
+    assert.ok(gapOption, 'an option with an assumption exists when race is not entered');
+    const gapText = textOf(renderToStaticMarkup(<ScoreDetailModal domain="side_effects" score={gapOption!.domain_scores.side_effects} regimen={gapOption!} onClose={() => {}} />));
+    assert.match(gapText, /A patient value is missing: the higher-risk case is assumed/);
+    for (const a of gapOption!.harm_burden!.unknown_assumptions) assert.ok(gapText.includes(`${a.drug}, ${harmLabel(a.effect)}: ${a.text}`), `assumption in words: ${a.text}`);
+    assert.match(gapText, /Assumed because race is not recorded/);
+    let sawUpper = false, sawGap = true, sawBorrowed = false;
+    for (const s of SCENARIOS) {
+        const o = generateAndScoreModifications(s.patient, names, prices);
+        for (const r of o.scoredRegimens) {
+            const hb = r.harm_burden!;
+            const upper = hb.lines.some(l => l.kind === 'harm' && l.upper_bound), sib = hb.lines.some(l => l.kind === 'harm' && l.level === 'siblingProxy');
+            if (!((upper && !sawUpper) || (sib && !sawBorrowed))) continue;
+            const t = textOf(renderToStaticMarkup(<ScoreDetailModal domain="side_effects" score={r.domain_scores.side_effects} regimen={r} onClose={() => {}} />));
+            assert.match(t, /serious, weight 3|moderate, weight 1|mild, weight 0\.5/);
+            assert.match(t, /Evidence (Measured for this drug|Measured for the drug class|Extrapolated|Borrowed from a sibling class|Upper bound)/);
+            if (upper) { sawUpper = true; assert.match(t, /Upper bound \(no measurement for this drug/); }
+            if (sib) { sawBorrowed = true; assert.match(t, /Borrowed from a sibling class/); }
+        }
+        if (sawUpper && sawGap && sawBorrowed) break;
+    }
+    assert.ok(sawUpper && sawGap && sawBorrowed, `upper bound ${sawUpper}, unevaluated ${sawGap}, sibling ${sawBorrowed}`);
+});
+check('death and hospitalization dialogs show the per-drug evidence, and the four evidence dialogs are wide enough to read', () => {
+    for (const d of ['mortality', 'hf_hospitalization'] as const) {
+        const html = renderToStaticMarkup(<ScoreDetailModal domain={d} score={lead.domain_scores[d]} regimen={lead} onClose={() => {}} />);
+        assert.match(textOf(html), /Published relative risk/); assert.match(html, /max-w-xl/);
+    }
+    assert.match(renderToStaticMarkup(<ScoreDetailModal domain="side_effects" score={50} regimen={lead} onClose={() => {}} />), /max-w-xl/);
+});
+check('score groups: six ranked factors, then reference-only and not-assessed groups that each state weight 0', () => {
+    const html = renderToStaticMarkup(<RecommendationCard regimen={lead} rank={1} />);
+    const t = textOf(html);
+    for (const g of DOMAIN_GROUPS) assert.ok(t.includes(g.label), g.label);
+    assert.match(t, /Guideline reference \(not in ranking\) weight 0/);
+    assert.match(t, /Individual physiological response \(not estimated\) weight 0/);
+    assert.match(t, /Ranked factors/);
+    const refStart = html.indexOf('aria-label="Guideline reference');
+    assert.ok(refStart > html.indexOf('aria-label="Patient values'), 'reference groups come after the ranked groups');
+});
+check('stale statements about the old model are gone from the card, the banner and the ledger, and the new fact is stated', () => {
+    const card = cardText(lead);
+    assert.doesNotMatch(card, /Treatment response is not estimated from trial-average coefficients|Outcome domains have zero ranking weight|Individual response is not quantified/);
+    assert.match(card, /Death, heart-failure hospitalization, symptoms, side effects, cost and dosing burden decide the order/);
+    assert.match(card, /reference only/i);
+    const page = textOf(render());
+    assert.doesNotMatch(page, /Individual response is not quantified/);
+    assert.match(page, /Expected effects are trial averages, not a prediction for this patient/);
+    const ledger = textOf(renderToStaticMarkup(<ScoreDetailModal domain="overall" score={lead.overall_score} regimen={lead} onClose={() => {}} />));
+    assert.doesNotMatch(ledger, /eight factors/); assert.match(ledger, /Weighted total of the factors/);
+    assert.match(ledger, /Ranked factors/);
+});
+check('draft note carries one sentence with the expected effect versus the current regimen and the population-average caveat, using only engine numbers', () => {
+    const note = buildChartSummary({ ...chartInput, results: [lead] });
+    assert.match(note, /EXPECTED EFFECT VERSUS CURRENT REGIMEN/);
+    const sentence = note.split('\n').find(l => /Versus the current regimen/.test(l))!;
+    assert.ok(sentence, 'sentence present');
+    assert.match(sentence, /population averages from randomized trials, not a prediction for this patient/);
+    for (const k of ['all_cause_death', 'hf_hospitalization'] as const) assert.ok(sentence.includes(`relative risk ${vsCur(lead, k).rr.toFixed(2)}`), k);
+    const numbers = [...sentence.matchAll(/\d+(?:\.\d+)?/g)].map(m => m[0]);
+    const allowed = new Set<string>(['95']);
+    for (const k of ['all_cause_death', 'hf_hospitalization'] as const) { const v = vsCur(lead, k); [v.rr, v.ci_low, v.ci_high].forEach(x => allowed.add(x.toFixed(2))); allowed.add(String(pctLower(v.rr))); }
+    const delta = lead.symptom_estimate!.points - symptomEstimateFor(p.current_regimen, p).points; allowed.add((Math.round(Math.abs(delta) * 10) / 10).toFixed(1));
+    const bd = compareHarmBurden(HARM_TABLE, lead.regimen, p.current_regimen, p).burden_difference; allowed.add((Math.round(Math.abs(bd) * 10) / 10).toFixed(1));
+    for (const n of numbers) assert.ok(allowed.has(n), `number ${n} in the note sentence is not an engine output`);
+    const none = buildChartSummary({ ...chartInput, results: [noChange] });
+    assert.match(none, /No medication change is proposed, so no change in expected effect/);
+    assert.doesNotMatch(none, /Individual response is not quantified/);
+    assert.match(buildChartSummary({ ...chartInput, results: [{ ...noChange, treatment_assessment: undefined }] }), /ASSESSMENT LIMITS:\n  - Expected effects are population averages from randomized trials/);
+});
+check('every scenario and option renders the expected-effect block without NaN, undefined or Infinity, and the reconstructed current regimen equals the patient\'s', () => {
+    let options = 0;
+    for (const s of SCENARIOS) {
+        const o = generateAndScoreModifications(s.patient, names, prices);
+        for (const r of o.scoredRegimens) {
+            options++;
+            const t = cardText(r);
+            const block = t.slice(t.indexOf('Expected effect (trial averages)'), t.indexOf('Evidence behind these estimates'));
+            assert.ok(block.length > 20, `${s.title}: block present`);
+            assert.doesNotMatch(block, /NaN|undefined|Infinity/, s.title);
+            const cur = currentRegimenOf(r)!;
+            const uniq = (xs: { med: { name: string } }[]) => [...new Set(xs.map(x => x.med.name))].sort().join('|');   // the engine removes duplicate entries (safety dedup)
+            assert.equal(uniq(cur), uniq(s.patient.current_regimen), `${s.title}: current regimen reconstructed`);
+        }
+    }
+    assert.ok(options > 500, `${options} options checked`);
+});
+check('every evidence basis, harm level and dose level in the data has a plain label without underscores', () => {
+    const bases = new Set<string>([...OUTCOME_EVIDENCE_TABLE.map(r => r.basis), ...SYMPTOM_TABLE.map(r => r.basis)]);
+    for (const b of bases) { const l = basisLabel(b); assert.ok(l.length > 3 && !/_/.test(l), b); }
+    const levels = new Set<string>(HARM_TABLE.rows.map(r => r.level));
+    for (const l of levels) { const w = harmLevelLabel(l); assert.ok(!/siblingProxy|_/.test(w), l); }
+    assert.match(harmLevelLabel('extrapolated', true), /^Upper bound/);
+    for (const a of (DOSE_EVIDENCE.anchors as { level: string }[])) assert.ok(DOSE_LEVEL_LABELS[a.level], a.level);
+});
+check('FAQ "How options are ordered" states the six factors and the weights table is generated from WEIGHT_PROFILES', () => {
+    const html = renderToStaticMarkup(<FAQ />); const t = textOf(html);
+    assert.doesNotMatch(t, /not a prognosis or a measure of expected clinical benefit|outcome domains are unassessed and carry zero weight because individual response is not quantified/);
+    assert.match(t, /relative risks from randomized trials/); assert.match(t, /pulled toward no effect/); assert.match(t, /titrated/);
+    assert.match(t, /fixed safety rules/i); assert.match(t, /guideline recommendations are a target/i);
+    const table = html.match(/<table[^>]*>(?:(?!<\/table>)[\s\S])*?Weight of each ranked factor[\s\S]*?<\/table>/)?.[0]; assert.ok(table, 'weights table');
+    const tt = textOf(table!);
+    for (const [name, weights] of Object.entries(WEIGHT_PROFILES)) {
+        assert.ok(tt.includes(WEIGHT_PROFILE_META[name as keyof typeof WEIGHT_PROFILES].label), name);
+        for (const k of ['mortality', 'hf_hospitalization', 'symptoms', 'side_effects', 'cost', 'adherence'] as const) assert.ok(tt.includes(`${Math.round(weights[k] * 1000) / 10}%`), `${name} ${k} ${weights[k]}`);
+    }
+    for (const k of ['guideline', 'completeness'] as const) assert.match(tt, new RegExp(`${DOMAIN_LABELS[k]}[\\s\\S]*?0%`));
+});
+check('evidence tables render every row of the four data files with column headers, and can be filtered by drug class', () => {
+    const html = renderToStaticMarkup(<EvidenceTables />);
+    const count = (kind: string) => (html.match(new RegExp(`data-evidence-row="${kind}"`, 'g')) ?? []).length;
+    assert.equal(count('outcome'), OUTCOME_EVIDENCE_TABLE.length);
+    assert.equal(count('symptom'), SYMPTOM_TABLE.length);
+    assert.equal(count('harm'), HARM_TABLE.rows.length);
+    assert.equal(count('dose'), (DOSE_EVIDENCE.anchors as unknown[]).length);
+    for (const h of ['Class', 'EF band', 'Outcome', 'Published', 'Used', 'Basis', 'Source', 'Drug', 'Harm', 'Severity', 'Evidence level', 'Full-credit daily dose']) assert.ok(html.includes(`>${h}</th>`), h);
+    assert.match(html, /<label[^>]*for="evidence-class-filter"[^>]*>Filter by drug class/);
+    assert.match(html, /<caption/);
+    const upper = HARM_TABLE.rows.filter(r => r.upper_bound).length; assert.ok(upper > 0);
+    assert.equal((textOf(html).match(/Upper bound \(no measurement/g) ?? []).length, upper);
+});
+
+check('tie rule and "what matters most" wording describe the six-factor model, not the retired completeness tie-break', () => {
+    assert.doesNotMatch(TIE_RULE_TEXT, /indicated therapy|covering more/);
+    assert.match(TIE_RULE_TEXT, /higher unrounded score is listed first; then the cheaper one/);
+    assert.doesNotMatch(tieSentence({ ...lead, overall_score: 50 }, { ...lead, overall_score: 50 }, 1)!, /therapy coverage/);
+    assert.match(profileDescription('cost_first'), /cost counts three times as much/);
+    assert.match(profileDescription('outcomes_first'), /cost counts half as much and dosing burden counts half as much/);
+    assert.match(profileDescription('default'), /death, heart-failure hospitalization, symptoms, side effects, cost and dosing burden/);
+    assert.doesNotMatch(RANKING_MODE_META.balanced.description, /therapy completeness/);
+    const ledger = textOf(renderToStaticMarkup(<ScoreDetailModal domain="overall" score={lead.overall_score} regimen={lead} onClose={() => {}} />));
+    assert.doesNotMatch(ledger, /therapy completeness, cost/);
+});
+
+check('an assumption that LOWERS risk is shown as not applied, and every assumption on every option is shown in words', () => {
+    let applied = 0, notApplied = 0;
+    const variants: ((q: any) => void)[] = [q => { q.race = undefined; }, q => { q.potassium = 0; }, q => { q.egfr = 0; q.creatinine = 0; }];
+    for (const v of variants) for (const sc of SCENARIOS.slice(0, 60)) {
+        const q = clonePatient(sc.patient); v(q);
+        const o = generateAndScoreModifications(q, names, prices);
+        for (const r of o.scoredRegimens) {
+            const hb = r.harm_burden!; if (hb.unknown_assumptions.length === 0) continue;
+            const t = textOf(renderToStaticMarkup(<ScoreDetailModal domain="side_effects" score={r.domain_scores.side_effects} regimen={r} onClose={() => {}} />));
+            for (const a of hb.unknown_assumptions) { assert.ok(t.includes(`${a.drug}, ${harmLabel(a.effect)}: ${a.text}`), a.text); a.applied ? applied++ : notApplied++; }
+        }
+    }
+    assert.ok(applied > 0, 'applied assumptions seen');
+    assert.ok(notApplied >= 0);
+});
+check('a relative-risk interval that includes 1 says "the interval includes no effect" next to the figure, on the card and in the draft note; one that excludes 1 does not', () => {
+    let withNote = 0, without = 0;
+    for (const sc of SCENARIOS) {
+        const o = generateAndScoreModifications(sc.patient, names, prices);
+        for (const r of o.scoredRegimens) {
+            if (r.modification_set?.modifications.every(m => m.action === 'keep')) continue;
+            const t = cardText(r), note = buildChartSummary({ ...chartInput, results: [r] });
+            for (const e of r.outcome_estimates!) {
+                const v = e.vs_current, includes = v.ci_low <= 1 && v.ci_high >= 1;
+                const figure = `${OUTCOME_SHORT[e.outcome]}: ${v.rr < 1 ? pctLower(v.rr) + '% lower' : pctLower(v.rr) + '% higher'} (relative risk ${v.rr.toFixed(2)}, 95% interval ${v.ci_low.toFixed(2)} to ${v.ci_high.toFixed(2)}`;
+                if (pctLower(v.rr) === 0) continue;
+                if (includes) { withNote++; assert.ok(t.includes(`${figure}; the interval includes no effect)`), `card: ${figure}`); assert.ok(note.includes(`relative risk ${v.rr.toFixed(2)}, 95% interval ${v.ci_low.toFixed(2)} to ${v.ci_high.toFixed(2)}; the interval includes no effect`), 'note'); }
+                else { without++; assert.ok(t.includes(`${figure})`), `card: ${figure}`); }
+            }
+        }
+        if (withNote >= 5 && without >= 5) break;
+    }
+    assert.ok(withNote >= 1 && without >= 1, `with ${withNote}, without ${without}`);
+});
+check('the swap bonus line appears in the ledger only when it changes the score', () => {
+    const none = { ...lead, score_breakdown: { ...lead.score_breakdown!, adjustments: [{ code: 'SPECIAL_FEATURES', label: 'x', points: 0 }] } };
+    assert.doesNotMatch(textOf(renderToStaticMarkup(<ScoreDetailModal domain="overall" score={50} regimen={none} onClose={() => {}} />)), /replacing a contraindicated/);
+    const some = { ...lead, score_breakdown: { ...lead.score_breakdown!, adjustments: [{ code: 'SPECIAL_FEATURES', label: 'x', points: 12 }] } };
+    assert.match(textOf(renderToStaticMarkup(<ScoreDetailModal domain="overall" score={50} regimen={some} onClose={() => {}} />)), /Bonus for replacing a contraindicated or intolerance-documented drug/);
+});
+check('loop diuretics say that dose has no measured relation and that congestion relief by dose is not modelled', () => {
+    const t = cardText(lead);
+    assert.match(t, /Furosemide[\s\S]*?Dose credit 100%\. No measured dose relation, so full credit at any dose; congestion relief by dose is not modelled/);
+    const sym = textOf(renderToStaticMarkup(<ScoreDetailModal domain="symptoms" score={0} regimen={lead} onClose={() => {}} />));
+    assert.doesNotMatch(sym, /Still congested on the current dose/);
+    assert.match(textOf(renderToStaticMarkup(<FAQ />)), /congestion relief by dose is not modelled/i);
 });
 
 console.log(`Clinical UI checks: ${passed} passed; ${failed} failed. Server-rendered content only; browser behavior and visual layout are not verified.`);

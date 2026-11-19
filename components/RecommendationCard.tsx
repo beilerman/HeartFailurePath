@@ -7,7 +7,8 @@ import { Disclosure } from './Disclosure';
 import { useEvidenceLink } from './EvidenceContext';
 import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
 import { partitionWarnings, stripDrugNotePrefix, isOverBudgetFallback } from './resultsModel';
-import { DOMAIN_LABELS, DOMAIN_GROUPS, type ScoreDomainKey } from '../services/engine/scoreModel';
+import { DOMAIN_LABELS, DOMAIN_GROUPS, WEIGHT_PROFILES, type ScoreDomainKey } from '../services/engine/scoreModel';
+import { ExpectedEffectBlock } from './ExpectedEffect';
 import { drugFacts } from '../services/engine/drugFacts';
 import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 import { clinicalSentence, doseLabel, costLabel, optionDifferences } from './clinicalPresentation';
@@ -21,7 +22,7 @@ interface Props {
     showFoundationalCoverage?: boolean;
 }
 
-const ScorePill = ({ label, fullLabel, score, color, onClick, assessed = true }: { label: string, fullLabel: string, score: number, color: string, onClick: () => void, assessed?: boolean }) => (
+const ScorePill = ({ label, fullLabel, score, color, onClick, assessed = true, weightText }: { label: string, fullLabel: string, score: number, color: string, onClick: () => void, assessed?: boolean, weightText?: string }) => (
     <button
         onClick={onClick}
         className="flex flex-col items-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 rounded-lg"
@@ -31,6 +32,7 @@ const ScorePill = ({ label, fullLabel, score, color, onClick, assessed = true }:
             {assessed ? score : 'N/A'}
         </div>
         <span className="text-[11px] font-bold text-slate-500 uppercase mt-1.5 tracking-wide group-hover:text-indigo-600 transition-colors">{label}</span>
+        {weightText && <span className="text-[10px] text-slate-600">{weightText}</span>}
     </button>
 );
 
@@ -127,6 +129,10 @@ const modActionIcon: Record<string, string> = {
 // Short pill labels and colours, keyed by the engine's domain keys. Full names come from the
 // engine's DOMAIN_LABELS; the compiler checks both maps cover every domain.
 const PILL_SHORT_LABELS = {
+    mortality: 'Death',
+    hf_hospitalization: 'HF admission',
+    symptoms: 'Symptoms',
+    side_effects: 'Side effects',
     neurohormonal: 'Neuro',
     functional: 'Function',
     volume: 'Volume',
@@ -137,6 +143,10 @@ const PILL_SHORT_LABELS = {
     adherence: 'Adherence',
 } as const satisfies Record<ScoreDomainKey, string>;
 const PILL_COLORS = {
+    mortality: 'border-sky-600 text-sky-700',
+    hf_hospitalization: 'border-cyan-600 text-cyan-700',
+    symptoms: 'border-violet-600 text-violet-700',
+    side_effects: 'border-orange-600 text-orange-700',
     neurohormonal: 'border-indigo-500 text-indigo-600',
     functional: 'border-blue-500 text-blue-600',
     volume: 'border-emerald-500 text-emerald-600',
@@ -147,7 +157,7 @@ const PILL_COLORS = {
     adherence: 'border-teal-500 text-teal-600',
 } as const satisfies Record<ScoreDomainKey, string>;
 // Compile-time guard that DomainScores and the engine's keys stay in step.
-const _domainKeysMatch: Record<keyof DomainScores, true> = { neurohormonal: true, functional: true, volume: true, structure: true, cost: true, adherence: true, guideline: true, completeness: true };
+const _domainKeysMatch: Record<keyof DomainScores, true> = { mortality: true, hf_hospitalization: true, symptoms: true, side_effects: true, neurohormonal: true, functional: true, volume: true, structure: true, cost: true, adherence: true, guideline: true, completeness: true };
 void _domainKeysMatch;
 
 export const RecommendationCard = React.memo(function RecommendationCard({ regimen, rank, leader, showFoundationalCoverage = false }: Props) {
@@ -158,6 +168,9 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
     const { openEvidence } = useEvidenceLink();
     const { safety: safetyWarnings, notes: prescribingNotes } = partitionWarnings(regimen.warnings);
 
+    const weightOf = (k: ScoreDomainKey): number => regimen.score_breakdown?.domains.find(d => d.key === k)?.weight ?? WEIGHT_PROFILES.default[k];
+    const rankedGroups = DOMAIN_GROUPS.filter(g => g.domains.some(k => weightOf(k) > 0));
+    const otherGroups = DOMAIN_GROUPS.filter(g => !g.domains.some(k => weightOf(k) > 0));
     const projections = regimen.qualitative_projections ?? [];
     const tradeOffs = regimen.trade_offs ?? [];
 
@@ -264,11 +277,14 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                     </Disclosure>
                 )}
 
+                {/* Expected effect from trial relative risks, KCCQ and measured harm rates, versus the current regimen */}
+                <ExpectedEffectBlock regimen={regimen} rank={rank} />
+
                 {/* Expected Direction (qualitative — replaces false-precision projected numbers) */}
                 {projections.length > 0 && (
                     <div className="p-6 border-b border-slate-100">
                         <h4 className="text-sm font-bold text-slate-600 uppercase mb-1 tracking-wide">Treatment considerations</h4>
-                        <p className="text-xs text-slate-600 mb-3">Individual response is not quantified. Reassess measured response after any treatment change.</p>
+                        <p className="text-xs text-slate-600 mb-3">Individual response is not predicted; the expected effect above is a trial average. Reassess measured response after any treatment change.</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {projections.map((p, i) => <ProjectionRow key={i} p={p} />)}
                         </div>
@@ -349,7 +365,7 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                 >
                     <div className="px-6 pb-6">
                         <p className="text-xs text-slate-600 mb-4 leading-snug">
-                            Treatment response is not estimated from trial-average coefficients. Observed EF, BNP, KCCQ, weight and vital signs are not replaced by a predicted state. Outcome domains have zero ranking weight; remaining evidence, coverage, cost and dosing-burden factors are rescaled. The composite score is an internal ordering heuristic, not a clinical grade or safety clearance.
+                            Death, heart-failure hospitalization, symptoms, side effects, cost and dosing burden decide the order. The first four are trial averages (relative risks, KCCQ points and one-year harm rates); the order is not a prediction for this patient. Observed EF, BNP, KCCQ, weight and vital signs are never replaced by a predicted state. Guideline concordance and therapy completeness are shown for reference only and carry weight 0; so do the four physiological domains, which are not assessed. The composite score is an internal ordering number, not a clinical grade or safety clearance.
                         </p>
                         {regimen.treatment_assessment?.limitations.map(note => <p key={note} className="text-xs text-slate-600 mb-2">{note}</p>)}
                         <div className="grid grid-cols-2 gap-y-2 gap-x-8 mb-5">
@@ -374,14 +390,19 @@ export const RecommendationCard = React.memo(function RecommendationCard({ regim
                         </div>
                         <p className="text-[11px] text-slate-600 font-medium uppercase tracking-wider mb-2">Domain sub-scores — tap for detail</p>
                         <div className="space-y-3">
-                            {DOMAIN_GROUPS.map(g => (
-                                <div key={g.key} role="group" aria-label={g.label}>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">{g.label}</p>
-                                    <div className="grid grid-cols-4 gap-y-3 gap-x-3">
-                                        {g.domains.map(k => (
-                                            <ScorePill key={k} label={PILL_SHORT_LABELS[k]} fullLabel={DOMAIN_LABELS[k]} score={domain_scores[k]} assessed={regimen.score_breakdown?.domains.find(d=>d.key===k)?.assessed !== false} color={PILL_COLORS[k]} onClick={() => setSelectedDomain(k)} />
-                                        ))}
-                                    </div>
+                            {[{ title: 'Ranked factors', groups: rankedGroups }, { title: 'Not ranked', groups: otherGroups }].filter(s => s.groups.length > 0).map(section => (
+                                <div key={section.title} className="space-y-3">
+                                    <h5 className="text-xs font-bold text-slate-700 border-b border-slate-200 pb-0.5">{section.title}</h5>
+                                    {section.groups.map(g => (
+                                        <div key={g.key} role="group" aria-label={g.label}>
+                                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">{g.label}{g.domains.every(k => weightOf(k) === 0) && <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700 normal-case">weight 0</span>}</p>
+                                            <div className="grid grid-cols-4 gap-y-3 gap-x-3">
+                                                {g.domains.map(k => (
+                                                    <ScorePill key={k} label={PILL_SHORT_LABELS[k]} fullLabel={DOMAIN_LABELS[k]} score={domain_scores[k]} assessed={regimen.score_breakdown?.domains.find(d=>d.key===k)?.assessed !== false} color={PILL_COLORS[k]} weightText={weightOf(k) > 0 ? `${Math.round(weightOf(k) * 1000) / 10}% weight` : undefined} onClick={() => setSelectedDomain(k)} />
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             ))}
                         </div>

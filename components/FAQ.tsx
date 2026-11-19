@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
-import { WEIGHT_PROFILES, WEIGHT_PROFILE_META, DOMAIN_LABELS, DOMAIN_KEYS } from '../services/engine/scoreModel';
+import { WEIGHT_PROFILES, WEIGHT_PROFILE_META, DOMAIN_LABELS, SCORE_ADJUSTMENTS, type ScoreDomainKey } from '../services/engine/scoreModel';
+import { EvidenceTables } from './EvidenceTables';
 import { SCOPE_STATEMENT } from './rankingModeMeta';
 import { EVIDENCE_MATRIX, ALL_EVIDENCE_ROWS, rowMatches } from './evidenceMatrix';
 
@@ -88,12 +89,14 @@ export const FAQ: React.FC<FAQProps> = ({ evidenceQuery, onEvidenceQueryChange, 
     const setQuery = onEvidenceQueryChange ?? setLocalQuery;
     const matrixRef = useRef<HTMLElement>(null);
     useEffect(() => { if (jumpNonce > 0) { matrixRef.current?.scrollIntoView({ block: 'start' }); matrixRef.current?.focus({ preventScroll: true }); } }, [jumpNonce]);
-    const assessedKeys = DOMAIN_KEYS.filter(k => ['guideline','completeness','cost','adherence'].includes(k));
+    const weightKeys: ScoreDomainKey[] = ['mortality', 'hf_hospitalization', 'symptoms', 'side_effects', 'cost', 'adherence', 'guideline', 'completeness'];
+    const pct = (w: number) => `${Math.round(w * 1000) / 10}%`;
     return <div className="h-full overflow-y-auto bg-slate-50 p-4 sm:p-8"><div className="max-w-5xl mx-auto space-y-6 pb-16">
         <header><h2 className="text-3xl font-bold text-slate-900">Clinical logic, safety and evidence</h2><p className="mt-3 text-slate-700" data-testid="faq-scope">{SCOPE_STATEMENT}</p></header>
         <section className="rounded-xl border bg-white p-6 space-y-3" aria-labelledby="faq-response">
             <h3 id="faq-response" className="text-xl font-bold">What can this review tell me?</h3>
             <p>It checks recorded findings, medication eligibility, treatment gaps, estimated cost and dosing burden. Each option is a proposal for clinician review, with medication-specific precautions and monitoring.</p>
+            <p>It also shows, for each option, the expected effect compared with the current regimen as population averages from randomized trials: death from any cause, heart-failure hospitalization, KCCQ points and side-effect burden. These are not predictions for this patient.</p>
             <p>It does not calculate an untreated state. Individual changes in EF, BNP, KCCQ, weight, blood pressure, heart rate and potassium are not estimated. Recorded measurements remain unchanged; a proposed medication change is not a new clinical observation.</p>
             <p>For substitutions and discontinuations, review the source and destination dose, washout or taper instructions, reason for the change and measured follow-up. A completed course is not ongoing exposure. Removing an iron-course entry does not subtract an assumed benefit.</p>
         </section>
@@ -105,10 +108,24 @@ export const FAQ: React.FC<FAQProps> = ({ evidenceQuery, onEvidenceQueryChange, 
         </section>
         <section className="rounded-xl border bg-white p-6 space-y-3" aria-labelledby="faq-score">
             <h3 id="faq-score" className="text-xl font-bold">How options are ordered</h3>
-            <p>The score is a software comparison, not a prognosis or a measure of expected clinical benefit. Neurohormonal, functional, volume and structural outcome domains are unassessed and carry zero weight because individual response is not quantified.</p>
-            <p>The remaining domain weights are rescaled. The table assumes cost is assessable; when it is not, cost also has zero weight and the other weights are rescaled again. Scores across different information completeness are not comparable.</p>
-            <div className="overflow-x-auto"><table className="w-full text-sm text-left"><caption className="sr-only">Effective weights when cost is known</caption><thead><tr><th>Preference</th>{assessedKeys.map(k=><th key={k}>{DOMAIN_LABELS[k]}</th>)}</tr></thead><tbody>{Object.entries(WEIGHT_PROFILES).map(([name,weights])=>{ const total=assessedKeys.reduce((sum,k)=>sum+weights[k],0); return <tr key={name}><th>{WEIGHT_PROFILE_META[name as keyof typeof WEIGHT_PROFILES].label}</th>{assessedKeys.map(k=><td key={k}>{(100*weights[k]/total).toFixed(1)}%</td>)}</tr>;})}</tbody></table></div>
-            <p>Evidence credit is divided by the number of indicated foundational treatment slots, fixed across options, so an unrelated additional drug does not dilute that credit. Safety warnings and label restrictions still apply. Equal scores do not establish equivalent clinical benefit.</p>
+            <p>Each option is ranked by six weighted factors, all taken from measured or priced inputs: death from any cause and heart-failure hospitalization (relative risks from randomized trials), symptoms (change in KCCQ points), side effects (one-year excess harm rates multiplied by a severity weight), cost, and dosing burden. The weights in the table are the tool&apos;s policy numbers, pending clinical review.</p>
+            <p>The first four estimates are population averages from trials, not predictions for this patient. Recorded measurements are never altered or projected, and the patient&apos;s own response at follow-up replaces these estimates.</p>
+            <h4 className="font-bold text-slate-800 pt-1">How the trial figures are used</h4>
+            <ul className="list-disc pl-5 space-y-1.5 text-slate-700">
+                <li><span className="font-semibold">Small or imprecise trials are pulled toward &ldquo;no effect&rdquo;</span> in proportion to their uncertainty. A figure from a few hundred patients moves more than one from tens of thousands. Every figure shows its published value and the value used.</li>
+                <li><span className="font-semibold">Dose.</span> A drug earns full credit at the dose the trials achieved. An option that starts or increases a drug is valued as titrated the way the trials did (&ldquo;as planned&rdquo;). A drug left at a lower dose earns less. The option card also shows the figure at today&apos;s doses where it differs. Loop diuretics have no measured dose relation, so they earn full credit at any dose, and congestion relief by dose is not modelled; the congestion display rule still shows the best diuretic intensification for a congested patient.</li>
+                <li><span className="font-semibold">Drugs of one mechanism are not counted twice.</span> Effects of different mechanisms are combined as if independent, which no trial has tested; the interval shown makes the same assumption.</li>
+                <li><span className="font-semibold">Evidence basis.</span> Each figure is labelled: randomized trial, pooled analysis of trials, extrapolated (carried from another population), borrowed from a sibling drug or class, assumed no effect (no outcome trial), not measured, or upper bound (no measurement for that drug, so the largest measured excess of that harm is used and probably overstates it).</li>
+                <li><span className="font-semibold">Guideline concordance and therapy completeness</span> are still calculated and shown, for reference only, with weight 0. Guideline recommendations are a target the model is measured against, not an input to the ranking.</li>
+                <li><span className="font-semibold">Neurohormonal, functional, volume and structure</span> remain &ldquo;not assessed&rdquo; with weight 0, because the tool does not predict an individual&apos;s biomarker or exam response.</li>
+            </ul>
+            <p>The table assumes cost is assessable. When it is not, cost has no weight and the other weights are rescaled. Scores from different sets of available inputs are not comparable.</p>
+            <div className="overflow-x-auto"><table className="w-full text-sm text-left"><caption className="sr-only">Weight of each ranked factor under each preference; reference-only factors carry 0%</caption>
+                <thead><tr><th scope="col">Preference</th>{weightKeys.map(k=><th scope="col" key={k}>{DOMAIN_LABELS[k]}</th>)}</tr></thead>
+                <tbody>{Object.entries(WEIGHT_PROFILES).map(([name,weights])=><tr key={name}><th scope="row">{WEIGHT_PROFILE_META[name as keyof typeof WEIGHT_PROFILES].label}</th>{weightKeys.map(k=><td key={k}>{pct(weights[k])}</td>)}</tr>)}</tbody></table></div>
+            <h4 className="font-bold text-slate-800 pt-1">Fixed safety rules that are not measured models</h4>
+            <p>Eligibility rules; the penalty for each unresolved safety warning; the low blood pressure, slow heart rate and high potassium bands; the volume-depletion adjustment; the limit of two new drug classes per visit; and the rule for showing a diuretic option when the patient is congested. One hand-set number also remains: an option that replaces a drug that is contraindicated or has a documented intolerance earns +15 points before scaling (after scaling it is limited to between {SCORE_ADJUSTMENTS.SPECIAL_FEATURES.min} and +{SCORE_ADJUSTMENTS.SPECIAL_FEATURES.max} points). It applies to few options. No other drug feature adds bonus points.</p>
+            <p>That swap bonus is divided by the number of indicated foundational treatment slots, fixed across options, so an unrelated additional drug does not dilute it. Safety warnings and label restrictions still apply. Equal scores do not establish equivalent clinical benefit.</p>
             <p>Cost-first and simpler-regimen preferences can trade clinical model score for affordability or dosing burden. Review the score breakdown and treatment considerations before choosing. Different doses and drugs are not presumed physiologically equivalent.</p>
         </section>
         <section className="rounded-xl border bg-white p-6 space-y-3" aria-labelledby="faq-safety">
@@ -117,6 +134,10 @@ export const FAQ: React.FC<FAQProps> = ({ evidenceQuery, onEvidenceQueryChange, 
             <p>Potassium at or above 6.0 triggers an urgent alert. Above 6.0 but below 6.5, only supported corrective reductions or removals may be shown; the abnormal value remains unresolved. At 6.5 or above, or systolic BP below 90, the engine returns alerts only. A measured potassium below 3.5 holds new or intensified potassium-lowering diuretics.</p>
             <p>ACE inhibitor to ARNI transitions require the stated washout. Beta-blocker transitions use a starting-tier proposal and an individual taper plan, not target-dose equivalence. Oral loop conversions are approximate starting conventions that require reassessment.</p>
             <details><summary className="font-semibold cursor-pointer">Medication eligibility rules</summary><ul className="mt-3 space-y-2">{ELIGIBILITY_RULES.map(rule=><li key={rule.id}><strong>{rule.id}: {rule.name}.</strong> {rule.summary}</li>)}</ul></details>
+        </section>
+        <section className="rounded-xl border bg-white p-6 space-y-3" aria-labelledby="faq-evidence-tables">
+            <h3 id="faq-evidence-tables" className="text-xl font-bold">Measured evidence tables</h3>
+            <EvidenceTables />
         </section>
         <section id="faq-evidence-matrix" ref={matrixRef} tabIndex={-1} aria-labelledby="faq-evidence-matrix-title" className="rounded-xl border bg-white scroll-mt-4">
             <h3 id="faq-evidence-matrix-title" className="text-xl font-bold p-6 pb-0">Evidence matrix: rules and sources</h3><EvidenceMatrixSection query={query} onQueryChange={setQuery}/>

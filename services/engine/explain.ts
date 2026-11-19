@@ -8,7 +8,11 @@ import { CREATININE_RISE_ACCEPTABLE_PCT, EGFR_FLOOR_FOR_CREATININE_RISE } from '
 import { hasRelevantIntensification } from './regimenUtils';
 import { regimenSatisfiesPillar, classifyPhenotype } from './domains';
 import { drugFacts } from './drugFacts';
-import { SCORE_ADJUSTMENTS } from './scoreModel';
+import { SCORE_ADJUSTMENTS, sideEffectScore } from './scoreModel';
+import { buildOutcomeEstimateViews } from './outcomeBenefit';
+import { planCreditsFor } from './doseCredit';
+import { symptomEstimateFor } from './symptomBenefit';
+import { harmBurdenFor, HARM_TABLE } from './harmBurden';
 
 export function buildMonitoringPlan(
     currentPatient: Patient,
@@ -314,6 +318,9 @@ export function assembleOutput(
     distinctPicks.forEach(r => {
         if (r.modification_set) r.monitoring_plan = buildMonitoringPlan(patient, r.projected_patient, r.modification_set);
         if (r.modification_set) r.treatment_assessment = buildTreatmentAssessment(patient, r.modification_set);
+        r.outcome_estimates = buildOutcomeEstimateViews(r.regimen, patient, r.modification_set);
+        r.symptom_estimate = symptomEstimateFor(r.regimen, patient, r.modification_set ? planCreditsFor(r.modification_set, patient).creditFn : undefined);
+        { const hb = harmBurdenFor(HARM_TABLE, r.regimen, patient); r.harm_burden = { ...hb, score: sideEffectScore(hb.burden) }; }
         r.qualitative_projections = r.treatment_assessment?.considerations ?? [];
         r.trade_offs = buildTradeOffLabels(r.domain_scores);
         if (r.score_breakdown?.domains.some(d => d.key === 'cost' && d.assessed === false)) {

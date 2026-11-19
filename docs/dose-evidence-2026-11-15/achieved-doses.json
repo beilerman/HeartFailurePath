@@ -1,0 +1,1860 @@
+{
+ "achieved": [
+  {
+   "id": "acei-solvd-t",
+   "drug_class": "ACEi",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "acei-reduced-death",
+    "acei-reduced-hfh"
+   ],
+   "trial": "SOLVD-Treatment (component of Flather overview)",
+   "trial_drug": "Enalapril",
+   "protocol_start_daily_mg": 5,
+   "protocol_target_daily_mg": 20,
+   "achieved_mean_daily_mg": 16.6,
+   "achieved_fraction_of_target": 0.83,
+   "share_reaching_target_pct": 49,
+   "per_formulary_drug": [
+    {
+     "drug": "Enalapril",
+     "achieved_daily_mg": 16.6,
+     "level": "drug",
+     "target_daily_mg_used": 20
+    },
+    {
+     "drug": "Lisinopril",
+     "achieved_daily_mg": 16.6,
+     "level": "siblingProxy",
+     "fraction_applied": 0.83,
+     "target_daily_mg_used": 20
+    },
+    {
+     "drug": "Ramipril",
+     "achieved_daily_mg": 8.3,
+     "level": "siblingProxy",
+     "fraction_applied": 0.83,
+     "target_daily_mg_used": 10
+    },
+    {
+     "drug": "Captopril",
+     "achieved_daily_mg": 124.5,
+     "level": "siblingProxy",
+     "fraction_applied": 0.83,
+     "target_daily_mg_used": 150
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "Among all randomized patients, final mean daily dose was 11.2 mg (among patients taking enalapril it was 16.6 mg).",
+   "notes": "Titration (Kondo Table 1): 2.5 mg bid run-in 2-7 days, then 2.5 mg bid 1 wk or 5 mg bid, 5 mg bid 2 wk, 10 mg bid if 5 mg bid tolerated. Footnote: usual start 5 mg bid (10 mg/day), 2.5 mg bid if high risk; 5 mg/day used here as the lowest start. 16.6 mg is the enalapril arm; 11.2 mg is the blend of both arms (placebo arm up-titrated blind). At the final visit 49.3% of the enalapril group took 20 mg daily. Active run-in was used, so run-in intolerant patients are excluded. Sibling proxies use the lowest formulary-flagged target daily dose (Lisinopril 20, Ramipril 10, Captopril 150 mg/day); Lisinopril also has a flagged 40 mg target (see ATLAS). Independent cross-check from the primary-data reanalysis (Lam 2018, PMID 28980368): \"the final mean daily dose of either study drug was 11 mg and at the final visit, 49% of patients in either treatment group were receiving target doses.\""
+  },
+  {
+   "id": "acei-solvd-p",
+   "drug_class": "ACEi",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "acei-reduced-death",
+    "acei-reduced-hfh"
+   ],
+   "trial": "SOLVD-Prevention (component of Flather overview)",
+   "trial_drug": "Enalapril",
+   "protocol_start_daily_mg": 5,
+   "protocol_target_daily_mg": 20,
+   "achieved_mean_daily_mg": 16.9,
+   "achieved_fraction_of_target": 0.845,
+   "share_reaching_target_pct": 57,
+   "per_formulary_drug": [
+    {
+     "drug": "Enalapril",
+     "achieved_daily_mg": 16.9,
+     "level": "drug",
+     "target_daily_mg_used": 20
+    },
+    {
+     "drug": "Lisinopril",
+     "achieved_daily_mg": 16.9,
+     "level": "siblingProxy",
+     "fraction_applied": 0.845,
+     "target_daily_mg_used": 20
+    },
+    {
+     "drug": "Ramipril",
+     "achieved_daily_mg": 8.45,
+     "level": "siblingProxy",
+     "fraction_applied": 0.845,
+     "target_daily_mg_used": 10
+    },
+    {
+     "drug": "Captopril",
+     "achieved_daily_mg": 126.75,
+     "level": "siblingProxy",
+     "fraction_applied": 0.845,
+     "target_daily_mg_used": 150
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "SOLVD‐P | Enalapril (2111) Placebo (2117) | 37.4 b | Yes | No | 2.5 mg bid 2–7 days run‐in/2.5 mg bid 1 wk or 5 mg bid/5 mg bid 2 wk /10 mg bid | 20 mg | 16.9 mg (E) e 18.2 mg (P) e | 57% (E) e 62% (P) e",
+   "notes": "Footnote e: patients could not have overt heart failure or be treated for it with a diuretic/digoxin/vasodilator; doses are from prescription at the last visit."
+  },
+  {
+   "id": "acei-save",
+   "drug_class": "ACEi",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "acei-reduced-death",
+    "acei-reduced-hfh"
+   ],
+   "trial": "SAVE (component of Flather overview)",
+   "trial_drug": "Captopril",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": 150,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Flather MD et al. Lancet 2000;355:1575-81 (the overview); primary trial papers SAVE NEJM 1992 (PMID 1386652), AIRE Lancet 1993 (PMID 8104270), TRACE NEJM 1995 (PMID 7477219)",
+    "pmid": "10821360"
+   },
+   "verification": "not_verified",
+   "quote": null,
+   "notes": "Achieved mean dose and share at target NOT found: the PubMed records for the primary papers have no dose text, none is open on PMC/Europe PMC, and the publisher sites returned HTTP 403. The Kondo review excludes post-MI trials. The protocol target shown is from memory of the trial design and is not verified."
+  },
+  {
+   "id": "acei-aire",
+   "drug_class": "ACEi",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "acei-reduced-death",
+    "acei-reduced-hfh"
+   ],
+   "trial": "AIRE (component of Flather overview)",
+   "trial_drug": "Ramipril",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": 10,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Flather MD et al. Lancet 2000;355:1575-81 (the overview); primary trial papers SAVE NEJM 1992 (PMID 1386652), AIRE Lancet 1993 (PMID 8104270), TRACE NEJM 1995 (PMID 7477219)",
+    "pmid": "10821360"
+   },
+   "verification": "not_verified",
+   "quote": null,
+   "notes": "Achieved mean dose and share at target NOT found: the PubMed records for the primary papers have no dose text, none is open on PMC/Europe PMC, and the publisher sites returned HTTP 403. The Kondo review excludes post-MI trials. The protocol target shown is from memory of the trial design and is not verified."
+  },
+  {
+   "id": "acei-trace",
+   "drug_class": "ACEi",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "acei-reduced-death",
+    "acei-reduced-hfh"
+   ],
+   "trial": "TRACE; not in the formulary (component of Flather overview)",
+   "trial_drug": "Trandolapril",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Flather MD et al. Lancet 2000;355:1575-81 (the overview); primary trial papers SAVE NEJM 1992 (PMID 1386652), AIRE Lancet 1993 (PMID 8104270), TRACE NEJM 1995 (PMID 7477219)",
+    "pmid": "10821360"
+   },
+   "verification": "not_verified",
+   "quote": null,
+   "notes": "Achieved mean dose and share at target NOT found: the PubMed records for the primary papers have no dose text, none is open on PMC/Europe PMC, and the publisher sites returned HTTP 403. The Kondo review excludes post-MI trials. The protocol target shown is from memory of the trial design and is not verified."
+  },
+  {
+   "id": "acei-flather-pooled",
+   "drug_class": "ACEi",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "acei-reduced-death",
+    "acei-reduced-hfh"
+   ],
+   "trial": "Flather overview (SAVE, AIRE, TRACE, SOLVD-T, SOLVD-P): patient-weighted achieved dose, SOLVD components only",
+   "trial_drug": "Enalapril",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": 20,
+   "achieved_mean_daily_mg": 16.8,
+   "achieved_fraction_of_target": 0.839,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Enalapril",
+     "achieved_daily_mg": 16.8,
+     "level": "drug",
+     "target_daily_mg_used": 20
+    },
+    {
+     "drug": "Lisinopril",
+     "achieved_daily_mg": 16.78,
+     "level": "siblingProxy",
+     "fraction_applied": 0.839,
+     "target_daily_mg_used": 20
+    },
+    {
+     "drug": "Ramipril",
+     "achieved_daily_mg": 8.39,
+     "level": "siblingProxy",
+     "fraction_applied": 0.839,
+     "target_daily_mg_used": 10
+    },
+    {
+     "drug": "Captopril",
+     "achieved_daily_mg": 125.85,
+     "level": "siblingProxy",
+     "fraction_applied": 0.839,
+     "target_daily_mg_used": 150
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "computed_from_verified",
+   "quote": "(computed) (1285 x 16.6/20 + 2111 x 16.9/20) / (1285 + 2111) = (1066.6 + 1783.8) / 3396 = 0.839",
+   "notes": "Weights are the enalapril-arm sizes from Kondo Table 1 (SOLVD-T 1285, SOLVD-P 2111). Covers about 53% of the overview (SOLVD 2569 + 4228 = 6797 of 12,763 patients, both arms). SAVE, AIRE and TRACE are not verified, so the pooled fraction is for the SOLVD portion only. All of it is enalapril against a 20 mg/day target. The overview pooled post-MI trials, where the same fraction cannot be assumed."
+  },
+  {
+   "id": "acei-mildly-reduced-and-preserved",
+   "drug_class": "ACEi",
+   "ef_band": "mildly_reduced/preserved",
+   "outcome_evidence_row_ids": [
+    "acei-mildly-reduced-death",
+    "acei-mildly-reduced-hfh",
+    "acei-preserved-death",
+    "acei-preserved-hfh"
+   ],
+   "trial": "CHARM-Overall (extrapolated rows); Cochrane 2021 ACEi pool (preserved rows)",
+   "trial_drug": "various",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Pfeffer 2003 (PMID 13678868); Cochrane review (PMID 34022072)",
+    "pmid": "13678868; 34022072"
+   },
+   "verification": "not_verified",
+   "quote": null,
+   "notes": "The mildly-reduced rows are extrapolated from candesartan (CHARM), so use the ARB figures. The preserved-EF ACEi trials (e.g. PEP-CHF perindopril) have achieved doses that were NOT looked up in this session."
+  },
+  {
+   "id": "arb-charm",
+   "drug_class": "ARB",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "arb-reduced-death",
+    "arb-reduced-hfh",
+    "arb-mildly-reduced-hfh",
+    "arb-mildly-reduced-death"
+   ],
+   "trial": "CHARM-Alternative + CHARM-Added (low-LVEF pool)",
+   "trial_drug": "Candesartan",
+   "protocol_start_daily_mg": 4,
+   "protocol_target_daily_mg": 32,
+   "achieved_mean_daily_mg": 24,
+   "achieved_fraction_of_target": 0.75,
+   "share_reaching_target_pct": 60,
+   "per_formulary_drug": [
+    {
+     "drug": "Candesartan",
+     "achieved_daily_mg": 24,
+     "level": "drug",
+     "target_daily_mg_used": 32
+    },
+    {
+     "drug": "Valsartan",
+     "achieved_daily_mg": 240.0,
+     "level": "siblingProxy",
+     "fraction_applied": 0.75,
+     "target_daily_mg_used": 320
+    },
+    {
+     "drug": "Losartan",
+     "achieved_daily_mg": 112.5,
+     "level": "siblingProxy",
+     "fraction_applied": 0.75,
+     "target_daily_mg_used": 150
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "The dose achieved in CHARM‐Alternative was 23 mg (59% at 32 mg target) and in CHARM‐Added was 24 mg (61% at target) in the candesartan group.",
+   "notes": "Start 4 or 8 mg once daily, dose doubled every 2 weeks to 32 mg (Kondo Table 1; time point 6 months; pooled row 24 mg, 60% at target). Independent cross-check, CHARM post hoc (Qin 2024, PMID 38581132, PMC11287367): mean achieved dose over follow-up 21.5 +/- 12.6 mg in men and 20.7 +/- 12.9 mg in women; \"At 6 months, the target dose of 32 mg was achieved in 903 (56.2%) men and 298 (53.4%) women.\" Patient-weighted check: men 903/0.562 = 1607 and women 298/0.534 = 558 candesartan patients, (1607 x 21.5 + 558 x 20.7)/2165 = 21.3 mg = 0.665 of target. The 21.3 mg whole-follow-up mean is lower than the 6-month 24 mg because it averages over time, including discontinuation. Use 0.665 to 0.75 as the range. The mildly-reduced rows are extrapolated/pooled from CHARM-Preserved, whose achieved dose was NOT found."
+  },
+  {
+   "id": "arb-valheft",
+   "drug_class": "ARB",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "arb-reduced-death",
+    "arb-reduced-hfh"
+   ],
+   "trial": "Val-HeFT (supporting; not a cited source of the rows)",
+   "trial_drug": "Valsartan",
+   "protocol_start_daily_mg": 80,
+   "protocol_target_daily_mg": 320,
+   "achieved_mean_daily_mg": 254,
+   "achieved_fraction_of_target": 0.794,
+   "share_reaching_target_pct": 84,
+   "per_formulary_drug": [
+    {
+     "drug": "Valsartan",
+     "achieved_daily_mg": 254,
+     "level": "drug",
+     "target_daily_mg_used": 320
+    },
+    {
+     "drug": "Candesartan",
+     "achieved_daily_mg": 25.41,
+     "level": "siblingProxy",
+     "fraction_applied": 0.794,
+     "target_daily_mg_used": 32
+    },
+    {
+     "drug": "Losartan",
+     "achieved_daily_mg": 119.1,
+     "level": "siblingProxy",
+     "fraction_applied": 0.794,
+     "target_daily_mg_used": 150
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "Val‐HeFT | Valsartan (2511) k Placebo (2499) | 23 b | No | Yes k | 40 mg bid 2 wk/dose doubled every 2 wk until 160 mg bid | 320 mg | 254 mg (V) k 283 mg (P) k | 84% (V) 93% (P)",
+   "notes": "93% of patients were on an ACE inhibitor at baseline. Direct data for the formulary drug Valsartan."
+  },
+  {
+   "id": "arb-heaal-losartan",
+   "drug_class": "ARB",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "arb-reduced-death",
+    "arb-reduced-hfh"
+   ],
+   "trial": "HEAAL (supporting; ACE-inhibitor-intolerant patients)",
+   "trial_drug": "Losartan",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": 150,
+   "achieved_mean_daily_mg": 129,
+   "achieved_fraction_of_target": 0.86,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Losartan",
+     "achieved_daily_mg": 129,
+     "level": "drug",
+     "target_daily_mg_used": 150
+    },
+    {
+     "drug": "Valsartan",
+     "achieved_daily_mg": 275.2,
+     "level": "siblingProxy",
+     "fraction_applied": 0.86,
+     "target_daily_mg_used": 320
+    },
+    {
+     "drug": "Candesartan",
+     "achieved_daily_mg": 27.52,
+     "level": "siblingProxy",
+     "fraction_applied": 0.86,
+     "target_daily_mg_used": 32
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "the mean daily losartan doses administered were 129 mg (SD 39) for the 150 mg group and 46 mg (SD 11) for the 50 mg treatment group.",
+   "notes": "Mean from follow-up to a primary endpoint or study end, in the 150 mg arm; the 50 mg arm reached 46 of 50 mg (0.92). Losartan has no placebo-controlled mortality trial in HF; the arb rows rest on candesartan."
+  },
+  {
+   "id": "arb-preserved",
+   "drug_class": "ARB",
+   "ef_band": "preserved",
+   "outcome_evidence_row_ids": [
+    "arb-preserved-death",
+    "arb-preserved-hfh"
+   ],
+   "trial": "Cochrane review, ARBs vs placebo, LVEF >40% (CHARM-Preserved, I-PRESERVE and others)",
+   "trial_drug": "Candesartan, irbesartan",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Cochrane PMID 34022072",
+    "pmid": "34022072"
+   },
+   "verification": "not_verified",
+   "quote": "Irbesartan (275 mg) versus placebo",
+   "notes": "Only one fragment: the Tillman Table 1 lists I-PRESERVE irbesartan at a mean 275 mg (target 300 mg from memory, not verified), PMID 31092128. CHARM-Preserved candesartan achieved dose was not found. Irbesartan is not in the formulary."
+  },
+  {
+   "id": "arni-paradigm",
+   "drug_class": "ARNI",
+   "ef_band": "reduced (rows for all bands inherit)",
+   "outcome_evidence_row_ids": [
+    "arni-reduced-death",
+    "arni-reduced-hfh",
+    "arni-mildly-reduced-death",
+    "arni-mildly-reduced-hfh",
+    "arni-preserved-death",
+    "arni-preserved-hfh"
+   ],
+   "trial": "PARADIGM-HF",
+   "trial_drug": "Sacubitril/valsartan",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": 400,
+   "achieved_mean_daily_mg": 375,
+   "achieved_fraction_of_target": 0.9375,
+   "share_reaching_target_pct": 58,
+   "per_formulary_drug": [
+    {
+     "drug": "Sacubitril/Valsartan (Entresto)",
+     "achieved_daily_mg": 375,
+     "level": "drug",
+     "target_daily_mg_used": 400
+    }
+   ],
+   "source": {
+    "citation": "Vardeny O et al. Eur J Heart Fail 2016;18:1228-34 (PARADIGM-HF dose-reduction analysis; intro cites the primary trial)",
+    "pmid": "27283779",
+    "pmcid": "PMC5095784"
+   },
+   "verification": "verified_fulltext",
+   "quote": "The majority of patients remained on target doses after randomization, with final mean achieved doses of 375 mg daily and 18.9 mg daily respectively.",
+   "notes": "Target is 200 mg twice daily (97/103 mg tablet) = 400 mg/day of the combined weight; enalapril comparator 18.9 of 20 mg/day (0.945). Every randomized patient had already tolerated target-dose sacubitril/valsartan in the run-in (median 29 days, label), so the 0.94 describes a pre-selected population; the first-ever-exposure benefit at a starting dose is not measured. Share 58% is computed: 42% of the sacubitril/valsartan arm had any dose reduction (abstract), so 58% stayed on the maximal dose throughout. Mildly-reduced and preserved rows use PARADIGM/PARAGON; the PARAGON achieved dose was NOT found."
+  },
+  {
+   "id": "bb-cibis2",
+   "drug_class": "Beta Blocker",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "beta-blocker-reduced-death",
+    "beta-blocker-reduced-hfh"
+   ],
+   "trial": "CIBIS-II",
+   "trial_drug": "Bisoprolol",
+   "protocol_start_daily_mg": 1.25,
+   "protocol_target_daily_mg": 10,
+   "achieved_mean_daily_mg": 6.2,
+   "achieved_fraction_of_target": 0.62,
+   "share_reaching_target_pct": 48,
+   "per_formulary_drug": [
+    {
+     "drug": "Bisoprolol",
+     "achieved_daily_mg": 6.2,
+     "level": "drug",
+     "target_daily_mg_used": 10
+    },
+    {
+     "drug": "Carvedilol",
+     "achieved_daily_mg": 31.0,
+     "level": "siblingProxy",
+     "fraction_applied": 0.62,
+     "target_daily_mg_used": 50
+    },
+    {
+     "drug": "Metoprolol Succinate",
+     "achieved_daily_mg": 124.0,
+     "level": "siblingProxy",
+     "fraction_applied": 0.62,
+     "target_daily_mg_used": 200
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "CIBIS II | Bisoprolol (1327) Placebo (1320) | 15.6 b | No | No | 1.25 mg qd 1 wk/2.5 mg qd 1 wk/3.75 mg qd 1 wk/5 mg qd 4 wk/7.5 mg qd 4 wk/10 mg qd | 10 mg | 6.2 mg (B) 7.3 mg (P) | 48% (B) i 65% (B) i",
+   "notes": "CONFLICT between two secondary reviews: Tillman 2019 (PMC6535737) lists bisoprolol \"8.6 mg daily\" for CIBIS-II (quote: \"CIBIS-II 10 Bisoprolol (8.6 mg daily) versus placebo\"). The primary paper is not accessible, so 6.2 vs 8.6 is unresolved. Footnote i of Kondo: the proportions are the maximum dose reached during the study, not the dose at the end. Dose-tertile analysis (Simon 2003, PMID 12643888, abstract): last tolerated dose 1.25-3.75 mg n=434, 5-7.5 mg n=328, 10 mg n=565 of the 1327 bisoprolol patients, so 565/1327 = 42.6% were on 10 mg at the last tolerated dose (computed). Fraction used in pooling: 0.62 (low) to 0.86 (high)."
+  },
+  {
+   "id": "bb-merit-hf",
+   "drug_class": "Beta Blocker",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "beta-blocker-reduced-death",
+    "beta-blocker-reduced-hfh"
+   ],
+   "trial": "MERIT-HF",
+   "trial_drug": "Metoprolol succinate (CR/XL)",
+   "protocol_start_daily_mg": 12.5,
+   "protocol_target_daily_mg": 200,
+   "achieved_mean_daily_mg": 159,
+   "achieved_fraction_of_target": 0.795,
+   "share_reaching_target_pct": 64,
+   "per_formulary_drug": [
+    {
+     "drug": "Metoprolol Succinate",
+     "achieved_daily_mg": 159,
+     "level": "drug",
+     "target_daily_mg_used": 200
+    },
+    {
+     "drug": "Carvedilol",
+     "achieved_daily_mg": 39.75,
+     "level": "siblingProxy",
+     "fraction_applied": 0.795,
+     "target_daily_mg_used": 50
+    },
+    {
+     "drug": "Bisoprolol",
+     "achieved_daily_mg": 7.95,
+     "level": "siblingProxy",
+     "fraction_applied": 0.795,
+     "target_daily_mg_used": 10
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "MERIT‐HF | Metoprolol‐S (1990) Placebo (2001) | 12 b | No | No | 12.5–25 mg qd 2 wk/50 mg qd 2 wk/100 mg qd 2 wk/200 mg qd | 200 mg | 159 mg (M‐S) 179 mg (P) | 64% (M‐S) l 82% (P) l",
+   "notes": "Start 12.5-25 mg per the table. Proportion shown is at the end of study. Post hoc dose groups (Wikstrand 2002, PMID 12142116 abstract): more than 100 mg/day, n=1,202, mean 192 mg; 100 mg or less, n=412, mean 76 mg. Check: (1202 x 192 + 412 x 76)/1614 = 162 mg, consistent with 159 mg overall (computed)."
+  },
+  {
+   "id": "bb-copernicus",
+   "drug_class": "Beta Blocker",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "beta-blocker-reduced-death",
+    "beta-blocker-reduced-hfh"
+   ],
+   "trial": "COPERNICUS",
+   "trial_drug": "Carvedilol",
+   "protocol_start_daily_mg": 6.25,
+   "protocol_target_daily_mg": 50,
+   "achieved_mean_daily_mg": 37,
+   "achieved_fraction_of_target": 0.74,
+   "share_reaching_target_pct": 65,
+   "per_formulary_drug": [
+    {
+     "drug": "Carvedilol",
+     "achieved_daily_mg": 37,
+     "level": "drug",
+     "target_daily_mg_used": 50
+    },
+    {
+     "drug": "Metoprolol Succinate",
+     "achieved_daily_mg": 148.0,
+     "level": "siblingProxy",
+     "fraction_applied": 0.74,
+     "target_daily_mg_used": 200
+    },
+    {
+     "drug": "Bisoprolol",
+     "achieved_daily_mg": 7.4,
+     "level": "siblingProxy",
+     "fraction_applied": 0.74,
+     "target_daily_mg_used": 10
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "COPERNICUS | Carvedilol (1156) Placebo (1133) | 9.7 (10.4 b ) | No | No | 3.125 mg bid 2 wk/6.25 mg bid 2 wk/12.5 mg bid 2 wk/25 mg bid | 50 mg | 37 mg (C) e 41 mg (P) e | 65% (C) e 78% (P) e",
+   "notes": "Doses are in surviving patients at 120 days: 65% on 50 mg, 11% 25 mg, 9% 12.5 mg, 6% 6.25 mg, 9% on 0 mg (from the Kondo footnote; from the clinical study report). The Coreg label gives only the maximum \"daily doses up to 50 mg (n = 1,156)\" for COPERNICUS (verified_label)."
+  },
+  {
+   "id": "bb-us-carvedilol",
+   "drug_class": "Beta Blocker",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "beta-blocker-reduced-death",
+    "beta-blocker-reduced-hfh"
+   ],
+   "trial": "US Carvedilol Heart Failure program (supporting)",
+   "trial_drug": "Carvedilol",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": 50,
+   "achieved_mean_daily_mg": 45,
+   "achieved_fraction_of_target": 0.9,
+   "share_reaching_target_pct": 80,
+   "per_formulary_drug": [
+    {
+     "drug": "Carvedilol",
+     "achieved_daily_mg": 45,
+     "level": "drug",
+     "target_daily_mg_used": 50
+    },
+    {
+     "drug": "Metoprolol Succinate",
+     "achieved_daily_mg": 180.0,
+     "level": "siblingProxy",
+     "fraction_applied": 0.9,
+     "target_daily_mg_used": 200
+    },
+    {
+     "drug": "Bisoprolol",
+     "achieved_daily_mg": 9.0,
+     "level": "siblingProxy",
+     "fraction_applied": 0.9,
+     "target_daily_mg_used": 10
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "US Carvedilol | Carvedilol (696) Placebo (398) | 6.5 | Yes | No | Varied d | 50 mg ≤85 kg 100 mg >85 kg | 45 mg (C) 60 mg (P) | 80% (C) – (P)",
+   "notes": "Mild-to-moderate HF with an active run-in, so a pre-selected tolerant population. Includes the dose-ranging MOCHA stratum (see dose_comparisons)."
+  },
+  {
+   "id": "bb-reduced-pooled-weighted",
+   "drug_class": "Beta Blocker",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "beta-blocker-reduced-death"
+   ],
+   "trial": "CIBIS-II + MERIT-HF + COPERNICUS (the pooled death row)",
+   "trial_drug": "Bisoprolol, metoprolol succinate, carvedilol",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": 0.729,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Carvedilol",
+     "achieved_daily_mg": 36.45,
+     "level": "siblingProxy",
+     "fraction_applied": 0.729,
+     "target_daily_mg_used": 50
+    },
+    {
+     "drug": "Metoprolol Succinate",
+     "achieved_daily_mg": 145.8,
+     "level": "siblingProxy",
+     "fraction_applied": 0.729,
+     "target_daily_mg_used": 200
+    },
+    {
+     "drug": "Bisoprolol",
+     "achieved_daily_mg": 7.29,
+     "level": "siblingProxy",
+     "fraction_applied": 0.729,
+     "target_daily_mg_used": 10
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "computed_from_verified",
+   "quote": "(computed) (1327 x 6.2/10 + 1990 x 159/200 + 1156 x 37/50) / 4473 = (822.7 + 1582.1 + 855.4) / 4473 = 0.729",
+   "notes": "Weights are the active-arm sizes in Kondo Table 2. Using 8.6 mg for CIBIS-II (Tillman) instead of 6.2 mg gives (1141.2 + 1582.1 + 855.4)/4473 = 0.800. Report 0.73 to 0.80. Per-trial fractions: bisoprolol 0.62 (or 0.86), metoprolol succinate 0.795, carvedilol 0.74. Active-arm sizes are patients randomized, not patients on dose."
+  },
+  {
+   "id": "bb-mildly-reduced-and-preserved",
+   "drug_class": "Beta Blocker",
+   "ef_band": "mildly_reduced/preserved",
+   "outcome_evidence_row_ids": [
+    "beta-blocker-mildly-reduced-death",
+    "beta-blocker-mildly-reduced-hfh",
+    "beta-blocker-preserved-death",
+    "beta-blocker-preserved-hfh"
+   ],
+   "trial": "Cleland 2018 IPD meta-analysis (mildly reduced); Cochrane 2021 (preserved HF hospitalization)",
+   "trial_drug": "various",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Cleland JGF et al. Eur Heart J 2018 (PMID 29040525); Cochrane 2021 (PMID 34022072)",
+    "pmid": "29040525; 34022072"
+   },
+   "verification": "not_verified",
+   "quote": null,
+   "notes": "Achieved doses in the pooled trials of mildly reduced and preserved EF were NOT retrieved (the IPD paper and Cochrane review were not read for dose). The IPD pool is mainly the same HFrEF trials, so the HFrEF fractions (0.73-0.80) are the only proxy and should be labelled as such."
+  },
+  {
+   "id": "mra-rales",
+   "drug_class": "MRA",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "mra-reduced-death",
+    "mra-reduced-hfh",
+    "nsmra-reduced-death",
+    "nsmra-reduced-hfh"
+   ],
+   "trial": "RALES",
+   "trial_drug": "Spironolactone",
+   "protocol_start_daily_mg": 25,
+   "protocol_target_daily_mg": 50,
+   "achieved_mean_daily_mg": 26,
+   "achieved_fraction_of_target": 0.52,
+   "share_reaching_target_pct": 12,
+   "per_formulary_drug": [
+    {
+     "drug": "Spironolactone",
+     "achieved_daily_mg": 26,
+     "level": "drug",
+     "target_daily_mg_used": 50
+    },
+    {
+     "drug": "Eplerenone",
+     "achieved_daily_mg": 26.0,
+     "level": "siblingProxy",
+     "fraction_applied": 0.52,
+     "target_daily_mg_used": 50
+    }
+   ],
+   "source": {
+    "citation": "Aldactone (spironolactone) label, DailyMed set id 0fed2822-3a03-4b64-9857-c682fcd462bc, section 14; Kondo 2022 Table 3 for the share",
+    "pmid": "10471456 (primary, abstract: 25 mg daily)"
+   },
+   "verification": "verified_label",
+   "quote": "The initial dose of spironolactone was 25 mg once daily. Patients who were intolerant of the initial dosage regimen had their dose decreased to one 25 mg tablet every other day at one to four weeks. Patients who were tolerant of one tablet daily at 8 weeks may have had their dose increased to 50 mg daily at the discretion of the investigator. The mean daily dose at study end for patients randomized to spironolactone was 26 mg.",
+   "notes": "The 12% share is the maximum dose reached, among patients still on treatment at 24 months, from Kondo Table 3 (verified_fulltext of the review; quote: \"12% (S) c 27% (P) c\"). Increase to 50 mg was discretionary, not protocol-mandated, so the trial effect is essentially the effect of 25-26 mg/day. The PubMed abstract itself says \"25 mg of spironolactone daily\"."
+  },
+  {
+   "id": "mra-emphasis",
+   "drug_class": "MRA",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "mra-reduced-death",
+    "mra-reduced-hfh",
+    "nsmra-reduced-death",
+    "nsmra-reduced-hfh"
+   ],
+   "trial": "EMPHASIS-HF",
+   "trial_drug": "Eplerenone",
+   "protocol_start_daily_mg": 25,
+   "protocol_target_daily_mg": 50,
+   "achieved_mean_daily_mg": 39,
+   "achieved_fraction_of_target": 0.78,
+   "share_reaching_target_pct": 85,
+   "per_formulary_drug": [
+    {
+     "drug": "Eplerenone",
+     "achieved_daily_mg": 39,
+     "level": "drug",
+     "target_daily_mg_used": 50
+    },
+    {
+     "drug": "Spironolactone",
+     "achieved_daily_mg": 39.0,
+     "level": "siblingProxy",
+     "fraction_applied": 0.78,
+     "target_daily_mg_used": 50
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_fulltext",
+   "quote": "EMPHASIS‐HF | Eplerenone (1364) Placebo (1373) | 21 | No | No | eGFR 50 ml/min/1.73m2: 25 mg qd 4 wk/50 mg qd eGFR 30–49 ml/min/1.73 m2: 25 mg alt. Days 4 week/25 mg qd | 50 mg 25 mg | 42/44 mg (Ep/P in high eGFR group) d 25/27 mg (Ep/P in low eGFR group) d | 85%/81% (Ep/P in high eGFR group) d 71%/76% (Ep/P in low eGFR group) d",
+   "notes": "Target was eGFR-stratified: 50 mg if eGFR 50 or more, 25 mg if eGFR 30-49. Footnote d: \"Doses shown are at month 5 visit (overall mean dose 39 mg).\" Fraction 0.78 = 39/50 (overall mean over the stratum-mixed target). Within strata: 42/50 = 0.84 (high eGFR) and 24.8/25 = 0.99 (low eGFR, \"24.8 ± 10.8 mg\"). Share is the maximum achieved dose at any time, not at one visit. The 5-month mean of 39 mg is also the figure in Tillman Table 1 (39.1 mg)."
+  },
+  {
+   "id": "mra-reduced-pooled-weighted",
+   "drug_class": "MRA",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "mra-reduced-death",
+    "mra-reduced-hfh",
+    "nsmra-reduced-death",
+    "nsmra-reduced-hfh"
+   ],
+   "trial": "RALES + EMPHASIS-HF (IPD pool 39232490)",
+   "trial_drug": "Spironolactone, eplerenone",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": 0.682,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Spironolactone",
+     "achieved_daily_mg": 34.1,
+     "level": "siblingProxy",
+     "fraction_applied": 0.682,
+     "target_daily_mg_used": 50
+    },
+    {
+     "drug": "Eplerenone",
+     "achieved_daily_mg": 34.1,
+     "level": "siblingProxy",
+     "fraction_applied": 0.682,
+     "target_daily_mg_used": 50
+    }
+   ],
+   "source": {
+    "citation": "Kondo T, Jhund PS, McMurray JJV. Drug therapy for heart failure with reduced ejection fraction: what is the right dose? Eur J Heart Fail 2022;24:421-430 (secondary review; Tables 1-4 compile the primary trials)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "computed_from_verified",
+   "quote": "(computed) (822 x 26/50 + 1364 x 39/50) / (822 + 1364) = (427.4 + 1063.9) / 2186 = 0.682",
+   "notes": "Both fractions are against a 50 mg/day target; EMPHASIS patients with eGFR 30-49 had a 25 mg target, so their true fraction of their own target was higher. The IPD meta-analysis paper (PMID 39232490) itself was not read for dose. The nsMRA (finerenone) reduced-EF rows are extrapolated from this pool, so a finerenone fraction here is a siblingProxy of the MRA class (finerenone label targets 20 or 40 mg, patient-dependent, so no single mg figure is given)."
+  },
+  {
+   "id": "mra-topcat",
+   "drug_class": "MRA",
+   "ef_band": "mildly_reduced/preserved",
+   "outcome_evidence_row_ids": [
+    "mra-mildly-reduced-death",
+    "mra-mildly-reduced-hfh",
+    "mra-preserved-death",
+    "mra-preserved-hfh",
+    "nsmra-mildly-reduced-death",
+    "nsmra-mildly-reduced-hfh",
+    "nsmra-preserved-death",
+    "nsmra-preserved-hfh"
+   ],
+   "trial": "TOPCAT",
+   "trial_drug": "Spironolactone",
+   "protocol_start_daily_mg": 15,
+   "protocol_target_daily_mg": 45,
+   "achieved_mean_daily_mg": 25,
+   "achieved_fraction_of_target": 0.5,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Spironolactone",
+     "achieved_daily_mg": 25,
+     "level": "drug",
+     "target_daily_mg_used": 50
+    },
+    {
+     "drug": "Eplerenone",
+     "achieved_daily_mg": 25.0,
+     "level": "siblingProxy",
+     "fraction_applied": 0.5,
+     "target_daily_mg_used": 50
+    }
+   ],
+   "source": {
+    "citation": "Michos ED et al. JACC Advances 2026;5:103280 (secondary review citing TOPCAT)",
+    "pmid": "42790283",
+    "pmcid": "PMC13635566"
+   },
+   "verification": "verified_fulltext",
+   "quote": "The TOPCAT study on HFmrEF/HFpEF subsequently evaluated a spironolactone starting dose of 15 mg once daily that was uptitrated to a maximum of 45 mg within the first 4 months of treatment.",
+   "notes": "Same review: \"the mean dose of spironolactone at 8 months was similar to the mean dose that was administered in RALES (25 mg vs 26 mg daily, respectively)\". Fraction 0.5 is 25 mg against the formulary 50 mg target; against the TOPCAT maximum of 45 mg it is 0.56. Secondary source; the TOPCAT paper was not read."
+  },
+  {
+   "id": "nsmra-fineartshf",
+   "drug_class": "nsMRA",
+   "ef_band": "mildly_reduced/preserved",
+   "outcome_evidence_row_ids": [
+    "nsmra-mildly-reduced-death",
+    "nsmra-mildly-reduced-hfh",
+    "nsmra-preserved-death",
+    "nsmra-preserved-hfh"
+   ],
+   "trial": "FINEARTS-HF",
+   "trial_drug": "Finerenone",
+   "protocol_start_daily_mg": 10,
+   "protocol_target_daily_mg": 40,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Kerendia label, DailyMed set id fc726765-5d5a-4d6e-b037-b847bda9fb7c",
+    "pmid": null
+   },
+   "verification": "verified_label",
+   "quote": "Increase dosage after 4 weeks to the target dose of 20 mg or 40 mg once daily for heart failure with LVEF ≥ 40% based on eGFR and serum potassium thresholds.",
+   "notes": "Label: starting dose 10 mg or 20 mg by eGFR and potassium; 2,993 FINEARTS patients \"were treated with 10 mg, 20 mg, or 40 mg once daily\". The mean achieved dose and the share at target were NOT found (primary NEJM paper not reachable). The formulary finerenone has no static target flag (patient-dependent target), start 10 mg if eGFR under 60, 20 mg if 60 or more."
+  },
+  {
+   "id": "sglt2i-dapagliflozin",
+   "drug_class": "SGLT2i",
+   "ef_band": "all",
+   "outcome_evidence_row_ids": [
+    "sglt2i-reduced-death",
+    "sglt2i-reduced-hfh",
+    "sglt2i-mildly-reduced-death",
+    "sglt2i-mildly-reduced-hfh",
+    "sglt2i-preserved-death",
+    "sglt2i-preserved-hfh"
+   ],
+   "trial": "DAPA-HF (and DELIVER, same dose)",
+   "trial_drug": "Dapagliflozin",
+   "protocol_start_daily_mg": 10,
+   "protocol_target_daily_mg": 10,
+   "achieved_mean_daily_mg": 10,
+   "achieved_fraction_of_target": 1.0,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Dapagliflozin",
+     "achieved_daily_mg": 10,
+     "level": "drug",
+     "target_daily_mg_used": 10
+    },
+    {
+     "drug": "Empagliflozin",
+     "achieved_daily_mg": 10,
+     "level": "drug",
+     "target_daily_mg_used": 10
+    }
+   ],
+   "source": {
+    "citation": "Dapagliflozin in patients with heart failure and reduced ejection fraction. N Engl J Med 2019 (abstract); Farxiga label, DailyMed set id 72ad22ae-efe6-4cd6-a302-98aaee423d69",
+    "pmid": "31535829"
+   },
+   "verification": "verified_abstract",
+   "quote": "receive either dapagliflozin (at a dose of 10 mg once daily) or placebo, in addition to recommended therapy.",
+   "notes": "Single dose studied, no titration. Label: \"For all other indications, the recommended dosage is 10 mg orally once daily.\" Share on treatment at the end was not retrieved. The 5 mg glycaemic starting dose is a diabetes dose, not a heart-failure outcome dose, and has no HF outcome evidence."
+  },
+  {
+   "id": "sglt2i-empagliflozin",
+   "drug_class": "SGLT2i",
+   "ef_band": "all",
+   "outcome_evidence_row_ids": [
+    "sglt2i-reduced-death",
+    "sglt2i-reduced-hfh",
+    "sglt2i-mildly-reduced-death",
+    "sglt2i-mildly-reduced-hfh",
+    "sglt2i-preserved-death",
+    "sglt2i-preserved-hfh"
+   ],
+   "trial": "EMPEROR-Reduced (and EMPEROR-Preserved, same dose)",
+   "trial_drug": "Empagliflozin",
+   "protocol_start_daily_mg": 10,
+   "protocol_target_daily_mg": 10,
+   "achieved_mean_daily_mg": 10,
+   "achieved_fraction_of_target": 1.0,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Empagliflozin",
+     "achieved_daily_mg": 10,
+     "level": "drug",
+     "target_daily_mg_used": 10
+    },
+    {
+     "drug": "Dapagliflozin",
+     "achieved_daily_mg": 10,
+     "level": "drug",
+     "target_daily_mg_used": 10
+    }
+   ],
+   "source": {
+    "citation": "Cardiovascular and renal outcomes with empagliflozin in heart failure. N Engl J Med 2020 (abstract); Jardiance label, DailyMed set id faf3dd6a-9cd0-39c2-0d2e-232cb3f67565",
+    "pmid": "32865377"
+   },
+   "verification": "verified_abstract",
+   "quote": "receive empagliflozin (10 mg once daily) or placebo, in addition to recommended",
+   "notes": "Single dose studied. The DELIVER and EMPEROR-Preserved doses (10 mg) were not read in this session; the labels recommend 10 mg for HF. The Kondo review notes the SGLT2 inhibitors are the exception to start-low-and-titrate."
+  },
+  {
+   "id": "vasodilator-aheft",
+   "drug_class": "Vasodilator",
+   "ef_band": "reduced (Black patients)",
+   "outcome_evidence_row_ids": [
+    "vasodilator-black-reduced-death",
+    "vasodilator-black-reduced-hfhosp",
+    "vasodilator-black-mildly_reduced-death",
+    "vasodilator-black-mildly_reduced-hfhosp"
+   ],
+   "trial": "A-HeFT",
+   "trial_drug": "Hydralazine/isosorbide dinitrate (fixed dose)",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": 68,
+   "per_formulary_drug": [
+    {
+     "drug": "Hydralazine/Isosorbide Dinitrate",
+     "achieved_daily_mg": null,
+     "level": "drug",
+     "note": "68% reached the target of 225 mg hydralazine / 120 mg ISDN per day (2 tablets tid); formulary start 37.5/20 tid, target 75/40 tid"
+    }
+   ],
+   "source": {
+    "citation": "Tillman F et al. A comprehensive review of chronic heart failure pharmacotherapy treatment approaches in African American patients. Ther Adv Cardiovasc Dis 2019;13 (secondary review; Table 1 lists mean trial doses)",
+    "pmid": "31092128",
+    "pmcid": "PMC6535737"
+   },
+   "verification": "verified_fulltext",
+   "quote": "A-HeFT 17 ISDN/hydralazine (68% achieved target dose of 120 mg/225 mg) versus placebo",
+   "notes": "Label (BiDil, DailyMed e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00): \"BiDil should be initiated at a dose of one BiDil Tablet, three times a day. Titrate to a maximum of two tablets three times daily, if tolerated.\" (verified_label), and \"The dosage may be decreased to as little as one-half BiDil Tablet three times a day\". Mean achieved dose not found. The target in mg/day is from the Tillman quote (225 mg hydralazine/120 mg ISDN)."
+  },
+  {
+   "id": "vasodilator-hheft",
+   "drug_class": "Vasodilator",
+   "ef_band": "reduced (non-Black)",
+   "outcome_evidence_row_ids": [
+    "vasodilator-other-reduced-death",
+    "vasodilator-other-reduced-hfhosp",
+    "vasodilator-other-mildly_reduced-death",
+    "vasodilator-other-mildly_reduced-hfhosp"
+   ],
+   "trial": "H-HeFT (DANHEART)",
+   "trial_drug": "Hydralazine/isosorbide dinitrate",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Kober L et al. Eur Heart J 2026 (H-HeFT)",
+    "pmid": "42978512"
+   },
+   "verification": "verified_abstract",
+   "quote": "Target treatment was hydralazine 75 mg/isosorbide dinitrate 40 mg three times a day (t.i.d).",
+   "notes": "Target 75/40 mg tid = 225/120 mg per day, which matches the formulary target. The achieved mean dose and share at target are NOT in the abstract and were not found."
+  },
+  {
+   "id": "ivabradine-shift",
+   "drug_class": "If Inhibitor",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "ivabradine-reduced-death",
+    "ivabradine-reduced-hfhosp",
+    "ivabradine-mildly_reduced-death",
+    "ivabradine-mildly_reduced-hfhosp"
+   ],
+   "trial": "SHIFT",
+   "trial_drug": "Ivabradine",
+   "protocol_start_daily_mg": 10,
+   "protocol_target_daily_mg": 15,
+   "achieved_mean_daily_mg": 13,
+   "achieved_fraction_of_target": 0.867,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Ivabradine",
+     "achieved_daily_mg": 13,
+     "level": "drug",
+     "target_daily_mg_used": 15
+    }
+   ],
+   "source": {
+    "citation": "Tillman F et al. A comprehensive review of chronic heart failure pharmacotherapy treatment approaches in African American patients. Ther Adv Cardiovasc Dis 2019;13 (secondary review; Table 1 lists mean trial doses)",
+    "pmid": "31092128",
+    "pmcid": "PMC6535737"
+   },
+   "verification": "verified_fulltext",
+   "quote": "SHIFT 20 Ivabradine (6.5 mg twice daily) versus placebo",
+   "notes": "Label (Corlanor, DailyMed 92018a65-38f6-45f7-91d4-a34921b81d0d): \"Patients were randomized 1:1 to Corlanor or placebo at an initial dose of 5 mg twice daily with the dose increased to 7.5 mg twice daily depending on resting heart rate and tolerability.\" (verified_label). 6.5 mg twice daily = 13 mg/day. Share at 7.5 mg bid not found. Label also says: \"Corlanor's benefit on the primary endpoint in SHIFT appeared to decrease as the dose of beta-blockers increased, with little if any benefit demonstrated in patients taking guideline-defined target doses of beta-blockers.\" Dose is heart-rate-driven, not fixed."
+  },
+  {
+   "id": "vericiguat-victoria",
+   "drug_class": "sGC Stimulator",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "vericiguat-reduced-death",
+    "vericiguat-reduced-hfhosp",
+    "vericiguat-mildly_reduced-death",
+    "vericiguat-mildly_reduced-hfhosp"
+   ],
+   "trial": "VICTORIA (VICTOR dose not read)",
+   "trial_drug": "Vericiguat",
+   "protocol_start_daily_mg": 2.5,
+   "protocol_target_daily_mg": 10,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": 90,
+   "per_formulary_drug": [
+    {
+     "drug": "Vericiguat",
+     "achieved_daily_mg": null,
+     "level": "drug",
+     "note": "90% on 10 mg after about 1 year, so mean is at least 9 mg if the rest were at 0 (lower bound, not a measured mean)"
+    }
+   ],
+   "source": {
+    "citation": "Verquvo label, DailyMed set id 17056d73-1b1b-4bf2-9c07-b7a9367f0d6d, section 14",
+    "pmid": null
+   },
+   "verification": "verified_label",
+   "quote": "VERQUVO was initiated at 2.5 mg once daily and increased at approximately 2 week intervals to 5 mg once daily and the target dose of 10 mg once daily, as tolerated. Placebo doses were similarly adjusted. After approximately 1 year, 90% of patients in both treatment groups were treated with the 10 mg target dose.",
+   "notes": "Fraction of target is at least 0.90 as a lower bound (computed), not reported as a mean. VICTOR (the second trial in the meta-analysis row) was not read."
+  },
+  {
+   "id": "digoxin-dig",
+   "drug_class": "Inotrope",
+   "ef_band": "reduced/preserved",
+   "outcome_evidence_row_ids": [
+    "digoxin-reduced-death",
+    "digoxin-reduced-hfhosp",
+    "digoxin-mildly_reduced-death",
+    "digoxin-mildly_reduced-hfhosp",
+    "digoxin-preserved-death",
+    "digoxin-preserved-hfhosp"
+   ],
+   "trial": "DIG (main trial and ancillary)",
+   "trial_drug": "Digoxin",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": 0.25,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Digoxin",
+     "achieved_daily_mg": 0.25,
+     "level": "drug",
+     "note": "formulary strengths are 0.0625 and 0.125 mg/day, so DIG average is twice the formulary maximum strength"
+    }
+   ],
+   "source": {
+    "citation": "Tillman F et al. A comprehensive review of chronic heart failure pharmacotherapy treatment approaches in African American patients. Ther Adv Cardiovasc Dis 2019;13 (secondary review; Table 1 lists mean trial doses)",
+    "pmid": "31092128",
+    "pmcid": "PMC6535737"
+   },
+   "verification": "verified_fulltext",
+   "quote": "DIG 8 Digoxin (0.25 mg daily) versus placebo",
+   "notes": "Second secondary source (Desai 2026, Cureus, PMID 42621459, PMC13488127): \"Digoxin was administered at an average dose of 0.25 mg per day over a 37-month follow-up period.\" Protocol dose schedule by age/weight/renal function, and start/target mg, NOT verified. The label confirms only that DIG was a 37-week(sic) trial in 6,800 patients and gives no dose. DIG used no target dose, so no fraction applies. Mean serum concentration is the better dose anchor (see dose_comparisons: benefit at 0.5-0.8 ng/mL)."
+  },
+  {
+   "id": "digoxin-decision",
+   "drug_class": "Inotrope",
+   "ef_band": "reduced/mildly_reduced",
+   "outcome_evidence_row_ids": [
+    "digoxin-reduced-death",
+    "digoxin-reduced-hfhosp",
+    "digoxin-mildly_reduced-death",
+    "digoxin-mildly_reduced-hfhosp"
+   ],
+   "trial": "DECISION (low-dose digoxin)",
+   "trial_drug": "Digoxin",
+   "protocol_start_daily_mg": 0.1,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [
+    {
+     "drug": "Digoxin",
+     "achieved_daily_mg": null,
+     "level": "drug",
+     "note": "start 0.1 mg (75%) or 0.2 mg (25%), then adjusted to serum level 0.5-0.9 ng/mL; median level 0.6 ng/mL"
+    }
+   ],
+   "source": {
+    "citation": "van Veldhuisen DJ et al. Nat Med 2026;32:2647-53 (DECISION)",
+    "pmid": "42108270",
+    "pmcid": "PMC13375525"
+   },
+   "verification": "verified_fulltext",
+   "quote": "As defined by the algorithm, 75% of patients started the study with 0.1 mg digoxin once daily and 25% of patients with 0.2 mg once daily.",
+   "notes": "\"Median SDC was 0.6 ng ml −1 (IQR 0.5–0.8 ng ml −1 )\". A secondary review (Digoxin Revisited, PMC13719635) states DECISION dosing as 0.0625 mg to 0.125 mg daily; this conflicts with the primary text on starting doses and is unresolved. DECISION is concentration-targeted, which is how the DIG post hoc suggests digoxin should be dosed."
+  },
+  {
+   "id": "fcm",
+   "drug_class": "IV Iron",
+   "ef_band": "reduced",
+   "outcome_evidence_row_ids": [
+    "fcm-reduced-death",
+    "fcm-reduced-hfhosp",
+    "iviron-mildly_reduced-death",
+    "iviron-mildly_reduced-hfhosp",
+    "iviron-preserved-death",
+    "iviron-preserved-hfhosp"
+   ],
+   "trial": "FCM IPD meta-analysis (CONFIRM-HF, AFFIRM-AHF, others)",
+   "trial_drug": "Ferric carboxymaltose",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "PMID 37632415",
+    "pmid": "37632415"
+   },
+   "verification": "not_verified",
+   "quote": null,
+   "notes": "Not searched. FCM is dosed by iron deficit (weight and haemoglobin) in one or two infusions, not as a daily dose that can be scaled, so a dose-fraction anchor does not apply the same way."
+  },
+  {
+   "id": "glp1-tirzepatide",
+   "drug_class": "GLP-1 RA / GLP-1/GIP RA",
+   "ef_band": "preserved",
+   "outcome_evidence_row_ids": [
+    "glp1-preserved-hfhosp",
+    "glp1-preserved-death",
+    "glp1-mildly_reduced-hfhosp",
+    "glp1-mildly_reduced-death"
+   ],
+   "trial": "SUMMIT",
+   "trial_drug": "Tirzepatide",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Packer M et al. N Engl J Med 2025;392:427-37",
+    "pmid": "39555826"
+   },
+   "verification": "verified_abstract",
+   "quote": "receive tirzepatide (up to 15 mg subcutaneously once per week) or placebo for at least 52 weeks.",
+   "notes": "Weekly dose, so not comparable with daily mg. Target 15 mg weekly (formulary). Mean achieved dose and share at 15 mg NOT found. One titrated arm: no randomized dose groups in the HF trial."
+  },
+  {
+   "id": "glp1-semaglutide",
+   "drug_class": "GLP-1 RA / GLP-1/GIP RA",
+   "ef_band": "preserved",
+   "outcome_evidence_row_ids": [
+    "glp1-preserved-hfhosp",
+    "glp1-preserved-death",
+    "glp1-reduced-hfhosp",
+    "glp1-reduced-death"
+   ],
+   "trial": "STEP-HFpEF (and SELECT HF subgroups)",
+   "trial_drug": "Semaglutide",
+   "protocol_start_daily_mg": null,
+   "protocol_target_daily_mg": null,
+   "achieved_mean_daily_mg": null,
+   "achieved_fraction_of_target": null,
+   "share_reaching_target_pct": null,
+   "per_formulary_drug": [],
+   "source": {
+    "citation": "Kosiborod MN et al. N Engl J Med 2023;389:1069-84",
+    "pmid": "37622681"
+   },
+   "verification": "verified_abstract",
+   "quote": "to receive once-weekly semaglutide (2.4 mg) or placebo for 52 weeks.",
+   "notes": "Weekly target 2.4 mg (formulary). Mean achieved dose, share at target and the SELECT dose were not read (SELECT abstract 39181597 has no dose text). One dose level."
+  }
+ ],
+ "dose_comparisons": [
+  {
+   "id": "atlas",
+   "drug_class": "ACEi",
+   "trial": "ATLAS (lisinopril high vs low)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "low 2.5-5.0 mg/day (mean 4.5 mg at end of titration; 3.2 mg over the trial)",
+     "daily_mg": 4.5
+    },
+    {
+     "dose_description": "high 32.5-35 mg/day (mean 33.2 mg at end of titration; 22.5 mg over the trial)",
+     "daily_mg": 33.2
+    }
+   ],
+   "death_hr": 0.92,
+   "death_ci": [
+    0.82,
+    1.03
+   ],
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "High vs low. Death HR from Kondo Table 4 (P=0.128). HF hospitalization: abstract gives \"24% fewer hospitalizations for heart failure (P=0.002)\" with no HR or CI (approximate HR 0.76, computed, not reported). Composite death or any hospitalization 12% lower (P=0.002); death or HF hospitalization HR 0.85 (0.78-0.93). EF 30% or less; no placebo arm, so low dose (2.5-5 mg) is itself an active ACE inhibitor dose.",
+   "source": {
+    "citation": "Packer M et al. Circulation 1999;100:2312-8; Kondo 2022 Table 4",
+    "pmid": "10587334; 35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_abstract",
+   "quote": "patients in the high-dose group had a nonsignificant 8% lower risk of death (P=0.128) but a significant 12% lower risk of death or hospitalization for any reason (P=0.002) and 24% fewer hospitalizations for heart failure (P=0.002)"
+  },
+  {
+   "id": "heaal",
+   "drug_class": "ARB",
+   "trial": "HEAAL (losartan 150 vs 50 mg)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "losartan 50 mg daily (achieved mean 46 mg)",
+     "daily_mg": 46
+    },
+    {
+     "dose_description": "losartan 150 mg daily (achieved mean 129 mg)",
+     "daily_mg": 129
+    }
+   ],
+   "death_hr": 0.94,
+   "death_ci": [
+    0.84,
+    1.04
+   ],
+   "hf_hosp_hr": 0.87,
+   "hf_hosp_ci": [
+    0.76,
+    0.98
+   ],
+   "endpoint_notes": "150 vs 50 mg. Primary composite (death or HF admission) HR 0.90 (0.82-0.99), p=0.027. ACE-inhibitor-intolerant, EF 40% or less, median follow-up 4.7 years. The 50 mg arm is itself an active dose (no placebo arm).",
+   "source": {
+    "citation": "Konstam MA et al. Lancet 2009;374:1840-8",
+    "pmid": "19922995"
+   },
+   "verification": "verified_abstract",
+   "quote": "635 patients in the 150 mg group versus 665 in the 50 mg group died (HR 0.94, 95% CI 0.84-1.04; p=0.24), and 450 versus 503 patients were admitted for heart failure (0.87, 0.76-0.98; p=0.025)."
+  },
+  {
+   "id": "network",
+   "drug_class": "ACEi",
+   "trial": "NETWORK (enalapril 2.5 vs 5 vs 10 mg bid)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "enalapril 2.5 mg bid (achieved 5.0 mg/day)",
+     "daily_mg": 5.0
+    },
+    {
+     "dose_description": "enalapril 5 mg bid (achieved 9.7 mg/day)",
+     "daily_mg": 9.7
+    },
+    {
+     "dose_description": "enalapril 10 mg bid (achieved 16.7 mg/day)",
+     "daily_mg": 16.7
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "24-week follow-up only. Primary endpoint (death, HF hospitalization or worsening HF) 62 (12.3%), 66 (12.9%), 76 (14.7%); crude relative risk 10 mg bid vs 2.5 mg bid 1.20 (0.88-1.64). Deaths 21 (4.2%), 17 (3.3%), 15 (2.9%): no HR reported, no significant difference. Achieved mean doses are from Kondo Table 1 (footnote h: only the 10 mg bid arm analysed, 71% on 20 mg/day at the last visit).",
+   "source": {
+    "citation": "NETWORK Investigators. Eur Heart J 1998;19:481-9; Kondo 2022 Table 1",
+    "pmid": "9568453; 35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "verified_abstract",
+   "quote": "The crude relative risk for the combined end-point in the 10 mg twice daily group compared to the 2.5 mg twice daily group was 1.20 (95% CI 0.88 to 1.64)."
+  },
+  {
+   "id": "nanas-enalapril",
+   "drug_class": "ACEi",
+   "trial": "Nanas high-dose enalapril (20 vs 60 mg/day)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "enalapril standard (target 20 mg/day)",
+     "daily_mg": 17.9
+    },
+    {
+     "dose_description": "enalapril high (target 60 mg/day)",
+     "daily_mg": 42.5
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "Only the doses were retrieved (Kondo Table 1). The outcomes of this trial were NOT found (PubMed search for the paper returned nothing).",
+   "source": {
+    "citation": "Kondo 2022 Table 1 (secondary)",
+    "pmid": "35119172",
+    "pmcid": "PMC9303189"
+   },
+   "verification": "not_verified",
+   "quote": "Nanas | Enalapril – standard (207) Enalapril ‐ high (207) | Fixed 12 | No | Yes | 2.5 mg bid to 10 mg bid in 5 wk i 2.5 mg bid to 30 mg bid in 9 wk | 20 mg 60 mg | 17.9 mg (E standard dose) i 42.5 mg (E high dose) i"
+  },
+  {
+   "id": "solvd-below-vs-target",
+   "drug_class": "ACEi",
+   "trial": "SOLVD-Treatment, enalapril vs placebo within achieved-dose strata",
+   "design": "post_hoc",
+   "arms": [
+    {
+     "dose_description": "below-target stratum: mean 8.8 mg/day both arms (n=1014: 528 enalapril, 486 placebo)",
+     "daily_mg": 8.8
+    },
+    {
+     "dose_description": "target stratum: mean 20.0 mg/day both arms (n=1444: 696 enalapril, 748 placebo)",
+     "daily_mg": 20.0
+    }
+   ],
+   "death_hr": 0.9,
+   "death_ci": [
+    0.81,
+    1.0
+   ],
+   "hf_hosp_hr": 0.79,
+   "hf_hosp_ci": [
+    0.71,
+    0.89
+   ],
+   "endpoint_notes": "Below-target stratum, adjusted HR enalapril vs placebo: death 0.90 (0.81-1.00; unadjusted 0.91, 0.82-1.01), HF hospitalization 0.79 (0.71-0.89), death or HF hospitalization 0.68 (0.57-0.81). Target stratum: death 0.90 (0.82-0.98; unadjusted 0.91, 0.83-0.99), HF hospitalization 0.75 (0.68-0.83), combined 0.70 (0.60-0.81). Within enalapril, target vs below-target: combined 1.04 (0.87-1.23). Strata defined by dose achieved after 1 month of blinded up-titration, so tolerance selects the groups (not randomized to dose); placebo was titrated the same way, which controls part of the selection.",
+   "source": {
+    "citation": "Lam PH et al. Eur J Heart Fail 2018;20:359-69",
+    "pmid": "28980368",
+    "pmcid": "PMC6500736"
+   },
+   "verification": "verified_fulltext",
+   "quote": "below-target dose enalapril (vs. below-target dose placebo) was associated with a 12% absolute lower risk of the combined endpoint of heart failure hospitalization or all-cause mortality (adjusted HR 0.68; 95% CI 0.57 – 0.81; P < 0.001)"
+  },
+  {
+   "id": "mocha",
+   "drug_class": "Beta Blocker",
+   "trial": "MOCHA (carvedilol dose groups vs placebo)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "placebo",
+     "daily_mg": 0
+    },
+    {
+     "dose_description": "carvedilol 6.25 mg bid",
+     "daily_mg": 12.5
+    },
+    {
+     "dose_description": "carvedilol 12.5 mg bid",
+     "daily_mg": 25
+    },
+    {
+     "dose_description": "carvedilol 25 mg bid",
+     "daily_mg": 50
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "Crude mortality 15.5% placebo vs 6.0%, 6.7%, 1.1% with increasing carvedilol dose (P<.001 for trend); all three combined: 73% lower all-cause actuarial mortality. Hospitalization lower by 58% to 64% (P=.01). No per-dose HRs in the abstract. EF improved 5, 6, 8 units vs 2 with placebo (linear dose response). Mild-to-moderate HF, n=345, 6 months, so mortality counts are small; the 6.25 and 12.5 mg bid doses (12.5 and 25 mg/day) were each associated with benefit.",
+   "source": {
+    "citation": "Bristow MR et al. Circulation 1996;94:2807-16",
+    "pmid": "8941106"
+   },
+   "verification": "verified_abstract",
+   "quote": "carvedilol was associated with dose-related improvements in LV function (by 5, 6, and 8 ejection fraction [EF] units in the low-, medium-, and high-dose carvedilol groups, respectively, compared with 2 EF units with placebo, P < .001 for linear dose response) and survival (respective crude mortality rates of 6.0%, 6.7%, and 1.1% with increasing doses of carvedilol compared with 15.5% in the placebo group, P < .001)"
+  },
+  {
+   "id": "merit-hf-dose",
+   "drug_class": "Beta Blocker",
+   "trial": "MERIT-HF post hoc by achieved dose",
+   "design": "post_hoc",
+   "arms": [
+    {
+     "dose_description": "high: more than 100 mg/day reached (n=1,202, mean 192 mg)",
+     "daily_mg": 192
+    },
+    {
+     "dose_description": "low: 100 mg/day or less (n=412, mean 76 mg)",
+     "daily_mg": 76
+    },
+    {
+     "dose_description": "placebo (n=1,845 with dose available at 3 months)",
+     "daily_mg": 0
+    }
+   ],
+   "death_hr": 0.62,
+   "death_ci": [
+    0.45,
+    0.84
+   ],
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "Mortality reduction vs placebo 38% in both groups (high 95% CI 16 to 55 -> HR 0.62, CI 0.45-0.84; low 95% CI 11 to 57 -> HR 0.62, CI 0.43-0.89; HR and CI are computed from the stated percentage reductions). Reported death_hr/death_ci are the high-dose group; the low-dose group is the same HR with CI 0.43-0.89. Abstract: \"somewhat higher risk in the low-dose group compared with the high-dose group\"; heart-rate fall was similar. HF hospitalization by dose not in the abstract. Low-dose patients were selected by tolerability (low heart rate was the main limit).",
+   "source": {
+    "citation": "Wikstrand J et al. J Am Coll Cardiol 2002;40:491-8",
+    "pmid": "12142116"
+   },
+   "verification": "verified_abstract",
+   "quote": "The reduction in total mortality with metoprolol CR/XL compared with placebo was similar: 38% (95% confidence interval [CI], 16 to 55) in high-dose group (p = 0.0022) and also 38% (95% CI, 11 to 57) in the low-dose group (p = 0.010)."
+  },
+  {
+   "id": "cibis2-dose",
+   "drug_class": "Beta Blocker",
+   "trial": "CIBIS-II by last tolerated dose (Simon 2003)",
+   "design": "post_hoc",
+   "arms": [
+    {
+     "dose_description": "low 1.25-3.75 mg/day (bisoprolol n=434, placebo n=234)",
+     "daily_mg": 2.5
+    },
+    {
+     "dose_description": "moderate 5-7.5 mg/day (n=328; placebo 278)",
+     "daily_mg": 6.25
+    },
+    {
+     "dose_description": "high 10 mg/day (n=565; placebo 808)",
+     "daily_mg": 10
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "All-cause mortality, adjusted relative hazard vs placebo: low 0.66 (0.48-0.92), moderate 0.33 (0.21-0.51), high 0.59 (0.40-0.89). The arm daily_mg values are group midpoints (computed), not means. Treatment withdrawal in the bisoprolol group: RH 2.13 (1.43-3.17). HF hospitalization not reported in the abstract. Groups defined by tolerance (post-randomization). death_hr is left null because there are three dose-specific values, listed here.",
+   "source": {
+    "citation": "Simon T et al. Eur Heart J 2003;24:552-9",
+    "pmid": "12643888"
+   },
+   "verification": "verified_abstract",
+   "quote": "all-cause mortality was significantly reduced in the bisoprolol group compared to placebo regardless of the dose level considered: LD (RH=0.66, 95% CI=0.48-0.92), MD (RH=0.33, 95% CI=0.21-0.51) or HD (RH=0.59, 95% CI=0.40-0.89)."
+  },
+  {
+   "id": "biostat-chf",
+   "drug_class": "ACEi/ARB and Beta Blocker",
+   "trial": "BIOSTAT-CHF (up-titration cohort)",
+   "design": "observational",
+   "arms": [
+    {
+     "dose_description": "under 50% of recommended dose",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "50-99% of recommended dose",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "100% or more of recommended dose",
+     "daily_mg": null
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "OBSERVATIONAL, not randomized, in patients selected as under-treated, with treatment-indication-bias correction. 22% reached the recommended ACEi/ARB dose and 12% the beta-blocker dose. Under 50% of recommended dose: higher risk of death and/or HF hospitalization vs 100%. 50-99%: comparable to 100% or more. Numeric HRs for the dose strata are not in the abstract (only HR 1.72, 1.43-2.01 for ACEi/ARB and 1.70, 1.36-2.05 for beta-blockers in patients not reaching dose because of symptoms, side effects or organ dysfunction). Sex analysis (Santema, Lancet 2019, PMID 31447116, abstract): in men lowest hazard at 100% of recommended dose; in women about 30% lower risk at 50% of the recommended doses with no further decrease above; 23-25% reached target ACEi/ARB, 13-14% beta-blocker. Women had lower weight (72 vs 85 kg).",
+   "source": {
+    "citation": "Ouwerkerk W et al. Eur Heart J 2017;38:1883-90; Santema BT et al. Lancet 2019;394:1254-63",
+    "pmid": "28329163; 31447116"
+   },
+   "verification": "verified_abstract",
+   "quote": "Patients reaching 50-99% of the recommended ACE-inhibitor/ARB and/or beta-blocker dose had comparable risk of death and/or heart failure hospitalization to those reaching ≥100%."
+  },
+  {
+   "id": "paradigm-dose-reduction",
+   "drug_class": "ARNI",
+   "trial": "PARADIGM-HF dose-reduction analysis",
+   "design": "observational",
+   "arms": [
+    {
+     "dose_description": "any dose reduction to 100/50/0 mg bid sacubitril/valsartan or 5/2.5/0 mg bid enalapril (42% of sac/val arm, 43% of enalapril arm)",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "maximal dose throughout (sac/val 200 mg bid = 400 mg/day; enalapril 10 mg bid)",
+     "daily_mg": 400
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "OBSERVATIONAL within a randomized trial (time-updated Cox, post hoc). Endpoint is the primary composite (CV death or HF hospitalization), not death or HF hospitalization separately. Sacubitril/valsartan vs enalapril HR after a dose reduction 0.80 (0.70-0.93); in patients with no dose reduction 0.79 (0.71-0.88). Any dose reduction predicted a higher subsequent event risk (HR 2.5, 2.2-2.7). This compares the two drugs at lower doses, NOT either drug against placebo or dose against dose; Kondo adds it held \"whether the reduction was to 50%-100% of target or to <50% of target dose\" (secondary).",
+   "source": {
+    "citation": "Vardeny O et al. Eur J Heart Fail 2016;18:1228-34",
+    "pmid": "27283779",
+    "pmcid": "PMC5095784"
+   },
+   "verification": "verified_abstract",
+   "quote": "the treatment benefit of sacubitril/valsartan over enalapril following a dose reduction was similar (HR 0.80, 95% CI 0.70-0.93, P < 0.001) to that observed in patients who had not experienced any dose reduction (HR 0.79, 95% CI 0.71-0.88, P < 0.001)."
+  },
+  {
+   "id": "dig-sdc-rathore",
+   "drug_class": "Inotrope",
+   "trial": "DIG post hoc by serum digoxin concentration, men with EF 45% or less",
+   "design": "post_hoc",
+   "arms": [
+    {
+     "dose_description": "serum digoxin 0.5-0.8 ng/mL at 1 month (n=572)",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "0.9-1.1 ng/mL (n=322)",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "1.2 ng/mL or higher (n=277)",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "placebo (n=2611)",
+     "daily_mg": 0
+    }
+   ],
+   "death_hr": 0.8,
+   "death_ci": [
+    0.68,
+    0.94
+   ],
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "Adjusted all-cause mortality HR vs placebo: 0.5-0.8 ng/mL 0.80 (0.68-0.94); 0.9-1.1 ng/mL 0.89 (0.74-1.08); 1.2 or higher 1.16 (0.96-1.39). The reported death_hr is the lowest-concentration group. Concentration, not mg dose, was the exposure; groups are self-selected by clearance. HF hospitalization by concentration is not in the abstract.",
+   "source": {
+    "citation": "Rathore SS et al. JAMA 2003;289:871-8",
+    "pmid": "12588271"
+   },
+   "verification": "verified_abstract",
+   "quote": "SDC 0.5-0.8 ng/mL hazard ratio [HR] 0.80, 95% CI, 0.68-0.94; SDC 0.9-1.1 ng/mL HR 0.89, 95% CI, 0.74-1.08; SDC > or =1.2 ng/mL HR 1.16, 95% CI, 0.96-1.39; and HR of 1.00 [referent] for placebo"
+  },
+  {
+   "id": "dig-sdc-women",
+   "drug_class": "Inotrope",
+   "trial": "DIG post hoc by serum digoxin concentration, women",
+   "design": "post_hoc",
+   "arms": [
+    {
+     "dose_description": "serum digoxin 0.5-0.9 ng/mL",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "serum digoxin 1.2-2.0 ng/mL",
+     "daily_mg": null
+    }
+   ],
+   "death_hr": 0.8,
+   "death_ci": [
+    0.62,
+    1.13
+   ],
+   "hf_hosp_hr": 0.73,
+   "hf_hosp_ci": [
+    0.58,
+    0.93
+   ],
+   "endpoint_notes": "0.5-0.9 ng/mL: death HR 0.8 (0.62-1.13); the hf_hosp fields hold the composite \"death or hospital stay for worsening HF\" HR 0.73 (0.58-0.93), not HF hospitalization alone. 1.2-2.0 ng/mL: death HR 1.33 (1.001-1.76).",
+   "source": {
+    "citation": "Adams KF Jr et al. J Am Coll Cardiol 2005;46:497-504",
+    "pmid": "16053964"
+   },
+   "verification": "verified_abstract",
+   "quote": "Averaging hazard ratios (HRs) across serum concentrations from 0.5 to 0.9 ng/ml in women produced a HR for death of 0.8 (95% confidence interval [CI] 0.62 to 1.13, p = 0.245) and for death or hospital stay for worsening HF of 0.73 (95% CI 0.58 to 0.93, p = 0.011)."
+  },
+  {
+   "id": "emphasis-egfr-dose",
+   "drug_class": "MRA",
+   "trial": "EMPHASIS-HF eGFR-stratified dose",
+   "design": "post_hoc",
+   "arms": [
+    {
+     "dose_description": "eGFR 50 or more: target 50 mg/day (achieved about 42 mg)",
+     "daily_mg": 42
+    },
+    {
+     "dose_description": "eGFR 30-49: target 25 mg/day or less (achieved 24.8 mg)",
+     "daily_mg": 24.8
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": 0.58,
+   "hf_hosp_ci": [
+    0.45,
+    0.74
+   ],
+   "endpoint_notes": "Endpoint is the composite of HF hospitalization or CV death (not HF hospitalization alone, no death-alone HR in the abstract). eGFR 50 or more: HR 0.58 (0.45-0.74); eGFR 30-49 (lower dose): HR 0.62 (0.49-0.78); interaction P 0.89. Dose was assigned by kidney function, not randomized, so it cannot separate dose from eGFR; hyperkalaemia and renal events were more frequent in the lower-dose, lower-eGFR stratum. Primary EMPHASIS-HF abstract (PMID 21073363): death HR 0.76 (0.62-0.93), primary composite 0.63 (0.54-0.74), \"eplerenone (up to 50 mg daily)\".",
+   "source": {
+    "citation": "Ferreira JP et al. Eur J Heart Fail 2019;21:345-51",
+    "pmid": "30768732"
+   },
+   "verification": "verified_abstract",
+   "quote": "25 mg/day in patients with eGFR 30-49 mL/min/1.73 m2 was as effective as 50 mg/day in patients with eGFR > =50 mL/min/1.73 m2"
+  },
+  {
+   "id": "rales-dose",
+   "drug_class": "MRA",
+   "trial": "RALES (no dose comparison)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "spironolactone 25 mg start, optional 50 mg; mean 26 mg",
+     "daily_mg": 26
+    },
+    {
+     "dose_description": "placebo",
+     "daily_mg": 0
+    }
+   ],
+   "death_hr": 0.7,
+   "death_ci": [
+    0.6,
+    0.82
+   ],
+   "hf_hosp_hr": 0.65,
+   "hf_hosp_ci": [
+    0.54,
+    0.77
+   ],
+   "endpoint_notes": "Single active strategy (25 mg, optional 50 mg), relative risks reported as the abstract states. No analysis of benefit by dose was found. The trial effect IS the effect at about 26 mg.",
+   "source": {
+    "citation": "Pitt B et al. N Engl J Med 1999;341:709-17",
+    "pmid": "10471456"
+   },
+   "verification": "verified_abstract",
+   "quote": "relative risk of death, 0.70; 95 percent confidence interval, 0.60 to 0.82; P<0.001 ... relative risk of hospitalization, 0.65; 95 percent confidence interval, 0.54 to 0.77"
+  },
+  {
+   "id": "sglt2-single-dose",
+   "drug_class": "SGLT2i",
+   "trial": "DAPA-HF, EMPEROR-Reduced (and DELIVER, EMPEROR-Preserved)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "dapagliflozin 10 mg once daily",
+     "daily_mg": 10
+    },
+    {
+     "dose_description": "empagliflozin 10 mg once daily",
+     "daily_mg": 10
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "Single dose studied; no dose comparison exists. Quote shown is DAPA-HF; the EMPEROR-Reduced quote is \"receive empagliflozin (10 mg once daily) or placebo\".",
+   "source": {
+    "citation": "Dapagliflozin in patients with heart failure and reduced ejection fraction, N Engl J Med 2019; empagliflozin, N Engl J Med 2020",
+    "pmid": "31535829; 32865377"
+   },
+   "verification": "verified_abstract",
+   "quote": "receive either dapagliflozin (at a dose of 10 mg once daily) or placebo"
+  },
+  {
+   "id": "incretin-single-arm",
+   "drug_class": "GLP-1 RA / GLP-1/GIP RA",
+   "trial": "SUMMIT (tirzepatide), STEP-HFpEF (semaglutide)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "tirzepatide up to 15 mg weekly (titrated, single active arm)",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "semaglutide 2.4 mg weekly",
+     "daily_mg": null
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "No randomized dose groups in the heart-failure trials. SUMMIT titrated to the maximum tolerated dose up to 15 mg; STEP-HFpEF used 2.4 mg. Dose-dependent weight loss is documented in the obesity trials (SURMOUNT-1: about 16%, 21.4%, 22.5% at 5, 10, 15 mg per a secondary review) but that is a weight endpoint, not an HF outcome. No HR by dose.",
+   "source": {
+    "citation": "Packer M et al. N Engl J Med 2025;392:427-37; Kosiborod MN et al. N Engl J Med 2023;389:1069-84",
+    "pmid": "39555826; 37622681"
+   },
+   "verification": "verified_abstract",
+   "quote": "receive tirzepatide (up to 15 mg subcutaneously once per week) or placebo for at least 52 weeks."
+  },
+  {
+   "id": "dose-loop",
+   "drug_class": "Loop Diuretic",
+   "trial": "DOSE (IV furosemide high vs low dose, acute HF)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "low: IV furosemide equal to previous oral daily dose (median total 358 mg IV-equivalent over 72 h)",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "high: 2.5 times the previous oral dose (median total 773 mg over 72 h)",
+     "daily_mg": null
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "Composite of death, rehospitalization or ED visit within 60 days, high vs low dose: HR 0.83 (0.60-1.16), P=0.28 (63 vs 67 events); the death and HF-hospitalization components alone are not reported separately here. Coprimary: symptom AUC 4430 vs 4171 (P=0.06); creatinine change 0.08 vs 0.04 mg/dL (P=0.21). Acute decompensation, short follow-up; baseline oral dose 131 +/- 52 mg/day furosemide-equivalent. Not a chronic outcome-dose anchor.",
+   "source": {
+    "citation": "Felker GM et al. N Engl J Med 2011;364:797-805",
+    "pmid": "21366472",
+    "pmcid": "PMC3412356"
+   },
+   "verification": "verified_fulltext",
+   "quote": "or between the high-dose group and the low-dose group (63 events and 67 events, respectively; hazard ratio with high dose, 0.83; 95% CI 0.60 to 1.16; P = 0.28)"
+  },
+  {
+   "id": "strong-hf",
+   "drug_class": "GDMT strategy (RAS inhibitor, beta-blocker, MRA)",
+   "trial": "STRONG-HF (rapid up-titration vs usual care)",
+   "design": "randomized",
+   "arms": [
+    {
+     "dose_description": "high-intensity care: up-titrate to 100% of recommended doses within 2 weeks; at day 90 full dose: RAS inhibitor 278/505 (55%), beta-blocker 249 (49%), MRA 423 (84%)",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "usual care; at day 90 full dose: RAS inhibitor 11/497 (2%), beta-blocker 20 (4%), MRA 231 (46%)",
+     "daily_mg": null
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "Strategy trial in acute HF, open label, stopped early. Primary: HF readmission or all-cause death to day 180, 15.2% vs 23.3%, risk ratio 0.66 (0.50-0.86), adjusted risk difference 8.1% (2.9-13.2), P=0.0021. Death alone and HF readmission alone were NOT in the abstract. Fatal adverse events 25 (5%) vs 32 (6%). The comparison bundles dose, pace, monitoring and visit frequency, so the benefit is not attributable to dose alone. Post hoc within the high-intensity arm (Cotter, JAMA Cardiol 2024, PMID 38150260; observational, 515 patients): at 2 weeks 7.6% low (<50% of optimal), 49.3% medium (50-<90%), 43.1% high (>=90%) dose; each 10% increase in average percent optimal dose: aHR 0.89 (0.81-0.98) for HF readmission or death and 0.84 (0.73-0.95) for death.",
+   "source": {
+    "citation": "Mebazaa A et al. Lancet 2022;400:1938-52; Cotter G et al. JAMA Cardiol 2024;9:114-24",
+    "pmid": "36356631; 38150260",
+    "pmcid": "PMC10753435"
+   },
+   "verification": "verified_abstract",
+   "quote": "Heart failure readmission or all-cause death up to day 180 occurred in 74 (15·2% down-weighted adjusted Kaplan-Meier estimate) of 506 patients in the high-intensity care group and 109 (23·3%) of 502 patients in the usual care group (adjusted risk difference 8·1% [95% CI 2·9-13·2]; p=0·0021; risk ratio 0·66 [95% CI 0·50-0·86])."
+  },
+  {
+   "id": "shift-bb-interaction",
+   "drug_class": "If Inhibitor",
+   "trial": "SHIFT by background beta-blocker dose",
+   "design": "post_hoc",
+   "arms": [
+    {
+     "dose_description": "ivabradine on top of lower background beta-blocker doses",
+     "daily_mg": null
+    },
+    {
+     "dose_description": "ivabradine on top of guideline target-dose beta-blocker",
+     "daily_mg": null
+    }
+   ],
+   "death_hr": null,
+   "death_ci": null,
+   "hf_hosp_hr": null,
+   "hf_hosp_ci": null,
+   "endpoint_notes": "Not a dose comparison of ivabradine. Label subgroup statement that benefit shrinks as beta-blocker dose rises. No HR given in the label text.",
+   "source": {
+    "citation": "Corlanor label, DailyMed set id 92018a65-38f6-45f7-91d4-a34921b81d0d",
+    "pmid": "20801500"
+   },
+   "verification": "verified_label",
+   "quote": "Corlanor’s benefit on the primary endpoint in SHIFT appeared to decrease as the dose of beta-blockers increased, with little if any benefit demonstrated in patients taking guideline-defined target doses of beta-blockers."
+  }
+ ]
+}

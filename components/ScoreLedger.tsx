@@ -6,6 +6,7 @@ import {
 import { DOMAIN_GOALS } from '../services/simulationService';
 import { pct, num, signed, describeAdjustment, describeOverride, goalAfterEquals } from './scoreExplain';
 import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
+import { profileDescription } from './rankingModeMeta';
 
 // Renders ScoreBreakdown as a reconciling ledger, grouped like the engine's DOMAIN_GROUPS. Every
 // number comes from the engine's breakdown (weights, points, adjustments) - nothing is restated here.
@@ -26,10 +27,12 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (d
     const meta = WEIGHT_PROFILE_META[breakdown.weight_profile];
     const rawOverrides = (breakdown.overrides ?? []).filter(o => o.applies_to === 'raw_score');
     const finalOverrides = (breakdown.overrides ?? []).filter(o => o.applies_to === 'overall_score');
-    const hasAdjustments = breakdown.adjustments.length > 0 || rawOverrides.length > 0;
+    // The swap bonus is a zero-point line on almost every option; a line that changes nothing is not shown.
+    const shownAdjustments = breakdown.adjustments.filter(a => !(a.points === 0 && a.code === 'SPECIAL_FEATURES'));
+    const hasAdjustments = shownAdjustments.length > 0 || rawOverrides.length > 0;
     const byKey = new Map<string, ScoreBreakdownDomainLine>(breakdown.domains.map(d => [d.key, d]));
-    const bonus = breakdown.adjustments.filter(a => a.points >= 0);
-    const deductions = breakdown.adjustments.filter(a => a.points < 0);
+    const bonus = shownAdjustments.filter(a => a.points >= 0);
+    const deductions = shownAdjustments.filter(a => a.points < 0);
 
     const adjustmentRow = (a: ScoreBreakdownAdjustment, i: number) => {
         const neg = a.points < 0;
@@ -68,7 +71,7 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (d
         <section aria-labelledby="score-ledger-heading" className="space-y-2">
             <h4 id="score-ledger-heading" className="text-sm font-bold text-slate-800">How this score was calculated</h4>
             <p className="text-xs text-slate-600 leading-snug">
-                <span className="font-bold">Weighting: {meta.label}.</span> {meta.description} Assessed factors are scored 0–100 and weighted. Unassessed domains have zero weight; remaining weights are rescaled. Scores from different sets of available inputs are not directly comparable. Named adjustments then apply.
+                <span className="font-bold">Weighting: {meta.label}.</span> {profileDescription(breakdown.weight_profile)} Ranked factors (weight above 0) are scored 0–100 and weighted: death, heart-failure hospitalization, symptoms, side effects, cost and dosing burden. Reference-only and not-assessed factors are shown with weight 0 and do not change the order. If a ranked factor cannot be assessed (for example cost without pricing), the remaining weights are rescaled. Scores from different sets of available inputs are not directly comparable. Named adjustments then apply.
             </p>
             <div className="overflow-x-auto rounded border border-slate-200">
                 <table className="w-full text-sm min-w-[18.5rem]">
@@ -83,7 +86,7 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (d
                         return (
                             <tbody key={g.key} className="divide-y divide-slate-100 border-t border-slate-200">
                                 <tr className="bg-slate-50">
-                                    <th scope="colgroup" colSpan={4} className="py-1.5 px-2 text-left text-xs font-bold text-slate-700">{g.label}</th>
+                                    <th scope="colgroup" colSpan={4} className="py-1.5 px-2 text-left text-xs font-bold text-slate-700">{g.label}{wSum === 0 && <span className="ml-2 rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-700">weight 0</span>}</th>
                                 </tr>
                                 {lines.map(d => (
                                     <tr key={d.key}>
@@ -109,7 +112,7 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (d
                     })}
                     <tbody className="border-t border-slate-200">
                         <tr className="bg-slate-100 font-bold">
-                            <th scope="row" className="py-1.5 px-2 text-left">Weighted total of the eight factors</th>
+                            <th scope="row" className="py-1.5 px-2 text-left">Weighted total of the factors</th>
                             <td />
                             <td className="py-1.5 px-2 text-right tabular-nums">{pct(breakdown.domains.reduce((s, d) => s + d.weight, 0))}</td>
                             <td className="py-1.5 px-2 text-right tabular-nums">{num(breakdown.weighted_subtotal)}</td>

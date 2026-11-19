@@ -7,7 +7,7 @@
  * Run: npx tsx scripts/redTeam.ts
  */
 import { withCarePriority } from './carePriorityEnv';
-import { generateAndScoreModifications } from '../services/simulationService';
+import { generateAndScoreModifications, hasCongestion } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
 import { INITIAL_PATIENT, clonePatient } from '../data/scenarios';
 import { MEDICATION_FORMULARY } from '../constants';
@@ -205,13 +205,19 @@ async function run() {
 
     // PROBE 12 — Scoring sanity: an ideal de-novo HFrEF candidate's TOP pick should be multi-pillar,
     // not a single drug riding a special-feature bonus.
+    const probe12Patient = base({ lvef: 25, sbp: 125, dbp: 78, potassium: 4.2, egfr: 70, creatinine: 1.0, nyha_class: 'II', max_affordable_cost: 2000, current_regimen: [] });
     probe('12. Scoring — ideal de-novo HFrEF top pick must be multi-pillar (not 1-drug gaming)',
-        base({ lvef: 25, sbp: 125, dbp: 78, potassium: 4.2, egfr: 70, creatinine: 1.0, nyha_class: 'II', max_affordable_cost: 2000, current_regimen: [] }),
+        probe12Patient,
         ({ regimens }) => {
             const f: Finding[] = [];
             if (!regimens[0]) return [{ severity: 'HIGH', msg: 'No regimen for an ideal candidate' }];
             const pillars = new Set(regimens[0].regimen.map(m => m.med.drug_class).map(c => RAAS.has(c) ? 'RAAS' : c).filter(c => ['RAAS', 'Beta Blocker', 'MRA', 'SGLT2i'].includes(c)));
-            if (pillars.size < 2) f.push({ severity: 'HIGH', msg: `Top pick has only ${pillars.size} pillar(s) for an ideal multi-pillar candidate — possible scoring gaming` });
+            // 2026-11-16 (controller ruling): this patient has congestion findings and the engine allows two new classes a visit. Guidelines give a diuretic for congestion their strongest
+            // recommendation, so a first visit of ONE foundational class plus a loop-diuretic start or increase is concordant. Pass: at least two foundational classes, OR at least one
+            // foundational class plus a loop start or increase when the patient is congested (hasCongestion, the engine's own predicate).
+            const loopStart = regimens[0].modification_set?.modifications.some(m => (m.action === 'add' || m.action === 'titrate_up') && m.target?.med.drug_class === 'Loop Diuretic') ?? false;
+            const concordant = pillars.size >= 2 || (pillars.size >= 1 && loopStart && hasCongestion(probe12Patient));
+            if (!concordant) f.push({ severity: 'HIGH', msg: `Top pick has only ${pillars.size} foundational class(es) and no loop start for a congested multi-pillar candidate — possible scoring gaming` });
             return f;
         });
 

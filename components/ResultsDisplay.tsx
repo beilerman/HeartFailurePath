@@ -193,7 +193,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
 
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5" role="note">
                 <p className="text-xs font-semibold text-amber-900">
-                    Research decision support. Review safety checks before choosing treatment. Individual response is not quantified; reassess the patient&apos;s actual response after any change.
+                    Research decision support. Review safety checks before choosing treatment. Expected effects are trial averages, not a prediction for this patient; reassess the patient&apos;s actual response after any change.
                 </p>
             </div>
 

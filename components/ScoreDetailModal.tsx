@@ -17,6 +17,7 @@ import { ScoreLedger } from './ScoreLedger';
 import { costLabel } from './clinicalPresentation';
 import { useEvidenceLink } from './EvidenceContext';
 import { ScoreComparisonDetail } from './ScoreComparison';
+import { EvidenceDrillDown, type EvidenceFocus } from './ExpectedEffect';
 import { goalAfterEquals } from './scoreExplain';
 import type { Phenotype, PillarKey, PillarConcordance } from '../services/simulationService';
 
@@ -53,6 +54,17 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
     const renderContent = () => {
         if (domainLine?.assessed === false) return <p className="text-sm text-slate-700">{domainLine.detail}</p>;
         switch (domain) {
+            case 'mortality':
+            case 'hf_hospitalization':
+            case 'symptoms':
+            case 'side_effects':
+                return (
+                    <div className="space-y-4">
+                        <p className="text-sm text-slate-700">{domainLine?.detail}</p>
+                        <EvidenceDrillDown regimen={regimen} focus={({ mortality: 'all_cause_death', hf_hospitalization: 'hf_hospitalization', symptoms: 'symptoms', side_effects: 'side_effects' } as Record<string, EvidenceFocus>)[domain]} />
+                    </div>
+                );
+
             case 'neurohormonal':
                 const bnp = Math.round(p.nt_pro_bnp);
                 return (
@@ -418,7 +430,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
             <div
                 ref={dialogRef}
                 tabIndex={-1}
-                className={`bg-white rounded-xl shadow-2xl w-full max-h-[90dvh] flex flex-col ${domain === 'overall' ? 'max-w-xl' : 'max-w-sm'} overflow-hidden outline-none`}
+                className={`bg-white rounded-xl shadow-2xl w-full max-h-[90dvh] flex flex-col ${domain === 'overall' || domain === 'mortality' || domain === 'hf_hospitalization' || domain === 'symptoms' || domain === 'side_effects' ? 'max-w-xl' : 'max-w-sm'} overflow-hidden outline-none`}
                 onClick={e => e.stopPropagation()}
             >
                 <div className="bg-indigo-600 p-4 flex justify-between items-center shrink-0">

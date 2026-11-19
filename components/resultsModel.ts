@@ -5,6 +5,7 @@ import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
 import { pillarFamilyOf, getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
 import type { PillarKey } from '../services/simulationService';
 import { clinicalSentence, doseLabel, NO_CHANGE_TEXT, optionDifferences } from './clinicalPresentation';
+import { expectedEffectSentence } from './expectedEffectModel';
 
 // Display-side organisation of the engine's output. Nothing here changes what the engine says: it
 // only decides where each existing string is shown. Unknown kinds always fall on the safety side.
@@ -224,8 +225,9 @@ export function buildChartSummary(c: ChartInput, selectedIndex = 0): string {
             ? bullets(`PROPOSED CHANGES IN OPTION ${k}`, changes.map(m => clinicalSentence(m.summary)))
             : ['', `PROPOSED CHANGES IN OPTION ${k}:`, `  - ${NO_CHANGE_TEXT}`]));
         if (k > 1) lines.push(...bullets('DIFFERENCES FROM OPTION 1 (ordered first by the tool)', optionDifferences(top, c.results[0])));
+        { const effect = expectedEffectSentence(top); if (effect) lines.push(...bullets('EXPECTED EFFECT VERSUS CURRENT REGIMEN', [effect])); }
         lines.push(...bullets('TREATMENT CONSIDERATIONS', (top.treatment_assessment?.considerations ?? []).map(x=>`${x.label}: ${x.detail}`)));
-        lines.push(...bullets('ASSESSMENT LIMITS', top.treatment_assessment?.limitations ?? ['Individual response is not quantified; reassess actual response after implementation.']));
+        lines.push(...bullets('ASSESSMENT LIMITS', top.treatment_assessment?.limitations ?? ['Expected effects are population averages from randomized trials, not a prediction for this patient; reassess actual response after implementation.']));
         const { safety, notes } = partitionWarnings(top.warnings);
         lines.push(...bullets('SAFETY WARNINGS FOR THIS OPTION', safety.map(clinicalSentence)));
         lines.push(...bullets('PRESCRIBING NOTES', notes.map(stripDrugNotePrefix)));

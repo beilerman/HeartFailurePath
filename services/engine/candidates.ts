@@ -3,7 +3,7 @@ import { Patient, Medication, RegimenMed, ModificationAction, RegimenModificatio
 import { drugFacts } from './drugFacts';
 import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient, congestionFindingCount } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup, isDiureticClass } from './registry';
-import { isCongestedAboveDryWeight, isLowOutputState, isLoopDiureticResistant, adjacentTiers, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
+import { isCongestedAboveDryWeight, isLowOutputState, isLoopDiureticResistant, adjacentTiers, hasCongestion, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication, MRA_POOL_CLASSES } from './intolerance';
 import { assessCreatinineChange } from './renalChange';
 import { UP_TITRATION_MAX_DAILY_FACTOR, BINDER_HOLD_REDUCTION_K, RAAS_EGFR_REVIEW_BELOW } from './thresholds';
@@ -18,6 +18,8 @@ export interface RegimenAnalysis {
     removable: RegimenMed[];
     addableAdjuncts: RegimenMed[];
     addablePillars: Map<string, RegimenMed[]>;  // missing pillar class group → candidate meds+doses
+    /** Missing pillar class group → the label-start tier of EVERY drug in the group (not truncated). Pair, triple, quad and pillar+titration candidates are built over all of them, so the scorer, not formulary order, chooses the drug within a class (2026-11-16). */
+    pillarStartTiers: Map<string, RegimenMed[]>;
     contraindicatedCurrentMeds: Set<string>;     // names of current meds now contraindicated
     intolerableCurrentMeds: Map<string, string>; // current meds violating documented-intolerance policy → reason
     forcedBbDownTitrateNames: Set<string>;       // existing BBs that must be down-titrated in acute decomp
@@ -425,11 +427,15 @@ export function analyzeCurrentRegimen(
 
     // Addable pillars: meds for missing GDMT pillars
     const addablePillars = new Map<string, RegimenMed[]>();
+    const pillarStartTiers = new Map<string, RegimenMed[]>();
     missingPillars.forEach(pillar => {
         const candidates = tiersByGroup.get(pillar) || [];
         const offered = safeSlice(candidates, 4).filter(t => startTiers.includes(t));
         if (offered.length > 0) {
             addablePillars.set(pillar, offered);
+            // Root cause of the fixed-representative defect: `safeSlice(candidates, 4)` keeps the first four TIERS of the group (the first drug's ladder), so a later drug of the
+            // class (eplerenone after spironolactone) never reached the pair/triple builders, which also read only element [0]. Every drug's start tier is kept here.
+            pillarStartTiers.set(pillar, candidates.filter(t => startTiers.includes(t)));
         }
     });
 
@@ -591,6 +597,7 @@ export function analyzeCurrentRegimen(
         removable,
         addableAdjuncts,
         addablePillars,
+        pillarStartTiers,
         contraindicatedCurrentMeds,
         intolerableCurrentMeds,
         forcedBbDownTitrateNames,
@@ -634,8 +641,7 @@ export function smallestStepAbove(current: RegimenMed, patient: Patient, current
 /** A flat model above its calibration ceiling does not prove dose equivalence during ongoing congestion. */
 export function loopReductionHeldAtModeledPlateau(current: RegimenMed, lower: RegimenMed | null, patient: Patient): boolean {
     return current.med.drug_class === 'Loop Diuretic' && lower !== null
-        && (isCongestedAboveDryWeight(patient) || congestionFindingCount(patient.volume_status.exam_findings) > 0)
-;
+        && hasCongestion(patient);
 }
 
 /** Engine sequencing policy: nearest lower allowed daily dose, never a higher strength; ties prefer
@@ -874,70 +880,21 @@ export function generateCandidateModifications(
     // --- b) Compound modifications (2-3 changes) ---
     const maxNewPerVisit = Math.max(0, Math.round(patient.max_new_classes_per_visit ?? 2));
 
-    // Pair missing-pillar additions
+    // Pair / triple / quad missing-pillar additions, over EVERY drug of each missing pillar (cartesian product; the scorer picks the drug within a class).
     const pillarEntries = Array.from(analysis.addablePillars.entries());
+    const pillarLists = pillarEntries.map(([pillar]) => analysis.pillarStartTiers.get(pillar) ?? analysis.addablePillars.get(pillar) ?? []);
+    const addAll = (picks: RegimenMed[]) => {
+        const mods: RegimenModification[] = picks.map(m => ({ action: 'add' as const, target: m, summary: `Add ${m.med.name} ${formatDose(m)}` }));
+        candidates.push({ modifications: mods, resulting_regimen: buildResultingRegimen(currentRegimen, mods) });
+    };
+    const product = (lists: RegimenMed[][], k: number, start = 0, chosen: RegimenMed[] = []): void => {
+        if (chosen.length === k) { addAll(chosen); return; }
+        for (let i = start; i < lists.length; i++) lists[i].forEach(m => product(lists, k, i + 1, [...chosen, m]));
+    };
     if (pillarEntries.length >= 2 && maxNewPerVisit >= 2) {
-        for (let i = 0; i < pillarEntries.length; i++) {
-            for (let j = i + 1; j < pillarEntries.length; j++) {
-                // Pick best candidate from each pillar (first one)
-                const med1 = pillarEntries[i][1][0];
-                const med2 = pillarEntries[j][1][0];
-                if (med1 && med2) {
-                    const mods: RegimenModification[] = [
-                        { action: 'add', target: med1, summary: `Add ${med1.med.name} ${formatDose(med1)}` },
-                        { action: 'add', target: med2, summary: `Add ${med2.med.name} ${formatDose(med2)}` }
-                    ];
-                    candidates.push({
-                        modifications: mods,
-                        resulting_regimen: buildResultingRegimen(currentRegimen, mods)
-                    });
-                }
-            }
-        }
-
-        // Triple pillar additions
-        if (pillarEntries.length >= 3 && maxNewPerVisit >= 3) {
-            for (let i = 0; i < pillarEntries.length; i++) {
-                for (let j = i + 1; j < pillarEntries.length; j++) {
-                    for (let k = j + 1; k < pillarEntries.length; k++) {
-                        const med1 = pillarEntries[i][1][0];
-                        const med2 = pillarEntries[j][1][0];
-                        const med3 = pillarEntries[k][1][0];
-                        if (med1 && med2 && med3) {
-                            const mods: RegimenModification[] = [
-                                { action: 'add', target: med1, summary: `Add ${med1.med.name} ${formatDose(med1)}` },
-                                { action: 'add', target: med2, summary: `Add ${med2.med.name} ${formatDose(med2)}` },
-                                { action: 'add', target: med3, summary: `Add ${med3.med.name} ${formatDose(med3)}` }
-                            ];
-                            candidates.push({
-                                modifications: mods,
-                                resulting_regimen: buildResultingRegimen(currentRegimen, mods)
-                            });
-                        }
-                    }
-                }
-            }
-        }
-
-        // Quad pillar additions
-        if (pillarEntries.length >= 4 && maxNewPerVisit >= 4) {
-            const med1 = pillarEntries[0][1][0];
-            const med2 = pillarEntries[1][1][0];
-            const med3 = pillarEntries[2][1][0];
-            const med4 = pillarEntries[3][1][0];
-            if (med1 && med2 && med3 && med4) {
-                const mods: RegimenModification[] = [
-                    { action: 'add', target: med1, summary: `Add ${med1.med.name} ${formatDose(med1)}` },
-                    { action: 'add', target: med2, summary: `Add ${med2.med.name} ${formatDose(med2)}` },
-                    { action: 'add', target: med3, summary: `Add ${med3.med.name} ${formatDose(med3)}` },
-                    { action: 'add', target: med4, summary: `Add ${med4.med.name} ${formatDose(med4)}` }
-                ];
-                candidates.push({
-                    modifications: mods,
-                    resulting_regimen: buildResultingRegimen(currentRegimen, mods)
-                });
-            }
-        }
+        product(pillarLists, 2);
+        if (pillarEntries.length >= 3 && maxNewPerVisit >= 3) product(pillarLists, 3);
+        if (pillarEntries.length >= 4 && maxNewPerVisit >= 4) product(pillarLists, 4);
     }
 
     // Combine addition + titration. Every missing pillar's leading agents are paired with each available dose increase. Until 2026-11-12 only the FIRST
@@ -948,7 +905,7 @@ export function generateCandidateModifications(
         // "first two agents" = the first agent of each of the pillar's first two drug classes (ARNI and an ACE inhibitor or ARB), so two options never differ
         // only by a sibling of the same class.
         const firstPerClass = (meds: RegimenMed[]) => meds.filter((m, i) => meds.findIndex(x => x.med.drug_class === m.med.drug_class) === i);
-        pillarEntries.forEach(([, meds]) => safeSlice(firstPerClass(meds), 2).forEach(pillarMed => {
+        pillarEntries.forEach(([pillar, meds]) => (analysis.pillarStartTiers.get(pillar) ?? safeSlice(firstPerClass(meds), 2)).forEach(pillarMed => {
             analysis.titratableUp.forEach(({ current, options }) => {
                 const bestHigher = options[options.length - 1]; // highest dose option (options sorted ascending by dose index in analyzeCurrentRegimen)
                 const key = `${pillarMed.med.name}|${pillarMed.dose.strength}|${current.med.name}`;
@@ -967,31 +924,29 @@ export function generateCandidateModifications(
         }));
     }
 
-    // Combine swap + addition
+    // Combine swap + addition (over every drug of the first missing pillar, not only formulary element [0])
     if (analysis.swappable.length > 0 && pillarEntries.length > 0 && maxNewPerVisit >= 1) {
-        const topPillarMed = pillarEntries[0][1][0];
-        if (topPillarMed) {
-            analysis.swappable.forEach(({ from, candidates: swapCandidates }) => {
-                const bestSwap = swapCandidates[0];
-                if (bestSwap) {
-                    const mods: RegimenModification[] = [
-                        { action: 'swap', source: from, target: bestSwap, summary: formatSwapSummary(from, bestSwap) },
-                        { action: 'add', target: topPillarMed, summary: `Add ${topPillarMed.med.name} ${formatDose(topPillarMed)}` }
-                    ];
-                    candidates.push({
-                        modifications: mods,
-                        resulting_regimen: buildResultingRegimen(currentRegimen, mods)
-                    });
-                }
+        const firstPillarMeds = pillarLists[0] ?? [];
+        analysis.swappable.forEach(({ from, candidates: swapCandidates }) => {
+            const bestSwap = swapCandidates[0];
+            if (!bestSwap) return;
+            firstPillarMeds.forEach(topPillarMed => {
+                const mods: RegimenModification[] = [
+                    { action: 'swap', source: from, target: bestSwap, summary: formatSwapSummary(from, bestSwap) },
+                    { action: 'add', target: topPillarMed, summary: `Add ${topPillarMed.med.name} ${formatDose(topPillarMed)}` }
+                ];
+                candidates.push({
+                    modifications: mods,
+                    resulting_regimen: buildResultingRegimen(currentRegimen, mods)
+                });
             });
-        }
+        });
     }
 
-    // Combine adjunct + pillar addition or adjunct + titration
+    // Combine adjunct + pillar addition or adjunct + titration (the pillar over every drug of the first missing pillar)
     if (analysis.addableAdjuncts.length > 0 && pillarEntries.length > 0 && maxNewPerVisit >= 2) {
         analysis.addableAdjuncts.forEach(adj => {
-            const topPillarMed = pillarEntries[0][1][0];
-            if (topPillarMed) {
+            (pillarLists[0] ?? []).forEach(topPillarMed => {
                 const mods: RegimenModification[] = [
                     { action: 'add', target: topPillarMed, summary: `Add ${topPillarMed.med.name} ${formatDose(topPillarMed)}` },
                     { action: 'add', target: adj, summary: addSummary(adj) }
@@ -1000,7 +955,7 @@ export function generateCandidateModifications(
                     modifications: mods,
                     resulting_regimen: buildResultingRegimen(currentRegimen, mods)
                 });
-            }
+            });
         });
     }
 
@@ -1175,7 +1130,13 @@ export function generateCandidateModifications(
                     (m.action === 'titrate_down' || m.action === 'remove' || m.action === 'swap')
                     && m.source?.med.name === medName
                 );
-                if (alreadyHandled) return;
+                if (alreadyHandled) {
+                    // A single reduction candidate built by the generic titrate-down pass has no reason in its summary: state the forced-reduction reason on it too (renal maximum,
+                    // potassium, interaction cap, heart rate), so every displayed reduction says why.
+                    c.modifications = c.modifications.map(m => (m.action === 'titrate_down' && m.source?.med.name === medName && !m.summary.includes(reason)
+                        ? { ...m, summary: `${m.summary} (${reason})` } : m));
+                    return;
+                }
                 c.modifications = c.modifications.filter(m =>
                     !((m.action === 'titrate_up' || m.action === 'keep') && m.source?.med.name === medName)
                 );

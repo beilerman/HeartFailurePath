@@ -202,7 +202,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Sacubitril/Valsartan (Entresto)',
         drug_class: 'ARNI',
-        facts: { ...RAAS_K_FACTS, pick_distinctness_key: 'ARNI', start_dose_exact: true },
+        facts: { ...RAAS_K_FACTS, pick_distinctness_key: 'ARNI', start_dose_exact: true, combination_daily_dose: 'sum' },
         // Label start (exact, not a ceiling): 49/51 mg bid, halved to 24/26 mg bid when not on an ACEi/ARB or on a low dose, eGFR < 30 or
         // Child-Pugh B (Entresto label 2.2, 2.7, 2.8). 97/103 mg is reached only by up-titration. See raasStart.ts.
         start_dose_for: arniStartDose,
@@ -677,7 +677,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         ]),
         // Most beta-1 selective — preferred BB in COPD and mild/moderate asthma (SEVERE asthma remains an absolute CI for all BBs)
         special_features: [
-            { feature: 'Preferred in COPD / mild-moderate asthma (most beta-1 selective)', points: 10, criteria: (p) => p.comorbidities.has("COPD") || p.comorbidities.has("Asthma (Mild/Moderate)") }
+            { feature: 'Preferred in COPD / mild-moderate asthma (most beta-1 selective)', replaced_by: 'not_modelled', points: 10, criteria: (p) => p.comorbidities.has("COPD") || p.comorbidities.has("Asthma (Mild/Moderate)") }
         ],
     },
 
@@ -755,7 +755,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
             {
                 feature: 'HFpEF Class IIb: TOPCAT Americas subgroup — reduced HF hospitalization (LVEF ≥ 45)',
-                points: 18,
+                replaced_by: 'outcome', points: 18,
                 criteria: (p) => p.lvef >= 45
             }
         ],
@@ -798,7 +798,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // Intra-class tolerability tiebreaker (eplerenone vs spironolactone in males), NOT an
             // outcome benefit — must stay small so it nudges MRA-agent choice without lifting a lone
             // MRA above multi-pillar GDMT. (Cf. spironolactone's TOPCAT outcome feature at 18 pts.)
-            { feature: 'Fewer endocrine side effects (No gynecomastia risk)', points: 3, criteria: (p) => p.sex === 'Male' }
+            { feature: 'Fewer endocrine side effects (No gynecomastia risk)', replaced_by: 'harm', points: 3, criteria: (p) => p.sex === 'Male' }
         ],
         ...ci([
             // Inspra label: K+ > 5.5 at initiation is a contraindication (label allows a start up to 5.5; the guideline
@@ -866,7 +866,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
             {
                 feature: 'nsMRA: 16% RRR CV death/HF events in LVEF≥40 (FINEARTS-HF); lower hyperkalemia vs steroidal MRA',
-                points: 45,
+                replaced_by: 'outcome', points: 45,
                 criteria: (p) => p.lvef >= 40
             }
         ],
@@ -937,7 +937,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         hemodynamic_effects: () => ({ sbp_drop: 3, hr_drop: 0, potassium_change: 0 }),
         side_effects: () => ({ genital_infection: 0.05, uti: 0.03, volume_depletion: 0.02 }),
         special_features: [
-            { feature: 'Preferred in Diabetics', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
+            { feature: 'Preferred in Diabetics', replaced_by: 'not_modelled', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
         ],
         ...ci([
             // eGFR threshold applies to INITIATION only — continuation allowed (DAPA-CKD)
@@ -974,7 +974,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // The Jardiance label carries the same volume-depletion warning as Farxiga (row 6), so the entry lists it too.
         side_effects: () => ({ genital_infection: 0.05, uti: 0.03, volume_depletion: 0.02 }),
         special_features: [
-            { feature: 'Preferred in Diabetics', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
+            { feature: 'Preferred in Diabetics', replaced_by: 'not_modelled', points: 10, criteria: (p) => p.comorbidities.has("Diabetes Mellitus Type 2") }
         ],
         ...ci([
             // eGFR threshold applies to INITIATION only — continuation allowed (EMPA-KIDNEY). The Jardiance HF dose (10 mg) has no eGFR
@@ -1043,7 +1043,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              // 40 points for BOTH GLP-1 agents (scale policy: symptom-level benefit with no guideline class sits below a Class 1A mortality
              // benefit; the old 50 / 60 split rested on a cross-trial "superior" claim). Phenotype text matches the initiation gate (LVEF >= 45).
-             { feature: 'STEP-HFpEF: improves symptoms and function in obesity-phenotype HFpEF (LVEF 45 or higher, BMI 30 or higher)', points: 40, criteria: (p) => p.bmi >= 30 && p.lvef >= 45 }
+             { feature: 'STEP-HFpEF: improves symptoms and function in obesity-phenotype HFpEF (LVEF 45 or higher, BMI 30 or higher)', replaced_by: 'symptom', points: 40, criteria: (p) => p.bmi >= 30 && p.lvef >= 45 }
         ],
         ...ci([
             // True safety gates — apply to initiation AND continuation:
@@ -1128,7 +1128,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
              // 40 points, equal to semaglutide. SUMMIT alone reports an event result (CV death or worsening HF 9.9% vs 15.3%, HR 0.62, 0.41-0.95;
              // worsening-HF events HR 0.54; CV death numerically higher, 8 vs 5), but there is no head-to-head HF trial, so no "superior" claim.
-             { feature: 'SUMMIT: fewer HF events and better symptoms in obesity-phenotype HFpEF (LVEF 50 or higher, BMI 30 or higher)', points: 40, criteria: (p) => p.bmi >= 30 && p.lvef >= 50 }
+             { feature: 'SUMMIT: fewer HF events and better symptoms in obesity-phenotype HFpEF (LVEF 50 or higher, BMI 30 or higher)', replaced_by: 'outcome', points: 40, criteria: (p) => p.bmi >= 30 && p.lvef >= 50 }
         ],
         ...ci([
             // True safety gates — apply to initiation AND continuation:
@@ -1260,14 +1260,14 @@ export const MEDICATION_FORMULARY: Medication[] = [
         special_features: [
             {
                 feature: 'Outpatient worsening-HF decongestion option on background loop therapy',
-                points: 12,
+                replaced_by: 'not_modelled', points: 12,
                 criteria: (p) => {
                     const fluidExcess = p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg;
                     const hasBaselineLoop = (p.current_regimen || []).some(r => r.med.drug_class === 'Loop Diuretic');
                     return fluidExcess >= 2.0 && hasBaselineLoop;
                 }
             },
-            { feature: 'On-body infusor complexity burden', points: -8, criteria: (p) => p.complexity_tolerance <= 4 }
+            { feature: 'On-body infusor complexity burden', replaced_by: 'adherence', points: -8, criteria: (p) => p.complexity_tolerance <= 4 }
         ],
         side_effects: () => ({ hypokalemia: 0.22, renal_worsening: 0.12, hypotension: 0.06, infusion_site_reaction: 0.12 }),
         ...ci([
@@ -1409,6 +1409,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // Label (BiDil): start one tablet (37.5/20 mg) three times daily.
         start_dose_for: () => '37.5/20',
         facts: {
+            combination_daily_dose: 'first',   // the hydralazine component (the dose-evidence anchor is hydralazine mg/day)
             regimen_warnings: [
                 // A long-acting nitrate taken outside the formulary plus the isosorbide dinitrate in this tablet is duplicate nitrate therapy (review 3: no warning was shown).
                 { text: p => `DDI WARNING: the patient already takes ${LONG_ACTING_NITRATES.filter(n => p.external_medications?.has(n)).join(' and ')}; hydralazine/isosorbide dinitrate contains isosorbide dinitrate. This is duplicate nitrate therapy. Replace the existing nitrate rather than adding to it, and watch for hypotension.`,
@@ -1461,7 +1462,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // benefit (verified row 38; the exact value is engine policy, was 30).
             {
                 feature: 'A-HeFT: mortality and HF-hospitalization benefit in self-identified Black patients, NYHA III-IV HFrEF, on a RAAS inhibitor and a beta-blocker (Class 1)',
-                points: 60,
+                replaced_by: 'outcome', points: 60,
                 criteria: (p, regimen) => isBlackRace(p) && (p.nyha_class === 'III' || p.nyha_class === 'IV') && p.lvef <= 40
                     && ((regimen ?? []).some(r => RAAS_DRUG_CLASSES.includes(r.med.drug_class as typeof RAAS_DRUG_CLASSES[number])) || unableToTakeClasses(p, RAAS_DRUG_CLASSES))
                     && ((regimen ?? []).some(r => r.med.drug_class === 'Beta Blocker') || unableToTakeClasses(p, ['Beta Blocker']))
@@ -1539,7 +1540,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 // The HR >= 70 criterion belongs to INITIATION (in the checks above): a patient already on ivabradine is meant to be at
                 // 50-60 bpm and keeps the evidence bonus (Corlanor label; 2022 AHA/ACC/HFSA Class 2a, ESC 2021 IIa).
                 feature: 'SHIFT: Reduces HF hospitalization (sinus rhythm, LVEF <= 35; started at HR >= 70 on maximally tolerated beta-blocker; AHA/ACC 2022 Class 2a)',
-                points: 15,
+                replaced_by: 'outcome', points: 15,
                 criteria: (p) => p.rhythm === 'Sinus' && p.lvef <= 35
                     && (p.pulse >= 70 || (p.current_regimen ?? []).some(r => r.med.drug_class === 'If Inhibitor'))
             }
@@ -1735,7 +1736,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // Sodium load in congested HF: -10 at the 10 g reference, scaled by the dose-related edema rate.
             {
                 feature: 'Sodium load risk in congested HF (about 400 mg sodium per 5 g; dose-related edema)',
-                points: -10,
+                replaced_by: 'harm', points: -10,
                 points_for_dose: (dose) => -Math.round(10 * LOKELMA_EDEMA_RATE(dose) / LOKELMA_EDEMA_RATE(10)),
                 criteria: (p) => (p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg) > 2.0
             }
@@ -1786,8 +1787,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // points: engine policy) at 41-49; none at >= 50, at NYHA I or IV, or at Hb >= 15 (ivIronCreditTier). Symptom / hospitalization-level
             // benefit (CONFIRM-HF 6MWT +33 m, AFFIRM-AHF HF hospitalizations RR 0.74, HEART-FID win ratio 1.10 NS-borderline): 40 sits below the
             // A-HeFT mortality benefit (60) and equal to the GLP-1 symptom benefit (40).
-            { feature: 'Treats iron deficiency in HFrEF (LVEF 40 or lower; Class 2a)', points: 40, criteria: p => ivIronCreditTier(p) === 'full' },
-            { feature: 'Treats iron deficiency, limited evidence at LVEF 41-49 (trials enrolled LVEF below 50)', points: 20, criteria: p => ivIronCreditTier(p) === 'limited' },
+            { feature: 'Treats iron deficiency in HFrEF (LVEF 40 or lower; Class 2a)', replaced_by: 'outcome', points: 40, criteria: p => ivIronCreditTier(p) === 'full' },
+            { feature: 'Treats iron deficiency, limited evidence at LVEF 41-49 (trials enrolled LVEF below 50)', replaced_by: 'outcome', points: 20, criteria: p => ivIronCreditTier(p) === 'limited' },
         ],
         ...ci([
             // The label has no data with hemoglobin >= 15 g/dL (HEART-FID required Hb < 15 in men, < 13.5 in women; AFFIRM-AHF excluded Hb > 15).
@@ -1854,7 +1855,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             return {};
         },
         special_features: [
-             { feature: 'Rate Control in AFib', points: 20, criteria: (p) => p.rhythm === 'AFib' }
+             { feature: 'Rate Control in AFib', replaced_by: 'not_modelled', points: 20, criteria: (p) => p.rhythm === 'AFib' }
         ]
     },
     {

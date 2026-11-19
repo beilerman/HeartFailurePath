@@ -9,7 +9,7 @@ numbered comment in it is one stage below.
 
 ## Medication transitions and the observed baseline
 
-Rule set .8: [medication transition repair](medication-repair-loop-2026-11-12/README.md). The observed patient is never replaced by an inferred untreated or future patient. Net transitions drive medication-specific considerations, cost, burden and explicit safety/eligibility rules. CHF/hemodynamic coefficient functions are audit-only and cannot influence clinical output. Neurohormonal, functional, volume and structure scores are unassessed with zero weight; remaining weights are rescaled (cost also excluded when unknown).
+(2026-11-16: the sentence in this paragraph that neurohormonal, functional, volume and structure scores are unassessed still holds; the outcome factors are now the trial-relative-risk model described in the 2026-11-16 section before Stage 6.) Rule set .8: [medication transition repair](medication-repair-loop-2026-11-12/README.md). The observed patient is never replaced by an inferred untreated or future patient. Net transitions drive medication-specific considerations, cost, burden and explicit safety/eligibility rules. CHF/hemodynamic coefficient functions are audit-only and cannot influence clinical output. Neurohormonal, functional, volume and structure scores are unassessed with zero weight; remaining weights are rescaled (cost also excluded when unknown).
 
 The legacy `projected_patient` field contains unchanged observed physiology and a proposed regimen. Its `assessment_basis` is `proposed_regimen`; the public facade rejects it as follow-up input. Changed-dose metadata is not carried forward as evidence of established exposure. New observed data and reconciled actual treatment must come from a subsequent clinical assessment.
 
@@ -69,7 +69,34 @@ E17 comes after E16 (pregnancy beta-blocker start, initiation only); E18 comes n
 Order matters in two places: E12 must precede E13 (a blank-renal trip is labelled "renal data
 required", not "contraindicated"), and E10/E11 ignore a current MRA that is being forced off.
 
+## 2026-11-16: the first-principles model (supersedes the eight-domain description in Stage 6 and the .8 sentence that outcome domains are unassessed)
+
+Full record: [first-principles-model-2026-11-16/README.md](first-principles-model-2026-11-16/README.md). The score is a weighted sum of six factors, all from measured or priced inputs, plus the named adjustments below:
+
+| Domain key | Meaning | Weight (default) | Module and data |
+|---|---|---|---|
+| `mortality` | Death from any cause: percent relative risk reduction from trial relative risks | 0.30 | `outcomeBenefit.ts`, `data/outcomeEvidence.json` |
+| `hf_hospitalization` | Heart-failure hospitalization, same method | 0.22 | same |
+| `symptoms` | Expected KCCQ points / 20 x 100, capped | 0.10 | `symptomBenefit.ts`, `data/symptomEvidence.json` |
+| `side_effects` | max(0, 100 - burden / 2); burden = one-year excess harm % x severity weight (0.5 / 1 / 3) plus a symptom figure per drug | 0.14 | `harmBurden.ts`, `data/harmEvidence.json`, `data/harmDefinitions.json` |
+| `cost` | Out-of-pocket cost against budget | 0.14 | `domains.ts` (unchanged) |
+| `adherence` | Dosing burden against tolerance | 0.10 | `domains.ts` (unchanged) |
+| `guideline`, `completeness` | Computed and shown, reference only | 0 | `domains.ts` |
+| `neurohormonal`, `functional`, `volume`, `structure` | Not assessed, no response model | 0 | `domains.ts` |
+
+Supporting modules: `shrinkage.ts` (precision weighting: used value = B x published value, B = tau2 / (tau2 + se^2), tau2 computed from each table), `doseCredit.ts` with `data/doseEvidence.json` (full credit at the trial-achieved dose; `planCreditsFor` values a drug started or increased today as titrated, the way the trials did), all constants in `scoreModel.ts` (`BASE_WEIGHTS`, `PROFILE_MULTIPLIERS`, `KCCQ_FULL_CREDIT_POINTS`, `SIDE_EFFECT_BURDEN_DIVISOR`, `SHRINKAGE_FORMULA`).
+
+Profiles are generated from `PROFILE_MULTIPLIERS` and renormalized: `outcomes_first` (cost and dosing burden x 0.5), `cost_first` (cost x 3), `simplicity_first` (dosing burden x 3). A profile changes only the weights. A missing budget removes the cost factor and the remaining weights are rescaled.
+
+Ranking order is displayed score, raw score, cost, fewer changes, regimen key. Therapy completeness is no longer a ranking step (`selection.ts`). The `foundational_first` ranking mode still orders by foundational coverage first.
+
+The estimates are population averages from randomized trials, not predictions for this patient. There is no baseline risk, so only relative effects are shown. Still fixed safety rules, not measured models: eligibility rules, the warning penalty, the low blood pressure / slow heart rate / high potassium bands, the volume-depletion adjustment, the two-new-classes-per-visit limit, the congestion display rule. The `SPECIAL_FEATURES` line now carries 0 points for every feature; it remains only for the mandatory-swap +15 before normalisation (clamped to -8 to +12 after), the one remaining hand-set number in the special-feature sum, non-zero on 17 of 951 displayed options (`special-features-inventory.md`). Loop diuretics have no measured dose relation (credit 1 at any dose); congestion relief by dose is not modelled and the congestion display rule shows the best diuretic intensification. Unknown patient values never make an option look safer: a sex-specific harm with sex not recorded, and a risk multiplier whose condition cannot be evaluated and whose ratio is above 1, are charged as the higher-risk case (`unknown_assumptions`).
+
+Guideline recommendations are a target, not an input: `npm run guideline:report` (`scripts/guidelineReproduction.ts`) and `scripts/guidelineTargets.ts`.
+
 ## Stage 6: the score
+
+> **Superseded 2026-11-16** by the section above for the domain list, weights, profile table, the Special-feature description, and the sentence that a perfect regimen scores 100 (the eight-domain model below is the 2026-11-10 to 2026-11-12 description, kept as history). The adjustment list and the reconciliation contract below still hold, except that `SPECIAL_FEATURES` points are now 0 except the forced-swap +15.
 
 Missing-data behavior is defined in [the incomplete-information review](incomplete-data-2026-11-12/README.md). Measured KCCQ is optional: functional scoring averages only the recorded NYHA, KCCQ and activity components. Unmeasured BNP and unassessed affordability are `assessed: false` with zero weight; the remaining domain weights are proportionally rescaled. No baseline or projected measurement is invented. Scores across differing information completeness are not directly comparable. These are model policies, not validated outcome estimates.
 

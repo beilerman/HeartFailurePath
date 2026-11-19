@@ -5,7 +5,6 @@ import { valueUnknown, hasGoutHistory, hasAtrialFibrillationHistory } from '../c
 import { hasChildPughBorC, hasChildPughBConfirmed, onPde5Inhibitor as onPde5InhibitorPatient } from './contraindications';
 import { RAAS_CLASSES, isDiureticClass } from './registry';
 import { clonePatient, isTargetDoseForPatient } from './regimenUtils';
-import { URIC_ACID_GOUT_POINTS } from './scoreModel';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
 import { HYPOKALEMIA_K_BELOW } from './thresholds';
 import { MRA_POOL_CLASSES } from './registry';
@@ -128,15 +127,14 @@ export function simulateModificationEffect(
         }
     }
 
-    // Special features from resulting regimen
+    // Special features from resulting regimen. Owner instruction 2026-11-15 (every clinical choice from a first-principles model), applied by the controller 2026-11-16: NO hand-set points. Every feature is text in the rationale only; `replaced_by` says where its
+    // benefit or harm is modelled (outcome, symptom, harm, adherence) or that it is noted but not scored (not_modelled). The only remaining bonus points are the
+    // mandatory swap above (+15).
     resultingRegimen.forEach(r => {
         if (r.med.special_features) {
             r.med.special_features.forEach(sf => {
                 if (sf.criteria(currentPatient, resultingRegimen)) {
-                    const sfPoints = sf.points_for_dose ? sf.points_for_dose(r.dose.strength) : sf.points;
-                    rationale.push(`+ ${r.med.name}: ${sf.feature}`);
-                    specialFeatureBonus += sfPoints;
-                    specialFeatureItems.push({ med: r.med.name, feature: sf.feature, points: sfPoints });
+                    rationale.push(`+ ${r.med.name}: ${sf.feature}${sf.replaced_by === 'not_modelled' ? ' (noted; not scored: no measured model yet)' : ''}`);
                 }
             });
         }
@@ -144,9 +142,7 @@ export function simulateModificationEffect(
         // Uric-acid caution as data: any drug declaring facts.raises_uric_acid (loops and thiazide-type diuretics; labels: may precipitate gout).
         if (drugFacts(r.med).raises_uric_acid && hasGoutHistory(currentPatient)) {
             const feature = 'Caution in Gout (uric acid retention)';
-            rationale.push(`+ ${r.med.name}: ${feature}`);
-            specialFeatureBonus += URIC_ACID_GOUT_POINTS;
-            specialFeatureItems.push({ med: r.med.name, feature, points: URIC_ACID_GOUT_POINTS });
+            rationale.push(`+ ${r.med.name}: ${feature}`);   // text only: 0 points (replaced by the measured harm model, 2026-11-16)
             const goutNote = 'Drug note (2026 ESC Supplementary Table S7): with gout on a loop or thiazide-type diuretic, consider allopurinol prophylaxis, use colchicine for an acute attack, and avoid NSAIDs.';
             if (!warnings.includes(goutNote)) warnings.push(goutNote);
         }

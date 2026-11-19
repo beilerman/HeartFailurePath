@@ -153,7 +153,7 @@ export function runSystemicReviewChecks(): { passed: number; failed: number } {
         const binder=entry('Patiromer',8.4);
         const scores=scoreCandidates([{modifications:[],resulting_regimen:p.current_regimen},
             {modifications:[{action:'add',target:binder,summary:'Add binder'}],resulting_regimen:[...p.current_regimen,binder]}],ctx);
-        assert.equal(scores.length,2);assert.ok(scores[0].special_feature_bonus!>0);
+        assert.equal(scores.length,2);assert.equal(scores[0].special_feature_bonus,0);   // 2026-11-16: every special feature adds 0 points (measured models replace them)
         assert.equal(scores[0].special_feature_bonus,scores[1].special_feature_bonus);
     });
     check('pregnancy switch during low output lands at or below the selective beta-blocker start dose', () => {

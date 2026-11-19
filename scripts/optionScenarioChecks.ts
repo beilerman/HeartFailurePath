@@ -63,10 +63,11 @@ export function checkOptionScenario(
             const ms = { modifications: [{ action: 'add' as const, target, summary: 'Add Furosemide' }], resulting_regimen: [target] };
             const run = (p: typeof P) => simulateModificationEffect(p, ms, scenarioPrices);
             const withReason = run(P);
-            if (!withReason.specialFeatureItems.some(i => i.med === 'Furosemide' && i.feature.includes('Gout'))) fail('Gout / Hyperuricemia intolerance did not trigger the uric-acid caution on furosemide');
+            // 2026-11-16: the gout caution adds 0 points (replaced by the measured harm model); its TRIGGER is read from the rationale text.
+            if (!withReason.rationale.some(x => x.includes('Furosemide') && x.includes('Gout')) || withReason.specialFeatureItems.some(i => i.feature.includes('Gout'))) fail('Gout / Hyperuricemia intolerance did not trigger the uric-acid caution on furosemide');
             if (!withReason.warnings.some(w => w.includes('allopurinol'))) fail('Gout note missing for the gout-history patient');
             const other = clonePatient(P); other.discontinued_meds = [{ ...P.discontinued_meds[0], reason: 'Rash / Hypersensitivity' }];
-            if (run(other).specialFeatureItems.some(i => i.feature.includes('Gout'))) fail('Uric-acid caution fired without a gout history');
+            if (run(other).rationale.some(x => x.includes('Gout'))) fail('Uric-acid caution fired without a gout history');
             const comorb = clonePatient(P); comorb.discontinued_meds = []; comorb.comorbidities.add('Gout');
             if (run(comorb).specialFeatureBonus !== withReason.specialFeatureBonus) fail('Gout intolerance and Gout comorbidity score differently');
         }

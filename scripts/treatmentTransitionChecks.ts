@@ -159,7 +159,8 @@ export function runTreatmentTransitionChecks() {
             const p=patient([entry(name,med.available_doses.at(-1)!.strength)]);p.egfr=25;p.creatinine=2.5;
             assert.equal(med.renal_adjustment?.(25,p).max_dose,undefined);
             const out=run(p);assert.ok(out.scoredRegimens.length>0);assert.ok(!intensifications(out).some(m=>m.target?.med.name===name));
-            assert.ok(out.scoredRegimens.every(r=>r.regimen.some(x=>x.med.name===name&&x.dose.strength===med.available_doses.at(-1)!.strength)));
+            // 2026-11-16 (controller ruling F2): a switch to sacubitril/valsartan is not a dose cut. The contract is that no displayed regimen CONTAINING the drug has it below its maximum dose.
+            assert.ok(out.scoredRegimens.every(r=>!r.regimen.some(x=>x.med.name===name)||r.regimen.some(x=>x.med.name===name&&x.dose.strength===med.available_doses.at(-1)!.strength)));
         }
     });
     check('future exposure dates are rejected and limited reviews preserve course-history alerts', () => {

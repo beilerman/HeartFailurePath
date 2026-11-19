@@ -5,14 +5,15 @@
  * `generateAndScoreModifications` lives here, so the number a clinician sees is a visible,
  * reconciling piece of arithmetic (cf. GlucosePATH printing every factor score + the weights).
  *
- * THE MODEL: a true weighted sum. Eight domains, each scored 0-100, are weighted by
- * `WEIGHT_PROFILES` (the weights sum to 100%), so a regimen that is perfect on every domain scores
- * exactly 100. GDMT completeness is one of the eight domains (score = fraction of indicated,
- * achievable therapies attained x 100). On top of the weighted sum sit only NAMED adjustments -
- * the special-feature evidence bonus and the safety penalties - each a visible line item. There is
+ * THE MODEL: a true weighted sum. Twelve domains, each scored 0-100, are weighted by `WEIGHT_PROFILES` (the weights sum to 100%). Six carry weight (mortality, hf_hospitalization,
+ * symptoms, side_effects, cost, adherence); the other six carry weight 0: four physiological domains that are permanently unassessed, and guideline concordance and therapy
+ * completeness, which are computed and shown for reference only. The two outcome domains (mortality, hf_hospitalization) are percent risk reductions from trial
+ * relative risks (outcomeBenefit.ts), so a perfect 100 is no longer attainable: no regimen removes all risk. Therapy completeness (score = fraction of indicated,
+ * achievable therapies attained x 100) is a reference-only domain with weight 0. On top of the weighted sum sit only NAMED adjustments -
+ * the special-feature line (now only the +15 mandatory-swap bonus before normalisation) and the safety penalties - each a visible line item. There is
  * no hidden bonus layer and no routine clamping: the final [0,100] clamp is a guard that appears in
- * the breakdown only when it actually changes the value. Ranking is raw_score (unrounded, higher
- * first), then cost (cheaper first).
+ * the breakdown only when it actually changes the value. Ranking is the displayed score, then raw_score (unrounded, higher
+ * first), then cost (cheaper first), then fewer changes, then regimen key (see byScoreThenCost in selection.ts).
  *
  * This module has NO imports so both `types.ts` and the engine can depend on it without cycles.
  *
@@ -36,14 +37,18 @@
  */
 
 export type ScoreDomainKey =
-    | 'neurohormonal' | 'functional' | 'volume' | 'structure' | 'guideline' | 'completeness' | 'cost' | 'adherence';
+    | 'mortality' | 'hf_hospitalization' | 'symptoms' | 'side_effects' | 'neurohormonal' | 'functional' | 'volume' | 'structure' | 'guideline' | 'completeness' | 'cost' | 'adherence';
 
 /** Display and accumulation order (the weighted sum is accumulated left-to-right in this order). */
 export const DOMAIN_KEYS: readonly ScoreDomainKey[] = [
-    'neurohormonal', 'functional', 'volume', 'structure', 'guideline', 'completeness', 'cost', 'adherence',
+    'mortality', 'hf_hospitalization', 'symptoms', 'side_effects', 'neurohormonal', 'functional', 'volume', 'structure', 'guideline', 'completeness', 'cost', 'adherence',
 ];
 
 export const DOMAIN_LABELS: Record<ScoreDomainKey, string> = {
+    mortality: 'Death from any cause (trial average)',
+    hf_hospitalization: 'Heart-failure hospitalization (trial average)',
+    symptoms: 'Symptoms and quality of life (KCCQ, trial average)',
+    side_effects: 'Side effects (measured harm rates)',
     neurohormonal: 'Neurohormonal',
     functional: 'Functional',
     volume: 'Volume',
@@ -56,68 +61,56 @@ export const DOMAIN_LABELS: Record<ScoreDomainKey, string> = {
 
 /** Domains grouped for display, in reading order. */
 export const DOMAIN_GROUPS: readonly { key: string; label: string; domains: readonly ScoreDomainKey[] }[] = [
-    { key: 'outcomes', label: 'Clinical outcomes', domains: ['neurohormonal', 'functional', 'volume', 'structure'] },
-    { key: 'therapy', label: 'Guideline-directed therapy', domains: ['guideline', 'completeness'] },
+    { key: 'benefit', label: 'Expected outcome benefit (trial averages)', domains: ['mortality', 'hf_hospitalization', 'symptoms'] },
+    { key: 'harm', label: 'Side effects (measured harm rates)', domains: ['side_effects'] },
+    { key: 'outcomes', label: 'Individual physiological response (not estimated)', domains: ['neurohormonal', 'functional', 'volume', 'structure'] },
+    { key: 'guideline_reference', label: 'Guideline reference (not in ranking)', domains: ['guideline', 'completeness'] },
     { key: 'values', label: 'Patient values', domains: ['cost', 'adherence'] },
 ];
 
 export type WeightProfileName = 'default' | 'outcomes_first' | 'cost_first' | 'simplicity_first';
 
 /**
- * Patient-selected weight rows (the clinician records what matters most to this patient). A profile
- * changes ONLY these eight weights. It never touches eligibility, gates, alerts, candidate
- * generation, rescue logic, adjustments/penalties, display floors or the affordability filter.
- * Each row must sum to 1.
+ * Patient-selected weight rows (the clinician records what matters most to this patient). A profile changes ONLY the weights. It never touches eligibility, gates,
+ * alerts, candidate generation, rescue logic, adjustments/penalties, display floors or the affordability filter. Each row sums to 1.
+ * Owner ruling 2026-11-15: every clinical choice comes from a first-principles model (measured drug properties), so guideline points and pillar counts leave the ranking.
  */
+/**
+ * ENGINE POLICY (pending owner review): the BASE weights of the six scored domains, and the multipliers that derive the other rows. Rows are GENERATED by
+ * `deriveProfile` (multiply the base weight of the named domains, then renormalize to sum to 1), never typed. The legacy four physiological-response domains, guideline
+ * concordance and therapy completeness carry an explicit weight of 0 (guideline and completeness are shown for reference only).
+ *   default          the base row
+ *   outcomes_first   cost and adherence x 0.5
+ *   cost_first       cost x 3
+ *   simplicity_first adherence x 3
+ */
+export const BASE_WEIGHTS = { mortality: 0.30, hf_hospitalization: 0.22, symptoms: 0.10, side_effects: 0.14, cost: 0.14, adherence: 0.10 } as const;
+export const PROFILE_MULTIPLIERS: Record<WeightProfileName, Partial<Record<keyof typeof BASE_WEIGHTS, number>>> = {
+    default: {},
+    outcomes_first: { cost: 0.5, adherence: 0.5 },
+    cost_first: { cost: 3 },
+    simplicity_first: { adherence: 3 },
+};
+const ZERO_WEIGHTS = { neurohormonal: 0, functional: 0, volume: 0, structure: 0, guideline: 0, completeness: 0 } as const;
+function deriveProfile(name: WeightProfileName): Record<ScoreDomainKey, number> {
+    const raw = Object.fromEntries(Object.entries(BASE_WEIGHTS).map(([k, v]) => [k, v * (PROFILE_MULTIPLIERS[name][k as keyof typeof BASE_WEIGHTS] ?? 1)])) as Record<keyof typeof BASE_WEIGHTS, number>;
+    const total = Object.values(raw).reduce((a, b) => a + b, 0);
+    const scaled = Object.fromEntries(Object.entries(raw).map(([k, v]) => [k, v / total])) as Record<keyof typeof BASE_WEIGHTS, number>;
+    return { ...scaled, ...ZERO_WEIGHTS };
+}
 export const WEIGHT_PROFILES: Record<WeightProfileName, Record<ScoreDomainKey, number>> = {
-    default: {
-        neurohormonal: 0.15,
-        functional: 0.12,
-        volume: 0.12,
-        structure: 0.08,
-        guideline: 0.12,
-        completeness: 0.22,
-        cost: 0.12,
-        adherence: 0.07,
-    },
-    outcomes_first: {
-        neurohormonal: 0.17,
-        functional: 0.13,
-        volume: 0.13,
-        structure: 0.09,
-        guideline: 0.13,
-        completeness: 0.25,
-        cost: 0.06,
-        adherence: 0.04,
-    },
-    cost_first: {
-        neurohormonal: 0.13,
-        functional: 0.10,
-        volume: 0.10,
-        structure: 0.07,
-        guideline: 0.11,
-        completeness: 0.20,
-        cost: 0.24,
-        adherence: 0.05,
-    },
-    simplicity_first: {
-        neurohormonal: 0.13,
-        functional: 0.10,
-        volume: 0.10,
-        structure: 0.07,
-        guideline: 0.11,
-        completeness: 0.20,
-        cost: 0.10,
-        adherence: 0.19,
-    },
+    default: deriveProfile('default'),
+    outcomes_first: deriveProfile('outcomes_first'),
+    cost_first: deriveProfile('cost_first'),
+    simplicity_first: deriveProfile('simplicity_first'),
 };
 
 /** Clinician-facing name and one-line description of each weight profile. */
 export const WEIGHT_PROFILE_META: Record<WeightProfileName, { label: string; description: string }> = {
-    default: { label: 'Balanced', description: 'Balances treatment evidence, therapy completeness, cost and dosing burden.' },
-    outcomes_first: { label: 'Prioritize treatment evidence', description: 'Cost and regimen burden count for less; disease-modifying therapy counts for more.' },
-    cost_first: { label: 'Keep cost low', description: 'Out-of-pocket cost counts double. The budget limit still applies separately.' },
-    simplicity_first: { label: 'Keep the regimen simple', description: 'Dosing burden and dosing complexity count for more.' },
+    default: { label: 'Balanced', description: 'Balances death, heart-failure hospitalization, symptoms, side effects, cost and dosing burden.' },
+    outcomes_first: { label: 'Prioritize treatment evidence', description: 'Cost and dosing burden count half as much.' },
+    cost_first: { label: 'Keep cost low', description: 'Out-of-pocket cost counts three times as much. The budget limit still applies separately.' },
+    simplicity_first: { label: 'Keep the regimen simple', description: 'Dosing burden counts three times as much.' },
 };
 
 /** Profiles in display order (first is the default). */
@@ -151,6 +144,29 @@ export interface ScoreAdjustmentSpec {
     threshold?: number;
 }
 
+/**
+ * ENGINE POLICY (statistical method): precision-weighted evidence. Ranking uses the posterior mean of each evidence row under a prior centred on no effect:
+ *     x_used = B x x_published,  B = tau2 / (tau2 + se^2),  se_used = sqrt(B) x se       (x = ln RR for outcomes, KCCQ points for symptoms)
+ * so a precisely measured row barely moves and a row from tiny trials is pulled toward no effect. tau2 is COMPUTED from each table (shrinkage.ts, outcomeBenefit.ts,
+ * symptomBenefit.ts), never typed, with the DerSimonian-Laird moment estimator centred on no effect (w = 1/se^2, Q = sum(w x^2), C = sum(w) - sum(w^2)/sum(w), tau2 = max(0, (Q - k) / C)) over trial
+ * or meta-analysis rows with an interval, an identical figure counted once. WHY WEIGHTED: a row's influence on the prior should follow its precision, so two very imprecise rows cannot set the prior for the rest.
+ */
+export const SHRINKAGE_FORMULA = 'x_used = B * x_published; B = tau2 / (tau2 + se^2); se_used = sqrt(B) * se; tau2 = DerSimonian-Laird centred on no effect: w = 1/se^2, Q = sum(w x^2), C = sum(w) - sum(w^2)/sum(w), tau2 = max(0, (Q - k) / C), over trial or meta-analysis rows with an interval (duplicates once; no row excluded)';
+
+/**
+ * KCCQ points that earn a symptom score of 100 (a large change). POLICY anchor: Spertus 2005 (J Am Coll Cardiol 45:2): 5 points is a small, 10 a moderate and 20 a large clinical change.
+ * symptom score = clamp(100 x credit-weighted KCCQ points / 20, 0, 100).
+ */
+export const KCCQ_FULL_CREDIT_POINTS = 20;
+
+/**
+ * ENGINE POLICY: the side-effect score is max(0, 100 - burden / SIDE_EFFECT_BURDEN_DIVISOR). The BURDEN stays exactly as computed (the same scale as the hypertension engine,
+ * harmDefinitions.json). A full quadruple regimen is about 77 burden points and regimens with a diuretic and adjuncts exceed 100, so `100 - burden` floored at 0 and stopped
+ * discriminating (Furoscix regimens scored 0); halving keeps every plausible regimen above 0.
+ */
+export const SIDE_EFFECT_BURDEN_DIVISOR = 2;
+export const sideEffectScore = (burden: number): number => Math.max(0, 100 - burden / SIDE_EFFECT_BURDEN_DIVISOR);
+
 /** Therapy-completeness credit for a therapy that is on board but below its target dose (full credit = 1). */
 export const COMPLETENESS_SUBTARGET_CREDIT = 0.6;
 
@@ -165,8 +181,6 @@ export const COMPLETENESS_SUBTARGET_CREDIT = 0.6;
  */
 export const COMPLETENESS_GRADED_CREDIT_SPAN = 1 - COMPLETENESS_SUBTARGET_CREDIT;
 
-/** Special-feature points for a drug that raises uric acid (facts.raises_uric_acid) in a patient with gout. Engine policy, unchanged from the loop-diuretic value (-5). */
-export const URIC_ACID_GOUT_POINTS = -5;
 
 export const SCORE_ADJUSTMENTS = {
     SPECIAL_FEATURES: {
@@ -232,8 +246,11 @@ export const SCORE_ADJUSTMENTS = {
  * MRA-initiation-at-borderline-K+ deliberately remain penalized).
  */
 export const NON_PENALIZED_WARNING_MARKERS: readonly string[] = [
-    'Elderly patient', 'Frail elderly', 'Hepatic Impairment', 'Monitor: K+',
-    'Titration Interval', 'Multiple new medications',
+    // Marker text must match the CURRENT wording in effects.ts (reworded in an earlier rule set; the stale markers silently cost -8 each until 2026-11-15):
+    // 'Elderly patient' -> 'Older adult:', 'Monitor: K+' -> 'Monitor: measured K+', 'Titration Interval' -> 'Before dose escalation:',
+    // 'Multiple new medications' -> 'Multiple new therapies:'. A verify check scans the engine source so every marker here must match emitted text.
+    'Older adult:', 'Frail elderly', 'Hepatic Impairment', 'Monitor: measured K+',
+    'Before dose escalation:', 'Multiple new therapies:',
     // Purely PROCEDURAL instructions attached unconditionally to specific actions must not
     // dock the action's rank: the ACEi→ARNI washout text fires on EVERY guideline-preferred
     // ARNI upgrade (docking it vs merely up-titrating the ACEi), the taper guidance on every

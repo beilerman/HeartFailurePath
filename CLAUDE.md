@@ -2,6 +2,8 @@
 
 **Taking this project over? Start with `docs/HANDOFF-2026-11-13.md`** (consolidated current state, all review stages, receipts, unresolved decisions and reproduction).
 
+**2026-11-16 (local, uncommitted), first-principles scoring model — SUPERSEDES the statements below that rule set .8 "makes no individual response estimate" for outcomes, that outcome domains are unassessed with zero weight, and the "Scoring Model (weighted sum, 2026-11-10)" weights list.** Options are ranked by six weighted factors from measured or priced inputs: death from any cause and HF hospitalization (trial relative risks), symptoms (KCCQ points), side effects (one-year excess harm rates x severity), cost, dosing burden. Weights 0.30 / 0.22 / 0.10 / 0.14 / 0.14 / 0.10 are ENGINE POLICY pending owner review (`BASE_WEIGHTS`, `scoreModel.ts`). Guideline concordance and therapy completeness are shown, reference only, weight 0, and completeness is no longer a ranking step. Estimates are trial population averages, not predictions for this patient; recorded measurements are never altered; the four physiological domains stay "not assessed" (weight 0); no baseline risk is modeled. Record, formulas, every ruling, weakest rows and open owner decisions: `docs/first-principles-model-2026-11-16/README.md`. Rule set `2026-11-16.1`. Final pass 2026-11-16: unknown patient values never make an option look safer (`harmBurden.ts`: sex-specific harm charged as the higher-risk case when sex is not recorded; a risk multiplier that cannot be evaluated is applied when its ratio is above 1; `unknown_assumptions`); loop diuretics have no measured dose relation, credit 1 at any dose, congestion relief by dose is not modelled; the digoxin dose-anchor unit defect is fixed; the one remaining hand-set number is the mandatory-swap +15 (non-zero on 17 of 951 options). Checks at this pass: golden 1,032 runs byte-identical, `npm run verify` 541 passed, `npm run verify:ui` 72 passed.
+
 **2026-11-15 (local, uncommitted), guided entry:** the app now opens in a **Guided** view (Start with six curated synthetic examples / seven steps / Results under a patient bar); the original layout is the **Full form** (header switch, or `?view=form`). One implementation of every field: `components/patient-form/usePatientFormModel.tsx` (state, validation, hints, handlers, `FormSection`) feeds both `PatientForm` and `components/guided/*`. Engine, `constants.ts`, `data/` and rule set untouched; golden byte-identical. `verify:ui` is now 52 checks. Browser check: `docs/guided-entry-2026-11-15/`. The saved 2026-11-12 browser script needs `HF_BASE_URL` ending in `?view=form`.
 
 **2026-11-15 (local, uncommitted):** the draft note and "Visit review" panel follow a clinician-selected option (default option 1; radio group + per-card button; resets each run). `planForOption` in `components/resultsModel.ts` is the single source for the selected option's monitoring/follow-up; `buildChartSummary(c, selectedIndex)` is byte-identical to before for option 1. Rule set **2026-11-15.1**. Earlier text below that says the note is option-1-only is superseded.
@@ -33,7 +35,8 @@ npm run typecheck        # TypeScript check only
 npm run verify           # scenario assertion harness — its printed count is authoritative
                          #   (latest saved receipt: Passed 442; the printed count is authoritative)
 npm run test             # alias for verify
-npm run verify:ui        # 52 clinical UI content checks, including all 344 scenario result states; not browser tests
+npm run verify:ui        # clinical UI content checks (the printed count is authoritative), including all 344 scenario result states; not browser tests
+npm run guideline:report # REPORT, not a gate: how closely the lead reproduces guideline concordance vs the frozen guideline-driven baseline `data/golden/guideline-baseline-a6cb28f.json` (the first option of every run at commit a6cb28f) + guideline targets met/missed (also rewrites docs/outcome-evidence-2026-11-15/guideline-reproduction.txt)
 npm run audit:red        # adversarial red-team probes (standalone QA, not in CI)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone QA, not in CI)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone QA, not in CI)
@@ -83,6 +86,8 @@ HeartFailurePath/
     engine/                       # the engine, one module per stage (see docs/scoring-architecture.md):
                                   #   inputContract, decisionReadiness, gates, eligibility (rules E01-E20), candidates, effects, domains,
                                   #   scoreModel (weights + adjustments as data), scoring, selection,
+                                  #   outcomeBenefit (trial relative risks), symptomBenefit (KCCQ), harmBurden (measured harm rates),
+                                  #   doseCredit (trial-achieved dose anchors, planCreditsFor), shrinkage (precision weighting),
                                   #   explain, registry, intolerance, regimenUtils, drugFacts
     clinicalPredicates.ts         # shared predicates (valueUnknown, hasHistoricalHFrEF,
                                   #   isIronDeficient, isBlackRace) — single source for
@@ -90,6 +95,14 @@ HeartFailurePath/
     pricingService.ts             # mock pricing source (insurance-tiered)
   data/
     scenarios.ts                  # scenario fixtures; re-exports clonePatient
+    outcomeEvidence.json          # 108 rows: relative risks (death, HF hospitalization) by class, EF band, population
+    symptomEvidence.json          # 51 rows: placebo-subtracted KCCQ points by class and EF band
+    harmEvidence.json             # 197 harm rows + 12 multipliers (one-year excess rates)
+    harmDefinitions.json          # effect definitions, severity weights, method, rulings R1-R9
+    doseEvidence.json             # 31 trial-achieved dose anchors + low-dose credit c0
+  components/ (evidence UI, 2026-11-16)  # ExpectedEffect.tsx (card block + drill-down), expectedEffectModel.ts (pure display model),
+                                  #   EvidenceTables.tsx (read-only tables on the Evidence tab), FAQ.tsx "How options are ordered";
+                                  #   UI checks in scripts/verifyClinicalUi.tsx
   scripts/
     verifyScenarios.ts            # scenario verification harness (CI regression gate)
     redTeam.ts                    # adversarial safety probes (standalone)
@@ -133,7 +146,9 @@ Engine characteristics:
 - candidate modifications include add/up/down/swap/remove/keep
 - affordability filter and display-safety filter applied before UI output
 
-## Scoring Model (weighted sum, 2026-11-10)
+## Scoring Model (weighted sum, 2026-11-10) — SUPERSEDED 2026-11-16 for the domain list, weights and ranking order
+
+> The current model is the six-factor model in `docs/first-principles-model-2026-11-16/README.md` (see the note at the top of this file). The bullets below are the 2026-11-10 description kept as history; the "Balanced weights" list (Neurohormonal 15 ... Adherence 7), completeness as a 22% domain, the special-feature points calibration and the completeness tie-break in the ranking line no longer apply. Still true: named adjustments and the reconciliation contract, `care_priority` changes only weights, ranking mode changes only order.
 
 Full description: `docs/scoring-architecture.md`. All numbers live in `services/engine/scoreModel.ts`.
 
@@ -392,6 +407,16 @@ verification (`verified-*.md`, with URLs) and the measured effect of each correc
 - **Inputs** (`gates.ts` `auditInputs`): NaN, undefined or negative numbers become 0 ("not entered"); blank systolic BP, current weight or dry weight stops the run with a DATA REQUIRED alert naming the field; a duplicate current drug keeps the higher dose and says so. With heart rate not entered a beta-blocker or ivabradine is neither started nor increased.
 - **Allergies** (`allergy.ts`, `facts.allergy_aliases`): free text resolves to formulary drugs ignoring case and spacing, by generic, brand or class name; an entry matching nothing raises an ALLERGY NOTE and the form shows what each entry excludes. A new drug must add its brand names to `ALLERGY_ALIASES_BY_DRUG` in `constants.ts`. Pregnancy: a non-selective beta-blocker that cannot be switched is kept, never increased.
 - **UI**: Re-run obeys form validation; Copy and Print are disabled while results are stale; the results pane has its own error boundary; the low-output hint uses the engine's two-of-three rule; the potassium hint covers 5.2, 6.0 and 6.5.
+
+## First-principles model rules (2026-11-16)
+
+- **Evidence tables are the single source.** Relative risks, KCCQ changes, harm rates and dose anchors live only in `data/*.json`, each row with source, quote, basis/level and extrapolation note. A missing or duplicate row throws; it never becomes 0 or RR 1.0. Never inline an effect size in engine or component code.
+- **No hand-set bonus points.** Special features add 0 (rationale text only, `replaced_by` names the model); the only remaining points are named safety adjustments and the forced-swap +15. A new benefit or harm is a new evidence row, not a bonus.
+- **Guideline expectations about which option leads or is shown go in `scripts/guidelineTargets.ts`** (a measured target, never a gate). Safety, eligibility, dose rules and arithmetic stay hard checks. Never weaken a check or move a target to make something pass; `golden:update` only for an intended change, with `npm run ranking:diff` reviewed first.
+- **Statistical method is uniform:** precision weighting (`shrinkage.ts`) applies to every outcome and symptom row with no per-row exception; tau2 is computed, never typed. Harm rates are not shrunk.
+- **Dose credit:** options are valued as the plan they start (`planCreditsFor`); harm is not discounted.
+- **Label basis honestly:** trial, pooled analysis (`meta_analysis`), extrapolated, `siblingProxy`, assumed neutral, not measured, upper bound. Do not present policy or extrapolation as evidence.
+- Open owner decisions are listed in README section 10 of the 2026-11-16 record; do not decide them silently.
 
 ## Development Rules of Thumb
 

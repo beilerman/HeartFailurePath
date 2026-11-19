@@ -3,4 +3,4 @@
  * MUST be bumped (to the change date) whenever engine output changes: scoring, gates, eligibility, formulary,
  * pricing or note text.
  */
-export const RULESET_VERSION = '2026-11-15.1';
+export const RULESET_VERSION = '2026-11-16.1';

@@ -49,11 +49,9 @@ export function brokenDisplayFloors(r: ScoredRegimen, baseline: Patient): string
 
 // Ranking rule (stated to the clinician in the FAQ and score ledger):
 //   1. Higher displayed score first.
-//   2. Same displayed score (the same whole number): the regimen covering more of the indicated
-//      therapy first. A fraction-of-a-point difference must not drop a guideline pillar.
-//   3. Still tied: higher unrounded score, then the cheaper regimen.
-// Completeness is also one of the eight weighted domains; here it only orders regimens the
-// clinician sees as equal.
+//   2. Same displayed score (the same whole number): higher unrounded score.
+//   3. Still tied: the cheaper regimen.
+//   (Therapy completeness is a reference-only domain with weight 0 and is not a tie-break step; see byScoreThenCost below.)
 //   4. Still tied: the option with fewer changes to the current regimen.
 //   5. Still tied: alphabetical by regimen, so the answer never depends on the order the current drugs were typed in.
 // Scores are compared to 9 decimals: the same regimen summed in a different drug order differs in the last floating-point bits.
@@ -62,9 +60,10 @@ const regimenKey = (r: ScoredRegimen): string => r.regimen.map(x => `${x.med.nam
 /** Number of changes to the current regimen. Between otherwise equal options the one that changes less comes first: an elective dose reduction with no modeled
  * benefit tied with "mandatory changes only" and won alphabetically, so the tool lowered a dose it had started on the previous run (review 2026-11-12). */
 const changeCount = (r: ScoredRegimen): number => (r.modification_set?.modifications ?? []).filter(m => m.action !== 'keep').length;
+// Order: displayed score, raw score, cost, change count, regimen key. GDMT completeness is NOT a step (owner ruling 2026-11-15: guideline pillar counts leave the ranking;
+// it was a tie-break against 'softness' only while displayed scores clamped at 100).
 export const byScoreThenCost = (a: ScoredRegimen, b: ScoredRegimen) =>
     b.overall_score - a.overall_score ||
-    stable(b.gdmt_completeness) - stable(a.gdmt_completeness) ||
     stable(b.raw_score) - stable(a.raw_score) ||
     a.cost - b.cost ||
     changeCount(a) - changeCount(b) ||
@@ -252,6 +251,11 @@ export function includesLoopIncrease(r: ScoredRegimen): boolean {
     return (r.modification_set?.modifications ?? []).some(isLoopIncreaseMod);
 }
 
+/** True when the regimen adds or raises any diuretic: a loop (including the Furoscix short course) or a thiazide-like drug. */
+export function includesDiureticIntensification(r: ScoredRegimen): boolean {
+    return (r.modification_set?.modifications ?? []).some(m => !!m.target && (m.action === 'add' || m.action === 'titrate_up') && (m.target.med.drug_class === 'Loop Diuretic' || m.target.med.drug_class === 'Thiazide-like Diuretic'));
+}
+
 /** True when the loop increase/start is the regimen's ONLY change, apart from forced safety changes (a removal or a dose reduction). */
 export function isPlainLoopStep(r: ScoredRegimen): boolean {
     const changes = (r.modification_set?.modifications ?? []).filter(m => m.action !== 'keep');
@@ -267,15 +271,21 @@ export function isPlainLoopStep(r: ScoredRegimen): boolean {
  * The shown option carries `shown_because` (explanation only).
  */
 export function ensureCongestionCoverage(picks: ScoredRegimen[], pool: ScoredRegimen[], patient: Patient): ScoredRegimen[] {
-    if (picks.length === 0 || !isCongestedAboveDryWeight(patient) || picks.some(includesLoopIncrease)) return picks;
+    if (picks.length === 0 || !isCongestedAboveDryWeight(patient)) return picks;
     const shown = new Set(picks);
-    // Preference: (i) the best-ranked candidate whose only change is the loop step (plus forced removals/reductions), else (ii) the best-ranked candidate with a loop step.
-    // Never a candidate that itself causes a severe projected-safety adjustment (isProjectedSafetyClean against the entered baseline).
-    const eligible = pool.filter(r => !shown.has(r) && includesLoopIncrease(r) && isProjectedSafetyClean(r, patient));
-    const candidate = eligible.find(isPlainLoopStep) ?? eligible[0];
+    const safe = (r: ScoredRegimen) => !shown.has(r) && isProjectedSafetyClean(r, patient);   // never a candidate that itself causes a severe projected-safety adjustment
+    // Stage 1: no displayed loop increase or start -> the BEST-SCORING eligible loop candidate (pool order is the ranking comparator's), not a plain loop step regardless of score.
+    // Stage 2 (2026-11-16): when NO loop increase exists at all (the loop is at its cap, as at eGFR 15 on bumetanide) and no displayed option intensifies any diuretic, show the
+    // best-scoring other diuretic intensification (Furoscix short course or a thiazide-like add-on).
+    let candidate: ScoredRegimen | undefined;
+    let what = 'a diuretic increase';
+    if (!picks.some(includesLoopIncrease)) {
+        candidate = pool.filter(r => safe(r) && includesLoopIncrease(r))[0];
+        if (!candidate && !picks.some(includesDiureticIntensification)) { candidate = pool.filter(r => safe(r) && includesDiureticIntensification(r))[0]; what = 'a diuretic intensification (a loop increase is not available)'; }
+    }
     if (!candidate) return picks;
     const kg = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg).toFixed(1);
-    const tagged: ScoredRegimen = { ...candidate, shown_because: `Includes a diuretic increase: the patient is congested (${kg} kg above dry weight; the tool's criterion is more than ${CONGESTION_EXCESS_KG_ABOVE} kg), and no other option raises the loop diuretic.` };
+    const tagged: ScoredRegimen = { ...candidate, shown_because: `Includes ${what}: the patient is congested (${kg} kg above dry weight; the tool's criterion is more than ${CONGESTION_EXCESS_KG_ABOVE} kg), and no other option raises the loop diuretic.` };
     return picks.length >= 3 ? [...picks.slice(0, picks.length - 1), tagged] : [...picks, tagged];
 }
 

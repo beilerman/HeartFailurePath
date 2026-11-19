@@ -7,17 +7,19 @@
  */
 import { Patient, Medication, ScoredRegimen, RegimenMed, RegimenModification, ModificationSet, DomainScores } from '../../types';
 import {
-    DOMAIN_KEYS, DOMAIN_LABELS, WEIGHT_PROFILES, resolveWeightProfile, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS, WARNINGS_PRICED_BY_NAMED_ADJUSTMENT,
+    DOMAIN_KEYS, DOMAIN_LABELS, sideEffectScore, SIDE_EFFECT_BURDEN_DIVISOR, WEIGHT_PROFILES, resolveWeightProfile, SCORE_ADJUSTMENTS, NON_PENALIZED_WARNING_MARKERS, WARNINGS_PRICED_BY_NAMED_ADJUSTMENT,
     ScoreBreakdown, ScoreBreakdownAdjustment, ScoreBreakdownDomainLine, ScoreBreakdownOverride, ScoreDomainKey,
-    COMPLETENESS_SUBTARGET_CREDIT,
-    COMPLETENESS_GRADED_CREDIT_SPAN,
 } from './scoreModel';
 import { drugFacts } from './drugFacts';
 import { ivIronCreditTier } from '../clinicalPredicates';
 import { RAAS_CLASSES, MRA_POOL_CLASSES, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES, getMedicationClassGroup } from './registry';
-import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, isTargetDoseForPatient, doseProgressToTarget, restrictToStartTiers } from './regimenUtils';
+import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, therapyDoseCredit, restrictToStartTiers } from './regimenUtils';
 import { calculateAdherenceScore, calculateCostScore, calculateFunctionalScore, calculateGuidelineConcordanceScore, calculateNeurohormonalScore, calculateStructureScore, calculateVolumeScore, classifyPhenotype, describeConcordance, nsMraFillsMraSlot, Phenotype } from './domains';
 import { simulateModificationEffect } from './effects';
+import { symptomEstimateFor, describeSymptomEstimate, type SymptomEstimate } from './symptomBenefit';
+import { planCreditsFor } from './doseCredit';
+import { harmBurdenFor, HARM_TABLE, type HarmBurden } from './harmBurden';
+import { outcomeEstimateFor, describeOutcomeEstimate, type OutcomeEstimate, type OutcomeKey } from './outcomeBenefit';
 import { IntolerancePolicy } from './intolerance';
 import { RegimenAnalysis } from './candidates';
 import { CriticalDataAudit, ClinicalFlags } from './gates';
@@ -54,6 +56,7 @@ export interface ScoringContext {
 
 /** A warning's identity without its numbers ("Low Perfusion Pressure (MAP 62 mmHg)" and "(MAP 63 mmHg)" are the same warning). */
 export const warningKey = (w: string): string => w.replace(/-?\d+(\.\d+)?/g, '#');
+const GUIDELINE_REFERENCE_DETAIL = 'Shown for reference; not a ranking input. Ranking uses measured outcome effects, cost and dosing burden.';
 const isPenalizedWarning = (w: string): boolean => !NON_PENALIZED_WARNING_MARKERS.some(marker => w.includes(marker)) && !WARNINGS_PRICED_BY_NAMED_ADJUSTMENT.some(marker => w.includes(marker));
 
 export function buildScoringContext(
@@ -245,41 +248,22 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
 export function gdmtCompletenessFraction(activeModSet: ModificationSet, ctx: ScoringContext, slots: GdmtSlot[] = ctx.achievableSlots): { fraction: number; slots: number } {
     const { patient } = ctx;
     const achievableSlots = slots;
-    const SUBTARGET_CREDIT = COMPLETENESS_SUBTARGET_CREDIT;
+    // Per-drug credit is the shared therapyDoseCredit (regimenUtils.ts), also used by the outcome-benefit module; a slot takes its best drug's credit.
     const slotValue = (s: GdmtSlot): number => {
         const meds = activeModSet.resulting_regimen.filter(r => s.match(r.med.drug_class));
-        if (meds.length === 0) return 0;
-        let best = 0;
-        const optimal = meds.some(r => {
-            const doses = r.med.available_doses;
-            if (doses.length === 1) return true;
-            const atTarget = isTargetDoseForPatient(r, patient);
-            const strengths = doses.map(d => Number(d.strength)).filter(n => !Number.isNaN(n));
-            const atMax = strengths.length > 0 && Number(r.dose.strength) >= Math.max(...strengths);
-            // A dose held at an interaction cap (e.g. eplerenone 25 mg with a moderate CYP3A inhibitor) is at its maximum.
-            const cap = r.med.interaction_dose_cap?.(patient);
-            const atCap = !!cap && Number(r.dose.strength) >= cap.max_dose;
-            const full = atTarget || atMax || atCap;
-            if (!full) {
-                // Below target: SUBTARGET_CREDIT at or below the labeled starting tier, rising linearly to 1 at target (scoreModel.ts); the flat credit where no numeric target exists.
-                const progress = doseProgressToTarget(r, patient);
-                best = Math.max(best, progress === undefined ? SUBTARGET_CREDIT : SUBTARGET_CREDIT + COMPLETENESS_GRADED_CREDIT_SPAN * progress);
-            }
-            return full;
-        });
-        return optimal ? 1.0 : best;
+        return meds.reduce((best, r) => Math.max(best, therapyDoseCredit(r, patient)), 0);
     };
     if (achievableSlots.length === 0) return { fraction: 0, slots: 0 };
     const attained = achievableSlots.reduce((sum, s) => sum + slotValue(s), 0);
     return { fraction: attained / achievableSlots.length, slots: achievableSlots.length };
 }
 
-/** The eight domain scores for one simulated candidate (unrounded for the math, rounded for display). */
+/** The domain scores for one simulated candidate (unrounded for the math, rounded for display). */
 export function scoreDomains(
     sim: Simulation,
     activeModSet: ModificationSet,
     ctx: ScoringContext
-): { unrounded: Record<ScoreDomainKey, number>; rounded: DomainScores; completenessSlots: number } {
+): { unrounded: Record<ScoreDomainKey, number>; rounded: DomainScores; completenessSlots: number; outcomes: Record<OutcomeKey, OutcomeEstimate>; symptoms: SymptomEstimate; harm: HarmBurden; titrated: string[]; doseNotMeasured: string[] } {
     const { patient, dataAudit, phenotype } = ctx;
     const p = sim.projectedPatient;
 
@@ -295,11 +279,27 @@ export function scoreDomains(
     const s_complete = completeness.fraction * 100;
     // Attach the evidence basis (recommendation class + trials) for the pillars present.
     sim.rationale = [...sim.rationale, ...describeConcordance(activeModSet.resulting_regimen, patient, phenotype)];
+    // Expected outcome benefit: trial relative risks of the candidate's resulting regimen (outcomeBenefit.ts). Recorded measurements are never altered.
+    // Each option is valued as the PLAN it starts (planCreditsFor): new starts and increases at the trial-achieved dose, everything else by its dose. Harm is not discounted.
+    const plan = planCreditsFor(activeModSet, patient);
+    const outcomes: Record<OutcomeKey, OutcomeEstimate> = {
+        all_cause_death: outcomeEstimateFor(activeModSet.resulting_regimen, patient, 'all_cause_death', plan.creditFn),
+        hf_hospitalization: outcomeEstimateFor(activeModSet.resulting_regimen, patient, 'hf_hospitalization', plan.creditFn),
+    };
+    // Symptoms (KCCQ points, trial-anchored dose credit) and side effects (measured harm rates); recorded measurements are never altered.
+    const symptoms = symptomEstimateFor(activeModSet.resulting_regimen, patient, plan.creditFn);
+    const harm = harmBurdenFor(HARM_TABLE, activeModSet.resulting_regimen, patient);
     const unroundedDomainScores: Record<ScoreDomainKey, number> = {
+        mortality: outcomes.all_cause_death.score, hf_hospitalization: outcomes.hf_hospitalization.score,
+        symptoms: symptoms.score, side_effects: sideEffectScore(harm.burden),
         neurohormonal: s_neuro, functional: s_func, volume: s_vol, structure: s_struc,
         guideline: s_guide, completeness: s_complete, cost: s_cost, adherence: s_adhere,
     };
     const domainScores: DomainScores = {
+        mortality: Math.round(outcomes.all_cause_death.score),
+        hf_hospitalization: Math.round(outcomes.hf_hospitalization.score),
+        symptoms: Math.round(symptoms.score),
+        side_effects: Math.round(sideEffectScore(harm.burden)),
         neurohormonal: Math.round(s_neuro),
         functional: Math.round(s_func),
         volume: Math.round(s_vol),
@@ -310,7 +310,7 @@ export function scoreDomains(
         adherence: Math.round(s_adhere),
     };
 
-    return { unrounded: unroundedDomainScores, rounded: domainScores, completenessSlots: completeness.slots };
+    return { unrounded: unroundedDomainScores, rounded: domainScores, completenessSlots: completeness.slots, outcomes, symptoms, harm, titrated: plan.titrated, doseNotMeasured: plan.doseNotMeasured };
 }
 
 /**
@@ -323,7 +323,12 @@ export function aggregateScore(
     sim: Simulation,
     activeModSet: ModificationSet,
     ctx: ScoringContext,
-    completenessSlots: number = ctx.achievableSlots.length
+    completenessSlots: number = ctx.achievableSlots.length,
+    outcomes?: Record<OutcomeKey, OutcomeEstimate>,
+    symptomEstimate?: SymptomEstimate,
+    harm?: HarmBurden,
+    titrated: string[] = [],
+    doseNotMeasured: string[] = []
 ): { overall: number; raw: number; breakdown: ScoreBreakdown; normalizedSFBonus: number; gdmtCompleteness: number } {
     const { dataAudit, isVolumeDepleted } = ctx;
     const p = { ...sim.projectedPatient, ...sim.riskScreen, potassium: sim.riskScreen.potassium_high };
@@ -336,7 +341,7 @@ export function aggregateScore(
     const assessedWeight = unassessed.size ? DOMAIN_KEYS.reduce((sum, key) => sum + (unassessed.has(key) ? 0 : weights[key]), 0) : 1;
     const effectiveWeight = (key: ScoreDomainKey) => unassessed.has(key) ? 0 : weights[key] / assessedWeight;
 
-    // Weighted sum of the eight domains (weights sum to 100%), from the patient's WEIGHT_PROFILES row,
+    // Weighted sum of the twelve domains, six of which carry weight (weights sum to 100%), from the patient's WEIGHT_PROFILES row,
     // accumulated left-to-right in DOMAIN_KEYS order.
     const breakdownDomains: ScoreBreakdownDomainLine[] = DOMAIN_KEYS.map(key => ({
         key,
@@ -345,9 +350,13 @@ export function aggregateScore(
         weight: effectiveWeight(key),
         contribution: unroundedDomainScores[key] * effectiveWeight(key),
         ...(unassessed.has(key) ? { assessed: false, detail: ['neurohormonal','functional','volume','structure'].includes(key) ? 'Not assessed: treatment response is not quantified. Observed measurements do not establish the effect of this proposed regimen; this domain has zero ranking weight.' : 'Not assessed: required input is unavailable; excluded and remaining domain weights rescaled.' } : {}),
+        ...(key === 'mortality' && outcomes ? { detail: describeOutcomeEstimate(outcomes.all_cause_death, titrated, doseNotMeasured) } : {}),
+        ...(key === 'hf_hospitalization' && outcomes ? { detail: describeOutcomeEstimate(outcomes.hf_hospitalization, titrated, doseNotMeasured) } : {}),
+        ...(key === 'symptoms' && symptomEstimate ? { detail: describeSymptomEstimate(symptomEstimate, titrated) } : {}),
+        ...(key === 'side_effects' && harm ? { detail: `Burden ${harm.burden.toFixed(1)} points from measured one-year harm rates (score = 100 minus burden / ${SIDE_EFFECT_BURDEN_DIVISOR}); harm is charged in full at the trial rate; rates are trial averages and several multipliers multiply (an assumption); not a prediction for this patient.` } : {}),
         ...(key === 'functional' && !unassessed.has(key) && ctx.patient.kccq_score === undefined ? { detail: 'KCCQ not measured: average uses recorded NYHA and activity only; no KCCQ value or response is assumed.' } : {}),
-        ...(key === 'completeness' && completenessSlots === 0
-            ? { detail: 'No achievable indicated therapies for this patient - scored 0' }
+        ...(key === 'guideline' || key === 'completeness'
+            ? { detail: GUIDELINE_REFERENCE_DETAIL + (key === 'completeness' && completenessSlots === 0 ? ' No achievable indicated therapies for this patient - scored 0.' : '') }
             : {}),
     }));
     let overall = breakdownDomains.reduce((sum, d) => sum + d.contribution, 0);
@@ -372,7 +381,7 @@ export function aggregateScore(
         : 0;
     addAdjustment(SCORE_ADJUSTMENTS.SPECIAL_FEATURES, normalizedSFBonus, undefined, sim.specialFeatureItems);
 
-    // GDMT completeness is the eighth weighted DOMAIN (see gdmtCompletenessFraction), not a bonus here.
+    // GDMT completeness is a reference-only domain with weight 0 (see gdmtCompletenessFraction); it is not a bonus here.
     const gdmtCompleteness = unroundedDomainScores.completeness / 100;
 
     // P5: Volume depletion — boost diuretic removal candidates
@@ -512,7 +521,7 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
         }
 
         const domains = scoreDomains(sim, activeModSet, ctx);
-        const agg = aggregateScore(domains.unrounded, sim, activeModSet, ctx, domains.completenessSlots);
+        const agg = aggregateScore(domains.unrounded, sim, activeModSet, ctx, domains.completenessSlots, domains.outcomes, domains.symptoms, domains.harm, domains.titrated, domains.doseNotMeasured);
         results.push({
             regimen: activeModSet.resulting_regimen,
             projected_patient: sim.projectedPatient,

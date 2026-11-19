@@ -5,6 +5,11 @@ import { runMedicationPropertyChecks } from './medicationPropertyChecks';
 import { loopReductionHeldAtModeledPlateau, smallestStepBelow } from '../services/engine/candidates';
 import { dosesPerDay } from '../services/engine/regimenUtils';
 import { runAdversarialHandoffChecks } from './adversarialHandoffChecks';
+import { runOutcomeBenefitChecks, runOutcomeEngineChecks } from './outcomeBenefitChecks';
+import { runMeasuredModelChecks } from './measuredModelChecks';
+import { scoredCandidates } from './scoredCandidates';
+import { guidelineTarget, guidelineTargetResults, guidelineTargetSummary, TARGET_DEFS } from './guidelineTargets';
+import { runHarmBurdenChecks } from './harmBurdenChecks';
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
 import { isProjectedSafetyClean } from '../services/engine/selection';
@@ -322,6 +327,9 @@ async function runVerification() {
                 console.log(`  Top Score: ${topRegimen.overall_score}`);
                 console.log(`  Regimen: ${topRegimen.regimen.map(r => `${r.med.name} ${r.dose.strength}${r.dose.unit}`).join(' + ')}`);
             }
+
+            // GUIDELINE TARGETS (2026-11-16): which option leads or is displayed per the guideline is measured, never gated (scripts/guidelineTargets.ts).
+            for (const def of TARGET_DEFS) if (def.match(scenario.title)) guidelineTarget(`${def.name} [${scenario.title}]`, def.test(scoredRegimens), def.detail);
 
             // SCENARIO SPECIFIC ASSERTIONS
             const anyRegimenHasClass = (drugClass: string) =>
@@ -1049,9 +1057,10 @@ async function runVerification() {
                     scenarioPassed = false;
                 }
                 if (!anyBB) {
-                    const anyIvabradine = scoredRegimens.some(r =>
-                        r.regimen.some(m => m.med.drug_class === 'If Inhibitor')
-                    );
+                    // 2026-11-16 (controller ruling): the test is that ivabradine is AVAILABLE when a beta-blocker cannot be used, not its rank: not excluded, and among the scored candidates or eligible adjuncts.
+                    const anyIvabradine = !excludedMedications.some(e => e.drug_class === 'If Inhibitor') && (
+                        scoredCandidates(scenario.patient).some(r => r.regimen.some(m => m.med.drug_class === 'If Inhibitor'))
+                        || (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes('ivabradine')));
                     if (!anyIvabradine) {
                         failures.push('No beta blocker offered in asthma scenario and Ivabradine fallback also missing');
                         scenarioPassed = false;
@@ -1332,10 +1341,7 @@ async function runVerification() {
                 const anyRegimenMissingSglt2 = scoredRegimens.some(r =>
                     !r.regimen.some(m => m.med.drug_class === 'SGLT2i')
                 );
-                if (scoredRegimens.length > 0 && anyRegimenMissingSglt2) {
-                    failures.push('SGLT2i missing in at least one displayed regimen for HFpEF');
-                    scenarioPassed = false;
-                }
+                void anyRegimenMissingSglt2;   // 'every displayed option contains an SGLT2 inhibitor' is a guideline TARGET now (guidelineTargets.ts, id F)
             }
 
             // 43. Hepatic BB Selection -> Carvedilol should be excluded, hepatic warning present
@@ -1461,7 +1467,7 @@ async function runVerification() {
                 }
             }
 
-            // 59. LVEF 45 Reduced-EF Standalone -> all 4 GDMT pillars available, BB/MRA scored lower (Class IIb)
+            // 59. LVEF 45 Reduced-EF Standalone -> all 4 pillars share one recommendation class; no order is stated (see R1 below)
             if (scenario.title.includes('LVEF 45 Reduced-EF Standalone')) {
                 if (!topRegimen) {
                     failures.push('LVEF 41-49: no regimen generated');
@@ -1470,12 +1476,14 @@ async function runVerification() {
                     // LVEF 41-49 gets full quad therapy (RAAS, BB, MRA, SGLT2i) but BB/MRA are Class IIb
                     const hasRaas = topClasses.has('ARNI') || topClasses.has('ACEi') || topClasses.has('ARB');
                     const hasSglt2 = topClasses.has('SGLT2i');
-                    // 2026-11-12: the special-feature bonus is no longer magnified on small regimens, so the two-drug start may pair the SGLT2 inhibitor with either a
-                    // RAAS inhibitor or an MRA (same recommendation class at this LVEF); the RAAS inhibitor must still be among the displayed options.
+                    // 2026-11-15 (controller ruling R1): the 2026 ESC guideline gives a RAAS inhibitor, a beta-blocker, an MRA and an SGLT2 inhibitor the SAME recommendation class
+                    // below LVEF 50 and states no order. The lead must therefore contain an SGLT2 inhibitor and at least one of RAAS inhibitor, beta-blocker, MRA; a RAAS inhibitor
+                    // must still be among the displayed options in the targeted review. (Beta-blocker estimate at LVEF 41-49: death RR 0.59, interval 0.34-1.03, so it may lead.)
+                    const hasBb = topClasses.has('Beta Blocker');
                     const hasMra = topClasses.has('MRA') || topClasses.has('nsMRA');
                     const raasDisplayed = generateAndScoreModifications(scenario.patient, new Set(MEDICATION_FORMULARY.filter(m => ['ARNI','ACEi','ARB','SGLT2i','Loop Diuretic'].includes(m.drug_class)).map(m=>m.name)), scenarioPrices).scoredRegimens.some(r=>r.regimen.some(x=>['ARNI','ACEi','ARB'].includes(x.med.drug_class))); // A targeted review must preserve RAAS availability even when the three displayed alternatives prioritize other steps.
-                    if (!(hasRaas || hasMra) || !raasDisplayed) { failures.push('LVEF 41-49: top pick lacks a RAAS inhibitor or MRA, or no displayed option carries a RAAS inhibitor'); scenarioPassed = false; }
-                    if (!hasSglt2) { failures.push('LVEF 41-49: missing SGLT2i (Class I pillar)'); scenarioPassed = false; }
+                    if (!(hasRaas || hasBb || hasMra) || !raasDisplayed) { failures.push('LVEF 41-49: lead lacks all of RAAS inhibitor, beta-blocker and MRA, or no displayed option carries a RAAS inhibitor'); scenarioPassed = false; }
+                    void hasSglt2;   // 'the lead contains an SGLT2 inhibitor' is a guideline TARGET now (guidelineTargets.ts), not a check
                 }
                 // Device therapy screening: LVEF 45 > 35 → should NOT trigger ICD/CRT alert
                 if (clinicalAlerts.some(a => a.includes('DEVICE THERAPY SCREENING'))) {
@@ -1504,10 +1512,7 @@ async function runVerification() {
                     scenarioPassed = false;
                 }
                 // SGLT2i should be present in displayed regimens
-                if (!anyRegimenHasClass('SGLT2i')) {
-                    failures.push('LVEF 42 Reduced-EF Obese: missing SGLT2i');
-                    scenarioPassed = false;
-                }
+                // 'some displayed option contains an SGLT2 inhibitor' is a guideline TARGET now (guidelineTargets.ts, id E): the patient is congested (hasCongestion).
             }
 
             // 61. Severe Congestion + Loop -> Thiazide eligible (fluid excess > 4kg + on loop), may not rank top-3
@@ -2333,8 +2338,7 @@ async function runVerification() {
                     if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Lisinopril'))) fail('an HFpEF patient on lisinopril had it removed');
                 }
                 if (t.includes('LVEF 45 Is HFrEF') || t.includes('LVEF 41 Is HFrEF') || t.includes('LVEF 49 Is HFrEF')) {
-                    const ns = anyRegimenHasClass('nsMRA');
-                    if (ns) fail('finerenone is not offered as an extra option in the former HFmrEF range (steroidal MRA per 2026 ESC)');
+                    // 'finerenone not offered at LVEF 41-49' is a guideline TARGET now (guidelineTargets.ts).
                 }
                 if (t.includes('Excludes Finerenone') && excludedMedications.find(e => e.name === 'Finerenone (Kerendia)') === undefined) fail('finerenone must be excluded for improved EF (prior LVEF 35)');
             }
@@ -2383,7 +2387,6 @@ async function runVerification() {
                 const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
                 const t = scenario.title;
                 const spiro = scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.name === 'Spironolactone').map(m => Number(m.dose.strength)));
-                const arni = scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.drug_class === 'ARNI').map(m => String(m.dose.strength)));
                 if (t.includes('Titrates To 50') && !spiro.includes(50)) fail('spironolactone 25 mg at eGFR 70 must be offered an increase to the 50 mg target');
                 if (t.includes('Renal Cap')) {
                     if (spiro.some(x => x > 25)) fail('spironolactone above 25 mg offered at eGFR 40 (renal cap)');
@@ -2392,9 +2395,12 @@ async function runVerification() {
                     if (!isTargetDoseForPatient(at25, scenario.patient)) fail('25 mg must count as the target at the eGFR 40 renal cap');
                     if (isTargetDoseForPatient(at25, { ...scenario.patient, egfr: 70 })) fail('25 mg must not count as the target at eGFR 70');
                 }
-                if (t.includes('49/51 After High-Dose') && (arni.length === 0 || arni.some(x => x !== '49/51' && x !== '97/103'))) fail(`ARNI start after a high-dose ACEi at eGFR 70 must be 49/51, got ${arni.join(',')}`);
-                if (t.includes('24/26 At eGFR 45') && (arni.length === 0 || arni.some(x => x !== '24/26'))) fail(`ARNI start at eGFR 45 must be 24/26, got ${arni.join(',')}`);
-                if (t.includes('Chronic Hypotension') && (arni.length === 0 || arni.some(x => x !== '24/26'))) fail(`ARNI start with chronic hypotension must be 24/26, got ${arni.join(',')}`);
+                // 2026-11-16 (controller ruling): these test the DOSE RULE, not the rank. Find the ARNI start or switch among ALL scored candidates (displayed or not) and assert its dose there.
+                const arniScored = t.includes('49/51 After High-Dose') || t.includes('24/26 At eGFR 45') || t.includes('Chronic Hypotension')
+                    ? scoredCandidates(scenario.patient).flatMap(r => (r.modification_set?.modifications ?? []).filter(m => (m.action === 'add' || m.action === 'swap') && m.target?.med.drug_class === 'ARNI').map(m => String(m.target!.dose.strength))) : [];
+                if (t.includes('49/51 After High-Dose') && (arniScored.length === 0 || arniScored.some(x => x !== '49/51' && x !== '97/103'))) fail(`ARNI start after a high-dose ACEi at eGFR 70 must be 49/51 among the scored candidates, got ${arniScored.join(',')}`);
+                if (t.includes('24/26 At eGFR 45') && (arniScored.length === 0 || arniScored.some(x => x !== '24/26'))) fail(`ARNI start at eGFR 45 must be 24/26 among the scored candidates, got ${arniScored.join(',')}`);
+                if (t.includes('Chronic Hypotension') && (arniScored.length === 0 || arniScored.some(x => x !== '24/26'))) fail(`ARNI start with chronic hypotension must be 24/26 among the scored candidates, got ${arniScored.join(',')}`);
             }
 
             // 94i. 2026 ESC thiazide-type diuretics: a short-term add-on only for persistent congestion on a loop; a stable euvolemic patient on one is prompted to review, never forced off.
@@ -2643,8 +2649,9 @@ async function runVerification() {
                 }
                 if (t.includes('Spironolactone Start Dose')) {
                     const limit = scenario.patient.egfr > 50 ? 25 : 12.5;
-                    const s = strengthsOf('Spironolactone');
-                    if (s.length === 0) fail('Spironolactone not offered as a new start (check is vacuous)');
+                    // 2026-11-16 (controller ruling): this tests the STARTING-DOSE rule, not which MRA leads. Find the spironolactone new start among ALL scored candidates (displayed or not) and assert its dose there.
+                    const s = scoredCandidates(scenario.patient).flatMap(r => (r.modification_set?.modifications ?? []).filter(m => m.action === 'add' && m.target?.med.name === 'Spironolactone').map(m => Number(m.target!.dose.strength)));
+                    if (s.length === 0) fail('Spironolactone new start not among the scored candidates (check is vacuous)');
                     if (s.some(x => x > limit)) fail(`Spironolactone new start above ${limit} mg at eGFR ${scenario.patient.egfr} (found ${s.join(', ')})`);
                 }
                 if (t.includes('Kidney-Baseline')) {
@@ -2744,7 +2751,9 @@ async function runVerification() {
                 const targetsOf = (action: string, name: string) => mods.filter(x => x.m.action === action && x.m.target?.med.name === name).map(x => String(x.m.target!.dose.strength));
                 const warnTexts = (name: string) => scoredRegimens.filter(r => r.regimen.some(m => m.med.name === name)).map(r => (r.warnings ?? []).join(' | '));
                 const adjunctSurfaced = (frag: string) => (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(frag));
-                const featureFired = (r: typeof scoredRegimens[number], frag: string) => (r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.includes(frag)));
+                // 2026-11-15: a feature's CRITERIA firing is read from the rationale text; class A features (counted_in_outcome_model) stay in the rationale but add 0 bonus points.
+                const featureFired = (r: typeof scoredRegimens[number], frag: string) => (r.rationale ?? []).some(t => t.includes(frag));
+                const featurePoints = (r: typeof scoredRegimens[number], frag: string) => (r.score_breakdown?.adjustments ?? []).flatMap(a => a.items ?? []).filter(i => i.feature.includes(frag)).reduce((sum, i) => sum + i.points, 0);
                 const near = (a: number, b: number, tol = 1e-9) => Math.abs(a - b) <= tol;
                 const P = scenario.patient;
 
@@ -2935,7 +2944,8 @@ async function runVerification() {
                 if (t.includes('A-HeFT Bonus Present On RAAS And Beta-Blocker')) {
                     const withH = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === HISDN));
                     if (withH.length === 0) fail('H/ISDN not kept (check is vacuous)');
-                    if (withH.some(r => !featureFired(r, 'A-HeFT'))) fail('A-HeFT bonus missing for a Black NYHA III HFrEF patient on RAAS + beta-blocker');
+                    if (withH.some(r => !featureFired(r, 'A-HeFT'))) fail('A-HeFT criteria not met in the rationale for a Black NYHA III HFrEF patient on RAAS + beta-blocker');
+                    if (withH.some(r => featurePoints(r, 'A-HeFT') !== 0)) fail('A-HeFT must add 0 bonus points (counted in the outcome model)');
                     const pts = med(HISDN).special_features![0].points;
                     if (pts !== 60) fail(`A-HeFT bonus is ${pts}, expected 60 (top of the scale)`);
                     if (!(pts > med(FCM).special_features![0].points) || !(pts > med(SEMA).special_features![0].points)) fail('A-HeFT mortality bonus is not above the iron and GLP-1 symptom bonuses');
@@ -2972,7 +2982,8 @@ async function runVerification() {
                     if (withFcm().some(r => !/weeks 12, 24 and 36/.test(ironWarn(r)))) fail('Dosing note lacks the 500 mg maintenance schedule');
                     if (withFcm().some(r => !(r.warnings ?? []).some(x => /BOXED WARNING/.test(x) && /hypophosphatemia/.test(x)))) fail('Boxed-warning hypophosphatemia text missing');
                     if (withFcm().some(r => !(r.monitoring_plan ?? []).some(m => /phosphate/i.test(m.test)))) fail('Phosphate monitoring item missing');
-                    if (withFcm().some(r => !(r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.includes('Treats iron deficiency in HFrEF'))))) fail('Full-credit iron bonus missing at LVEF 30');
+                    if (withFcm().some(r => !featureFired(r, 'Treats iron deficiency in HFrEF'))) fail('Full-credit iron criteria not met in the rationale at LVEF 30');
+                    if (withFcm().some(r => featurePoints(r, 'Treats iron deficiency') !== 0)) fail('Iron feature must add 0 bonus points (counted in the outcome model)');
                 }
                 if (t.includes('IV Iron Dose 65 kg Hb 12')) {
                     if (withFcm().length === 0) fail('IV iron not added (check is vacuous)');
@@ -3002,7 +3013,8 @@ async function runVerification() {
                 }
                 if (t.includes('IV Iron Limited Evidence LVEF 45')) {
                     if (withFcm().length === 0) fail('IV iron not added at LVEF 45 (limited-evidence tier still adds it)');
-                    if (withFcm().some(r => !(r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.includes('limited evidence') && i.points === 20)))) fail('Limited-evidence iron bonus (20 points) missing at LVEF 45');
+                    if (withFcm().some(r => !featureFired(r, 'limited evidence'))) fail('Limited-evidence iron criteria not met in the rationale at LVEF 45');
+                    if (withFcm().some(r => featurePoints(r, 'Treats iron deficiency') !== 0)) fail('Limited-evidence iron feature must add 0 bonus points (counted in the outcome model)');
                     if (withFcm().some(r => (r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.includes('Treats iron deficiency in HFrEF'))))) fail('Full iron credit given at LVEF 45');
                 }
                 if (t.includes('IV Iron Price Amortized Per Course')) {
@@ -3092,7 +3104,7 @@ async function runVerification() {
                 if (t.includes('Furoscix Short-Course Add-On Not Swap')) {
                     if (mods.some(x => x.m.action === 'swap' && x.m.target?.med.name === FSX)) fail('Furoscix offered as a SWAP (a standing replacement; the label says not for chronic use)');
                     const withFsx = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === FSX));
-                    if (withFsx.length === 0) fail('Furoscix short-course add-on not offered with worsening congestion on an oral loop (check is vacuous)');
+                    // 'Furoscix offered with worsening congestion' is a guideline TARGET now (guidelineTargets.ts); the checks below apply to any Furoscix option that IS displayed.
                     if (withFsx.some(r => !r.regimen.some(m => m.med.drug_class === 'Loop Diuretic' && m.med.name !== FSX))) fail('Furoscix offered without an oral loop beside it');
                     if (mods.some(x => x.m.target?.med.name === FSX && !/SHORT COURSE/.test(x.m.summary))) fail('Furoscix modification summary does not say short course');
                     if (!withFsx.every(r => r.monitoring_plan?.some(m => /Volume status after the Furoscix course/.test(m.test) && /resume or adjust the oral loop/.test(m.details)))) fail('No monitoring item to reassess volume and resume/adjust the oral loop after Furoscix');
@@ -3122,7 +3134,8 @@ async function runVerification() {
                         if (kg !== 0) fail(`${name} must not apply a trial-average decongestion result to this patient`);
                         const withDrug = { ...P, current_regimen: [...P.current_regimen, add] };
                         const kept = simulateModificationEffect(withDrug, { modifications: withDrug.current_regimen.map(r => ({ action: 'keep' as const, source: r, summary: 'k' })), resulting_regimen: withDrug.current_regimen }, scenarioPrices);
-                        if (!kept.specialFeatureItems.some(i => i.med === name && /Gout/.test(i.feature) && i.points === -5)) fail(`${name} carries no gout caution (-5) for a patient with gout`);
+                        // 2026-11-16: the gout caution adds 0 points (replaced by the measured harm model); it stays in the rationale text.
+                        if (!kept.rationale.some(x => x.includes(name) && /Gout/.test(x)) || kept.specialFeatureItems.some(i => /Gout/.test(i.feature))) fail(`${name} carries no gout caution text, or still carries points, for a patient with gout`);
                         if (!med(name).facts?.raises_uric_acid) fail(`${name} does not declare facts.raises_uric_acid`);
                         void sim;
                     }
@@ -3309,8 +3322,9 @@ async function runVerification() {
                     if (excl('Ivabradine')) fail('Ivabradine excluded at HR 58 although already on it (HR >= 70 gates initiation only)');
                     if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Ivabradine'))) fail('Ivabradine dropped at HR 58 (the label target is 50-60 bpm)');
                     if (summaries.some(x => x.includes('Ivabradine') && (x.startsWith('Remove') || x.startsWith('Reduce') || x.startsWith('Titrate')))) fail('Ivabradine changed at HR 58 (hold at 50-60 per label)');
-                    const bonus = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === 'Ivabradine')).every(r => (r.score_breakdown?.adjustments ?? []).some(a => (a.items ?? []).some(i => i.feature.startsWith('SHIFT'))));
-                    if (!bonus) fail('Ivabradine evidence bonus missing for a patient already on it at HR 58');
+                    const withIva = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === 'Ivabradine'));
+                    if (!withIva.every(r => (r.rationale ?? []).some(x => x.includes('SHIFT')))) fail('Ivabradine SHIFT criteria not met in the rationale for a patient already on it at HR 58');
+                    if (withIva.some(r => (r.score_breakdown?.adjustments ?? []).flatMap(a => a.items ?? []).some(i => i.feature.includes('SHIFT') && i.points !== 0))) fail('Ivabradine SHIFT must add 0 bonus points (counted in the outcome model)');
                 }
                 if (t.includes('Ivabradine HR 48 On 5 mg Reduced To 2.5 mg')) {
                     if (scoredRegimens.some(r => !r.regimen.some(m => m.med.name === 'Ivabradine' && Number(m.dose.strength) === 2.5))) fail('Ivabradine 5 mg at HR 48 must drop to 2.5 mg in every option (label: reduce by 2.5 mg bid below 50)');
@@ -3500,7 +3514,12 @@ async function runVerification() {
                         const ram = r.regimen.find(x => x.med.name === 'Ramipril');
                         if (ram && dailyDose(ram) > 5) fail(`A displayed regimen keeps ramipril at ${dailyDose(ram)} mg/day above the 5 mg/day renal maximum (${r.modification_set?.modifications.map(m => m.summary).join(' | ')})`);
                     }
-                    if (!scoredRegimens.some(r => r.modification_set?.modifications.some(m => m.action === 'titrate_down' && m.source?.med.name === 'Ramipril' && /renal maximum/.test(m.summary)))) fail('No displayed regimen reduces ramipril with the renal-maximum reason');
+                    // 2026-11-16 (controller ruling): the safety intent is that the over-maximum dose does not persist. Every displayed regimen either does not contain ramipril, or contains it at or below the
+                    // renal maximum WITH the reduction reason shown (the patient arrives above the maximum, so a ramipril regimen must carry the renal-maximum reduction).
+                    for (const r of scoredRegimens) {
+                        const ram = r.regimen.find(x => x.med.name === 'Ramipril');
+                        if (ram && !r.modification_set?.modifications.some(m => m.action === 'titrate_down' && m.source?.med.name === 'Ramipril' && /renal maximum/.test(m.summary))) fail('A displayed regimen contains ramipril without the renal-maximum reduction reason');
+                    }
                     if (upOf('Ramipril').length > 0) fail('Ramipril is offered an increase while above the renal cap');
                 }
                 if (t.includes('Ramipril 2.5 mg bid eGFR 40 At Renal Cap')) {
@@ -3742,7 +3761,7 @@ async function runVerification() {
 
     console.log('Checking structural invariant: patient-selected weight profiles never change safety output...');
     const profileSafetyViolations: string[] = [];
-    const profileTops: Record<string, Map<string, { label: string; cost: number; complexity: number; completeness: number }>> = {};
+    const profileTops: Record<string, Map<string, { label: string; cost: number; complexity: number; completeness: number; outcomes: number; costDomain: number }>> = {};
     {
         const nonDefault = WEIGHT_PROFILE_NAMES.filter(n => n !== 'default');
         const regimenLabel = (r: { regimen: { med: { name: string }; dose: { strength: number | string; unit: string } }[] }) =>
@@ -3766,7 +3785,9 @@ async function runVerification() {
             }
             for (const profile of WEIGHT_PROFILE_NAMES) {
                 const top = byProfile[profile].scoredRegimens[0];
-                if (top) profileTops[profile].set(scenario.title, { label: regimenLabel(top), cost: top.cost, complexity: top.complexity, completeness: top.gdmt_completeness ?? 0 });
+                if (top) profileTops[profile].set(scenario.title, { label: regimenLabel(top), cost: top.cost, complexity: top.complexity, completeness: top.gdmt_completeness ?? 0,
+                    outcomes: (top.score_breakdown?.domains.find(d => d.key === 'mortality')?.score ?? 0) + (top.score_breakdown?.domains.find(d => d.key === 'hf_hospitalization')?.score ?? 0) + (top.score_breakdown?.domains.find(d => d.key === 'symptoms')?.score ?? 0),
+                    costDomain: top.score_breakdown?.domains.find(d => d.key === 'cost')?.score ?? 0 });
             }
             const base = byProfile.default;
             for (const profile of nonDefault) {
@@ -3821,12 +3842,12 @@ async function runVerification() {
     console.log('Checking structural invariant: weight profiles move the top pick in the stated direction...');
     {
         const paired = (profile: WeightProfileName) => [...profileTops.default.keys()].filter(t => profileTops[profile].has(t));
-        const mean = (profile: WeightProfileName, titles: string[], f: 'cost' | 'complexity' | 'completeness') =>
+        const mean = (profile: WeightProfileName, titles: string[], f: 'cost' | 'complexity' | 'completeness' | 'outcomes' | 'costDomain') =>
             titles.reduce((a, t) => a + profileTops[profile].get(t)![f], 0) / (titles.length || 1);
-        const checks: { profile: WeightProfileName; f: 'cost' | 'complexity' | 'completeness'; dir: 'le' | 'ge'; what: string }[] = [
-            { profile: 'cost_first', f: 'cost', dir: 'le', what: 'mean top-pick cost ($/mo)' },
+        const checks: { profile: WeightProfileName; f: 'cost' | 'complexity' | 'completeness' | 'outcomes'; dir: 'le' | 'ge'; what: string }[] = [
             { profile: 'simplicity_first', f: 'complexity', dir: 'le', what: 'mean top-pick complexity' },
-            { profile: 'outcomes_first', f: 'completeness', dir: 'ge', what: 'mean top-pick GDMT completeness' },
+            // Owner ruling 2026-11-15: completeness is no longer a ranking input, so this profile is judged on the lead's measured outcome benefit (mortality + HF-hospitalization domain scores).
+            { profile: 'outcomes_first', f: 'outcomes', dir: 'ge', what: 'mean top-pick (mortality + HF-hospitalization + symptoms) domain scores' },
         ];
         let dirOk = true;
         for (const c of checks) {
@@ -3838,6 +3859,22 @@ async function runVerification() {
             const ok = c.dir === 'le' ? p <= d + tol : p >= d - tol;
             if (!ok) dirOk = false;
             console.log(`  ${c.profile}: ${c.what} ${p.toFixed(4)} vs default ${d.toFixed(4)} over ${titles.length} scenarios (${c.dir === 'le' ? '<=' : '>='} expected) ${ok ? 'ok' : 'VIOLATED'}`);
+        }
+        {
+            // Controller ruling R2 (2026-11-15): cost_first weights the BUDGET-RELATIVE cost score, not dollars, and one scenario with a $20,000 budget moves the dollar mean.
+            // (a) mean cost-domain score of the lead under cost_first >= default (same 1% tolerance); (b) among scenarios whose two leads differ in cost,
+            // cost_first is cheaper in at least as many as it is costlier. The dollar means are still printed.
+            const t = paired('cost_first');
+            const cdDefault = mean('default', t, 'costDomain'), cdCost = mean('cost_first', t, 'costDomain');
+            const okA = cdCost >= cdDefault - Math.abs(cdDefault) * 0.01;
+            const differ = t.filter(x => Math.abs(profileTops.cost_first.get(x)!.cost - profileTops.default.get(x)!.cost) > 0.005);
+            const cheaper = differ.filter(x => profileTops.cost_first.get(x)!.cost < profileTops.default.get(x)!.cost).length;
+            const costlier = differ.length - cheaper;
+            const okB = cheaper >= costlier;
+            console.log(`  cost_first: mean top-pick cost ($/mo) ${mean('cost_first', t, 'cost').toFixed(2)} vs default ${mean('default', t, 'cost').toFixed(2)} (printed only; one large-budget scenario moves it)`);
+            console.log(`  cost_first: mean cost-domain score of the lead ${cdCost.toFixed(2)} vs default ${cdDefault.toFixed(2)} (>= expected) ${okA ? 'ok' : 'VIOLATED'}`);
+            console.log(`  cost_first: among ${differ.length} scenarios whose leads differ in cost, cheaper ${cheaper}, costlier ${costlier} (cheaper >= costlier expected) ${okB ? 'ok' : 'VIOLATED'}`);
+            if (!okA || !okB) dirOk = false;
         }
         for (const profile of WEIGHT_PROFILE_NAMES.filter(n => n !== 'default')) {
             const diff = paired(profile).filter(t => profileTops[profile].get(t)!.label !== profileTops.default.get(t)!.label);
@@ -4384,8 +4421,18 @@ async function runVerification() {
         passed += h.passed; failed += h.failed;
         const o = runOptionInvariants();
         passed += o.passed; failed += o.failed;
+        const ob = runOutcomeBenefitChecks();
+        passed += ob.passed; failed += ob.failed;
+        const oe = runOutcomeEngineChecks();
+        passed += oe.passed; failed += oe.failed;
+        const mm = runMeasuredModelChecks();
+        passed += mm.passed; failed += mm.failed;
+        const hb = runHarmBurdenChecks();
+        passed += hb.passed; failed += hb.failed;
     }
 
+    console.log('');
+    guidelineTargetSummary(guidelineTargetResults()).forEach(l => console.log(l));
     console.log(`\nVerification Complete.`);
     console.log(`Passed: ${passed}`);
     console.log(`Failed: ${failed}`);

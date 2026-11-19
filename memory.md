@@ -578,3 +578,24 @@ consistency. NOTE: Phase-B recClass labels are metadata only — changing a labe
 - Alerts are written before options exist. Any alert sentence that says what "the plan" does must go through `reconcilePlanAlerts`.
 - Open, in priority order, in the review record: flat RAAS potassium effect (and binders attached to dose reductions), MRA kidney thresholds on continuation, completeness credit vs renal caps, dose-reduction steps and wording.
 - Reviewer probe scripts lived in a session scratch directory and were not kept; the review record carries enough detail to reproduce each open item.
+
+## First-principles scoring model (2026-11-16; record: docs/first-principles-model-2026-11-16/README.md)
+
+### Gotchas
+- Header comments of `scoreModel.ts`, `outcomeBenefit.ts`, `harmBurden.ts`, `selection.ts` and `scoring.ts` and the `WEIGHT_PROFILE_META` descriptions were brought to the six-factor model at the final pass 2026-11-16 (comment/text only; `npm run golden` stayed byte-identical). `harmBurden.ts`'s own `score` field is still `100 - burden`; the side_effects domain uses `sideEffectScore` (burden / 2).
+- The notes-resolved files in `docs/harm-evidence-2026-11-15/` describe the table BEFORE merge rulings R7-R9; `data/harmEvidence.json` is current (e.g. loop hypokalemia is now a 6.2 sibling row; ARB syncope and eplerenone gynecomastia are no longer upper bounds).
+- Dose anchors carry a `unit` and a check (`measuredModelChecks.ts`) asserts each lies inside its drug's dose range; the digoxin anchor was once 0.125 (mg) against a mcg formulary (found by review, fixed: 125 mcg/day). Keep the check.
+- `guideline:report` rewrites `docs/outcome-evidence-2026-11-15/guideline-reproduction.txt` every run. Targets are TARGET MET/MISSED lines, never a failure.
+- Congested loop rows apply only when `hasCongestion(patient)`. Loops have no measured dose relation: credit 1 at any dose (the old c0 for an unchanged loop in a congested patient was removed). Keeping a loop in a congested patient must score above removing it (hard check in `measuredModelChecks.ts`); congestion relief by dose is not modelled.
+- Unknown patient values are charged as the higher-risk case (`harmBurden.ts`: sex-specific rows, multipliers with ratio above 1); `unknown_assumptions` feeds the drill-down. Never turn this back into "not applied".
+- `guideline:report` compares with the frozen `data/golden/guideline-baseline-a6cb28f.json`, not the live golden reference (which was refreshed with the new engine).
+- The UI computes three comparisons the engine does not output (symptom change, burden change, "at today's doses" versus current) with engine functions and rebuilds the current regimen from the option's modification set; a UI check asserts the rebuilt regimen equals the patient's for every scenario.
+- `SPECIAL_FEATURES` still appears in raw-score ledgers: it carries only the forced-swap +15 (normalized, clamped to 12). Special-feature `points` in `constants.ts` are retired documentation.
+- `components/evidenceMatrix.ts` parses `docs/evidence-matrix.md`: a table row must have exactly 8 cells split on " | " (no pipes inside cells) or it becomes a note; `## ` starts a section.
+- UI display model file is `components/expectedEffectModel.ts` (not `expectedEffect.ts`: casing collision with `ExpectedEffect.tsx`).
+
+### Decisions worth remembering
+- Evidence labels exist so extrapolation is never presented as a finding; "assumed neutral" is a decision, not a result.
+- Owner decisions still open are numbered in README section 10 (ordered by estimated influence: titrated valuation, weights, side-effect scale, upper-bound rows, loop rows, shrinkage, class limit, finerenone at LVEF 41-49, KCCQ anchor, c0, safety penalties, swap +15, beta-blocker figure, interval widening, weak harm rows, SOLVD denominator, baseline risk).
+- Ruled 2026-11-16: section 10 item 5, in the owner's words "use the Cochrane diuretic figures for congested patients". The engine already did this (no output change). Not covered by that ruling: how the figures are precision-weighted, the neutral rows for non-congested patients, full loop credit at any dose.
+- Attribution rule: write "owner ruling" only for something the owner said (the four quotes in README section 1). Decisions Claude made while building are "controller ruling". On 2026-11-16 about 40 labels in `data/outcomeEvidence.json`, code comments and README section 6a had this wrong (including a sentence quoted as the owner's that Claude wrote) and were corrected; sub-agent briefs had passed controller rulings on as owner rulings.

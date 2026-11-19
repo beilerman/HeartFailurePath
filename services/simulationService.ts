@@ -12,7 +12,7 @@ import { buildEligibleAdjuncts, assembleOutput, reconcilePlanAlerts, annotateGdm
 
 // Public facade: every symbol this module exported before the phase-4 split is re-exported here,
 // so nothing outside services/ needs an import change.
-export { isTargetDoseForPatient, getTargetDosePatientContext, clonePatient } from './engine/regimenUtils';
+export { isTargetDoseForPatient, getTargetDosePatientContext, clonePatient, hasCongestion } from './engine/regimenUtils';
 export { isRenalOnlyContraindication, deriveIntolerancePolicy, currentMedIntoleranceReason } from './engine/intolerance';
 export type { IntolerancePolicy } from './engine/intolerance';
 export { MRA_POOL_CLASSES } from './engine/registry';
