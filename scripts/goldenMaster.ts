@@ -7,7 +7,7 @@
  * non-zero on any difference; `npm run golden:update` rewrites the snapshot.
  *
  * Only update the snapshot for an INTENDED clinical/behavior change, in its own commit that
- * says why. A pure refactor must leave it byte-identical.
+ * says why. A pure refactor must leave it identical (text exact, numbers to 1e-9).
  *
  * ADDITIVE_KEYS: explanation-only fields added after the baseline was captured. They are
  * stripped before comparison so adding explanatory output does not invalidate the baseline.
@@ -70,16 +70,45 @@ export async function capture(): Promise<Record<string, unknown>> {
     return result;
 }
 
-function firstDiff(a: unknown, b: unknown, path: string): string | null {
-    if (JSON.stringify(a) === JSON.stringify(b)) return null;
-    if (a && b && typeof a === 'object' && typeof b === 'object' && Array.isArray(a) === Array.isArray(b)) {
+/**
+ * Numbers are compared to 1e-9, the precision the ranking itself uses (`stable` in services/engine/selection.ts).
+ * Reason: the measured model takes logarithms and exponentials of relative risks, and those functions differ in the
+ * last binary digit between processors (this Mac and the Linux machine that runs CI disagreed at the 15th significant
+ * digit of four raw scores, 2026-11-18). Everything else (text, booleans, structure, key sets) must match exactly.
+ */
+export const NUMBER_TOLERANCE = 1e-9;
+
+export function firstDiff(a: unknown, b: unknown, path: string): string | null {
+    if (typeof a === 'number' && typeof b === 'number') {
+        if (a === b || Math.abs(a - b) <= NUMBER_TOLERANCE) return null;
+    } else if (a && b && typeof a === 'object' && typeof b === 'object' && Array.isArray(a) === Array.isArray(b)) {
         const keys = new Set([...Object.keys(a as object), ...Object.keys(b as object)]);
         for (const k of keys) {
             const d = firstDiff((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k], `${path}.${k}`);
             if (d) return d;
         }
+        return null;
+    } else if (JSON.stringify(a) === JSON.stringify(b)) {
+        return null;
     }
     return `${path}\n      expected: ${JSON.stringify(a)?.slice(0, 300)}\n      actual:   ${JSON.stringify(b)?.slice(0, 300)}`;
+}
+
+/** The comparison must still catch real changes; run before every comparison so the tolerance cannot be loosened unnoticed. */
+function selfCheck() {
+    const base = { s: [{ raw_score: 61.17708807742629, overall_score: 61, name: 'Furosemide', flags: [true, null] }] };
+    const same = (x: unknown) => firstDiff(base, x, 'self') === null;
+    const cases: Array<[string, boolean]> = [
+        ['processor-level noise in a number is accepted', same({ s: [{ raw_score: 61.177088077426305, overall_score: 61, name: 'Furosemide', flags: [true, null] }] })],
+        ['a change of one millionth in a number is caught', !same({ s: [{ raw_score: 61.17708907742629, overall_score: 61, name: 'Furosemide', flags: [true, null] }] })],
+        ['a changed word is caught', !same({ s: [{ raw_score: 61.17708807742629, overall_score: 61, name: 'Torsemide', flags: [true, null] }] })],
+        ['a missing field is caught', !same({ s: [{ raw_score: 61.17708807742629, name: 'Furosemide', flags: [true, null] }] })],
+        ['an added list item is caught', !same({ s: [{ raw_score: 61.17708807742629, overall_score: 61, name: 'Furosemide', flags: [true, null, false] }] })],
+        ['a number that became text is caught', !same({ s: [{ raw_score: '61.17708807742629', overall_score: 61, name: 'Furosemide', flags: [true, null] }] })],
+        ['a value that became null is caught', !same({ s: [{ raw_score: null, overall_score: 61, name: 'Furosemide', flags: [true, null] }] })],
+    ];
+    const failed = cases.filter(([, ok]) => !ok).map(([name]) => name);
+    if (failed.length) { console.error('GOLDEN MASTER SELF-CHECK FAILED: ' + failed.join('; ')); process.exit(1); }
 }
 
 async function main() {
@@ -96,6 +125,7 @@ async function main() {
         console.log(`Golden master written: ${Object.keys(actual).length} runs -> ${SNAPSHOT}`);
         return;
     }
+    selfCheck();
     const expected = JSON.parse(gunzipSync(readFileSync(SNAPSHOT)).toString('utf8')) as Record<string, unknown>;
     const keys = new Set([...Object.keys(expected), ...Object.keys(actual)]);
     const diffs: string[] = [];
@@ -108,7 +138,7 @@ async function main() {
         for (const d of diffs.slice(0, 15)) console.error(`  - ${d}`);
         process.exit(1);
     }
-    console.log(`Golden master OK: ${keys.size} runs byte-identical.`);
+    console.log(`Golden master OK: ${keys.size} runs identical (text and structure exact; numbers to ${NUMBER_TOLERANCE}).`);
 }
 
 // Only run the CLI when executed directly (rankingDiff.ts imports capture/normalize).
