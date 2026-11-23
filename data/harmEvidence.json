@@ -22,6 +22,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Symptoms related to hypotension (includes dizziness and orthostatic symptoms; near-synonyms counted once, so no separate ACE-inhibitor dizziness row)",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 14.8% -> 4.691%/y; control 7.1% -> 2.185%/y; excess 2.506 | Enalapril measured directly. Same window in both arms (R3 satisfied). ",
@@ -47,6 +48,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Symptoms related to hypotension (includes dizziness and orthostatic symptoms; near-synonyms counted once, so no separate ACE-inhibitor dizziness row)",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 14.8% -> 4.691%/y; control 7.1% -> 2.185%/y; excess 2.506 | Measured for enalapril; lisinopril, captopril take it as the sibling/class figure (ramipril and lisinopril have their own rows where measured). ",
@@ -74,6 +76,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Cough reported as a side effect",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 5.0% -> 1.527%/y; control 2.0% -> 0.604%/y; excess 0.923 | Enalapril measured directly. Same window in both arms (R3 satisfied). ",
@@ -99,6 +102,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Cough reported as a side effect",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 5.0% -> 1.527%/y; control 2.0% -> 0.604%/y; excess 0.923 | Measured for enalapril; lisinopril, captopril take it as the sibling/class figure (ramipril and lisinopril have their own rows where measured). ",
@@ -126,6 +130,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Fatigue reported as a side effect",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 5.8% -> 1.777%/y; control 3.5% -> 1.063%/y; excess 0.713 | Enalapril measured directly. Same window in both arms (R3 satisfied). ",
@@ -151,6 +156,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Fatigue reported as a side effect",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 5.8% -> 1.777%/y; control 3.5% -> 1.063%/y; excess 0.713 | Measured for enalapril; lisinopril, captopril take it as the sibling/class figure (ramipril and lisinopril have their own rows where measured). ",
@@ -178,6 +184,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Hyperkalemia reported as a side effect. DEFINITION MISMATCH (R2): reported event, not laboratory above 5.5; probably understates the laboratory rate",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 1.2% -> 0.362%/y; control 0.4% -> 0.120%/y; excess 0.241 | No laboratory-threshold ACE-inhibitor row in heart failure was found. Enalapril measured directly. Same window in both arms (R3 satisfied). ",
@@ -203,6 +210,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Hyperkalemia reported as a side effect. DEFINITION MISMATCH (R2): reported event, not laboratory above 5.5; probably understates the laboratory rate",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 1.2% -> 0.362%/y; control 0.4% -> 0.120%/y; excess 0.241 | No laboratory-threshold ACE-inhibitor row in heart failure was found. Measured for enalapril; lisinopril, captopril take it as the sibling/class figure (ramipril and lisinopril have their own rows where measured). ",
@@ -230,6 +238,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Azotemia reported as a side effect. DEFINITION MISMATCH: not a creatinine rise of 0.5 mg/dL or more",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 3.8% -> 1.155%/y; control 1.6% -> 0.483%/y; excess 0.673 | No laboratory ACE-inhibitor row in heart failure was found. Enalapril measured directly. Same window in both arms (R3 satisfied). ",
@@ -255,6 +264,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Azotemia reported as a side effect. DEFINITION MISMATCH: not a creatinine rise of 0.5 mg/dL or more",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 3.8% -> 1.155%/y; control 1.6% -> 0.483%/y; excess 0.673 | No laboratory ACE-inhibitor row in heart failure was found. Measured for enalapril; lisinopril, captopril take it as the sibling/class figure (ramipril and lisinopril have their own rows where measured). ",
@@ -282,6 +292,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Angioedema reported as a side effect (p<0.05)",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 0.4% -> 0.120%/y; control 0.1% -> 0.030%/y; excess 0.090 | Rare event; the confidence interval is wide. Enalapril measured directly. Same window in both arms (R3 satisfied). ",
@@ -307,6 +318,7 @@
    "population": "SOLVD: LVEF 0.35 or less, 6797 participants (symptomatic heart failure and asymptomatic LV dysfunction), double-blind enalapril vs placebo, 40 months average follow-up",
    "control_type": "placebo",
    "definition_used": "Angioedema reported as a side effect (p<0.05)",
+   "event_recording": "side_effect_reported",
    "verification": "verified_abstract",
    "quote": "During 40 months' average follow-up ... Enalapril use was associated with a higher rate of symptoms related to hypotension (14.8% vs 7.1%), azotemia (3.8% vs 1.6%), cough (5.0% vs 2.0%), fatigue (5.8% vs 3.5%), hyperkalemia (1.2% vs 0.4%), and angioedema (0.4% vs 0.1%)",
    "notes": "T=3.333 y; drug 0.4% -> 0.120%/y; control 0.1% -> 0.030%/y; excess 0.090 | Rare event; the confidence interval is wide. Measured for enalapril; lisinopril, captopril take it as the sibling/class figure (ramipril and lisinopril have their own rows where measured). ",
@@ -330,9 +342,13 @@
     "trial": "Enalapril heart-failure trials (label pool)",
     "citation": "VASOTEC (enalapril) FDA label, DailyMed set id 39631f1f-5d19-43c1-b504-bf56d991ed97, Adverse Reactions, Heart Failure table"
    },
+   "caveats": [
+    "From the enalapril label heart failure table: syncope in 2.2% of 673 patients against 0.9% of 339 on placebo. The enalapril figure combines controlled and uncontrolled trials of up to about a year while the placebo figure comes from controlled trials of 12 weeks, so the two windows differ and the excess probably overstates. It is used as observed."
+   ],
    "population": "Enalapril HF trials (label): enalapril arm from controlled AND uncontrolled trials up to about one year; placebo arm from controlled trials of 12 weeks",
    "control_type": "placebo",
    "definition_used": "Syncope reported as an adverse experience",
+   "event_recording": "label_adverse_experience",
    "verification": "verified_label",
    "quote": "Heart Failure table, VASOTEC (n=673) vs Placebo (n=339): Syncope 2.2 (0.1) | 0.9",
    "notes": "drug 2.2% vs control 0.9%; follow-up not stated y is not above one year: used as observed (difference 1.300) | R3: windows differ between arms, so step 3 (extrapolated), probably overstates the excess; used as observed. ",
@@ -360,6 +376,7 @@
    "population": "AIRE: post-MI clinical heart failure, label table n=1004 vs 982 (\"possibly/probably related\" events), average follow-up 15 months",
    "control_type": "placebo",
    "definition_used": "Syncope reported as a possibly/probably drug-related adverse event",
+   "event_recording": "drug_related_adverse_event",
    "verification": "verified_label",
    "quote": "Table 2 (AIRE): Syncope | Placebo 1% | Ramipril 2%; follow-up: \"a minimum of 6 months and an average of 15 months\" (PMID 8104270)",
    "notes": "T=1.250 y; drug 2% -> 1.603%/y; control 1% -> 0.801%/y; excess 0.802 | Restricted to events judged possibly/probably related, so may understate. Rounded integer percentages. ",
@@ -385,6 +402,7 @@
    "population": "AIRE (ramipril) used as sibling for lisinopril and captopril",
    "control_type": "placebo",
    "definition_used": "Syncope reported as a possibly/probably drug-related adverse event",
+   "event_recording": "drug_related_adverse_event",
    "verification": "verified_label",
    "quote": "Table 2 (AIRE): Syncope | Placebo 1% | Ramipril 2%",
    "notes": "T=1.250 y; drug 2% -> 1.603%/y; control 1% -> 0.801%/y; excess 0.802 | Sibling proxy for lisinopril and captopril (enalapril has its own step-3 row). ",
@@ -412,6 +430,7 @@
    "population": "AIRE: post-MI clinical heart failure; label safety set n=1004 vs 982; average follow-up 15 months",
    "control_type": "placebo",
    "definition_used": "Hypotension reported as a possibly/probably drug-related adverse event",
+   "event_recording": "drug_related_adverse_event",
    "verification": "verified_label",
    "quote": "AIRE label Table 2 (placebo n=982, ramipril n=1004): Hypotension 5% vs 11%; Cough increased 4% vs 8%; Abnormal kidney function 0.5% vs 1%; Vomiting 0.5% vs 2%; Nausea 1% vs 2%",
    "notes": "T=1.250 y; drug 11% -> 8.901%/y; control 5% -> 4.020%/y; excess 4.881 | Events judged possibly/probably related, so may understate. ",
@@ -439,6 +458,7 @@
    "population": "AIRE: post-MI clinical heart failure; label safety set n=1004 vs 982; average follow-up 15 months",
    "control_type": "placebo",
    "definition_used": "Cough increased reported as a possibly/probably drug-related adverse event",
+   "event_recording": "drug_related_adverse_event",
    "verification": "verified_label",
    "quote": "AIRE label Table 2 (placebo n=982, ramipril n=1004): Hypotension 5% vs 11%; Cough increased 4% vs 8%; Abnormal kidney function 0.5% vs 1%; Vomiting 0.5% vs 2%; Nausea 1% vs 2%",
    "notes": "T=1.250 y; drug 8% -> 6.453%/y; control 4% -> 3.213%/y; excess 3.240 | Events judged possibly/probably related, so may understate. ",
@@ -466,6 +486,7 @@
    "population": "AIRE: post-MI clinical heart failure; label safety set n=1004 vs 982; average follow-up 15 months",
    "control_type": "placebo",
    "definition_used": "Abnormal kidney function reported as an adverse event. DEFINITION MISMATCH: not a 0.5 mg/dL rise",
+   "event_recording": "adverse_event_reported",
    "verification": "verified_label",
    "quote": "AIRE label Table 2 (placebo n=982, ramipril n=1004): Hypotension 5% vs 11%; Cough increased 4% vs 8%; Abnormal kidney function 0.5% vs 1%; Vomiting 0.5% vs 2%; Nausea 1% vs 2%",
    "notes": "T=1.250 y; drug 1.0% -> 0.801%/y; control 0.5% -> 0.400%/y; excess 0.401 | Rounded. Events judged possibly/probably related, so may understate. ",
@@ -519,6 +540,7 @@
    "population": "Controlled heart-failure studies: lisinopril 12 weeks vs placebo 12 weeks (n not given in the label)",
    "control_type": "placebo",
    "definition_used": "Hypotension reported as an adverse reaction (event rate 2% or more above placebo)",
+   "event_recording": "label_adverse_reaction_above_placebo",
    "verification": "verified_label",
    "quote": "In controlled studies in patients with heart failure ... The following adverse reactions (events 2% greater on Zestril than on placebo) were observed with Zestril: hypotension (by 3.8%), chest pain (by 2.1%).",
    "notes": "The label gives only the difference (+3.8 points) over 12 weeks in both arms: excess set directly to 3.8; used as observed (window under one year, understates later events). Dose relation measured in ATLAS (hypotension 11% high vs 7% low, 35 mg vs 2.5-5 mg; no placebo arm) but not anchored to placebo, so no dose groups emitted. ",
@@ -632,7 +654,8 @@
    "drug_pct": 4,
    "control_pct": 3,
    "follow_up_years": null,
-   "preference_step": 4
+   "preference_step": 4,
+   "level_note": "From HYPERTENSION trials, not heart failure: candesartan placebo-controlled hypertension trials."
   },
   {
    "id": "ARB-valsartan-dizziness",
@@ -883,7 +906,7 @@
    "dose_related": null,
    "level": "extrapolated",
    "source": {
-    "trial": "R5: comparator (enalapril) placebo-controlled excess plus PARADIGM-HF difference",
+    "trial": "Enalapril excess over placebo plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril",
     "citation": "SOLVD: Kostis JB et al. Am Heart J 1996;131:350-5 (PMID 8579032); PARADIGM-HF: Jhund PS et al. Eur Heart J 2015;36:2576-84 (PMID 26231885)",
     "pmid": "8579032"
    },
@@ -900,7 +923,8 @@
    "components": {
     "enalapril_excess_one_year": 2.506,
     "paradigm_difference_one_year": 2.3
-   }
+   },
+   "level_note": "A SUM across two trials, not one measurement: the enalapril excess over placebo (SOLVD or the enalapril label) plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril; the two trials had different populations and follow-up."
   },
   {
    "id": "ARNI-R5-cough",
@@ -914,7 +938,7 @@
    "dose_related": null,
    "level": "extrapolated",
    "source": {
-    "trial": "R5: comparator (enalapril) placebo-controlled excess plus PARADIGM-HF difference",
+    "trial": "Enalapril excess over placebo plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril",
     "citation": "SOLVD: Kostis JB et al. Am Heart J 1996;131:350-5 (PMID 8579032); PARADIGM-HF: Jhund PS et al. Eur Heart J 2015;36:2576-84 (PMID 26231885)",
     "pmid": "8579032"
    },
@@ -931,7 +955,8 @@
    "components": {
     "enalapril_excess_one_year": 0.923,
     "paradigm_difference_one_year": -1.414
-   }
+   },
+   "level_note": "A SUM across two trials, not one measurement: the enalapril excess over placebo (SOLVD or the enalapril label) plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril; the two trials had different populations and follow-up."
   },
   {
    "id": "ARNI-R5-angioedema",
@@ -945,7 +970,7 @@
    "dose_related": null,
    "level": "extrapolated",
    "source": {
-    "trial": "R5: comparator (enalapril) placebo-controlled excess plus PARADIGM-HF difference",
+    "trial": "Enalapril excess over placebo plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril",
     "citation": "SOLVD: Kostis JB et al. Am Heart J 1996;131:350-5 (PMID 8579032); PARADIGM-HF: Jhund PS et al. Eur Heart J 2015;36:2576-84 (PMID 26231885)",
     "pmid": "8579032"
    },
@@ -962,7 +987,8 @@
    "components": {
     "enalapril_excess_one_year": 0.09,
     "paradigm_difference_one_year": 0.094
-   }
+   },
+   "level_note": "A SUM across two trials, not one measurement: the enalapril excess over placebo (SOLVD or the enalapril label) plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril; the two trials had different populations and follow-up."
   },
   {
    "id": "ARNI-R5-creatinine",
@@ -976,7 +1002,7 @@
    "dose_related": null,
    "level": "extrapolated",
    "source": {
-    "trial": "R5: comparator (enalapril) placebo-controlled excess plus PARADIGM-HF difference",
+    "trial": "Enalapril excess over placebo plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril",
     "citation": "SOLVD: Kostis JB et al. Am Heart J 1996;131:350-5 (PMID 8579032); PARADIGM-HF: Jhund PS et al. Eur Heart J 2015;36:2576-84 (PMID 26231885)",
     "pmid": "8579032"
    },
@@ -993,7 +1019,8 @@
    "components": {
     "enalapril_excess_one_year": 0.673,
     "paradigm_difference_one_year": -0.519
-   }
+   },
+   "level_note": "A SUM across two trials, not one measurement: the enalapril excess over placebo (SOLVD or the enalapril label) plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril; the two trials had different populations and follow-up."
   },
   {
    "id": "ARNI-R5-hyperkalemia",
@@ -1007,7 +1034,7 @@
    "dose_related": null,
    "level": "extrapolated",
    "source": {
-    "trial": "R5: comparator (enalapril) placebo-controlled excess plus PARADIGM-HF difference",
+    "trial": "Enalapril excess over placebo plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril",
     "citation": "SOLVD: Kostis JB et al. Am Heart J 1996;131:350-5 (PMID 8579032); PARADIGM-HF: Jhund PS et al. Eur Heart J 2015;36:2576-84 (PMID 26231885)",
     "pmid": "8579032"
    },
@@ -1024,7 +1051,8 @@
    "components": {
     "enalapril_excess_one_year": 0.241,
     "paradigm_difference_one_year": -0.572
-   }
+   },
+   "level_note": "A SUM across two trials, not one measurement: the enalapril excess over placebo (SOLVD or the enalapril label) plus the PARADIGM-HF difference between sacubitril/valsartan and enalapril; the two trials had different populations and follow-up."
   },
   {
    "id": "ARNI-R5-syncope",
@@ -1038,10 +1066,10 @@
    "dose_related": null,
    "level": "extrapolated",
    "source": {
-    "trial": "R5: enalapril label excess plus PARADIGM-HF serious-syncope difference",
+    "trial": "Enalapril label excess plus the PARADIGM-HF serious-syncope difference between sacubitril/valsartan and enalapril",
     "citation": "VASOTEC label (enalapril HF table); ClinicalTrials.gov NCT01035255 (PARADIGM-HF)"
    },
-   "population": "Enalapril label HF pool (windows differ, R3) plus PARADIGM-HF registry serious syncope",
+   "population": "Enalapril label HF pool (the follow-up windows differ) plus PARADIGM-HF registry serious syncope",
    "control_type": "active",
    "definition_used": "Syncope (enalapril: all reported; PARADIGM: serious only)",
    "verification": "computed_from_verified",
@@ -1050,7 +1078,8 @@
    "drug_pct": null,
    "control_pct": null,
    "follow_up_years": null,
-   "preference_step": 3
+   "preference_step": 3,
+   "level_note": "A SUM across two sources, not one measurement: the enalapril label excess plus the PARADIGM-HF serious-syncope difference between sacubitril/valsartan and enalapril."
   },
   {
    "id": "BB-Ko-hypotensionSymptomatic",
@@ -1066,16 +1095,17 @@
     "citation": "Ko DT et al. Adverse effects of beta-blocker therapy for patients with heart failure: a quantitative overview of randomized trials. Arch Intern Med 2004;164:1389-94",
     "pmid": "15249347"
    },
-   "population": "Randomized beta-blocker trials in heart failure (placebo-controlled), pooled by random effects; patient number not in the abstract",
+   "population": "Randomized beta-blocker trials in heart failure, pooled by random effects (the abstract does not say that every trial was placebo-controlled); patient number not in the abstract",
    "control_type": "placebo",
    "definition_used": "Hypotension (trial-reported)",
    "verification": "verified_abstract",
    "quote": "beta-Blocker therapy was associated with significant absolute annual increases in risks of hypotension (11 per 1000; 95% CI, 0-22), dizziness (57 per 1000; 95% CI, 11-104), and bradycardia (38 per 1000; 95% CI, 21-54). There was no significant absolute risk of fatigue ... (3 per 1000; 95% CI, -2 to 9).",
-   "notes": "Absolute annual increase read directly (per 1000 patient-years converted to percent a year): 1.1 (95% CI 0 to 2.2). Already annual: no conversion. Carvedilol, metoprolol and bisoprolol all take it (R4: pooled class source with more patients than any single-drug label; it includes MERIT-HF and COPERNICUS-era trials). Dose relation not measured. ",
+   "notes": "Absolute annual increase read directly (per 1000 patient-years converted to percent a year): 1.1 (95% CI 0 to 2.2). Already annual: no conversion. Carvedilol, metoprolol and bisoprolol all take it (R4: pooled class source; the abstract does not name the trials). Dose relation not measured.  For comparison the carvedilol label gives symptomatic hypotension and postural hypotension in 9.7% vs 3.6% (mild-to-moderate heart failure) and 15.1% vs 8.7% (COPERNICUS), an excess of about 6 points, far above this overview's 1.1 a year.",
    "drug_pct": null,
    "control_pct": null,
    "follow_up_years": null,
-   "preference_step": 1
+   "preference_step": 1,
+   "level_note": "From a pooled overview of randomized beta-blocker trials; the class figure, not a measurement for this drug."
   },
   {
    "id": "BB-Ko-dizziness",
@@ -1091,16 +1121,23 @@
     "citation": "Ko DT et al. Adverse effects of beta-blocker therapy for patients with heart failure: a quantitative overview of randomized trials. Arch Intern Med 2004;164:1389-94",
     "pmid": "15249347"
    },
-   "population": "Randomized beta-blocker trials in heart failure (placebo-controlled), pooled by random effects; patient number not in the abstract",
+   "caveats": [
+    "Each drug's own label figures for dizziness, in placebo-controlled heart failure trials: metoprolol succinate 1.8% against 1.0% on placebo (dizziness or vertigo; MERIT-HF; the label does not state the follow-up of that table, and the table lists only events at 1% or more and more than 0.5% above placebo); carvedilol 24% against 17% on placebo in severe heart failure (COPERNICUS, median exposure 10.4 months) and 32% against 19% in mild to moderate heart failure (U.S. trials, median exposure 6.3 months). Bisoprolol: its label has no heart failure table.",
+    "These figures are not used to choose between the drugs. The placebo-arm rates of the same event differ several-fold between the two label tables (1.0% in the MERIT-HF table against 17% in the carvedilol severe heart failure table), although both are placebo-treated heart failure patients, so the two trials did not record the event alike and a difference between the drugs cannot be separated from a difference between the trials.",
+    "The class figure (5.7 a year, from the pooled overview of randomized beta-blocker trials) is therefore charged to all three beta-blockers."
+   ],
+   "population": "Randomized beta-blocker trials in heart failure, pooled by random effects (the abstract does not say that every trial was placebo-controlled); patient number not in the abstract",
    "control_type": "placebo",
    "definition_used": "Dizziness (trial-reported)",
+   "event_recording": "trial_reported",
    "verification": "verified_abstract",
    "quote": "beta-Blocker therapy was associated with significant absolute annual increases in risks of hypotension (11 per 1000; 95% CI, 0-22), dizziness (57 per 1000; 95% CI, 11-104), and bradycardia (38 per 1000; 95% CI, 21-54). There was no significant absolute risk of fatigue ... (3 per 1000; 95% CI, -2 to 9).",
-   "notes": "Absolute annual increase read directly (per 1000 patient-years converted to percent a year): 5.7 (95% CI 1.1 to 10.4). Already annual: no conversion. Carvedilol, metoprolol and bisoprolol all take it (R4: pooled class source with more patients than any single-drug label; it includes MERIT-HF and COPERNICUS-era trials). Dose relation not measured. ",
+   "notes": "Absolute annual increase read directly (per 1000 patient-years converted to percent a year): 5.7 (95% CI 1.1 to 10.4). Already annual: no conversion. Carvedilol, metoprolol and bisoprolol all take it (R4: pooled class source; the abstract does not name the trials). Dose relation not measured. ",
    "drug_pct": null,
    "control_pct": null,
    "follow_up_years": null,
-   "preference_step": 1
+   "preference_step": 1,
+   "level_note": "From a pooled overview of randomized beta-blocker trials; the class figure, not a measurement for this drug."
   },
   {
    "id": "BB-Ko-bradycardiaSymptomatic",
@@ -1116,16 +1153,23 @@
     "citation": "Ko DT et al. Adverse effects of beta-blocker therapy for patients with heart failure: a quantitative overview of randomized trials. Arch Intern Med 2004;164:1389-94",
     "pmid": "15249347"
    },
-   "population": "Randomized beta-blocker trials in heart failure (placebo-controlled), pooled by random effects; patient number not in the abstract",
+   "caveats": [
+    "Each drug's own label figures for bradycardia, in placebo-controlled heart failure trials: metoprolol succinate 1.5% against 0.4% on placebo (MERIT-HF; the label does not state the follow-up of that table, and the table lists only events at 1% or more and more than 0.5% above placebo); carvedilol 10% against 3% on placebo in severe heart failure (COPERNICUS, median exposure 10.4 months) and 9% against 1% in mild to moderate heart failure (U.S. trials, median exposure 6.3 months). Bisoprolol: its label has no heart failure table.",
+    "These figures are not used to choose between the drugs. The placebo-arm rates of the same event differ several-fold between the two label tables (0.4% in the MERIT-HF table against 3% in the carvedilol severe heart failure table), although both are placebo-treated heart failure patients, so the two trials did not record the event alike and a difference between the drugs cannot be separated from a difference between the trials.",
+    "The class figure (3.8 a year, from the pooled overview of randomized beta-blocker trials) is therefore charged to all three beta-blockers."
+   ],
+   "population": "Randomized beta-blocker trials in heart failure, pooled by random effects (the abstract does not say that every trial was placebo-controlled); patient number not in the abstract",
    "control_type": "placebo",
    "definition_used": "Bradycardia (trial-reported; mixes symptomatic and asymptomatic)",
+   "event_recording": "trial_reported",
    "verification": "verified_abstract",
    "quote": "beta-Blocker therapy was associated with significant absolute annual increases in risks of hypotension (11 per 1000; 95% CI, 0-22), dizziness (57 per 1000; 95% CI, 11-104), and bradycardia (38 per 1000; 95% CI, 21-54). There was no significant absolute risk of fatigue ... (3 per 1000; 95% CI, -2 to 9).",
-   "notes": "Absolute annual increase read directly (per 1000 patient-years converted to percent a year): 3.8 (95% CI 2.1 to 5.4). Already annual: no conversion. Carvedilol, metoprolol and bisoprolol all take it (R4: pooled class source with more patients than any single-drug label; it includes MERIT-HF and COPERNICUS-era trials). Dose relation not measured. ",
+   "notes": "Absolute annual increase read directly (per 1000 patient-years converted to percent a year): 3.8 (95% CI 2.1 to 5.4). Already annual: no conversion. Carvedilol, metoprolol and bisoprolol all take it (R4: pooled class source; the abstract does not name the trials). Dose relation not measured. ",
    "drug_pct": null,
    "control_pct": null,
    "follow_up_years": null,
-   "preference_step": 1
+   "preference_step": 1,
+   "level_note": "From a pooled overview of randomized beta-blocker trials; the class figure, not a measurement for this drug."
   },
   {
    "id": "BB-Ko-fatigue",
@@ -1160,21 +1204,27 @@
    ],
    "effect": "syncope",
    "layer": "harmRow",
-   "one_year_excess_pct": 3,
+   "one_year_excess_pct": 0.6,
    "dose_related": null,
    "level": "drug",
    "source": {
-    "trial": "COPERNICUS (severe HF, n=1156 vs 1133) and US carvedilol HF trials (n=765 vs 437)",
-    "citation": "COREG (carvedilol) FDA label, DailyMed set id 07c619c6-4a0c-445e-94fa-664a54f68a39, section 6.1 Table 1"
+    "trial": "COPERNICUS (severe HF, n=1156 vs 1133), label section 5.3",
+    "citation": "COREG (carvedilol) FDA label, DailyMed set id 07c619c6-4a0c-445e-94fa-664a54f68a39, section 5.3 (Hypotension); Table 1 in section 6.1 shown in the notes"
    },
+   "caveats": [
+    "The carvedilol label gives two figures for fainting (syncope) in the same trial of severe heart failure (COPERNICUS). Section 5.3 says syncope occurred in 2.9% of patients on carvedilol against 2.3% on placebo. The label's adverse-event table lists 8% against 5%. This tool uses 2.9% against 2.3%, an excess of 0.6 points.",
+    "Why that one: section 5.3 is the label's dedicated statement of this event, with one decimal place, while the table counts adverse events of any cause rounded to whole percents and lists only events that were more frequent on the drug. The label's other heart failure figures agree with the lower figure (3.4% against 2.5% in mild to moderate heart failure, section 5.3). Using 8% against 5% would charge an excess of 3.0 points, five times as much.",
+    "CAPRICORN (after myocardial infarction) gave 3.9% against 1.9%; it is another population and is not used. Median exposure was 10.4 months, so the figures are used as observed, not scaled to a year."
+   ],
    "population": "COPERNICUS severe HF (carvedilol n=1156, placebo n=1133; median exposure 10.4 months)",
    "control_type": "placebo",
-   "definition_used": "Syncope reported as an adverse event (any cause)",
+   "definition_used": "Syncope (label section 5.3)",
+   "event_recording": "label_section_5_3_statement",
    "verification": "verified_label",
-   "quote": "Table 1 severe HF, COREG vs placebo (%): Syncope 8 vs 5; Diarrhea 5 vs 3; Hyperglycemia 5 vs 3",
-   "notes": "drug 8% vs control 5%; follow-up 0.867 y is not above one year: used as observed (difference 3.000) | Larger-n population chosen by R4 (mild-moderate trials: 3% vs 3%, n=765 vs 437). Median exposure 10.4 months: used as observed. ",
-   "drug_pct": 8,
-   "control_pct": 5,
+   "quote": "COREG label section 5.3: \"In a long-term, placebo-controlled trial in severe heart failure (COPERNICUS), hypotension and postural hypotension occurred in 15.1% and syncope in 2.9% of heart failure subjects receiving COREG compared with 8.7% and 2.3% of placebo subjects, respectively.\" Table 1 (section 6.1), severe HF, COREG vs placebo (%): Syncope 8 vs 5.",
+   "notes": "Controller ruling 2026-11-19 (round 1 review, E6): the label gives two placebo-controlled heart failure figures for syncope that disagree. Table 1 (adverse events regardless of causality, incidence above 3%, integer percentages): severe heart failure (COPERNICUS) COREG 8% vs placebo 5%; mild-to-moderate heart failure (U.S. trials, n = 765 vs 437) 3% vs 3%. Section 5.3 (hypotension): COPERNICUS syncope 2.9% vs 2.3%; primarily mild-to-moderate heart failure 3.4% vs 2.5%. (CAPRICORN, after myocardial infarction, 3.9% vs 1.9%, is another population and is not used.) CHOSEN: COPERNICUS 2.9% vs 2.3% from section 5.3, an excess of 0.6 points. By the table's own source rule (fixed definition first, heart failure before other populations, placebo-controlled, then more patients, then longer follow-up, never by the result): both candidates are placebo-controlled in heart failure; COPERNICUS (2,289 patients) has more patients than the mild-to-moderate trials (1,202); between the two COPERNICUS figures the section 5.3 statement is the label's dedicated, one-decimal statement of syncope, whereas Table 1 is an any-cause adverse-event table rounded to whole percents (8 vs 5 could be 7.5-8.5 vs 4.5-5.5) that lists only events more frequent with drug. The same trial gives 3.0 in one table and 0.6 in the other; the earlier row charged 3.0 (Table 1) and did not mention section 5.3, so it charged about five times the rate. Follow-up: median exposure 10.4 months = 0.867 year, not above one year, so the figures are used as observed (2.9 - 2.3 = 0.6).",
+   "drug_pct": 2.9,
+   "control_pct": 2.3,
    "follow_up_years": 0.867,
    "preference_step": 1
   },
@@ -1184,21 +1234,26 @@
    "drugs": [],
    "effect": "syncope",
    "layer": "harmRow",
-   "one_year_excess_pct": 3,
+   "one_year_excess_pct": 0.6,
    "dose_related": null,
    "level": "siblingProxy",
    "source": {
-    "trial": "COPERNICUS (severe HF, n=1156 vs 1133) and US carvedilol HF trials (n=765 vs 437)",
-    "citation": "COREG (carvedilol) FDA label, DailyMed set id 07c619c6-4a0c-445e-94fa-664a54f68a39, section 6.1 Table 1"
+    "trial": "COPERNICUS (severe HF, n=1156 vs 1133), label section 5.3",
+    "citation": "COREG (carvedilol) FDA label, DailyMed set id 07c619c6-4a0c-445e-94fa-664a54f68a39, section 5.3 (Hypotension); Table 1 in section 6.1 shown in the notes"
    },
+   "caveats": [
+    "The same COPERNICUS figure as carvedilol (2.9% against 2.3% in section 5.3 of the carvedilol label; its adverse-event table lists 8% against 5%), borrowed for the other beta-blockers because none of them has its own syncope figure in heart failure.",
+    "Why that one: section 5.3 is the label's dedicated statement of this event, with one decimal place, while the table counts adverse events of any cause rounded to whole percents and lists only events that were more frequent on the drug. The label's other heart failure figures agree with the lower figure (3.4% against 2.5% in mild to moderate heart failure, section 5.3). Using 8% against 5% would charge an excess of 3.0 points, five times as much."
+   ],
    "population": "COPERNICUS severe HF (carvedilol n=1156, placebo n=1133; median exposure 10.4 months)",
    "control_type": "placebo",
-   "definition_used": "Syncope reported as an adverse event (any cause)",
+   "definition_used": "Syncope (label section 5.3)",
+   "event_recording": "label_section_5_3_statement",
    "verification": "verified_label",
-   "quote": "Table 1 severe HF, COREG vs placebo (%): Syncope 8 vs 5; Diarrhea 5 vs 3; Hyperglycemia 5 vs 3",
-   "notes": "drug 8% vs control 5%; follow-up 0.867 y is not above one year: used as observed (difference 3.000) | Larger-n population chosen by R4 (mild-moderate trials: 3% vs 3%, n=765 vs 437). Carvedilol COPERNICUS figure used as the beta-blocker sibling for metoprolol succinate and bisoprolol. ",
-   "drug_pct": 8,
-   "control_pct": 5,
+   "quote": "COREG label section 5.3: \"In a long-term, placebo-controlled trial in severe heart failure (COPERNICUS), hypotension and postural hypotension occurred in 15.1% and syncope in 2.9% of heart failure subjects receiving COREG compared with 8.7% and 2.3% of placebo subjects, respectively.\" Table 1 (section 6.1), severe HF, COREG vs placebo (%): Syncope 8 vs 5.",
+   "notes": "Controller ruling 2026-11-19 (round 1 review, E6): the label gives two placebo-controlled heart failure figures for syncope that disagree. Table 1 (adverse events regardless of causality, incidence above 3%, integer percentages): severe heart failure (COPERNICUS) COREG 8% vs placebo 5%; mild-to-moderate heart failure (U.S. trials, n = 765 vs 437) 3% vs 3%. Section 5.3 (hypotension): COPERNICUS syncope 2.9% vs 2.3%; primarily mild-to-moderate heart failure 3.4% vs 2.5%. (CAPRICORN, after myocardial infarction, 3.9% vs 1.9%, is another population and is not used.) CHOSEN: COPERNICUS 2.9% vs 2.3% from section 5.3, an excess of 0.6 points. By the table's own source rule (fixed definition first, heart failure before other populations, placebo-controlled, then more patients, then longer follow-up, never by the result): both candidates are placebo-controlled in heart failure; COPERNICUS (2,289 patients) has more patients than the mild-to-moderate trials (1,202); between the two COPERNICUS figures the section 5.3 statement is the label's dedicated, one-decimal statement of syncope, whereas Table 1 is an any-cause adverse-event table rounded to whole percents (8 vs 5 could be 7.5-8.5 vs 4.5-5.5) that lists only events more frequent with drug. The same trial gives 3.0 in one table and 0.6 in the other; the earlier row charged 3.0 (Table 1) and did not mention section 5.3, so it charged about five times the rate. Follow-up: median exposure 10.4 months = 0.867 year, not above one year, so the figures are used as observed (2.9 - 2.3 = 0.6). Carvedilol's COPERNICUS figure is used as the beta-blocker sibling for metoprolol succinate and bisoprolol.",
+   "drug_pct": 2.9,
+   "control_pct": 2.3,
    "follow_up_years": 0.867,
    "preference_step": 5
   },
@@ -1220,6 +1275,7 @@
    "population": "COPERNICUS severe HF (carvedilol n=1156, placebo n=1133; median exposure 10.4 months)",
    "control_type": "placebo",
    "definition_used": "Diarrhea (largest of diarrhea +2, nausea +1 in severe HF; mild-moderate HF shows diarrhea +6 but fewer patients)",
+   "event_recording": "label_table_any_cause",
    "verification": "verified_label",
    "quote": "Table 1 severe HF, COREG vs placebo (%): Syncope 8 vs 5; Diarrhea 5 vs 3; Hyperglycemia 5 vs 3",
    "notes": "drug 5% vs control 3%; follow-up 0.867 y is not above one year: used as observed (difference 2.000) | R4 chose the larger-n population. Median exposure 10.4 months: used as observed. ",
@@ -1244,6 +1300,7 @@
    "population": "COPERNICUS severe HF (carvedilol n=1156, placebo n=1133; median exposure 10.4 months)",
    "control_type": "placebo",
    "definition_used": "Diarrhea (largest of diarrhea +2, nausea +1 in severe HF; mild-moderate HF shows diarrhea +6 but fewer patients)",
+   "event_recording": "label_table_any_cause",
    "verification": "verified_label",
    "quote": "Table 1 severe HF, COREG vs placebo (%): Syncope 8 vs 5; Diarrhea 5 vs 3; Hyperglycemia 5 vs 3",
    "notes": "drug 5% vs control 3%; follow-up 0.867 y is not above one year: used as observed (difference 2.000) | R4 chose the larger-n population. Carvedilol COPERNICUS figure used as the beta-blocker sibling for metoprolol succinate and bisoprolol. ",
@@ -1270,6 +1327,7 @@
    "population": "COPERNICUS severe HF (carvedilol n=1156, placebo n=1133; median exposure 10.4 months)",
    "control_type": "placebo",
    "definition_used": "Hyperglycemia reported as an adverse event. DEFINITION MISMATCH (R2): the effect is incident diabetes; this event includes worsening glycaemia in patients who already have diabetes, so it probably overstates incident diabetes",
+   "event_recording": "adverse_event_reported",
    "verification": "verified_label",
    "quote": "Table 1 severe HF, COREG vs placebo (%): Syncope 8 vs 5; Diarrhea 5 vs 3; Hyperglycemia 5 vs 3",
    "notes": "drug 5% vs control 3%; follow-up 0.867 y is not above one year: used as observed (difference 2.000) | No incident-diabetes row for beta-blockers in heart failure was found. Median exposure 10.4 months: used as observed. ",
@@ -1294,6 +1352,7 @@
    "population": "COPERNICUS severe HF (carvedilol n=1156, placebo n=1133; median exposure 10.4 months)",
    "control_type": "placebo",
    "definition_used": "Hyperglycemia reported as an adverse event. DEFINITION MISMATCH (R2): the effect is incident diabetes; this event includes worsening glycaemia in patients who already have diabetes, so it probably overstates incident diabetes",
+   "event_recording": "adverse_event_reported",
    "verification": "verified_label",
    "quote": "Table 1 severe HF, COREG vs placebo (%): Syncope 8 vs 5; Diarrhea 5 vs 3; Hyperglycemia 5 vs 3",
    "notes": "drug 5% vs control 3%; follow-up 0.867 y is not above one year: used as observed (difference 2.000) | No incident-diabetes row for beta-blockers in heart failure was found. Carvedilol COPERNICUS figure used as the beta-blocker sibling for metoprolol succinate and bisoprolol. ",
@@ -2148,7 +2207,7 @@
     "citation": "Eplerenone Revisited: A Balanced Reappraisal of Its Role in Hypertension, Heart Failure, and Cardiorenal Disease (2026), Europe PMC PMC13629649",
     "pmid": "42617196"
    },
-   "population": "EPHESUS: men with left ventricular dysfunction after myocardial infarction (another population; step 4)",
+   "population": "EPHESUS: men with left ventricular dysfunction after myocardial infarction",
    "control_type": "placebo",
    "definition_used": "Gynecomastia in men reported as an adverse event",
    "verification": "verified_fulltext (secondary source)",
@@ -2899,7 +2958,8 @@
    "control_pct": 1.5,
    "follow_up_years": 0.4,
    "preference_step": 4,
-   "population_sex": "female"
+   "population_sex": "female",
+   "level_note": "From placebo-controlled trials in TYPE 2 DIABETES, not heart failure."
   },
   {
    "id": "SGLT2i-dapa-genital-male",
@@ -2926,7 +2986,8 @@
    "control_pct": 0.3,
    "follow_up_years": 0.4,
    "preference_step": 4,
-   "population_sex": "male"
+   "population_sex": "male",
+   "level_note": "From placebo-controlled trials in TYPE 2 DIABETES, not heart failure."
   },
   {
    "id": "SGLT2i-empa-genital-female",
@@ -2953,7 +3014,8 @@
    "control_pct": 1.5,
    "follow_up_years": 0.46,
    "preference_step": 4,
-   "population_sex": "female"
+   "population_sex": "female",
+   "level_note": "From placebo-controlled trials in TYPE 2 DIABETES, not heart failure."
   },
   {
    "id": "SGLT2i-empa-genital-male",
@@ -2980,7 +3042,8 @@
    "control_pct": 0.4,
    "follow_up_years": 0.46,
    "preference_step": 4,
-   "population_sex": "male"
+   "population_sex": "male",
+   "level_note": "From placebo-controlled trials in TYPE 2 DIABETES, not heart failure."
   },
   {
    "id": "SGLT2i-dapa-urinaryFrequency",
@@ -3006,7 +3069,8 @@
    "drug_pct": 3.8,
    "control_pct": 1.7,
    "follow_up_years": 0.4,
-   "preference_step": 4
+   "preference_step": 4,
+   "level_note": "From placebo-controlled trials in TYPE 2 DIABETES, not heart failure."
   },
   {
    "id": "SGLT2i-empa-urinaryFrequency",
@@ -3032,7 +3096,8 @@
    "drug_pct": 3.4,
    "control_pct": 1.0,
    "follow_up_years": 0.46,
-   "preference_step": 4
+   "preference_step": 4,
+   "level_note": "From placebo-controlled trials in TYPE 2 DIABETES, not heart failure."
   },
   {
    "id": "ACEi-STEP6-renalSAE",
@@ -3040,24 +3105,25 @@
    "drugs": [],
    "effect": "renalSeriousEvent",
    "layer": "harmRow",
-   "one_year_excess_pct": 1.393,
+   "one_year_excess_pct": 0.0,
    "dose_related": null,
-   "level": "extrapolated",
+   "level": "notMeasured",
    "source": {
-    "trial": "Upper bound: largest placebo-controlled excess of this harm for any class in the tables",
-    "citation": "data/harmDefinitions.json preference step 6"
+    "trial": "none (no randomized serious acute-kidney-injury incidence found)",
+    "citation": "see quote and notes"
    },
-   "population": "Largest placebo-controlled one-year excess of this harm among the verified rows for any class",
-   "control_type": "placebo",
+   "population": "Not measured separately: the ACE inhibitor creatinine-rise row already charges kidney harm for this drug; no randomized serious acute-kidney-injury incidence was found; nothing is charged here",
+   "control_type": "none",
    "definition_used": "Acute kidney injury or renal failure reported as a serious adverse event, or leading to hospitalization or dialysis.",
-   "verification": "computed_from_verified",
-   "quote": "No ACE-inhibitor row for acute kidney injury as a serious event in heart failure was found (SOLVD reports azotemia). Largest verified placebo-controlled excess in the tables: finerenone FINEARTS-HF acute kidney injury, 0.38 points a year. GISSI-3 (lisinopril, acute MI, label): creatinine above 3 mg/dL or doubled, 2.4% vs 1.1% in-hospital and at 6 weeks, is context only.",
-   "notes": "Step-6 value reset at merge to the largest placebo-controlled excess across both tables: 1.393 (GLP-1 RA, STEP-HFpEF (registry)); was 0.38. No ACE-inhibitor row for acute kidney injury as a serious event in heart failure was found (SOLVD reports azotemia). Largest verified placebo-controlled excess in the tables: finerenone FINEARTS-HF acute kidney injury, 0.38 points a year. GISSI-3 (lisinopril, acute MI, label): creatinine above 3 mg/dL or doubled, 2.4% vs 1.1% in-hospital and at 6 weeks, is context only. UPPER BOUND: charged as a ceiling, not an estimate; the true rate for this drug is probably lower. ",
+   "verification": "n/a",
+   "quote": "No ACE-inhibitor row for acute kidney injury as a serious event in heart failure was found (SOLVD reports azotemia). GISSI-3 (lisinopril, acute MI, label): creatinine above 3 mg/dL or doubled, 2.4% vs 1.1% in-hospital and at 6 weeks, is context only.",
+   "notes": "Controller ruling 2026-11-19 (round 1 review), replacing the 2026-11-18 charge of 0.351 (a mean of other drug classes with different definitions and follow-up, resting almost entirely on one semaglutide row). Kidney harm of ACE inhibitors is charged through the measured creatinine-rise rows (SOLVD enalapril, AIRE ramipril), so this serious-event row is not measured separately and charges nothing. The creatinine rise is not the same event as a serious kidney injury, so any serious-event excess beyond the creatinine rise is not charged; that probably understates it slightly.",
    "drug_pct": null,
    "control_pct": null,
    "follow_up_years": null,
-   "preference_step": 6,
-   "upper_bound": true
+   "preference_step": null,
+   "upper_bound": false,
+   "level_label": "not measured"
   },
   {
    "id": "ARB-STEP6-renalSAE",
@@ -3065,24 +3131,25 @@
    "drugs": [],
    "effect": "renalSeriousEvent",
    "layer": "harmRow",
-   "one_year_excess_pct": 1.393,
+   "one_year_excess_pct": 0.0,
    "dose_related": null,
-   "level": "extrapolated",
+   "level": "notMeasured",
    "source": {
-    "trial": "Upper bound: largest placebo-controlled excess of this harm for any class in the tables",
-    "citation": "data/harmDefinitions.json preference step 6"
+    "trial": "none (no randomized serious acute-kidney-injury incidence found)",
+    "citation": "see quote and notes"
    },
-   "population": "Largest placebo-controlled one-year excess of this harm among the verified rows for any class",
-   "control_type": "placebo",
+   "population": "Not measured separately: the angiotensin receptor blocker creatinine-rise row already charges kidney harm for this drug; no randomized serious acute-kidney-injury incidence was found; nothing is charged here",
+   "control_type": "none",
    "definition_used": "Acute kidney injury or renal failure reported as a serious adverse event, or leading to hospitalization or dialysis.",
-   "verification": "computed_from_verified",
-   "quote": "No ARB row for acute kidney injury as a serious event in heart failure was found. Largest verified excess: finerenone FINEARTS-HF acute kidney injury, 0.38.",
-   "notes": "Step-6 value reset at merge to the largest placebo-controlled excess across both tables: 1.393 (GLP-1 RA, STEP-HFpEF (registry)); was 0.38. No ARB row for acute kidney injury as a serious event in heart failure was found. Largest verified excess: finerenone FINEARTS-HF acute kidney injury, 0.38. UPPER BOUND: charged as a ceiling, not an estimate; the true rate for this drug is probably lower. ",
+   "verification": "n/a",
+   "quote": "No ARB row for acute kidney injury as a serious event in heart failure was found.",
+   "notes": "Controller ruling 2026-11-19 (round 1 review), replacing the 2026-11-18 charge of 0.351 (a mean of other drug classes). Kidney harm of angiotensin receptor blockers is charged through the measured creatinine-rise rows (CHARM candesartan, valsartan), so this serious-event row is not measured separately and charges nothing. Any serious-event excess beyond the creatinine rise is not charged; that probably understates it slightly.",
    "drug_pct": null,
    "control_pct": null,
    "follow_up_years": null,
-   "preference_step": 6,
-   "upper_bound": true
+   "preference_step": null,
+   "upper_bound": false,
+   "level_label": "not measured"
   },
   {
    "id": "ARB-STEP6-angioedema",
@@ -3144,24 +3211,25 @@
    ],
    "effect": "renalSeriousEvent",
    "layer": "harmRow",
-   "one_year_excess_pct": 1.393,
+   "one_year_excess_pct": 0.0,
    "dose_related": null,
-   "level": "extrapolated",
+   "level": "notMeasured",
    "source": {
-    "trial": "Upper bound: largest placebo-controlled excess of this harm for any class in the tables",
-    "citation": "data/harmDefinitions.json preference step 6"
+    "trial": "none (no randomized serious acute-kidney-injury incidence found)",
+    "citation": "see quote and notes"
    },
-   "population": "Largest placebo-controlled one-year excess of this harm among the verified rows for any class",
-   "control_type": "placebo",
+   "population": "Not measured separately: the sacubitril/valsartan creatinine-rise row already charges kidney harm for this drug; no randomized serious acute-kidney-injury incidence was found; nothing is charged here",
+   "control_type": "none",
    "definition_used": "Acute kidney injury or renal failure reported as a serious adverse event, or leading to hospitalization or dialysis.",
-   "verification": "computed_from_verified",
-   "quote": "Enalapril has no placebo-controlled serious renal figure (R5 then step 6). PARADIGM-HF serious acute renal failure was 74/4203 vs 79/4229 (about equal). Largest verified excess: finerenone AKI 0.38.",
-   "notes": "Step-6 value reset at merge to the largest placebo-controlled excess across both tables: 1.393 (GLP-1 RA, STEP-HFpEF (registry)); was 0.38. Enalapril has no placebo-controlled serious renal figure (R5 then step 6). PARADIGM-HF serious acute renal failure was 74/4203 vs 79/4229 (about equal). Largest verified excess: finerenone AKI 0.38. UPPER BOUND: charged as a ceiling, not an estimate; the true rate for this drug is probably lower. ",
+   "verification": "n/a",
+   "quote": "Enalapril has no placebo-controlled serious renal figure. PARADIGM-HF serious acute renal failure was 74/4203 vs 79/4229 (about equal), against enalapril, an active comparator.",
+   "notes": "Controller ruling 2026-11-19 (round 1 review), replacing the 2026-11-18 charge of 0.351. Kidney harm of sacubitril/valsartan is charged through its creatinine-rise row (extrapolated from enalapril), so this serious-event row is not measured separately and charges nothing. PARADIGM-HF compared with enalapril, not placebo, so it gives no excess over placebo. Any serious-event excess beyond the creatinine rise is not charged; that probably understates it slightly.",
    "drug_pct": null,
    "control_pct": null,
    "follow_up_years": null,
-   "preference_step": 6,
-   "upper_bound": true
+   "preference_step": null,
+   "upper_bound": false,
+   "level_label": "not measured"
   },
   {
    "id": "BB-STEP6-AVblockAdv",
@@ -3169,24 +3237,25 @@
    "drugs": [],
    "effect": "avBlockAdvanced",
    "layer": "harmRow",
-   "one_year_excess_pct": 0.261,
+   "one_year_excess_pct": 0.0,
    "dose_related": null,
-   "level": "extrapolated",
+   "level": "notMeasured",
    "source": {
-    "trial": "Upper bound: largest placebo-controlled excess of this harm for any class in the tables",
-    "citation": "data/harmDefinitions.json preference step 6"
+    "trial": "none (no randomized incidence found)",
+    "citation": "COREG prescribing information, DailyMed set 07c619c6-4a0c-445e-94fa-664a54f68a39 (contraindications and adverse reactions)"
    },
-   "population": "Largest placebo-controlled one-year excess of this harm among the verified rows for any class",
-   "control_type": "placebo",
+   "population": "Not measured: no randomized incidence of second- or third-degree block or bradycardia needing a pacemaker was found for a beta-blocker in heart failure, and no other class with the same mechanism (blockade of beta-adrenergic conduction at the atrioventricular node) has a measured row; nothing is charged",
+   "control_type": "none",
    "definition_used": "Second- or third-degree atrioventricular block, or bradycardia leading to hospitalization or pacemaker implantation.",
-   "verification": "computed_from_verified",
-   "quote": "No beta-blocker heart-failure figure for second/third-degree block: carvedilol label lists AV block only in the band 1-3% with no placebo rate; metoprolol label warns without a figure. Largest placebo-controlled excess in the tables: ivabradine 0.261 a year from the adjunct table (id iva-avb-ctgov; NOT verified by this checker). Likely UNDERSTATES a beta-blocker risk (an upper bound that is lower than the label band).",
-   "notes": "No beta-blocker heart-failure figure for second/third-degree block: carvedilol label lists AV block only in the band 1-3% with no placebo rate; metoprolol label warns without a figure. Largest placebo-controlled excess in the tables: ivabradine 0.261 a year from the adjunct table (id iva-avb-ctgov; NOT verified by this checker). Likely UNDERSTATES a beta-blocker risk (an upper bound that is lower than the label band). UPPER BOUND: charged as a ceiling, not an estimate; the true rate for this drug is probably lower. ",
+   "verification": "verified_label",
+   "quote": "Carvedilol label: contraindicated in \"Second- or third-degree AV block\"; \"AV block\" is listed among adverse events at an incidence of more than 1% to 3% or less, with no placebo rate; \"complete AV block\" is listed at 0.1% or less. The metoprolol label warns of heart block without a figure.",
+   "notes": "Controller ruling 2026-11-19 (round 1 review), replacing the 2026-11-18 charge of 0.096 (a mean of ivabradine, digoxin, eplerenone and finerenone rows with four different definitions, which charged a labelled contraindication less than ivabradine). Ivabradine acts on the sinus node, digoxin through the vagus, and the mineralocorticoid antagonists not on conduction at all, so none shares the mechanism and none is borrowed. THIS ZERO PROBABLY UNDERSTATES THE HARM: the label band is 1% to 3% for any AV block. Bradycardia and first-degree block are charged by their own rows.",
    "drug_pct": null,
    "control_pct": null,
    "follow_up_years": null,
-   "preference_step": 6,
-   "upper_bound": true
+   "preference_step": null,
+   "upper_bound": false,
+   "level_label": "not measured"
   },
   {
    "id": "iva-af",
@@ -3653,7 +3722,8 @@
    "definition_used": "Drug-induced lupus syndrome",
    "verification": "verified_abstract",
    "quote": "The incidence was dose dependent, with no cases recorded in patients taking 50 mg daily and incidences of 5.4% with 100 mg daily and of 10.4% with 200 mg daily.",
-   "notes": "Step 3/4: no control arm; placebo rate assumed 0 (not measured; background lupus is rare). 10.4% over 3 years at 200 mg: 1-(1-0.104)^(1/3) = 3.594% a year. 200 mg/day is the group nearest the BiDil target (225 mg hydralazine). NOT given as dose_groups because the engine computes NaN for the combination strength \"37.5/20\" and would then pick the lowest group (0). Other groups: 50 mg 0; 100 mg 5.4% over 3 y = 1.8% a year. Overall (all doses) 6.7% over 3 y = 2.285% a year. The original collector row (6.7% overall) understates the target dose."
+   "notes": "Step 3/4: no control arm; placebo rate assumed 0 (not measured; background lupus is rare). 10.4% over 3 years at 200 mg: 1-(1-0.104)^(1/3) = 3.594% a year. 200 mg/day is the group nearest the BiDil target (225 mg hydralazine). NOT given as dose_groups because the engine computes NaN for the combination strength \"37.5/20\" and would then pick the lowest group (0). Other groups: 50 mg 0; 100 mg 5.4% over 3 y = 1.8% a year. Overall (all doses) 6.7% over 3 y = 2.285% a year. The original collector row (6.7% overall) understates the target dose.",
+   "level_note": "From a COHORT of 281 patients starting hydralazine for HYPERTENSION, with no control arm (the placebo rate is assumed zero), over 3 years."
   },
   {
    "id": "vas-syncope",
@@ -3663,21 +3733,27 @@
    ],
    "effect": "syncope",
    "layer": "harmRow",
-   "one_year_excess_pct": 3,
+   "one_year_excess_pct": 0.5,
    "dose_related": null,
-   "level": "extrapolated",
-   "upper_bound": true,
+   "level": "siblingProxy",
+   "upper_bound": false,
    "source": {
     "trial": "VICTORIA",
     "citation": "Armstrong PW et al. N Engl J Med 2020;382:1883-93",
     "pmid": "32222134"
    },
-   "population": "Upper bound: largest placebo-controlled syncope excess in this part of the table (VICTORIA vericiguat)",
+   "caveats": [
+    "No fainting rate exists for hydralazine with isosorbide dinitrate. The figure is borrowed from vericiguat in VICTORIA (4.0% against 3.5%), because isosorbide dinitrate acts through the same pathway and fainting follows vasodilation and low blood pressure.",
+    "The hydralazine and isosorbide dinitrate label lists no fainting among adverse events at 2% or more, so the true rate is probably below 2%. The borrowed figure is a trial average over its follow-up, not scaled to a year."
+   ],
+   "population": "Borrowed from vericiguat (an sGC stimulator) in VICTORIA: heart failure with reduced EF, placebo-controlled; hydralazine/isosorbide dinitrate has no syncope rate of its own",
    "control_type": "placebo",
    "definition_used": "Syncope (label warns lightheadedness \"or even syncope\"; no trial rate)",
    "verification": "verified_abstract",
-   "quote": "syncope occurred in 4.0% of the patients in the vericiguat group and in 3.5% of the patients in the placebo group",
-   "notes": "Step-6 value reset at merge to the largest placebo-controlled excess across both tables: 3 (Beta Blocker, COPERNICUS (severe HF, n=1156 vs 1133) and US carvedilol HF trials (n=765 vs 437)); was 0.5. Step 6 upper bound (BiDil label has no syncope rate; the trial list shows hypotension only). The foundational table may hold a larger syncope excess; the controller should take the larger."
+   "quote": "syncope occurred in 4.0% of the patients in the vericiguat group and in 3.5% of the patients in the placebo group (P = 0.30)",
+   "notes": "Controller ruling 2026-11-19 (round 1 review), replacing the 2026-11-18 charge of 0.737 (of which carvedilol supplied about four-fifths). Borrowed from the sGC Stimulator class (row ver-syncope, 0.5 points) because it shares the same mechanism for fainting: isosorbide dinitrate releases nitric oxide, which acts through soluble guanylate cyclase and cyclic GMP, the pathway vericiguat sensitizes, and fainting follows vasodilation and low blood pressure. The BiDil label has no syncope rate (its adverse-reaction table lists hypotension only, charged separately). The VICTORIA figure is a trial average over its follow-up, not annualized.",
+   "level_label": "borrowed from a sibling class",
+   "borrowed_from": "ver-syncope"
   },
   {
    "id": "vas-dae",
@@ -3722,7 +3798,8 @@
    "definition_used": "Hospitalization for suspected or confirmed digoxin toxicity, first hospitalization of each patient",
    "verification": "verified_fulltext",
    "quote": "Hospitalization due to digoxin toxicity occurred in 13 patients in the placebo group and 44 patients in the digoxin group during the first year of follow up (HR, 3.38; 95% CI, 1.82-6.28; P <0.0001)",
-   "notes": "44/3889 = 1.131% vs 13/3899 = 0.333%, excess 0.798 over exactly one year (no conversion). Rate per 10,000 person-years 120 vs 36 gives 0.85, same. Whole-trial label figure (2.0% vs 0.9% over 37 months) converts to 0.653% vs 0.292% a year, excess 0.36; the first-year figure is higher, consistent with early risk. CHOSEN by sourceChoice (same trial, follow-up up to a year, definition spelled out). Follow-up settled: the label \"37-week\" is a typo; the DIG NEJM abstract says \"average follow-up, 37 months\"."
+   "notes": "44/3889 = 1.131% vs 13/3899 = 0.333%, excess 0.798 over exactly one year (no conversion). Rate per 10,000 person-years 120 vs 36 gives 0.85, same. Whole-trial label figure (2.0% vs 0.9% over 37 months) converts to 0.653% vs 0.292% a year, excess 0.36; the first-year figure is higher, consistent with early risk. CHOSEN by sourceChoice (same trial, follow-up up to a year, definition spelled out). Follow-up settled: the label \"37-week\" is a typo; the DIG NEJM abstract says \"average follow-up, 37 months\".",
+   "level_note": "POST HOC analysis of the first year of the DIG trial, not a prespecified analysis of this event."
   },
   {
    "id": "dig-vent-arrhythmia",
@@ -3745,7 +3822,8 @@
    "definition_used": "Hospitalization for ventricular arrhythmia / cardiac arrest, first hospitalization",
    "verification": "verified_fulltext",
    "quote": "Ventricular arrhythmia/cardiac arrest: 122 (41%) 157 (57/3635) 178 (65/3654) + 21 1.14 (0.80-1.62) 0.485",
-   "notes": "65/3889 = 1.671% vs 57/3899 = 1.462%, excess 0.209; not significant (HR 1.14, 0.80-1.62). Hospitalization, so toward the severe end. Step 1. DECISION (low-dose digoxin, 36.5 months, treatment-related SAE) agrees in direction: VT 4 vs 3."
+   "notes": "65/3889 = 1.671% vs 57/3899 = 1.462%, excess 0.209; not significant (HR 1.14, 0.80-1.62). Hospitalization, so toward the severe end. Step 1. DECISION (low-dose digoxin, 36.5 months, treatment-related SAE) agrees in direction: VT 4 vs 3.",
+   "level_note": "POST HOC analysis of the first year of the DIG trial, not a prespecified analysis of this event."
   },
   {
    "id": "dig-av-block",
@@ -3768,7 +3846,8 @@
    "definition_used": "Hospitalization for atrioventricular block or bradyarrhythmia, first hospitalization",
    "verification": "verified_fulltext",
    "quote": "Hospitalization due to atrioventricular block or bradyarrhythmia toxicity occurred in 2 patients in the placebo group and 11 patients in the digoxin group during the first year of follow up (HR, 5.47; 95% CI, 1.21-24.69; P=0.027)",
-   "notes": "11/3889 = 0.283% vs 2/3899 = 0.051%, excess 0.232 over one year. DECISION treatment-related SAE: AV block 2 vs 1."
+   "notes": "11/3889 = 0.283% vs 2/3899 = 0.051%, excess 0.232 over one year. DECISION treatment-related SAE: AV block 2 vs 1.",
+   "level_note": "POST HOC analysis of the first year of the DIG trial, not a prespecified analysis of this event."
   },
   {
    "id": "dig-gi",
@@ -3904,9 +3983,10 @@
    "definition_used": "Serum potassium below 3.5 mmol/L at the 1-year visit",
    "verification": "verified_abstract",
    "quote": "After 1 year of treatment, 7.2% of the participants randomized to active treatment had a serum potassium <3.5 mmol/L compared with 1% of the participants randomized to placebo",
-   "notes": "Ruling R7 (2026-11-15): sibling class before upper bound. Takes the Thiazide-like Diuretic figure (class row, SHEP): 6.2; was -1.5. Step 4 is the best step reached: no heart-failure or higher-dose placebo-controlled loop figure exists in anything fetched (labels, DOSE, TRANSFORM-HF has no adverse-event data, CLOROTIC abstract gives only \"similar\"). The measured excess is below zero (floors to 0). The same label says that at heart-failure doses \"hypokalemia was observed with greater frequency, in a dose-related manner\" with no number, so this row probably understates. Alternatives left to the controller: thiazide SHEP 6.2 (step 5 across classes) or a step-6 bound (largest placebo-controlled hypokalemia excess in the table: SZC 15 g, 10.7). Bumetanide label (uncontrolled): hypokalemia 14.7% of patients tested, threshold not stated.",
+   "notes": "Ruling R7 (2026-11-15): sibling class before upper bound. Takes the Thiazide-like Diuretic figure (class row, SHEP): 6.2; was -1.5. The best available step is a placebo-controlled figure from another population: no heart-failure or higher-dose placebo-controlled loop figure exists in anything fetched (labels, DOSE, TRANSFORM-HF has no adverse-event data, CLOROTIC abstract gives only \"similar\"). The measured excess is below zero (floors to 0). The same label says that at heart-failure doses \"hypokalemia was observed with greater frequency, in a dose-related manner\" with no number, so this row probably understates. Alternatives left to the controller: thiazide SHEP 6.2 (step 5 across classes) or a step-6 bound (largest placebo-controlled hypokalemia excess in the table: SZC 15 g, 10.7). Bumetanide label (uncontrolled): hypokalemia 14.7% of patients tested, threshold not stated.",
    "upper_bound": false,
-   "preference_step": 5
+   "preference_step": 5,
+   "level_note": "From HYPERTENSION trials, not heart failure: chlorthalidone-based treatment in isolated systolic hypertension (SHEP), taken from the thiazide-type class and applied to loop diuretics."
   },
   {
    "id": "loop-hyponatremia",
@@ -3927,8 +4007,9 @@
    "definition_used": "Sodium below 135 mmol/L at week 4 (definition says 130)",
    "verification": "verified_label",
    "quote": "Sodium <135 mmol/L at week 4, n (%) 4 (3.5%) 1 (0.8%) 0 (0%)",
-   "notes": "Ruling R7 (2026-11-15): sibling class before upper bound. Takes the Thiazide-like Diuretic figure (class row, Widaplik label): 2.165; was 2.165. STEP 6 upper bound: largest placebo-controlled hyponatremia excess in this part of the table (thiazide-like). 5 of 231 on indapamide combinations vs 0 of 62 placebo = 2.165, 4 weeks, as observed. Threshold mismatch (135 not 130) overstates. Bumetanide label (uncontrolled): hyponatremia 9.2% of patients tested.",
-   "preference_step": 5
+   "notes": "Ruling R7 (2026-11-15): sibling class before upper bound. Takes the Thiazide-like Diuretic figure (class row, Widaplik label): 2.165; was 2.165. 5 of 231 on indapamide combinations vs 0 of 62 placebo = 2.165, 4 weeks, as observed. Threshold mismatch (135 not 130) overstates. Bumetanide label (uncontrolled): hyponatremia 9.2% of patients tested.",
+   "preference_step": 5,
+   "level_note": "From HYPERTENSION trials, not heart failure: indapamide-containing combination tablets over 4 weeks (Widaplik label), taken from the thiazide-type class and applied to loop diuretics."
   },
   {
    "id": "loop-hypomagnesemia",
@@ -3936,21 +4017,29 @@
    "drugs": [],
    "effect": "hypomagnesemia",
    "layer": "harmRow",
-   "one_year_excess_pct": 21.596,
+   "one_year_excess_pct": 0.0,
    "dose_related": null,
-   "level": "extrapolated",
-   "upper_bound": true,
+   "level": "notMeasured",
+   "upper_bound": false,
    "source": {
+    "trial": "none (no randomized incidence found)",
+    "citation": "Kieboom BCT et al. Pharmacoepidemiol Drug Saf 2018;27:1166-73 (Rotterdam Study, general population, cross-sectional, n = 9,820), PMID 30095199, abstract read",
+    "pmid": "30095199"
+   },
+   "population": "Not measured: no randomized incidence of hypomagnesemia exists for this class; nothing is charged",
+   "control_type": "none",
+   "definition_used": "Serum magnesium below 1.8 mg/dL during treatment",
+   "verification": "verified_abstract",
+   "quote": "The use of loop diuretics is not associated with an increased risk of hypomagnesaemia. (Loop diuretic use was associated with higher serum magnesium levels; title: Thiazide but not loop diuretics is associated with hypomagnesaemia in the general population.)",
+   "notes": "Changed 2026-11-18 (controller recommendation, change C7, source report evidence-lookups.md item 1). The earlier value of 21.596 was the rate for patiromer (a potassium binder, PEARL-HF, PMID 21208974), not for a diuretic. No randomized incidence exists for loop diuretics. The population cohort found no association (quote). Charged as not measured, so it adds no burden. The earlier row is kept in previous_value, previous_source and previous_population.",
+   "previous_value": 21.596,
+   "previous_source": {
     "trial": "PEARL-HF",
     "citation": "Pitt B et al. Eur Heart J 2011;32:820-8 (PMC3069389)",
     "pmid": "21208974"
    },
-   "population": "Upper bound from a potassium binder (patiromer 30 g/day) in HF, 4 weeks; no loop-diuretic magnesium rate was found",
-   "control_type": "placebo",
-   "definition_used": "Serum magnesium below 1.8 mg/dL during treatment",
-   "verification": "verified_fulltext",
-   "quote": "Serum magnesium <1.8 mg/dL during the treatment period was seen in 13 (24%) RLY5016-treated patients and 1 (2.1%) placebo-treated patient",
-   "notes": "STEP 6 upper bound: the largest placebo-controlled hypomagnesemia excess in this part of the table is a binder that chelates magnesium; it is almost surely far above the loop-diuretic rate. Marked upper bound so the controller can drop it. Torsemide, Furoscix and bumetanide labels all warn of hypomagnesemia without a rate."
+   "previous_population": "Upper bound from a potassium binder (patiromer 30 g/day) in HF, 4 weeks; no loop-diuretic magnesium rate was found",
+   "level_label": "not measured"
   },
   {
    "id": "loop-hyperglycemia",
@@ -3972,8 +4061,9 @@
    "definition_used": "Incident diabetes",
    "verification": "computed_from_verified",
    "quote": "placebo (nine groups) 0.77 (0.63-0.94, p = 0.009)",
-   "notes": "Ruling R7 (2026-11-15): sibling class before upper bound. Takes the Thiazide-like Diuretic figure (class row, Elliott & Meyer network meta-analysis): 1.86; was 1.86. STEP 6 upper bound (thiazide-type figure applied to loops). Odds of diuretic vs placebo = 1/0.77 = 1.30; placebo odds 0.0681/0.9319 = 0.07308; x1.30 = 0.0949, p = 8.67%; excess 8.67 - 6.81 = 1.86. Follow-up not given in the abstract (trials of several years), so no one-year conversion was made; this overstates a yearly rate. Loop labels: hyperglycemia warned; bumetanide label 6.6% of patients tested (uncontrolled).",
-   "preference_step": 5
+   "notes": "Ruling R7 (2026-11-15): sibling class before upper bound. Takes the Thiazide-like Diuretic figure (class row, Elliott & Meyer network meta-analysis): 1.86; was 1.86. Odds of diuretic vs placebo = 1/0.77 = 1.30; placebo odds 0.0681/0.9319 = 0.07308; x1.30 = 0.0949, p = 8.67%; excess 8.67 - 6.81 = 1.86. Follow-up not given in the abstract (trials of several years), so no one-year conversion was made; this overstates a yearly rate. Loop labels: hyperglycemia warned; bumetanide label 6.6% of patients tested (uncontrolled).",
+   "preference_step": 5,
+   "level_note": "From HYPERTENSION trials, not heart failure: incident diabetes over several years in a network meta-analysis of diuretic-based initial therapy, not annualized, taken from the thiazide-type class and applied to loop diuretics."
   },
   {
    "id": "loop-gout",
@@ -3989,12 +4079,16 @@
     "citation": "Choi HK et al. BMJ 2012;344:d8190 (PMC3257215)",
     "pmid": "22240117"
    },
+   "caveats": [
+    "From a UK primary-care case-control study of patients with hypertension (not heart failure) that pooled loop and thiazide-type diuretics: an excess of 572 cases per 100,000 person-years, or 0.572% a year. The study is observational, adjusted, and not specific to loop diuretics."
+   ],
    "population": "UK primary-care case-control, patients with hypertension, current diuretic use (loop and thiazide pooled)",
    "control_type": "none",
    "definition_used": "Incident gout (observational, not a randomized placebo contrast)",
    "verification": "verified_fulltext",
    "quote": "The respective absolute risk differences were 572, 218, 109, and 132 cases per 100 000 person years.",
-   "notes": "Diuretics RR 2.36 (2.21 to 2.52); absolute difference 572 per 100,000 person-years = 0.572% a year. Observational and adjusted; not specific to loops."
+   "notes": "Diuretics RR 2.36 (2.21 to 2.52); absolute difference 572 per 100,000 person-years = 0.572% a year. Observational and adjusted; not specific to loops.",
+   "level_note": "From HYPERTENSION trials, not heart failure: a case-control study of patients with hypertension that pooled loop and thiazide diuretics (observational, adjusted)."
   },
   {
    "id": "loop-hypotension",
@@ -4002,20 +4096,25 @@
    "drugs": [],
    "effect": "hypotensionSymptomatic",
    "layer": "symptomFigure",
-   "one_year_excess_pct": 5,
+   "one_year_excess_pct": 0.0,
    "dose_related": null,
-   "level": "extrapolated",
-   "upper_bound": true,
+   "level": "notMeasured",
+   "upper_bound": false,
    "source": {
-    "trial": "A-HeFT (label)",
-    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+    "trial": "none (no controlled incidence found)",
+    "citation": "see quote and notes"
    },
-   "population": "Upper bound: largest placebo-controlled symptomatic-hypotension excess in this part of the table (BiDil, A-HeFT)",
-   "control_type": "placebo",
+   "population": "Not measured: no controlled incidence of symptomatic low blood pressure was found for a loop diuretic in heart failure, and no other class with the same mechanism (low blood pressure from loss of salt and water) has a measured row; nothing is charged",
+   "control_type": "none",
    "definition_used": "Hypotension reported as adverse reaction",
-   "verification": "verified_label",
-   "quote": "Hypotension 8 4",
-   "notes": "Step-6 value reset at merge to the largest placebo-controlled excess across both tables: 5 (ARB, Val-HeFT and short-term heart-failure valsartan trials (first 4 months)); was 4.0. STEP 6 upper bound. Loop labels warn of hypotension and volume depletion without a controlled rate (bumetanide label, uncontrolled: hypotension 0.8%, dizziness 1.1%, muscle cramps 1.1%)."
+   "verification": "n/a",
+   "quote": "Loop-diuretic labels warn of hypotension and volume depletion without a controlled rate (bumetanide label, uncontrolled: hypotension 0.8%, dizziness 1.1%, muscle cramps 1.1%).",
+   "notes": "Controller ruling 2026-11-19 (round 1 review), replacing the 2026-11-18 charge of 1.778 (a mean over ten drug classes with different definitions and follow-up). The classes that do have a measured hypotension row (the sodium-glucose cotransporter 2 inhibitors and the mineralocorticoid antagonists) act differently, so none is borrowed. THIS ZERO PROBABLY UNDERSTATES THE HARM: loss of salt and water is the main way these drugs lower blood pressure. The loop and thiazide-type drugs in this table therefore carry no charge for symptomatic low blood pressure; the option cards say \"not measured\".",
+   "level_label": "not measured",
+   "drug_pct": null,
+   "control_pct": null,
+   "follow_up_years": null,
+   "preference_step": null
   },
   {
    "id": "torsemide-urinary-frequency",
@@ -4042,6 +4141,10 @@
     "trial": "Torsemide label",
     "citation": "Torsemide prescribing information, DailyMed set 5eeca7b4-92ac-bb1f-e063-6394a90a036a, section 6.1"
    },
+   "caveats": [
+    "From US hypertension trials of 5 and 10 mg a day (median treatment 41 days), not heart failure: excessive urination in 4% on 5 mg and 15% on 10 mg against 1% on placebo.",
+    "The label also says excessive urination was generally not reported as an adverse event in patients treated for cardiac, renal or hepatic failure, so this probably overstates in heart failure."
+   ],
    "population": "US hypertension trials, 5 and 10 mg daily, median treatment 41 days",
    "control_type": "placebo",
    "definition_used": "Excessive urination",
@@ -4057,20 +4160,25 @@
    ],
    "effect": "injectionSiteReaction",
    "layer": "symptomFigure",
-   "one_year_excess_pct": 6.0,
+   "one_year_excess_pct": 0.0,
    "dose_related": null,
-   "level": "extrapolated",
-   "upper_bound": true,
+   "level": "notMeasured",
+   "upper_bound": false,
    "source": {
-    "trial": "Zepbound label",
-    "citation": "ZEPBOUND prescribing information, DailyMed set 487cd7e7-434c-4925-99fa-aa80b1cc776b, Table 2"
+    "trial": "none (no incidence found)",
+    "citation": "Furoscix prescribing information, DailyMed set eac958dd-8d43-e44e-e053-2995a90a4d5e"
    },
-   "population": "Upper bound from tirzepatide 10 or 15 mg (obesity trials); Furoscix label lists administration-site reactions (erythema, bruising, edema, pain) with no incidence table",
-   "control_type": "placebo",
+   "population": "Not measured: the Furoscix label lists administration-site reactions (erythema, bruising, edema, pain) with no incidence table, and no other class with the same mechanism has a measured, verified row that fits (see notes); nothing is charged",
+   "control_type": "none",
    "definition_used": "Injection site reactions",
    "verification": "verified_label",
-   "quote": "Injection Site Reactions d 2 6 8 8",
-   "notes": "STEP 6 upper bound. Furoscix takes the oral furosemide class rows (hypokalemia, hyponatremia, magnesium, glucose, gout, hypotension) by sibling assumption, because its label has no incidence table, and adds its own site reaction. Charged per administration in practice (R6); the trial-year figure used."
+   "quote": "Furoscix label: administration-site reactions (erythema, bruising, edema, pain) are listed; the label has no incidence table.",
+   "notes": "Controller ruling 2026-11-19 (round 1 review), replacing the 2026-11-18 charge of 6.0 (the largest figure found elsewhere, a weekly tirzepatide pen in obesity trials, Zepbound label Table 1). Furoscix is a five-hour on-body subcutaneous infusion under an adhesive patch, not a weekly pen. The two measured subcutaneous rows in this table disagree 15-fold (semaglutide 0.4, tirzepatide 6), and the intravenous iron row (4.6) is a different mechanism (extravasation). THIS ZERO PROBABLY UNDERSTATES THE HARM. Furoscix takes the oral furosemide class rows by sibling assumption, because its label has no incidence table.",
+   "level_label": "not measured",
+   "drug_pct": null,
+   "control_pct": null,
+   "follow_up_years": null,
+   "preference_step": null
   },
   {
    "id": "thiazide-hypokalemia",
@@ -4091,7 +4199,8 @@
    "definition_used": "Serum potassium below 3.5 mmol/L at the 1-year visit",
    "verification": "verified_abstract",
    "quote": "After 1 year of treatment, 7.2% of the participants randomized to active treatment had a serum potassium <3.5 mmol/L compared with 1% of the participants randomized to placebo",
-   "notes": "7.2 - 1.0 = 6.2 at one year (a prevalence at one visit). Chlorthalidone figure applied to the whole class (step 4 for chlorthalidone, sibling for the others). Widaplik 12-week (indapamide, vs a combination without it): 6.8% vs 0%, consistent."
+   "notes": "7.2 - 1.0 = 6.2 at one year (a prevalence at one visit). Chlorthalidone figure applied to the whole class (step 4 for chlorthalidone, sibling for the others). Widaplik 12-week (indapamide, vs a combination without it): 6.8% vs 0%, consistent.",
+   "level_note": "From HYPERTENSION trials, not heart failure: chlorthalidone-based treatment in isolated systolic hypertension (SHEP), applied to the whole thiazide-type class."
   },
   {
    "id": "thiazide-hyponatremia",
@@ -4111,7 +4220,8 @@
    "definition_used": "Sodium below 135 mmol/L at week 4 (definition says 130)",
    "verification": "verified_label",
    "quote": "Sodium <135 mmol/L at week 4, n (%) 4 (3.5%) 1 (0.8%) 0 (0%)",
-   "notes": "(4+1)/231 = 2.165 vs 0/62, as observed (4 weeks). Placebo-controlled rows are preferred to the 12-week Study 2 contrast (Widaplik 7.3% vs 3.2% without indapamide, excess 4.1). Threshold mismatch (135 not 130) overstates the severe event. Combination drug; sibling extension to chlorthalidone, HCTZ, metolazone."
+   "notes": "(4+1)/231 = 2.165 vs 0/62, as observed (4 weeks). Placebo-controlled rows are preferred to the 12-week Study 2 contrast (Widaplik 7.3% vs 3.2% without indapamide, excess 4.1). Threshold mismatch (135 not 130) overstates the severe event. Combination drug; sibling extension to chlorthalidone, HCTZ, metolazone.",
+   "level_note": "From HYPERTENSION trials, not heart failure: indapamide-containing combination tablets over 4 weeks (Widaplik label), applied to the whole thiazide-type class."
   },
   {
    "id": "thiazide-hyperglycemia",
@@ -4132,7 +4242,8 @@
    "definition_used": "Incident diabetes",
    "verification": "computed_from_verified",
    "quote": "placebo (nine groups) 0.77 (0.63-0.94, p = 0.009)",
-   "notes": "Computed: odds diuretic vs placebo = 1/0.77 = 1.30 applied to the placebo 6.81%: 8.67%; excess 1.86. Follow-up not stated (several years); no conversion, so overstates a yearly rate."
+   "notes": "Computed: odds diuretic vs placebo = 1/0.77 = 1.30 applied to the placebo 6.81%: 8.67%; excess 1.86. Follow-up not stated (several years); no conversion, so overstates a yearly rate.",
+   "level_note": "From HYPERTENSION trials, not heart failure: incident diabetes over several years in a network meta-analysis, not annualized, applied to the whole thiazide-type class."
   },
   {
    "id": "thiazide-gout",
@@ -4148,6 +4259,9 @@
     "citation": "Choi HK et al. BMJ 2012;344:d8190",
     "pmid": "22240117"
    },
+   "caveats": [
+    "From a UK primary-care case-control study of patients with hypertension (not heart failure), with all diuretics pooled: an excess of 572 cases per 100,000 person-years, or 0.572% a year. The study is observational, not randomized."
+   ],
    "population": "UK primary-care case-control; diuretics pooled",
    "control_type": "none",
    "definition_used": "Incident gout (observational)",
@@ -4161,21 +4275,29 @@
    "drugs": [],
    "effect": "hypomagnesemia",
    "layer": "harmRow",
-   "one_year_excess_pct": 21.596,
+   "one_year_excess_pct": 0.0,
    "dose_related": null,
-   "level": "extrapolated",
-   "upper_bound": true,
+   "level": "notMeasured",
+   "upper_bound": false,
    "source": {
+    "trial": "none (no randomized incidence found)",
+    "citation": "Kieboom BCT et al. Pharmacoepidemiol Drug Saf 2018;27:1166-73 (Rotterdam Study, general population, cross-sectional, n = 9,820), PMID 30095199, abstract read; Siegel D et al. JAMA 1992;267:1083-9, PMID 1735925",
+    "pmid": "30095199"
+   },
+   "population": "Not measured: no randomized incidence of hypomagnesemia exists for this class; nothing is charged",
+   "control_type": "none",
+   "definition_used": "Serum magnesium below 1.8 mg/dL",
+   "verification": "verified_abstract",
+   "quote": "Thiazide diuretic use was associated with lower serum magnesium levels, resulting in an increased odds ratio of hypomagnesaemia of 3.14 (95% CI: 1.67; 5.92) and 2.74 (95% CI: 1.57; 4.77) (Kieboom 2018). Serum magnesium and intracellular potassium and magnesium levels were not reduced by hydrochlorothiazide, nor were they related to ventricular arrhythmias (Siegel 1992, randomized, 233 hypertensive men, 2 months).",
+   "notes": "Changed 2026-11-18 (controller recommendation, change C7, source report evidence-lookups.md item 1). The earlier value of 21.596 was the rate for patiromer (a potassium binder, PEARL-HF, PMID 21208974), not for a diuretic. No randomized incidence exists for thiazide-type drugs. The population cohort (Rotterdam) found odds ratios of 3.14 and 2.74 for hypomagnesemia (serum magnesium at or below 0.72 mmol/L), but the baseline prevalence is not in the abstract, so the absolute excess cannot be recovered. The randomized trial (Siegel 1992, hydrochlorothiazide 50 mg a day for 2 months in repleted hypertensive men) found no fall in serum magnesium. Charged as not measured, so it adds no burden: THIS ZERO PROBABLY UNDERSTATES THE HARM for thiazide-type drugs. The earlier row is kept in previous_value, previous_source and previous_population.",
+   "previous_value": 21.596,
+   "previous_source": {
     "trial": "PEARL-HF",
     "citation": "Pitt B et al. Eur Heart J 2011;32:820-8",
     "pmid": "21208974"
    },
-   "population": "Upper bound from a potassium binder, 4 weeks",
-   "control_type": "placebo",
-   "definition_used": "Serum magnesium below 1.8 mg/dL",
-   "verification": "verified_fulltext",
-   "quote": "Serum magnesium <1.8 mg/dL during the treatment period was seen in 13 (24%) RLY5016-treated patients and 1 (2.1%) placebo-treated patient",
-   "notes": "STEP 6 upper bound (see the loop row): thiazide labels warn of hypomagnesemia without a rate."
+   "previous_population": "Upper bound from a potassium binder, 4 weeks",
+   "level_label": "not measured"
   },
   {
    "id": "thiazide-hypotension",
@@ -4183,20 +4305,25 @@
    "drugs": [],
    "effect": "hypotensionSymptomatic",
    "layer": "symptomFigure",
-   "one_year_excess_pct": 5,
+   "one_year_excess_pct": 0.0,
    "dose_related": null,
-   "level": "extrapolated",
-   "upper_bound": true,
+   "level": "notMeasured",
+   "upper_bound": false,
    "source": {
-    "trial": "A-HeFT (label)",
-    "citation": "BiDil (isosorbide dinitrate and hydralazine) prescribing information, DailyMed set e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00, Table 1"
+    "trial": "none (no controlled incidence found)",
+    "citation": "see quote and notes"
    },
-   "population": "Upper bound (BiDil, A-HeFT)",
-   "control_type": "placebo",
+   "population": "Not measured: no controlled incidence of symptomatic low blood pressure was found for a thiazide-type diuretic in heart failure, and no other class with the same mechanism (low blood pressure from loss of salt and water) has a measured row; nothing is charged",
+   "control_type": "none",
    "definition_used": "Hypotension",
-   "verification": "verified_label",
-   "quote": "Hypotension 8 4",
-   "notes": "Step-6 value reset at merge to the largest placebo-controlled excess across both tables: 5 (ARB, Val-HeFT and short-term heart-failure valsartan trials (first 4 months)); was 4.0. STEP 6 upper bound. Widaplik symptomatic hypotension (3.5 to 5.1% vs 0%) is a three-drug combination and not attributable to the diuretic."
+   "verification": "n/a",
+   "quote": "CLOROTIC (hydrochlorothiazide added to intravenous furosemide, 230 patients) reported \"no differences in mortality or rehospitalizations\"; the abstract gives no symptomatic hypotension rate. A metolazone trial (NCT02620384) reports \"hypotension requiring intervention and AKI\" as one combined event (1 vs 0), not separable.",
+   "notes": "Controller ruling 2026-11-19 (round 1 review), replacing the 2026-11-18 charge of 1.778 (a mean over ten drug classes with different definitions and follow-up). The classes that do have a measured hypotension row (the sodium-glucose cotransporter 2 inhibitors and the mineralocorticoid antagonists) act differently, so none is borrowed. THIS ZERO PROBABLY UNDERSTATES THE HARM: loss of salt and water is the main way these drugs lower blood pressure. The loop and thiazide-type drugs in this table therefore carry no charge for symptomatic low blood pressure; the option cards say \"not measured\".",
+   "level_label": "not measured",
+   "drug_pct": null,
+   "control_pct": null,
+   "follow_up_years": null,
+   "preference_step": null
   },
   {
    "id": "hctz-creatinine",
@@ -4214,12 +4341,22 @@
     "citation": "Trullas JC et al. Eur Heart J 2023;44:411-21",
     "pmid": "36423214"
    },
+   "excess_window": "72 hours",
+   "caveats": [
+    "This is a 72-hour inpatient figure: hydrochlorothiazide added to an intravenous loop diuretic in acute decompensated heart failure (CLOROTIC; creatinine rise of 26.5 micromol/L or a fall in eGFR in 46.5% against 17.2%). It is an excess over 72 hours, not per year, and is charged as observed.",
+    "It is charged only when the option also contains a loop diuretic, because that is the only situation measured. Applied to an outpatient it probably overstates."
+   ],
    "population": "CLOROTIC: acute decompensated HF, 230 patients, age 83, HCTZ vs placebo added to IV furosemide, 72 hours",
    "control_type": "placebo",
    "definition_used": "Increase in creatinine >=26.5 micromol/L (0.3 mg/dL) or fall in eGFR, within 72 hours (definition says 0.5 mg/dL)",
    "verification": "verified_abstract",
    "quote": "impaired renal function (increase in creatinine 26.5 moL/L or decrease in eGFR 50; 46.5 vs. 17.2; P 0.001)",
-   "notes": "46.5% vs 17.2% over 72 hours, used as observed (under a year); 29.3 points. An acute, inpatient add-on figure: charged as a yearly rate it dominates the scale (14.7 points). Threshold 0.3 not 0.5 (overstates)."
+   "notes": "Change C6 (2026-11-18, controller recommendation; third pass for metolazone): this rate comes from a short inpatient trial in which the thiazide-type drug was ADDED to a loop diuretic (CLOROTIC, 72 hours, hydrochlorothiazide added to an intravenous loop diuretic in acute heart failure), so it is charged only when the option's regimen also contains a loop diuretic. With no loop diuretic on board the drill-down shows \"kidney harm without a loop diuretic: not measured\" and charges nothing; the controller will supply the hypertension engine's row in a second pass. 46.5% vs 17.2% over 72 hours, used as observed (under a year); 29.3 points. An acute, inpatient add-on figure: charged as a yearly rate it dominates the scale (14.7 points). Threshold 0.3 not 0.5 (overstates).",
+   "charge_when": {
+    "kind": "regimen_contains_class",
+    "value": "Loop Diuretic"
+   },
+   "charge_when_note": "Kidney harm without a loop diuretic: not measured. The only controlled figures are from acute add-on use with a loop diuretic (CLOROTIC, 72 hours, hydrochlorothiazide added to an intravenous loop diuretic in acute heart failure), and the tool's hypertension model charges none, so nothing is charged. "
   },
   {
    "id": "metolazone-creatinine",
@@ -4237,12 +4374,22 @@
     "citation": "ClinicalTrials.gov NCT02620384 adverse events module",
     "pmid": "NCT02620384"
    },
+   "excess_window": "48 hours",
+   "caveats": [
+    "This is a 48-hour inpatient figure from MELT-HF (metolazone added to a loop diuretic in acute heart failure; 10 of 72 patients against 4 of 70 on placebo, reported as acute kidney injury). It is an excess over 48 hours, not per year, and is charged as observed.",
+    "It is charged only when the option also contains a loop diuretic. Applied to an outpatient it probably overstates."
+   ],
    "population": "MELT-HF: acute decompensated HF, metolazone 72 vs placebo 70 added to loop, adverse events collected for the first 48 hours",
    "control_type": "placebo",
    "definition_used": "Reported acute kidney injury in 48 hours",
    "verification": "computed_from_verified",
    "quote": "Acute Kidney Injury: Placebo 4 of 70, Metolazone 10 of 72",
-   "notes": "13.889% vs 5.714% over 48 hours, as observed. Reported event (R2 mismatch)."
+   "notes": "Change C6 (2026-11-18, controller recommendation; third pass for metolazone): this rate comes from a short inpatient trial in which the thiazide-type drug was ADDED to a loop diuretic (MELT-HF, 48 hours, metolazone added to a loop diuretic in acute heart failure), so it is charged only when the option's regimen also contains a loop diuretic. With no loop diuretic on board the drill-down shows \"kidney harm without a loop diuretic: not measured\" and charges nothing; the controller will supply the hypertension engine's row in a second pass. 13.889% vs 5.714% over 48 hours, as observed. Reported event (R2 mismatch).",
+   "charge_when": {
+    "kind": "regimen_contains_class",
+    "value": "Loop Diuretic"
+   },
+   "charge_when_note": "Kidney harm without a loop diuretic: not measured. The only controlled figures are from acute add-on use with a loop diuretic (MELT-HF, 48 hours, metolazone added to a loop diuretic in acute heart failure), and the tool's hypertension model charges none, so nothing is charged. "
   },
   {
    "id": "chlorthalidone-creatinine",
@@ -4260,12 +4407,22 @@
     "citation": "Trullas JC et al. Eur Heart J 2023;44:411-21",
     "pmid": "36423214"
    },
+   "excess_window": "72 hours",
+   "caveats": [
+    "This is a 72-hour inpatient figure from CLOROTIC (hydrochlorothiazide added to an intravenous loop diuretic in acute decompensated heart failure; 46.5% against 17.2%), borrowed for chlorthalidone because chlorthalidone has no add-on trial. It is an excess over 72 hours, not per year, and is charged as observed.",
+    "It is charged only when the option also contains a loop diuretic. Applied to an outpatient drug it probably overstates."
+   ],
    "population": "Sibling proxy: HCTZ, CLOROTIC (larger of the two thiazide-like add-on trials)",
    "control_type": "placebo",
    "definition_used": "As the HCTZ row",
    "verification": "verified_abstract",
    "quote": "impaired renal function (increase in creatinine 26.5 moL/L or decrease in eGFR 50; 46.5 vs. 17.2; P 0.001)",
-   "notes": "Step 5 sibling (R4: more patients, 230 vs 142). Chlorthalidone has no add-on trial; applying an acute inpatient figure to an outpatient drug probably overstates. Flagged."
+   "notes": "Change C6 (2026-11-18, controller recommendation; third pass for metolazone): this rate comes from a short inpatient trial in which the thiazide-type drug was ADDED to a loop diuretic (CLOROTIC, 72 hours, hydrochlorothiazide added to an intravenous loop diuretic in acute heart failure; borrowed for chlorthalidone as a sibling), so it is charged only when the option's regimen also contains a loop diuretic. With no loop diuretic on board the drill-down shows \"kidney harm without a loop diuretic: not measured\" and charges nothing; the controller will supply the hypertension engine's row in a second pass. Step 5 sibling (R4: more patients, 230 vs 142). Chlorthalidone has no add-on trial; applying an acute inpatient figure to an outpatient drug probably overstates. Flagged.",
+   "charge_when": {
+    "kind": "regimen_contains_class",
+    "value": "Loop Diuretic"
+   },
+   "charge_when_note": "Kidney harm without a loop diuretic: not measured. The only controlled figures are from acute add-on use with a loop diuretic (CLOROTIC, 72 hours, hydrochlorothiazide added to an intravenous loop diuretic in acute heart failure; borrowed for chlorthalidone as a sibling), and the tool's hypertension model charges none, so nothing is charged. "
   },
   {
    "id": "patiromer-hypokalemia",
@@ -4434,6 +4591,10 @@
     "citation": "Kosiborod M et al. JAMA 2014;312:2223-33",
     "pmid": "25402495"
    },
+   "caveats": [
+    "Measured in HARMONIZE, outpatients with high potassium (not heart failure), over 28 days: low potassium in 5 of 51 patients on 10 g and 6 of 56 on 15 g, none on 5 g or placebo. The heart failure trial REALIZE-K reported a similar rate (about 6% over 6.5 months).",
+    "The excess is charged at the dose in the option and is used as observed over 28 days, not scaled to a year."
+   ],
    "population": "HARMONIZE: outpatients with hyperkalemia (not heart-failure-specific), SZC 5, 10, 15 g/day vs placebo (45, 51, 56 vs 85), 28 days",
    "control_type": "placebo",
    "definition_used": "Hypokalemia (laboratory; threshold K below 3.5 per the label programme, methods text not retrieved)",
@@ -4470,6 +4631,9 @@
     "trial": "Lokelma label",
     "citation": "LOKELMA prescribing information, DailyMed set 90bf8e28-748d-4e4b-a19f-9cf483370eff, section 6.1"
    },
+   "caveats": [
+    "Measured over up to 28 days in placebo-controlled trials in patients with high potassium and kidney disease, heart failure or diabetes (4.4% at 5 g, 5.9% at 10 g and 16.1% at 15 g against 2.4% on placebo). It is not a heart failure only population. The heart failure trial REALIZE-K gave 5.9% against 2.0% over 6.5 months, which agrees at about 10 g."
+   ],
    "population": "Placebo-controlled trials in patients not on dialysis, hyperkalemia with CKD, heart failure and diabetes (n=1,009), up to 28 days",
    "control_type": "placebo",
    "definition_used": "Edema reported",
@@ -4502,6 +4666,9 @@
     "trial": "Lokelma label",
     "citation": "LOKELMA prescribing information, section 6.1"
    },
+   "caveats": [
+    "An estimated incidence from pooled studies in Asian populations (9% at 10 g and 5% at 5 g), with no cases on placebo. It is not a randomized comparison, so it is the weakest of the sodium zirconium cyclosilicate figures."
+   ],
    "population": "Pooled Asian-population studies; no placebo cases",
    "control_type": "placebo",
    "definition_used": "Constipation",
@@ -4517,20 +4684,28 @@
    ],
    "effect": "hypophosphatemia",
    "layer": "harmRow",
-   "one_year_excess_pct": 66.35,
+   "one_year_excess_pct": 7.482,
    "dose_related": null,
-   "level": "extrapolated",
+   "level": "drug",
    "source": {
+    "trial": "Pooled analysis of six heart failure trials of ferric carboxymaltose (FER-CARS-01, FAIR-HF, EFFICACY-HF, EFFECT-HF, CONFIRM-HF, AFFIRM-AHF)",
+    "citation": "Hypophosphataemia after ferric carboxymaltose in heart failure, pooled analysis, ESC Heart Fail 2023 (PMC10053364)",
+    "pmid": "36722321"
+   },
+   "population": "Heart failure with iron deficiency, pooled six randomized trials: 1,074 on ferric carboxymaltose, 809 on placebo, 110 on comparator; 12 to 52 weeks",
+   "control_type": "placebo",
+   "definition_used": "Serum phosphate below 2.0 mg/dL (CTCAE moderate or severe), lowest post-baseline value",
+   "verification": "verified_fulltext",
+   "quote": "Fewer than 10% of FCM-treated patients in the HF subgroup had serum PO4 levels of <2.0 mg/dL (8.1%). [...] 91 patients in the pooled HF analysis set (FCM: 83; placebo: 5; comparator: 3) had a post-baseline PO4 level <2 mg/dL. [...] In the HF subgroup, one patient (<0.1%) had a serum PO4 of <1.0 mg/dL recorded. (Excerpts from different passages of the paper, joined by [...].)",
+   "notes": "Changed 2026-11-18 (controller recommendation, change C6, source report evidence-lookups.md item 4). Replaces the iron-deficiency-anemia figure of 66.35 (PHOSPHARE-IDA, not heart failure, active comparator). Excess = 8.1% on ferric carboxymaltose minus 0.618% on placebo = 7.482 points. The 8.1% is printed; the placebo percent is DERIVED from a printed count (5 patients) and the arm size of 809 randomized (the paper prints no placebo percent; an analysed-set denominator near 747 would give about 0.7%). The effect is early and transient: nadir at week 4 and little difference between the groups by week 12, so it is not an annual rate, but it is charged as observed over a course. No excess of clinical events: cardiology adverse events potentially linked to hypophosphatemia were not more frequent on ferric carboxymaltose than on placebo. One patient (below 0.1%) had phosphate below 1.0 mg/dL. The authors caution that only 5 placebo patients were below 2.0 mg/dL. The earlier row is kept in previous_value, previous_source and previous_population. ",
+   "previous_value": 66.35,
+   "previous_source": {
     "trial": "PHOSPHARE-IDA trials A and B",
     "citation": "Wolf M et al. JAMA 2020;323:432-43",
     "pmid": "32016310"
    },
-   "population": "Iron-deficiency anemia (not heart failure), 245 patients, FCM 750 mg on days 0 and 7 vs iron isomaltoside 1000 mg; 35 days",
-   "control_type": "active",
-   "definition_used": "Serum phosphate below 2.0 mg/dL between baseline and day 35",
-   "verification": "verified_abstract",
-   "quote": "trial A: 7.9% vs 75.0% ... trial B: 8.1% vs 73.7%",
-   "notes": "FCM 74.35% (pooled 75.0 and 73.7) minus comparator 8.0% = 66.35, 35 days (one course), as observed. Step 3 by R5 would add the comparator placebo excess, which is unknown, so the difference alone is used and understates if iron isomaltoside also lowers phosphate. HF trials report only serious hypophosphatemia (HEART-FID 1 vs 0). Label: laboratory phosphorus <2 mg/dL in 27% (440/1638) of patients (uncontrolled), reported AE 2.1% vs 0.1% (comparators). Courses a year in HF: about one to two (R6); one course used. LARGEST single charge in this part (33 points). Boxed warning (08/2026)."
+   "previous_population": "Iron-deficiency anemia (not heart failure), 245 patients, FCM 750 mg on days 0 and 7 vs iron isomaltoside 1000 mg; 35 days",
+   "level_note": "A DIFFERENCE OF TWO FIGURES from different denominators: the 8.1% is a percent of the heart failure subgroup of a larger ferric carboxymaltose analysis; the placebo figure is 5 of 809 from the pooled heart failure set (83 of 1,074 on the drug in that set is 7.7%)."
   },
   {
    "id": "fcm-hypersensitivity",
@@ -4667,7 +4842,8 @@
    "definition_used": "Cholelithiasis plus cholecystitis reported as adverse events",
    "verification": "verified_label",
    "quote": "cholelithiasis was reported by 1.6% of WEGOVY injection-treated patients and 0.7% of placebo injection-treated patients ... Cholecystitis was reported by 0.6% of WEGOVY injection-treated adult patients and 0.2% of placebo- treated patients.",
-   "notes": "(1.6 + 0.6) - (0.7 + 0.2) = 1.3, no stated follow-up (used as observed; the trials ran about 68 weeks); patients with both may be counted twice. CORRECTED: the collector omitted cholecystitis (0.9). Chosen over the STEP-HFpEF registry (5/573 vs 3/572, excess 0.35) because the registry lists only serious events, a definition mismatch (R2)."
+   "notes": "(1.6 + 0.6) - (0.7 + 0.2) = 1.3, no stated follow-up (used as observed; the trials ran about 68 weeks); patients with both may be counted twice. CORRECTED: the collector omitted cholecystitis (0.9). Chosen over the STEP-HFpEF registry (5/573 vs 3/572, excess 0.35) because the registry lists only serious events, a definition mismatch (R2).",
+   "level_note": "From the drug label's placebo-controlled trials in OBESITY or weight management, not heart failure."
   },
   {
    "id": "sema-gi",
@@ -4734,7 +4910,8 @@
    "definition_used": "Injection site reactions",
    "verification": "verified_label",
    "quote": "1.4% of WEGOVY-treated patients and 1% of patients receiving placebo experienced injection site reactions",
-   "notes": "1.4 vs 1.0, follow-up not stated, as observed."
+   "notes": "1.4 vs 1.0, follow-up not stated, as observed.",
+   "level_note": "From the drug label's placebo-controlled trials in OBESITY or weight management, not heart failure."
   },
   {
    "id": "sema-aki",
@@ -4801,7 +4978,8 @@
    "definition_used": "Cholelithiasis plus cholecystitis reported as adverse events",
    "verification": "verified_label",
    "quote": "cholelithiasis was reported in 1.1% of ZEPBOUND-treated patients and 1% of placebo-treated patients, cholecystitis was reported in 0.7% of ZEPBOUND-treated patients and 0.2% of placebo-treated patients",
-   "notes": "(1.1 + 0.7) - (1.0 + 0.2) = 0.6, as observed. Chosen over SUMMIT (serious events only visible, 9/364 vs 5/367, 0.56 a year) by definition match (R2); the two agree."
+   "notes": "(1.1 + 0.7) - (1.0 + 0.2) = 0.6, as observed. Chosen over SUMMIT (serious events only visible, 9/364 vs 5/367, 0.56 a year) by definition match (R2); the two agree.",
+   "level_note": "From the drug label's placebo-controlled trials in OBESITY or weight management, not heart failure."
   },
   {
    "id": "tirz-gi",
@@ -4929,7 +5107,8 @@
    "definition_used": "Injection site reactions (grouped term)",
    "verification": "verified_label",
    "quote": "Injection Site Reactions d 2 6 8 8",
-   "notes": "Dose groups (weekly mg): 5 mg 6 - 2 = 4, 10 mg 8 - 2 = 6, 15 mg 8 - 2 = 6; follow-up not stated."
+   "notes": "Dose groups (weekly mg): 5 mg 6 - 2 = 4, 10 mg 8 - 2 = 6, 15 mg 8 - 2 = 6; follow-up not stated.",
+   "level_note": "From the drug label's placebo-controlled trials in OBESITY or weight management, not heart failure."
   },
   {
    "id": "tirz-aki",
@@ -4951,7 +5130,8 @@
    "definition_used": "Acute kidney injury reported",
    "verification": "verified_label",
    "quote": "acute kidney injury was reported in 0.5% of ZEPBOUND-treated patients compared to 0.2% of placebo-treated patients",
-   "notes": "Added by the verifier; as observed, follow-up not stated."
+   "notes": "Added by the verifier; as observed, follow-up not stated.",
+   "level_note": "From the drug label's placebo-controlled trials in OBESITY or weight management, not heart failure."
   },
   {
    "id": "tirz-dae",
@@ -4988,7 +5168,7 @@
     "kind": "age_at_least",
     "value": 75
    },
-   "ratio": 1.344,
+   "ratio": 1.262,
    "level": "drug",
    "source": {
     "trial": "PARADIGM-HF (sacubitril/valsartan vs enalapril; Jhund age analysis Table 3)",
@@ -4996,7 +5176,7 @@
     "pmid": "26231885"
    },
    "quote": "Jhund Table 3 (PMC4595742), rows by age category <55, 55-64, 65-74, >=75 (enalapril | LCZ696): symptomatic hypotension LCZ696 96, 158, 195, 139.",
-   "notes": "Drug-arm rate ratio (not excess): >=75 139/784=17.73% vs <75 449/3403=13.19%. Base row is the overall rate, not a <75 rate. Rates over about 2.25 y (ratio is time-free)."
+   "notes": "Drug-arm rate ratio (not excess): >=75 139/784=17.73% vs <75 449/3403=13.19%. Base row is the overall rate, not a <75 rate. Rates over about 2.25 y (ratio is time-free). Controller ruling 2026-11-19 (round 1 review, E7): recomputed against the OVERALL rate of the arm (588/4187 = 14.04%), the same reference every other multiplier in this file uses, because the base row is an overall-population rate; it was stated against the rest of the population (age under 75, 449/3403 = 13.19%) as 1.344. Now 139/784 = 17.73% over 14.04% = 1.262."
   },
   {
    "id": "M-age75-hypotension-ACEi",
@@ -5008,7 +5188,7 @@
     "kind": "age_at_least",
     "value": 75
    },
-   "ratio": 1.389,
+   "ratio": 1.296,
    "level": "siblingProxy",
    "source": {
     "trial": "PARADIGM-HF (sacubitril/valsartan vs enalapril; Jhund age analysis Table 3)",
@@ -5016,7 +5196,7 @@
     "pmid": "26231885"
    },
    "quote": "Jhund Table 3 (PMC4595742), rows by age category <55, 55-64, 65-74, >=75 (enalapril | LCZ696): symptomatic hypotension enalapril 60, 111, 124, 93.",
-   "notes": "Enalapril-arm rate ratio: 93/779=11.94% vs 295/3433=8.59%; applied to all ACE inhibitors as proxy. Base row overall."
+   "notes": "Enalapril-arm rate ratio: 93/779=11.94% vs 295/3433=8.59%; applied to all ACE inhibitors as proxy. Base row overall. Controller ruling 2026-11-19 (round 1 review, E7): recomputed against the OVERALL rate of the arm (388/4212 = 9.21%), the same reference every other multiplier in this file uses, because the base row is an overall-population rate; it was stated against the rest of the population (age under 75, 295/3433 = 8.59%) as 1.389. Now 93/779 = 11.94% over 9.21% = 1.296."
   },
   {
    "id": "M-age75-K55-ARNI",
@@ -5028,7 +5208,7 @@
     "kind": "age_at_least",
     "value": 75
    },
-   "ratio": 1.128,
+   "ratio": 1.101,
    "level": "drug",
    "source": {
     "trial": "PARADIGM-HF (sacubitril/valsartan vs enalapril; Jhund age analysis Table 3)",
@@ -5036,7 +5216,7 @@
     "pmid": "26231885"
    },
    "quote": "Jhund Table 3 (PMC4595742), rows by age category <55, 55-64, 65-74, >=75 (enalapril | LCZ696): K above 5.5 LCZ696 97, 220, 218, 139.",
-   "notes": "Laboratory K above 5.5, drug-arm ratio 17.73% vs 15.72%. Base row overall (and about zero, so the ratio changes little)."
+   "notes": "Laboratory K above 5.5, drug-arm ratio 17.73% vs 15.72%. Base row overall (and about zero, so the ratio changes little). Controller ruling 2026-11-19 (round 1 review, E7): recomputed against the OVERALL rate of the arm (674/4187 = 16.10%), the same reference every other multiplier in this file uses, because the base row is an overall-population rate; it was stated against the rest of the population (age under 75, 535/3403 = 15.72%) as 1.128. Now 139/784 = 17.73% over 16.10% = 1.101."
   },
   {
    "id": "M-age75-K55-ACEi",
@@ -5048,7 +5228,7 @@
     "kind": "age_at_least",
     "value": 75
    },
-   "ratio": 1.165,
+   "ratio": 1.13,
    "level": "siblingProxy",
    "source": {
     "trial": "PARADIGM-HF (sacubitril/valsartan vs enalapril; Jhund age analysis Table 3)",
@@ -5056,7 +5236,7 @@
     "pmid": "26231885"
    },
    "quote": "Jhund Table 3 (PMC4595742), rows by age category <55, 55-64, 65-74, >=75 (enalapril | LCZ696): K above 5.5 enalapril 89, 254, 232, 152.",
-   "notes": "Enalapril-arm ratio 19.51% vs 16.75%; base row is a reported-event row, so the ratio is applied across definitions."
+   "notes": "Enalapril-arm ratio 19.51% vs 16.75%; base row is a reported-event row, so the ratio is applied across definitions. Controller ruling 2026-11-19 (round 1 review, E7): recomputed against the OVERALL rate of the arm (727/4212 = 17.26%), the same reference every other multiplier in this file uses, because the base row is an overall-population rate; it was stated against the rest of the population (age under 75, 575/3433 = 16.75%) as 1.165. Now 152/779 = 19.51% over 17.26% = 1.13."
   },
   {
    "id": "M-age75-creat25-ARNI",
@@ -5068,7 +5248,7 @@
     "kind": "age_at_least",
     "value": 75
    },
-   "ratio": 1.351,
+   "ratio": 1.268,
    "level": "drug",
    "source": {
     "trial": "PARADIGM-HF (sacubitril/valsartan vs enalapril; Jhund age analysis Table 3)",
@@ -5076,7 +5256,7 @@
     "pmid": "26231885"
    },
    "quote": "Jhund Table 3 (PMC4595742), rows by age category <55, 55-64, 65-74, >=75 (enalapril | LCZ696): creatinine at least 2.5 mg/dL LCZ696 10, 34, 62, 33.",
-   "notes": "Absolute level, not a rise; ratio 4.21% vs 3.11%."
+   "notes": "Absolute level, not a rise; ratio 4.21% vs 3.11%. Controller ruling 2026-11-19 (round 1 review, E7): recomputed against the OVERALL rate of the arm (139/4187 = 3.32%), the same reference every other multiplier in this file uses, because the base row is an overall-population rate; it was stated against the rest of the population (age under 75, 106/3403 = 3.11%) as 1.351. Now 33/784 = 4.21% over 3.32% = 1.268."
   },
   {
    "id": "M-age75-creat25-ACEi",
@@ -5088,7 +5268,7 @@
     "kind": "age_at_least",
     "value": 75
    },
-   "ratio": 1.428,
+   "ratio": 1.323,
    "level": "siblingProxy",
    "source": {
     "trial": "PARADIGM-HF (sacubitril/valsartan vs enalapril; Jhund age analysis Table 3)",
@@ -5096,7 +5276,7 @@
     "pmid": "26231885"
    },
    "quote": "Jhund Table 3 (PMC4595742), rows by age category <55, 55-64, 65-74, >=75 (enalapril | LCZ696): creatinine at least 2.5 mg/dL enalapril 20, 48, 74, 46.",
-   "notes": "Enalapril arm: 46/779=5.91% vs 142/3433=4.14%."
+   "notes": "Enalapril arm: 46/779=5.91% vs 142/3433=4.14%. Controller ruling 2026-11-19 (round 1 review, E7): recomputed against the OVERALL rate of the arm (188/4212 = 4.46%), the same reference every other multiplier in this file uses, because the base row is an overall-population rate; it was stated against the rest of the population (age under 75, 142/3433 = 4.14%) as 1.428. Now 46/779 = 5.91% over 4.46% = 1.323."
   },
   {
    "id": "M-black-angioedema-ARNI",
@@ -5152,25 +5332,6 @@
    },
    "quote": "The rates of hyperkalemia in EPHESUS in the INSPRA-treated group vs. placebo were increased in patients with proteinuria (16% vs 11%), diabetes (18% vs. 13%) or both (26% vs. 16%).",
    "notes": "Ratio on the excess over placebo: diabetes (18-13) over overall (15.6-11.2) = 1.136. Base row is the overall excess. Measured with eplerenone, post-MI; applied to spironolactone too."
-  },
-  {
-   "id": "M-diabetes-K55-nsMRA",
-   "effect": "hyperkalemia",
-   "applies_to_classes": [
-    "nsMRA"
-   ],
-   "condition": {
-    "kind": "has_diabetes"
-   },
-   "ratio": 1.38,
-   "level": "drug",
-   "source": {
-    "trial": "FINEARTS-HF potassium analysis",
-    "citation": "Vaduganathan M et al. JAMA Cardiol 2025;10:42-48 (PMC11571067)",
-    "pmid": "39550716"
-   },
-   "quote": "Type 2 diabetes | 1.38 (1.16-1.63) | <.001 (Potassium >5.5 mmol/L)",
-   "notes": "Hazard ratio for K above 5.5 in all patients (adjusted for treatment), applied as a ratio on the finerenone excess. Base row is the overall rate. Not an excess ratio."
   },
   {
    "id": "mult-hydralazine-lupus-female",
@@ -5370,6 +5531,16 @@
    "description": "Thiazide added to a loop: CLOROTIC reports hypokalaemia \"similar between groups\" without numbers",
    "why": "No numbers in the abstract; full text not open. Not estimated.",
    "source": "CLOROTIC, PMID 36423214"
+  },
+  {
+   "id": "NR-FINEARTS-K-diabetes",
+   "effect": "hyperkalemia",
+   "applies_to_classes": [
+    "nsMRA"
+   ],
+   "measured": "Type 2 diabetes: hazard ratio 1.38 (1.16-1.63) for potassium above 5.5 mmol/L (all patients, adjusted for treatment) (FINEARTS-HF potassium analysis, PMC11571067: \"Type 2 diabetes | 1.38 (1.16-1.63) | <.001 (Potassium >5.5 mmol/L)\")",
+   "source": "Vaduganathan JAMA Cardiol 2025 (PMID 39550716), Table",
+   "reason": "Removed 2026-11-19 (controller ruling, round 1 review, E7) as a multiplier: it is a prognostic hazard ratio across both arms (diabetes raises potassium on placebo too), not a drug-by-diabetes interaction, so it is not a ratio on the finerenone excess. The steroidal MRA multiplier (EPHESUS, diabetes 18% vs 13%) is a within-drug comparison and stays."
   }
  ],
  "listed_not_scored": [

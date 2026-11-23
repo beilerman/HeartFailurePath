@@ -2,6 +2,8 @@ import React from 'react';
 import { UserIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
+import { pregnancyStatusRequired } from '../../services/clinicalPredicates';
+import { BREASTFEEDING_NOT_ASSESSED } from '../../services/engine/thresholds';
 
 interface DemographicsSectionProps {
     patientData: Patient;
@@ -34,7 +36,7 @@ export const DemographicsSection: React.FC<DemographicsSectionProps> = ({ patien
                         <option value="false">No / not applicable</option>
                         <option value="true">Yes</option>
                     </Select>
-                    <p className="mt-1 text-xs text-slate-600">If unknown, pregnancy-restricted medication changes are withheld; other supported checks remain available.</p>
+                    <p className="mt-1 text-xs text-slate-600">{pregnancyStatusRequired(patientData) ? 'Required for a woman younger than 56. If unknown, pregnancy-restricted medication changes are withheld; other supported checks remain available.' : 'Not required at age 56 or older; leave blank. Enter Yes if she is pregnant.'} {BREASTFEEDING_NOT_ASSESSED}</p>
                 </div>}
                 <div>
                     <Label htmlFor="race">Self-reported race</Label>

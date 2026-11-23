@@ -67,7 +67,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                         </div>
                         <div className="h-10 w-px bg-slate-100 mx-2"></div>
                         <div className="text-center flex-1">
-                            <div className="text-2xl font-black text-slate-900">{patient.kccq_score ?? '—'}</div><p className="text-xs text-slate-500">{patient.kccq_instrument ?? 'Instrument not recorded'}</p>
+                            <div className="text-2xl font-black text-slate-900">{patient.kccq_score ?? 'not entered'}</div><p className="text-xs text-slate-500">{patient.kccq_instrument ?? 'Instrument not recorded'}</p>
                             <div className="text-xs font-bold text-slate-400 uppercase mt-1">KCCQ Score</div>
                         </div>
                      </div>
@@ -95,7 +95,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                         </div>
                         {isPrerenal && (
                             <div className="bg-amber-50 border border-amber-100 text-amber-800 text-xs px-2 py-1.5 rounded font-bold mt-1 text-center">
-                                Elevated BUN/creatinine ratio — assess perfusion and other causes
+                                Elevated BUN/creatinine ratio: assess perfusion and other causes
                             </div>
                         )}
                      </div>
@@ -125,7 +125,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                         </p>
                     )}
                     <div className="flex justify-between mt-2 text-xs text-slate-500">
-                        <span>Budget: ${patient.max_affordable_cost ?? '—'}</span>
+                        <span>Budget: ${patient.max_affordable_cost ?? 'not entered'}</span>
                         <span>Cost sensitivity: {patient.cost_sensitivity} of 10</span>
                     </div>
                 </div>

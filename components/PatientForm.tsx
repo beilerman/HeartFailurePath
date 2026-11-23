@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import type { Patient, TestScenario } from '../types';
+import { VISIT_LIMIT_WORDS } from '../services/engine/thresholds';
 import { Label, Select } from './patient-form/Common';
 import { FORM_SECTION_IDS, FormSection, usePatientFormModel } from './patient-form/usePatientFormModel';
 
@@ -58,14 +59,14 @@ export const PatientForm: React.FC<PatientFormProps> = ({
                         </optgroup>
                     ))}
                 </Select>
-                <p className="mt-2 text-xs font-semibold text-slate-600">{selectedScenario === 'custom' ? 'New case: clinical findings must be entered from the chart.' : 'Example case — contains sample data. Choose Custom profile for a new case.'}</p>
+                <p className="mt-2 text-xs font-semibold text-slate-600">{selectedScenario === 'custom' ? 'New case: clinical findings must be entered from the chart.' : 'Example case: contains sample data. Choose Custom profile for a new case.'}</p>
                 {urgentFindings.length > 0 && <div role="alert" className="mt-3 rounded-lg border border-red-300 bg-red-50 p-3 text-sm text-red-950">
                     <p className="font-bold">Recorded findings need prompt clinical review</p>
                     <ul className="mt-2 list-disc pl-5 space-y-2">{urgentFindings.map(finding=><li key={finding}>{finding}</li>)}</ul>
                     <p className="mt-2">These findings remain visible while other entries are incomplete or being corrected.</p>
                 </div>}
                 <nav aria-label="Patient form sections" className="mt-3 flex flex-wrap gap-2">
-                    {Object.entries({'patient-demographics':'Patient','patient-symptoms':'Symptoms','patient-exam':'Vitals / exam','patient-diagnostics':'Labs / echo','patient-history':'History / allergies','patient-medications':'Medications','patient-social':'Preferences'}).map(([id,label]) => (
+                    {Object.entries({'patient-demographics':'Patient','patient-symptoms':'Symptoms','patient-exam':'Vitals / exam','patient-diagnostics':'Labs / echo','patient-history':'History / allergies','patient-scope':'Scope question','patient-medications':'Medications','patient-social':'Preferences'}).map(([id,label]) => (
                         <button key={id} type="button" onClick={()=>focusField(id)} className="px-2 py-1.5 text-xs font-semibold rounded bg-white border border-slate-300 text-indigo-700 focus-visible:ring-2 focus-visible:ring-indigo-500">{label}</button>
                     ))}
                 </nav>
@@ -74,7 +75,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
                 {selectedScenario === 'custom' && (
                     <p role="status" className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800">
-                        Enter what is known and leave unavailable fields blank. The review will explain which decisions can be assessed and which wait for more information. Model preferences: cost sensitivity {patientData.cost_sensitivity}/10, regimen complexity tolerance {patientData.complexity_tolerance}/10, and up to {patientData.max_new_classes_per_visit} new drug classes per visit. Unchecked history or examination items mean not recorded, not confirmed absent.
+                        Enter what is known and leave unavailable fields blank. The review will explain which decisions can be assessed and which wait for more information. Model preferences: cost sensitivity {patientData.cost_sensitivity}/10, regimen complexity tolerance {patientData.complexity_tolerance}/10, and a limit of {patientData.max_new_classes_per_visit} per visit. {VISIT_LIMIT_WORDS} Unchecked history or examination items mean not recorded, not confirmed absent.
                     </p>
                 )}
                 {FORM_SECTION_IDS.map(id => <FormSection key={id} id={id} model={model} />)}

@@ -27,7 +27,7 @@ export function buildTreatmentAssessment(patient: Patient, set: ModificationSet)
     for (const change of changes) {
         const med = (change.target ?? change.source)!.med;
         let detail = medicationEffectContext(med);
-        if (change.action === 'swap') detail = `Substitution: ${change.source!.med.name} → ${med.name}. ${detail} No untreated state or exact replacement response is inferred.`;
+        if (change.action === 'swap') detail = `Switch ${change.source!.med.name} to ${med.name}. ${detail} No untreated state or exact replacement response is inferred.`;
         else if (change.action === 'remove' || change.action === 'titrate_down') detail = `Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. ${detail}`;
         else if (change.action === 'titrate_up') detail = `Dose increase: additional benefit and adverse effects are not numerically estimated. ${detail}`;
         considerations.push({ label: med.name, direction: 'caution', detail });

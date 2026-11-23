@@ -7,6 +7,7 @@ import { MRA_POOL_CLASSES, RAAS_CLASSES, DIURETIC_CLASSES, DRUG_CLASS_REGISTRY, 
 // Re-exported so the eligibility rules (and any caller) can take every intolerance helper from one module.
 export { MRA_POOL_CLASSES };
 import { clonePatient } from './regimenUtils';
+import { hasAngioedemaHistoryEntered } from './contraindications';
 
 // When renal data is missing (blank eGFR/creatinine → the 0 sentinel), every `egfr < X`
 // contraindication in the formulary evaluates TRUE — blank data must not read as end-stage
@@ -51,6 +52,9 @@ export interface IntolerancePolicy {
     hasBbBronchospasm: boolean;           // avoid non-selective carvedilol; β1-selective acceptable
     hasGlp1GiIntolerance: boolean;        // new starts only — a currently tolerated GLP-1 is kept
 }
+
+/** An angioedema history recorded by ANY entry route (the "History of Angioedema" comorbidity, a discontinued RAAS drug whose reason names it, or the word typed in the allergy box): the one predicate every reader uses (W11). */
+export const hasAngioedemaHistory = (patient: Patient): boolean => hasAngioedemaHistoryEntered(patient) || deriveIntolerancePolicy(patient).angioedema.suspected;
 
 export function deriveIntolerancePolicy(patient: Patient): IntolerancePolicy {
     const discontinued = patient.discontinued_meds;
@@ -254,3 +258,41 @@ export function intoleranceCautionsFor(patient: Patient, modifications: readonly
 export function aceInhibitorAllergies(patient: Patient): string[] {
     return MEDICATION_FORMULARY.filter(m => m.drug_class === 'ACEi' && patient.allergies.has(m.name)).map(m => m.name);
 }
+
+/** Plain name of a drug class for a sentence ("ACE inhibitor", "beta-blocker"). */
+const CLASS_WORDS: Record<string, string> = {
+    'ACEi': 'ACE inhibitor', 'ARB': 'angiotensin receptor blocker', 'ARNI': 'angiotensin receptor-neprilysin inhibitor', 'Beta Blocker': 'beta-blocker', 'MRA': 'mineralocorticoid receptor antagonist',
+    'nsMRA': 'nonsteroidal mineralocorticoid receptor antagonist', 'Loop Diuretic': 'loop diuretic', 'Thiazide-like Diuretic': 'thiazide-type diuretic', 'SGLT2i': 'SGLT2 inhibitor', 'K+ Binder': 'potassium binder',
+    'GLP-1 RA': 'GLP-1 receptor agonist', 'GLP-1/GIP RA': 'GLP-1 and GIP receptor agonist',
+};
+export const drugClassWords = (drugClass: string): string => CLASS_WORDS[drugClass] ?? drugClass;
+
+/** Drugs of the same class as `med` (other than `med`) that the patient lists as an allergy (the resolved formulary names; see allergy.ts). Empty when `med` is itself an allergy (it is then excluded, not started). */
+export function sameClassAllergies(patient: Patient, med: Medication): string[] {
+    if (patient.allergies.has(med.name)) return [];
+    const classes = classesContained(med);
+    const products = combinationProductsContaining(med);
+    return MEDICATION_FORMULARY.filter(m => m.name !== med.name && patient.allergies.has(m.name) && (classes.includes(m.drug_class) || products.includes(m.name))).map(m => m.name);
+}
+const genericOf = (n: string) => n.replace(/\s*\(.*\)/, '').toLowerCase();
+/**
+ * R9 Z6b: the formulary's combination products (written "A/B") that contain `med` as a component (sacubitril/valsartan contains valsartan). An allergy to the product puts the allergy check on a start of a component,
+ * the mirror of the check an allergy to valsartan puts on the product (W10a). Read from the formulary names; no drug is named here.
+ */
+export const combinationProductsContaining = (med: Medication): string[] => MEDICATION_FORMULARY.filter(m => m.name !== med.name && genericOf(m.name).includes('/') && genericOf(m.name).split('/').includes(genericOf(med.name))).map(m => m.name);
+/** R9 Z6a: the GLP-1 receptor agonists (semaglutide, tirzepatide) are one family for the allergy check, as they already are for the class limit. */
+const GLP1_GROUP = 'GLP-1 Therapy';
+
+/**
+ * The classes a drug belongs to or CONTAINS (R7 W10a): the same check applied to a combination product's component classes, as the allergy resolver already does for the name ("valsartan" resolves to
+ * sacubitril/valsartan) and the class alias ("ARB" excludes the ARNI). Sacubitril/valsartan contains valsartan, an angiotensin receptor blocker.
+ */
+export const classesContained = (med: Medication): string[] => (med.drug_class === 'ARNI' ? ['ARNI', 'ARB']
+    : getMedicationClassGroup(med.drug_class) === GLP1_GROUP ? [...new Set(MEDICATION_FORMULARY.filter(m => getMedicationClassGroup(m.drug_class) === GLP1_GROUP).map(m => m.drug_class))]
+    : [med.drug_class]);
+
+/** True when every listed allergy matched `med` only through a component class (an ARB-class allergy and the ARNI that contains valsartan). */
+export const allergyViaComponentOnly = (patient: Patient, med: Medication): boolean => {
+    const names = sameClassAllergies(patient, med);
+    return med.drug_class === 'ARNI' && names.length > 0 && names.every(n => MEDICATION_FORMULARY.find(m => m.name === n)?.drug_class !== med.drug_class);
+};

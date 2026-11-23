@@ -1,11 +1,11 @@
 
 import { Medication, Patient, RegimenMed } from './types';
-import { ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raasPotassiumChecks, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
+import { digoxinAfibAccessoryPathway, ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raasPotassiumChecks, CI_BILATERAL_RAS, CI_ALISKIREN_DIABETES, LIVER_BC, LIVER_B_CONFIRMED, hasChildPughBorC, hasChildPughBConfirmed, bbStartBradycardiaCheck, CI_SICK_SINUS_NO_PACEMAKER, SICK_SINUS, VENTRICULAR_FIBRILLATION, WPW, CONDUCTION_DEFECT, IVABRADINE_STRONG_CYP3A4, CYP3A4_INDUCERS, strongIvabradineCyp3a4, onCyp3a4Inducer, onVerapamilOrDiltiazem, onAmiodarone, CI_SEVERE_HEPATIC_UNSPECIFIED, CI_AV_BLOCK_2, CI_AV_BLOCK_3, CI_SEVERE_ASTHMA, CI_TYPE1_OR_DKA, CI_MTC_MEN2, pregnancyCheck,
     STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, mraStartEgfrCheck, creatinineRiseStopCheck, moderateCyp3aInhibitor,
     PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, EXTERNAL_POTASSIUM_RAISERS } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
-import { valueUnknown, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
-import { MRA_HALVE_DOSE_EGFR_BELOW, BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_CAUTION, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
+import { valueUnknown, congestionFindingCount, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
+import { SEVERE_CKD_EGFR_BELOW, MRA_HALVE_DOSE_EGFR_BELOW, BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_CAUTION, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
 
 // Helper for logarithmic calculations (dose-response curves)
 const logBase = (base: number, x: number) => Math.log(x) / Math.log(base);
@@ -150,23 +150,35 @@ const SGLT2_S9_FACTS = { regimen_warnings: [
 ] };
 
 // 2026 ESC Supplementary Table S6 cautions for starting a beta-blocker (shared by the three agents).
-const BB_S6_START_NOTE = { text: 'Drug note (2026 ESC Supplementary Table S6): seek specialist advice before starting in NYHA IV or with a current or recent (under 4 weeks) exacerbation; achieve euvolemia first if congestion persists or systolic pressure is below 90. Asthma is a relative contraindication (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.',
-    // Shown only on an option that STARTS a beta-blocker (it was attached to a beta-blocker the patient already takes: review 3).
-    when: (p: Patient, regimen: RegimenMed[]) => regimen.some(r => r.med.drug_class === 'Beta Blocker' && !(p.current_regimen ?? []).some(c => c.med.name === r.med.name)) };
+// R6 V8: a beta-blocker started (or raised) is followed by a heart-rate and blood-pressure check. The timing is the one the tool's follow-up calendar already gives for its first review (about 1 week); no new number.
+/** Digoxin: the kidney-function ceiling this tool applies (a conservative choice; the label's table doses by lean body weight and creatinine clearance). */
+const DIGOXIN_CAP_EGFR_BELOW = 30, DIGOXIN_CAP_MCG = 62.5;
+const BB_HR_BP_ITEM = { test: 'Heart rate and blood pressure after a beta-blocker start or increase', timing: 'About 1 week; sooner if indicated', details: 'Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug\'s limit.', when_started: true as const };
+// 2026 ESC Supplementary Table S6, beta-blocker start. R6 V13: the note was one block that stated three conditions ("in NYHA IV or a recent exacerbation", "if congestion persists or systolic pressure is below 90", asthma) and was shown on every
+// start, including NYHA II. Each condition is now its own note shown only when it holds for the patient; the general statements (asthma, COPD, the dosing interval) stay general.
+const startsBetaBlocker = (p: Patient, regimen: RegimenMed[]) => regimen.some(r => r.med.drug_class === 'Beta Blocker' && !(p.current_regimen ?? []).some(c => c.med.name === r.med.name));
+// R7 W6: the text says what is true of THIS patient. Table S6 asks for specialist advice in NYHA IV or with a current or recent (under 4 weeks) exacerbation; the record holds "HF hospitalization within 6 months or outpatient IV diuretics within 3 months", which cannot tell 4 weeks from 6 months, so a recorded worsening is worded as a worsening to be dated.
+const BB_S6_ADVICE_NOTE = { text: (p: Patient) => `Drug note (2026 ESC Supplementary Table S6): seek specialist advice before starting${[p.nyha_class === 'IV' ? 'in NYHA class IV' : '', p.recent_hf_worsening_within_6mo === 'yes' ? 'with a recent exacerbation: a worsening is recorded within the last 6 months, and the guideline caution is for one in the last 4 weeks (or a current one), which this record cannot separate, so confirm when it was' : ''].filter(Boolean).map((x, i) => `${i === 0 ? ' ' : '; and '}${x}`).join('')}.`,
+    // Shown only on an option that STARTS a beta-blocker (it was attached to a beta-blocker the patient already takes: review 3), and only for a patient in NYHA IV or with a recent worsening recorded.
+    when: (p: Patient, regimen: RegimenMed[]) => startsBetaBlocker(p, regimen) && (p.nyha_class === 'IV' || p.recent_hf_worsening_within_6mo === 'yes') };
+const BB_S6_EUVOLEMIA_NOTE = { text: (p: Patient) => `Drug note (2026 ESC Supplementary Table S6): achieve euvolemia first; ${[congestionFindingCount(p.volume_status.exam_findings) > 0 ? 'congestion is recorded' : '', p.sbp > 0 && p.sbp < 90 ? `the systolic pressure is ${p.sbp}, below 90` : ''].filter(Boolean).join(' and ')}.`,
+    when: (p: Patient, regimen: RegimenMed[]) => startsBetaBlocker(p, regimen) && (congestionFindingCount(p.volume_status.exam_findings) > 0 || (p.sbp > 0 && p.sbp < 90)) };
+const BB_S6_START_NOTE = { text: 'Drug note (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.',
+    when: (p: Patient, regimen: RegimenMed[]) => startsBetaBlocker(p, regimen) };
 
 // Potassium rules for a RAAS inhibitor the patient is ALREADY on (2026 ESC heart failure guideline section 6.1; thresholds.ts): one dose step down from 5.5
 // (stopped if already at the lowest tier), stopped from 6.0, with the MRA reduced or stopped first when both are on board (yields_to). Increases are held above 5.2,
 // the same threshold that stages a new start (rule E18; a new start is blocked outright above 5.4 by raasPotassiumChecks). Abrupt withdrawal of an ACEi/ARNI risks deterioration, so a
 // current drug is reduced rather than removed in the 5.5-5.9 band. Before 2026-11-11 a current RAAS inhibitor was removed above 5.4 (engine policy).
-const MRA_K_FIRST_STEPS = 'Recheck potassium and kidney function in 1-2 weeks and look for other causes first (2026 ESC Supplementary Table S8: above 5.5 halve the dose; above 6.0 interrupt and seek specialist advice). ESC says therapy held for less than 14 days can usually restart at the previous dose; the US labels restart a WITHHELD MRA at a low dose (not the previous dose) once potassium is below 5.5; this tool uses that label rule. A dose that was only reduced is not increased again until potassium is below 5.0.';
+const MRA_K_FIRST_STEPS = 'Recheck potassium and kidney function in 1-2 weeks and look for other causes first (2026 ESC Supplementary Table S8: above 5.5 halve the dose; above 6.0 interrupt and seek specialist advice). ESC says therapy held for less than 14 days can usually restart at the previous dose; the US labels restart a withheld MRA at a low dose (not the previous dose) once potassium is below 5.5; this tool uses that label rule. A dose that was only reduced is not increased again until potassium is below 5.0.';
 
 const RAAS_K_FACTS = {
     k_continuation: { reduce_at: RAAS_REDUCE_K, withhold_at: RAAS_WITHHOLD_K, restart_below: RAAS_REDUCE_K, yields_to: 'mra' as const,
-        first_steps: 'Stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes first, then recheck potassium and kidney function in 1-2 weeks (2026 ESC Supplementary Tables S4/S5: potassium up to 5.5 is acceptable; a persistent rise above 5.5 halves the dose and is rechecked in 1-2 weeks; S4 also says stop above 5.5, and the main text says down-titrate or discontinue for above 5.5 or above 6, so the engine reduces one step from 5.5 and stops from 6.0). Therapy held for less than 14 days can usually restart at the previous dose (2026 ESC).',
-        basis: '2026 ESC section 6.1: severe hyperkalaemia (above 5.5 or 6) leads to temporary down-titration or discontinuation of the MRA and/or ACEi/ARNI/ARB; the 5.5 reduce / 6.0 stop split and MRA-first order are engine policy' },
+        first_steps: 'Stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes first, then recheck potassium and kidney function in 1-2 weeks (2026 ESC Supplementary Tables S4/S5: potassium up to 5.5 is acceptable; a persistent rise above 5.5 halves the dose and is rechecked in 1-2 weeks; S4 also says stop above 5.5, and the main text says down-titrate or discontinue for above 5.5 or above 6, so the tool reduces one step from 5.5 and stops from 6.0). Therapy held for less than 14 days can usually restart at the previous dose (2026 ESC).',
+        basis: '2026 ESC section 6.1: severe hyperkalaemia (above 5.5 or 6) leads to temporary down-titration or discontinuation of the MRA and/or ACEi/ARNI/ARB; the 5.5 reduce / 6.0 stop split and MRA-first order are a rule set by this tool' },
     // One ladder for intensification: an increase is held above the same potassium at which a new start is held (rule E18). Until 2026-11-12 an increase was
     // allowed up to 5.4 while a new start was held above 5.2 (adversarial review item 12).
-    k_uptitration_max: { above: RAAS_START_K_CAUTION, basis: `Engine policy: the dose is not raised above potassium ${RAAS_START_K_CAUTION}, the same threshold that holds a new start (2026 ESC Supplementary Tables S4/S5: seek advice above 5.2; a rise to 5.5 on treatment is acceptable)` },
+    k_uptitration_max: { above: RAAS_START_K_CAUTION, basis: `A rule set by this tool: the dose is not raised above potassium ${RAAS_START_K_CAUTION}, the same threshold that holds a new start (2026 ESC Supplementary Tables S4/S5: seek advice above 5.2; a rise to 5.5 on treatment is acceptable)` },
 };
 
 // Wording for the RAAS pregnancy checks: all eight carry a boxed warning for fetal toxicity (replaces the obsolete "Category X").
@@ -527,10 +539,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         start_dose_for: () => 3.125,
         facts: {
             nonselective_beta_blocker: true, hepatically_metabolized: true, target_reference_dose: 25, // 2026 ESC Table 11: carvedilol target 25 mg twice daily (50 mg above 85 kg); the fraction uses 25
-            regimen_warnings: [BB_S6_START_NOTE],
+            regimen_warnings: [BB_S6_ADVICE_NOTE, BB_S6_EUVOLEMIA_NOTE, BB_S6_START_NOTE],
+            monitoring_items: [BB_HR_BP_ITEM],
             // Coreg label sec 2.1 and 5.2: "reduce the dose if heart rate is less than 55 beats per minute" (sourced). No
             // up-titration below 60 bpm is ENGINE POLICY (no label number). Established therapy is reduced one step, never stopped at a rate.
-            hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'Coreg label: reduce the dose if heart rate is below 55 (the 55 is also used as the start threshold); no up-titration below 60 is ENGINE POLICY (no source)' },
+            hr_continuation: { reduce_below: BB_HR_BELOW, no_uptitration_below: 60, basis: 'Coreg label: reduce the dose if heart rate is below 55 (the 55 is also used as the start threshold); no up-titration below 60 is a rule set by this tool (no source)' },
         },
         // ACC/AHA target: 25 mg BID for <= 85 kg dry weight, 50 mg BID above (the label calls 50 mg BID the maximum
         // ADMINISTERED to patients over 85 kg; the weight-based target is from the guideline, secondary source).
@@ -578,7 +591,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         // COPERNICUS: 50mg BID target only for patients > 85kg; standard target is 25mg BID
         renal_adjustment: (_egfr, patient) => {
             const dryWeight = patient?.volume_status?.dry_weight_kg ?? 85;
-            if (dryWeight <= 85) return { max_dose: 25 };
+            if (dryWeight <= 85) return { max_dose: 25, max_dose_reason: `the label's limit by body weight, 50 mg twice daily only above 85 kg, at a dry weight of ${dryWeight} kg` };
             return {};
         },
     },
@@ -589,10 +602,11 @@ export const MEDICATION_FORMULARY: Medication[] = [
         start_dose_for: (p) => (p.nyha_class === 'III' || p.nyha_class === 'IV' ? 12.5 : 25),
         facts: {
             beta1_selective: true, hepatically_metabolized: true, target_reference_dose: 200, // 2026 ESC Table 11: metoprolol succinate target 200 mg daily
-            regimen_warnings: [BB_S6_START_NOTE],
+            regimen_warnings: [BB_S6_ADVICE_NOTE, BB_S6_EUVOLEMIA_NOTE, BB_S6_START_NOTE],
+            monitoring_items: [BB_HR_BP_ITEM],
             // Toprol-XL/generic label: "if patients experience symptomatic bradycardia, reduce the dose" (no number). Below 55 bpm as the
             // trigger (same as carvedilol's labeled number) and no up-titration below 60 are ENGINE POLICY.
-            hr_continuation: { reduce_below: BB_HR_BELOW_ESC, no_uptitration_below: 60, basis: '2026 ESC Supplementary Table S6: lower the dose if heart rate is below 50 with worsening symptoms (the metoprolol label gives no number); no up-titration below 60 is ENGINE POLICY (no source)' },
+            hr_continuation: { reduce_below: BB_HR_BELOW_ESC, no_uptitration_below: 60, basis: '2026 ESC Supplementary Table S6: lower the dose if heart rate is below 50 with worsening symptoms (the metoprolol label gives no number); no up-titration below 60 is a rule set by this tool (no source)' },
         },
         // is_best_in_class removed: the three beta-blockers are modeled as equal at target (verified-rate-control.md); no verified source ranks one above the others.
         available_doses: [
@@ -638,9 +652,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
             beta1_selective: true, most_cardioselective: true, target_reference_dose: 10, // 2026 ESC Table 11: bisoprolol target 10 mg daily
             // The US label gives no heart-rate number ("marked sinus bradycardia" is a contraindication). Below 55 bpm as the reduction
             // trigger and no up-titration below 60 are ENGINE POLICY, matched to the other two beta-blockers.
-            hr_continuation: { reduce_below: BB_HR_BELOW_ESC, no_uptitration_below: 60, basis: '2026 ESC Supplementary Table S6: lower the dose if heart rate is below 50 with worsening symptoms (the bisoprolol label gives no number); no up-titration below 60 is ENGINE POLICY (no source)' },
+            hr_continuation: { reduce_below: BB_HR_BELOW_ESC, no_uptitration_below: 60, basis: '2026 ESC Supplementary Table S6: lower the dose if heart rate is below 50 with worsening symptoms (the bisoprolol label gives no number); no up-titration below 60 is a rule set by this tool (no source)' },
+            monitoring_items: [BB_HR_BP_ITEM],
             regimen_warnings: [
-                BB_S6_START_NOTE,
+                BB_S6_ADVICE_NOTE, BB_S6_EUVOLEMIA_NOTE, BB_S6_START_NOTE,
                 { text: 'Drug note: the US bisoprolol label is for hypertension only and lists overt cardiac failure as a contraindication, so heart-failure use is off-label (guideline-supported: CIBIS-II, target 10 mg daily). US single-agent tablets are 5 mg and 10 mg; 2.5 mg is half of a scored 5 mg tablet, the CIBIS-II 1.25 mg starting dose requires confirmation of a suitable product or pharmacy preparation. Do not assume a 5 mg tablet can be quartered accurately.' },
             ],
         },
@@ -698,7 +713,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             k_continuation: { reduce_at: 5.5, withhold_at: 6.0, basis: 'Eplerenone/finerenone label rule applied to spironolactone by analogy (the Aldactone label gives no numeric rule)', first_steps: MRA_K_FIRST_STEPS },
             // ENGINE POLICY (class rule by analogy): do not raise the dose while K+ is 5.0 or above. The Aldactone label gives no up-titration potassium number;
             // the Inspra and Kerendia labels both say increase only when K+ is below 5.0.
-            k_uptitration_max: { below: 5.0, basis: 'Engine policy: class rule from the eplerenone and finerenone labels applied to spironolactone (the Aldactone label gives no number)' },
+            k_uptitration_max: { below: 5.0, basis: 'A rule set by this tool: class rule from the eplerenone and finerenone labels applied to spironolactone (the Aldactone label gives no number)' },
             monitoring_items: [{
                 test: 'Spironolactone starting dose (eGFR 30-50)',
                 timing: 'At initiation',
@@ -748,7 +763,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             pregnancyCheck('label advises avoiding it in pregnancy; may affect male sex differentiation'),
         ]),
         renal_adjustment: (egfr) => {
-            if (egfr < 30) return { contraindicated: true };
+            if (egfr < 30) return { contraindicated: true, limit_text: 'below 30' };
             if (egfr < MRA_HALVE_DOSE_EGFR_BELOW) return { max_dose: 25, caution: true }; // 2022 AHA/ACC/HFSA 7.3.3: halve the dosing at eGFR 31-49 (was 45 or below)
             return {};
         },
@@ -812,7 +827,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             pregnancyCheck(), // no letter category is cited (the letter system is retired); the engine avoids every MRA in pregnancy (2026 ESC, Class III)
         ]),
         renal_adjustment: (egfr) => {
-            if (egfr <= 30) return { contraindicated: true };
+            if (egfr <= 30) return { contraindicated: true, limit_text: '30 or below' };
             if (egfr < MRA_HALVE_DOSE_EGFR_BELOW) return { max_dose: 25, caution: true }; // 2022 AHA/ACC/HFSA 7.3.3: halve the dosing at eGFR 31-49 (was 45 or below, unsourced)
             return {};
         },
@@ -903,7 +918,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         renal_adjustment: (egfr) => {
             // Kerendia HF dosing: maximum 20 mg qd if eGFR 25-59, 40 mg qd if eGFR >= 60; contraindicated below 25.
             // The start tier (10 / 20 mg) comes from start_dose_for.
-            if (egfr < 25) return { contraindicated: true };
+            if (egfr < 25) return { contraindicated: true, limit_text: 'below 25' };
             if (egfr < 60) return { max_dose: 20, caution: true };
             return {};
         },
@@ -1006,7 +1021,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             t2dm_scale: { weight: 6.4 / 10.7, kccq: 7.3 / 7.8, basis: 'STEP-HFpEF DM (PMID 38587233) versus STEP-HFpEF (PMID 37622681)' },
             regimen_warnings: [
                 { text: 'Drug note: semaglutide titration is one labeled step at a time (0.25, 0.5, 1.0, 1.7, then 2.4 mg weekly), at least 4 weeks per step; escalation can be delayed 4 weeks for tolerability. 1.7 mg is a labeled maintenance dose, 2.4 mg is the dose studied in STEP-HFpEF (injection only; the oral tablets have no heart-failure data).' },
-                { text: 'Drug note: Wegovy warnings: acute pancreatitis (not recommended to restart after pancreatitis; ask about history), gallbladder disease, and worsening of diabetic retinopathy (a larger absolute risk when retinopathy is present at baseline: 8.2% vs 5.2%).',
+                { text: (p: Patient) => `Drug note: Wegovy warnings: acute pancreatitis (not recommended to restart after pancreatitis; ${p.comorbidities.has('History of Pancreatitis') ? 'a history of pancreatitis is already recorded, so weigh this before using it' : 'ask about history'}), gallbladder disease, and worsening of diabetic retinopathy (a larger absolute risk when retinopathy is present at baseline: 8.2% vs 5.2%).`,
                   when: p => p.comorbidities.has('History of Pancreatitis') || p.comorbidities.has('Diabetic Retinopathy') },
                 { text: 'Drug note: severe gastroparesis: GLP-1 receptor agonists slow gastric emptying and are not recommended in severe gastroparesis (Zepbound label; class caution).',
                   when: p => p.comorbidities.has('Severe Gastroparesis') },
@@ -1053,11 +1068,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // must not force its removal (mirrors the SGLT2i alreadyOn* pattern). The Wegovy label has no heart-failure indication and no
             // guideline recommends a GLP-1 in HFpEF (2022 AHA/ACC/HFSA), so these are evidence-tier gates.
             {
+                indication: true,
                 reason: 'BMI below 30 — initiation only (STEP-HFpEF enrollment criterion)',
                 when: p => !p.current_regimen?.some(r =>
                     r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.bmi < 30,
             },
             {
+                indication: true,
                 reason: 'LVEF below 45 — initiation only (STEP-HFpEF and STEP-HFpEF DM enrolled LVEF 45 or higher; no semaglutide HF trial below 45)',
                 when: p => !p.current_regimen?.some(r =>
                     r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.lvef < 45,
@@ -1083,7 +1100,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 { text: 'Drug note: tirzepatide titration is one labeled step at a time (2.5 mg increments, at least 4 weeks per step). 2.5 mg is the starting dose only, not a maintenance dose; maintenance is 5, 10 or 15 mg weekly.' },
                 { text: 'Drug note: tirzepatide 2.5 mg is an initiation dose, not a maintenance dose (Zepbound label): plan the next step after 4 weeks.',
                   when: (_p, regimen) => regimen.some(r => r.med.drug_class === 'GLP-1/GIP RA' && Number(r.dose.strength) === 2.5) },
-                { text: 'Drug note: acute pancreatitis warning (ask about history) and gallbladder disease (Zepbound label).',
+                { text: 'Drug note: acute pancreatitis warning (a history of pancreatitis is already recorded, so weigh this before using it) and gallbladder disease (Zepbound label).',
                   when: p => p.comorbidities.has('History of Pancreatitis') },
                 { text: 'Drug note: severe gastroparesis: tirzepatide is not recommended in severe gastroparesis (Zepbound label).',
                   when: p => p.comorbidities.has('Severe Gastroparesis') },
@@ -1136,11 +1153,13 @@ export const MEDICATION_FORMULARY: Medication[] = [
             CI_MTC_MEN2, // FDA boxed warning: MTC/MEN2
             // BMI >= 30 and LVEF >= 50 are SUMMIT enrollment (INITIATION) gates only (no tirzepatide trial at LVEF 41-49).
             {
+                indication: true,
                 reason: 'BMI below 30 — initiation only (SUMMIT enrollment criterion)',
                 when: p => !p.current_regimen?.some(r =>
                     r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.bmi < 30,
             },
             {
+                indication: true,
                 reason: 'LVEF below 50 — initiation only (SUMMIT enrolled LVEF 50 or higher; no tirzepatide trial at LVEF 41-49)',
                 when: p => !p.current_regimen?.some(r =>
                     r.med.drug_class === 'GLP-1 RA' || r.med.drug_class === 'GLP-1/GIP RA') && p.lvef < 50,
@@ -1227,7 +1246,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 LOOP_LOW_EGFR_ITEM,
             ],
             regimen_warnings: [
-                { text: 'Drug note: Furoscix is a short course beside the oral loop diuretic, not a replacement; the label says "not for chronic use". Plan the return to the oral diuretic when congestion resolves. In significantly reduced renal function the fixed 80 mg dose may be insufficient and additional diuretic may be needed (Furoscix label).' },
+                { text: 'Drug note: Furoscix is a short course beside the oral loop diuretic, not a replacement; the label says "not for chronic use". Plan the return to the oral diuretic when congestion resolves.' },
+                // R6 V13: the renal clause is shown only with a low eGFR (the severe-CKD limit this tool already uses for the diuretic alert).
+                { text: (p: Patient) => `Drug note: the eGFR is ${p.egfr}: in significantly reduced renal function the fixed 80 mg dose may be insufficient and additional diuretic may be needed (Furoscix label).`, when: (p: Patient) => p.egfr > 0 && p.egfr < SEVERE_CKD_EGFR_BELOW },
             ],
         },
         available_doses: [
@@ -1283,7 +1304,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             },
             CI_ANURIA,
             {
-                reason: 'Documented furosemide / loop diuretic hypersensitivity',
+                reason: 'Documented furosemide hypersensitivity',
                 when: p => Array.from(p.allergies || []).map(a => a.toLowerCase()).some(term =>
                     term.includes('furosemide') || term.includes('furoscix') || term.includes('loop diuretic')
                 ),
@@ -1551,8 +1572,10 @@ export const MEDICATION_FORMULARY: Medication[] = [
         name: 'Vericiguat',
         drug_class: 'sGC Stimulator',
         facts: {
-            // Verquvo label 2.2: start 5 mg once daily with food; start 2.5 mg only for a patient at risk of symptomatic hypotension; double about every
-            // 2 weeks to the 10 mg target. VICTORIA itself started 2.5 mg. The start tier is exact (never both).
+            // Verquvo label, section 2.1 (DailyMed set id 17056d73-1b1b-4bf2-9c07-b7a9367f0d6d, revised 1/2026, read 2026-11-20 for ruling U10; the tool's start dose AGREES with it):
+            // "The recommended starting dose of VERQUVO is 5 mg orally once daily with food. For patients at risk of symptomatic hypotension, the recommended starting dose is 2.5 mg
+            // orally once daily with food ... Double the dose approximately every 2 weeks to reach the target maintenance dose of 10 mg once daily, as tolerated by the patient."
+            // VICTORIA itself started 2.5 mg. The start tier is exact (never both).
             source_differences: [
                 { topic: 'starting dose', label: '5 mg once daily, or 2.5 mg if at risk of symptomatic hypotension (Verquvo label, revised January 2026)',
                   guideline: '2.5 mg once daily (2026 ESC Table 11; the VICTORIA starting dose)', tool_follows: 'label',
@@ -1705,6 +1728,9 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 test: 'Weight and edema (heart failure)',
                 timing: 'Daily weights; review at 1 week',
                 details: 'Lokelma sodium load can cause fluid retention. Check weight, edema and diuretic need after starting or raising the dose.',
+                // R6 V19a: the row is about starting or raising; for a binder already taken and unchanged it is ongoing monitoring.
+                when_started: true,
+                ongoing: { test: 'Weight and edema (heart failure)', timing: 'Each visit while on Lokelma', details: 'Lokelma sodium load can cause fluid retention. Check weight, edema and diuretic need at each visit.' },
             }],
         },
         // Lokelma label: 10 g three times daily for up to 48 h (correction phase, NOT modeled), then 10 g once daily;
@@ -1752,8 +1778,8 @@ export const MEDICATION_FORMULARY: Medication[] = [
             regimen_warnings: [
                 // Patient-specific dosing note (label table by weight and hemoglobin).
                 { text: (p) => `Drug note: ${fcmDosingNote(p)}` },
-                { text: 'Drug note (2026 ESC heart failure guideline): a transferrin saturation (TSAT) below 20% identifies the patients most likely to benefit from IV iron; the engine criteria (ferritin below 100, or 100-300 with TSAT below 20%) are unchanged.' },
-                { text: 'Drug note: BOXED WARNING (Injectafer label, 08/2026): symptomatic, severe and prolonged hypophosphatemia, including osteomalacia and fractures, has occurred, also in patients with a normal baseline phosphate. Correct pre-existing hypophosphatemia first; check serum phosphate before any repeat course within 3 months and in patients at risk (malabsorption, inflammatory bowel disease, vitamin D deficiency, hyperparathyroidism).' },
+                { text: 'Drug note (2026 ESC heart failure guideline): a transferrin saturation (TSAT) below 20% identifies the patients most likely to benefit from IV iron; the tool\'s criteria (ferritin below 100, or 100-300 with TSAT below 20%) are unchanged.' },
+                { text: 'Drug note: boxed warning (Injectafer label, 08/2026): symptomatic, severe and prolonged hypophosphatemia, including osteomalacia and fractures, has occurred, also in patients with a normal baseline phosphate. Correct pre-existing hypophosphatemia first; check serum phosphate before any repeat course within 3 months and in patients at risk (malabsorption, inflammatory bowel disease, vitamin D deficiency, hyperparathyroidism).' },
             ],
             monitoring_items: [
                 { test: 'Serum phosphate (ferric carboxymaltose boxed warning)', timing: 'Before any repeat course within 3 months, and when symptoms of bone pain or weakness occur',
@@ -1809,10 +1835,19 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 test: 'Serum digoxin concentration',
                 timing: 'After starting or changing the dose, after any renal change or interacting drug, and when toxicity is suspected (no interval is stated in the sections read)',
                 details: '2026 ESC heart failure guideline: target serum concentration below 1.2 ng/mL (the guideline gives the target; the plasma level guides dosing). Check potassium, magnesium and kidney function with it.',
+                // About starting or raising: an option that starts nothing and raises nothing (the drug kept, or reduced) gets the ongoing wording (R5 Y10).
+                when_started: true,
+                ongoing: {
+                    test: 'Serum digoxin concentration',
+                    timing: 'After any dose change, after any renal change or interacting drug, and when toxicity is suspected (no interval is stated in the sections read)',
+                    details: '2026 ESC heart failure guideline: target serum concentration below 1.2 ng/mL (the guideline gives the target; the plasma level guides dosing). Check potassium, magnesium and kidney function with it.',
+                },
             }],
             regimen_warnings: [
-                { text: 'DIGOXIN SAFETY: Wolff-Parkinson-White / accessory pathway (Lanoxin label warning 5.1): in atrial fibrillation with an accessory pathway digoxin can accelerate conduction over the pathway and cause ventricular fibrillation. Avoid unless the pathway has been treated or a specialist directs it.', when: p => p.comorbidities.has(WPW) },
-                { text: 'DIGOXIN SAFETY: Potassium above 5.5 mEq/L. The label has no potassium contraindication (hypokalemia, hypomagnesemia and hypercalcemia are the toxicity predisposers); correct the hyperkalemia, check an ECG, and recheck the digoxin level before relying on this regimen.', when: p => p.potassium > 5.5 },
+                { text: 'DIGOXIN SAFETY: Wolff-Parkinson-White / accessory pathway (Lanoxin label warning 5.1): in atrial fibrillation with an accessory pathway digoxin can accelerate conduction over the pathway and cause ventricular fibrillation. Avoid unless the pathway has been treated or a specialist directs it.', when: p => p.comorbidities.has(WPW), start_prerequisite: true },
+                { text: 'DIGOXIN SAFETY: Potassium above 5.5 mEq/L. The label has no potassium contraindication (hypokalemia, hypomagnesemia and hypercalcemia are the toxicity predisposers); correct the hyperkalemia, check an ECG, and recheck the digoxin level before relying on this regimen.', when: p => p.potassium > 5.5, start_prerequisite: true },
+                // R6 V15c: what this tool does with the kidney for digoxin, said on every option that has the drug (a patient at eGFR 34 on 125 mcg was left unchanged with only a level check shown).
+                { text: `Drug note: digoxin is cleared by the kidney and its label doses it by lean body weight and creatinine clearance, not by age or an eGFR band. This tool sets a ceiling of ${DIGOXIN_CAP_MCG} mcg a day only below an eGFR of ${DIGOXIN_CAP_EGFR_BELOW} and does not otherwise adjust the dose for kidney function or age: confirm the dose against the creatinine clearance and a serum level (target below 1.2 ng/mL).` },
                 { text: 'DIGOXIN SAFETY: eGFR below 15. The label has no renal contraindication; dosing follows its table by lean body weight and creatinine clearance (the 62.5 mcg tier is the lowest offered). Expect accumulation: check a level in 5-7 days and after any renal change.', when: p => p.egfr > 0 && p.egfr < 15 },
             ],
         },
@@ -1846,12 +1881,15 @@ export const MEDICATION_FORMULARY: Medication[] = [
             { reason: `Potassium below ${HYPOKALEMIA_K_BELOW} mEq/L`, when: p => (p.potassium > 0 && p.potassium < HYPOKALEMIA_K_BELOW) },
             CI_AV_BLOCK_2,
             CI_AV_BLOCK_3,
+            // Lanoxin label warning 5.1 (accessory pathway): digoxin is not STARTED in atrial fibrillation with an accessory pathway. A patient already taking it keeps
+            // the drug and gets an alert (gates.ts), so this is a start-only check.
+            { reason: 'Atrial fibrillation with an accessory pathway (Lanoxin label warning: digoxin can speed conduction over the pathway); a new start is held, a current drug is not stopped by this rule', when: p => digoxinAfibAccessoryPathway(p) && !(p.current_regimen ?? []).some(r => r.med.name === 'Digoxin') },
         ]),
         // The label doses by lean body weight and CrCl (not age or eGFR bands), and no source supports a flat 62.5 mcg cap at eGFR
         // 30-50. The 62.5 mcg cap below eGFR 30 is a CONSERVATIVE ENGINE CHOICE (the label's table gives larger doses at some
         // weights), kept because it only restricts the dose.
         renal_adjustment: (egfr) => {
-            if (egfr < 30) return { max_dose: 62.5, caution: true };
+            if (egfr < DIGOXIN_CAP_EGFR_BELOW) return { max_dose: DIGOXIN_CAP_MCG, caution: true };
             return {};
         },
         special_features: [
@@ -1865,16 +1903,25 @@ export const MEDICATION_FORMULARY: Medication[] = [
             raises_uric_acid: true, // label: regularly raises uric acid, can occasionally precipitate gout
             // Penalized caution, NOT a label contraindication (the label's contraindications are anuria, hepatic coma/precoma and allergy). The label warns
             // of rapid-onset severe hyponatremia and/or hypokalemia (dose-related). The K+ 3.5 level is ENGINE POLICY.
-            hypokalemia_caution_below_k: { k: 3.5, basis: 'engine policy; the label warns of rapid severe hypokalemia, dose-related, and has no potassium contraindication' },
+            hypokalemia_caution_below_k: { k: 3.5, basis: 'a rule set by this tool; the label warns of rapid severe hypokalemia, dose-related, and has no potassium contraindication' },
             monitoring_items: [{
                 test: 'Basic metabolic panel (sodium, potassium) after starting metolazone',
                 timing: 'Within about 3-5 days of starting, then at regular intervals (the day count is practice-based, not label text)',
                 details: 'Label: rapid-onset severe hyponatremia and/or hypokalemia can occur, rarely even after the initial doses, and hyponatremia can occur at any time during long-term therapy; check potassium at regular intervals. Hypokalemia is dose-related and is a hazard with digoxin; adding it to a loop diuretic can cause large fluid and electrolyte losses.',
+                // About starting: shown only for an option that starts or raises metolazone. A patient already taking it gets the ongoing wording (the label says hyponatremia can occur at any time during long-term therapy).
+                when_started: true,
+                ongoing: {
+                    test: 'Basic metabolic panel (sodium, potassium) while taking metolazone',
+                    timing: 'At regular intervals (the interval is practice-based, not label text)',
+                    details: 'Label: hyponatremia can occur at any time during long-term therapy, and rapid-onset severe hyponatremia and/or hypokalemia can occur; check potassium at regular intervals. Hypokalemia is dose-related and is a hazard with digoxin.',
+                },
             }],
             chronic_use_review: THIAZIDE_CHRONIC_USE_REVIEW,
             regimen_warnings: [
-                { text: THIAZIDE_SHORT_TERM_NOTE },
-                { text: 'Drug note: metolazone can cause severe hyponatremia and hypokalemia, sometimes within the first doses, especially added to a loop diuretic. Check sodium and potassium soon after starting and at regular intervals (Zaroxolyn label).' },
+                { text: THIAZIDE_SHORT_TERM_NOTE, when_started: true },
+                // R6 V19a: the starting wording belongs to an option that starts metolazone; for one already taken and kept the same risk is stated without it.
+                { text: 'Drug note: metolazone can cause severe hyponatremia and hypokalemia, sometimes within the first doses, especially added to a loop diuretic. Check sodium and potassium soon after starting and at regular intervals (Zaroxolyn label).', when_started: true },
+                { text: 'Drug note: metolazone can cause severe hyponatremia and hypokalemia, especially with a loop diuretic. Check sodium and potassium at regular intervals (Zaroxolyn label).', when: (p: Patient) => (p.current_regimen ?? []).some(r => r.med.name === 'Metolazone') },
             ],
         },
         // Label (HF edema): 5-20 mg once daily, titrated to the minimal effective dose; tablets 2.5 and 5 mg (10 mg named in the description). The 2.5 mg tier is in
@@ -1903,7 +1950,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Chlorthalidone',
         drug_class: 'Thiazide-like Diuretic',
-        facts: { raises_uric_acid: true, chronic_use_review: THIAZIDE_CHRONIC_USE_REVIEW, regimen_warnings: [{ text: THIAZIDE_SHORT_TERM_NOTE }] }, // label: hyperuricemia, frank gout may be precipitated, dose-related uric acid rise
+        facts: { raises_uric_acid: true, chronic_use_review: THIAZIDE_CHRONIC_USE_REVIEW, regimen_warnings: [{ text: THIAZIDE_SHORT_TERM_NOTE, when_started: true }] }, // label: hyperuricemia, frank gout may be precipitated, dose-related uric acid rise
         // 12.5 mg is half of a 25 mg tablet (label tablets 25 and 50 mg; the edema dose on the label is 30-100 mg daily).
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'half of a 25 mg tablet', frequency_options: ['qd'] },
@@ -1930,7 +1977,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
     {
         name: 'Hydrochlorothiazide',
         drug_class: 'Thiazide-like Diuretic',
-        facts: { raises_uric_acid: true, chronic_use_review: THIAZIDE_CHRONIC_USE_REVIEW, regimen_warnings: [{ text: THIAZIDE_SHORT_TERM_NOTE }] }, // label: acute gout may be precipitated
+        facts: { raises_uric_acid: true, chronic_use_review: THIAZIDE_CHRONIC_USE_REVIEW, regimen_warnings: [{ text: THIAZIDE_SHORT_TERM_NOTE, when_started: true }] }, // label: acute gout may be precipitated
         available_doses: [
             { strength: 12.5, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] }, // label strengths 12.5, 25, 50 mg
             { strength: 25, unit: 'mg', formulation: 'tablet', frequency_options: ['qd'] },
@@ -2004,8 +2051,17 @@ const ALLERGY_ALIASES_BY_DRUG: Record<string, string[]> = {
     'Hydrochlorothiazide': ['hctz', 'microzide'],
     'Chlorthalidone': ['thalitone', 'hygroton', 'chlortalidone'],
 };
+/** Salt and modifier words of a generic name, which name no drug when read inside a typed allergy sentence ("low sodium diet"). Add a row when a drug's generic name has one. */
+const ALLERGY_MODIFIER_WORDS_BY_DRUG: Record<string, string[]> = {
+    'Metoprolol Succinate': ['succinate'],
+    'Sodium Zirconium Cyclosilicate (Lokelma)': ['sodium'],
+    'Ferric Carboxymaltose': ['ferric'],
+    'Hydralazine/Isosorbide Dinitrate': ['dinitrate'],
+};
 MEDICATION_FORMULARY.forEach(m => {
     const aliases = ALLERGY_ALIASES_BY_DRUG[m.name];
     if (aliases) m.facts = { ...(m.facts ?? {}), allergy_aliases: aliases };
+    const modifiers = ALLERGY_MODIFIER_WORDS_BY_DRUG[m.name];
+    if (modifiers) m.facts = { ...(m.facts ?? {}), allergy_modifier_words: modifiers };
 });
 

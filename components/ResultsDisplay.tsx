@@ -1,19 +1,23 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem, RankingInfo, DecisionReadiness } from '../types';
+import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem, DecisionReadiness, SimulationOutput } from '../types';
 import { DecisionReadinessPanel } from './DecisionReadinessPanel';
 import { RecommendationCard } from './RecommendationCard';
 import { buildChartHeader, type RunSnapshot } from './chartHeader';
 import { RULESET_VERSION } from '../services/rulesetVersion';
 import { clinicalSentence, NO_CHANGE_TEXT } from './clinicalPresentation';
 import { Disclosure } from './Disclosure';
+import { plainText } from './plainText';
+import { PrintSummary } from './PrintSummary';
+import type { WhyFirst } from '../services/engine/whyFirst';
 import { useEvidenceLink } from './EvidenceContext';
 import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
 import {
     buildChartSummary, partitionAlerts, partitionWarnings, groupExclusions, exclusionsForGap, startedByOption,
-    planForOption, normalizeOptionIndex, type ChartInput,
-    entryReasonText, sentenceCase, isOverBudgetFallback, rankingModeLines,
+    planForOption, normalizeOptionIndex, stopStateText, type ChartInput,
+    entryReasonText, isOverBudgetFallback,
     type ExclusionEntry, type ExclusionGroup,
 } from './resultsModel';
+import { headWords } from '../services/engine/whyFirst';
 
 interface Props {
     results: ScoredRegimen[];
@@ -29,15 +33,19 @@ interface Props {
     eligibleAdjuncts?: string[];
     missingDataNotices?: string[];
     followUpCalendar?: MonitoringPlanItem[];
-    ranking?: RankingInfo;
     decisionReadiness?: DecisionReadiness;
+    /** Whether the scope question was answered (policy gate) and the one sentence naming the ejection-fraction evidence used. */
+    scopeStatus?: SimulationOutput['scope_status'];
+    evidenceBand?: SimulationOutput['evidence_band'];
+    /** The engine's reasons for each option's place and for each indicated class that is not started. */
+    whyFirst?: WhyFirst;
     /** Time and patient inputs captured when the analysis ran; printed in the copied note header. */
     runSnapshot?: RunSnapshot;
     /** Print the case label line. The guided view shows the label once, in its patient bar, and turns this off. */
     showCaseLabel?: boolean;
 }
 
-const modIcon: Record<string, string> = { add: '+', titrate_up: '↑', titrate_down: '↓', swap: '⇄', remove: '−' };
+const modIcon: Record<string, string> = { add: '+', titrate_up: '+', titrate_down: '−', swap: '~', remove: '−' };
 const modWord: Record<string, string> = { add: 'Start', titrate_up: 'Increase', titrate_down: 'Reduce', swap: 'Switch', remove: 'Stop' };
 const modTone: Record<string, string> = {
     add: 'text-emerald-800', titrate_up: 'text-blue-800', titrate_down: 'text-blue-800', swap: 'text-amber-800', remove: 'text-red-800',
@@ -61,10 +69,9 @@ const EvidenceButton: React.FC<{ drugNames: string[] }> = ({ drugNames }) => {
     const { openEvidence } = useEvidenceLink();
     const name = drugNames.find(n => evidenceRowsForDrug(n).length > 0);
     if (!name) return null;
-    const count = evidenceRowsForDrug(name).length;
     return (
         <button type="button" onClick={() => openEvidence(drugSearchTerm(name))} className="text-xs font-bold text-indigo-700 underline hover:text-indigo-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">
-            Evidence for {drugSearchTerm(name)} ({count})
+            Evidence for {name}
         </button>
     );
 };
@@ -74,10 +81,7 @@ const ExclusionEntryRow: React.FC<{ entry: ExclusionEntry }> = ({ entry }) => {
     return (
         <li className="text-sm text-slate-800 leading-snug">
             <span className="font-bold">{entry.names.join(', ')}</span>
-            <span className="text-slate-600">
-                {entry.ruleName ? ` — ${entry.ruleName}` : ''}
-                {entry.ruleId && <span className="ml-1.5 inline-block px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 text-[10px] font-bold align-middle">Rule {entry.ruleId}</span>}
-            </span>
+            <span className="text-slate-600">{entry.ruleName ? `: ${plainText(entry.ruleName)}` : ''}</span>
             {reason && <span className="block text-slate-700 mt-0.5">Why: {reason}</span>}
             <span className="block mt-0.5"><EvidenceButton drugNames={entry.names} /></span>
         </li>
@@ -85,10 +89,17 @@ const ExclusionEntryRow: React.FC<{ entry: ExclusionEntry }> = ({ entry }) => {
 };
 
 const ExclusionList: React.FC<{ group: ExclusionGroup }> = ({ group }) => (
-    <ul className="space-y-2">{group.entries.map((e, i) => <ExclusionEntryRow key={i} entry={e} />)}</ul>
+    <>
+        <ul className="space-y-2">{group.entries.map((e, i) => <ExclusionEntryRow key={i} entry={e} />)}</ul>
+        {group.entries.some(e => e.ruleId) && (
+            <Disclosure className="mt-2 rounded border border-slate-200 bg-white" buttonClassName="px-2 py-1.5 text-[11px] font-bold text-slate-600" title="Technical reference: rule identifiers">
+                <ul className="px-2 pb-2 text-[11px] text-slate-600">{group.entries.filter(e => e.ruleId).map((e, i) => <li key={i}>{e.names.join(', ')}: rule {e.ruleId}</li>)}</ul>
+            </Disclosure>
+        )}
+    </>
 );
 
-export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runId = 0, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [], ranking, runSnapshot, decisionReadiness, showCaseLabel = true }: Props) {
+export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runId = 0, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [], runSnapshot, decisionReadiness, whyFirst, scopeStatus, evidenceBand, showCaseLabel = true }: Props) {
     const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
     const [showNote, setShowNote] = useState(false);
     // Which option the draft note and visit summary describe (0-based). Option 1 unless the clinician chooses otherwise.
@@ -107,21 +118,29 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
     const exclusionGroups = useMemo(() => groupExclusions(excludedMedications), [excludedMedications]);
     const top = results[0];
     const overBudget = isOverBudgetFallback(top);
-    const modeLines = rankingModeLines(ranking);
     const sel = normalizeOptionIndex(results.length, selectedOption);
-    const chartInput = useMemo<ChartInput>(() => ({ results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications, ranking, decisionReadiness }),
-        [results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications, ranking, decisionReadiness]);
+    const chartInput = useMemo<ChartInput>(() => ({ results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications, decisionReadiness, whyFirst, evidenceBandText: evidenceBand?.text, scopeNote: scopeStatus?.state === 'not_confirmed' ? scopeStatus.text : undefined }),
+        [results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications, decisionReadiness, whyFirst, scopeStatus, evidenceBand]);
     const chartText = useMemo(() => {
         const body = buildChartSummary(chartInput, sel);
-        return runSnapshot ? `${buildChartHeader(runSnapshot)}\n\n${body}` : `Rule-set version: ${RULESET_VERSION}\n\n${body}`;
+        return plainText(runSnapshot ? `${buildChartHeader(runSnapshot)}\n\n${body}` : `Rule-set version: ${RULESET_VERSION}\n\n${body}`);
     }, [chartInput, sel, runSnapshot]);
     useEffect(() => { setCopyState('idle'); setShowNote(false); setSelectedOption(0); }, [runId]);
+    // The status says what was copied last; once the selection changes it no longer describes the draft on screen.
+    useEffect(() => { setCopyState('idle'); }, [sel]);
     useEffect(() => {
         if (copyState !== 'copied') return;
         const timer = setTimeout(() => setCopyState('idle'), 3000);
         return () => clearTimeout(timer);
     }, [copyState]);
 
+    const printWith = (mode: 'summary' | 'note') => {
+        try {
+            document.body.dataset.print = mode;
+            window.addEventListener('afterprint', () => { delete document.body.dataset.print; }, { once: true });
+        } catch { /* printing still works without the mode */ }
+        window.print();
+    };
     const handleCopy = async () => {
         if (resultsStale || error || !hasRun) return;
         try {
@@ -137,7 +156,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
     if (error || (hasRun && resultsStale)) return (
         <section role="alert" aria-label="Analysis needs review" className="rounded-xl border-2 border-amber-400 bg-amber-50 p-5 space-y-3">
             <h2 className="text-lg font-bold text-amber-950">{resultsStale ? 'Analysis is out of date' : 'Analysis could not be completed'}</h2>
-            <p className="text-sm text-amber-950">{resultsStale ? 'Inputs or an unfinished entry changed. Previous medication options are hidden. Save or clear pending entries, check the form, then run again.' : 'Correct the issue below and run the analysis again.'}</p>
+            <p className="text-sm text-amber-950">{resultsStale ? 'Inputs or an unfinished entry changed. Previous medication results are hidden. Save or clear pending entries, check the form, then run again.' : 'Correct the issue below and run the analysis again.'}</p>
             {error && <p className="text-sm font-semibold text-red-800">{error}</p>}
             {onRerun && <button type="button" onClick={onRerun} className="print:hidden px-4 py-2 rounded bg-indigo-700 text-white font-semibold focus-visible:ring-2">Re-run Analysis</button>}
         </section>
@@ -182,13 +201,16 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
     const chosenOverBudget = isOverBudgetFallback(chosen);
     const changes = (chosen?.modification_set?.modifications ?? []).filter(m => m.action !== 'keep');
     const topWarnings = chosen ? partitionWarnings(chosen.warnings) : { safety: [], notes: [] };
-    const selectOption = (index: number, thenJump = false) => { setSelectedOption(index); if (thenJump) jumpTo('results-this-visit'); };
+    const selectOption = (index: number, thenJump = false) => { setSelectedOption(index); setCopyState('idle'); if (thenJump) jumpTo('results-this-visit'); };
     const showActions = results.length > 0 || clinicalAlerts.length > 0;
+    const stopText = stopStateText(clinicalAlerts, decisionReadiness, whyFirst);
+    // The "Why" block holds the indicated-therapy gaps, eligible adjuncts, care prompts, missing data, monitoring, follow-up and withheld drugs: with none of them it is not drawn (a stop or scope screen).
+    const hasWhyContent = gdmtGaps.length > 0 || eligibleAdjuncts.length > 0 || alerts.advisory.length > 0 || missingDataNotices.length > 0 || plan.monitoring.length > 0 || plan.followUp.length > 0 || excludedMedications.length > 0;
 
     return (
         <div ref={regionRef} tabIndex={-1} role="region" aria-label="Analysis results" className="space-y-6 pb-16 focus:outline-none">
             <p className="sr-only" role="status">
-                Analysis complete: {results.length} option{results.length === 1 ? '' : 's'}, {alerts.urgent.length} safety check{alerts.urgent.length === 1 ? '' : 's'}.
+                Analysis complete: {results.length === 0 ? 'no medication option is proposed' : `${results.length} option${results.length === 1 ? '' : 's'}`}, {alerts.urgent.length} safety check{alerts.urgent.length === 1 ? '' : 's'}.
             </p>
 
             <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5" role="note">
@@ -197,7 +219,10 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                 </p>
             </div>
 
-            <div className="space-y-6">
+            <PrintSummary patient={runSnapshot?.patient} caseLabel={runSnapshot?.caseLabel} ranAt={runSnapshot?.ranAt} results={results} clinicalAlerts={clinicalAlerts} monitoring={plan.monitoring} monitoringOption={n} whyFirst={whyFirst} decisionReadiness={decisionReadiness} evidenceBandText={evidenceBand?.text} scopeNote={scopeStatus?.state === 'not_confirmed' ? scopeStatus.text : undefined} />
+            <pre data-print-note className="hidden">{chartText}</pre>
+
+            <div className="space-y-6" data-print-detail>
 
             {showCaseLabel && runSnapshot?.caseLabel && <p className="text-sm font-semibold text-slate-700">{runSnapshot.caseLabel}</p>}
             {runSnapshot && <Disclosure title="Inputs used for this analysis" className="border border-slate-200 rounded bg-white" buttonClassName="px-4 py-3 text-sm font-semibold">
@@ -215,8 +240,8 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
                                 </svg>
                                 <div>
-                                    {a.head && <h3 className="text-sm font-bold text-red-800">{a.head}</h3>}
-                                    <p className={a.head ? 'text-sm text-red-800 mt-1 leading-relaxed' : 'text-sm font-bold text-red-800 leading-relaxed'}>{a.body}</p>
+                                    {a.head && <h3 className="text-sm font-bold text-red-800">{plainText(a.head)}</h3>}
+                                    <p className={a.head ? 'text-sm text-red-800 mt-1 leading-relaxed' : 'text-sm font-bold text-red-800 leading-relaxed'}>{plainText(a.body)}</p>
                                 </div>
                             </div>
                         </div>
@@ -224,7 +249,10 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                 </section>
             )}
 
-            <DecisionReadinessPanel assessment={decisionReadiness} />
+            {scopeStatus?.state === 'not_confirmed' && <p role="note" data-testid="scope-not-confirmed" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-950">{scopeStatus.text}</p>}
+            {evidenceBand && results.length > 0 && <p data-testid="evidence-band" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800">{evidenceBand.text}</p>}
+
+            <DecisionReadinessPanel assessment={decisionReadiness} noMedicationChange={results.length === 0} />
 
             {/* 2. This visit */}
             <section id="results-this-visit" tabIndex={-1} aria-labelledby="results-this-visit-title" className="rounded-2xl border-2 border-indigo-300 bg-white shadow-sm overflow-hidden focus:outline-none scroll-mt-4 break-inside-avoid">
@@ -241,7 +269,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                                 {top ? `Copy draft for option ${n}` : 'Copy focused review draft'}
                             </button>
                             <button
-                                onClick={() => window.print()}
+                                onClick={() => printWith('summary')}
                                 disabled={resultsStale}
                                 title={resultsStale ? 'Inputs changed: re-run the analysis before printing' : undefined}
                                 className="text-sm font-bold px-3 py-1.5 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 transition-colors min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -260,11 +288,6 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                         <div className="rounded-lg border-2 border-red-300 bg-red-50 px-4 py-3" role="alert">
                             <p className="text-sm font-bold text-red-800">{Number.isFinite(top.cost) ? 'Over the stated budget' : 'Cost cannot be assessed'}</p>
                             <p className="text-sm text-red-800 mt-0.5">{Number.isFinite(top.cost) ? 'No displayed option fits the budget entered. Review coverage, assistance or an affordable alternative before choosing treatment.' : 'Pricing is incomplete. Obtain the missing costs before comparing affordability or choosing an option.'}</p>
-                        </div>
-                    )}
-                    {top && modeLines.length > 0 && (
-                        <div className="rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2.5" data-testid="ranking-mode-note">
-                            {modeLines.map((l, i) => <p key={i} className={i === 0 ? 'text-sm font-semibold text-indigo-900' : 'text-sm text-indigo-900 mt-0.5'}>{l}</p>)}
                         </div>
                     )}
                     {results.length > 1 && (
@@ -287,13 +310,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                     )}
                     {!top && (
                         <p className="text-sm text-slate-800 font-semibold">
-                            {decisionReadiness?.mode === 'limited_review'
-                                ? 'Focused findings remain available. Complete the decision-specific information listed above before requesting a complete medication regimen.'
-                                : alerts.urgent.length > 0
-                                ? 'No regimen was generated. Resolve the safety alerts above first.'
-                                : excludedMedications.length > 0
-                                    ? 'No regimen was generated after applying clinical exclusions and constraints. See the withheld drugs below.'
-                                    : 'No regimen was generated. Adjust the patient inputs and run the analysis again.'}
+                            {stopStateText(clinicalAlerts, decisionReadiness, whyFirst)}
                         </p>
                     )}
                     {top && (
@@ -336,17 +353,18 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
             </section>
 
             <div className="print:hidden">
+                <button type="button" onClick={() => printWith('note')} className="mr-4 text-sm font-semibold text-indigo-700 underline focus-visible:ring-2">Print draft note</button>
                 <button type="button" onClick={()=>setShowNote(v=>!v)} aria-expanded={showNote} aria-controls="chart-note-preview" className="text-sm font-semibold text-indigo-700 underline focus-visible:ring-2">{showNote ? 'Hide' : 'Review'} {top ? `draft note for option ${n}` : 'focused review draft'}</button>
                 <div hidden={!showNote} className="mt-3" id="chart-note-preview">
-                    <label htmlFor="chart-note-text" className="block text-sm font-semibold mb-1">Draft note — check before adding to the chart</label>
+                    <label htmlFor="chart-note-text" className="block text-sm font-semibold mb-1">Draft note: check before adding to the chart</label>
                     <textarea id="chart-note-text" readOnly value={chartText} rows={14} className="w-full rounded border border-slate-300 p-3 text-sm" onFocus={e=>e.currentTarget.select()} />
-                    <p className="text-xs text-slate-600">{top ? `Contains option ${n} only.` : 'Contains the focused review and its limitations; no medication option was generated.'} Select the text and copy manually if clipboard access is unavailable.</p>
+                    <p className="text-xs text-slate-600">{top ? `Contains option ${n} only.` : 'Contains the focused review and its limitations; no medication option is proposed.'} Select the text and copy manually if clipboard access is unavailable.</p>
                 </div>
             </div>
 
             {/* 3. Options */}
             {results.length > 0 && (
-                <section id="results-options" tabIndex={-1} aria-labelledby="results-options-title" className="focus:outline-none scroll-mt-4">
+                <section id="results-options" tabIndex={-1} className="focus:outline-none scroll-mt-4">
                     <div className="border-b border-slate-200 pb-3 mb-5">
                         <h2 id="results-options-title" className="text-2xl font-bold text-slate-900 tracking-tight">Options ({results.length})</h2>
                         <p className="text-slate-600 mt-1 text-sm">Options to review with the patient. Check safety warnings, medication differences and monitoring before choosing; the first option is not a finalized prescription.</p>
@@ -356,7 +374,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                             // runId in the key remounts cards on each analysis run so per-card UI
                             // state (details expansion, open modal) never carries onto a different regimen.
                             <div key={`${runId}-${idx}`} id={`results-option-${idx + 1}`} tabIndex={-1} className={`focus:outline-none scroll-mt-4 break-inside-avoid ${idx === 0 && results.length > 1 ? '2xl:col-span-2' : ''}`}>
-                                <RecommendationCard regimen={regimen} rank={idx + 1} leader={idx > 0 ? results[0] : undefined} showFoundationalCoverage={ranking?.applied === true} />
+                                <RecommendationCard regimen={regimen} rank={idx + 1} leader={idx > 0 ? results[0] : undefined} why={whyFirst?.options[idx]} />
                                 {results.length > 1 && (
                                     <button type="button" aria-pressed={sel === idx} onClick={() => selectOption(idx, true)}
                                         className={`print:hidden mt-2 text-sm font-bold px-3 py-2 rounded-lg border-2 min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${sel === idx ? 'bg-indigo-700 text-white border-indigo-700' : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50'}`}>
@@ -369,25 +387,32 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                 </section>
             )}
 
-            {/* 4. Why */}
-            <section id="results-why" tabIndex={-1} aria-labelledby="results-why-title" className="space-y-5 focus:outline-none scroll-mt-4">
+            {/* 4. Why: not rendered when it would be empty (stop and scope screens, R5 Y12) */}
+            {hasWhyContent && <section id="results-why" tabIndex={-1} aria-labelledby="results-why-title" className="space-y-5 focus:outline-none scroll-mt-4">
                 <h2 id="results-why-title" className="text-2xl font-bold text-slate-900 tracking-tight border-b border-slate-200 pb-3">Why: gaps, withheld drugs and follow-up</h2>
 
                 {gdmtGaps.length > 0 && (
                     <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-5 shadow-sm">
                         <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wide mb-1">Indicated GDMT currently missing</h3>
-                        <p className="text-xs text-indigo-900 mb-3">Guideline-indicated classes for this EF phenotype that are not in the current regimen. {`Each row says whether option ${n} starts a drug in the class and, if drugs were withheld, why.`}</p>
+                        <p className="text-xs text-indigo-900 mb-3">Guideline-indicated classes for this EF phenotype that are not in the current regimen. {top ? `Each row says whether option ${n} starts a drug in the class, why not when it does not, and which drugs could be started.` : stopText}</p>
                         <ul className="space-y-3">
                             {gdmtGaps.map((gap, i) => {
                                 const started = startedByOption(gap, chosen);
                                 const ex = exclusionsForGap(gap, exclusionGroups);
+                                const w = whyFirst?.gaps.find(x => x.gap === gap);
+                                const reason = w?.reasons[sel] ?? null;
                                 return (
-                                    <li key={i} className="text-sm text-indigo-950">
-                                        <p className="font-semibold">{gap}</p>
+                                    <li key={i} className="text-sm text-indigo-950" data-testid="gap-row">
+                                        <p className="font-semibold">{plainText(gap)}</p>
                                         <p className="text-xs text-indigo-900 mt-0.5">
-                                            {started.length > 0 ? `Option ${n} starts ${started.join(', ')}.` : `Option ${n} does not start a drug in this class.`}
+                                            {started.length > 0 ? `Option ${n} starts ${started.join(', ')}.`
+                                                : !top ? 'No drug in this class is started, because no medication is started or raised (see the stop state above).'
+                                                : `Option ${n} does not start a drug in this class.`}
                                         </p>
-                                        {ex ? (
+                                        {started.length === 0 && top && reason && <p className="text-xs text-indigo-900 mt-0.5" data-testid="gap-reason">{reason}</p>}
+                                        {started.length === 0 && top && w && w.eligible.length > 0 && <p className="text-xs text-indigo-900 mt-0.5">Could be started (no rule withholds them): {w.eligible.join(', ')}.</p>}
+                                        {started.length === 0 && top && w && w.eligible.length === 0 && ex && <p className="text-xs text-indigo-900 mt-0.5">Every drug in this class is withheld; the reasons are listed below.</p>}
+                                        {ex && (
                                             <Disclosure
                                                 className="mt-1.5 rounded-lg bg-white/70 border border-indigo-200"
                                                 buttonClassName="px-3 py-2 text-xs font-bold text-indigo-900 hover:bg-white"
@@ -395,8 +420,6 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                                             >
                                                 <div className="px-3 pb-3 pt-1"><ExclusionList group={ex} /></div>
                                             </Disclosure>
-                                        ) : (
-                                            <p className="text-xs text-indigo-900 mt-0.5">No eligibility rule withheld a drug in this class.</p>
                                         )}
                                     </li>
                                 );
@@ -413,7 +436,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                             {eligibleAdjuncts.map((a, i) => (
                                 <li key={i} className="text-sm text-violet-950 flex items-start gap-2">
                                     <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-violet-600 flex-shrink-0" aria-hidden="true"></span>
-                                    {a}
+                                    {plainText(a)}
                                 </li>
                             ))}
                         </ul>
@@ -422,11 +445,11 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
 
                 {alerts.advisory.length > 0 && (
                     <div className="rounded-xl border border-slate-300 bg-white p-5 shadow-sm">
-                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-1">Other care prompts (not urgent)</h3>
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-1">Other care prompts</h3>
                         <ul className="space-y-2 mt-2">
                             {alerts.advisory.map((a, i) => (
                                 <li key={i} className="text-sm text-slate-800 leading-relaxed">
-                                    {a.head && <span className="font-bold">{sentenceCase(a.head)}. </span>}{a.body}
+                                    {a.head && <span className="font-bold">{plainText(headWords(a.head))}. </span>}{plainText(a.body)}
                                 </li>
                             ))}
                         </ul>
@@ -441,7 +464,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                             {missingDataNotices.map((notice, i) => (
                                 <li key={i} className="text-sm text-slate-800 flex items-start gap-2">
                                     <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-slate-500 flex-shrink-0" aria-hidden="true"></span>
-                                    {notice}
+                                    {plainText(notice)}
                                 </li>
                             ))}
                         </ul>
@@ -450,13 +473,13 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
 
                 {plan.monitoring.length > 0 && (
                     <div id="results-monitoring" tabIndex={-1} className="rounded-xl border-2 border-blue-200 bg-blue-50 p-5 shadow-sm focus:outline-none scroll-mt-4 break-inside-avoid">
-                        <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wide mb-3">Recommended monitoring plan</h3>
+                        <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wide mb-3">{results.length === 0 ? 'Monitoring' : 'Recommended monitoring plan'}</h3>
                         <ul className="space-y-2">
                             {plan.monitoring.map((item, i) => (
                                 <li key={`${item.test}-${i}`} className="text-sm text-blue-950 leading-relaxed">
                                     <span className="font-semibold">{item.test}</span>
                                     <span className="text-blue-900"> ({item.timing})</span>
-                                    <span>: {item.details}</span>
+                                    <span>: {plainText(item.details)}</span>
                                 </li>
                             ))}
                         </ul>
@@ -471,8 +494,8 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                             {plan.followUp.map((item, i) => (
                                 <li key={`${item.test}-${i}`} className="text-sm text-emerald-950 leading-relaxed">
                                     <span className="font-bold">{item.timing}</span>
-                                    <span className="font-semibold"> &mdash; {item.test}</span>
-                                    <span>: {item.details}</span>
+                                    <span className="font-semibold">: {item.test}</span>
+                                    <span>: {plainText(item.details)}</span>
                                 </li>
                             ))}
                         </ol>
@@ -498,7 +521,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                         </div>
                     </div>
                 )}
-            </section>
+            </section>}
             <p className="text-[11px] text-slate-500 text-right">Rule-set version {RULESET_VERSION}</p>
             </div>
         </div>

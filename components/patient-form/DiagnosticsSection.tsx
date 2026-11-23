@@ -156,7 +156,7 @@ export const DiagnosticsSection: React.FC<DiagnosticsSectionProps> = ({ patientD
                 </Select>
                 <Label htmlFor="phosphate_review">Phosphate safety assessment</Label>
                 <Select id="phosphate_review" name="phosphate_review" value={patientData.phosphate_review ?? ''} onChange={onChange}>
-                    <option value="">Not assessed</option><option value="unknown">Assessment incomplete</option><option value="not_indicated">Testing not indicated after risk review</option><option value="acceptable">Phosphate assessed and acceptable</option><option value="low">Low phosphate — correct before iron</option>
+                    <option value="">Not assessed</option><option value="unknown">Assessment incomplete</option><option value="not_indicated">Testing not indicated after risk review</option><option value="acceptable">Phosphate assessed and acceptable</option><option value="low">Low phosphate: correct before iron</option>
                 </Select>
             </details>
         </section>

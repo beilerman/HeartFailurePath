@@ -6,7 +6,7 @@ import {
 import { DOMAIN_GOALS } from '../services/simulationService';
 import { pct, num, signed, describeAdjustment, describeOverride, goalAfterEquals } from './scoreExplain';
 import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
-import { profileDescription } from './rankingModeMeta';
+import { profileDescription } from './appStatements';
 
 // Renders ScoreBreakdown as a reconciling ledger, grouped like the engine's DOMAIN_GROUPS. Every
 // number comes from the engine's breakdown (weights, points, adjustments) - nothing is restated here.
@@ -46,7 +46,7 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (d
                         <ul className="mt-1 list-disc list-inside text-xs font-normal text-slate-600 space-y-0.5">
                             {a.items.map((it, j) => (
                                 <li key={j}>
-                                    {it.med} — {it.feature} — {signed(it.points)} before scaling
+                                    {it.med}, {it.feature}, {signed(it.points)} before scaling
                                     {onEvidence && evidenceRowsForDrug(it.med).length > 0 && (
                                         <> <button type="button" onClick={() => onEvidence(drugSearchTerm(it.med))} className="font-bold text-indigo-700 underline hover:text-indigo-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">See evidence</button></>
                                     )}
@@ -137,7 +137,7 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (d
                                     </th>
                                     <td className="py-1.5 px-2 text-right tabular-nums font-bold text-red-800 align-top">
                                         {'▼ '}{signed(o.after - o.before)}
-                                        <div className="text-[10px] font-normal">{num(o.before)} {'→'} {num(o.after)}</div>
+                                        <div className="text-[10px] font-normal">{num(o.before)} to {num(o.after)}</div>
                                     </td>
                                 </tr>
                             );
@@ -154,7 +154,7 @@ export const ScoreLedger: React.FC<{ breakdown?: ScoreBreakdown; onEvidence?: (d
                                 <tr key={`${o.code}-${i}`} className="bg-amber-50">
                                     <th scope="row" colSpan={3} className="py-1.5 px-2 text-left font-medium text-amber-900">
                                         {d.title}
-                                        <div className="text-xs font-normal">{num(o.before)} {'→'} {num(o.after)}</div>
+                                        <div className="text-xs font-normal">{num(o.before)} to {num(o.after)}</div>
                                     </th>
                                     <td className="py-1.5 px-2 text-right tabular-nums font-bold text-amber-900">{signed(o.after - o.before)}</td>
                                 </tr>

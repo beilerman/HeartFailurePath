@@ -1,4 +1,4 @@
-import { resolveAllergy } from '../../services/engine/allergy';
+import { allergyEntryEffect } from '../../services/engine/allergy';
 import React, { useState, useEffect } from 'react';
 import { WarningIcon } from '../icons';
 import { Label, Input, Select } from './Common';
@@ -239,13 +239,13 @@ export const HistorySection: React.FC<HistorySectionProps> = ({ patientData, set
                 <div className="flex flex-wrap gap-2">
                     {Array.from(patientData.allergies).map((alg: string) => {
                         // Show what the entry excludes, or that it excludes nothing (same resolver the engine uses).
-                        const matched = resolveAllergy(alg, MEDICATION_FORMULARY);
+                        const matched = allergyEntryEffect(alg, MEDICATION_FORMULARY);
                         return (
                             <span key={alg} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-50 text-red-700 text-sm font-medium rounded border border-red-100">
                                 <span>
                                     {alg}
-                                    <span className={`block text-xs font-normal ${matched.length > 0 ? 'text-red-600' : 'text-slate-600'}`}>
-                                        {matched.length > 0 ? `Excludes: ${matched.join(', ')}` : 'No drug in this tool matched; nothing is excluded'}
+                                    <span className={`block text-xs font-normal ${matched ? 'text-red-600' : 'text-slate-600'}`}>
+                                        {matched ? `Excludes or changes: ${matched}` : 'No drug in this tool matched; nothing is excluded'}
                                     </span>
                                 </span>
                                 <button onClick={() => handleRemoveAllergy(alg)} className="hover:text-red-900 font-bold" aria-label={`Remove ${alg}`}>&times;</button>

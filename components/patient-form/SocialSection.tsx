@@ -2,10 +2,9 @@ import React from 'react';
 import { BanknotesIcon } from '../icons';
 import { Label, Input, Select } from './Common';
 import type { Patient } from '../../types';
+import { VISIT_LIMIT_WORDS } from '../../services/engine/thresholds';
 import { WEIGHT_PROFILE_NAMES, WEIGHT_PROFILE_META, resolveWeightProfile } from '../../services/engine/scoreModel';
-import { profileDescription } from '../rankingModeMeta';
-import { resolveRankingMode } from '../../services/engine/selection';
-import { RANKING_MODE_META, RANKING_MODE_NAMES, RANKING_MODE_VS_PRIORITY_NOTE } from '../rankingModeMeta';
+import { profileDescription } from '../appStatements';
 
 interface SocialSectionProps {
     patientData: Patient;
@@ -19,7 +18,7 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
     return (
         <section id="patient-social" tabIndex={-1}>
             <div className="bg-slate-50 p-3 rounded-lg border border-slate-100 space-y-3">
-                <h4 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1"><BanknotesIcon className="w-4 h-4" aria-hidden="true" /> Patient values and practical limits</h4>
+                <h3 className="text-xs font-bold text-slate-500 uppercase flex items-center gap-1"><BanknotesIcon className="w-4 h-4" aria-hidden="true" /> Patient values and practical limits</h3>
                 <p className="text-xs text-slate-500">These change how the options are ordered and which are affordable. They never change safety exclusions or alerts.</p>
                 <div>
                     <Label htmlFor="insurance_tier">Insurance coverage</Label>
@@ -49,22 +48,6 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                     </Select>
                     <p id="care_priority-help" className="mt-1 text-xs text-slate-500">
                         {profileDescription(resolveWeightProfile(patientData))}
-                    </p>
-                </div>
-                <div>
-                    <Label htmlFor="ranking_mode">Ranking approach</Label>
-                    <Select
-                        name="ranking_mode"
-                        value={resolveRankingMode(patientData)}
-                        onChange={onChange}
-                        aria-describedby="ranking_mode-help"
-                    >
-                        {RANKING_MODE_NAMES.map(name => (
-                            <option key={name} value={name}>{RANKING_MODE_META[name].label}</option>
-                        ))}
-                    </Select>
-                    <p id="ranking_mode-help" className="mt-1 text-xs text-slate-500">
-                        {RANKING_MODE_META[resolveRankingMode(patientData)].description} {RANKING_MODE_VS_PRIORITY_NOTE}
                     </p>
                 </div>
                 <div>
@@ -136,7 +119,7 @@ export const SocialSection: React.FC<SocialSectionProps> = ({ patientData, onCha
                         <span className="text-xs font-bold text-slate-500">6</span>
                     </div>
                     <p className="mt-1 text-xs text-slate-500">
-                        Current: {patientData.max_new_classes_per_visit} (default 2). Any additional drug class, including IV iron, counts toward this limit.
+                        Current: {patientData.max_new_classes_per_visit} (default 2). {VISIT_LIMIT_WORDS}
                     </p>
                 </div>
 

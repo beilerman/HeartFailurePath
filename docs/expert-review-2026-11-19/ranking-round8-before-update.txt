@@ -1,0 +1,80 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1032 / 1032
+  (b) displayed pick set same:   1032 / 1032
+  (c) pick order identical:      1032 / 1032
+  (d) eligibility + alerts identical: NO (288 differences)
+  (e) per-regimen warnings identical: NO (80 regimens)
+  top-pick overall_score  old: min 0 / median 66 / max 86
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 0 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+
+BUGS (eligibility/alerts must not change):
+  John Doe (Wet & Warm) :: cash: clinicalAlerts differ
+  John Doe (Wet & Warm) :: commercial: clinicalAlerts differ
+  John Doe (Wet & Warm) :: medicare: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: cash: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: commercial: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: medicare: clinicalAlerts differ
+  African American (A-HeFT Indication) :: cash: clinicalAlerts differ
+  African American (A-HeFT Indication) :: commercial: clinicalAlerts differ
+  African American (A-HeFT Indication) :: medicare: clinicalAlerts differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: cash: clinicalAlerts differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: commercial: clinicalAlerts differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: medicare: clinicalAlerts differ
+  HFpEF with Resistant Edema :: cash: clinicalAlerts differ
+  HFpEF with Resistant Edema :: commercial: clinicalAlerts differ
+  HFpEF with Resistant Edema :: medicare: clinicalAlerts differ
+  Critical Renal (eGFR 25, K+ 5.2) :: cash: clinicalAlerts differ
+  Critical Renal (eGFR 25, K+ 5.2) :: commercial: clinicalAlerts differ
+  Critical Renal (eGFR 25, K+ 5.2) :: medicare: clinicalAlerts differ
+
+Warning differences:
+  Jane Smith (Dry & Cold) :: cash: 
+  Jane Smith (Dry & Cold) :: commercial: 
+  Jane Smith (Dry & Cold) :: medicare: 
+  Iron-Deficient HFrEF :: commercial: Ferric Carboxymaltose 1000mg once + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Iron-Deficient HFrEF :: medicare: Ferric Carboxymaltose 1000mg once + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: cash: Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: cash: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: cash: Dapagliflozin 10mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: commercial: Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: commercial: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: commercial: Dapagliflozin 10mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: medicare: Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: medicare: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: medicare: Dapagliflozin 10mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: cash: Dapagliflozin 10mg qd
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: commercial: Dapagliflozin 10mg qd
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: medicare: Dapagliflozin 10mg qd
+  Rate-Source Ivabradine Beta-Blocker Limited By Hypotension :: cash: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd
+  Rate-Source Ivabradine Beta-Blocker Limited By Hypotension :: commercial: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd
+  Rate-Source Ivabradine Beta-Blocker Limited By Hypotension :: medicare: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd
+  Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12 :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd
+  Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12 :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12 :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12 :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd
+  Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12 :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12 :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12 :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd
+  Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12 :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Adjunct-Source IV Iron Added At LVEF 30 Dose 85 kg Hb 12 :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  Adjunct-Source IV Iron Dose 65 kg Hb 12 :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ferric Carboxymaltose 1000mg once + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd

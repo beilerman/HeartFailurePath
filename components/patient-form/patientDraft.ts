@@ -17,7 +17,7 @@ export function blankPatient(): Patient {
         insurance_tier: undefined, max_affordable_cost: undefined,
         // Explicit model defaults, surfaced beside the form; no defaults inherited from sample patients.
         cost_sensitivity: 5, complexity_tolerance: 5, max_new_classes_per_visit: 2,
-        care_priority: 'default', ranking_mode: 'balanced',
+        care_priority: 'default',
     };
     return blank as unknown as Patient;
 }

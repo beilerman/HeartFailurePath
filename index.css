@@ -20,3 +20,12 @@
   }
   button { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* Print summary (components/PrintSummary.tsx) and printed draft note: the long on-screen results are not printed. */
+@media print {
+  [data-print-detail] { display: none !important; }
+  [data-print-summary] { display: block !important; }
+  [data-print-note] { display: block !important; white-space: pre-wrap; font-size: 10pt; }
+  body[data-print="note"] [data-print-summary] { display: none !important; }
+  body:not([data-print="note"]) [data-print-note] { display: none !important; }
+}

@@ -287,7 +287,7 @@ export function runOutcomeEngineChecks(): { passed: number; failed: number } {
     const baseRegimen = () => [entry('Lisinopril', 20), entry('Metoprolol Succinate', 200)];
 
     check('evidence table: every formulary drug x 3 bands x 2 outcomes x both population keys resolves', () => {
-        assert.equal(OUTCOME_EVIDENCE_TABLE.length, 108);   // 102 + 6: each loop-diuretic row became a congested and an other row (2026-11-16)
+        assert.equal(OUTCOME_EVIDENCE_TABLE.length, 114);   // 102 + 6: each loop-diuretic row became a congested and an other row (2026-11-16); + 3 beta-blocker rhythm rows (change C4, 2026-11-18), rewritten by E1 (2026-11-19): the derived sinus row is gone, the atrial fibrillation rows are measured subgroups and one atrial fibrillation hospitalization row was added: 111 before the K+ binder split; E8 then added three rows (sodium zirconium cyclosilicate hospitalization, one per band): 114
         for (const med of MEDICATION_FORMULARY) for (const band of bands) for (const o of outcomes) for (const black of [false, true]) {
             const p = inBand(band); if (black) p.race = 'Black';
             const r = evidenceFor(OUTCOME_EVIDENCE_TABLE, med, p, o, populationKeyFor(med, p));
@@ -303,7 +303,8 @@ export function runOutcomeEngineChecks(): { passed: number; failed: number } {
                 const id = evidenceFor(OUTCOME_EVIDENCE_TABLE, med, p, o, populationKeyFor(med, p)).id;
                 (byClass.get(med.drug_class) ?? byClass.set(med.drug_class, new Set()).get(med.drug_class)!).add(id);
             }
-            for (const [cls, ids] of byClass) assert.equal(ids.size, 1, `${cls} siblings resolve to different rows in ${band}/${o}: ${[...ids].join(', ')}`);
+            // E8 (2026-11-19): the K+ binder hospitalization rows are drug-specific on purpose (patiromer: no outcome evidence; sodium zirconium cyclosilicate: the REALIZE-K signal)
+            for (const [cls, ids] of byClass) assert.equal(ids.size, cls === 'K+ Binder' && o === 'hf_hospitalization' ? 2 : 1, `${cls} siblings resolve to different rows in ${band}/${o}: ${[...ids].join(', ')}`);
             const idOf = (cls: string) => [...byClass.get(cls)!][0];
             assert.equal(new Set([idOf('ARNI'), idOf('ACEi'), idOf('ARB')]).size, 3);
             assert.notEqual(idOf('MRA'), idOf('nsMRA'));
@@ -320,12 +321,15 @@ export function runOutcomeEngineChecks(): { passed: number; failed: number } {
         }
     });
 
-    check('populationKeyFor: only the vasodilator (self-identified race) and loop-diuretic (congestion) classes are keyed', () => {
+    // Rewritten 2026-11-18 (change C4): beta-blockers are now keyed by CURRENT rhythm; the old check asserted that only two classes are keyed.
+    check('populationKeyFor: only the vasodilator (self-identified race), loop-diuretic (congestion) and beta-blocker (current rhythm) classes are keyed', () => {
         const hid = MEDICATION_FORMULARY.find(m => m.drug_class === 'Vasodilator')!;
         const black = patient(); black.race = 'Black';
         assert.equal(populationKeyFor(hid, black), 'self_identified_black');
         assert.equal(populationKeyFor(hid, patient()), 'other');
-        for (const m of MEDICATION_FORMULARY.filter(m => m.drug_class !== 'Vasodilator' && m.drug_class !== 'Loop Diuretic')) assert.equal(populationKeyFor(m, black), undefined, m.name);
+        const bb = MEDICATION_FORMULARY.find(m => m.drug_class === 'Beta Blocker')!, sinus = patient(); sinus.rhythm = 'Sinus'; const af = patient(); af.rhythm = 'AFib';
+        assert.equal(populationKeyFor(bb, af), 'atrial_fibrillation'); assert.equal(populationKeyFor(bb, sinus), 'other');
+        for (const m of MEDICATION_FORMULARY.filter(m => m.drug_class !== 'Vasodilator' && m.drug_class !== 'Loop Diuretic' && m.drug_class !== 'Beta Blocker')) assert.equal(populationKeyFor(m, black), undefined, m.name);
     });
 
     check('weights: every profile sums to 1; the four legacy domains weigh 0 and are not assessed', () => {
@@ -435,16 +439,19 @@ export function runOutcomeEngineChecks(): { passed: number; failed: number } {
         assert.ok(black.every(id => id.includes('black')) && other.every(id => id.includes('other')), `${black} / ${other}`);
     });
 
-    check('hand-computed four-drug reduced-EF regimen at target: death 0.72 x 0.66 x 0.73 x 0.87, hospitalization 0.51 x 0.64 x 0.63 x 0.72', () => {
-        const p = patient();
+    // Rewritten 2026-11-18 (C4) and again 2026-11-19 (E1): for a patient in atrial fibrillation the beta-blocker figures are the measured subgroup 0.97 (death) and the extrapolated 0.847 (hospitalization);
+    // for sinus and other rhythms they are the three-trial pool 0.66 and CIBIS-II 0.64.
+    check('hand-computed four-drug reduced-EF regimen at target: death 0.72 x (0.66 sinus or 0.97 atrial fibrillation) x 0.73 x 0.87, hospitalization 0.51 x (0.64 sinus or 0.847 atrial fibrillation) x 0.63 x 0.72', () => {
+        const p = patient();   // the shared fixture is in atrial fibrillation
         const reg = [entry(ENTRESTO, '97/103'), entry('Metoprolol Succinate', 200), entry('Spironolactone', 50), entry('Dapagliflozin', 10)];
         // PUBLISHED figures (no precision weighting): the hand arithmetic is about the table's own numbers.
         const d = regimenOutcomeEstimate(OUTCOME_EVIDENCE_TABLE, reg, p, 'all_cause_death', populationKeyFor, undefined, false);
         const h = regimenOutcomeEstimate(OUTCOME_EVIDENCE_TABLE, reg, p, 'hf_hospitalization', populationKeyFor, undefined, false);
-        near(d.rr, 0.72 * 0.66 * 0.73 * 0.87, 5e-4, 'death');
-        near(h.rr, 0.51 * 0.64 * 0.63 * 0.72, 5e-4, 'hospitalization');
-        assert.equal(d.rr.toFixed(3), (0.72 * 0.66 * 0.73 * 0.87).toFixed(3));
-        assert.equal(h.rr.toFixed(3), (0.51 * 0.64 * 0.63 * 0.72).toFixed(3));
+        near(d.rr, 0.72 * 0.97 * 0.73 * 0.87, 5e-4, 'death (atrial fibrillation)');
+        near(h.rr, 0.51 * 0.847 * 0.63 * 0.72, 1e-3, 'hospitalization (atrial fibrillation)');
+        const sinus = patient(); sinus.rhythm = 'Sinus';
+        near(regimenOutcomeEstimate(OUTCOME_EVIDENCE_TABLE, reg, sinus, 'all_cause_death', populationKeyFor, undefined, false).rr, 0.72 * 0.66 * 0.73 * 0.87, 5e-4, 'death (sinus)');
+        near(regimenOutcomeEstimate(OUTCOME_EVIDENCE_TABLE, reg, sinus, 'hf_hospitalization', populationKeyFor, undefined, false).rr, 0.51 * 0.64 * 0.63 * 0.72, 5e-4, 'hospitalization (sinus)');
     });
 
     check('a medication recorded as held earns no outcome credit, in the current regimen or in any option', () => {
@@ -478,18 +485,21 @@ export function runOutcomeEngineChecks(): { passed: number; failed: number } {
         const idx = (pred: (r: ScoredRegimen) => boolean) => out.scoredRegimens.findIndex(pred);
         const up = idx(r => changes(r).some(m => m.action === 'titrate_up')), keep = idx(r => changes(r).length === 0);
         assert.ok(up >= 0 && keep >= 0, 'both options expected');
-        assert.ok(up < keep, `titration at ${up}, no change at ${keep}`);
-        assert.ok(out.scoredRegimens[up].raw_score! >= out.scoredRegimens[keep].raw_score!);
+        // Rewritten 2026-11-19 (ruling U4): the titration leads unless it is less than one point above no change, in which case "No medication change" is listed first by the stated rule.
+        const gap = out.scoredRegimens[up].raw_score! - out.scoredRegimens[keep].raw_score!;
+        assert.ok(gap >= 0, `titration scores ${gap} against no change`);
+        assert.ok(up < keep || (keep === 0 && gap < 1), `titration at ${up}, no change at ${keep}, gap ${gap}`);
     });
 
-    check('outcome dose credit: at the label start dose exactly c0, below it proportional, completeness credit untouched', () => {
+    // Rewritten 2026-11-18 (change C2): spironolactone has its own trial dose (RALES 26 mg), so credit is never below dose / 26; the old check asserted c0 at the label start dose for it.
+    check('outcome dose credit: at the label start dose the larger of c0 and dose / trial dose (spironolactone: dose / 26), below it proportional, completeness credit untouched', () => {
         const c0 = START_DOSE_CREDIT.value;
         const p = patient();                                   // eGFR 70
         const spiro = (d: number) => entry('Spironolactone', d);
         const startMg = Number(MEDICATION_FORMULARY.find(m => m.name === 'Spironolactone')!.start_dose_for!(p));
         const atStart = spiro(startMg), below = spiro(startMg / 2);
-        near(outcomeDoseCredit(atStart, p), c0, 1e-12);
-        near(outcomeDoseCredit(below, p), c0 / 2, 1e-12);
+        near(outcomeDoseCredit(atStart, p), Math.max(c0, startMg / 26), 1e-12);
+        near(outcomeDoseCredit(below, p), Math.max(c0 / 2, (startMg / 2) / 26), 1e-12);
         assert.equal(therapyDoseCredit(below, p), 0.6);        // completeness domain keeps its flat credit
         assert.equal(outcomeDoseCredit(spiro(50), p), 1);      // at or above the trial-achieved dose (26 mg/day)
         assert.equal(outcomeDoseCredit(entry('Dapagliflozin', 10), p), 1);   // single-dose drug: unchanged
@@ -505,7 +515,7 @@ export function runOutcomeEngineChecks(): { passed: number; failed: number } {
         };
         const c0 = START_DOSE_CREDIT.value;
         const cases: [string, number | string, number, number | undefined, number, string?][] = [
-            ['Spironolactone', 12.5, 40, 12.5, c0], ['Eplerenone', 25, 40, 25, 1],
+            ['Spironolactone', 12.5, 40, 12.5, 12.5 / 26], ['Eplerenone', 25, 40, 25, 1],   // spironolactone: the C2 floor (RALES dose 26 mg) replaces c0
             ['Finerenone (Kerendia)', 10, 40, 10, c0], ['Finerenone (Kerendia)', 20, 40, 10, 1],
             ['Finerenone (Kerendia)', 10, 70, 20, c0 / 2], ['Finerenone (Kerendia)', 20, 70, 20, c0],
             [ENTRESTO, '24/26', 70, 100, c0, 'bid'], ['Carvedilol', 3.125, 70, 6.25, c0, 'bid'],
@@ -536,7 +546,7 @@ export function runOutcomeEngineChecks(): { passed: number; failed: number } {
         let sawExtrap = false, sawNeutral = false;
         for (const r of out.scoredRegimens) for (const o of r.outcome_estimates!) for (const c of [...o.contributors, ...o.not_counted]) {
             assert.equal(c.extrapolated, c.basis === 'extrapolated');
-            assert.equal(c.assumed_neutral, c.basis === 'assumed_neutral');
+            assert.equal(c.assumed_neutral, c.basis === 'assumed_neutral' || c.basis === 'no_outcome_evidence' || c.basis === 'conflicting');   // E4: three bases assume no effect
             sawExtrap ||= c.extrapolated; sawNeutral ||= c.assumed_neutral;
         }
         assert.ok(sawExtrap && sawNeutral, 'fixture should show both kinds');
@@ -557,7 +567,7 @@ export function runOutcomeEngineChecks(): { passed: number; failed: number } {
         const p = patient(reg);
         const o = buildOutcomeEstimateViews(p.current_regimen, p)[0];
         const used = (id: string) => shrunkOutcomeRow(OUTCOME_EVIDENCE_TABLE, OUTCOME_EVIDENCE_TABLE.find(r => r.id === id)!).rr_used;
-        const uArni = used('arni-reduced-death'), uBb = used('beta-blocker-reduced-death');   // precision-weighted values (2026-11-16)
+        const uArni = used('arni-reduced-death'), uBb = used('beta-blocker-reduced-death-afib');   // precision-weighted values (2026-11-16); the shared fixture is in atrial fibrillation, so the atrial fibrillation row (change C4)
         near(o.at_target.rr, uArni * uBb, 1e-12);
         near(o.as_prescribed.rr, Math.pow(uArni, START_DOSE_CREDIT.value) * uBb, 1e-12);   // ARNI at its start dose earns c0 credit
         near(o.at_target_vs_current.rr, Math.pow(uArni, 1 - START_DOSE_CREDIT.value), 1e-12);   // (0.72 x 0.66) / (0.72^c0 x 0.66)
@@ -619,7 +629,7 @@ export function runOutcomeEngineChecks(): { passed: number; failed: number } {
         for (const r of out.scoredRegimens) {
             assert.deepEqual(r.outcome_estimates!.map(o => o.outcome), ['all_cause_death', 'hf_hospitalization']);
             const m = r.score_breakdown!.domains.find(d => d.key === 'mortality')!;
-            assert.match(m.detail!, /^Relative risk \d\.\d\d \(95% interval \d\.\d\d to \d\.\d\d\) versus no disease-modifying therapy; population average from randomized trials, not a prediction for this patient\.( Valued as titrated to the trial-achieved dose: .+\.)?$/);
+            assert.match(m.detail!, /^Relative risk \d\.\d\d \(95% interval \d\.\d\d to \d\.\d\d\) versus no disease-modifying therapy; population average from randomized trials, not a prediction for this patient\.( New drugs valued as titrated, to the trial-achieved dose or the highest dose allowed for this patient: .+?\.)?( Counted at the highest dose allowed for this patient, which is below the trial dose: .+?\.)?$/);
             for (const o of r.outcome_estimates!) for (const c of o.contributors) {
                 assert.ok(c.row_id && c.trial && c.citation && typeof c.extrapolated === 'boolean');
             }

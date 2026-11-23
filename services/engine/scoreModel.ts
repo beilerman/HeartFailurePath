@@ -56,7 +56,7 @@ export const DOMAIN_LABELS: Record<ScoreDomainKey, string> = {
     guideline: 'Guideline concordance',
     completeness: 'Therapy completeness',
     cost: 'Cost',
-    adherence: 'Adherence',
+    adherence: 'Dosing burden',
 };
 
 /** Domains grouped for display, in reading order. */
@@ -148,10 +148,10 @@ export interface ScoreAdjustmentSpec {
  * ENGINE POLICY (statistical method): precision-weighted evidence. Ranking uses the posterior mean of each evidence row under a prior centred on no effect:
  *     x_used = B x x_published,  B = tau2 / (tau2 + se^2),  se_used = sqrt(B) x se       (x = ln RR for outcomes, KCCQ points for symptoms)
  * so a precisely measured row barely moves and a row from tiny trials is pulled toward no effect. tau2 is COMPUTED from each table (shrinkage.ts, outcomeBenefit.ts,
- * symptomBenefit.ts), never typed, with the DerSimonian-Laird moment estimator centred on no effect (w = 1/se^2, Q = sum(w x^2), C = sum(w) - sum(w^2)/sum(w), tau2 = max(0, (Q - k) / C)) over trial
+ * symptomBenefit.ts), never typed, with a moment estimator centred on no effect (w = 1/se^2, Q = sum(w x^2), tau2 = max(0, (Q - k) / sum(w))) over trial
  * or meta-analysis rows with an interval, an identical figure counted once. WHY WEIGHTED: a row's influence on the prior should follow its precision, so two very imprecise rows cannot set the prior for the rest.
  */
-export const SHRINKAGE_FORMULA = 'x_used = B * x_published; B = tau2 / (tau2 + se^2); se_used = sqrt(B) * se; tau2 = DerSimonian-Laird centred on no effect: w = 1/se^2, Q = sum(w x^2), C = sum(w) - sum(w^2)/sum(w), tau2 = max(0, (Q - k) / C), over trial or meta-analysis rows with an interval (duplicates once; no row excluded)';
+export const SHRINKAGE_FORMULA = 'x_used = B * x_published; B = tau2 / (tau2 + se^2); se_used = sqrt(B) * se; tau2 = moment estimator centred on no effect: w = 1/se^2, Q = sum(w x^2), tau2 = max(0, (Q - k) / sum(w)), over trial or meta-analysis rows with an interval (duplicates once; no row excluded)';
 
 /**
  * KCCQ points that earn a symptom score of 100 (a large change). POLICY anchor: Spertus 2005 (J Am Coll Cardiol 45:2): 5 points is a small, 10 a moderate and 20 a large clinical change.

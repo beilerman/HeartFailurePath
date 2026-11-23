@@ -1,0 +1,80 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1032 / 1032
+  (b) displayed pick set same:   1032 / 1032
+  (c) pick order identical:      1032 / 1032
+  (d) eligibility + alerts identical: NO (585 differences)
+  (e) per-regimen warnings identical: NO (249 regimens)
+  top-pick overall_score  old: min 0 / median 66 / max 86
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 0 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+
+BUGS (eligibility/alerts must not change):
+  John Doe (Wet & Warm) :: cash: clinicalAlerts differ
+  John Doe (Wet & Warm) :: commercial: clinicalAlerts differ
+  John Doe (Wet & Warm) :: medicare: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: cash: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: commercial: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: medicare: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: cash: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: commercial: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: medicare: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: cash: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: commercial: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: medicare: clinicalAlerts differ
+  African American (A-HeFT Indication) :: cash: clinicalAlerts differ
+  African American (A-HeFT Indication) :: commercial: clinicalAlerts differ
+  African American (A-HeFT Indication) :: medicare: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: cash: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: commercial: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: medicare: clinicalAlerts differ
+
+Warning differences:
+  Gout & Congestion - Diuretic Caution :: cash: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Gout & Congestion - Diuretic Caution :: cash: Captopril 6.25mg tid + Eplerenone 25mg qd
+  Gout & Congestion - Diuretic Caution :: commercial: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Gout & Congestion - Diuretic Caution :: commercial: Captopril 6.25mg tid + Eplerenone 25mg qd
+  Gout & Congestion - Diuretic Caution :: medicare: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Gout & Congestion - Diuretic Caution :: medicare: Captopril 6.25mg tid + Eplerenone 25mg qd
+  Obese HFpEF (BMI 35, LVEF 58) :: cash: Dapagliflozin 10mg qd + Spironolactone 25mg qd
+  Obese HFpEF (BMI 35, LVEF 58) :: cash: Dapagliflozin 10mg qd
+  Obese HFpEF (BMI 35, LVEF 58) :: commercial: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly
+  Obese HFpEF (BMI 35, LVEF 58) :: commercial: Dapagliflozin 10mg qd + Spironolactone 25mg qd
+  Obese HFpEF (BMI 35, LVEF 58) :: medicare: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly
+  Obese HFpEF (BMI 35, LVEF 58) :: medicare: Dapagliflozin 10mg qd + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: cash: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: cash: Captopril 6.25mg tid + Carvedilol 3.125mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: commercial: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: commercial: Captopril 6.25mg tid + Carvedilol 3.125mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: commercial: Ferric Carboxymaltose 1000mg once + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Iron-Deficient HFrEF :: medicare: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: medicare: Captopril 6.25mg tid + Carvedilol 3.125mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: medicare: Ferric Carboxymaltose 1000mg once + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  African American NYHA III (A-HeFT) :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  African American NYHA III (A-HeFT) :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  African American NYHA III (A-HeFT) :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  African American NYHA III (A-HeFT) :: commercial: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  African American NYHA III (A-HeFT) :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  African American NYHA III (A-HeFT) :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  Pregnant Woman with HFrEF :: cash: Metoprolol Succinate 25mg qd
+  Pregnant Woman with HFrEF :: cash: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd
+  Pregnant Woman with HFrEF :: commercial: Metoprolol Succinate 25mg qd
+  Pregnant Woman with HFrEF :: commercial: Bisoprolol 1.25mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid

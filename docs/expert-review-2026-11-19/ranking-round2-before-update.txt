@@ -1,0 +1,48 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1032 / 1032
+  (b) displayed pick set same:   970 / 1032
+  (c) pick order identical:      970 / 1032
+  (d) eligibility + alerts identical: NO (258 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 0 / median 66 / max 86
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 0 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+
+BUGS (eligibility/alerts must not change):
+  John Doe (Wet & Warm) :: cash: clinicalAlerts differ
+  John Doe (Wet & Warm) :: commercial: clinicalAlerts differ
+  John Doe (Wet & Warm) :: medicare: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: cash: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: commercial: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: medicare: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: cash: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: commercial: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: medicare: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: cash: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: commercial: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: medicare: clinicalAlerts differ
+  African American (A-HeFT Indication) :: cash: clinicalAlerts differ
+  African American (A-HeFT Indication) :: commercial: clinicalAlerts differ
+  African American (A-HeFT Indication) :: medicare: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: cash: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: commercial: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: medicare: clinicalAlerts differ

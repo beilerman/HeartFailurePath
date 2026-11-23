@@ -10,8 +10,8 @@
  * A missing row throws (never a silent 0). Deterministic and side-effect free; only active exposures count.
  */
 import type { Patient, RegimenMed } from '../../types';
-import { efBandFor, type EfBand } from './outcomeBenefit';
-import { outcomeDoseCredit } from './doseCredit';
+import { efBandFor, rowsForPatientLvef, MOSTLY_PRIOR_BELOW, type EfBand } from './outcomeBenefit';
+import { outcomeDoseCredit, type CappedStart } from './doseCredit';
 import { getMedicationClassGroup } from './registry';
 import { isActiveExposure } from './medicationExposure';
 import { KCCQ_FULL_CREDIT_POINTS } from './scoreModel';
@@ -19,10 +19,15 @@ import { shrinkValue, tau2From, median } from './shrinkage';
 import symptomEvidenceJson from '../../data/symptomEvidence.json';
 
 export interface SymptomEvidenceRow {
-    id: string; drug_class: string; ef_band: EfBand; kccq_points: number; ci_low: number | null; ci_high: number | null;
-    instrument: string; basis: 'trial' | 'meta_analysis' | 'extrapolated' | 'not_measured';
+    id: string; drug_class: string; ef_band: EfBand; lvef_range?: { min?: number; max?: number; note?: string; applies_to?: string }; kccq_points: number; ci_low: number | null; ci_high: number | null;
+    instrument: string; basis: 'trial' | 'meta_analysis' | 'extrapolated' | 'converted' | 'combined' | 'not_measured';
     source: { trial: string; citation: string; pmid?: string };
     population: string; comparator: string; verification: string; quote: string; extrapolation: string; notes: string;
+    /** Which drugs the source actually tested (T8); null when it does not name them. */
+    tested_drugs?: string[] | null; tested_trial?: string; tested_note?: string;
+    /** What was inferred beyond the source (T13): questionnaire, band, population, arb_to_acei. */
+    inferences?: string[];
+    caveats?: string[];
 }
 export const SYMPTOM_TABLE: SymptomEvidenceRow[] = (symptomEvidenceJson as unknown as { rows: SymptomEvidenceRow[] }).rows;
 
@@ -30,7 +35,7 @@ export const SYMPTOM_TABLE: SymptomEvidenceRow[] = (symptomEvidenceJson as unkno
 const kSe = (r: SymptomEvidenceRow): number | null => (r.ci_low === null || r.ci_high === null ? null : (r.ci_high - r.ci_low) / 3.92);
 interface SymptomStats { tau2: number; medianSe: number }
 const SYMPTOM_STATS = new WeakMap<SymptomEvidenceRow[], SymptomStats>();
-/** tau2 (DerSimonian-Laird centred on no effect, shrinkage.ts) over trial or meta-analysis rows with an interval (an identical figure counted once); median se over rows that have an interval. */
+/** tau2 (moment estimator centred on no effect, shrinkage.ts) over trial or meta-analysis rows with an interval (an identical figure counted once); median se over rows that have an interval. */
 export function symptomStats(table: SymptomEvidenceRow[]): SymptomStats {
     let st = SYMPTOM_STATS.get(table);
     if (!st) {
@@ -64,6 +69,10 @@ export interface SymptomContributor {
     kccq_points: number;
     kccq_points_published: number; ci_low: number | null; ci_high: number | null;
     shrinkage_b: number; interval_imputed: boolean;
+    /** Plain sentence, present when the row used comes from a different ejection-fraction band than the stated one (X1). */
+    band_note?: string;
+    /** The prior variance (KCCQ points squared) this row was weighted with, and whether its weight B is below 0.2 ("mostly prior"; change C3, 2026-11-18). */
+    prior_tau2: number; mostly_prior: boolean;
     credit: number; points: number;
     basis: SymptomEvidenceRow['basis']; not_measured: boolean; trial: string; citation: string;
 }
@@ -79,7 +88,7 @@ export interface SymptomEstimate {
 
 export function symptomRowFor(table: SymptomEvidenceRow[], med: { drug_class: string; name: string }, patient: Patient): SymptomEvidenceRow {
     const band = efBandFor(patient);
-    const rows = table.filter(r => r.drug_class === med.drug_class && r.ef_band === band);
+    const rows = rowsForPatientLvef(table.filter(r => r.drug_class === med.drug_class), patient);
     if (rows.length === 0) throw new SymptomEvidenceError('missing', `No symptom-evidence row for ${med.name} (class ${med.drug_class}), band ${band}`);
     if (rows.length > 1) throw new SymptomEvidenceError('duplicate', `${rows.length} symptom-evidence rows for ${med.name}, band ${band}: ${rows.map(r => r.id).join(', ')}`);
     return rows[0];
@@ -87,11 +96,11 @@ export function symptomRowFor(table: SymptomEvidenceRow[], med: { drug_class: st
 
 export function regimenSymptomEstimate(table: SymptomEvidenceRow[], regimen: RegimenMed[], patient: Patient, creditFn: (r: RegimenMed, p: Patient) => number = outcomeDoseCredit): SymptomEstimate {
     const all: SymptomContributor[] = regimen.filter(isActiveExposure).map(r => {
-        const row = symptomRowFor(table, r.med, patient), credit = creditFn(r, patient);
+        const row = symptomRowFor(table, r.med, patient), credit = creditFn(r, patient), band = efBandFor(patient);
         const notMeasured = row.basis === 'not_measured';
         const u = shrunkSymptomRow(table, row);
         return { medication: r.med.name, drug_class: r.med.drug_class, class_group: getMedicationClassGroup(r.med.drug_class), row_id: row.id,
-            kccq_points: u.used, kccq_points_published: row.kccq_points, ci_low: row.ci_low, ci_high: row.ci_high, shrinkage_b: u.B, interval_imputed: u.imputed,
+            kccq_points: u.used, kccq_points_published: row.kccq_points, ci_low: row.ci_low, ci_high: row.ci_high, shrinkage_b: u.B, interval_imputed: u.imputed, ...(row.lvef_range?.note && row.ef_band !== band ? { band_note: row.lvef_range.note } : {}), prior_tau2: symptomStats(table).tau2, mostly_prior: !notMeasured && u.B < MOSTLY_PRIOR_BELOW,
             credit, points: notMeasured ? 0 : credit * u.used,
             basis: row.basis, not_measured: notMeasured, trial: row.source.trial, citation: row.source.citation };
     });
@@ -108,9 +117,9 @@ export const SYMPTOM_TAU2: number = symptomStats(SYMPTOM_TABLE).tau2;
 export const symptomEstimateFor = (regimen: RegimenMed[], patient: Patient, creditFn?: (r: RegimenMed, p: Patient) => number): SymptomEstimate => regimenSymptomEstimate(SYMPTOM_TABLE, regimen, patient, creditFn);
 
 /** One-line breakdown text (two decimals). */
-export const describeSymptomEstimate = (e: SymptomEstimate, titrated: string[] = []): string => {
+export const describeSymptomEstimate = (e: SymptomEstimate, titrated: string[] = [], capped: CappedStart[] = []): string => {
     const nm = e.contributors.filter(c => c.not_measured).map(c => c.medication);
     const pulled = e.contributors.filter(c => !c.not_measured && Math.abs(c.kccq_points_published - c.kccq_points) >= 0.1);
     const pulledText = pulled.length ? ` Pulled toward no effect because the trials are small or imprecise: ${pulled.map(c => `${c.medication} published ${c.kccq_points_published.toFixed(1)}, used ${c.kccq_points.toFixed(1)}`).join('; ')}.` : '';
-    return `Expected change of ${e.points.toFixed(1)} KCCQ points (full credit = ${KCCQ_FULL_CREDIT_POINTS}); trial averages, additive across drugs (an assumption: no trial measured the combinations), not a prediction for this patient.${titrated.length ? ` Valued as titrated to the trial-achieved dose: ${titrated.join(', ')}.` : ''}${pulledText}${nm.length ? ` Not measured: ${nm.join(', ')}.` : ''}`;
+    return `Expected change of ${e.points.toFixed(1)} health-status points in KCCQ-equivalent units (full credit = ${KCCQ_FULL_CREDIT_POINTS}; some figures were converted from another questionnaire); trial averages, additive across drugs (an assumption: no trial measured the combinations), not a prediction for this patient.${titrated.length ? ` New drugs valued as titrated, to the trial-achieved dose or the highest dose allowed for this patient: ${titrated.join(', ')}.` : ''}${capped.length ? ` Counted at the highest dose allowed for this patient, which is below the trial dose: ${capped.map(c => `${c.drug}: ${c.text}, so it earns ${Math.round(c.credit * 100)}% of the trial effect`).join('; ')}.` : ''}${pulledText}${nm.length ? ` Not measured: ${nm.join(', ')}.` : ''}`;
 };

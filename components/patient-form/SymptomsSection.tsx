@@ -17,10 +17,10 @@ export const SymptomsSection: React.FC<SymptomsSectionProps> = ({ patientData, o
                 <div>
                     <Label htmlFor="nyha_class">NYHA functional class</Label>
                     <Select name="nyha_class" value={patientData.nyha_class} onChange={onChange} placeholder="Select activity limitation" error={validationErrors.nyha_class}>
-                        <option value="I">I — no limitation with usual activity</option>
-                        <option value="II">II — symptoms with ordinary activity</option>
-                        <option value="III">III — symptoms with less than ordinary activity</option>
-                        <option value="IV">IV — symptoms at rest</option>
+                        <option value="I">I: no limitation with usual activity</option>
+                        <option value="II">II: symptoms with ordinary activity</option>
+                        <option value="III">III: symptoms with less than ordinary activity</option>
+                        <option value="IV">IV: symptoms at rest</option>
                     </Select>
                 </div>
                 <div>

@@ -4,12 +4,13 @@ import { drugFacts } from './drugFacts';
 import { valueUnknown, hasGoutHistory, hasAtrialFibrillationHistory } from '../clinicalPredicates';
 import { hasChildPughBorC, hasChildPughBConfirmed, onPde5Inhibitor as onPde5InhibitorPatient } from './contraindications';
 import { RAAS_CLASSES, isDiureticClass } from './registry';
-import { clonePatient, isTargetDoseForPatient } from './regimenUtils';
-import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy } from './intolerance';
+import { clonePatient, isTargetDoseForPatient, sortedByName } from './regimenUtils';
+import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy, hasAngioedemaHistory } from './intolerance';
 import { HYPOKALEMIA_K_BELOW } from './thresholds';
 import { MRA_POOL_CLASSES } from './registry';
 import { EXTERNAL_POTASSIUM_RAISERS, potassiumRaisersTaken, ALISKIREN } from './contraindications';
-import { intoleranceCautionsFor, aceInhibitorAllergies } from './intolerance';
+import { MEDICATION_FORMULARY } from '../../constants';
+import { intoleranceCautionsFor, aceInhibitorAllergies, sameClassAllergies, allergyViaComponentOnly, drugClassWords, combinationProductsContaining } from './intolerance';
 import { monthlyMedicationCost } from '../medicationCost';
 import { physiologicTransitions } from './regimenTransition';
 
@@ -174,7 +175,7 @@ export function simulateModificationEffect(
         }
     }
     // D9: Single-agent titration interval guidance
-    if (titrations.length > 0 && newAdds.length === 0) {
+    if (titrations.length > 0) {
         warnings.push('Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.');
     }
 
@@ -188,7 +189,11 @@ export function simulateModificationEffect(
 
     // --- Safety Checks ---
     if (proj.sbp < 90) warnings.push('Risk of Hypotension (SBP < 90)');
-    if (proj.pulse > 0 && proj.pulse < 50) warnings.push('Risk of Bradycardia (HR < 50)');
+    if (proj.pulse > 0 && proj.pulse < 50) {
+        warnings.push('Risk of Bradycardia (HR < 50)');
+        // R7 W13g: in a paced rhythm the pacemaker sets a floor under the rate, and every other rate rule of the tool (the beta-blocker start limit, the dose reduction for a slow rate) is not applied; the warning says so.
+        if (currentPatient.rhythm === 'Paced') warnings.push('Drug note: the rhythm is recorded as paced. A pacemaker sets a floor under the heart rate, so the tool does not limit a beta-blocker by a recorded rate below 50 in a paced rhythm; confirm the pacemaker\'s lower rate setting.');
+    }
 
     if (!kUnknown) {
         if (proj.potassium > 6.0) {
@@ -208,7 +213,9 @@ export function simulateModificationEffect(
 
     // Drug-specific regimen warnings declared as data on the formulary entry (facts.regimen_warnings).
     resultingRegimen.forEach(r => {
+        const startsThis = modificationSet.modifications.some(m => (m.action === 'add' || m.action === 'swap') && m.target?.med.name === r.med.name);
         drugFacts(r.med).regimen_warnings?.forEach(w => {
+            if (w.when_started && !startsThis) return;
             if (!w.when || w.when(currentPatient, resultingRegimen)) warnings.push(typeof w.text === 'function' ? w.text(currentPatient) : w.text);
         });
         drugFacts(r.med).source_differences?.forEach(d => warnings.push(sourceDifferenceNote(r.med.name, d)));
@@ -220,15 +227,14 @@ export function simulateModificationEffect(
 
     // H1: ARB + angioedema history → mandatory monitoring warning (ACC/AHA: "use with caution")
     const hasARBinRegimen = resultingRegimen.some(r => r.med.drug_class === 'ARB');
-    const angioedemaRiskPresent = currentPatient.comorbidities.has("History of Angioedema") ||
-        currentPatient.discontinued_meds.some(dm => {
-            const text = `${dm.reason} ${dm.reason_detail ?? ''}`.toLowerCase();
-            return text.includes('angioedema') && RAAS_CLASSES.has(dm.drug_class);
-        });
+    // W11: one reading of "angioedema history" for every entry route (the comorbidity, a recorded intolerance to a RAAS drug, or the word typed in the allergy box): intolerance.ts.
+    const angioedemaRiskPresent = hasAngioedemaHistory(currentPatient);
     if (hasARBinRegimen && angioedemaRiskPresent) {
+        const startsArb = modificationSet.modifications.some(m => (m.action === 'add' || m.action === 'swap') && m.target?.med.drug_class === 'ARB');
         warnings.push(
-            'ANGIOEDEMA CAUTION: ARB prescribed with prior angioedema history. Cross-reactivity risk is low (~2-8%) but not zero. ' +
-            'Initiate in a monitored setting. Ensure patient has epinephrine auto-injector. Educate on angioedema signs (lip/tongue swelling). ' +
+            'ANGIOEDEMA CAUTION: ARB ' + (startsArb ? 'prescribed' : 'continued') + ' with prior angioedema history. Cross-reactivity risk is low (~2-8%) but not zero. ' +
+            (startsArb ? 'Initiate in a monitored setting. ' : 'The ARB is already taken: ask about any swelling since it was started. ') +
+            'Ensure patient has epinephrine auto-injector. Educate on angioedema signs (lip/tongue swelling). ' +
             'If angioedema recurs on ARB, discontinue and use H/ISDN as RAAS alternative.'
         );
     }
@@ -246,7 +252,8 @@ export function simulateModificationEffect(
     // β1-selective beta-blocker in mild/moderate asthma: acceptable but not risk-free.
     // (Severe asthma is an absolute CI for all BBs and is handled by exclusion upstream.)
     if (currentPatient.comorbidities.has('Asthma (Mild/Moderate)')) {
-        const selectiveBB = resultingRegimen.find(r =>
+        // The first beta-1-selective drug BY NAME, never by entry order (T25): the warning text and its baseline key must not depend on how the list was typed.
+        const selectiveBB = sortedByName(resultingRegimen).find(r =>
             drugFacts(r.med).beta1_selective
         );
         if (selectiveBB) {
@@ -287,7 +294,7 @@ export function simulateModificationEffect(
     if (hasChildPughBorC(currentPatient)) {
         const hasMRAInRegimen = resultingRegimen.some(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA');
         if (hasMRAInRegimen) {
-            const mraName = resultingRegimen.find(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA')?.med.name;
+            const mraName = sortedByName(resultingRegimen).find(r => r.med.drug_class === 'MRA' || r.med.drug_class === 'nsMRA')?.med.name;
             warnings.push(`Hepatic Impairment: ${mraName} accumulates in cirrhosis. Monitor K+ and renal function closely. Consider dose reduction.`);
         }
         // BB: Carvedilol and Metoprolol are extensively hepatically metabolized
@@ -357,7 +364,7 @@ export function simulateModificationEffect(
         modificationSet.modifications.forEach(mod => {
             const tgt = (mod.action === 'add' || mod.action === 'swap' || mod.action === 'titrate_up') ? mod.target : undefined;
             if (!tgt || !isDiureticClass(tgt.med.drug_class)) return;
-            const rule = drugFacts(tgt.med).hypokalemia_caution_below_k ?? { k: HYPOKALEMIA_K_BELOW, basis: 'engine policy; loop and thiazide-type diuretic labels warn of hypokalemia and give no potassium contraindication' };
+            const rule = drugFacts(tgt.med).hypokalemia_caution_below_k ?? { k: HYPOKALEMIA_K_BELOW, basis: 'a rule set by this tool; loop and thiazide-type diuretic labels warn of hypokalemia and give no potassium contraindication' };
             if (currentPatient.potassium < rule.k) {
                 warnings.push(`HYPOKALEMIA CAUTION: ${tgt.med.name} lowers potassium and the baseline K+ is ${currentPatient.potassium} (below ${rule.k}). Replete potassium first or monitor closely; check electrolytes within days of ${mod.action === 'titrate_up' ? 'the increase' : 'starting'} (${rule.basis}).`);
             }
@@ -431,6 +438,22 @@ export function simulateModificationEffect(
             warnings.push(`ALLERGY CHECK: an allergy to ${aceAllergy.length > 2 ? 'ACE inhibitors' : aceAllergy.join(' and ')} is recorded without the type of reaction. ${startsArni.target!.med.name} is contraindicated if that reaction was angioedema: confirm before starting (an ARB is the alternative).`);
         }
     }
+
+    // An option that STARTS a drug (a new start or a switch to it) of the same class as a drug the patient lists as an allergy: the entry does not say what the reaction was, and a reaction
+    // to one agent can recur with another of its class. The same kind of check, with the same weight, as the ARNI check above: confirm the reaction before starting.
+    modificationSet.modifications.forEach(mod => {
+        if ((mod.action !== 'add' && mod.action !== 'swap') || !mod.target) return;
+        const listed = sameClassAllergies(currentPatient, mod.target.med);
+        if (listed.length === 0) return;
+        // R10 A11d: an entry that states angioedema ("angioedema with losartan") is not "without the type of reaction"; the allergy to an ACE inhibitor, ARB or ARNI is worded for what was recorded.
+        const angioedemaEntry = [...(currentPatient.allergies ?? [])].some(a => /angio-?(o)?edema/i.test(a)) && listed.some(n => RAAS_CLASSES.has(MEDICATION_FORMULARY.find(m => m.name === n)?.drug_class ?? ''));
+        const containsOtherClass = allergyViaComponentOnly(currentPatient, mod.target.med);
+        const products = combinationProductsContaining(mod.target.med);
+        const isComponent = !containsOtherClass && listed.every(n => products.includes(n));
+        const otherFamilyMember = !containsOtherClass && !isComponent && listed.every(n => MEDICATION_FORMULARY.find(m => m.name === n)?.drug_class !== mod.target!.med.drug_class);
+        const w = `ALLERGY CHECK: an allergy to ${listed.length > 2 ? `${listed.slice(0, 2).join(', ')} and others` : listed.join(' and ')} is recorded ${angioedemaEntry ? 'as angioedema' : 'without the type of reaction'}, and ${mod.target.med.name} ${containsOtherClass ? `contains valsartan, an ${drugClassWords('ARB')},` : isComponent ? `is a component of ${listed.join(' and ')},` : otherFamilyMember ? `is a related ${drugClassWords(mod.target.med.drug_class)} in the same family,` : `is ${/^(ACE|SGLT|[aeiou])/i.test(drugClassWords(mod.target.med.drug_class)) ? 'an' : 'a'} ${drugClassWords(mod.target.med.drug_class)}`} too. Confirm ${angioedemaEntry ? 'the reaction history' : 'what the reaction was'} before starting ${mod.target.med.name}.`;
+        if (!warnings.includes(w)) warnings.push(w);
+    });
 
     // Intolerance history cautions (intolerance.ts table): a NEW start of a drug in an affected class names the history. Informational, not score-penalized.
     intoleranceCautionsFor(currentPatient, modificationSet.modifications).forEach(w => { if (!warnings.includes(w)) warnings.push(w); });

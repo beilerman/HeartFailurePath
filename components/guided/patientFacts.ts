@@ -1,4 +1,5 @@
 import type { Patient } from '../../types';
+import { validatePatientForm } from '../patient-form/formValidation';
 
 export const NOT_ENTERED = 'not entered';
 
@@ -8,7 +9,8 @@ export const currentDrugNames = (p: Patient) => p.current_regimen.map(r => short
 
 const num = (v: number | undefined | null) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined);
 
-export interface PatientFact { label: string; value: string; detail?: string; entered: boolean }
+export interface PatientFact { label: string; value: string; detail?: string; entered: boolean; invalid?: boolean }
+export const NOT_ACCEPTED = 'not accepted: fix before running';
 
 /** Values exactly as entered; a blank is "not entered", never 0. Shared by the results bar and the Review step. */
 export function patientFacts(p: Patient): PatientFact[] {
@@ -16,14 +18,17 @@ export function patientFacts(p: Patient): PatientFact[] {
     const sbp = num(p.sbp); const dbp = num(p.dbp);
     const lvef = num(p.lvef); const hr = num(p.pulse); const k = num(p.potassium); const egfr = num(p.egfr);
     const drugs = currentDrugNames(p);
-    const f = (label: string, value: string | undefined, detail?: string): PatientFact => ({ label, value: value ?? NOT_ENTERED, detail, entered: value !== undefined });
+    const errors = validatePatientForm(p);
+    const f = (label: string, value: string | undefined, detail?: string, ...fields: string[]): PatientFact => fields.some(x => errors[x])
+        ? { label, value: NOT_ACCEPTED, detail, entered: true, invalid: true }
+        : { label, value: value ?? NOT_ENTERED, detail, entered: value !== undefined };
     const base = [
-        f('Age and sex', age || sex ? `${age ? `${age} years` : 'age not entered'}, ${sex ? sex.toLowerCase() : 'sex not entered'}` : undefined),
-        f('LVEF', lvef !== undefined ? `${lvef}%` : undefined),
+        f('Age and sex', age || sex ? `${age ? `${age} years` : 'age not entered'}, ${sex ? sex.toLowerCase() : 'sex not entered'}` : undefined, undefined, 'age'),
+        f('LVEF', lvef !== undefined ? `${lvef}%` : undefined, undefined, 'lvef'),
         f('NYHA class', p.nyha_class || undefined),
-        f('Blood pressure (mmHg)', sbp !== undefined && dbp !== undefined ? `${sbp}/${dbp}` : undefined),
-        f('Heart rate', hr !== undefined ? `${hr} bpm` : undefined),
-        f('Potassium (mEq/L)', k !== undefined ? k.toFixed(1) : undefined),
+        f('Blood pressure (mmHg)', sbp !== undefined && dbp !== undefined ? `${sbp}/${dbp}` : undefined, undefined, 'sbp', 'dbp'),
+        f('Heart rate', hr !== undefined ? `${hr} bpm` : undefined, undefined, 'pulse'),
+        f('Potassium (mEq/L)', k !== undefined ? k.toFixed(1) : undefined, undefined, 'potassium'),
         f('eGFR (mL/min/1.73 m²)', egfr !== undefined ? `${Math.round(egfr)}` : undefined),
         { label: 'Current drugs', value: String(drugs.length), detail: drugs.join(', ') || 'none entered', entered: drugs.length > 0 },
     ];

@@ -74,7 +74,7 @@ export function runIncompleteDataChecks(): { passed: number; failed: number } {
         assert.ok(changes(run(p,new Set(['Dapagliflozin']))).length);
     });
     check('unknown pregnancy holds restricted changes but permits otherwise eligible selective beta-blocker review', () => {
-        const p=patient();p.sex='Female';p.is_pregnant=undefined;
+        const p=patient();p.sex='Female';p.age=40;p.is_pregnant=undefined; // age 40: pregnancy status is required below the childbearing-potential age (S12, 2026-11-19)
         const out=run(p,new Set(['Metoprolol Succinate','Carvedilol','Lisinopril','Dapagliflozin','Spironolactone']));
         assert.ok(changes(out).some(m=>m.target!.med.name==='Metoprolol Succinate'));
         assert.ok(changes(out).every(m=>m.target!.med.name==='Metoprolol Succinate'));

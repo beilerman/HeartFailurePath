@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { MEDICATION_FORMULARY } from '../constants';
 import { Medication } from '../types';
 import { WarningIcon, BeakerIcon } from './icons';
+import { plainText } from './plainText';
 
 // Formulary encodes drops as positive values; a negative drop is an increase (e.g. GLP-1
 // mild tachycardia), so format the sign explicitly instead of hard-coding a leading minus.
@@ -24,14 +25,14 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                 <div className="flex flex-wrap gap-1 mt-2">
                     {med.available_doses.map((d, i) => (
                         <span key={i} className="text-xs text-slate-500 bg-white px-1.5 py-0.5 rounded border border-slate-200">
-                            {d.strength} {d.unit} — {d.formulation}
+                            {d.strength} {d.unit}: {d.formulation}
                         </span>
                     ))}
                 </div>
             </div>
 
             <div className="p-4 space-y-4 flex-1">
-                <p className="text-sm text-slate-700">{medicationEffectContext(med)}</p>
+                <p className="text-sm text-slate-700">{plainText(medicationEffectContext(med))}</p>
                 <p className="text-xs text-slate-600">Individual dose response and withdrawal effects are not quantified. Trial evidence and label-based dose guidance do not establish head-to-head physiological equivalence.</p>
 
                 {/* Side Effects & Cautions */}
@@ -49,7 +50,7 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                     </div>
                     <p className="mt-1 text-[10px] text-slate-400">Listed effects only; consult the current label. Observed-state safety checks cannot establish the individual response to a new dose.</p>
                     {(med.facts?.source_differences ?? []).map(d => (
-                        <p key={d.topic} className="mt-2 text-[11px] text-slate-600"><span className="font-semibold">Sources differ ({d.topic}).</span> Label: {d.label}. Guideline: {d.guideline}. This tool follows the {d.tool_follows}: {d.why}.</p>
+                        <p key={d.topic} className="mt-2 text-[11px] text-slate-600"><span className="font-semibold">Sources differ ({plainText(d.topic)}).</span> Label: {plainText(d.label)}. Guideline: {plainText(d.guideline)}. This tool follows the {plainText(d.tool_follows)}: {plainText(d.why)}.</p>
                     ))}
                 </div>
 
@@ -58,7 +59,7 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                     <div>
                         <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Not offered when</h4>
                         <ul className="list-disc pl-4 text-xs text-slate-600 space-y-0.5">
-                            {med.contraindication_checks.map((c, i) => <li key={i}>{c.reason}</li>)}
+                            {med.contraindication_checks.map((c, i) => <li key={i}>{plainText(c.reason)}</li>)}
                         </ul>
                     </div>
                 )}

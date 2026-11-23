@@ -127,16 +127,12 @@ export function topDeltas(deltas: ScoreDelta[], n: number): { lower: ScoreDelta[
 }
 
 export const TIE_RULE_TEXT =
-    'When two options show the same whole-number score, the one with the higher unrounded score is listed first; then the cheaper one; then the one with fewer changes to the current regimen; then alphabetical order of the drugs.';
-
-/** Shown beside the option-versus-option comparison when the foundational ranking mode is applied. */
-export const FOUNDATIONAL_ORDER_NOTE =
-    'Ranking approach: Prioritize foundational therapy. Options are ordered by how much of the four foundational therapies they cover (after setting aside any that push blood pressure, heart rate or potassium into a severe range), and only then by score. An option can score higher and still be listed lower. The score itself is the same as under Balanced.';
+    'When two options show the same whole-number score, the one with the slightly higher score (before rounding) is listed first; then the cheaper one; then the one with fewer changes to the current regimen; then alphabetical order of the drugs.';
 
 /** One sentence on how a tie against the leader was settled, or null when the displayed scores differ. */
 export function tieSentence(self: ScoredRegimen, leader: ScoredRegimen, leaderRank: number): string | null {
     if (self.overall_score !== leader.overall_score) return null;
-    return `Option ${leaderRank} shows the same score (${leader.overall_score}). ${TIE_RULE_TEXT} Here: unrounded score ${num(self.raw_score ?? self.overall_score)} vs ${num(leader.raw_score ?? leader.overall_score)}, cost ${costLabel(self.cost)} vs ${costLabel(leader.cost)}. Equal scores do not establish equivalent clinical benefit.`;
+    return `Option ${leaderRank} shows the same score (${leader.overall_score}). ${TIE_RULE_TEXT} Here: score before rounding ${num(self.raw_score ?? self.overall_score)} vs ${num(leader.raw_score ?? leader.overall_score)}, cost ${costLabel(self.cost)} vs ${costLabel(leader.cost)}. Equal scores do not establish equivalent clinical benefit.`;
 }
 
 /** Lowercase the first letter of a goal sentence, unless it starts an acronym (NYHA, NT-proBNP). */

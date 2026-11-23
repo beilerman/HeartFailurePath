@@ -8,17 +8,20 @@ import { ResultsDisplay } from './components/ResultsDisplay';
 import { MedicationLibrary } from './components/MedicationLibrary';
 import { FAQ } from './components/FAQ';
 import { EvidenceContext } from './components/EvidenceContext';
-import { Patient, ScoredRegimen, ExcludedMedication, MonitoringPlanItem, RankingInfo, DecisionReadiness } from './types';
+import type { WhyFirst } from './services/engine/whyFirst';
+import { Patient, ScoredRegimen, ExcludedMedication, MonitoringPlanItem, DecisionReadiness, SimulationOutput } from './types';
+import { RESEARCH_LINE } from './components/appStatements';
 import { generateAndScoreModifications } from './services/simulationService';
 import { getDrugPrices } from './services/pricingService';
 import { MEDICATION_FORMULARY } from './constants';
 import type { RunSnapshot } from './components/chartHeader';
-import { SCOPE_STATEMENT } from './components/rankingModeMeta';
+import { SCOPE_STATEMENT } from './components/appStatements';
 import { TableIcon, BookOpenIcon, QuestionMarkCircleIcon } from './components/icons';
 import { StartScreen } from './components/guided/StartScreen';
 import { StepsScreen } from './components/guided/StepsScreen';
 import { GuidedResults } from './components/guided/GuidedResults';
 import { REVIEW_STEP } from './components/guided/steps';
+import { loadSession, saveSession, clearSession } from './components/guided/sessionStore';
 import { SCENARIOS, clonePatient } from './data/scenarios';
 type ViewMode = 'guided' | 'form';
 type GuidedPhase = 'start' | 'steps' | 'results';
@@ -26,18 +29,21 @@ const initialView = (): ViewMode => {
     try { return new URLSearchParams(window.location.search).get('view') === 'form' ? 'form' : 'guided'; } catch { return 'guided'; }
 };
 
+// A reload mid-entry restores the entered patient for this tab (session storage only). Results are not stored: a restored session reopens at the Review step.
+const restored = (() => { const s = loadSession(); return s && s.phase !== 'start' ? s : undefined; })();
+
 function App() {
-    const [patient, setPatient] = useState<Patient>(blankPatient);
+    const [patient, setPatient] = useState<Patient>(() => restored?.patient ?? blankPatient());
     const [pendingEntry, setPendingEntry] = useState(false);
     // Two views over the SAME patient, run and stale state: the guided flow (default) and the original full form.
     const [view, setView] = useState<ViewMode>(initialView);
-    const [phase, setPhase] = useState<GuidedPhase>('start');
-    const [step, setStep] = useState(0);
+    const [phase, setPhase] = useState<GuidedPhase>(restored ? 'steps' : 'start');
+    const [step, setStep] = useState(restored ? (restored.phase === 'results' ? REVIEW_STEP : restored.step) : 0);
     // Remounts the guided steps whenever a patient is loaded, so no draft entry from another patient survives.
     const [formEpoch, setFormEpoch] = useState(0);
     // An example card loads a scenario and runs it once its prices are ready.
     const [autoRun, setAutoRun] = useState(false);
-    const [scenario, setScenario] = useState<string>('custom');
+    const [scenario, setScenario] = useState<string>(restored?.scenario ?? 'custom');
     const [results, setResults] = useState<ScoredRegimen[]>([]);
     const [excludedMeds, setExcludedMeds] = useState<ExcludedMedication[]>([]);
     const [clinicalAlerts, setClinicalAlerts] = useState<string[]>([]);
@@ -46,8 +52,10 @@ function App() {
     const [eligibleAdjuncts, setEligibleAdjuncts] = useState<string[]>([]);
     const [missingDataNotices, setMissingDataNotices] = useState<string[]>([]);
     const [followUpCalendar, setFollowUpCalendar] = useState<MonitoringPlanItem[]>([]);
-    const [ranking, setRanking] = useState<RankingInfo | undefined>(undefined);
     const [decisionReadiness, setDecisionReadiness] = useState<DecisionReadiness>();
+    const [whyFirst, setWhyFirst] = useState<WhyFirst | undefined>(undefined);
+    const [scopeStatus, setScopeStatus] = useState<SimulationOutput['scope_status']>(undefined);
+    const [evidenceBand, setEvidenceBand] = useState<SimulationOutput['evidence_band']>(undefined);
     // Incremented per successful analysis so result cards remount (resetting per-card
     // disclosure/modal state) instead of positionally inheriting it across runs.
     const [runId, setRunId] = useState(0);
@@ -67,6 +75,8 @@ function App() {
     // changed" (show a stale-results banner so an old plan is never read against new data).
     const [hasRun, setHasRun] = useState(false);
     const lastRunInputsRef = useRef<string>('');
+    const hasRunRef = useRef(false);
+    hasRunRef.current = hasRun;
 
     // Navigation State
     const [activeTab, setActiveTab] = useState<'simulation' | 'library' | 'faq'>('simulation');
@@ -108,6 +118,32 @@ function App() {
         };
     }, [patient.insurance_tier, priceLoadAttempt]);
 
+    // Session copy of the guided entry (nothing is sent anywhere). "Start over" clears it.
+    useEffect(() => { if (phase === 'start') clearSession(); else saveSession({ patient, step, phase, scenario }); }, [patient, step, phase, scenario]);
+
+    // Browser Back moves one step back in the guided entry instead of leaving the app: every phase or step change is a history entry.
+    const fromPopRef = useRef(false);
+    useEffect(() => {
+        try {
+            if (fromPopRef.current) { fromPopRef.current = false; return; }
+            const cur = window.history.state as { hfp?: boolean; phase?: string; step?: number } | null;
+            if (cur?.hfp && cur.phase === phase && cur.step === step) return;
+            const entry = { hfp: true, phase, step };
+            if (cur?.hfp) window.history.pushState(entry, ''); else window.history.replaceState(entry, '');
+        } catch { /* history is a convenience only */ }
+    }, [phase, step]);
+    useEffect(() => {
+        const onPop = (e: PopStateEvent) => {
+            const st = e.state as { hfp?: boolean; phase?: GuidedPhase; step?: number } | null;
+            if (!st?.hfp || !st.phase) return;
+            fromPopRef.current = true;
+            setPhase(st.phase === 'results' && !hasRunRef.current ? 'steps' : st.phase);
+            setStep(st.phase === 'results' && !hasRunRef.current ? REVIEW_STEP : (st.step ?? 0));
+        };
+        window.addEventListener('popstate', onPop);
+        return () => window.removeEventListener('popstate', onPop);
+    }, []);
+
     const pricesReady = !pricesLoading && !priceLoadError && Object.keys(drugPrices).length > 0;
 
     // Serialize inputs for change detection (Sets → arrays; functions on med objects are dropped
@@ -143,7 +179,7 @@ function App() {
         setHasRun(true);
         // The engine is synchronous and fast — compute inline (no artificial delay).
         try {
-            const { scoredRegimens, excludedMedications, clinicalAlerts: alerts, monitoringPlan: plan, gdmtGaps: gaps, eligibleAdjuncts: adjuncts, missingDataNotices: notices, followUpCalendar: calendar, ranking: rankingInfo, decisionReadiness: readiness } = generateAndScoreModifications(patient, simMeds, pricesReady ? drugPrices : {});
+            const { scoredRegimens, excludedMedications, clinicalAlerts: alerts, monitoringPlan: plan, gdmtGaps: gaps, eligibleAdjuncts: adjuncts, missingDataNotices: notices, followUpCalendar: calendar, decisionReadiness: readiness, why_first: why, scope_status: scope, evidence_band: band } = generateAndScoreModifications(patient, simMeds, pricesReady ? drugPrices : {});
             setResults(scoredRegimens);
             setExcludedMeds(excludedMedications);
             setClinicalAlerts(alerts);
@@ -152,9 +188,11 @@ function App() {
             setEligibleAdjuncts(adjuncts ?? []);
             setMissingDataNotices(notices ?? []);
             setFollowUpCalendar(calendar ?? []);
-            setRanking(rankingInfo);
             setDecisionReadiness(readiness);
-            setRunSnapshot({ ranAt: new Date().toISOString(), patient: clonePatient(patient), caseLabel: scenario === 'custom' ? 'Custom case' : `EXAMPLE / TEST CASE — ${scenario}` });
+            setWhyFirst(why);
+            setScopeStatus(scope);
+            setEvidenceBand(band);
+            setRunSnapshot({ ranAt: new Date().toISOString(), patient: clonePatient(patient), caseLabel: scenario === 'custom' ? 'Custom case' : `EXAMPLE / TEST CASE: ${scenario}` });
             setRunId(r => r + 1);
         } catch (err) {
             const message = err instanceof Error ? err.message : 'An unexpected error occurred during analysis.';
@@ -167,8 +205,10 @@ function App() {
             setEligibleAdjuncts([]);
             setMissingDataNotices([]);
             setFollowUpCalendar([]);
-            setRanking(undefined);
             setDecisionReadiness(undefined);
+            setWhyFirst(undefined);
+            setScopeStatus(undefined);
+            setEvidenceBand(undefined);
         }
         return true;
     };
@@ -191,7 +231,7 @@ function App() {
     const clearRun = () => {
         setHasRun(false); lastRunInputsRef.current = '';
         setResults([]); setExcludedMeds([]); setClinicalAlerts([]); setMonitoringPlan([]); setGdmtGaps([]); setEligibleAdjuncts([]);
-        setMissingDataNotices([]); setFollowUpCalendar([]); setRanking(undefined); setDecisionReadiness(undefined);
+        setMissingDataNotices([]); setFollowUpCalendar([]); setDecisionReadiness(undefined); setWhyFirst(undefined); setScopeStatus(undefined); setEvidenceBand(undefined);
         setRunSnapshot(undefined); setSimError(null);
     };
     const loadForGuided = (title: string, next: Patient) => {
@@ -208,6 +248,12 @@ function App() {
         setAutoRun(true);
         setPhase('results');
     };
+    const startOver = () => {
+        clearSession();
+        loadForGuided('custom', blankPatient());
+        setStep(0);
+        setPhase('start');
+    };
     const startNewPatient = () => {
         loadForGuided('custom', blankPatient());
         setStep(0);
@@ -219,12 +265,12 @@ function App() {
         try {
             const url = new URL(window.location.href);
             if (next === 'form') url.searchParams.set('view', 'form'); else url.searchParams.delete('view');
-            window.history.replaceState(null, '', url);
+            window.history.replaceState(window.history.state, '', url);
         } catch { /* the URL is a convenience only */ }
     };
     const viewBtn = (mode: ViewMode) =>
         `min-h-[40px] px-2.5 sm:px-4 py-2 rounded-md text-sm font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${view === mode ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-700 hover:text-slate-900'}`;
-    const caseLabel = runSnapshot?.caseLabel ?? (scenario === 'custom' ? 'Custom case' : `EXAMPLE / TEST CASE — ${scenario}`);
+    const caseLabel = runSnapshot?.caseLabel ?? (scenario === 'custom' ? 'Custom case' : `EXAMPLE / TEST CASE: ${scenario}`);
 
     const tabClass = (tab: 'simulation' | 'library' | 'faq') =>
         `px-2.5 sm:px-4 py-2 rounded-md text-sm font-bold flex items-center gap-1.5 sm:gap-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${activeTab === tab ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`;
@@ -249,7 +295,7 @@ function App() {
     return (
         <EvidenceContext.Provider value={evidenceCtx}>
         <div className="min-h-screen lg:h-screen w-full flex flex-col bg-slate-50 text-slate-800 font-sans lg:overflow-hidden print:h-auto print:overflow-visible">
-            <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:font-bold">
+            <a href="#main-content" className="sr-only print:hidden focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:bg-indigo-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:font-bold">
                 Skip to main content
             </a>
             {/* Header */}
@@ -313,6 +359,9 @@ function App() {
                 </nav>
             </header>
 
+            {/* The one always-visible line (U8a): on the landing page, every entry page and every results page, and in print. */}
+            <p data-testid="research-line" role="note" className="bg-amber-50 border-b border-amber-300 px-3 sm:px-6 py-1.5 text-xs font-semibold text-amber-950">{RESEARCH_LINE}</p>
+
             <main id="main-content" className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden relative min-w-0 print:block print:overflow-visible">
                 {/* Kept mounted (just hidden) when another tab is open, so the results and scroll position survive a visit to the Evidence tab. */}
                 {(
@@ -320,6 +369,11 @@ function App() {
                         {view === 'guided' ? (
                             <section aria-label="Guided review" className="flex-1 min-w-0 bg-slate-50 lg:overflow-y-auto p-4 sm:p-8 custom-scrollbar print:p-0 print:overflow-visible">
                                 <div className="max-w-[1100px] mx-auto">
+                                    {phase !== 'start' && (
+                                        <div className="mb-3 flex justify-end print:hidden">
+                                            <button type="button" onClick={startOver} className="min-h-[36px] rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Start over: clear the entered patient</button>
+                                        </div>
+                                    )}
                                     {phase === 'start' && <StartScreen onOpenExample={openExample} onNewPatient={startNewPatient} />}
                                     {phase === 'steps' && (
                                         <StepsScreen
@@ -348,7 +402,7 @@ function App() {
                                             resultsProps={{
                                                 results, runId, error: simError, hasRun, resultsStale: resultsStale || pendingEntry, onRerun: stableRerun,
                                                 excludedMedications: excludedMeds, clinicalAlerts, monitoringPlan, gdmtGaps, eligibleAdjuncts, missingDataNotices,
-                                                followUpCalendar, ranking, decisionReadiness, runSnapshot,
+                                                followUpCalendar, decisionReadiness, whyFirst, runSnapshot, scopeStatus, evidenceBand,
                                             }}
                                         />
                                     )}
@@ -399,9 +453,11 @@ function App() {
                                     eligibleAdjuncts={eligibleAdjuncts}
                                     missingDataNotices={missingDataNotices}
                                     followUpCalendar={followUpCalendar}
-                                    ranking={ranking}
                                     decisionReadiness={decisionReadiness}
+                                    whyFirst={whyFirst}
                                     runSnapshot={runSnapshot}
+                                    scopeStatus={scopeStatus}
+                                    evidenceBand={evidenceBand}
                                 />
                                 </ErrorBoundary>
                             </div>

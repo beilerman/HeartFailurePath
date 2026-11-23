@@ -1,0 +1,80 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1032 / 1032
+  (b) displayed pick set same:   1032 / 1032
+  (c) pick order identical:      1032 / 1032
+  (d) eligibility + alerts identical: NO (30 differences)
+  (e) per-regimen warnings identical: NO (36 regimens)
+  top-pick overall_score  old: min 0 / median 66 / max 86
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 0 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+
+BUGS (eligibility/alerts must not change):
+  Severe CKD Loop Resistance (eGFR 18) :: cash: clinicalAlerts differ
+  Severe CKD Loop Resistance (eGFR 18) :: commercial: clinicalAlerts differ
+  Severe CKD Loop Resistance (eGFR 18) :: medicare: clinicalAlerts differ
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: cash: clinicalAlerts differ
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: commercial: clinicalAlerts differ
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: medicare: clinicalAlerts differ
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: cash: clinicalAlerts differ
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: commercial: clinicalAlerts differ
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: medicare: clinicalAlerts differ
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: cash: clinicalAlerts differ
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: commercial: clinicalAlerts differ
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: medicare: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: cash: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: commercial: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: medicare: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: cash: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: commercial: clinicalAlerts differ
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: medicare: clinicalAlerts differ
+  ESC26-RAAS-K K+ 5.6 With MRA Reduces The MRA First :: cash: clinicalAlerts differ
+  ESC26-RAAS-K K+ 5.6 With MRA Reduces The MRA First :: commercial: clinicalAlerts differ
+  ESC26-RAAS-K K+ 5.6 With MRA Reduces The MRA First :: medicare: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged :: cash: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged :: commercial: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged :: medicare: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept :: cash: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept :: commercial: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept :: medicare: clinicalAlerts differ
+  ESC26-Alerts NT-proBNP 6000 With Congestion Advises Admission :: cash: clinicalAlerts differ
+  ESC26-Alerts NT-proBNP 6000 With Congestion Advises Admission :: commercial: clinicalAlerts differ
+  ESC26-Alerts NT-proBNP 6000 With Congestion Advises Admission :: medicare: clinicalAlerts differ
+
+Warning differences:
+  Jane Smith (Dry & Cold) :: cash: 
+  Jane Smith (Dry & Cold) :: commercial: 
+  Jane Smith (Dry & Cold) :: medicare: 
+  Pregnant Vericiguat + Ivabradine Exclusion :: cash: Metoprolol Succinate 25mg qd
+  Pregnant Vericiguat + Ivabradine Exclusion :: commercial: Bisoprolol 1.25mg qd
+  Pregnant Vericiguat + Ivabradine Exclusion :: medicare: Bisoprolol 1.25mg qd
+  Adjunct-Source Semaglutide Not Started At LVEF 43 :: cash: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Adjunct-Source Semaglutide Not Started At LVEF 43 :: commercial: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Adjunct-Source Semaglutide Not Started At LVEF 43 :: medicare: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Adjunct-Source GLP-1 Continuation Below Initiation Gates :: cash: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Semaglutide (Wegovy) 1mg weekly
+  Adjunct-Source GLP-1 Continuation Below Initiation Gates :: commercial: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Semaglutide (Wegovy) 1mg weekly
+  Adjunct-Source GLP-1 Continuation Below Initiation Gates :: medicare: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Semaglutide (Wegovy) 1mg weekly
+  Adjunct-Source Empagliflozin Started At eGFR 22 Dapagliflozin Not :: cash: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Adjunct-Source Empagliflozin Started At eGFR 22 Dapagliflozin Not :: cash: Carvedilol 3.125mg bid + Lisinopril 2.5mg qd
+  Adjunct-Source Empagliflozin Started At eGFR 22 Dapagliflozin Not :: commercial: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Adjunct-Source Empagliflozin Started At eGFR 22 Dapagliflozin Not :: commercial: Carvedilol 3.125mg bid + Lisinopril 2.5mg qd
+  Adjunct-Source Empagliflozin Started At eGFR 22 Dapagliflozin Not :: medicare: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Adjunct-Source Empagliflozin Started At eGFR 22 Dapagliflozin Not :: medicare: Carvedilol 3.125mg bid + Lisinopril 2.5mg qd
+  Adjunct-Source SGLT2i Not Started At eGFR 18 :: cash: Carvedilol 3.125mg bid + Vericiguat 5mg qd
+  Adjunct-Source SGLT2i Not Started At eGFR 18 :: cash: Carvedilol 3.125mg bid
+  Adjunct-Source SGLT2i Not Started At eGFR 18 :: commercial: Carvedilol 3.125mg bid + Vericiguat 5mg qd
+  Adjunct-Source SGLT2i Not Started At eGFR 18 :: commercial: Carvedilol 3.125mg bid
+  Adjunct-Source SGLT2i Not Started At eGFR 18 :: medicare: Carvedilol 3.125mg bid + Vericiguat 5mg qd
+  Adjunct-Source SGLT2i Not Started At eGFR 18 :: medicare: Carvedilol 3.125mg bid
+  Adjunct-Source SGLT2i Continuation At eGFR 18 :: cash: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Vericiguat 5mg qd
+  Adjunct-Source SGLT2i Continuation At eGFR 18 :: cash: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd
+  Adjunct-Source SGLT2i Continuation At eGFR 18 :: commercial: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Vericiguat 5mg qd
+  Adjunct-Source SGLT2i Continuation At eGFR 18 :: commercial: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd
+  Adjunct-Source SGLT2i Continuation At eGFR 18 :: medicare: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Vericiguat 5mg qd
+  Adjunct-Source SGLT2i Continuation At eGFR 18 :: medicare: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd

@@ -23,12 +23,27 @@ import { valueUnknown, isBlackRace, hasGoutHistory } from '../clinicalPredicates
 import harmDefinitionsJson from '../../data/harmDefinitions.json';
 import harmEvidenceJson from '../../data/harmEvidence.json';
 export type HarmLayer = 'harmRow' | 'symptomFigure' | 'crossCheck' | 'caution';
-export type HarmLevel = 'drug' | 'class' | 'extrapolated' | 'siblingProxy';
+/** `notMeasured` (second pass, 2026-11-18): no randomized incidence exists for this drug or class, so nothing is charged; shown in words as "not measured", never as a bare zero. */
+export type HarmLevel = 'drug' | 'class' | 'extrapolated' | 'siblingProxy' | 'notMeasured';
 export interface HarmRow {
     id: string; drug_class: string; drugs: string[]; effect: string; layer: HarmLayer;
     one_year_excess_pct: number; dose_related: boolean | null;
     dose_groups?: { daily_mg: number; one_year_excess_pct: number }[];
     level: HarmLevel; upper_bound?: boolean; population_sex?: 'male' | 'female';
+    /** Change C6: the row is charged only when this holds for the option's regimen (e.g. a thiazide-type creatinine rise measured only with a loop diuretic on board). */
+    charge_when?: HarmCondition;
+    /** The words shown on the line when `charge_when` does not hold (what is not measured and why nothing is charged). */
+    charge_when_note?: string;
+    /** Plain label kept on a not-measured row; the value it replaced. */
+    level_label?: string; previous_value?: number;
+    /** E2 (controller ruling 2026-11-19): the id of the measured row of a same-mechanism class that a borrowed row copies. */
+    borrowed_from?: string;
+    /** E12: words added to the level text when a row is a sum across trials, post hoc, or borrowed from another disease. */
+    level_note?: string;
+    /** Plain-words caveats shown under "Notes" on the evidence tables and the drill-down (T9); the row's `notes` field keeps the working history and is never displayed. */
+    caveats?: string[];
+    /** The window the figure covers when it is not a year ("72 hours"): the excess is shown over that window, not per year. */
+    excess_window?: string;
     source: { trial: string; citation: string; pmid?: string };
     population: string; control_type: 'placebo' | 'active' | 'none';
     definition_used: string; verification: string; quote: string; notes: string;
@@ -37,7 +52,9 @@ export type HarmCondition =
     | { kind: 'egfr_below'; value: number } | { kind: 'potassium_at_least'; value: number }
     | { kind: 'sbp_below'; value: number } | { kind: 'age_at_least'; value: number }
     | { kind: 'sex'; value: 'male' | 'female' } | { kind: 'self_identified_black' }
-    | { kind: 'has_diabetes' } | { kind: 'no_diabetes' } | { kind: 'has_gout' };
+    | { kind: 'has_diabetes' } | { kind: 'no_diabetes' } | { kind: 'has_gout' }
+    /** True when an active drug of this class is in the option's regimen (change C6, 2026-11-18). */
+    | { kind: 'regimen_contains_class'; value: string };
 export interface HarmMultiplier {
     id: string; effect: string; applies_to_classes: string[]; condition: HarmCondition; ratio: number;
     level: HarmLevel; source: { trial: string; citation: string; pmid?: string }; quote: string; notes: string;
@@ -72,6 +89,8 @@ export interface HarmLine {
     /** Set when a value needed for this line was not recorded and the conservative (higher-risk) case was charged: the field(s) concerned, e.g. 'sex' or 'race'. */
     assumed_because_unknown?: string;
     split_from?: string;     // set on the moderate hyperkalemia line when the severe row was subtracted
+    /** Set when the row's `charge_when` condition does not hold: nothing is charged and this says why (change C6). */
+    charge_note?: string;
 }
 export interface SymptomComponent {
     effect: string; row_id: string; measured_rate: number; adjusted_rate: number; charged_rate: number;
@@ -94,7 +113,7 @@ const RACES = ['White', 'Black', 'Asian', 'Hispanic', 'Other'];
 const num = (v: unknown): number | undefined => (typeof v === 'number' && !valueUnknown(v) ? v : undefined);
 
 /** true / false, or the reason the condition cannot be evaluated (patient value missing or unknown). */
-function evaluateCondition(c: HarmCondition, p: Patient): boolean | { unknown: string } {
+function evaluateCondition(c: HarmCondition, p: Patient, regimen: RegimenMed[] = []): boolean | { unknown: string } {
     const need = (field: string, v: number | undefined) => (v === undefined ? { unknown: `${field} is missing or unknown` } : undefined);
     switch (c.kind) {
         case 'egfr_below': { const v = num(p.egfr); return need('eGFR', v) ?? v! < c.value; }
@@ -112,6 +131,7 @@ function evaluateCondition(c: HarmCondition, p: Patient): boolean | { unknown: s
             return c.kind === 'has_diabetes' ? has : !has;
         }
         case 'has_gout': return p.comorbidities instanceof Set ? hasGoutHistory(p) : { unknown: 'comorbidity list is missing' };
+        case 'regimen_contains_class': return regimen.filter(isActiveExposure).some(r => r.med.drug_class === c.value);
     }
 }
 
@@ -147,10 +167,10 @@ function validate(table: HarmTable): void {
     for (const m of table.multipliers) if (!EFFECTS.has(m.effect)) throw new HarmTableError('unknown_effect', `Multiplier ${m.id}: effect "${m.effect}" is not in data/harmDefinitions.json`);
 }
 
-interface Resolved { row: HarmRow; measured: number; adjusted: number; applied: HarmMultiplier[]; doseMeasured: boolean; assumed: string[]; appliedAssumed: Map<string, string> }
+interface Resolved { row: HarmRow; measured: number; adjusted: number; applied: HarmMultiplier[]; doseMeasured: boolean; assumed: string[]; appliedAssumed: Map<string, string>; heldBack?: string }
 const CONDITION_FIELD: Record<HarmCondition['kind'], string> = {
     egfr_below: 'eGFR', potassium_at_least: 'potassium', sbp_below: 'systolic blood pressure', age_at_least: 'age', sex: 'sex', self_identified_black: 'race',
-    has_diabetes: 'comorbidity list', no_diabetes: 'comorbidity list', has_gout: 'comorbidity list',
+    has_diabetes: 'comorbidity list', no_diabetes: 'comorbidity list', has_gout: 'comorbidity list', regimen_contains_class: 'regimen',
 };
 
 export function harmBurdenFor(table: HarmTable, regimen: RegimenMed[], patient: Patient): HarmBurden {
@@ -197,7 +217,14 @@ export function harmBurdenFor(table: HarmTable, regimen: RegimenMed[], patient: 
                 assumptions.push({ drug: name, effect, field: 'sex', applied: true, row_id: row.id, text: 'sex not recorded: charged as the higher-risk case' });
             }
             const { rate, measured, adjusted } = rateOf(row);
-            return { row, measured: rate, adjusted, applied, doseMeasured: measured, assumed: assumedFields, appliedAssumed };
+            // Change C6: a row measured only in a particular company (a thiazide-type drug added to a loop diuretic) is charged only when the option's regimen has it.
+            let heldBack: string | undefined;
+            if (row.charge_when && evaluateCondition(row.charge_when, patient, regimen) !== true) {
+                heldBack = row.charge_when_note ?? (row.charge_when.kind === 'regimen_contains_class'
+                    ? `Not measured without a ${row.charge_when.value.toLowerCase()} (${row.source.trial}); nothing is charged`
+                    : 'Not measured under this option\'s conditions; nothing is charged');
+            }
+            return { row, measured: rate, adjusted, applied, doseMeasured: measured, assumed: assumedFields, appliedAssumed, heldBack };
         };
         const view = (m: HarmMultiplier, assumedField?: string): AppliedMultiplier => ({ id: m.id, ratio: m.ratio, level: m.level, trial: m.source.trial, ...(assumedField ? { assumed_because_unknown: assumedField } : {}) });
         const effects = [...new Set(matching.map(x => x.effect))].sort();
@@ -213,19 +240,19 @@ export function harmBurdenFor(table: HarmTable, regimen: RegimenMed[], patient: 
             if (res) resolved.set(effect, res);
         }
         for (const [effect, res] of resolved) {
-            const d = EFFECTS.get(effect)!, base = { level: res.row.level, upper_bound: res.row.upper_bound === true, dose_relation_measured: res.doseMeasured, multipliers: res.applied.map(m => view(m, res.appliedAssumed.get(m.id))), multipliers_combined: res.applied.length > 1,
+            const d = EFFECTS.get(effect)!, base = { level: (res.heldBack ? 'notMeasured' : res.row.level) as HarmLevel, upper_bound: res.row.upper_bound === true, dose_relation_measured: res.doseMeasured, multipliers: res.applied.map(m => view(m, res.appliedAssumed.get(m.id))), multipliers_combined: res.applied.length > 1,
                 ...(res.assumed.length ? { assumed_because_unknown: res.assumed.join(', ') } : {}) };
             if (d.layer === 'symptomFigure') {
                 symptoms.push({ effect, row_id: res.row.id, measured_rate: res.measured, adjusted_rate: res.adjusted, charged_rate: Math.max(0, res.adjusted), ...base });
                 continue;
             }
             const severity = d.severity!, weight = SEVERITY_WEIGHTS[severity];
-            let charged = Math.max(0, res.adjusted), splitFrom: string | undefined;
+            let charged = res.heldBack ? 0 : Math.max(0, res.adjusted), splitFrom: string | undefined;
             if (effect === 'hyperkalemia' && resolved.has('hyperkalemiaSevere')) {
                 charged = Math.max(0, res.adjusted - Math.max(0, resolved.get('hyperkalemiaSevere')!.adjusted)); // moderate share only; the severe row carries the rest
                 splitFrom = 'hyperkalemiaSevere';
             }
-            harm.push({ kind: 'harm', drug: name, drug_class: cls, effect, row_id: res.row.id, measured_rate: res.measured, adjusted_rate: res.adjusted, charged_rate: charged, severity, weight, points: charged * weight, ...base, ...(splitFrom ? { split_from: splitFrom } : {}) });
+            harm.push({ kind: 'harm', drug: name, drug_class: cls, effect, row_id: res.row.id, measured_rate: res.heldBack ? 0 : res.measured, adjusted_rate: res.heldBack ? 0 : res.adjusted, charged_rate: charged, severity, weight, points: charged * weight, ...base, ...(splitFrom ? { split_from: splitFrom } : {}), ...(res.heldBack ? { charge_note: res.heldBack } : {}) });
         }
         for (const l of harm) { lines.push(l); burden += l.points; }
         if (symptoms.length > 0) {

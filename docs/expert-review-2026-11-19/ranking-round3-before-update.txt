@@ -1,0 +1,500 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        882 / 1032
+  (b) displayed pick set same:   1032 / 1032
+  (c) pick order identical:      882 / 1032
+  (d) eligibility + alerts identical: NO (435 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 0 / median 66 / max 86
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 3 of 57 runs
+    LVEF <= 40: 144 of 864 runs
+    LVEF >= 50: 3 of 111 runs
+
+Top pick changed in 150 runs:
+  Sinus Tachycardia on Max BB (Ivabradine Candidate) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 74.87]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.67]
+  Sinus Tachycardia on Max BB (Ivabradine Candidate) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.14]
+  Sinus Tachycardia on Max BB (Ivabradine Candidate) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 74.92]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.72]
+  HFimpEF (Prior LVEF 25, Now 45) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 74.87]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.67]
+  HFimpEF (Prior LVEF 25, Now 45) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.14]
+  HFimpEF (Prior LVEF 25, Now 45) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 74.92]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.72]
+  HFimpEF Unknown on Existing Quad (Preserve Pillars) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.01]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.81]
+  HFimpEF Unknown on Existing Quad (Preserve Pillars) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.40]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.20]
+  HFimpEF Unknown on Existing Quad (Preserve Pillars) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.05]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.85]
+  NYHA II + BNP 1800 (Vericiguat Eligible) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.29]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.09]
+  NYHA II + BNP 1800 (Vericiguat Eligible) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.19]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.32]
+  NYHA II + BNP 1800 (Vericiguat Eligible) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 75, raw 75.42]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.11]
+  Stable Outpatient BNP 1800 (No Recent Worsening) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.29]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.09]
+  Stable Outpatient BNP 1800 (No Recent Worsening) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.52]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.32]
+  Stable Outpatient BNP 1800 (No Recent Worsening) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.31]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.11]
+  Low Body Weight Carvedilol Boundary (55kg) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.32]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.12]
+  Low Body Weight Carvedilol Boundary (55kg) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.60]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.40]
+  Low Body Weight Carvedilol Boundary (55kg) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 75, raw 75.35]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.15]
+  Vericiguat Continuation Carve-Out :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 67, raw 66.80]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 67, raw 66.61]
+  Vericiguat Continuation Carve-Out :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 76, raw 76.37]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 76, raw 76.19]
+  Vericiguat Continuation Carve-Out :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 76, raw 75.60]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 75, raw 75.42]
+  Rate-Source Ivabradine Strong CYP3A4 Inhibitor Excluded :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Strong CYP3A4 Inhibitor Excluded :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Rate-Source Ivabradine Strong CYP3A4 Inhibitor Excluded :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Telithromycin Excluded :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Telithromycin Excluded :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Rate-Source Ivabradine Telithromycin Excluded :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Continuation HR 58 Keeps Drug And Bonus :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 69, raw 69.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 69, raw 69.16]
+  Rate-Source Ivabradine Continuation HR 58 Keeps Drug And Bonus :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 69, raw 69.37]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 69, raw 69.19]
+  Rate-Source Ivabradine Continuation HR 58 Keeps Drug And Bonus :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 69, raw 69.35]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 69, raw 69.17]
+  Rate-Source Ivabradine Start Tier 5 mg :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Start Tier 5 mg :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Rate-Source Ivabradine Start Tier 5 mg :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Start Tier 2.5 mg Conduction Defect :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Start Tier 2.5 mg Conduction Defect :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Rate-Source Ivabradine Start Tier 2.5 mg Conduction Defect :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Acute Decompensation Excluded :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Acute Decompensation Excluded :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Rate-Source Ivabradine Acute Decompensation Excluded :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Paced Rhythm Excluded :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Paced Rhythm Excluded :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Rate-Source Ivabradine Paced Rhythm Excluded :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Digoxin Potassium 5.8 Not Excluded Warned :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 0, raw -1.38]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd [overall 0, raw -1.91]
+  Rate-Source Digoxin Potassium 5.8 Not Excluded Warned :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 0, raw -1.37]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd [overall 0, raw -1.90]
+  Rate-Source Digoxin Potassium 5.8 Not Excluded Warned :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 0, raw -1.37]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd [overall 0, raw -1.90]
+  Rate-Source Digoxin Heart-Rate Effect Only In AFib :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Digoxin Heart-Rate Effect Only In AFib :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Rate-Source Digoxin Heart-Rate Effect Only In AFib :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Metadata :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Rate-Source Ivabradine Metadata :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Rate-Source Ivabradine Metadata :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.66]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.46]
+  Adjunct-Source Vericiguat Offered At NT-proBNP 1200 Sinus :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.30]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source Vericiguat Offered At NT-proBNP 1200 Sinus :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.39]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.49]
+  Adjunct-Source Vericiguat Offered At NT-proBNP 1200 Sinus :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.36]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source Vericiguat Not Offered At NT-proBNP 1200 AFib :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 70, raw 70.20]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 70, raw 69.94]
+  Adjunct-Source Vericiguat Not Offered At NT-proBNP 1200 AFib :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 70, raw 70.21]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 70, raw 69.95]
+  Adjunct-Source Vericiguat Not Offered At NT-proBNP 1200 AFib :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 70, raw 70.20]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 70, raw 69.94]
+  Adjunct-Source Vericiguat Starts At 5 mg :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.30]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source Vericiguat Starts At 5 mg :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.39]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.49]
+  Adjunct-Source Vericiguat Starts At 5 mg :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.36]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source Vericiguat Starts At 2.5 mg When SBP Low :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 2.5mg qd [overall 76, raw 76.30]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source Vericiguat Starts At 2.5 mg When SBP Low :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 2.5mg qd [overall 76, raw 76.39]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.49]
+  Adjunct-Source Vericiguat Starts At 2.5 mg When SBP Low :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 2.5mg qd [overall 76, raw 76.36]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source Vericiguat Riociguat Excluded :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source Vericiguat Riociguat Excluded :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.69]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.49]
+  Adjunct-Source Vericiguat Riociguat Excluded :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.68]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source Vericiguat PDE5 Inhibitor Warned Not Excluded :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 76, raw 76.30]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 75, raw 75.50]
+  Adjunct-Source Vericiguat PDE5 Inhibitor Warned Not Excluded :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 76, raw 76.39]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 75.60]
+  Adjunct-Source Vericiguat PDE5 Inhibitor Warned Not Excluded :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 76, raw 76.36]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 75.57]
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 76, raw 76.48]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 76, raw 76.30]
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 77, raw 76.58]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 76, raw 76.39]
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 77, raw 76.55]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 76, raw 76.36]
+  Adjunct-Source H/ISDN Side Effects Tachycardia Lupus Warning :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 75/40mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.20]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 75/40mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 76, raw 75.65]
+  Adjunct-Source H/ISDN Side Effects Tachycardia Lupus Warning :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 75/40mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.30]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 75/40mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 76, raw 75.66]
+  Adjunct-Source H/ISDN Side Effects Tachycardia Lupus Warning :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 75/40mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.27]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 75/40mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 76, raw 75.65]
+  Adjunct-Source IV Iron Held At Hb 15.5 :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.30]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source IV Iron Held At Hb 15.5 :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.39]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.49]
+  Adjunct-Source IV Iron Held At Hb 15.5 :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.36]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.30]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.39]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.49]
+  Adjunct-Source IV Iron Hemoglobin Not Entered Dose Withheld :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 5mg qd [overall 76, raw 76.36]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.48]
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.96]
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.96]
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.96]
+  Diuretic-Source Furosemide 40 mg bid Below High-Dose Alert :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.96]
+  Diuretic-Source Furosemide 40 mg bid Below High-Dose Alert :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.96]
+  Diuretic-Source Furosemide 40 mg bid Below High-Dose Alert :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 74.96]
+  Diuretic-Source Daily Dose Credit :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Diuretic-Source Daily Dose Credit :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Diuretic-Source Daily Dose Credit :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Diuretic-Source Thiazide Add-On Credit And Gout Caution :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Diuretic-Source Thiazide Add-On Credit And Gout Caution :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Diuretic-Source Thiazide Add-On Credit And Gout Caution :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Diuretic-Source Metolazone Electrolyte Monitoring :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 68, raw 67.88]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 68, raw 67.70]
+  Diuretic-Source Metolazone Electrolyte Monitoring :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 68, raw 67.88]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 68, raw 67.70]
+  Diuretic-Source Metolazone Electrolyte Monitoring :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 68, raw 67.88]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 68, raw 67.70]
+  Diuretic-Source Formulary Strengths And Badges :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Diuretic-Source Formulary Strengths And Badges :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Diuretic-Source Formulary Strengths And Badges :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Final-Gaps Furosemide 80 mg bid Congested On High Dose Swap Allowed :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Final-Gaps Furosemide 80 mg bid Congested On High Dose Swap Allowed :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Final-Gaps Furosemide 80 mg bid Congested On High Dose Swap Allowed :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Final-Gaps Furosemide 40 mg bid Is Not Swapped Without A Reason :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Final-Gaps Furosemide 40 mg bid Is Not Swapped Without A Reason :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Final-Gaps Furosemide 40 mg bid Is Not Swapped Without A Reason :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Final-Gaps Torsemide 20 mg qd Is Not Swapped Without A Reason :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Torsemide 20mg qd [overall 76, raw 75.73]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 76, raw 75.55]
+  Final-Gaps Torsemide 20 mg qd Is Not Swapped Without A Reason :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Torsemide 20mg qd [overall 76, raw 75.73]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 76, raw 75.55]
+  Final-Gaps Torsemide 20 mg qd Is Not Swapped Without A Reason :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Torsemide 20mg qd [overall 76, raw 75.73]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 76, raw 75.55]
+  ESC26-Table11 Spironolactone 25 mg eGFR 70 Titrates To 50 :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  ESC26-Table11 Spironolactone 25 mg eGFR 70 Titrates To 50 :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  ESC26-Table11 Spironolactone 25 mg eGFR 70 Titrates To 50 :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device LVEF 30 NYHA II Ischaemic Sinus :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device LVEF 30 NYHA II Ischaemic Sinus :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device LVEF 30 NYHA II Ischaemic Sinus :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device LVEF 30 NYHA II Not Recorded Ischaemic Sinus :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device LVEF 30 NYHA II Not Recorded Ischaemic Sinus :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device LVEF 30 NYHA II Not Recorded Ischaemic Sinus :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device LVEF 30 NYHA III AFib CRT Needs Sinus :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 70, raw 70.22]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 70, raw 69.95]
+  Alert-Source Device LVEF 30 NYHA III AFib CRT Needs Sinus :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 70, raw 70.22]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 70, raw 69.95]
+  Alert-Source Device LVEF 30 NYHA III AFib CRT Needs Sinus :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 70, raw 70.22]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 70, raw 69.95]
+  Alert-Source Device LVEF 30 NYHA IV Refractory :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device LVEF 30 NYHA IV Refractory :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device LVEF 30 NYHA IV Refractory :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device Not Raised At LVEF 40 :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device Not Raised At LVEF 40 :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Device Not Raised At LVEF 40 :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Advanced HF LVEF 18 Marker :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Advanced HF LVEF 18 Marker :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Advanced HF LVEF 18 Marker :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Advanced HF NYHA III High NT-proBNP Marker :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Advanced HF NYHA III High NT-proBNP Marker :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Advanced HF NYHA III High NT-proBNP Marker :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Advanced HF Diuretic Resistance Marker :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Alert-Source Advanced HF Diuretic Resistance Marker :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Alert-Source Advanced HF Diuretic Resistance Marker :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 76.53]
+  Alert-Source Advanced HF Stable Not Raised :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Advanced HF Stable Not Raised :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source Advanced HF Stable Not Raised :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source AF HFrEF Anticoagulation And Rate Control :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 70, raw 70.22]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 70, raw 69.95]
+  Alert-Source AF HFrEF Anticoagulation And Rate Control :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 70, raw 70.22]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 70, raw 69.95]
+  Alert-Source AF HFrEF Anticoagulation And Rate Control :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 70, raw 70.22]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 70, raw 69.95]
+  Alert-Source No AF Alert In Sinus Rhythm :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source No AF Alert In Sinus Rhythm :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  Alert-Source No AF Alert In Sinus Rhythm :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  AF-History Paroxysmal Sinus Ivabradine Start Note :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  AF-History Paroxysmal Sinus Ivabradine Start Note :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  AF-History Paroxysmal Sinus Ivabradine Start Note :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  AF-History No Comorbidity Sinus No Ivabradine Note :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  AF-History No Comorbidity Sinus No Ivabradine Note :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+  AF-History No Comorbidity Sinus No Ivabradine Note :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 76, raw 75.70]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 75, raw 75.50]
+
+BUGS (eligibility/alerts must not change):
+  John Doe (Wet & Warm) :: cash: clinicalAlerts differ
+  John Doe (Wet & Warm) :: commercial: clinicalAlerts differ
+  John Doe (Wet & Warm) :: medicare: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: cash: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: commercial: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: medicare: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: cash: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: commercial: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: medicare: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: cash: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: commercial: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: medicare: clinicalAlerts differ
+  African American (A-HeFT Indication) :: cash: clinicalAlerts differ
+  African American (A-HeFT Indication) :: commercial: clinicalAlerts differ
+  African American (A-HeFT Indication) :: medicare: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: cash: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: commercial: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: medicare: clinicalAlerts differ

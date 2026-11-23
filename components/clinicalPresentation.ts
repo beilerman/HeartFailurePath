@@ -1,12 +1,13 @@
 import type { Patient, RegimenMed, ScoredRegimen } from '../types';
 import { congestionFindingCount } from '../services/clinicalPredicates';
+import { plainText } from './plainText';
 
 const FREQUENCIES: Record<string, string> = {
     qd: 'once daily', bid: 'twice daily', tid: 'three times daily', qid: 'four times daily',
     qod: 'every other day', weekly: 'once weekly', once: 'once',
 };
 export const frequencyLabel = (value: string): string => FREQUENCIES[value] ?? value;
-export const clinicalSentence = (value: string): string => value
+export const clinicalSentence = (value: string): string => plainText(value)
     .replace(/\b(qd|bid|tid|qid|qod)\b/gi, v => frequencyLabel(v.toLowerCase()))
     .replace(/\$(?:Infinity|NaN)/g, 'cost unavailable');
 export const doseLabel = (r: RegimenMed): string => `${r.dose.strength} ${r.dose.unit} ${frequencyLabel(r.selected_frequency)}`;

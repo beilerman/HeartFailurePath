@@ -21,12 +21,12 @@
 import type { Patient, Medication, RegimenMed, ExcludedMedication } from '../../types';
 import { MEDICATION_FORMULARY } from '../../constants';
 import {
-    deriveIntolerancePolicy, currentMedIntoleranceReason, isRenalOnlyContraindication, MRA_POOL_CLASSES,
+    deriveIntolerancePolicy, currentMedIntoleranceReason, isRenalOnlyContraindication, MRA_POOL_CLASSES, drugClassWords,
     type IntolerancePolicy,
 } from './intolerance';
 import { RAAS_CLASSES } from './registry';
 import { kContinuationAction } from './regimenUtils';
-import { valueUnknown } from '../clinicalPredicates';
+import { valueUnknown, kidneyNotEnteredWords } from '../clinicalPredicates';
 import { drugFacts } from './drugFacts';
 import { contraindicationReasons } from './contraindications';
 import { MRA_START_K_CEILING, RAAS_START_K_CAUTION, RAAS_EGFR_REVIEW_BELOW } from './thresholds';
@@ -42,6 +42,8 @@ export interface EligibilityContext {
     /** Drug names the patient has a documented discontinuation for (rule E01). */
     discontinuedByName: Map<string, ExcludedMedication>;
     hasSulfaAllergy: boolean;
+    /** An ACE inhibitor or ARB the patient takes that the tool is NOT forcing off the regimen (no allergy, intolerance or contraindication of its own): a switch from it to the ARNI is an upgrade, not a forced change (E22). */
+    currentHasStayingAceiOrArb: boolean;
     /** Defer all NEW beta-blocker initiation (prior bradycardia / AV block). */
     excludeBB: boolean;
     excludeACEi: boolean;
@@ -87,6 +89,7 @@ export function buildEligibilityContext(patient: Patient, renalDataUnknown: bool
         renalDataUnknown,
         intolerancePolicy,
         discontinuedByName: new Map(patient.discontinued_meds.map(m => [m.name, m])),
+        currentHasStayingAceiOrArb: (patient.current_regimen ?? []).some(r => (r.med.drug_class === 'ACEi' || r.med.drug_class === 'ARB') && isStayingOnRegimen(r) && !patient.allergies.has(r.med.name)),
         hasSulfaAllergy: [...patient.allergies].some(a => a.toLowerCase().includes('sulfa') || a.toLowerCase().includes('sulfonamide')),
         excludeBB: intolerancePolicy.hasBbBradycardia,
         excludeACEi: hasAngioedemaRisk || hasAceiCoughHistory,
@@ -105,9 +108,17 @@ export function buildEligibilityContext(patient: Patient, renalDataUnknown: bool
 export function blankLabNames(ctx: Pick<EligibilityContext, 'patient' | 'renalDataUnknown'>): string[] {
     const names: string[] = [];
     if (valueUnknown(ctx.patient.potassium)) names.push('potassium');
-    if (ctx.renalDataUnknown) names.push('renal function (eGFR/creatinine)');
+    if (ctx.renalDataUnknown) names.push(kidneyNotEnteredWords(ctx.patient).replace('eGFR / creatinine', 'eGFR/creatinine'));
     return names;
 }
+
+/** R8 X2: E15 holds new MRA starts at potassium 5.0 or higher. A drug the patient already takes is not "started": its line says it is not raised again; a second MRA is not started beside one that is being reduced. */
+const e15Taken = (p: Patient, med: Medication): boolean => (p.current_regimen ?? []).some(r => r.med.name === med.name);
+const e15OtherMraTaken = (p: Patient): string => (p.current_regimen ?? []).filter(r => MRA_POOL_CLASSES.has(r.med.drug_class)).map(r => r.med.name).sort().join(', ');
+const e15Reason = (p: Patient, med: Medication): string => e15Taken(p, med)
+    ? `Potassium ${p.potassium.toFixed(1)} is 5.0 or higher and the patient takes it: do not raise the dose again until potassium is below 5.0`
+    : e15OtherMraTaken(p) ? `Potassium ${p.potassium.toFixed(1)} is 5.0 or higher and the patient already takes an MRA that is being reduced or withheld: a second MRA is not started`
+        : `Potassium ${p.potassium.toFixed(1)} is 5.0 or higher: recheck and start the MRA once potassium is below 5.0`;
 
 export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
     {
@@ -125,7 +136,7 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         id: 'E03', name: 'ACE inhibitor intolerance',
         summary: 'ACE inhibitors are withheld after prior angioedema or ACE-inhibitor cough.',
         evaluate: (ctx, med) => med.drug_class === 'ACEi' && ctx.excludeACEi
-            ? 'Cross-reactivity with prior ACEi intolerance' : null,
+            ? (ctx.excludeARNI ? 'Angioedema is recorded: an ACE inhibitor is not used after angioedema' : 'Cross-reactivity with prior ACEi intolerance') : null,
     },
     {
         id: 'E04', name: 'ARNI after angioedema',
@@ -170,13 +181,13 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         // Depends on the staying-on-regimen predicate in buildEligibilityContext (a steroidal MRA the
         // engine is forcing off does not block).
         evaluate: (ctx, med) => med.drug_class === 'nsMRA' && ctx.currentHasSteroidalMRA
-            ? 'Dual MRA prevention: current steroidal MRA in regimen' : null,
+            ? 'Dual MRA prevention: a steroidal MRA is already in the regimen' : null,
     },
     {
         id: 'E11', name: 'Dual MRA (non-steroidal already on board)',
         summary: 'A steroidal MRA is not added while the patient stays on a non-steroidal MRA.',
         evaluate: (ctx, med) => med.drug_class === 'MRA' && ctx.currentHasNsMRA
-            ? 'Dual MRA prevention: current nsMRA in regimen' : null,
+            ? 'Dual MRA prevention: a nonsteroidal MRA is already in the regimen' : null,
     },
     {
         id: 'E12', name: 'Decision-specific information required',
@@ -228,8 +239,12 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             // "Already on an MRA" exempts a switch within the class only while that MRA may continue at its dose: one being reduced or withheld by its
             // potassium rule (5.5 or higher) is not a licence to start a different MRA (2026-11-12).
             && !(ctx.patient.current_regimen ?? []).some(r => MRA_POOL_CLASSES.has(r.med.drug_class) && kContinuationAction(r.med, ctx.patient) === null)
-            ? `Potassium ${ctx.patient.potassium.toFixed(1)} is 5.0 or higher: recheck and start the MRA once potassium is below 5.0` : null,
-        details: (ctx) => [
+            ? e15Reason(ctx.patient, med) : null,
+        details: (ctx, med) => e15Taken(ctx.patient, med) ? [
+            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is at or above ${MRA_START_K_CEILING.toFixed(1)} and the patient already takes ${med.name}, which the potassium rule reduces or withholds. It is not raised again until potassium is below ${MRA_START_K_CEILING.toFixed(1)} (the labelled limit for raising an MRA); recheck potassium`,
+        ] : e15OtherMraTaken(ctx.patient) ? [
+            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is at or above ${MRA_START_K_CEILING.toFixed(1)} and the patient already takes an MRA (${e15OtherMraTaken(ctx.patient)}), which the potassium rule reduces or withholds. A second MRA is not started`,
+        ] : [
             `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is at or above the ${MRA_START_K_CEILING.toFixed(1)} start limit (2022 AHA/ACC/HFSA 7.3.3: potassium 5.0 or above is a contraindication to MRA initiation; 2026 ESC section 6.1: caution at 5.0 or above; the Aldactone and Kerendia labels allow exactly 5.0, the guideline boundary is the stricter and is used). Repeat potassium and start the MRA once it is below ${MRA_START_K_CEILING.toFixed(1)}`,
             'Potassium binders: whether they improve outcomes is uncertain in the 2022 US guideline (primary text); the 2026 ESC guideline makes no recommendation for them (insufficient evidence of clinical benefit). The tool does not start an MRA together with a binder',
         ],
@@ -246,7 +261,7 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             && !(ctx.patient.current_regimen ?? []).some(r => r.med.name === med.name)
             ? `Laboratory prerequisite — ${blankLabNames(ctx).join(' and ')} not entered; obtain a BMP before starting this drug` : null,
         details: (ctx, med) => [
-            `${blankLabNames(ctx).join(' and ')} ${blankLabNames(ctx).length > 1 ? 'are' : 'is'} blank (not entered): a new ${med.drug_class} start needs a current potassium and renal function — obtain a BMP first`,
+            `${blankLabNames(ctx).join(' and ')} ${blankLabNames(ctx).length > 1 ? 'are' : 'is'} blank (not entered): a new ${drugClassWords(med.drug_class)} start needs a current potassium and renal function — obtain a BMP first`,
         ],
     },
     {
@@ -279,7 +294,7 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             && !(ctx.patient.current_regimen ?? []).some(r => RAAS_CLASSES.has(r.med.drug_class))
             ? `Potassium ${ctx.patient.potassium.toFixed(1)} is above 5.2: recheck and start once it is 5.2 or lower` : null,
         details: (ctx) => [
-            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above ${RAAS_START_K_CAUTION.toFixed(1)}, the 2026 ESC caution threshold for starting an ACE inhibitor, ARB or ARNI (Supplementary Tables S4/S5: seek specialist advice). The engine applies it as a staged start (engine policy). First steps: stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes, then repeat potassium and start once it is ${RAAS_START_K_CAUTION.toFixed(1)} or lower`,
+            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above ${RAAS_START_K_CAUTION.toFixed(1)}, the 2026 ESC caution threshold for starting an ACE inhibitor, ARB or ARNI (Supplementary Tables S4/S5: seek specialist advice). The tool applies it as a staged start (a rule set by this tool). First steps: stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes, then repeat potassium and start once it is ${RAAS_START_K_CAUTION.toFixed(1)} or lower`,
             'Potassium binders carry a Class 2b recommendation in the 2022 US guideline for hyperkalaemia that develops while on a RAAS inhibitor (secondary source); the 2026 ESC guideline makes no recommendation for them. The tool does not start a RAAS inhibitor together with a binder',
         ],
     },
@@ -298,7 +313,7 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
         },
         details: (ctx) => {
             const change = assessCreatinineChange(ctx.patient);
-            return change ? [`${change.why}. The 2026 ESC guideline (Supplementary Tables S4/S5/S8) halves these drugs when already in use and allows no increase until kidney function is stable; not starting a new one in the same state is engine policy. Look for and stop other causes (NSAIDs, volume depletion), recheck in 1-2 weeks`] : [];
+            return change ? [`${change.why}. The 2026 ESC guideline (Supplementary Tables S4/S5/S8) halves these drugs when already in use and allows no increase until kidney function is stable; not starting a new one in the same state is a rule set by this tool. Look for and stop other causes (NSAIDs, volume depletion), recheck in 1-2 weeks`] : [];
         },
     },
     {
@@ -312,13 +327,28 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
             && !(ctx.patient.current_regimen ?? []).some(r => r.med.name === med.name)
             ? `eGFR ${ctx.patient.egfr} is below ${RAAS_EGFR_REVIEW_BELOW}: not started without specialist advice` : null,
         details: (ctx) => [
-            `eGFR ${ctx.patient.egfr} mL/min/1.73 m2 is below ${RAAS_EGFR_REVIEW_BELOW}. The 2026 ESC guideline (Supplementary Table S4) advises stopping an ACE inhibitor or ARB and seeking specialist advice when eGFR falls below 20; this tool therefore does not start, increase or switch one at this level (engine policy). A drug already in use is kept.`,
+            `eGFR ${ctx.patient.egfr} mL/min/1.73 m2 is below ${RAAS_EGFR_REVIEW_BELOW}. The 2026 ESC guideline (Supplementary Table S4) advises stopping an ACE inhibitor or ARB and seeking specialist advice when eGFR falls below 20; this tool therefore does not start, increase or switch one at this level (a rule set by this tool). A drug already in use is kept.`,
         ],
     },
     {
         id: 'E21', name: 'Correct low potassium before diuretic intensification',
         summary: 'A new potassium-lowering diuretic waits for correction of recorded hypokalemia; existing therapy is reviewed separately.',
         evaluate: (ctx, med) => ctx.patient.current_regimen.some(r => r.med.name === med.name) ? null : knownMedicationChangeHold(ctx.patient, med),
+    },
+    {
+        id: 'E22', name: 'No switch to sacubitril/valsartan above potassium 5.2',
+        summary: 'A switch from an ACE inhibitor or ARB that stays on the regimen to sacubitril/valsartan is held at potassium above 5.2, the level at which a new RAAS inhibitor start and an increase are held. A switch forced by the current drug\'s own allergy, intolerance or contraindication is not held by this rule.',
+        // Added 2026-11-21 (round 6 clinical review P2, owner ruling V3): at potassium 5.4 the alert said lisinopril "stays at the current dose" under "the same threshold that holds a new
+        // start" while option 1 stopped it and started sacubitril/valsartan. The switch is the same kind of step (it starts a RAAS-active drug and the label of each raises potassium
+        // risk), so it waits at the existing 5.2 threshold. No new number. Not a forced change: those are left as they were.
+        evaluate: (ctx, med) => med.drug_class === 'ARNI'
+            && ctx.patient.potassium > RAAS_START_K_CAUTION
+            && ctx.currentHasStayingAceiOrArb
+            && !(ctx.patient.current_regimen ?? []).some(r => r.med.name === med.name)
+            ? `Potassium ${ctx.patient.potassium.toFixed(1)} is above 5.2: the switch from the ACE inhibitor or ARB to sacubitril/valsartan waits until it is 5.2 or lower` : null,
+        details: (ctx) => [
+            `Potassium ${ctx.patient.potassium.toFixed(1)} mEq/L is above ${RAAS_START_K_CAUTION.toFixed(1)}, the level at which this tool holds a new start of an ACE inhibitor, ARB or ARNI and any increase of one (2026 ESC Supplementary Tables S4/S5: seek specialist advice above 5.2). The current ACE inhibitor or ARB stays at its dose. Recheck potassium, then switch once it is ${RAAS_START_K_CAUTION.toFixed(1)} or lower. A switch forced by an allergy, intolerance or contraindication of the current drug is not held by this rule.`,
+        ],
     },
 ];
 

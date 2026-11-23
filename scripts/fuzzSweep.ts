@@ -187,8 +187,8 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
         else if (/\bundefined\b|\bNaN\b|\[object |\bnull\b/.test(s)) add('BAD_TEXT', `${path}: ${s.slice(0, 160)}`);
     });
     if (regs.length === 0 && out.clinicalAlerts.length === 0 && (out.missingDataNotices ?? []).length === 0) add('SILENT_EMPTY', 'no options and no alert or notice');
-    // An empty page must NAME why: a hard stop, required data, the display floors, or the explicit "no option" alert (any unrelated alert used to satisfy this).
-    if (regs.length === 0 && !out.clinicalAlerts.some(x => /^(NO DISPLAY-SAFE|NO OPTION AVAILABLE|HEMODYNAMIC INSTABILITY|HYPERKALEMIC EMERGENCY|DATA REQUIRED|IMPLAUSIBLE VALUE|INPUT ERROR)/i.test(x)))
+    // An empty page must NAME why: a hard stop (low blood pressure, third-degree AV block without a pacemaker since 2026-11-19, potassium), required data, the display floors, or the explicit "no option" alert (any unrelated alert used to satisfy this).
+    if (regs.length === 0 && !out.clinicalAlerts.some(x => /^(NO DISPLAY-SAFE|NO OPTION AVAILABLE|NO REGIMEN CHANGE SHOWN|HEMODYNAMIC INSTABILITY|THIRD-DEGREE AV BLOCK|HYPERKALEMIC EMERGENCY|DATA REQUIRED|IMPLAUSIBLE VALUE|INPUT ERROR)/i.test(x)))
         add('EMPTY_WITHOUT_REASON', out.clinicalAlerts.map(x => x.slice(0, 40)).join(' | '));
     if (regs.length > 3) add('TOO_MANY_PICKS', String(regs.length));
     if (new Set(regs.map(r => sig(r.regimen))).size !== regs.length) add('DUPLICATE_PICKS', regs.map(r => sig(r.regimen)).join(' || '));
@@ -317,10 +317,12 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
         if (known(p.pulse) && pp.pulse < 45 && pp.pulse < p.pulse) add('PROJECTED_HR_LT_45', `${tag} projected ${pp.pulse} from ${p.pulse}`);
     });
 
-    // ranking: the list is in a defensible order under Balanced
-    if (p.ranking_mode !== 'foundational_first') {
+    // ranking: the list is in a defensible order (one ranking since 2026-11-20)
+    {
         for (let i = 1; i < regs.length; i++) {
             if (regs[i].shown_because || regs[i - 1].shown_because) continue;
+            // Ruling U4: "No medication change" leads when the best option is less than one point above it.
+            if (regs[i - 1].modification_set?.modifications.every(m => m.action === 'keep') && (regs[i].raw_score ?? 0) - (regs[i - 1].raw_score ?? 0) < 1) continue;
             const costFallback = p.care_priority === 'cost_first' && regs.every(r => r.warnings.some(w => w.startsWith('BUDGET EXCEEDED:')));
             if (costFallback) {
                 if (regs[i].cost < regs[i - 1].cost) add('FALLBACK_COST_ORDER', `opt${i} $${regs[i - 1].cost} before opt${i + 1} $${regs[i].cost}`);
@@ -340,13 +342,12 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
         if (o && sigs(o) !== sigs(out)) add('ORDER_DEPENDENT', `${sigs(out)}  ##reversed##  ${sigs(o)}`);
     }
 
+    // The retired ranking_mode field is ignored (U13): any value gives identical output.
     const flipMode = clonePatient(p); flipMode.ranking_mode = p.ranking_mode === 'foundational_first' ? 'balanced' : 'foundational_first';
     const om = safe(() => run(flipMode), 'THROW_RANKING_MODE');
     if (om) {
-        if (JSON.stringify(normalize(om.excludedMedications)) !== JSON.stringify(normalize(out.excludedMedications))) add('RANKING_MODE_CHANGES_EXCLUSIONS', '');
-        if (JSON.stringify(om.gdmtGaps) !== JSON.stringify(out.gdmtGaps)) add('RANKING_MODE_CHANGES_GAPS', '');
-        const scoreBySig = new Map(out.scoredRegimens.map(r => [sig(r.regimen), r.overall_score]));
-        for (const r of om.scoredRegimens) { const s = scoreBySig.get(sig(r.regimen)); if (s !== undefined && s !== r.overall_score) add('RANKING_MODE_CHANGES_SCORE', `${s} vs ${r.overall_score}`); }
+        const noMode = (k: string, v: unknown) => (k === 'ranking_mode' ? undefined : v);
+        if (JSON.stringify(om, noMode) !== JSON.stringify(out, noMode)) add('RANKING_MODE_FIELD_NOT_IGNORED', '');
     }
     const flipPriority = clonePatient(p); flipPriority.care_priority = p.care_priority === 'cost_first' ? 'outcomes_first' : 'cost_first';
     const op = safe(() => run(flipPriority), 'THROW_CARE_PRIORITY');

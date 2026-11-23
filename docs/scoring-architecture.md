@@ -1,6 +1,6 @@
 # How HeartFailurePath reaches a recommendation
 
-Written 2026-11-10; updated 2026-11-12 (rule E19, adversarial review changes, current counts; earlier: rule E16, ranking mode, alignment with the 2026 ESC guideline: see the sections near the end). The engine follows the same five-step shape as GlucosePATH: describe the
+Written 2026-11-10; updated 2026-11-12 (rules E16 and E19, the last rule then E22, adversarial review changes, current counts; earlier: rule E16, alignment with the 2026 ESC guideline: see the sections near the end). The engine follows the same five-step shape as GlucosePATH: describe the
 patient and the drugs, exclude what cannot be used, generate options, score them against clinical
 goals and patient values, and show the arithmetic.
 
@@ -58,13 +58,16 @@ exclusion carries that rule's id and name.
 | E17 | Pregnancy: a NEW beta-blocker start is limited to beta-1-selective agents (`facts.beta1_selective`); a pregnant patient on a non-selective one is offered a switch with the reason (2026 ESC Class I C) |
 | E18 | New RAAS inhibitor start above K+ 5.2 is staged: a NEW ACE inhibitor, ARB or ARNI (patient on none of them) is withheld with or without a K+ binder, recheck and start once K+ is 5.2 or lower (ESC S4/S5 caution threshold; staged start is engine policy). The RAAS GDMT gap states the reason and the monitoring plan adds "repeat potassium; start RAAS inhibitor if 5.2 or lower". A swap within the RAAS pool is not a new start. E13 still blocks a new start above 5.4 |
 | E19 | No new RAAS inhibitor or MRA while the entered baseline creatinine shows the reduce band (rise of 50% or more, or derived eGFR fall over 30%); a drug already in use is untouched here (engine policy following 2026 ESC S4/S5/S8) |
+| E20 | No new RAAS inhibitor, increase or switch at a measured eGFR below 20: an ACE inhibitor, ARB or ARNI the patient does not already take is not started (this includes a switch within the class) and one in use is not increased; a drug in use is kept, with the alert asking whether the fall is new (engine policy following 2026 ESC S4) |
+| E21 | Correct low potassium before diuretic intensification: a new potassium-lowering diuretic waits for correction of recorded hypokalemia; existing therapy is reviewed separately |
+| E22 | No switch to sacubitril/valsartan above K+ 5.2: a switch from an ACE inhibitor or ARB that stays on the regimen to sacubitril/valsartan is held at the level at which a new RAAS inhibitor start and an increase are held; a switch forced by the current drug's own allergy, intolerance or contraindication is not held (owner ruling 2026-11-21) |
 
 Explanations: a rule may carry an optional `details(ctx, med)` that returns specifics; the filter
 stores them in the additive `ExcludedMedication.why` (E13 lists each contraindication check that fired,
 via `contraindicationReasons`; E12 names the blank renal value; E14 gives the eGFR). They never affect
 the decision and are in `ADDITIVE_KEYS` for the golden master.
 
-E17 comes after E16 (pregnancy beta-blocker start, initiation only); E18 comes next (new RAAS start above K+ 5.2, initiation only; E13 still reports potassium above 5.4 first); E19 comes last (new RAAS inhibitor or MRA start while the baseline creatinine shows the reduce band; needs the optional baseline creatinine, with it blank nothing changes). E15's "already on an MRA" exemption now applies to a within-class switch only while that MRA may continue (potassium below 5.5). E16 (owner decision 2026-11-11) is otherwise the last rule, so a real contraindication (E13/E14) or the renal-gated start (E12) keeps its own label. It covers new starts only. Dose increases and switches to a RAAS inhibitor or MRA are dropped one level up, in `scoreCandidates` (`intensifiesRaasOrMra`), and a single `LABS REQUIRED: ...` clinical alert is raised once per run in the orchestrator. A drug the patient already takes is not affected. There is no freshness window (the form records no lab dates) and no new numeric threshold: "blank" is the existing not-entered value (0).
+E17 comes after E16 (pregnancy beta-blocker start, initiation only); E18 comes next (new RAAS start above K+ 5.2, initiation only; E13 still reports potassium above 5.4 first); E19 follows (new RAAS inhibitor or MRA start while the baseline creatinine shows the reduce band; needs the optional baseline creatinine, with it blank nothing changes). E15's "already on an MRA" exemption now applies to a within-class switch only while that MRA may continue (potassium below 5.5). E16 (owner decision 2026-11-11) comes after the real contraindications, so a real contraindication (E13/E14) or the renal-gated start (E12) keeps its own label. E20 (eGFR below 20), E21 (low potassium before diuretic intensification) and E22 (no switch to sacubitril/valsartan above potassium 5.2) follow in that order; E22 comes last. It covers new starts only. Dose increases and switches to a RAAS inhibitor or MRA are dropped one level up, in `scoreCandidates` (`intensifiesRaasOrMra`), and a single `LABS REQUIRED: ...` clinical alert is raised once per run in the orchestrator. A drug the patient already takes is not affected. There is no freshness window (the form records no lab dates) and no new numeric threshold: "blank" is the existing not-entered value (0).
 
 Order matters in two places: E12 must precede E13 (a blank-renal trip is labelled "renal data
 required", not "contraindicated"), and E10/E11 ignore a current MRA that is being forced off.
@@ -88,7 +91,7 @@ Supporting modules: `shrinkage.ts` (precision weighting: used value = B x publis
 
 Profiles are generated from `PROFILE_MULTIPLIERS` and renormalized: `outcomes_first` (cost and dosing burden x 0.5), `cost_first` (cost x 3), `simplicity_first` (dosing burden x 3). A profile changes only the weights. A missing budget removes the cost factor and the remaining weights are rescaled.
 
-Ranking order is displayed score, raw score, cost, fewer changes, regimen key. Therapy completeness is no longer a ranking step (`selection.ts`). The `foundational_first` ranking mode still orders by foundational coverage first.
+Ranking order is displayed score, raw score, cost, fewer changes, regimen key. Therapy completeness is no longer a ranking step (`selection.ts`). There is one ranking: the order above (`byScoreThenCost`). The earlier second ranking, "Prioritize foundational therapy", was removed on the owner's instruction (2026-11-20).
 
 The estimates are population averages from randomized trials, not predictions for this patient. There is no baseline risk, so only relative effects are shown. Still fixed safety rules, not measured models: eligibility rules, the warning penalty, the low blood pressure / slow heart rate / high potassium bands, the volume-depletion adjustment, the two-new-classes-per-visit limit, the congestion display rule. The `SPECIAL_FEATURES` line now carries 0 points for every feature; it remains only for the mandatory-swap +15 before normalisation (clamped to -8 to +12 after), the one remaining hand-set number in the special-feature sum, non-zero on 17 of 951 displayed options (`special-features-inventory.md`). Loop diuretics have no measured dose relation (credit 1 at any dose); congestion relief by dose is not modelled and the congestion display rule shows the best diuretic intensification. Unknown patient values never make an option look safer: a sex-specific harm with sex not recorded, and a risk multiplier whose condition cannot be evaluated and whose ratio is above 1, are charged as the higher-risk case (`unknown_assumptions`).
 
@@ -170,39 +173,20 @@ overall_score     = raw_score, clamped to 0-100 and rounded (then capped at 25 i
 
 The UI shows this ledger under "How this score was calculated" on each recommendation card.
 
-### Ranking mode
+### One ranking
 
-`Patient.ranking_mode` (`'balanced' | 'foundational_first'`; missing means balanced) is a physician-owner decision of
-2026-11-11, separate from `care_priority`: the weight profile changes the eight weights, the ranking mode changes only the
-**order** of regimens that already passed eligibility, the budget filter and the display floors. Scores, exclusions, alerts,
-gaps, adjuncts, notices, the budget filter and the display floors are identical in both modes (a verify invariant checks this for
-every scenario and tier). Balanced is exactly `byScoreThenCost` above.
+Options are ordered by `byScoreThenCost` (displayed score, raw score, cost, fewer changes, regimen key). There is no second ranking. Until 2026-11-20 a `Patient.ranking_mode` field (`balanced` or `foundational_first`) offered an
+alternative order that put regimens with more pillar slots on board first; the owner removed it, together with `SimulationOutput.ranking`, `ScoredRegimen.foundational_coverage` and the form control. `Patient.ranking_mode`
+remains in the type only as an ignored field, so older saved cases still load; a check shows it changes nothing. The weight profile (`care_priority`, "What matters most") is separate and still changes the weights.
 
-`foundational_first` applies to reduced EF (`classifyPhenotype` = HFrEF: LVEF below 50, improved EF, or a prior LVEF below 50; since 2026-11-11 this includes LVEF 41-49). For HFpEF it is
-a no-op and `SimulationOutput.ranking.reason_not_applied` says so. When it applies, regimens are ordered:
-
-1. Regimens that do not cause a severe projected-safety problem first. A regimen is set aside only if it trips
-   `PROJECTED_SBP_LT_85`, `PROJECTED_SBP_LT_90`, `PROJECTED_HR_LT_50` or `PROJECTED_K_GT_5_5` **and** moves that value the
-   harmful way from the entered baseline (SBP or HR lower, K+ higher). A hyperkalemic patient whose regimen does not raise
-   potassium is not demoted. The mild SBP < 95 tier does not demote; it still costs score points (step 3).
-2. Higher `foundational_coverage` (0-100): the share of INDICATED pillar slots (RAAS inhibitor, beta-blocker, MRA, SGLT2
-   inhibitor) on board (a pillar held today, for example at potassium 5.3, still counts in the denominator; the card says "n of m on board; k cannot be started today"), credit 1.0 at target, maximum, cap or single dose and a graded credit below (0.6 at or below the patient's labeled starting tier, rising linearly in total daily dose to 1.0 at target: 0.6 + 0.4 x progress from start to target; 0.6 where no numeric target can be derived; one function, `gdmtCompletenessFraction`). This is the same per-slot rule as
-   `gdmt_completeness` but over pillar slots only, so an adjunct (ivabradine, H/ISDN, GLP-1, iron) cannot outrank or tie a pillar.
-3. The Balanced order.
-
-`SimulationOutput.ranking` = `{ mode, applied, reason_not_applied?, balanced_lead_differs, balanced_lead_summary? }`;
-`ScoredRegimen.foundational_coverage` is explanation-only and never scored. Both are additive keys in the golden master.
-
-Effect (from `docs/medication-review-2026-11-10/changes-ranking-mode.txt`): the mode changes the lead regimen in 99 of 630
-HFrEF/HFimpEF runs (744 runs in all). In 2 runs the foundational lead has lower pillar coverage than the balanced lead, both
-because the balanced lead is set aside by step 1: `Jane Smith (Dry & Cold)` under commercial and Medicare pricing (balanced lead
-carvedilol 3.125 mg bid + dapagliflozin, 40% coverage; foundational lead lisinopril 2.5 mg, 15%).
+Two rules act on the order after it is computed, and neither changes a score: when leaving the regimen unchanged is a candidate and no plan eligible for display scores `TOO_CLOSE_TO_SEPARATE_POINTS` (one point) or more above it,
+"No medication change" is listed first (`selection.ts`, `chooseDisplayPicks`); and the congestion display rule adds a diuretic option for a congested patient (`ensureCongestionCoverage`).
 
 Graded dose credit (2026-11-11, final pass): the old flat 0.6 for any dose below target gave a titration step (carvedilol 3.125 to 6.25 mg) no credit, so it lost to unrelated changes. The credit is now progress from the starting dose to the target dose: 0.6 at or below the patient's labeled starting tier for that drug (`start_dose_for(patient)`, else the lowest tier), 1.0 at target, maximum, cap or single dose (also where start equals target), and linear in total daily dose in between: 0.6 + 0.4 x (dose - start) / (target - start) (`COMPLETENESS_SUBTARGET_CREDIT` and `COMPLETENESS_GRADED_CREDIT_SPAN`, `scoreModel.ts`; `doseProgressToTarget`). With no dose cap, a NEW start stays at the start anchor. As of rule set 2026-11-12.4, a known renal cap also bounds the attainable target on its declared daily/per-dose basis: a starting dose that is already the renal maximum earns full completeness credit (eplerenone 25 mg at eGFR 40). Unknown renal labs do not confer this credit. This is scoring policy, not an additional efficacy claim. Basis: higher doses give lower event rates (2026 ESC section 6.1.6: composite event rates were lower with target than lower doses); the linear shape is engine policy. The target is patient-specific (`facts.target_daily_dose`, else the lowest strength `is_target_dose_for` accepts, else the `is_target_dose` flag). The guideline-concordance domain still uses the at-target boolean. The distinct-pick rule also treats two regimens with the same drugs as distinct when each consists solely of up-titrations of different drugs (titrate carvedilol versus titrate spironolactone), so a one-step beta-blocker titration is not hidden behind another titration. Against the pre-graded-credit golden, 8 of 999 top picks differ (`changes-final-anchored-credit.txt`): 3 semaglutide 0.25 to 0.5 steps and 5 beta-blocker heart-rate one-step reductions. Earlier version of this change (0.5 + 0.5 x dose/target): `changes-final-graded-dose-credit.txt`.
 
 Known limit: a fully dosed pillar can still outrank a different pillar at its starting dose.
 
-Congestion coverage (2026-11-11, final pass; `ensureCongestionCoverage` in `selection.ts`, a named pure step after distinct-pick selection, no score change): ESC 2026 dosing the loop diuretic to volume status for congestion is Class I A, so when the patient meets the engine's congestion criterion (more than `CONGESTION_EXCESS_KG_ABOVE` = 1.0 kg above dry weight, `isCongestedAboveDryWeight`, the same predicate the loop start and the diuretic-resistance rule use) and no displayed option raises or starts a loop diuretic, the best-ranked display-safe candidate that does is shown, preferring one whose ONLY change is the loop step (plus forced removals or dose reductions) and otherwise the best-ranked with a loop step, and never one that itself causes a severe projected-safety adjustment (`isProjectedSafetyClean` against the entered baseline): it replaces the LAST option when three are shown, else is appended. Option 1 is never displaced, the display floors and the budget rule still apply (in the over-budget fallback the cheapest loop candidate is used), both ranking modes behave the same, and the added option carries the explanation-only `shown_because` line (card and copy-to-chart text). A loop candidate exists only if the engine's own hold rules allow an increase (volume depletion, loop at its maximum daily dose, hypotension). Effect: `changes-final-congestion-coverage.txt`.
+Congestion coverage (2026-11-11, final pass; `ensureCongestionCoverage` in `selection.ts`, a named pure step after distinct-pick selection, no score change): ESC 2026 dosing the loop diuretic to volume status for congestion is Class I A, so when the patient meets the engine's congestion criterion (more than `CONGESTION_EXCESS_KG_ABOVE` = 1.0 kg above dry weight, `isCongestedAboveDryWeight`, the same predicate the loop start and the diuretic-resistance rule use) and no displayed option raises or starts a loop diuretic, the best-ranked display-safe candidate that does is shown, preferring one whose ONLY change is the loop step (plus forced removals or dose reductions) and otherwise the best-ranked with a loop step, and never one that itself causes a severe projected-safety adjustment (`isProjectedSafetyClean` against the entered baseline): it replaces the LAST option when three are shown, else is appended. Option 1 is never displaced, the display floors and the budget rule still apply (in the over-budget fallback the cheapest loop candidate is used), the rule is part of the one ranking, and the added option carries the explanation-only `shown_because` line (card and copy-to-chart text). A loop candidate exists only if the engine's own hold rules allow an increase (volume depletion, loop at its maximum daily dose, hypotension). Effect: `changes-final-congestion-coverage.txt`.
 
 Known limit: a fully dosed pillar can still outrank a different pillar at its starting dose, and a starting dose that is a large share of target (eplerenone 25 mg of 50) earns more credit than one that is a small share (spironolactone 12.5 mg of 50).
 Over-budget fallback regimens are ordered the same way, and the UI marks them as not affordable at the stated budget.
@@ -232,11 +216,11 @@ Still in engine code: adjunct initiation criteria for ivabradine, digoxin and H/
 | Golden master | `npm run golden` | Every scenario under three insurance tiers (1032 runs, 344 scenarios) is byte-identical |
 | Scenarios | `npm run verify` | 344 scenarios (`SCENARIOS`) plus the structural checks (371 pass on 2026-11-12; the printed count is authoritative) |
 | Audits | `npm run audit:hundred`, `audit:mistakes`, `audit:red` | Broad, treatment-error and adversarial sweeps |
-| Randomized sweep | `npm run fuzz` | 5,000 seeded random patients (`scripts/fuzzSweep.ts`): safety invariants written independently of the engine, plus consistency checks (regimen listed in another order gives the same answer; ranking mode and care priority change ordering only; a lower-case allergy still excludes the drug). Part of `gate` and `ci` |
+| Randomized sweep | `npm run fuzz` | 5,000 seeded random patients (`scripts/fuzzSweep.ts`): safety invariants written independently of the engine, plus consistency checks (regimen listed in another order gives the same answer; the ignored ranking-mode field changes nothing and care priority changes ordering only; a lower-case allergy still excludes the drug). Part of `gate` and `ci` |
 | All of the above | `npm run gate` | |
 
 The structural invariants (the harness count is authoritative): every drug has a price; every score breakdown reconciles; weight profiles never change
-safety output; weight profiles move the top pick in the stated direction; the ranking mode changes order only; every weight
+safety output; weight profiles move the top pick in the stated direction; the ignored `ranking_mode` field changes nothing; every weight
 profile covers every domain and sums to 100%; titration never skips the next step; every RAAS new start is at or below its
 starting tier; no displayed regimen exceeds a declared maximum total daily dose; eligibility rule ids are unique and ascending
 and every exclusion carries one; no drug name appears as a literal in engine code; no engine module imports the facade;
@@ -305,9 +289,9 @@ UI: the Re-run button obeys form validation; Copy and Print are disabled while r
 
 Full table with enforcement: `docs/adversarial-review-2026-11-12.md`. Changes that touch this document's tables:
 
-- Scoring: the special-feature divisor is never below the number of indicated foundational therapies; warnings priced by a named adjustment (`WARNINGS_PRICED_BY_NAMED_ADJUSTMENT`) are shown but charged once; `foundational_coverage` is over indicated pillars.
+- Scoring: the special-feature divisor is never below the number of indicated foundational therapies; warnings priced by a named adjustment (`WARNINGS_PRICED_BY_NAMED_ADJUSTMENT`) are shown but charged once.
 - Potassium: the renal multiplier applies to rises only (`kPair`); RAAS increases are held above 5.2 like new starts; a binder in use is not reduced while measured potassium is 5.0 or higher; a rescue binder or iron over the per-visit limit or budget is dropped from the option instead of discarding it.
-- Ranking ties: score, coverage, unrounded score, cost, fewer changes, then alphabetical.
+- Ranking ties: see "One ranking" above (displayed score, raw score, cost, fewer changes, regimen key).
 - Doses: one target threshold per drug (losartan 150 mg); label versus guideline differences are `facts.source_differences`; `side_effects` rates are display-only.
 - Inputs: one `INTOLERANCE_TABLE`; Chronic Kidney Disease and Obesity options removed; `hasAtrialFibrillationHistory`; `EXTERNAL_POTASSIUM_RAISERS`; patient cost capped at the cash price (`npm run audit:pricing`); fixtures reconciled with the form's derived fields.
 - Output: cost label "Well within budget / Near the budget limit / Over budget"; copied notes carry run date, `RULESET_VERSION` (2026-11-12.2) and inputs.

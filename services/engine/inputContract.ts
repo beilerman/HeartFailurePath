@@ -38,6 +38,7 @@ export function validateEngineInput(patient: Patient): { errors: string[]; regim
         const value = patient[field];
         if (value !== undefined && (typeof value !== 'number' || !Number.isFinite(value) || value < 0)) fail(`${field} must be a valid number or left blank.`);
     }
+    if (patient.scope_conditions !== undefined && (!(patient.scope_conditions instanceof Set) || [...patient.scope_conditions].some(v => typeof v !== 'string'))) fail('scope_conditions must be a set of text entries or left unanswered.');
     for (const field of ['comorbidities', 'allergies', 'external_medications'] as const) {
         const value = patient[field];
         if (field === 'external_medications' && value === undefined) continue;

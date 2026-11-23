@@ -1,3 +1,4 @@
+import { exposureAfterDoseEdit, useStatusWords } from '../guided/confirmUse';
 import React, { useState, useMemo, useEffect } from 'react';
 import { PillIcon } from '../icons';
 import { Label, Select } from './Common';
@@ -50,7 +51,8 @@ export const MedicationManager: React.FC<MedicationManagerProps> = ({ patientDat
             dose: doseObj,
             selected_frequency: selectedFreq,
             ...(editingIndex !== null && patientData.current_regimen[editingIndex].exposure
-                ? { exposure: { ...patientData.current_regimen[editingIndex].exposure, ...(String(patientData.current_regimen[editingIndex].dose.strength) !== selectedDoseStrength || patientData.current_regimen[editingIndex].selected_frequency !== selectedFreq ? { dose_interval_reviewed: false, dose_changed_on: undefined, adherence: undefined } : {}) } } : {})
+                ? { exposure: String(patientData.current_regimen[editingIndex].dose.strength) !== selectedDoseStrength || patientData.current_regimen[editingIndex].selected_frequency !== selectedFreq
+                    ? exposureAfterDoseEdit(patientData.current_regimen[editingIndex].exposure) : patientData.current_regimen[editingIndex].exposure } : {})
         };
 
         setPatientData(prev => ({
@@ -91,11 +93,11 @@ export const MedicationManager: React.FC<MedicationManagerProps> = ({ patientDat
                             <div className="text-sm font-bold text-slate-800">{item.med.name}</div>
                             <div className="text-sm text-slate-600">{doseLabel(item)}</div>
                             <details id={`medication_exposure_${idx}`} tabIndex={-1} className="mt-2 text-sm">
-                                <summary className="cursor-pointer text-indigo-700">Use and course history: {item.exposure?.status ?? 'not assessed'}</summary>
+                                <summary className="cursor-pointer text-indigo-700">Use and course history: {useStatusWords(item.exposure)}</summary>
                                 <div className="grid gap-2 mt-2">
                                     <label htmlFor={`exposure-status-${idx}`}>Current use</label>
                                     <select id={`exposure-status-${idx}`} className="border rounded p-2" value={item.exposure?.status ?? ''} onChange={e => updateExposure(idx, { status: (e.target.value || undefined) as NonNullable<RegimenMed['exposure']>['status'], restart_or_repeat_reviewed: false, dose_interval_reviewed: false, adherence: undefined })}>
-                                        <option value="">Not assessed</option><option value="active">Taking as recorded</option><option value="unknown">Current use uncertain</option><option value="held">Held — restart needs review</option>
+                                        <option value="">Not assessed</option><option value="active">Taking as recorded</option><option value="unknown">Current use uncertain</option><option value="held">Held: restart needs review</option>
                                         {(item.med.facts?.single_course_dose || item.med.facts?.short_course_addon) && <option value="completed">Course completed</option>}
                                     </select>
                                     {['held','completed'].includes(item.exposure?.status ?? '') && <label className="flex gap-2 items-start"><input type="checkbox" checked={item.exposure?.restart_or_repeat_reviewed === true} onChange={e => updateExposure(idx, { restart_or_repeat_reviewed: e.target.checked })} /><span>Reason and interval reviewed; a new start or course may be considered. Other dose and safety prerequisites still apply.</span></label>}
@@ -162,7 +164,7 @@ export const MedicationManager: React.FC<MedicationManagerProps> = ({ patientDat
                             <option value="">Dose...</option>
                             {availableDoses.map((d, i) => (
                                 <option key={i} value={String(d.strength)}>
-                                    {d.strength} {d.unit} — {d.formulation}
+                                    {d.strength} {d.unit}: {d.formulation}
                                 </option>
                             ))}
                         </Select>

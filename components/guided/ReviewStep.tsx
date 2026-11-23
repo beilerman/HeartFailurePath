@@ -3,6 +3,7 @@ import type { Patient } from '../../types';
 import { STEPS, stepForField } from './steps';
 import { enteredFacts } from './patientFacts';
 import { blankCoreItems } from './reviewModel';
+import { isUseConfirmed, isUseNotAssessed, useStatusWords, type ConfirmResult } from './confirmUse';
 
 interface ReviewStepProps {
     patient: Patient;
@@ -16,9 +17,19 @@ interface ReviewStepProps {
     pricesReady: boolean;
     priceLoadError?: string | null;
     onRetryPrices?: () => void;
+    /** Marks every entered drug as taking as recorded with consistent use (one control for the whole list). */
+    onConfirmAllUse?: () => void;
+    /** What the last use of the control did (shown while it is still true of the regimen). */
+    confirmNote?: Pick<ConfirmResult, 'confirmed' | 'leftAlone'>;
 }
 
-export const ReviewStep: React.FC<ReviewStepProps> = ({ patient, problems, hints, hasErrors, onGoToField, onRun, pricesReady, priceLoadError, onRetryPrices }) => {
+export const ReviewStep: React.FC<ReviewStepProps> = ({ patient, problems, hints, hasErrors, onGoToField, onRun, pricesReady, priceLoadError, onRetryPrices, onConfirmAllUse, confirmNote }) => {
+    const unconfirmed = patient.current_regimen.filter(r => !isUseConfirmed(r));
+    const notAssessed = unconfirmed.filter(isUseNotAssessed);
+    const recordedOther = unconfirmed.filter(r => !isUseNotAssessed(r));
+    // The result of the last click, kept only while it is still true: each drug it confirmed is still confirmed, each it left alone is still unconfirmed.
+    const stillConfirmed = (confirmNote?.confirmed ?? []).filter(n => patient.current_regimen.some(r => r.med.name === n && isUseConfirmed(r)));
+    const stillLeft = (confirmNote?.leftAlone ?? []).filter(x => patient.current_regimen.some(r => r.med.name === x.name && !isUseConfirmed(r)));
     const missing = blankCoreItems(patient, hints);
     const entered = enteredFacts(patient);
     return (
@@ -49,7 +60,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ patient, problems, hints
                             <ul className="mt-3 space-y-2 text-sm text-slate-800">
                                 {missing.map(m => (
                                     <li key={m.label}>
-                                        <span className="font-semibold">{m.label}</span><span className="text-slate-600"> — Not entered</span>
+                                        <span className="font-semibold">{m.label}</span><span className="text-slate-600">: Not entered</span>
                                         {m.hint && <span className="mt-0.5 block text-xs text-slate-700">{m.hint}</span>}
                                     </li>
                                 ))}
@@ -57,6 +68,24 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ patient, problems, hints
                         </>}
                 </div>
             </div>
+
+            {confirmNote && (stillConfirmed.length > 0 || stillLeft.length > 0) && (
+                <div role="status" className="rounded-xl border-2 border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-950" data-testid="confirm-result">
+                    <p className="font-bold">{stillConfirmed.length === 0 ? 'No drug was confirmed' : `${stillConfirmed.length} ${stillConfirmed.length === 1 ? 'drug' : 'drugs'} confirmed as taking as recorded: ${stillConfirmed.join(', ')}`}.</p>
+                    {stillLeft.length > 0 && <p className="mt-1">Left as you recorded them, not confirmed: {stillLeft.map(x => `${x.name} (${x.recorded})`).join('; ')}.</p>}
+                </div>
+            )}
+
+            {unconfirmed.length > 0 && (
+                <div role="status" className="rounded-xl border-2 border-amber-300 bg-amber-50 p-5" data-testid="unconfirmed-use">
+                    <h3 className="text-lg font-bold text-amber-950">Current use is not confirmed ({unconfirmed.length} {unconfirmed.length === 1 ? 'drug' : 'drugs'})</h3>
+                    <p className="mt-1 text-sm text-amber-950">The use and course history is not confirmed for {unconfirmed.map(r => r.med.name).join(', ')}. Their doses will not be changed until they are confirmed: no increase or substitution is offered for them, although a reduction or stop that a safety rule requires is still shown.</p>
+                    <p className="mt-1 text-sm text-amber-950">Confirm each drug under Medications (&ldquo;Use and course history&rdquo;){notAssessed.length > 0 ? ', or confirm the ones not yet assessed all at once if they are taken as recorded' : ''}.</p>
+                    {onConfirmAllUse && notAssessed.length > 0 && <button type="button" onClick={onConfirmAllUse} className="mt-3 min-h-[44px] rounded-lg border-2 border-amber-700 bg-white px-4 py-2 text-sm font-bold text-amber-950 hover:bg-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600">Confirm all as taking as recorded ({notAssessed.length} not yet assessed)</button>}
+                    <p className="mt-1 text-xs text-amber-900">This changes only drugs whose use has not been assessed: {notAssessed.length > 0 ? notAssessed.map(r => r.med.name).join(', ') : 'none now'}. It sets current use to &ldquo;Taking as recorded&rdquo; and consistency of use to &ldquo;Consistent use confirmed&rdquo;. Check that it matches what the patient actually takes.</p>
+                    {recordedOther.length > 0 && <p className="mt-1 text-xs text-amber-900">It leaves alone what you recorded for {recordedOther.map(r => `${r.med.name} (${useStatusWords(r.exposure)}${r.exposure?.adherence ? `; ${r.exposure.adherence === 'partial' ? 'partial or interrupted use' : r.exposure.adherence === 'unknown' ? 'consistency unknown' : 'consistent use confirmed'}` : ''})`).join(', ')}.</p>}
+                </div>
+            )}
 
             {problems.length > 0 && (
                 <div role="status" className="rounded-xl border border-red-200 bg-red-50 p-5">

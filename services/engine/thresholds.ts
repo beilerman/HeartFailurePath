@@ -120,3 +120,41 @@ export const POTASSIUM_RAISER_REVIEW_K = 5.0;
  * MRA_START_K_CEILING). Below it the binder may be stepped down as usual.
  */
 export const BINDER_HOLD_REDUCTION_K = 5.0;
+
+/**
+ * Pregnancy status is required (and a missing status withholds pregnancy-restricted starts) for a female patient younger than this age; at this age or older it is
+ * "not applicable". POLICY NUMBER. Basis: regulatory labeling defines a woman of childbearing potential as premenopausal (FDA and EMA pregnancy-labeling and trial
+ * guidance); the usual age at natural menopause is 51 and ovarian function is generally treated as ended by 55, so 56 is the first age at which the tool stops asking.
+ */
+export const CHILDBEARING_POTENTIAL_AGE_BELOW = 56;
+
+/**
+ * Two options whose weighted scores differ by less than this many points are "too close to separate" (one point on the 0 to 100 score). One constant for the explanation
+ * ("too close to separate"), for the rule that lists "No medication change" first when the best change is not measurably better (U4), and for the checks. POLICY NUMBER: the
+ * score is a weighted sum of trial averages with no confidence interval of its own, so a difference under one point is below what the inputs can resolve.
+ */
+export const TOO_CLOSE_TO_SEPARATE_POINTS = 1;
+
+/**
+ * The lowest entry limits among the trials behind the tool's figures (ruling U8c). Wording only: no score, option or gate reads them.
+ * eGFR 20: EMPEROR-Reduced (NCT03057977) and EMPEROR-Preserved (NCT03057951) excluded eGFR below 20 or dialysis (DAPA-HF 30, DELIVER 25, PARADIGM-HF 30). Registered eligibility text read 2026-11-20.
+ * Systolic pressure 95: DAPA-HF (NCT03036124) and DELIVER (NCT03619213) excluded systolic pressure below 95 mmHg (PARADIGM-HF, EMPEROR-Reduced, EMPEROR-Preserved and VICTORIA: below 100).
+ */
+export const TRIAL_EGFR_ENTRY_LOWEST = 20;
+export const TRIAL_SBP_ENTRY_LOWEST = 95;
+
+/**
+ * The lenient resting heart rate target in atrial fibrillation, beats a minute (ruling W7c, alert wording only: no option, score or gate reads it). Source: RACE II (Van Gelder et al., NEJM 2010;362:1363):
+ * lenient rate control (resting rate under 110) was not inferior to strict control (under 80); the 2022 AHA/ACC/HFSA and 2026 ESC guidelines accept it. A recorded resting rate above it in atrial
+ * fibrillation is stated in the alert, with the sentence that rate control needs assessment. Used with a recorded rate only.
+ */
+export const AF_RESTING_RATE_LENIENT_TARGET = 110;
+
+/** The tool does not assess breastfeeding; one sentence, shown in the scope statement and in the pregnancy-status alert. */
+export const BREASTFEEDING_NOT_ASSESSED = 'This tool does not assess breastfeeding; check each drug against lactation advice.';
+
+/**
+ * The per-visit limit, in one set of words used on the form, in the FAQ, in the draft note and in the documentation (S11): each new drug class (including IV iron) and each
+ * switch from an ACE inhibitor or ARB to sacubitril/valsartan counts toward it; dose changes and other switches do not. A switch the safety rules require does not count.
+ */
+export const VISIT_LIMIT_WORDS = 'Each new drug class (including IV iron) and each switch from an ACE inhibitor or ARB to sacubitril/valsartan counts toward the per-visit limit; dose changes and other switches do not.';

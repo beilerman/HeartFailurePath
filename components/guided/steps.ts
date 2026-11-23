@@ -5,7 +5,7 @@ export const STEPS: ReadonlyArray<{ id: string; label: string; sections: readonl
     { id: 'patient', label: 'Patient and symptoms', sections: ['patient-demographics', 'patient-symptoms'] },
     { id: 'vitals', label: 'Vitals and exam', sections: ['patient-exam'] },
     { id: 'labs', label: 'Labs and echo', sections: ['patient-diagnostics'] },
-    { id: 'history', label: 'History and allergies', sections: ['patient-history'] },
+    { id: 'history', label: 'History and allergies', sections: ['patient-history', 'patient-scope'] },
     { id: 'medications', label: 'Current medications', sections: ['patient-medications'] },
     { id: 'preferences', label: 'Preferences', sections: ['patient-social'] },
     { id: 'review', label: 'Review', sections: [] },
@@ -17,7 +17,7 @@ const FIELD_STEP: Record<string, number> = {
     sbp: 1, dbp: 1, pulse: 1, oxygen_saturation: 1, rhythm: 1, dry_weight_kg: 1, current_weight_kg: 1,
     lvef: 2, previous_lvef: 2, nt_pro_bnp: 2, lvedd: 2, lavi: 2, potassium: 2, creatinine: 2, baseline_creatinine: 2, bun: 2,
     ferritin: 2, tsat: 2, hemoglobin: 2, peak_flow_lpm: 2,
-    'patient-history': 3,
+    'patient-history': 3, 'patient-scope': 3,
     'add-medication-drug': 4,
     insurance_tier: 5, max_affordable_cost: 5,
 };

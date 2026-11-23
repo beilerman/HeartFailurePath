@@ -9,9 +9,11 @@
  *     se_used = sqrt(B) x se             (the posterior standard error)
  *
  * A precisely measured row barely moves (B near 1); a row from tiny trials is pulled toward no effect (B small). tau2 is the between-row variance of true effects,
- * COMPUTED from the table, never typed, with the DerSimonian-Laird moment estimator centred on no effect: over rows whose basis is `trial` or `meta_analysis` and that have an
- * interval, after counting an identical (value, interval) copied across bands or drugs once,
- *     w_i = 1 / se_i^2,  Q = sum(w_i x_i^2),  C = sum(w_i) - sum(w_i^2) / sum(w_i),  tau2 = max(0, (Q - k) / C)        (k = number of distinct rows)
+ * COMPUTED from the table, never typed, with a moment estimator centred on no effect (the DerSimonian-Laird form with the divisor that suits a zero centre): over rows whose basis is `trial` or `meta_analysis` and that have an
+ * interval, after counting one row copied across bands or drugs once (same value, interval and source, in any band, drug or drug class; two different trials with identical numbers are two rows),
+ *     w_i = 1 / se_i^2,  Q = sum(w_i x_i^2),  tau2 = max(0, (Q - k) / sum(w_i))        (k = number of distinct rows)
+ * The outcome table gets one prior for death and a separate one for hospitalization (change C3, controller recommendation 2026-11-18, approved by the owner); the symptom table has its own.
+ * The divisor is the sum of the weights, because Q is centred on zero (E13, controller ruling 2026-11-19, round 1 review; it was the mean-centred quantity before).
  * WHY WEIGHTED: a row's influence on the prior should follow its precision. The earlier unweighted form (mean(x^2) - mean(se^2)) let two very imprecise rows (the loop-diuretic
  * figures from 202 and 169 patients) set the prior for all 38 rows. No row is excluded. A row with a value but no interval uses the MEDIAN se of the rows that have one and is flagged
  * `interval_imputed`. A row with no effect (value 0) stays 0. Zero width (se 0) gives B = 1: unchanged.
@@ -24,10 +26,10 @@ export function tau2From(items: { x: number; se: number }[]): number {
     const rows = items.filter(i => i.se > 0);          // a zero-width row has infinite precision and carries no between-row information
     if (rows.length === 0) return 0;
     const w = rows.map(i => 1 / (i.se * i.se));
-    const sw = w.reduce((a, b) => a + b, 0), sw2 = w.reduce((a, b) => a + b * b, 0);
+    const sw = w.reduce((a, b) => a + b, 0);
     const Q = rows.reduce((a, i, j) => a + w[j] * i.x * i.x, 0);
-    const C = sw - sw2 / sw;
-    return C > 0 ? Math.max(0, (Q - rows.length) / C) : 0;
+    // The estimator is centred on NO EFFECT (Q = sum(w x^2)), so the divisor is the sum of the weights (controller ruling 2026-11-19, round 1 review, E13). The mean-centred quantity sum(w) - sum(w^2)/sum(w) belongs to a Q centred on the weighted mean.
+    return sw > 0 ? Math.max(0, (Q - rows.length) / sw) : 0;
 }
 
 export function median(xs: number[]): number {

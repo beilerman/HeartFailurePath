@@ -1,0 +1,100 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1026 / 1032
+  (b) displayed pick set same:   1026 / 1032
+  (c) pick order identical:      1026 / 1032
+  (d) eligibility + alerts identical: NO (159 differences)
+  (e) per-regimen warnings identical: NO (478 regimens)
+  top-pick overall_score  old: min 0 / median 66 / max 86
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 6 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+
+Top pick changed in 6 runs:
+  ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged :: cash
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 60, raw 60.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd [overall 58, raw 57.91]
+  ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged :: commercial
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 60, raw 60.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd [overall 58, raw 57.91]
+  ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged :: medicare
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 60, raw 60.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd [overall 58, raw 57.91]
+  ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept :: cash
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 60, raw 60.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd [overall 58, raw 57.91]
+  ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept :: commercial
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 60, raw 60.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd [overall 58, raw 57.91]
+  ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept :: medicare
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 60, raw 60.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd [overall 58, raw 57.91]
+
+BUGS (eligibility/alerts must not change):
+  John Doe (Wet & Warm) :: cash: clinicalAlerts differ
+  John Doe (Wet & Warm) :: commercial: clinicalAlerts differ
+  John Doe (Wet & Warm) :: medicare: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: cash: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: commercial: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: medicare: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: cash: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: commercial: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: medicare: clinicalAlerts differ
+  African American (A-HeFT Indication) :: cash: clinicalAlerts differ
+  African American (A-HeFT Indication) :: commercial: clinicalAlerts differ
+  African American (A-HeFT Indication) :: medicare: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: cash: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: commercial: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: medicare: clinicalAlerts differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: cash: clinicalAlerts differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: commercial: clinicalAlerts differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: medicare: clinicalAlerts differ
+  Critical Renal (eGFR 25, K+ 5.2) :: cash: clinicalAlerts differ
+  Critical Renal (eGFR 25, K+ 5.2) :: commercial: clinicalAlerts differ
+  Critical Renal (eGFR 25, K+ 5.2) :: medicare: clinicalAlerts differ
+
+Warning differences:
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 20mg qd + Spironolactone 12.5mg qd
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 20mg qd
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 30mg qd
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 20mg qd + Spironolactone 12.5mg qd
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 20mg qd
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 30mg qd
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 20mg qd + Spironolactone 12.5mg qd
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 20mg qd
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 30mg qd
+  Ideal Candidate (No Constraints) :: cash: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Ideal Candidate (No Constraints) :: cash: Captopril 6.25mg tid + Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd
+  Ideal Candidate (No Constraints) :: cash: Carvedilol 3.125mg bid + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Ideal Candidate (No Constraints) :: commercial: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Ideal Candidate (No Constraints) :: commercial: Captopril 6.25mg tid + Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd
+  Ideal Candidate (No Constraints) :: commercial: Carvedilol 3.125mg bid + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Ideal Candidate (No Constraints) :: medicare: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Ideal Candidate (No Constraints) :: medicare: Captopril 6.25mg tid + Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd
+  Ideal Candidate (No Constraints) :: medicare: Carvedilol 3.125mg bid + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Iron-Deficient HFrEF :: cash: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: cash: Captopril 6.25mg tid + Carvedilol 3.125mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: commercial: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: commercial: Captopril 6.25mg tid + Carvedilol 3.125mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: medicare: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd
+  Iron-Deficient HFrEF :: medicare: Captopril 6.25mg tid + Carvedilol 3.125mg bid + Spironolactone 25mg qd
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: cash: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: cash: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: commercial: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: commercial: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: medicare: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: medicare: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd

@@ -1,7 +1,7 @@
+import { useStatusWords } from './guided/confirmUse';
 import type { Patient } from '../types';
 import { valueUnknown } from '../services/clinicalPredicates';
 import { WEIGHT_PROFILE_META } from '../services/engine/scoreModel';
-import { RANKING_MODE_META } from './rankingModeMeta';
 import { RULESET_VERSION } from '../services/rulesetVersion';
 import { doseLabel } from './clinicalPresentation';
 
@@ -22,7 +22,7 @@ const list = (items: Iterable<string> | undefined): string => {
 };
 const pad = (n: number) => String(n).padStart(2, '0');
 
-function formatRunTime(iso: string): string {
+export function formatRunTime(iso: string): string {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return NOT_ENTERED;
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -35,11 +35,10 @@ export function buildChartHeader(snap: RunSnapshot): string {
     const hr = `${num(p.pulse, ' bpm')}, rhythm ${p.rhythm || NOT_ENTERED}`;
     const wv = p.volume_status;
     const weight = `current ${num(wv?.current_weight_kg, ' kg')}, dry ${num(wv?.dry_weight_kg, ' kg')}`;
-    const regimen = (p.current_regimen ?? []).map(r => `${r.med.name} ${doseLabel(r)} [use: ${r.exposure?.status ?? "not assessed"}; consistency: ${r.exposure?.adherence ?? "not assessed"}; started: ${r.exposure?.started_on ?? "unknown"}; dose since: ${r.exposure?.dose_changed_on ?? "unknown"}; last dose: ${r.exposure?.last_dose_on ?? "unknown"}; dose interval reviewed: ${r.exposure?.dose_interval_reviewed === true ? "yes" : "no"}; restart/course reviewed: ${r.exposure?.restart_or_repeat_reviewed === true ? "yes" : "no"}]`);
+    const regimen = (p.current_regimen ?? []).map(r => `${r.med.name} ${doseLabel(r)} [use: ${useStatusWords(r.exposure)}; consistency: ${r.exposure?.adherence === "consistent" ? "consistent use confirmed" : r.exposure?.adherence === "partial" ? "partial or interrupted use" : r.exposure?.adherence === "unknown" ? "unknown" : "not assessed"}; started: ${r.exposure?.started_on ?? "unknown"}; dose since: ${r.exposure?.dose_changed_on ?? "unknown"}; last dose: ${r.exposure?.last_dose_on ?? "unknown"}; dose interval reviewed: ${r.exposure?.dose_interval_reviewed === true ? "yes" : "no"}; restart/course reviewed: ${r.exposure?.restart_or_repeat_reviewed === true ? "yes" : "no"}]`);
     const intol = (p.discontinued_meds ?? []).map(d => `${d.name} (${d.reason}${d.reason_detail ? `: ${d.reason_detail}` : ''})`);
     const budget = p.max_affordable_cost === undefined || Number.isNaN(p.max_affordable_cost) ? NOT_ENTERED : `$${p.max_affordable_cost}/month`;
     const priority = WEIGHT_PROFILE_META[p.care_priority ?? 'default']?.label ?? NOT_ENTERED;
-    const mode = RANKING_MODE_META[p.ranking_mode ?? 'balanced']?.label ?? NOT_ENTERED;
     const preg = p.sex === 'Female' ? [`  Pregnant: ${p.is_pregnant === undefined ? NOT_ENTERED : p.is_pregnant ? 'yes' : 'no'}`] : [];
     const maxNew = num(p.max_new_classes_per_visit, '', true);
     const status = (v: string | undefined) => (v && v !== 'unknown' ? v : NOT_ENTERED);
@@ -60,11 +59,12 @@ export function buildChartHeader(snap: RunSnapshot): string {
         `  Weight: ${weight}`,
         `  Examination findings recorded: ${list(wv?.exam_findings)}`,
         `  Comorbidities: ${list(p.comorbidities)}`,
+        `  Conditions the tool does not cover: ${p.scope_conditions === undefined ? 'question not answered' : p.scope_conditions.size === 0 ? 'none of these' : list(p.scope_conditions)}`,
         `  Allergies: ${list(p.allergies)}`,
         `  Documented intolerances: ${intol.length > 0 ? intol.join('; ') : 'none recorded'}`,
         `  Other current medications: ${list(p.external_medications)}`,
         `  Current regimen entered: ${regimen.length > 0 ? regimen.join('; ') : 'none recorded'}`,
-        `  Pricing profile: ${TIER_LABEL[p.insurance_tier] ?? NOT_ENTERED}; budget: ${budget}; max new drug classes per visit: ${maxNew}`,
-        `  Ranking approach: ${mode}; what matters most: ${priority}`,
+        `  Pricing profile: ${TIER_LABEL[p.insurance_tier] ?? NOT_ENTERED}; budget: ${budget}; max new drug classes per visit: ${maxNew} (a switch from an ACE inhibitor or ARB to sacubitril/valsartan also counts)`,
+        `  What matters most: ${priority}`,
     ].join('\n');
 }

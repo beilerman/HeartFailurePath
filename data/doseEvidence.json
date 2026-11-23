@@ -60,7 +60,8 @@
    0.205853,
    0.565138
   ],
-  "basis": "measured for ACE inhibitors and ARBs (two randomized dose comparisons); extrapolated to every other class"
+  "basis": "estimated from two randomized dose comparisons (ATLAS for lisinopril, HEAAL for losartan) with large uncertainty; carried to every other class",
+  "audit_note": "Controller ruling 2026-11-19 (round 1 review, E11): the value 0.364 recomputes (0.36425). It uses proxy anchors for the full-credit dose (16.79 and 110.43 mg) while the trials' own high arms were 33.2 mg (ATLAS) and 129 mg (HEAAL); re-solved with those the four credits are 0.6, 0.269, 0.394, 0.365, mean 0.407 (about 41% rather than 36%). The hazard-ratio inputs mix Flather Peto odds ratios with ATLAS Cox hazard ratios. The stated range [0.206, 0.565] is the spread of four points, not an interval: the HEAAL death credit runs from -0.364 to 1.307 across the interval of its hazard ratio (0.84-1.04) and the HEAAL hospitalization credit from 0.00 to 0.93, so the credit from HEAAL alone is not bounded. \"Measured for ACE inhibitors and ARBs\" overstated it. The value is unchanged; it is an engine estimate."
  },
  "anchors": [
   {
@@ -104,10 +105,11 @@
    "verification": "confirmed_single_secondary_plus_arithmetic",
    "quote": "SOLVD-T (Kondo Table 1): 'Enalapril (1285) ... 20 mg | 16.6 mg (E) 18.0 mg (P)'; SOLVD-P: '16.9 mg (E) e 18.2 mg (P) e'",
    "arithmetic": "D2: fraction 0.839 = (1285 x 16.6/20 + 2111 x 16.9/20) / (1285 + 2111) = (1066.6 + 1783.8)/3396 (SOLVD-T and SOLVD-P enalapril arms; protocol target 20 mg/day); x lowest flagged formulary target 20 mg/day = 16.79 mg/day.",
-   "notes": "Lisinopril target is flagged at 20, 30 and 40 mg; the lowest (20) is the denominator as the engine's first-flagged target. No placebo-controlled lisinopril trial exists. ATLAS used 32.5-35 mg as the high arm.",
+   "notes": "Lisinopril target is flagged at 20, 30 and 40 mg; the lowest (20) is the denominator as the engine's first-flagged target. No placebo-controlled lisinopril trial exists. ATLAS used 32.5-35 mg as the high arm. Controller ruling 2026-11-19 (round 1 review, E11): SOLVD-P (2,111 of the 3,396 patients, 62% of the weighting) enrolled asymptomatic left ventricular dysfunction without overt heart failure, and its footnote reads \"Doses/proportions shown were obtained from prescription at the last visit. By the end of the trial, 24% had discontinued enalapril.\" The earlier note disclosed the discontinuation for SOLVD-T only.",
    "frequency": "qd",
    "anchor_per_dose_mg": 16.79,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": "Enalapril arms of SOLVD-T and SOLVD-P, among patients still on drug at the last visit (not all randomized patients)"
   },
   {
    "id": "acei-enalapril",
@@ -127,10 +129,11 @@
    "verification": "confirmed_single_secondary_plus_arithmetic",
    "quote": "SOLVD-T (Kondo Table 1): 'Enalapril (1285) ... 20 mg | 16.6 mg (E) 18.0 mg (P)'; SOLVD-P: '16.9 mg (E) e 18.2 mg (P) e'",
    "arithmetic": "D1: patient-weighted mean of enalapril-arm means = (1285 x 16.6 + 2111 x 16.9)/3396 = 16.79 mg/day; fraction 16.79/20 = 0.839.",
-   "notes": "DENOMINATOR CAVEAT: 16.6 and 16.9 are doses among patients still on drug at the last visit. In SOLVD-T 32.5% of the enalapril group had discontinued; 16.6 x (1 - 0.325) = 11.2 mg, the all-randomized mean the same footnote reports, and Lam 2018 says 'final mean daily dose of either study drug was 11 mg'. The trial RR is an intention-to-treat estimate, so it reflects the diluted 11.2 mg average exposure; the on-drug dose is 16.6. Judgement: anchor kept at the on-drug dose (a patient modelled as taking the drug), flagged for the controller. SAVE, AIRE and TRACE patients (73% of the pooled 12,763) have no verified dose.",
+   "notes": "DENOMINATOR CAVEAT: 16.6 and 16.9 are doses among patients still on drug at the last visit. In SOLVD-T 32.5% of the enalapril group had discontinued; 16.6 x (1 - 0.325) = 11.2 mg, the all-randomized mean the same footnote reports, and Lam 2018 says 'final mean daily dose of either study drug was 11 mg'. The trial RR is an intention-to-treat estimate, so it reflects the diluted 11.2 mg average exposure; the on-drug dose is 16.6. Judgement: anchor kept at the on-drug dose (a patient modelled as taking the drug), flagged for the controller. SAVE, AIRE and TRACE patients (73% of the pooled 12,763) have no verified dose. Controller ruling 2026-11-19 (round 1 review, E11): SOLVD-P (2,111 of the 3,396 patients, 62% of the weighting) enrolled asymptomatic left ventricular dysfunction without overt heart failure, and its footnote reads \"Doses/proportions shown were obtained from prescription at the last visit. By the end of the trial, 24% had discontinued enalapril.\" The earlier note disclosed the discontinuation for SOLVD-T only.",
    "frequency": "bid",
    "anchor_per_dose_mg": 8.39,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": "Enalapril arms of SOLVD-T and SOLVD-P, among patients still on drug at the last visit (not all randomized patients)"
   },
   {
    "id": "acei-ramipril",
@@ -150,10 +153,11 @@
    "verification": "confirmed_single_secondary_plus_arithmetic",
    "quote": "SOLVD-T (Kondo Table 1): 'Enalapril (1285) ... 20 mg | 16.6 mg (E) 18.0 mg (P)'; SOLVD-P: '16.9 mg (E) e 18.2 mg (P) e'",
    "arithmetic": "D2: 0.839 x 10 mg/day (target_daily_dose) = 8.39 mg/day.",
-   "notes": "AIRE (ramipril, target 5 mg bid) mean dose not found; the ramipril label says the target regimen was achieved in 77% of ramipril patients: 'target regimen (achieved in 77% of patients randomized to ramipril) of 5 mg twice daily'. 8.39 mg/day is consistent with that (at least 7.7 mg/day if the other 23% took nothing).",
+   "notes": "AIRE (ramipril, target 5 mg bid) mean dose not found; the ramipril label says the target regimen was achieved in 77% of ramipril patients: 'target regimen (achieved in 77% of patients randomized to ramipril) of 5 mg twice daily'. 8.39 mg/day is consistent with that (at least 7.7 mg/day if the other 23% took nothing). Controller ruling 2026-11-19 (round 1 review, E11): SOLVD-P (2,111 of the 3,396 patients, 62% of the weighting) enrolled asymptomatic left ventricular dysfunction without overt heart failure, and its footnote reads \"Doses/proportions shown were obtained from prescription at the last visit. By the end of the trial, 24% had discontinued enalapril.\" The earlier note disclosed the discontinuation for SOLVD-T only.",
    "frequency": "qd or bid (daily total)",
    "anchor_per_dose_mg": 8.39,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": "Enalapril arms of SOLVD-T and SOLVD-P, among patients still on drug at the last visit (not all randomized patients)"
   },
   {
    "id": "acei-captopril",
@@ -173,10 +177,11 @@
    "verification": "confirmed_single_secondary_plus_arithmetic",
    "quote": "SOLVD-T (Kondo Table 1): 'Enalapril (1285) ... 20 mg | 16.6 mg (E) 18.0 mg (P)'; SOLVD-P: '16.9 mg (E) e 18.2 mg (P) e'",
    "arithmetic": "D2: 0.839 x 150 mg/day (50 mg tid) = 125.9 mg/day.",
-   "notes": "SAVE achieved dose not found in any fetched source. Captopril was also given in SAVE after infarction (3 of the 5 Flather trials were post-MI).",
+   "notes": "SAVE achieved dose not found in any fetched source. Captopril was also given in SAVE after infarction (3 of the 5 Flather trials were post-MI). Controller ruling 2026-11-19 (round 1 review, E11): SOLVD-P (2,111 of the 3,396 patients, 62% of the weighting) enrolled asymptomatic left ventricular dysfunction without overt heart failure, and its footnote reads \"Doses/proportions shown were obtained from prescription at the last visit. By the end of the trial, 24% had discontinued enalapril.\" The earlier note disclosed the discontinuation for SOLVD-T only.",
    "frequency": "tid",
    "anchor_per_dose_mg": 41.97,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": "Enalapril arms of SOLVD-T and SOLVD-P, among patients still on drug at the last visit (not all randomized patients)"
   },
   {
    "id": "arb-valsartan",
@@ -263,12 +268,13 @@
     "pmid": "35119172"
    },
    "verification": "confirmed_single_secondary",
-   "quote": "COPERNICUS | Carvedilol (1156) Placebo (1133) | ... | 50 mg | 37 mg (C) e 41 mg (P) e | 65% (C) e 78% (P) e",
+   "quote": "COPERNICUS | Carvedilol (1156) Placebo (1133) | ... | 50 mg | 37 mg (C) e 41 mg (P) e | 65% (C) e 78% (P) e | Kondo Table 2 footnote: \"daily dose in surviving patients at 120 days (65% 50 mg, 11% 25 mg, 9% 12.5 mg, 6% 6.25 mg, 9% 0 mg)\"",
    "arithmetic": "D1: 37 / 50 = 0.74 (per-dose 18.5 mg bid).",
-   "notes": "Single secondary source. The carvedilol label confirms the COPERNICUS dose ceiling (up to 50 mg/day) but gives no mean (its 42 mg/day figure is COMET, its 20 mg bid figure is CAPRICORN). The trial target was 25 mg bid for all; the formulary target is 100 mg/day above 85 kg dry weight, where 37 mg is 0.37 of the formulary target. The beta-blocker HFH row rests on CIBIS-II alone, not COPERNICUS.",
+   "notes": "Single secondary source. The carvedilol label confirms the COPERNICUS dose ceiling (up to 50 mg/day) but gives no mean (its 42 mg/day figure is COMET, its 20 mg bid figure is CAPRICORN). The trial target was 25 mg bid for all; the formulary target is 100 mg/day above 85 kg dry weight, where 37 mg is 0.37 of the formulary target. The beta-blocker HFH row rests on CIBIS-II alone, not COPERNICUS. Controller ruling 2026-11-19 (round 1 review, E11): the 37 mg is a day-120 mean among SURVIVORS and it includes 9% at zero; it recomputes from the footnote (0.65 x 50 + 0.11 x 25 + 0.09 x 12.5 + 0.06 x 6.25 + 0.09 x 0 = 36.75 mg). Among those still taking the drug the mean would be about 40 mg (36.75 / 0.91).",
    "frequency": "bid",
    "anchor_per_dose_mg": 18.5,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": "Mean among COPERNICUS patients still alive at day 120, including the 9% who were taking no drug (zero)"
   },
   {
    "id": "bb-metoprolol-succinate",
@@ -334,10 +340,11 @@
    "verification": "confirmed_three_sources",
    "quote": "The mean daily dose at study end for patients randomized to spironolactone was 26 mg. (Kondo Table 3: 26 mg (S); Tillman: 'Spironolactone (26 mg daily)')",
    "arithmetic": "D1: 26 / 50 = 0.52. The formulary target is 25 mg when eGFR <50 (fraction 1.04 there).",
-   "notes": "Only 12% reached 50 mg (Kondo). RALES median CrCl 57 mL/min. The trial effect is the effect of about 26 mg; nothing below 25 mg was measured.",
+   "notes": "Only 12% reached 50 mg (Kondo). RALES median CrCl 57 mL/min. The trial effect is the effect of about 26 mg; nothing below 25 mg was measured. Controller ruling 2026-11-19 (round 1 review, E11): the Aldactone label gives the mean \"for patients randomized to spironolactone\" and Kondo Table 3 footnote c says \"among patients continuing to receive treatment after 24 months\"; the denominators conflict (all randomized patients against those still on drug at 24 months) and neither was disclosed in the row before.",
    "frequency": "qd",
    "anchor_per_dose_mg": 26,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": "Two denominators that disagree: the label says patients randomized to spironolactone (mean at study end 26 mg); Kondo Table 3 footnote c says patients continuing to receive treatment after 24 months"
   },
   {
    "id": "mra-eplerenone-egfr-ge50",
@@ -449,6 +456,7 @@
   },
   {
    "id": "sema-semaglutide",
+   "label_basis": {"kind": "target", "set_id": "ee06186f-2aa3-4990-a760-757579d8f77b", "label": "WEGOVY (semaglutide) injection label, revised 6/2026, section 2.2", "sentence": "The usual recommended maintenance dosage of WEGOVY injection is 2.4 mg once weekly."},
    "drug": "Semaglutide (Wegovy)",
    "drug_class": "GLP-1 RA",
    "full_credit_daily_mg": 2.4,
@@ -472,6 +480,7 @@
   },
   {
    "id": "sema-tirzepatide",
+   "label_basis": {"kind": "maximum", "set_id": "487cd7e7-434c-4925-99fa-aa80b1cc776b", "label": "ZEPBOUND (tirzepatide) injection label, revised 8/2026, section 2.2", "sentence": "The maximum dosage of ZEPBOUND for all indications is 15 mg injected subcutaneously once weekly."},
    "drug": "Tirzepatide (Zepbound)",
    "drug_class": "GLP-1/GIP RA",
    "full_credit_daily_mg": 15,
@@ -495,6 +504,7 @@
   },
   {
    "id": "vasodilator-hydralazine-isdn",
+   "label_basis": {"kind": "maximum", "set_id": "e1e63cd5-d1e4-4af5-bad5-1ad41ea46b00", "label": "BiDil (isosorbide dinitrate and hydralazine) label, revised 11/2025, section 2", "sentence": "Titrate to a maximum of two tablets three times daily, if tolerated."},
    "drug": "Hydralazine/Isosorbide Dinitrate",
    "drug_class": "Vasodilator",
    "full_credit_daily_mg": 225,
@@ -541,6 +551,7 @@
   },
   {
    "id": "vericiguat",
+   "label_basis": {"kind": "target", "set_id": "17056d73-1b1b-4bf2-9c07-b7a9367f0d6d", "label": "VERQUVO (vericiguat) label, revised 1/2026, section 2.1", "sentence": "Double the dose approximately every 2 weeks to reach the target maintenance dose of 10 mg once daily, as tolerated by the patient."},
    "drug": "Vericiguat",
    "drug_class": "sGC Stimulator",
    "full_credit_daily_mg": 10,
@@ -589,6 +600,7 @@
   },
   {
    "id": "no-target-furosemide",
+   "label_basis": {"kind": "none", "set_id": "668e9f1f-0df0-45f6-8281-f1b98a4a681d", "label": "Furosemide tablets label, DailyMed revision 10/2026, Dosage and Administration", "sentence": "Therapy should be individualized according to patient response to gain maximal therapeutic response and to determine the minimal dose needed to maintain that response."},
    "drug": "Furosemide",
    "drug_class": "Loop Diuretic",
    "full_credit_daily_mg": null,
@@ -597,21 +609,23 @@
    "formulary_start_daily_mg": 20,
    "level": "not_measured",
    "condition": null,
-   "trial": "Row rests on null or neutral evidence (RR 1.0) or iron-deficit dosing",
+   "trial": "No daily dose relation measured",
    "source": {
-    "citation": "data/outcomeEvidence.json rows loop-*, thiazide-*, kbinder-*, fcm-*",
+    "citation": "data/outcomeEvidence.json rows for this drug class (loop-*, thiazide-*, kbinder-*, fcm-*)",
     "pmid": null
    },
    "verification": "not_applicable",
-   "quote": "No quote: the evidence row is RR 1.0 (no outcome benefit counted); FCM is dosed by iron deficit, not a daily dose.",
-   "arithmetic": "D4 cannot apply: this entry has no flagged formulary target dose. With RR 1.0 any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1). FCM (RR 0.93 death, 0.83 HFH) is dosed 500 or 1,000 mg once by deficit; no daily anchor exists.",
-   "notes": "Leave on the existing credit rules; nothing to anchor.",
+   "quote": "No quote: no trial related this drug's daily dose to an outcome.",
+   "arithmetic": "Controller ruling 2026-11-19 (round 1 review, E11): the earlier text said the evidence row is RR 1.0 and any dose credit leaves the outcome unchanged; that is false for loop diuretics and ferric carboxymaltose. No daily dose relation is measured, so there is nothing to anchor. The congested-patient evidence rows are NOT neutral (death OR 0.24, hospitalization OR 0.07 in small trials, pulled strongly toward no effect), but no trial related dose to outcome: TRANSFORM-HF compared two loop diuretics and DOSE compared dosing strategies. The engine credits a loop at full value (1) at any dose; congestion relief by dose is not modelled.",
+   "notes": "Full credit at any dose is a modelling choice, not a finding that dose is irrelevant.",
    "frequency": "",
    "anchor_per_dose_mg": null,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": null
   },
   {
    "id": "no-target-torsemide",
+   "label_basis": {"kind": "none", "set_id": "09305350-e317-419c-96f5-aa8fbeb4044d", "label": "Torsemide tablets label, DailyMed revision 3/2026, section 2.1", "sentence": "If the diuretic response is inadequate, titrate upward by approximately doubling until the desired diuretic response is obtained."},
    "drug": "Torsemide",
    "drug_class": "Loop Diuretic",
    "full_credit_daily_mg": null,
@@ -620,21 +634,23 @@
    "formulary_start_daily_mg": 5,
    "level": "not_measured",
    "condition": null,
-   "trial": "Row rests on null or neutral evidence (RR 1.0) or iron-deficit dosing",
+   "trial": "No daily dose relation measured",
    "source": {
-    "citation": "data/outcomeEvidence.json rows loop-*, thiazide-*, kbinder-*, fcm-*",
+    "citation": "data/outcomeEvidence.json rows for this drug class (loop-*, thiazide-*, kbinder-*, fcm-*)",
     "pmid": null
    },
    "verification": "not_applicable",
-   "quote": "No quote: the evidence row is RR 1.0 (no outcome benefit counted); FCM is dosed by iron deficit, not a daily dose.",
-   "arithmetic": "D4 cannot apply: this entry has no flagged formulary target dose. With RR 1.0 any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1). FCM (RR 0.93 death, 0.83 HFH) is dosed 500 or 1,000 mg once by deficit; no daily anchor exists.",
-   "notes": "Leave on the existing credit rules; nothing to anchor.",
+   "quote": "No quote: no trial related this drug's daily dose to an outcome.",
+   "arithmetic": "Controller ruling 2026-11-19 (round 1 review, E11): the earlier text said the evidence row is RR 1.0 and any dose credit leaves the outcome unchanged; that is false for loop diuretics and ferric carboxymaltose. No daily dose relation is measured, so there is nothing to anchor. The congested-patient evidence rows are NOT neutral (death OR 0.24, hospitalization OR 0.07 in small trials, pulled strongly toward no effect), but no trial related dose to outcome: TRANSFORM-HF compared two loop diuretics and DOSE compared dosing strategies. The engine credits a loop at full value (1) at any dose; congestion relief by dose is not modelled.",
+   "notes": "Full credit at any dose is a modelling choice, not a finding that dose is irrelevant.",
    "frequency": "",
    "anchor_per_dose_mg": null,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": null
   },
   {
    "id": "no-target-bumetanide",
+   "label_basis": {"kind": "none", "set_id": "8914d8bf-61b7-4cd2-a8ef-7e1c5df37828", "label": "Bumetanide tablets label, DailyMed revision 11/2026, Dosage and Administration", "sentence": "Individualize dosage with careful monitoring of patient response."},
    "drug": "Bumetanide",
    "drug_class": "Loop Diuretic",
    "full_credit_daily_mg": null,
@@ -643,21 +659,23 @@
    "formulary_start_daily_mg": 0.5,
    "level": "not_measured",
    "condition": null,
-   "trial": "Row rests on null or neutral evidence (RR 1.0) or iron-deficit dosing",
+   "trial": "No daily dose relation measured",
    "source": {
-    "citation": "data/outcomeEvidence.json rows loop-*, thiazide-*, kbinder-*, fcm-*",
+    "citation": "data/outcomeEvidence.json rows for this drug class (loop-*, thiazide-*, kbinder-*, fcm-*)",
     "pmid": null
    },
    "verification": "not_applicable",
-   "quote": "No quote: the evidence row is RR 1.0 (no outcome benefit counted); FCM is dosed by iron deficit, not a daily dose.",
-   "arithmetic": "D4 cannot apply: this entry has no flagged formulary target dose. With RR 1.0 any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1). FCM (RR 0.93 death, 0.83 HFH) is dosed 500 or 1,000 mg once by deficit; no daily anchor exists.",
-   "notes": "Leave on the existing credit rules; nothing to anchor.",
+   "quote": "No quote: no trial related this drug's daily dose to an outcome.",
+   "arithmetic": "Controller ruling 2026-11-19 (round 1 review, E11): the earlier text said the evidence row is RR 1.0 and any dose credit leaves the outcome unchanged; that is false for loop diuretics and ferric carboxymaltose. No daily dose relation is measured, so there is nothing to anchor. The congested-patient evidence rows are NOT neutral (death OR 0.24, hospitalization OR 0.07 in small trials, pulled strongly toward no effect), but no trial related dose to outcome: TRANSFORM-HF compared two loop diuretics and DOSE compared dosing strategies. The engine credits a loop at full value (1) at any dose; congestion relief by dose is not modelled.",
+   "notes": "Full credit at any dose is a modelling choice, not a finding that dose is irrelevant.",
    "frequency": "",
    "anchor_per_dose_mg": null,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": null
   },
   {
    "id": "no-target-metolazone",
+   "label_basis": {"kind": "none", "set_id": "efa8795e-2c89-4519-b49f-13146fb9ded1", "label": "Metolazone tablets label, DailyMed revision 8/2026, Dosage and Administration", "sentence": "Effective dosage of metolazone tablets should be individualized according to indication and patient response."},
    "drug": "Metolazone",
    "drug_class": "Thiazide-like Diuretic",
    "full_credit_daily_mg": null,
@@ -666,21 +684,23 @@
    "formulary_start_daily_mg": 2.5,
    "level": "not_measured",
    "condition": null,
-   "trial": "Row rests on null or neutral evidence (RR 1.0) or iron-deficit dosing",
+   "trial": "No daily dose relation measured",
    "source": {
-    "citation": "data/outcomeEvidence.json rows loop-*, thiazide-*, kbinder-*, fcm-*",
+    "citation": "data/outcomeEvidence.json rows for this drug class (loop-*, thiazide-*, kbinder-*, fcm-*)",
     "pmid": null
    },
    "verification": "not_applicable",
-   "quote": "No quote: the evidence row is RR 1.0 (no outcome benefit counted); FCM is dosed by iron deficit, not a daily dose.",
-   "arithmetic": "D4 cannot apply: this entry has no flagged formulary target dose. With RR 1.0 any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1). FCM (RR 0.93 death, 0.83 HFH) is dosed 500 or 1,000 mg once by deficit; no daily anchor exists.",
-   "notes": "Leave on the existing credit rules; nothing to anchor.",
+   "quote": "No quote: no trial related this drug's daily dose to an outcome.",
+   "arithmetic": "Controller ruling 2026-11-19 (round 1 review, E11): the earlier text said the evidence row is RR 1.0 and any dose credit leaves the outcome unchanged; that is false for loop diuretics and ferric carboxymaltose. No daily dose relation is measured. The outcome rows for this drug are \"no outcome evidence; no effect assumed\" (RR 1.0), so any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1).",
+   "notes": "Nothing to anchor.",
    "frequency": "",
    "anchor_per_dose_mg": null,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": null
   },
   {
    "id": "no-target-chlorthalidone",
+   "label_basis": {"kind": "none", "set_id": "36ef8d83-45f2-4873-b7cb-1be096d14d18", "label": "Chlorthalidone tablets label, DailyMed revision 10/2026, Dosage and Administration", "sentence": "Therapy should be initiated with the lowest possible dose, then titrated according to individual patient response."},
    "drug": "Chlorthalidone",
    "drug_class": "Thiazide-like Diuretic",
    "full_credit_daily_mg": null,
@@ -689,21 +709,23 @@
    "formulary_start_daily_mg": 12.5,
    "level": "not_measured",
    "condition": null,
-   "trial": "Row rests on null or neutral evidence (RR 1.0) or iron-deficit dosing",
+   "trial": "No daily dose relation measured",
    "source": {
-    "citation": "data/outcomeEvidence.json rows loop-*, thiazide-*, kbinder-*, fcm-*",
+    "citation": "data/outcomeEvidence.json rows for this drug class (loop-*, thiazide-*, kbinder-*, fcm-*)",
     "pmid": null
    },
    "verification": "not_applicable",
-   "quote": "No quote: the evidence row is RR 1.0 (no outcome benefit counted); FCM is dosed by iron deficit, not a daily dose.",
-   "arithmetic": "D4 cannot apply: this entry has no flagged formulary target dose. With RR 1.0 any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1). FCM (RR 0.93 death, 0.83 HFH) is dosed 500 or 1,000 mg once by deficit; no daily anchor exists.",
-   "notes": "Leave on the existing credit rules; nothing to anchor.",
+   "quote": "No quote: no trial related this drug's daily dose to an outcome.",
+   "arithmetic": "Controller ruling 2026-11-19 (round 1 review, E11): the earlier text said the evidence row is RR 1.0 and any dose credit leaves the outcome unchanged; that is false for loop diuretics and ferric carboxymaltose. No daily dose relation is measured. The outcome rows for this drug are \"no outcome evidence; no effect assumed\" (RR 1.0), so any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1).",
+   "notes": "Nothing to anchor.",
    "frequency": "",
    "anchor_per_dose_mg": null,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": null
   },
   {
    "id": "no-target-hydrochlorothiazide",
+   "label_basis": {"kind": "none", "set_id": "4e43dd27-3f4b-4205-a26e-6ecaa8281347", "label": "Hydrochlorothiazide tablets label, DailyMed revision 11/2026, Dosage and Administration", "sentence": "Therapy should be individualized according to patient response. Use the smallest dosage necessary to achieve the required response."},
    "drug": "Hydrochlorothiazide",
    "drug_class": "Thiazide-like Diuretic",
    "full_credit_daily_mg": null,
@@ -712,21 +734,23 @@
    "formulary_start_daily_mg": 12.5,
    "level": "not_measured",
    "condition": null,
-   "trial": "Row rests on null or neutral evidence (RR 1.0) or iron-deficit dosing",
+   "trial": "No daily dose relation measured",
    "source": {
-    "citation": "data/outcomeEvidence.json rows loop-*, thiazide-*, kbinder-*, fcm-*",
+    "citation": "data/outcomeEvidence.json rows for this drug class (loop-*, thiazide-*, kbinder-*, fcm-*)",
     "pmid": null
    },
    "verification": "not_applicable",
-   "quote": "No quote: the evidence row is RR 1.0 (no outcome benefit counted); FCM is dosed by iron deficit, not a daily dose.",
-   "arithmetic": "D4 cannot apply: this entry has no flagged formulary target dose. With RR 1.0 any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1). FCM (RR 0.93 death, 0.83 HFH) is dosed 500 or 1,000 mg once by deficit; no daily anchor exists.",
-   "notes": "Leave on the existing credit rules; nothing to anchor.",
+   "quote": "No quote: no trial related this drug's daily dose to an outcome.",
+   "arithmetic": "Controller ruling 2026-11-19 (round 1 review, E11): the earlier text said the evidence row is RR 1.0 and any dose credit leaves the outcome unchanged; that is false for loop diuretics and ferric carboxymaltose. No daily dose relation is measured. The outcome rows for this drug are \"no outcome evidence; no effect assumed\" (RR 1.0), so any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1).",
+   "notes": "Nothing to anchor.",
    "frequency": "",
    "anchor_per_dose_mg": null,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": null
   },
   {
    "id": "no-target-patiromer",
+   "label_basis": {"kind": "none", "set_id": "bf002984-d6c9-46df-aecb-a07733f763c1", "label": "VELTASSA (patiromer) label, DailyMed revision 1/2025, section 2.2", "sentence": "For adults, adjust dose by 8.4 grams daily as needed at one-week intervals to obtain desired serum potassium target range."},
    "drug": "Patiromer",
    "drug_class": "K+ Binder",
    "full_credit_daily_mg": null,
@@ -735,21 +759,23 @@
    "formulary_start_daily_mg": 8.4,
    "level": "not_measured",
    "condition": null,
-   "trial": "Row rests on null or neutral evidence (RR 1.0) or iron-deficit dosing",
+   "trial": "No daily dose relation measured",
    "source": {
-    "citation": "data/outcomeEvidence.json rows loop-*, thiazide-*, kbinder-*, fcm-*",
+    "citation": "data/outcomeEvidence.json rows for this drug class (loop-*, thiazide-*, kbinder-*, fcm-*)",
     "pmid": null
    },
    "verification": "not_applicable",
-   "quote": "No quote: the evidence row is RR 1.0 (no outcome benefit counted); FCM is dosed by iron deficit, not a daily dose.",
-   "arithmetic": "D4 cannot apply: this entry has no flagged formulary target dose. With RR 1.0 any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1). FCM (RR 0.93 death, 0.83 HFH) is dosed 500 or 1,000 mg once by deficit; no daily anchor exists.",
-   "notes": "Leave on the existing credit rules; nothing to anchor.",
+   "quote": "No quote: no trial related this drug's daily dose to an outcome.",
+   "arithmetic": "Controller ruling 2026-11-19 (round 1 review, E11): the earlier text said the evidence row is RR 1.0 and any dose credit leaves the outcome unchanged; that is false for loop diuretics and ferric carboxymaltose. No daily dose relation is measured. The outcome rows for patiromer are \"no outcome evidence; no effect assumed\" (RR 1.0), so any dose credit leaves the outcome estimate unchanged.",
+   "notes": "Nothing to anchor.",
    "frequency": "",
    "anchor_per_dose_mg": null,
-   "unit": "g"
+   "unit": "g",
+   "dose_population": null
   },
   {
    "id": "no-target-sodium",
+   "label_basis": {"kind": "none", "set_id": "90bf8e28-748d-4e4b-a19f-9cf483370eff", "label": "LOKELMA (sodium zirconium cyclosilicate) label, DailyMed revision 11/2026, section 2.1", "sentence": "Adjust dose at one-week intervals as needed (by 5 g daily) to obtain desired serum potassium target range."},
    "drug": "Sodium Zirconium Cyclosilicate (Lokelma)",
    "drug_class": "K+ Binder",
    "full_credit_daily_mg": null,
@@ -758,21 +784,23 @@
    "formulary_start_daily_mg": 5,
    "level": "not_measured",
    "condition": null,
-   "trial": "Row rests on null or neutral evidence (RR 1.0) or iron-deficit dosing",
+   "trial": "No daily dose relation measured",
    "source": {
-    "citation": "data/outcomeEvidence.json rows loop-*, thiazide-*, kbinder-*, fcm-*",
+    "citation": "data/outcomeEvidence.json rows for this drug class (loop-*, thiazide-*, kbinder-*, fcm-*)",
     "pmid": null
    },
    "verification": "not_applicable",
-   "quote": "No quote: the evidence row is RR 1.0 (no outcome benefit counted); FCM is dosed by iron deficit, not a daily dose.",
-   "arithmetic": "D4 cannot apply: this entry has no flagged formulary target dose. With RR 1.0 any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1). FCM (RR 0.93 death, 0.83 HFH) is dosed 500 or 1,000 mg once by deficit; no daily anchor exists.",
-   "notes": "Leave on the existing credit rules; nothing to anchor.",
+   "quote": "No quote: no trial related this drug's daily dose to an outcome.",
+   "arithmetic": "Controller ruling 2026-11-19 (round 1 review, E11): the earlier text said the evidence row is RR 1.0 and any dose credit leaves the outcome unchanged; that is false for loop diuretics and ferric carboxymaltose. No daily dose relation is measured. The death rows are \"no outcome evidence\" (RR 1.0); the hospitalization rows carry the exploratory REALIZE-K signal (an extrapolated risk ratio above 1), for which no dose relation is known either, so full credit is given at any dose.",
+   "notes": "Nothing to anchor.",
    "frequency": "",
    "anchor_per_dose_mg": null,
-   "unit": "g"
+   "unit": "g",
+   "dose_population": null
   },
   {
    "id": "no-target-ferric",
+   "label_basis": {"kind": "none", "set_id": "517b4a19-45b3-4286-9f6a-ced4e10447de", "label": "INJECTAFER (ferric carboxymaltose) label, DailyMed revision 8/2026, section 2.2", "sentence": "For patients weighing 50 kg or more, the recommended dosage is Injectafer 750 mg intravenously in two doses separated by at least 7 days for a total cumulative dose of 1,500 mg of iron per course."},
    "drug": "Ferric Carboxymaltose",
    "drug_class": "IV Iron",
    "full_credit_daily_mg": null,
@@ -781,18 +809,19 @@
    "formulary_start_daily_mg": null,
    "level": "not_measured",
    "condition": null,
-   "trial": "Row rests on null or neutral evidence (RR 1.0) or iron-deficit dosing",
+   "trial": "No daily dose relation measured",
    "source": {
-    "citation": "data/outcomeEvidence.json rows loop-*, thiazide-*, kbinder-*, fcm-*",
+    "citation": "data/outcomeEvidence.json rows for this drug class (loop-*, thiazide-*, kbinder-*, fcm-*)",
     "pmid": null
    },
    "verification": "not_applicable",
-   "quote": "No quote: the evidence row is RR 1.0 (no outcome benefit counted); FCM is dosed by iron deficit, not a daily dose.",
-   "arithmetic": "D4 cannot apply: this entry has no flagged formulary target dose. With RR 1.0 any dose credit leaves the outcome estimate unchanged (1.0 ^ credit = 1). FCM (RR 0.93 death, 0.83 HFH) is dosed 500 or 1,000 mg once by deficit; no daily anchor exists.",
-   "notes": "Leave on the existing credit rules; nothing to anchor.",
+   "quote": "No quote: no trial related this drug's daily dose to an outcome.",
+   "arithmetic": "Controller ruling 2026-11-19 (round 1 review, E11): the earlier text said the evidence row is RR 1.0 and any dose credit leaves the outcome unchanged; that is false for loop diuretics and ferric carboxymaltose. No daily dose relation exists: ferric carboxymaltose is dosed 500 or 1,000 mg once by iron deficit. Its outcome rows are NOT neutral (death 0.93, hospitalization 0.83), but full credit is given at any dose because no dose-outcome relation was measured.",
+   "notes": "Full credit at any dose is a modelling choice.",
    "frequency": "",
    "anchor_per_dose_mg": null,
-   "unit": "mg"
+   "unit": "mg",
+   "dose_population": null
   }
  ],
  "unit_note": "Every anchor value (`full_credit_daily_mg`, the historical field name) is expressed in the unit given by that anchor's `unit`, the formulary dose unit of the drug (checked by verify: the value lies between the drug's lowest and highest available daily dose)."

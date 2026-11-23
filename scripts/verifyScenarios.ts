@@ -10,14 +10,23 @@ import { runMeasuredModelChecks } from './measuredModelChecks';
 import { scoredCandidates } from './scoredCandidates';
 import { guidelineTarget, guidelineTargetResults, guidelineTargetSummary, TARGET_DEFS } from './guidelineTargets';
 import { runHarmBurdenChecks } from './harmBurdenChecks';
+import { runEngineSafetyRound2Checks } from './engineSafetyRound2Checks';
+import { runEngineReadinessR2Checks } from './engineReadinessR2Checks';
+import { runEngineReadinessR3Checks } from './engineReadinessR3Checks';
+import { runEngineReadinessR4Checks } from './engineReadinessR4Checks';
+import { runEngineReadinessR5Checks } from './engineReadinessR5Checks';
+import { runEngineReadinessR6Checks } from './engineReadinessR6Checks';
+import { runEngineReadinessR7Checks } from './engineReadinessR7Checks';
+import { runEngineReadinessR8Checks } from './engineReadinessR8Checks';
+import { runEngineReadinessR9Checks } from './engineReadinessR9Checks';
+import { runEngineReadinessR10Checks } from './engineReadinessR10Checks';
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
-import { isProjectedSafetyClean } from '../services/engine/selection';
 import { getDoseTiers, dailyDose, doseProgressToTarget, isCongestedAboveDryWeight, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
 import { isAcutelyDecompensated, derivedFields } from '../services/clinicalPredicates';
 import type { RegimenMed } from '../types';
 import { getMedicationClassGroup, isDiureticClass } from '../services/engine/registry';
-import { UP_TITRATION_MAX_DAILY_FACTOR, RAAS_START_K_CAUTION, MRA_START_K_CEILING } from '../services/engine/thresholds';
+import { UP_TITRATION_MAX_DAILY_FACTOR, RAAS_START_K_CAUTION, MRA_START_K_CEILING, TOO_CLOSE_TO_SEPARATE_POINTS } from '../services/engine/thresholds';
 import { includesLoopIncrease } from '../services/engine/selection';
 import { analyzeCurrentRegimen, equivalentSwapTier, formatSwapSummary, diureticHeldForNoCongestion } from '../services/engine/candidates';
 import { simulateModificationEffect, patientChfEffects } from '../services/engine/effects';
@@ -442,7 +451,9 @@ async function runVerification() {
                     const bNonInferior = b.overall_score >= a.overall_score
                         && (b.gdmt_completeness ?? 0) >= (a.gdmt_completeness ?? 0)
                         && (b.raw_score ?? 0) >= (a.raw_score ?? 0);
-                    if (bNonInferior && b.cost < a.cost) {
+                    // Rewritten 2026-11-19 (ruling U4): "No medication change" listed first because the best option is less than TOO_CLOSE_TO_SEPARATE_POINTS above it is a stated rule, not needless spend.
+                    const noChangeLeadsByRule = i === 0 && (a.modification_set?.modifications ?? []).every(m => m.action === 'keep') && (b.raw_score ?? 0) - (a.raw_score ?? 0) < TOO_CLOSE_TO_SEPARATE_POINTS;
+                    if (bNonInferior && b.cost < a.cost && !noChangeLeadsByRule) {
                         failures.push(`Cost-inefficient ranking: pick #${j + 1} ($${b.cost}) is clinically >= pick #${i + 1} ($${a.cost}) but ranked below it`);
                         scenarioPassed = false;
                         break;
@@ -728,8 +739,14 @@ async function runVerification() {
                     failures.push('Severe dilation: beta-blocker INITIATED during NYHA IV acute decompensation');
                     scenarioPassed = false;
                 }
-                if (!anyRegimenHasClass('SGLT2i') && !anyRegimenHasRaas()) {
-                    failures.push('Severe dilation: no disease-modifying pillar (SGLT2i/RAAS) offered');
+                // 2026-11-19 (S1a): this patient has a pulse pressure of 25 with NYHA IV decompensation, so the engine's cold state applies: no option starts a disease-modifying drug
+                // (the expectation here was the reverse before). A diuretic step is the one start allowed, and the urgent perfusion alert must be shown.
+                if (anyRegimenHasClass('SGLT2i') || anyRegimenHasRaas()) {
+                    failures.push('Severe dilation: a disease-modifying drug (SGLT2i/RAAS) is started in the cold state');
+                    scenarioPassed = false;
+                }
+                if (!clinicalAlerts.some(a => a.startsWith('POOR PERFUSION') && a.includes('same-day evaluation'))) {
+                    failures.push('Severe dilation: no urgent poor-perfusion alert in the cold state');
                     scenarioPassed = false;
                 }
             }
@@ -760,14 +777,15 @@ async function runVerification() {
                 // ...AND the forced reduction must NOT suppress safe guideline additions. SGLT2i is
                 // beneficial in acute HF (EMPULSE / SOLOIST-WHF) and has near-zero hemodynamic cost —
                 // at least one option must add a missing pillar alongside the BB reduction.
-                const offersAddition = scoredRegimens.some(r =>
+                // 2026-11-19 (S1a): in the cold state no option starts a drug or raises a dose (except a diuretic step when congested); the reversed expectation (an SGLT2i/MRA add
+                // alongside the cut) is retired. The options are the forced reduction, with its reason, and any diuretic step.
+                const startsOther = scoredRegimens.some(r =>
                     (r.modification_set?.modifications || []).some(m =>
-                        m.action === 'add' && m.target &&
-                        (m.target.med.drug_class === 'SGLT2i' || m.target.med.drug_class === 'MRA' || m.target.med.drug_class === 'nsMRA')
+                        (m.action === 'add' || m.action === 'titrate_up' || m.action === 'swap') && m.target && m.target.med.drug_class !== 'Loop Diuretic'
                     )
                 );
-                if (!offersAddition) {
-                    failures.push('Cold decompensation: forced BB reduction suppressed all guideline additions (expected SGLT2i/MRA add alongside the cut)');
+                if (startsOther) {
+                    failures.push('Cold decompensation: an option starts or raises a drug other than a diuretic');
                     scenarioPassed = false;
                 }
             }
@@ -1022,17 +1040,21 @@ async function runVerification() {
             // 13. ACEi-to-ARNI Swap -> Must have 36-hour washout warning
             if (scenario.title.includes('ACEi-to-ARNI Swap')) {
                 // Check across all returned regimens for any that contain the washout warning
-                const allWarnings = scoredRegimens.flatMap(r => r.warnings);
+                // Read across every SCORED candidate, not only the displayed ones: since 2026-11-19 (S10) an option the engine scores below "no change" is not displayed, and the swap
+                // can be one of them. The washout rule is a property of the swap, wherever it ranks.
+                // This fixture sets max_new_classes_per_visit to 0; since S11 (2026-11-19) an ACE inhibitor to ARNI switch counts as one of the allowed changes, so the probe allows two.
+                const washoutPatient = clonePatient(scenario.patient); washoutPatient.max_new_classes_per_visit = 2;
+                const allWarnings = scoredCandidates(washoutPatient).flatMap(r => r.warnings);
                 if (!allWarnings.some(w => w.includes('36-hour washout'))) {
                     failures.push('Missing 36-hour washout warning for ACEi->ARNI swap');
                     scenarioPassed = false;
                 }
 
-                const allSummaries = scoredRegimens
+                const allSummaries = scoredCandidates(washoutPatient)
                     .flatMap(r => r.modification_set?.modifications ?? [])
                     .map(m => m.summary);
                 const hasStepwiseSummary = allSummaries.some(s =>
-                    s.includes('STOP') && s.includes('WAIT 36 hours') && s.includes('THEN start')
+                    s.includes('Stop ') && s.includes('wait 36 hours') && s.includes('then start')
                 );
                 if (!hasStepwiseSummary) {
                     failures.push('ACEi->ARNI change missing explicit STOP/WAIT/THEN summary');
@@ -1671,7 +1693,7 @@ async function runVerification() {
                     failures.push('The MRA GDMT gap does not state the potassium reason');
                     scenarioPassed = false;
                 }
-                if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start MRA once below 5.0')) {
+                if (!(monitoringPlan ?? []).some(m => /^Repeat potassium; start .+ once below 5\.0$/.test(m.test))) {
                     failures.push('Monitoring plan lacks "repeat potassium; start MRA once below 5.0"');
                     scenarioPassed = false;
                 }
@@ -2290,14 +2312,14 @@ async function runVerification() {
             }
 
             // 94c. Potassium 6.0-6.4 (decision 2026-11-11; verified-clinical-decisions-2026-11-11.md rows 5b, 7, 8): the alert tells the clinician to get an ECG
-            // and repeat the potassium urgently, says a secondary source classes K+ above 6.0 as severe and that the thresholds are engine policy; no displayed option
+            // and repeat the potassium urgently, says a secondary source classes K+ above 6.0 as severe and that the thresholds are a rule set by this tool; no displayed option
             // starts or increases a RAAS inhibitor or MRA; a current MRA is withheld (not merely reduced).
             if (scenario.title.includes('K6-Source')) {
                 const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
                 const alert = clinicalAlerts.find(a => a.includes('HYPERKALEMIC EMERGENCY')) ?? '';
                 if (!alert) fail('No HYPERKALEMIC EMERGENCY alert at K+ 6.0-6.4');
                 if (!/ECG/.test(alert) || !/repeat the potassium urgently/.test(alert)) fail('Alert lacks the ECG / repeat-potassium instruction');
-                if (!/secondary source/.test(alert) || !/above 6\.0 as severe/.test(alert) || !/engine policy/.test(alert)) fail('Alert lacks the secondary-source severity statement and the engine-policy label');
+                if (!/secondary source/.test(alert) || !/above 6\.0 as severe/.test(alert) || !/a rule set by this tool/.test(alert)) fail('Alert lacks the secondary-source severity statement and the engine-policy label');
                 for (const r of scoredRegimens) {
                     for (const m of r.modification_set?.modifications ?? []) {
                         if (!m.target) continue;
@@ -2318,7 +2340,8 @@ async function runVerification() {
             if (scenario.title.includes('ESC26-Phenotype')) {
                 const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
                 const t = scenario.title;
-                const out = generateAndScoreModifications({ ...scenario.patient, ranking_mode: 'foundational_first' }, scenarioAvailableMedNames, scenarioPrices);
+                // Rewritten 2026-11-20 (U13): the reference scenario runs once, the one way (it used to be run under the removed foundational ranking approach).
+                const out = generateAndScoreModifications({ ...scenario.patient }, scenarioAvailableMedNames, scenarioPrices);
                 const gaps = (out.gdmtGaps ?? []).map(g => g.split(' — ')[0]);
                 const phen = classifyPhenotype(scenario.patient);
                 const reduced = /Is HFrEF|Excludes Finerenone/.test(t);
@@ -2326,11 +2349,9 @@ async function runVerification() {
                 if (!reduced && phen !== 'HFpEF') fail(`classifyPhenotype returned ${phen}, expected HFpEF`);
                 if (reduced) {
                     if (gaps.length !== 4) fail(`expected four foundational gaps (RAAS, beta-blocker, MRA, SGLT2i), got ${gaps.length}`);
-                    if (!out.ranking?.applied) fail('foundational-first ranking should apply to reduced EF (LVEF below 50)');
                     if (!anyRegimenHasClass('Beta Blocker')) fail('a beta-blocker is a Class I pillar below LVEF 50 but no displayed option offers one');
                 } else if (t.includes('Stays HFpEF') || t.includes('LVEF 50 Is HFpEF')) {
                     if (gaps.length !== 2 || gaps.some(g => g.startsWith('Evidence-based beta-blocker') || g.startsWith('RAAS'))) fail('HFpEF gaps must be SGLT2i and MRA only');
-                    if (out.ranking?.applied) fail('foundational-first ranking must not apply to HFpEF');
                     if (scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Beta Blocker' || RAAS_CLASSES.has(m.med.drug_class)))) fail('HFpEF must not be offered a beta-blocker or RAAS inhibitor as a new start');
                 }
                 if (t.includes('RAAS Not A Slot')) {
@@ -2425,7 +2446,8 @@ async function runVerification() {
             if (scenario.title.includes('ESC26-Renal')) {
                 const fail = (msg: string) => { failures.push(msg); scenarioPassed = false; };
                 const t = scenario.title;
-                const raasAlert = clinicalAlerts.find(a => a.startsWith('eGFR below 20 on a RAAS inhibitor'));
+                // Rewritten 2026-11-19 (ruling U12): the alert now carries its own heading and begins with a capital letter.
+                const raasAlert = clinicalAlerts.find(a => a.startsWith('LOW KIDNEY FUNCTION ON A RAAS INHIBITOR: The eGFR is below 20 on a RAAS inhibitor'));
                 if (scoredRegimens.length === 0) fail('no regimen produced');
                 const drug = t.includes('Sacubitril') ? 'Sacubitril/Valsartan (Entresto)' : 'Lisinopril';
                 if (excludedMedications.some(e => e.name === drug)) fail(`${drug} must not be excluded by a current-eGFR stop`);
@@ -2451,12 +2473,12 @@ async function runVerification() {
                     if (scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'K+ Binder') && !r.regimen.some(m => isK(m.med.drug_class) && onBoard.has(getMedicationClassGroup(m.med.drug_class))))) fail('a binder was offered with nothing it may enable');
                     if (!raasMeds.every(n => e18.some(e => e.name === n))) fail('not every ACEi/ARB/ARNI is withheld by E18 at K+ 5.3');
                     const why = (e18[0]?.why ?? []).join(' ');
-                    if (!/Tables S4\/S5/.test(why) || !/potassium supplements/.test(why) || !/salt substitutes/.test(why) || !/engine policy/.test(why)) fail('E18 details must cite ESC Tables S4/S5, say the staged start is engine policy and name the first steps');
+                    if (!/Tables S4\/S5/.test(why) || !/potassium supplements/.test(why) || !/salt substitutes/.test(why) || !/a rule set by this tool/.test(why)) fail('E18 details must cite ESC Tables S4/S5, say the staged start is engine policy and name the first steps');
                     if (!e18[0]?.reason.includes('above 5.2: recheck and start once it is 5.2 or lower')) fail('E18 reason text wrong');
                     if (!anyRegimenContainsAnyClass('Beta Blocker')) fail('a beta-blocker must still be offered');
                     if (!anyRegimenContainsAnyClass('SGLT2i')) fail('an SGLT2 inhibitor must still be offered');
                     if (!(gdmtGaps ?? []).some(g => g.startsWith('RAAS inhibitor') && g.includes('above 5.2'))) fail('the RAAS GDMT gap does not state the potassium reason');
-                    if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start RAAS inhibitor if 5.2 or lower')) fail('monitoring plan lacks "repeat potassium; start RAAS inhibitor if 5.2 or lower"');
+                    if (!(monitoringPlan ?? []).some(m => /^Repeat potassium; start .+ if 5\.2 or lower$/.test(m.test))) fail('monitoring plan lacks "repeat potassium; start RAAS inhibitor if 5.2 or lower"');
                 }
                 if (t.includes('Naive RAAS Start Offered')) {
                     if (!(anyRegimenHasClass('ARNI') || anyRegimenHasClass('ACEi') || anyRegimenHasClass('ARB'))) fail('a RAAS inhibitor start must be offered at K+ 5.1');
@@ -2567,7 +2589,8 @@ async function runVerification() {
                 if (t.includes('AF HFrEF Anticoagulation And Rate Control')) {
                     const a = af[0];
                     if (!a || !a.includes('CHA2DS2-VA') || !a.includes('DOAC is preferred') || !a.includes('does not compute the score')) fail('anticoagulation wording / score disclaimer missing');
-                    if (!a?.includes('beta-blocker is first line') || !a.includes('digoxin should be considered') || a.includes('none is on board')) fail('rate-control wording wrong');
+                    // Rewritten in round 6 (ruling V9): the digoxin sentence appears only when the recorded resting rate is above the lenient target (110).
+                    if (!a?.includes('beta-blocker is first line') || a.includes('digoxin should be considered') !== (scenario.patient.pulse > 110) || a.includes('none is on board')) fail('rate-control wording wrong');
                 }
                 if (t.includes('No Beta-Blocker On Board') && !af[0]?.includes('none is on board')) fail('should say no beta-blocker is on board');
                 if (t.includes('AF HFpEF') && (af.length !== 1 || af[0].includes('Rate control'))) fail('HFpEF AF alert should carry anticoagulation only');
@@ -2683,7 +2706,7 @@ async function runVerification() {
                     }
                     if (t.includes('Stable eGFR 19')) {
                         if (kidneyAlert) fail('KIDNEY FUNCTION alert raised at eGFR 19 (the dedicated eGFR below 20 alert speaks there)');
-                        if (!clinicalAlerts.some(a => a.includes('eGFR below 20 on a RAAS inhibitor') && a.includes('not a new fall'))) fail('eGFR < 20 alert does not say the fall is not new');
+                        if (!clinicalAlerts.some(a => a.includes('is below 20 on a RAAS inhibitor') && a.includes('not a new fall'))) fail('eGFR < 20 alert does not say the fall is not new');
                         if (clinicalAlerts.some(a => a.includes('cannot tell these apart'))) fail('baseline entered but the alert still says the tool cannot tell');
                         if (excl('Lisinopril')) fail('lisinopril stopped at eGFR 19 with a stable baseline (ESC: a fall from baseline is the stop criterion)');
                     }
@@ -2716,7 +2739,7 @@ async function runVerification() {
                     if (['Spironolactone', 'Eplerenone'].some(n => excl(n)?.rule_id !== 'E15')) fail('Spironolactone/eplerenone not withheld by E15 at K+ 5.3');
                     if (!(excl('Spironolactone')?.why ?? []).some(w => w.includes('uncertain'))) fail('E15 details do not say binder outcome benefit is uncertain (2022 US guideline 7.3.6)');
                     if (!(gdmtGaps ?? []).some(g => g.startsWith('Mineralocorticoid') && g.includes('potassium 5.3'))) fail('MRA gap lacks the potassium reason');
-                    if (!(monitoringPlan ?? []).some(m => m.test === 'Repeat potassium; start MRA once below 5.0')) fail('Monitoring plan lacks the repeat-potassium item');
+                    if (!(monitoringPlan ?? []).some(m => /^Repeat potassium; start .+ once below 5\.0$/.test(m.test))) fail('Monitoring plan lacks the repeat-potassium item');
                 }
                 if (t.includes('MRA Start K+ 5.3 No Binder Available')) {
                     const noBinderExcl = ['Spironolactone', 'Eplerenone'].filter(n => excl(n)?.rule_id === 'E15');
@@ -2750,7 +2773,9 @@ async function runVerification() {
                 const mods = scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => ({ r, m })));
                 const targetsOf = (action: string, name: string) => mods.filter(x => x.m.action === action && x.m.target?.med.name === name).map(x => String(x.m.target!.dose.strength));
                 const warnTexts = (name: string) => scoredRegimens.filter(r => r.regimen.some(m => m.med.name === name)).map(r => (r.warnings ?? []).join(' | '));
-                const adjunctSurfaced = (frag: string) => (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(frag));
+                // Rewritten in round 4 (ruling W7b): an adjunct is surfaced when it is listed OR a displayed option starts it (then it is not listed again as an adjunct that is not in an option).
+                const adjunctSurfaced = (frag: string) => (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(frag))
+                    || scoredRegimens.some(r => (r.modification_set?.modifications ?? []).some(m => (m.action === 'add' || m.action === 'swap') && !!m.target && (m.target.med.name.toLowerCase().includes(frag) || getMedicationClassGroup(m.target.med.drug_class).toLowerCase().includes(frag))));
                 // 2026-11-15: a feature's CRITERIA firing is read from the rationale text; class A features (counted_in_outcome_model) stay in the rationale but add 0 bonus points.
                 const featureFired = (r: typeof scoredRegimens[number], frag: string) => (r.rationale ?? []).some(t => t.includes(frag));
                 const featurePoints = (r: typeof scoredRegimens[number], frag: string) => (r.score_breakdown?.adjustments ?? []).flatMap(a => a.items ?? []).filter(i => i.feature.includes(frag)).reduce((sum, i) => sum + i.points, 0);
@@ -2980,7 +3005,7 @@ async function runVerification() {
                     // label table: 70 kg or more, Hb 10-14 -> 1000 mg day 1, 500 mg week 6
                     if (withFcm().some(r => !/70 kg or more/.test(ironWarn(r)) || !/day 1 1000 mg; week 6 500 mg/.test(ironWarn(r)))) fail(`85 kg / Hb 12 dosing note is not 1000 mg then 500 mg at week 6: ${withFcm().map(ironWarn)[0]}`);
                     if (withFcm().some(r => !/weeks 12, 24 and 36/.test(ironWarn(r)))) fail('Dosing note lacks the 500 mg maintenance schedule');
-                    if (withFcm().some(r => !(r.warnings ?? []).some(x => /BOXED WARNING/.test(x) && /hypophosphatemia/.test(x)))) fail('Boxed-warning hypophosphatemia text missing');
+                    if (withFcm().some(r => !(r.warnings ?? []).some(x => /boxed warning/i.test(x) && /hypophosphatemia/.test(x)))) fail('Boxed-warning hypophosphatemia text missing');
                     if (withFcm().some(r => !(r.monitoring_plan ?? []).some(m => /phosphate/i.test(m.test)))) fail('Phosphate monitoring item missing');
                     if (withFcm().some(r => !featureFired(r, 'Treats iron deficiency in HFrEF'))) fail('Full-credit iron criteria not met in the rationale at LVEF 30');
                     if (withFcm().some(r => featurePoints(r, 'Treats iron deficiency') !== 0)) fail('Iron feature must add 0 bonus points (counted in the outcome model)');
@@ -3106,7 +3131,7 @@ async function runVerification() {
                     const withFsx = scoredRegimens.filter(r => r.regimen.some(m => m.med.name === FSX));
                     // 'Furoscix offered with worsening congestion' is a guideline TARGET now (guidelineTargets.ts); the checks below apply to any Furoscix option that IS displayed.
                     if (withFsx.some(r => !r.regimen.some(m => m.med.drug_class === 'Loop Diuretic' && m.med.name !== FSX))) fail('Furoscix offered without an oral loop beside it');
-                    if (mods.some(x => x.m.target?.med.name === FSX && !/SHORT COURSE/.test(x.m.summary))) fail('Furoscix modification summary does not say short course');
+                    if (mods.some(x => x.m.target?.med.name === FSX && !/short course/i.test(x.m.summary))) fail('Furoscix modification summary does not say short course');
                     if (!withFsx.every(r => r.monitoring_plan?.some(m => /Volume status after the Furoscix course/.test(m.test) && /resume or adjust the oral loop/.test(m.details)))) fail('No monitoring item to reassess volume and resume/adjust the oral loop after Furoscix');
                     // credited ABOVE the oral loop: oral 40 mg/day = 2.4 kg, plus Furoscix 80 mg SC (= 160 mg oral) -> furosemide curve at 40 + 160 = 200 mg oral-equivalent, capped at 320
                     const inc = kgLost([{ action: 'add', target: rmed(FSX, 80, 'qd'), summary: 'x' }]).kg;
@@ -3195,7 +3220,9 @@ async function runVerification() {
                 const summaries = mods.map(x => x.m.summary);
                 const strengthsOf = (name: string) => scoredRegimens.flatMap(r => r.regimen.filter(m => m.med.name === name).map(m => Number(m.dose.strength)));
                 const warningsOf = (name: string) => scoredRegimens.filter(r => r.regimen.some(m => m.med.name === name)).map(r => (r.warnings ?? []).join(' | '));
-                const adjunctSurfaced = (frag: string) => (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(frag));
+                // Rewritten in round 4 (ruling W7b): an adjunct is surfaced when it is listed OR a displayed option starts it (then it is not listed again as an adjunct that is not in an option).
+                const adjunctSurfaced = (frag: string) => (eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(frag))
+                    || scoredRegimens.some(r => (r.modification_set?.modifications ?? []).some(m => (m.action === 'add' || m.action === 'swap') && !!m.target && (m.target.med.name.toLowerCase().includes(frag) || getMedicationClassGroup(m.target.med.drug_class).toLowerCase().includes(frag))));
                 const med = (n: string) => MEDICATION_FORMULARY.find(m => m.name === n)!;
                 const BETA_BLOCKERS = ['Carvedilol', 'Metoprolol Succinate', 'Bisoprolol'];
                 const anyBb = () => scoredRegimens.some(r => r.regimen.some(m => m.med.drug_class === 'Beta Blocker'));
@@ -3215,7 +3242,7 @@ async function runVerification() {
                     oneStep('Carvedilol', 25, 12.5, 54);
                     // 2026-11-11: metoprolol succinate and bisoprolol start thresholds are 50 (ESC S6), so at HR 54 they are NOT blocked (before: blocked below 55).
                     for (const n of ['Metoprolol Succinate', 'Bisoprolol']) {
-                        if (excl(n)?.rule_id === 'E13' && /START/.test(whyText(n))) fail(`${n} (a NEW start) is blocked at HR 54 (the ESC S6 start threshold is 50)`);
+                        if (excl(n)?.rule_id === 'E13' && /\bstart\b/i.test(whyText(n))) fail(`${n} (a NEW start) is blocked at HR 54 (the ESC S6 start threshold is 50)`);
                     }
                 }
                 if (t.includes('Metoprolol Succinate 100 mg HR 48')) oneStep('Metoprolol Succinate', 100, 50, 48);
@@ -3227,11 +3254,11 @@ async function runVerification() {
                 }
                 if (t.includes('Bisoprolol New Start At HR 52 Allowed')) {
                     if (excl('Bisoprolol')) fail('Bisoprolol new start excluded at HR 52 (ESC S6 threshold is 50)');
-                    if (excl('Carvedilol')?.rule_id !== 'E13' || !/START/.test(whyText('Carvedilol'))) fail('Carvedilol new start not blocked at HR 52 (label threshold 55)');
+                    if (excl('Carvedilol')?.rule_id !== 'E13' || !/\bstart\b/i.test(whyText('Carvedilol'))) fail('Carvedilol new start not blocked at HR 52 (label threshold 55)');
                     if (excl('Metoprolol Succinate')) fail('Metoprolol succinate new start excluded at HR 52 (ESC S6 threshold is 50)');
                 }
                 if (t.includes('Bisoprolol New Start At HR 48 Withheld')) {
-                    if (excl('Bisoprolol')?.rule_id !== 'E13' || !/START/.test(whyText('Bisoprolol'))) fail('Bisoprolol new start not withheld at HR 48');
+                    if (excl('Bisoprolol')?.rule_id !== 'E13' || !/\bstart\b/i.test(whyText('Bisoprolol'))) fail('Bisoprolol new start not withheld at HR 48');
                     if (anyBb()) fail('A beta-blocker START offered at HR 48');
                 }
                 if (t.includes('Carvedilol 3.125 mg HR 50 Withheld')) {
@@ -3240,14 +3267,16 @@ async function runVerification() {
                     if (!bradyAlert('CARVEDILOL')) fail('No bradycardia alert for the withheld beta-blocker');
                 }
                 if (t.includes('Third-Degree AV Block Beta-Blocker Removed')) {
+                    // 2026-11-19 (S4): third-degree AV block without a pacemaker is a stop state like the low blood pressure stop: no options, an urgent alert naming the rhythm and that
+                    // pacing evaluation comes first (the beta-blocker is no longer shown as a "Remove carvedilol" option).
                     if (anyBb()) fail('Beta-blocker kept with third-degree AV block and no pacemaker');
-                    if (!summaries.some(x => x.startsWith('Remove Carvedilol') && x.includes('contraindicated'))) fail('Carvedilol not removed as contraindicated in third-degree AV block');
-                    if (!/Third-degree/.test(whyText('Carvedilol'))) fail('Carvedilol exclusion does not state third-degree AV block');
+                    if (scoredRegimens.length > 0) fail('options shown with third-degree AV block and no pacemaker (a stop state)');
+                    if (!clinicalAlerts.some(a => /^THIRD-DEGREE AV BLOCK/.test(a) && /pacing evaluation comes first/.test(a))) fail('no urgent third-degree AV block alert naming pacing');
                     if (bradyAlert('CARVEDILOL')) fail('Bradycardia dose-reduction alert shown for a beta-blocker that is being removed for AV block');
                 }
                 if (t.includes('Sick Sinus Syndrome Without Pacemaker')) {
                     if (anyBb()) fail('Beta-blocker kept with sick sinus syndrome and no pacemaker (labeled contraindication)');
-                    if (!summaries.some(x => x.startsWith('Remove Metoprolol Succinate') && x.includes('contraindicated'))) fail('Metoprolol succinate not removed for sick sinus syndrome');
+                    if (!summaries.some(x => x.startsWith('Remove Metoprolol Succinate') && x.includes('Sick sinus'))) fail('Metoprolol succinate not removed for sick sinus syndrome, with its specific reason');
                     for (const n of BETA_BLOCKERS) if (!/Sick sinus/.test(whyText(n))) fail(`${n} exclusion does not state sick sinus syndrome`);
                 }
                 if (t.includes('Paced Rhythm HR 52 Beta-Blocker Kept')) {
@@ -3267,7 +3296,7 @@ async function runVerification() {
                 }
                 if (t.includes('New Beta-Blocker Start Blocked At HR 48')) {
                     for (const n of BETA_BLOCKERS) {
-                        if (excl(n)?.rule_id !== 'E13' || !/START/.test(whyText(n))) fail(`${n} new start not blocked at HR 48 with the initiation reason`);
+                        if (excl(n)?.rule_id !== 'E13' || !/\bstart\b/i.test(whyText(n))) fail(`${n} new start not blocked at HR 48 with the initiation reason`);
                     }
                     if (anyBb()) fail('A beta-blocker START offered at HR 48');
                 }
@@ -3337,7 +3366,7 @@ async function runVerification() {
                 }
                 if (t.includes('Ivabradine Start Tier 5 mg') || t.includes('Ivabradine Start Tier 2.5 mg')) {
                     const want = t.includes('2.5 mg') ? 2.5 : 5;
-                    const starts = mods.filter(x => x.m.action === 'add' && x.m.target?.med.name === 'Ivabradine').map(x => Number(x.m.target!.dose.strength));
+                    const starts = scoredCandidates(scenario.patient).flatMap(r => r.modification_set?.modifications ?? []).filter(m => m.action === 'add' && m.target?.med.name === 'Ivabradine').map(m => Number(m.target!.dose.strength));
                     if (starts.length === 0) fail('Ivabradine not offered as a new start (check is vacuous)');
                     if (starts.some(x => x !== want)) fail(`Ivabradine start must be ${want} mg bid (found ${starts.join(', ')}); label: 2.5 mg bid only for conduction defects / bradycardia risk`);
                 }
@@ -3535,7 +3564,7 @@ async function runVerification() {
                 if (t.includes('Spironolactone 25 mg Potassium 5.2 Not Increased')) {
                     if (upOf('Spironolactone').length > 0) fail('Spironolactone up-titration offered at potassium 5.2');
                     const alert = clinicalAlerts.find(a => a.startsWith('POTASSIUM HOLD ON SPIRONOLACTONE'));
-                    if (!alert || !alert.includes('5.2') || !/not increased/.test(alert) || !/Engine policy/.test(alert)) fail('No plain potassium-hold alert (with the engine-policy basis) for spironolactone at potassium 5.2');
+                    if (!alert || !alert.includes('5.2') || !/not increased/.test(alert) || !/A rule set by this tool/.test(alert)) fail('No plain potassium-hold alert (with the engine-policy basis) for spironolactone at potassium 5.2');
                     if (scoredRegimens.some(r => r.modification_set?.modifications.some(m => m.action === 'titrate_up' && m.target?.med.name === 'Spironolactone'))) fail('A displayed regimen up-titrates spironolactone at potassium 5.2');
                     if (analysis.forcedReduceNames.has('Spironolactone')) fail('Potassium 5.2 forces an MRA reduction (reduction starts at 5.5)');
                 }
@@ -3608,7 +3637,8 @@ async function runVerification() {
                 const probePatient=clonePatient(scenario.patient);
                 probePatient.current_regimen=probePatient.current_regimen.map(r=>({...r,exposure:{...r.exposure,dose_interval_reviewed:false}}));
                 const reviewRegimens = ['Target-Dose ACEi To ARNI','Low-Dose ACEi To ARNI','ARNI At SBP 98'].some(x=>t.includes(x))
-                    ? generateAndScoreModifications(probePatient,new Set(MEDICATION_FORMULARY.filter(m=>RAAS_CLASSES.has(m.drug_class) || scenario.patient.current_regimen.some(r=>r.med.name===m.name)).map(m=>m.name)),scenarioPrices).scoredRegimens
+                    // Every scored candidate of the RAAS probe (not only the displayed ones: an option scored below "no change" is not displayed since 2026-11-19, S10).
+                    ? scoredCandidates(probePatient,new Set(MEDICATION_FORMULARY.filter(m=>RAAS_CLASSES.has(m.drug_class) || scenario.patient.current_regimen.some(r=>r.med.name===m.name)).map(m=>m.name)))
                     : scoredRegimens;
                 const mods = reviewRegimens.flatMap(r => (r.modification_set?.modifications ?? []).map(m => ({ r, m })));
                 const startsOf = (name: string) => mods.filter(x => (x.m.action === 'add' || x.m.action === 'swap') && x.m.target?.med.name === name).map(x => String(x.m.target!.dose.strength));
@@ -3624,7 +3654,7 @@ async function runVerification() {
                     const s = startsOf(ARNI);
                     if (!s.includes('49/51')) fail(`Target-dose ACEi -> ARNI swap not offered at 49/51 (found ${s.join(', ') || 'none'})`);
                     if (s.includes('97/103')) fail('ARNI swap offered at 97/103');
-                    if (!allSummaries.some(x => x.includes('WAIT 36 hours'))) fail('ACEi -> ARNI swap lacks the 36-hour washout instruction');
+                    if (!allSummaries.some(x => x.includes('wait 36 hours'))) fail('ACEi -> ARNI swap lacks the 36-hour washout instruction');
                     if (!allWarnings.some(w => w.includes('36-hour washout'))) fail('ACEi -> ARNI swap lacks the washout warning');
                     if (scoredRegimens.some(r => r.regimen.filter(m => RAAS_CLASSES.has(m.med.drug_class)).length > 1)) fail('A regimen holds ARNI and ACEi together (hard exclusion)');
                 }
@@ -3636,7 +3666,7 @@ async function runVerification() {
                 if (t.includes('ARNI To ACEi Washout')) {
                     const toAcei = mods.filter(x => x.m.action === 'swap' && x.m.source?.med.drug_class === 'ARNI' && x.m.target?.med.drug_class === 'ACEi');
                     if (toAcei.length === 0) fail('No ARNI -> ACEi swap produced (check is vacuous)');
-                    if (toAcei.some(x => !x.m.summary.includes('WAIT 36 hours'))) fail('ARNI -> ACEi swap lacks the 36-hour washout instruction (Zestril label: mirror rule)');
+                    if (toAcei.some(x => !x.m.summary.includes('wait 36 hours'))) fail('ARNI -> ACEi swap lacks the 36-hour washout instruction (Zestril label: mirror rule)');
                     if (toAcei.some(x => !x.r.warnings.some(w => w.includes('36-hour washout') && w.includes('last ARNI dose')))) fail('ARNI -> ACEi swap lacks the washout warning');
                 }
                 if (t.includes('Aliskiren With Diabetes')) {
@@ -3794,9 +3824,16 @@ async function runVerification() {
                 runs++;
                 const out = byProfile[profile];
                 const tag = `"${scenario.title}" [${profile}]`;
+                // Rewritten in round 6 (ruling V15a): an eligible adjunct that no option carries now says why ("Not in an option shown: ..."), and that reason can differ between profiles (the plan's fate depends on the profile's order and scores); the adjuncts themselves must be the same.
+                const stripReason = (xs: unknown) => (Array.isArray(xs) ? xs.map(x => String(x).split(' Not in an option shown: ')[0]) : xs);
                 const same = (k: 'excludedMedications' | 'clinicalAlerts' | 'gdmtGaps' | 'eligibleAdjuncts' | 'missingDataNotices') =>
-                    JSON.stringify(out[k]) === JSON.stringify(base[k]);
+                    JSON.stringify(k === 'eligibleAdjuncts' ? stripReason(out[k]) : out[k]) === JSON.stringify(k === 'eligibleAdjuncts' ? stripReason(base[k]) : base[k]);
+                // Rewritten in round 4 (ruling W7b): an eligible adjunct is not listed when a displayed option starts its class, so the list can differ between profiles exactly when the profiles
+                // display options that start different classes. With the same classes started, the list must be identical.
+                const startedClasses = (o: typeof out) => JSON.stringify([...new Set(o.scoredRegimens.flatMap(r => (r.modification_set?.modifications ?? []).filter(m => (m.action === 'add' || m.action === 'swap') && m.target).map(m => getMedicationClassGroup(m.target!.med.drug_class))))].sort());
+                const sameClassesStarted = startedClasses(out) === startedClasses(base);
                 for (const k of ['excludedMedications', 'clinicalAlerts', 'gdmtGaps', 'eligibleAdjuncts', 'missingDataNotices'] as const) {
+                    if (k === 'eligibleAdjuncts' && !sameClassesStarted) continue;
                     if (!same(k)) profileSafetyViolations.push(`${tag}: ${k} differ from the default-profile run`);
                 }
                 if (out.scoredRegimens.length === 0 && base.scoredRegimens.length > 0) profileSafetyViolations.push(`${tag}: no regimens although default shows some`);
@@ -3885,106 +3922,34 @@ async function runVerification() {
         else { console.log('  [PASS] cost_first, simplicity_first and outcomes_first move cost, complexity and completeness the stated way.'); passed++; }
     }
 
-    console.log('Checking structural invariant: the ranking mode changes order only (Balanced default; Prioritize foundational therapy)...');
+    // Rewritten 2026-11-20 (owner ruling 2, U13): the "Prioritize foundational therapy" ranking toggle was removed. The invariant now is: there is ONE ranking. A patient object that still
+    // carries the retired `ranking_mode` field (any value) does not crash and gives output identical to the same patient without it, and no engine module reads the field.
+    console.log('Checking structural invariant: one ranking (a patient carrying the retired ranking_mode field is ranked identically; no engine module reads it)...');
     {
         const violations: string[] = [];
-        const examples: { tag: string; bal: string; fnd: string; balR: ScoredRegimenLike; fndR: ScoredRegimenLike }[] = [];
-        type ScoredRegimenLike = { overall_score: number; foundational_coverage?: number; cost: number };
-        const label = (r: { regimen: { med: { name: string }; dose: { strength: number | string; unit: string }; selected_frequency: string }[] }) =>
-            r.regimen.map(m => `${m.med.name} ${m.dose.strength}${m.dose.unit} ${m.selected_frequency}`).join(' + ');
-        let runs = 0, applicableRuns = 0, leadChanged = 0;
-        const demotedBalancedCases: string[] = [];
-        const spotChecks: string[] = [];
-        for (const scenario of SCENARIOS) {
-            for (const tier of ['cash', 'commercial', 'medicare'] as const) {
-                const pt = clonePatient(scenario.patient);
-                pt.insurance_tier = tier;
-                const prices = await getDrugPrices(formularyNames, tier);
-                const avail = availableFor(scenario.title);
-                const tag = `"${scenario.title}" [${tier}]`;
-                let def, bal, fnd;
-                try {
-                    def = generateAndScoreModifications(clonePatient(pt), avail, prices);
-                    bal = generateAndScoreModifications({ ...clonePatient(pt), ranking_mode: 'balanced' }, avail, prices);
-                    fnd = generateAndScoreModifications({ ...clonePatient(pt), ranking_mode: 'foundational_first' }, avail, prices);
-                } catch (err) { violations.push(`${tag}: threw: ${(err as Error).message}`); continue; }
-                runs++;
-                // ranking_mode is echoed into projected_patient; everything else must be byte-identical.
-                const noMode = (_k: string, v: unknown) => (_k === 'ranking_mode' ? undefined : v);
-                if (JSON.stringify(def, noMode) !== JSON.stringify(bal, noMode)) violations.push(`${tag}: missing ranking_mode differs from explicit 'balanced'`);
-                for (const k of ['excludedMedications', 'clinicalAlerts', 'gdmtGaps', 'eligibleAdjuncts', 'missingDataNotices'] as const) {
-                    if (JSON.stringify(bal[k]) !== JSON.stringify(fnd[k])) violations.push(`${tag}: ${k} differ between modes`);
-                }
-                if (bal.scoredRegimens.length === 0 && fnd.scoredRegimens.length > 0) violations.push(`${tag}: foundational mode shows regimens although Balanced shows none`);
-                // Scores never change with the mode: a regimen shown in both runs has identical scores.
-                for (const r of fnd.scoredRegimens) {
-                    const m = bal.scoredRegimens.find(x => label(x) === label(r));
-                    if (m && (m.overall_score !== r.overall_score || m.raw_score !== r.raw_score)) violations.push(`${tag}: ${label(r)} scores differ between modes`);
-                }
-                // Over-budget fallback wording (owner decision 2026-11-11): never presented as an implementable plan.
-                for (const r of [...bal.scoredRegimens, ...fnd.scoredRegimens]) {
-                    const w = r.warnings.find(x => x.startsWith('BUDGET EXCEEDED'));
-                    if (w && !(w.includes('nothing fits the stated budget') && w.includes('not as a plan the patient can carry out'))) violations.push(`${tag}: BUDGET EXCEEDED warning lacks the not-implementable wording`);
-                }
-                const phen = classifyPhenotype(pt);
-                const rk = fnd.ranking;
-                // Hard-stop outputs (alerts only) return before selection and carry no ranking info.
-                if (fnd.scoredRegimens.length > 0 && (!rk || rk.mode !== 'foundational_first')) violations.push(`${tag}: ranking info missing/wrong mode`);
-                if (bal.ranking && (bal.ranking.mode !== 'balanced' || bal.ranking.applied || bal.ranking.balanced_lead_differs)) violations.push(`${tag}: balanced ranking info wrong`);
-                if (phen !== 'HFrEF') {
-                    if (JSON.stringify(bal.scoredRegimens, noMode) !== JSON.stringify(fnd.scoredRegimens, noMode)) violations.push(`${tag}: ${phen} picks differ between modes (must be identical)`);
-                    if (rk && (rk.applied || !rk.reason_not_applied)) violations.push(`${tag}: non-applicable phenotype must report applied=false with a reason`);
-                } else {
-                    applicableRuns++;
-                    const b0 = bal.scoredRegimens[0], f0 = fnd.scoredRegimens[0];
-                    const cov = (r: { foundational_coverage?: number }) => r.foundational_coverage ?? 0;
-                    const clean = (r: Parameters<typeof isProjectedSafetyClean>[0]) => isProjectedSafetyClean(r, pt);
-                    // The foundational lead, when clean, has the highest foundational coverage among every clean displayed candidate.
-                    if (f0 && clean(f0)) {
-                        for (const o of fnd.scoredRegimens) if (clean(o) && cov(o) > cov(f0) + 1e-9) violations.push(`${tag}: clean foundational lead coverage ${cov(f0)} < clean displayed regimen ${label(o)} (${cov(o)})`);
-                    }
-                    // A clean lead must come before every demoted regimen.
-                    if (f0 && !clean(f0) && fnd.scoredRegimens.some(clean)) violations.push(`${tag}: a demoted regimen leads although a clean one is displayed`);
-                    // Foundational lead never covers fewer pillars than the balanced lead unless the balanced lead is demoted by rule (a).
-                    if (b0 && f0 && cov(f0) < cov(b0) - 1e-9) {
-                        if (clean(b0)) violations.push(`${tag}: foundational lead coverage ${cov(f0)} < balanced lead ${cov(b0)} although the balanced lead is clean`);
-                        else demotedBalancedCases.push(`${tag}: balanced lead ${label(b0)} (coverage ${Math.round(cov(b0))}%) is demoted by rule (a); foundational lead ${label(f0)} (${Math.round(cov(f0))}%)`);
-                    }
-                    if (/Hyperkalemia \(K\+ 5\.6\)|Severe Dilation \(LVEF 20%/.test(scenario.title)) {
-                        const cleanWithPillar = fnd.scoredRegimens.some(o => clean(o) && cov(o) > 0);
-                        spotChecks.push(`${tag}: foundational lead ${f0 ? label(f0) : '(none)'} coverage ${f0 ? Math.round(cov(f0)) : '-'}%, clean regimen with a pillar displayed: ${cleanWithPillar}`);
-                        if (f0 && cov(f0) === 0 && cleanWithPillar) violations.push(`${tag}: foundational mode leads with a zero-pillar regimen although a clean regimen with a pillar exists`);
-                    }
-                    const differs = !!b0 && !!f0 && label(b0) !== label(f0);
-                    if (differs !== !!rk?.balanced_lead_differs) violations.push(`${tag}: balanced_lead_differs=${rk?.balanced_lead_differs} but leads ${differs ? 'differ' : 'match'}`);
-                    if (differs && !rk?.balanced_lead_summary) violations.push(`${tag}: balanced_lead_differs without a summary`);
-                    if (differs) { leadChanged++; examples.push({ tag, bal: label(b0), fnd: label(f0), balR: b0, fndR: f0 }); }
-                }
-            }
-        }
-        // Source guard: only selection.ts (and the facade re-export) may read the mode, so it cannot reach scoring or eligibility.
-        for (const f of readdirSync(path.join(process.cwd(), 'services', 'engine')).filter(n => n.endsWith('.ts') && n !== 'selection.ts')) {
+        let runs = 0;
+        for (const f of readdirSync(path.join(process.cwd(), 'services', 'engine')).filter(n => n.endsWith('.ts'))) {
             const text = readFileSync(path.join(process.cwd(), 'services', 'engine', f), 'utf8');
-            if (/ranking_mode|resolveRankingMode/.test(text)) violations.push(`services/engine/${f} reads the ranking mode (only selection.ts may)`);
+            if (/ranking_mode|resolveRankingMode|foundational_first|foundational_coverage/.test(text)) violations.push(`services/engine/${f} still reads the retired ranking mode`);
+        }
+        const noMode = (k: string, v: unknown) => (k === 'ranking_mode' ? undefined : v);
+        for (const scenario of SCENARIOS) {
+            const avail = availableFor(scenario.title), pr = await getDrugPrices(formularyNames, scenario.patient.insurance_tier);
+            const base = JSON.stringify(generateAndScoreModifications(clonePatient(scenario.patient), avail, pr), noMode);
+            for (const mode of ['balanced', 'foundational_first', 'anything'] as const) {
+                runs++;
+                try {
+                    const out = JSON.stringify(generateAndScoreModifications({ ...clonePatient(scenario.patient), ranking_mode: mode }, avail, pr), noMode);
+                    if (out !== base) violations.push(`${scenario.title}: ranking_mode '${mode}' changes the output`);
+                } catch (e) { violations.push(`${scenario.title}: ranking_mode '${mode}' throws ${String(e).slice(0, 80)}`); }
+            }
         }
         if (violations.length > 0) {
             violations.slice(0, 20).forEach(m => console.error(`  [FAIL] ${m}`));
             failed++;
         } else {
-            console.log(`  [PASS] ${runs} scenario x tier runs: default == balanced; exclusions, alerts, gaps, adjuncts, notices and scores identical across modes; non-HFrEF picks identical.`);
+            console.log(`  [PASS] ${runs} runs with the retired field set to three values: identical output, no crash, no engine module reads it.`);
             passed++;
-        }
-        console.log(`  RANKING MODE EFFECT: foundational_first changes the lead pick in ${leadChanged} of ${applicableRuns} HFrEF/HFimpEF runs (${runs} runs total).`);
-        console.log(`  Foundational lead has LOWER foundational coverage than the balanced lead only where the balanced lead is demoted by rule (a): ${demotedBalancedCases.length} runs.`);
-        demotedBalancedCases.forEach(c => console.log(`    ${c}`));
-        spotChecks.forEach(c => console.log(`  SPOT ${c}`));
-        const seen = new Set<string>();
-        for (const e of examples) {
-            const title = e.tag.replace(/ \[[a-z]+\]$/, '');
-            if (seen.has(title)) continue;
-            seen.add(title);
-            if (seen.size > 12) break;
-            console.log(`    ${e.tag}\n      Balanced lead:     ${e.bal} [score ${e.balR.overall_score}, foundational coverage ${Math.round(e.balR.foundational_coverage ?? 0)}%, $${e.balR.cost}]\n      Foundational lead: ${e.fnd} [score ${e.fndR.overall_score}, foundational coverage ${Math.round(e.fndR.foundational_coverage ?? 0)}%, $${e.fndR.cost}]`);
         }
     }
 
@@ -4138,15 +4103,16 @@ async function runVerification() {
                 const pt = clonePatient(scenario.patient);
                 pt.insurance_tier = tier;
                 const prices = await getDrugPrices(formularyNames, tier);
-                for (const mode of ['balanced', 'foundational_first'] as const) {
-                    const p = { ...clonePatient(pt), ranking_mode: mode };
+                for (const mode of ['one ranking'] as const) {
+                    const p = clonePatient(pt);
                     const out = generateAndScoreModifications(p, availableFor(scenario.title), prices);
                     checked++;
                     if (out.scoredRegimens.length === 0 || !isCongestedAboveDryWeight(p)) continue;
                     const formularyNow = MEDICATION_FORMULARY.filter(m => availableFor(scenario.title).has(m.name));
                     const up = analyzeCurrentRegimen(p, formularyNow, formularyNow.flatMap(m => getDoseTiers(m, p))).titratableUp.some(x => x.current.med.drug_class === 'Loop Diuretic');
                     for (const r of out.scoredRegimens) if (r.shown_because) tagged++;
-                    if (out.scoredRegimens[0].shown_because) violations.push(`"${scenario.title}" [${tier}/${mode}]: option 1 carries shown_because (it must never be displaced or tagged)`);
+                    // Rewritten 2026-11-19 (ruling U2): option 1 may carry the label that says it is shown although it scores below the baseline plan (the over-budget rule); it is never tagged as a congestion-rule insertion.
+                    if (out.scoredRegimens[0].shown_because && !/the tool scores this option below/.test(out.scoredRegimens[0].shown_because)) violations.push(`"${scenario.title}" [${tier}/${mode}]: option 1 carries shown_because (it must never be displaced or tagged)`);
                     if (!up || (p.potassium > 0 && p.potassium < 3.5) || p.current_regimen.some(r => r.med.drug_class === 'Loop Diuretic' && (r.exposure?.status !== 'active' || r.exposure?.adherence !== 'consistent'))) continue;
                     relevant++;
                     const has = out.scoredRegimens.some(r => includesLoopIncrease(r));
@@ -4381,7 +4347,7 @@ async function runVerification() {
         else { console.log(`  [PASS] ${MEDICATION_FORMULARY.length} drugs: one target threshold each.`); passed++; }
     }
 
-    console.log('Checking structural invariant: one fact, one charge (a state warning priced by a named adjustment is not counted again), and coverage counts are consistent...');
+    console.log('Checking structural invariant: one fact, one charge (a state warning priced by a named adjustment is not counted again)...');
     {
         const bad: string[] = [];
         for (const sc of SCENARIOS) {
@@ -4391,13 +4357,10 @@ async function runVerification() {
                 const dw = r.score_breakdown?.adjustments.find(a => a.code === SCORE_ADJUSTMENTS.DANGEROUS_WARNINGS.code);
                 const twice = WARNINGS_PRICED_BY_NAMED_ADJUSTMENT.find(m => dw?.detail?.includes(m));
                 if (twice) bad.push(`${sc.title}: "${twice}" counted in the warnings penalty`);
-                const fs = r.foundational_slots;
-                if (fs && (fs.on_board > fs.indicated || fs.on_board + fs.not_startable > fs.indicated || (r.foundational_coverage ?? 0) > 100 * fs.on_board / Math.max(1, fs.indicated) + 1e-6))
-                    bad.push(`${sc.title}: coverage ${r.foundational_coverage} inconsistent with ${fs.on_board} of ${fs.indicated} on board`);
             }
         }
         if (bad.length > 0) { console.error(`  [FAIL] ${bad.length}: ${bad.slice(0, 4).join('; ')}`); failed++; }
-        else { console.log('  [PASS] no ledger charges a fact twice; coverage never exceeds the share of indicated therapies on board.'); passed++; }
+        else { console.log('  [PASS] no ledger charges a fact twice. (The foundational-coverage consistency check was removed 2026-11-20 with the coverage field, U13.)'); passed++; }
     }
 
     console.log('Checking structural invariant: every sample patient is what the form would run (eGFR and BMI are fixed points of the form derivation)...');
@@ -4429,6 +4392,26 @@ async function runVerification() {
         passed += mm.passed; failed += mm.failed;
         const hb = runHarmBurdenChecks();
         passed += hb.passed; failed += hb.failed;
+        const r2 = runEngineSafetyRound2Checks();
+        passed += r2.passed; failed += r2.failed;
+        const rr2 = runEngineReadinessR2Checks();
+        passed += rr2.passed; failed += rr2.failed;
+        const rr3 = runEngineReadinessR3Checks();
+        passed += rr3.passed; failed += rr3.failed;
+        const rr4 = runEngineReadinessR4Checks();
+        passed += rr4.passed; failed += rr4.failed;
+        const rr5 = runEngineReadinessR5Checks();
+        passed += rr5.passed; failed += rr5.failed;
+        const rr6 = runEngineReadinessR6Checks();
+        passed += rr6.passed; failed += rr6.failed;
+        const rr7 = runEngineReadinessR7Checks();
+        passed += rr7.passed; failed += rr7.failed;
+        const rr8 = runEngineReadinessR8Checks();
+        passed += rr8.passed; failed += rr8.failed;
+        const rr9 = runEngineReadinessR9Checks();
+        passed += rr9.passed; failed += rr9.failed;
+        const rr10 = runEngineReadinessR10Checks();
+        passed += rr10.passed; failed += rr10.failed;
     }
 
     console.log('');

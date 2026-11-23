@@ -2,6 +2,8 @@
 
 Record of the work for the next person. It states what the model measures, what it extrapolates and what is engine policy, where every number lives, every ruling made on the way, the weakest rows and the decisions that belong to the owner. Everything here was read from the code and data files as they stood at the final pass on 2026-11-16 (local, uncommitted, undeployed; rule set `2026-11-16.1`). Nothing here is clinical validation: the checks that were run are engineering checks on synthetic cases (listed at the end).
 
+> **Superseded in part on 2026-11-18 (rule set 2026-11-18.1).** The owner instructed "implement the recommended changes and run them as one package". What changed, with measured results and the review record, is in `docs/owner-decisions-2026-11-18/README.md`, section "Package as implemented". It supersedes these statements below: a dose increase earns credit 1 (it now earns the credit at the dose reached, and a start is capped at the best dose the patient may be given); credit is 0.364 at the label starting dose for every drug (a drug with its own trial dose never earns less than its fraction of that dose); one prior of 0.0596 for outcomes (now 0.0288 for death and 0.0935 for hospitalization); one beta-blocker death row regardless of rhythm (now by current rhythm); ten upper-bound harm rows (seven are class averages, two are not measured, one remains); the IV iron hypophosphatemia row of 66.35 (now 7.48); 108 outcome rows (now 111); the results in section 11 (see the new record). Section 10's open decisions are answered, as recommendations, in the same record.
+
 ## 1. The owner's instructions
 
 The owner, a physician, ruled on 2026-11-15 and 2026-11-16:
@@ -295,7 +297,7 @@ Gate and ranking comparison, as reported by the controller after refreshing the 
 - `components/expectedEffectModel.ts`: pure display model (named so to avoid a casing collision with ExpectedEffect.tsx).
 - `components/EvidenceTables.tsx`: read-only tables of the four evidence files on the Evidence tab, with a drug-class filter.
 - `components/FAQ.tsx`: "How options are ordered" (weights table generated from `WEIGHT_PROFILES`).
-- `components/RecommendationCard.tsx`, `ScoreDetailModal.tsx`, `ScoreLedger.tsx`, `resultsModel.ts` (draft-note sentence), `scoreExplain.ts`, `rankingModeMeta.ts`.
+- `components/RecommendationCard.tsx`, `ScoreDetailModal.tsx`, `ScoreLedger.tsx`, `resultsModel.ts` (draft-note sentence), `scoreExplain.ts`, `appStatements.ts`.
 - `scripts/verifyClinicalUi.tsx`: UI checks (`npm run verify:ui`).
 
 ## 14. Verification limits

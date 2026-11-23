@@ -1,0 +1,1672 @@
+{
+ "runs": 1032,
+ "withLead": 1005,
+ "priors": {
+  "death": 0.024354151404266115,
+  "hospitalization": 0.08173390258467439,
+  "symptoms": 6.1976764044902515,
+  "mostlyPriorBelow": 0.2
+ },
+ "mostlyPrior": [
+  {
+   "kind": "outcome",
+   "id": "beta-blocker-mildly-reduced-death-afib",
+   "B": 0.1521468181335195
+  },
+  {
+   "kind": "outcome",
+   "id": "loop-reduced-death-congested",
+   "B": 0.05766679598872453
+  },
+  {
+   "kind": "outcome",
+   "id": "loop-reduced-hfhosp-congested",
+   "B": 0.07445665087703962
+  },
+  {
+   "kind": "outcome",
+   "id": "loop-mildly_reduced-death-congested",
+   "B": 0.05766679598872453
+  },
+  {
+   "kind": "outcome",
+   "id": "loop-mildly_reduced-hfhosp-congested",
+   "B": 0.07445665087703962
+  },
+  {
+   "kind": "outcome",
+   "id": "loop-preserved-death-congested",
+   "B": 0.05766679598872453
+  },
+  {
+   "kind": "outcome",
+   "id": "loop-preserved-hfhosp-congested",
+   "B": 0.07445665087703962
+  },
+  {
+   "kind": "outcome",
+   "id": "kbinder-szc-reduced-hfhosp",
+   "B": 0.16810896525457938
+  },
+  {
+   "kind": "outcome",
+   "id": "kbinder-szc-mildly_reduced-hfhosp",
+   "B": 0.16810896525457938
+  },
+  {
+   "kind": "outcome",
+   "id": "kbinder-szc-preserved-hfhosp",
+   "B": 0.16810896525457938
+  },
+  {
+   "kind": "symptom",
+   "id": "bb-reduced",
+   "B": 0.180413542699551
+  },
+  {
+   "kind": "symptom",
+   "id": "bb-mildly_reduced",
+   "B": 0.180413542699551
+  },
+  {
+   "kind": "symptom",
+   "id": "bb-preserved",
+   "B": 0.180413542699551
+  }
+ ],
+ "outcome": {
+  "beta-blocker-reduced-death-afib": {
+   "first": 69,
+   "displayed": 123,
+   "weightSum": 4.8438773813587765
+  },
+  "sglt2i-reduced-death": {
+   "first": 601,
+   "displayed": 808,
+   "weightSum": 97.9260411894575
+  },
+  "mra-reduced-death": {
+   "first": 559,
+   "displayed": 792,
+   "weightSum": 178.6692308990955
+  },
+  "loop-reduced-death-congested": {
+   "first": 181,
+   "displayed": 346,
+   "weightSum": 28.38489173628224
+  },
+  "acei-reduced-death": {
+   "first": 135,
+   "displayed": 425,
+   "weightSum": 40.82601595071301
+  },
+  "beta-blocker-reduced-hfh-afib": {
+   "first": 69,
+   "displayed": 123,
+   "weightSum": 7.723891661126813
+  },
+  "sglt2i-reduced-hfh": {
+   "first": 601,
+   "displayed": 808,
+   "weightSum": 143.0588818661211
+  },
+  "mra-reduced-hfh": {
+   "first": 559,
+   "displayed": 792,
+   "weightSum": 157.63695578025013
+  },
+  "loop-reduced-hfhosp-congested": {
+   "first": 181,
+   "displayed": 346,
+   "weightSum": 34.046920306839226
+  },
+  "acei-reduced-hfh": {
+   "first": 135,
+   "displayed": 425,
+   "weightSum": 43.033536738714055
+  },
+  "arni-reduced-death": {
+   "first": 583,
+   "displayed": 686,
+   "weightSum": 185.8572001538396
+  },
+  "arni-reduced-hfh": {
+   "first": 583,
+   "displayed": 686,
+   "weightSum": 238.53077576612435
+  },
+  "vasodilator-other-reduced-death": {
+   "first": 3,
+   "displayed": 33,
+   "weightSum": 1.572175624004751
+  },
+  "vasodilator-other-reduced-hfhosp": {
+   "first": 3,
+   "displayed": 33,
+   "weightSum": 0.13202696472385964
+  },
+  "loop-reduced-death-other": {
+   "first": 15,
+   "displayed": 30,
+   "weightSum": 0
+  },
+  "loop-reduced-hfhosp-other": {
+   "first": 15,
+   "displayed": 30,
+   "weightSum": 0
+  },
+  "loop-preserved-death-congested": {
+   "first": 10,
+   "displayed": 10,
+   "weightSum": 7.048015224078286
+  },
+  "mra-preserved-death": {
+   "first": 80,
+   "displayed": 36,
+   "weightSum": 48.814095471716946
+  },
+  "loop-preserved-hfhosp-congested": {
+   "first": 10,
+   "displayed": 10,
+   "weightSum": 4.331886635944331
+  },
+  "mra-preserved-hfh": {
+   "first": 80,
+   "displayed": 36,
+   "weightSum": 23.86809614045955
+  },
+  "sglt2i-preserved-death": {
+   "first": 97,
+   "displayed": 166,
+   "weightSum": 24.94748933725695
+  },
+  "sglt2i-preserved-hfh": {
+   "first": 97,
+   "displayed": 166,
+   "weightSum": 51.143296746061715
+  },
+  "nsmra-preserved-death": {
+   "first": 9,
+   "displayed": 80,
+   "weightSum": 5.281603246555432
+  },
+  "nsmra-preserved-hfh": {
+   "first": 9,
+   "displayed": 80,
+   "weightSum": 2.9688387468238955
+  },
+  "beta-blocker-reduced-death": {
+   "first": 660,
+   "displayed": 840,
+   "weightSum": 308.3213846103665
+  },
+  "beta-blocker-reduced-hfh": {
+   "first": 660,
+   "displayed": 840,
+   "weightSum": 219.49809300160243
+  },
+  "glp1-preserved-death": {
+   "first": 38,
+   "displayed": 72,
+   "weightSum": 12.572004157211218
+  },
+  "glp1-preserved-hfhosp": {
+   "first": 38,
+   "displayed": 72,
+   "weightSum": 16.230337143300755
+  },
+  "fcm-reduced-death": {
+   "first": 18,
+   "displayed": 38,
+   "weightSum": 0.8700060260222854
+  },
+  "fcm-reduced-hfhosp": {
+   "first": 18,
+   "displayed": 38,
+   "weightSum": 1.5788981743103163
+  },
+  "vasodilator-black-reduced-death": {
+   "first": 12,
+   "displayed": 27,
+   "weightSum": 3.203281298111759
+  },
+  "vasodilator-black-reduced-hfhosp": {
+   "first": 12,
+   "displayed": 27,
+   "weightSum": 3.317936275928281
+  },
+  "vericiguat-reduced-death": {
+   "first": 42,
+   "displayed": 50,
+   "weightSum": 4.086772696148329
+  },
+  "vericiguat-reduced-hfhosp": {
+   "first": 42,
+   "displayed": 50,
+   "weightSum": 2.3685182953589736
+  },
+  "digoxin-reduced-death": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 1.4814918264623005
+  },
+  "digoxin-reduced-hfhosp": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 4.517698274070601
+  },
+  "sglt2i-mildly-reduced-death": {
+   "first": 39,
+   "displayed": 60,
+   "weightSum": 3.312381802418717
+  },
+  "arni-mildly-reduced-death": {
+   "first": 41,
+   "displayed": 70,
+   "weightSum": 23.957043773160215
+  },
+  "sglt2i-mildly-reduced-hfh": {
+   "first": 39,
+   "displayed": 60,
+   "weightSum": 13.490528543811923
+  },
+  "arni-mildly-reduced-hfh": {
+   "first": 41,
+   "displayed": 70,
+   "weightSum": 16.74072919759125
+  },
+  "loop-mildly_reduced-death-congested": {
+   "first": 6,
+   "displayed": 6,
+   "weightSum": 2.3659532235557093
+  },
+  "loop-mildly_reduced-hfhosp-congested": {
+   "first": 6,
+   "displayed": 6,
+   "weightSum": 2.1608416023538717
+  },
+  "mra-mildly-reduced-death": {
+   "first": 27,
+   "displayed": 30,
+   "weightSum": 5.006519409016972
+  },
+  "mra-mildly-reduced-hfh": {
+   "first": 27,
+   "displayed": 30,
+   "weightSum": 5.23899214027509
+  },
+  "nsmra-mildly-reduced-death": {
+   "first": 9,
+   "displayed": 39,
+   "weightSum": 1.1568660239818023
+  },
+  "acei-mildly-reduced-death": {
+   "first": 4,
+   "displayed": 11,
+   "weightSum": 1.3446535918965787
+  },
+  "nsmra-mildly-reduced-hfh": {
+   "first": 9,
+   "displayed": 39,
+   "weightSum": 1.5683732957994874
+  },
+  "acei-mildly-reduced-hfh": {
+   "first": 4,
+   "displayed": 11,
+   "weightSum": 1.4616021764877296
+  },
+  "arb-reduced-death": {
+   "first": 2,
+   "displayed": 10,
+   "weightSum": 1.1603018922369714
+  },
+  "arb-reduced-hfh": {
+   "first": 2,
+   "displayed": 10,
+   "weightSum": 1.142805358696853
+  },
+  "beta-blocker-mildly-reduced-death-afib": {
+   "first": 0,
+   "displayed": 2,
+   "weightSum": 0
+  },
+  "beta-blocker-mildly-reduced-hfh": {
+   "first": 21,
+   "displayed": 26,
+   "weightSum": 1.0499816966029716
+  },
+  "kbinder-reduced-death": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "kbinder-reduced-hfhosp": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "ivabradine-reduced-death": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 0.698829897570074
+  },
+  "ivabradine-reduced-hfhosp": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 1.1993871765433404
+  },
+  "beta-blocker-mildly-reduced-death": {
+   "first": 21,
+   "displayed": 24,
+   "weightSum": 6.1304693054029515
+  },
+  "glp1-mildly_reduced-death": {
+   "first": 9,
+   "displayed": 6,
+   "weightSum": 1.4726506238147066
+  },
+  "glp1-mildly_reduced-hfhosp": {
+   "first": 9,
+   "displayed": 6,
+   "weightSum": 2.9843986576174655
+  },
+  "iviron-mildly_reduced-death": {
+   "first": 3,
+   "displayed": 3,
+   "weightSum": 0.35196106508507885
+  },
+  "iviron-mildly_reduced-hfhosp": {
+   "first": 3,
+   "displayed": 3,
+   "weightSum": 0.5182270490490284
+  },
+  "thiazide-reduced-death": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0
+  },
+  "thiazide-reduced-hfhosp": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0
+  },
+  "acei-preserved-death": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0.3367925631812506
+  },
+  "acei-preserved-hfh": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0.4575445874098085
+  }
+ },
+ "symptom": {
+  "bb-reduced": {
+   "first": 729,
+   "displayed": 963,
+   "weightSum": 198.34749367129788
+  },
+  "sglt2i-reduced": {
+   "first": 601,
+   "displayed": 808,
+   "weightSum": 228.30923796604117
+  },
+  "mra-reduced": {
+   "first": 559,
+   "displayed": 792,
+   "weightSum": 114.14938466265497
+  },
+  "loop-reduced": {
+   "first": 196,
+   "displayed": 376,
+   "weightSum": 0
+  },
+  "acei-reduced": {
+   "first": 135,
+   "displayed": 425,
+   "weightSum": 50.45188921193983
+  },
+  "arni-reduced": {
+   "first": 583,
+   "displayed": 686,
+   "weightSum": 246.48147958350796
+  },
+  "vasodilator-reduced": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 6.651178152632052
+  },
+  "loop-preserved": {
+   "first": 10,
+   "displayed": 10,
+   "weightSum": 0
+  },
+  "mra-preserved": {
+   "first": 80,
+   "displayed": 36,
+   "weightSum": 21.548831784106877
+  },
+  "sglt2i-preserved": {
+   "first": 97,
+   "displayed": 166,
+   "weightSum": 51.411325608399636
+  },
+  "nsmra-preserved": {
+   "first": 9,
+   "displayed": 80,
+   "weightSum": 3.192451783711513
+  },
+  "glp1-preserved": {
+   "first": 29,
+   "displayed": 54,
+   "weightSum": 18.26480423876527
+  },
+  "iviron-reduced": {
+   "first": 18,
+   "displayed": 38,
+   "weightSum": 6.402605648291062
+  },
+  "sgc-reduced": {
+   "first": 42,
+   "displayed": 50,
+   "weightSum": 0
+  },
+  "inotrope-reduced": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 0
+  },
+  "sglt2i-mildly_reduced": {
+   "first": 39,
+   "displayed": 60,
+   "weightSum": 15.733783241541337
+  },
+  "arni-mildly_reduced": {
+   "first": 41,
+   "displayed": 70,
+   "weightSum": 8.1411334968766
+  },
+  "loop-mildly_reduced": {
+   "first": 6,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "mra-mildly_reduced": {
+   "first": 27,
+   "displayed": 30,
+   "weightSum": 5.3955022893329865
+  },
+  "nsmra-mildly_reduced": {
+   "first": 9,
+   "displayed": 39,
+   "weightSum": 5.384355657903198
+  },
+  "acei-mildly_reduced": {
+   "first": 4,
+   "displayed": 11,
+   "weightSum": 0
+  },
+  "arb-reduced": {
+   "first": 2,
+   "displayed": 10,
+   "weightSum": 2
+  },
+  "bb-mildly_reduced": {
+   "first": 21,
+   "displayed": 26,
+   "weightSum": 4.450185846245017
+  },
+  "glpgip-preserved": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 4.582586585016675
+  },
+  "kbinder-reduced": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0.25570042887387767
+  },
+  "if-reduced": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 1.5604176781582404
+  },
+  "glp1-mildly_reduced": {
+   "first": 9,
+   "displayed": 6,
+   "weightSum": 5.406890793495491
+  },
+  "iviron-mildly_reduced": {
+   "first": 3,
+   "displayed": 3,
+   "weightSum": 0.8787616712056125
+  },
+  "thiazide-reduced": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0
+  },
+  "acei-preserved": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0
+  }
+ },
+ "harm": {
+  "BB-STEP6-AVblockAdv": {
+   "first": 750,
+   "displayed": 989,
+   "weightSum": 0
+  },
+  "BB-carvedilol-hyperglycemia": {
+   "first": 681,
+   "displayed": 902,
+   "weightSum": 40.11216483479635
+  },
+  "BB-carvedilol-syncope": {
+   "first": 681,
+   "displayed": 902,
+   "weightSum": 36.10094835131673
+  },
+  "BB-Ko-bradycardiaSymptomatic": {
+   "first": 750,
+   "displayed": 989,
+   "weightSum": 56.14347656799664
+  },
+  "BB-Ko-dizziness": {
+   "first": 750,
+   "displayed": 989,
+   "weightSum": 56.14347656799664
+  },
+  "BB-Ko-fatigue": {
+   "first": 750,
+   "displayed": 989,
+   "weightSum": 56.14347656799664
+  },
+  "BB-carvedilol-giUpset": {
+   "first": 681,
+   "displayed": 902,
+   "weightSum": 49.49612492111117
+  },
+  "BB-Ko-hypotensionSymptomatic": {
+   "first": 750,
+   "displayed": 989,
+   "weightSum": 56.14347656799664
+  },
+  "SGLT2i-dapa-genital-male": {
+   "first": 661,
+   "displayed": 883,
+   "weightSum": 52.61464230984875
+  },
+  "SGLT2i-dapa-K55-sibling": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 0
+  },
+  "SGLT2i-dapa-K60": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 1.4586105767386255
+  },
+  "SGLT2i-dapa-hypoglycemia": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 0.8751663460431709
+  },
+  "SGLT2i-dapa-DKA": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 3.5006653841726836
+  },
+  "SGLT2i-dapa-AKI": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 0
+  },
+  "SGLT2i-dapa-syncope": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 0
+  },
+  "SGLT2i-dapa-UTI": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 2.795670272082382
+  },
+  "SGLT2i-dapa-hypotension": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 18.905083988471528
+  },
+  "SGLT2i-dapa-urinaryFrequency": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 18.905083988471528
+  },
+  "SGLT2i-dapa-volume": {
+   "first": 728,
+   "displayed": 1014,
+   "weightSum": 18.905083988471528
+  },
+  "MRA-EMPHASIS-AVadv-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 0
+  },
+  "MRA-EPHESUS-creatinine-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 8.301416438687378
+  },
+  "MRA-STEP6-gynecomastia-eplerenone": {
+   "first": 294,
+   "displayed": 419,
+   "weightSum": 0
+  },
+  "MRA-EMPHASIS-hyperkalemia-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 29.970452048716748
+  },
+  "MRA-IPD-K60": {
+   "first": 666,
+   "displayed": 858,
+   "weightSum": 37.99039756137507
+  },
+  "MRA-EMPHASIS-gout-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 0
+  },
+  "MRA-IPD-hypoK": {
+   "first": 666,
+   "displayed": 858,
+   "weightSum": 0
+  },
+  "MRA-EMPHASIS-hyponatremia-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 0.5725114785301646
+  },
+  "MRA-EMPHASIS-renalSAE-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 0
+  },
+  "MRA-EMPHASIS-syncope-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 7.1154998045892
+  },
+  "MRA-EMPHASIS-bradycardia-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 2.211408376387755
+  },
+  "MRA-EMPHASIS-cough-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 2.211408376387755
+  },
+  "MRA-EMPHASIS-dizziness-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 2.211408376387755
+  },
+  "MRA-EMPHASIS-fatigue-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 2.211408376387755
+  },
+  "MRA-EMPHASIS-giUpset-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 2.211408376387755
+  },
+  "MRA-EMPHASIS-hypotension-eplerenone": {
+   "first": 351,
+   "displayed": 450,
+   "weightSum": 2.211408376387755
+  },
+  "loop-hyperglycemia": {
+   "first": 212,
+   "displayed": 403,
+   "weightSum": 14.482461363822965
+  },
+  "loop-gout": {
+   "first": 212,
+   "displayed": 403,
+   "weightSum": 4.453746182853075
+  },
+  "loop-hypokalemia": {
+   "first": 212,
+   "displayed": 403,
+   "weightSum": 24.137435606371568
+  },
+  "loop-hypomagnesemia": {
+   "first": 212,
+   "displayed": 403,
+   "weightSum": 0
+  },
+  "loop-hyponatremia": {
+   "first": 212,
+   "displayed": 403,
+   "weightSum": 16.857273576707872
+  },
+  "loop-hypotension": {
+   "first": 212,
+   "displayed": 403,
+   "weightSum": 0.6994198702256927
+  },
+  "ACEi-SOLVD-angioedema-class": {
+   "first": 142,
+   "displayed": 436,
+   "weightSum": 1.4349255966698966
+  },
+  "ACEi-SOLVD-creatinineRise-class": {
+   "first": 139,
+   "displayed": 418,
+   "weightSum": 1.6290491819197044
+  },
+  "ACEi-SOLVD-hyperkalemia-class": {
+   "first": 142,
+   "displayed": 436,
+   "weightSum": 1.1935139119908142
+  },
+  "ACEi-STEP6-renalSAE": {
+   "first": 142,
+   "displayed": 442,
+   "weightSum": 0
+  },
+  "ACEi-class-syncope": {
+   "first": 139,
+   "displayed": 418,
+   "weightSum": 11.647822679639841
+  },
+  "ACEi-SOLVD-cough-class": {
+   "first": 139,
+   "displayed": 418,
+   "weightSum": 8.356594880159514
+  },
+  "ACEi-SOLVD-fatigue-class": {
+   "first": 142,
+   "displayed": 436,
+   "weightSum": 8.626725690072346
+  },
+  "ACEi-lisinopril-hypotension": {
+   "first": 124,
+   "displayed": 238,
+   "weightSum": 7.375363873041727
+  },
+  "SGLT2i-dapa-genital-female#notcharged": {
+   "first": 661,
+   "displayed": 883,
+   "weightSum": 0
+  },
+  "ARNI-R5-angioedema": {
+   "first": 624,
+   "displayed": 756,
+   "weightSum": 11.327506798026155
+  },
+  "ARNI-R5-creatinine": {
+   "first": 624,
+   "displayed": 756,
+   "weightSum": 1.4798025027353578
+  },
+  "ARNI-R5-hyperkalemia": {
+   "first": 624,
+   "displayed": 756,
+   "weightSum": 0
+  },
+  "ARNI-STEP6-renalSAE": {
+   "first": 624,
+   "displayed": 756,
+   "weightSum": 0
+  },
+  "ARNI-R5-syncope": {
+   "first": 624,
+   "displayed": 756,
+   "weightSum": 59.97300815705595
+  },
+  "ARNI-R5-cough": {
+   "first": 624,
+   "displayed": 756,
+   "weightSum": 46.478652975801936
+  },
+  "ARNI-R5-hypotension": {
+   "first": 624,
+   "displayed": 756,
+   "weightSum": 46.478652975801936
+  },
+  "MRA-TOPCAT-creatinine-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 1.1855866365713863
+  },
+  "MRA-RALES-gynecomastia-spironolactone": {
+   "first": 304,
+   "displayed": 395,
+   "weightSum": 33.58952719688813
+  },
+  "MRA-TOPCAT-hyperkalemia-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 20.42072771091464
+  },
+  "MRA-TOPCAT-gout-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 0
+  },
+  "MRA-TOPCAT-hyponatremia-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 1.7764490319962167
+  },
+  "MRA-TOPCAT-renalSAE-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 5.051294204024034
+  },
+  "MRA-TOPCAT-syncope-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 0
+  },
+  "MRA-TOPCAT-bradycardia-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 1.2511598904743817
+  },
+  "MRA-TOPCAT-cough-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 1.2511598904743817
+  },
+  "MRA-TOPCAT-dizziness-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 1.2511598904743817
+  },
+  "MRA-TOPCAT-fatigue-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 1.2511598904743817
+  },
+  "MRA-TOPCAT-giUpset-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 1.2511598904743817
+  },
+  "MRA-TOPCAT-hypotension-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 1.2511598904743817
+  },
+  "MRA-TOPCAT-volume-spironolactone": {
+   "first": 315,
+   "displayed": 408,
+   "weightSum": 1.2511598904743817
+  },
+  "vas-lupus": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 0.4396368513335677
+  },
+  "vas-syncope": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 0.2597124652523408
+  },
+  "vas-vt": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 1.0388498610093633
+  },
+  "vas-dizziness": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 1.4138467350720048
+  },
+  "vas-fatigue": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 1.4138467350720048
+  },
+  "vas-giupset": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 1.4138467350720048
+  },
+  "vas-headache": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 1.4138467350720048
+  },
+  "vas-hypotension": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 1.4138467350720048
+  },
+  "vas-vision": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 1.4138467350720048
+  },
+  "vas-dae#notcharged": {
+   "first": 15,
+   "displayed": 60,
+   "weightSum": 0
+  },
+  "ACEi-SOLVD-hypotensionSymptomatic-class": {
+   "first": 15,
+   "displayed": 180,
+   "weightSum": 0.981231007117788
+  },
+  "MRA-RALES-gynecomastia-spironolactone#notcharged": {
+   "first": 11,
+   "displayed": 13,
+   "weightSum": 0
+  },
+  "SGLT2i-dapa-genital-female": {
+   "first": 67,
+   "displayed": 131,
+   "weightSum": 12.892006709316831
+  },
+  "SGLT2i-dapa-genital-male#notcharged": {
+   "first": 67,
+   "displayed": 131,
+   "weightSum": 0
+  },
+  "MRA-STEP6-gynecomastia-eplerenone#notcharged": {
+   "first": 57,
+   "displayed": 31,
+   "weightSum": 0
+  },
+  "nsMRA-FINEARTS-AVadv-finerenone": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 0.16677673359909068
+  },
+  "nsMRA-FINEARTS-creatinine-finerenone": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 1.370636373831607
+  },
+  "nsMRA-FINEARTS-hyperkalemia-finerenone": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 1.7156916847262775
+  },
+  "nsMRA-IPD-K60": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 1.7051483280044948
+  },
+  "nsMRA-IPD-hypoK": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 0
+  },
+  "nsMRA-FINEARTS-hyponatremia-finerenone": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 0.09776567142015652
+  },
+  "nsMRA-FINEARTS-renalSAE-finerenone": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 1.0926751511664559
+  },
+  "nsMRA-FINEARTS-syncope-finerenone": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 0.1265202806613791
+  },
+  "nsMRA-FINEARTS-dizziness-finerenone": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 0.7762715268292619
+  },
+  "nsMRA-FINEARTS-diarrhoea-finerenone": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 0.7762715268292619
+  },
+  "nsMRA-FINEARTS-hypotension-finerenone": {
+   "first": 18,
+   "displayed": 119,
+   "weightSum": 0.7762715268292619
+  },
+  "ACEi-SOLVD-angioedema-enalapril": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "ACEi-SOLVD-creatinineRise-enalapril": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "ACEi-SOLVD-hyperkalemia-enalapril": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "ACEi-enalapril-syncope": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "ACEi-SOLVD-cough-enalapril": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "ACEi-SOLVD-fatigue-enalapril": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "ACEi-SOLVD-hypotensionSymptomatic-enalapril": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "SGLT2i-empa-genital-male": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0.6871371481517053
+  },
+  "SGLT2i-empa-K55": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0
+  },
+  "SGLT2i-empa-K60": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0
+  },
+  "SGLT2i-empa-hypoglycemia": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0.05497097185213643
+  },
+  "SGLT2i-empa-DKA": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0
+  },
+  "SGLT2i-empa-AKI": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0
+  },
+  "SGLT2i-empa-syncope": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0.13513697246983541
+  },
+  "SGLT2i-empa-UTI": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0.22141085884888287
+  },
+  "SGLT2i-empa-hypotension": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0.25895541268705957
+  },
+  "SGLT2i-empa-urinaryFrequency": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0.25895541268705957
+  },
+  "SGLT2i-empa-volume": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0.25895541268705957
+  },
+  "SGLT2i-empa-genital-female#notcharged": {
+   "first": 9,
+   "displayed": 20,
+   "weightSum": 0
+  },
+  "sema-gallbladder": {
+   "first": 38,
+   "displayed": 60,
+   "weightSum": 1.3367473860248755
+  },
+  "sema-pancreatitis": {
+   "first": 38,
+   "displayed": 60,
+   "weightSum": 0
+  },
+  "sema-aki": {
+   "first": 38,
+   "displayed": 60,
+   "weightSum": 4.2971287124599655
+  },
+  "sema-constipation": {
+   "first": 38,
+   "displayed": 60,
+   "weightSum": 5.73981817391277
+  },
+  "sema-gi": {
+   "first": 38,
+   "displayed": 60,
+   "weightSum": 5.73981817391277
+  },
+  "sema-inj": {
+   "first": 38,
+   "displayed": 60,
+   "weightSum": 5.73981817391277
+  },
+  "fcm-hypersensitivity": {
+   "first": 21,
+   "displayed": 41,
+   "weightSum": 0.22173266942110992
+  },
+  "fcm-hypophosphatemia": {
+   "first": 21,
+   "displayed": 41,
+   "weightSum": 1.4107175447353264
+  },
+  "fcm-gi": {
+   "first": 21,
+   "displayed": 41,
+   "weightSum": 1.1049674632284578
+  },
+  "fcm-site-reaction": {
+   "first": 21,
+   "displayed": 41,
+   "weightSum": 1.1049674632284578
+  },
+  "fcm-dae#notcharged": {
+   "first": 21,
+   "displayed": 41,
+   "weightSum": 0
+  },
+  "BB-class-hyperglycemia-sibling": {
+   "first": 69,
+   "displayed": 87,
+   "weightSum": 5.387081623050506
+  },
+  "BB-class-syncope-sibling": {
+   "first": 69,
+   "displayed": 87,
+   "weightSum": 4.8483734607454565
+  },
+  "BB-class-giUpset-sibling": {
+   "first": 69,
+   "displayed": 87,
+   "weightSum": 6.6473516468855784
+  },
+  "ver-anemia": {
+   "first": 42,
+   "displayed": 50,
+   "weightSum": 1.456939468088943
+  },
+  "ver-syncope": {
+   "first": 42,
+   "displayed": 50,
+   "weightSum": 1.456939468088943
+  },
+  "ver-dizziness": {
+   "first": 42,
+   "displayed": 50,
+   "weightSum": 0.7556688475623561
+  },
+  "ver-gi": {
+   "first": 42,
+   "displayed": 50,
+   "weightSum": 0.7556688475623561
+  },
+  "ver-hypotension": {
+   "first": 42,
+   "displayed": 50,
+   "weightSum": 0.7556688475623561
+  },
+  "furoscix-injection-site": {
+   "first": 0,
+   "displayed": 11,
+   "weightSum": 0
+  },
+  "dig-av-block": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 0.3085109806808408
+  },
+  "dig-toxicity-hosp": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 1.061171390445306
+  },
+  "dig-vent-arrhythmia": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 0.2779258403547229
+  },
+  "dig-dizziness": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 0.29191240687470865
+  },
+  "dig-gi": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 0.29191240687470865
+  },
+  "dig-headache": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 0.29191240687470865
+  },
+  "dig-rash": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 0.29191240687470865
+  },
+  "dig-vision": {
+   "first": 15,
+   "displayed": 23,
+   "weightSum": 0.29191240687470865
+  },
+  "torsemide-urinary-frequency": {
+   "first": 6,
+   "displayed": 15,
+   "weightSum": 0.6994198702256927
+  },
+  "ARB-STEP6-angioedema": {
+   "first": 2,
+   "displayed": 10,
+   "weightSum": 0.03184401621450131
+  },
+  "ARB-valsartan-creatinine": {
+   "first": 0,
+   "displayed": 7,
+   "weightSum": 0
+  },
+  "ARB-valsartan-hyperkalemia": {
+   "first": 0,
+   "displayed": 7,
+   "weightSum": 0
+  },
+  "ARB-STEP6-renalSAE": {
+   "first": 2,
+   "displayed": 10,
+   "weightSum": 0
+  },
+  "ARB-STEP6-syncope": {
+   "first": 2,
+   "displayed": 10,
+   "weightSum": 0.283765566711445
+  },
+  "ARB-valsartan-dizziness": {
+   "first": 0,
+   "displayed": 7,
+   "weightSum": 0
+  },
+  "ARB-valsartan-fatigue": {
+   "first": 0,
+   "displayed": 7,
+   "weightSum": 0
+  },
+  "ARB-valsartan-giUpset": {
+   "first": 0,
+   "displayed": 7,
+   "weightSum": 0
+  },
+  "ARB-valsartan-hypotensionSymptomatic": {
+   "first": 0,
+   "displayed": 7,
+   "weightSum": 0
+  },
+  "ARB-CHARM-creatinine-candesartan": {
+   "first": 2,
+   "displayed": 0,
+   "weightSum": 0.12448651523854122
+  },
+  "ARB-CHARM-hyperkalemia-candesartan": {
+   "first": 2,
+   "displayed": 0,
+   "weightSum": 0.16240448269395666
+  },
+  "ARB-HTN-dizziness-candesartan": {
+   "first": 2,
+   "displayed": 0,
+   "weightSum": 0.24485453771333987
+  },
+  "ARB-CHARM-hypotension-candesartan": {
+   "first": 2,
+   "displayed": 0,
+   "weightSum": 0.24485453771333987
+  },
+  "ACEi-AIRE-creatinineRise-ramipril": {
+   "first": 3,
+   "displayed": 18,
+   "weightSum": 0.022292256727765435
+  },
+  "ACEi-ramipril-syncope": {
+   "first": 3,
+   "displayed": 18,
+   "weightSum": 0.2675070807331852
+  },
+  "ACEi-AIRE-cough-ramipril": {
+   "first": 3,
+   "displayed": 18,
+   "weightSum": 0.27013080991283067
+  },
+  "ACEi-AIRE-giUpset-ramipril": {
+   "first": 3,
+   "displayed": 18,
+   "weightSum": 0.27013080991283067
+  },
+  "ACEi-AIRE-hypotensionSymptomatic-ramipril": {
+   "first": 3,
+   "displayed": 18,
+   "weightSum": 0.27013080991283067
+  },
+  "tirz-gallbladder": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 0.12364932061799443
+  },
+  "tirz-pancreatitis": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 0.2553358470761585
+  },
+  "tirz-aki": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 0.18547398092699163
+  },
+  "tirz-constipation": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 1.1010100354363637
+  },
+  "tirz-dizziness": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 1.1010100354363637
+  },
+  "tirz-gi": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 1.1010100354363637
+  },
+  "tirz-hypotension": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 1.1010100354363637
+  },
+  "tirz-inj": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 1.1010100354363637
+  },
+  "tirz-dae#notcharged": {
+   "first": 9,
+   "displayed": 18,
+   "weightSum": 0
+  },
+  "patiromer-hypokalemia": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0.17957089727764627
+  },
+  "patiromer-hypomagnesemia": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0.7109098254093582
+  },
+  "patiromer-constipation": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0.049719063999199065
+  },
+  "patiromer-gi": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0.049719063999199065
+  },
+  "patiromer-edema": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0.049719063999199065
+  },
+  "patiromer-dae#notcharged": {
+   "first": 3,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "ARB-CHARM-creatinineRise-losartan": {
+   "first": 0,
+   "displayed": 3,
+   "weightSum": 0
+  },
+  "ARB-CHARM-hyperkalemia-losartan": {
+   "first": 0,
+   "displayed": 3,
+   "weightSum": 0
+  },
+  "ARB-CHARM-hypotensionSymptomatic-losartan": {
+   "first": 0,
+   "displayed": 3,
+   "weightSum": 0
+  },
+  "iva-af": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 0.2946545058511104
+  },
+  "iva-avb-advanced": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 0.20974043461947228
+  },
+  "iva-avb-first": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 0
+  },
+  "iva-creatinine": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 0.018348939682546427
+  },
+  "iva-brady-symptomatic": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 0.2179757006935062
+  },
+  "iva-dizziness": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 0.2179757006935062
+  },
+  "iva-hypotension": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 0.2179757006935062
+  },
+  "iva-phosphenes": {
+   "first": 12,
+   "displayed": 21,
+   "weightSum": 0.2179757006935062
+  },
+  "metolazone-creatinine": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0.4468170817542921
+  },
+  "thiazide-hyperglycemia": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0.20332226839461362
+  },
+  "thiazide-gout": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0.06252706318371988
+  },
+  "thiazide-hypokalemia": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0.338870447324356
+  },
+  "thiazide-hypomagnesemia": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0
+  },
+  "thiazide-hyponatremia": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0.23666274788942931
+  },
+  "thiazide-hypotension": {
+   "first": 6,
+   "displayed": 9,
+   "weightSum": 0
+  }
+ },
+ "mult": {
+  "M-diabetes-K55-MRA": {
+   "first": 52,
+   "displayed": 83,
+   "weightSum": 4.713980730272712
+  },
+  "mult-hydralazine-lupus-male": {
+   "first": 12,
+   "displayed": 48,
+   "weightSum": 0.20295582989654548
+  },
+  "M-black-angioedema-ACEi": {
+   "first": 9,
+   "displayed": 15,
+   "weightSum": 0.1629897134158016
+  },
+  "M-age75-creat25-ARNI": {
+   "first": 9,
+   "displayed": 9,
+   "weightSum": 0.030645657226790607
+  },
+  "M-age75-K55-ARNI": {
+   "first": 9,
+   "displayed": 9,
+   "weightSum": 0
+  },
+  "M-age75-hypotension-ARNI": {
+   "first": 9,
+   "displayed": 9,
+   "weightSum": 0
+  },
+  "M-age75-creat25-ACEi": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "M-age75-K55-ACEi": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "M-age75-hypotension-ACEi": {
+   "first": 0,
+   "displayed": 6,
+   "weightSum": 0
+  },
+  "M-black-angioedema-ARNI": {
+   "first": 18,
+   "displayed": 36,
+   "weightSum": 0.8797305207822743
+  },
+  "mult-hydralazine-lupus-female": {
+   "first": 3,
+   "displayed": 12,
+   "weightSum": 0.2366810214370222
+  }
+ },
+ "dose": {
+  "bb-carvedilol": {
+   "first": 681,
+   "displayed": 0,
+   "weightSum": 681
+  },
+  "mra-eplerenone-egfr-lt50": {
+   "first": 85,
+   "displayed": 0,
+   "weightSum": 85
+  },
+  "acei-lisinopril": {
+   "first": 124,
+   "displayed": 0,
+   "weightSum": 124
+  },
+  "mra-spironolactone": {
+   "first": 315,
+   "displayed": 0,
+   "weightSum": 315
+  },
+  "arni-sacubitril-valsartan": {
+   "first": 624,
+   "displayed": 0,
+   "weightSum": 624
+  },
+  "mra-eplerenone-egfr-ge50": {
+   "first": 266,
+   "displayed": 0,
+   "weightSum": 266
+  },
+  "bb-metoprolol-succinate": {
+   "first": 42,
+   "displayed": 0,
+   "weightSum": 42
+  },
+  "bb-bisoprolol": {
+   "first": 27,
+   "displayed": 0,
+   "weightSum": 27
+  },
+  "acei-captopril": {
+   "first": 15,
+   "displayed": 0,
+   "weightSum": 15
+  },
+  "digoxin": {
+   "first": 15,
+   "displayed": 0,
+   "weightSum": 15
+  },
+  "nsmra-finerenone-egfr-lt60": {
+   "first": 12,
+   "displayed": 0,
+   "weightSum": 12
+  },
+  "arb-candesartan": {
+   "first": 2,
+   "displayed": 0,
+   "weightSum": 2
+  },
+  "acei-ramipril": {
+   "first": 3,
+   "displayed": 0,
+   "weightSum": 3
+  },
+  "nsmra-finerenone-egfr-ge60": {
+   "first": 6,
+   "displayed": 0,
+   "weightSum": 6
+  },
+  "ivabradine": {
+   "first": 12,
+   "displayed": 0,
+   "weightSum": 12
+  }
+ }
+}

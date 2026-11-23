@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Patient } from '../../types';
 import { FormSection, usePatientFormModel } from '../patient-form/usePatientFormModel';
 import { REVIEW_STEP, STEPS, stepForField } from './steps';
 import { ReviewStep } from './ReviewStep';
+import { confirmUnassessedUse, type ConfirmResult } from './confirmUse';
 
 interface StepsScreenProps {
     patientData: Patient;
@@ -29,6 +30,7 @@ export const StepsScreen: React.FC<StepsScreenProps> = ({ patientData, setPatien
     const navRef = useRef<HTMLElement>(null);
     const focusAfterStep = useRef<string | null>(null);
     const first = useRef(true);
+    const [confirmNote, setConfirmNote] = useState<Pick<ConfirmResult, 'confirmed' | 'leftAlone'> | undefined>(undefined);
 
     // Focus moves to the step heading when the step changes (or to a specific field when arriving from an error link).
     useEffect(() => {
@@ -114,6 +116,8 @@ export const StepsScreen: React.FC<StepsScreenProps> = ({ patientData, setPatien
                             pricesReady={pricesReady}
                             priceLoadError={priceLoadError}
                             onRetryPrices={onRetryPrices}
+                            onConfirmAllUse={() => { const res = confirmUnassessedUse(patientData.current_regimen); setPatientData(prev => ({ ...prev, current_regimen: confirmUnassessedUse(prev.current_regimen).regimen })); setConfirmNote({ confirmed: res.confirmed, leftAlone: res.leftAlone }); }}
+                            confirmNote={confirmNote}
                         />
                     ) : (
                         <div className={`guided-fields grid gap-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6 [&>section]:!mt-0 ${s.sections.length > 1 ? 'lg:grid-cols-2' : ''}`}>

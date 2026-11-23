@@ -29,8 +29,6 @@ interface Props {
     onClose: () => void;
     /** Option 1, for the "why ranked lower" comparison. Omit for option 1 itself. */
     leader?: ScoredRegimen;
-    /** Foundational ranking mode applied: the comparison explains the order accordingly. */
-    foundationalOrder?: boolean;
     rank?: number;
 }
 
@@ -43,7 +41,7 @@ const guidelinePhenotype = (regimen: ScoredRegimen): Phenotype => classifyPhenot
 
 const COMPLETENESS_SUBTARGET_CREDIT_PCT = Math.round(COMPLETENESS_SUBTARGET_CREDIT * 100);
 
-export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onClose, leader, rank = 1, foundationalOrder = false }) => {
+export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onClose, leader, rank = 1 }) => {
     const p = regimen.projected_patient;
     const { openEvidence } = useEvidenceLink();
     const title = domain === 'overall' ? 'Overall' : DOMAIN_LABELS[domain];
@@ -240,7 +238,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                     <div className="space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                             <div className="bg-slate-50 p-3 rounded border border-slate-200">
-                                <div className="text-xs text-slate-500 uppercase font-bold">Regimen Complexity</div>
+                                <div className="text-xs text-slate-500 uppercase font-bold">Dosing burden of this regimen</div>
                                 <div className="text-xl font-black text-slate-900">{complexity} <span className="text-sm font-medium text-slate-500">pts</span></div>
                             </div>
                             <div className="bg-slate-50 p-3 rounded border border-slate-200">
@@ -353,7 +351,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 return (
                     <>
                         <ScoreLedger breakdown={regimen.score_breakdown} onEvidence={(term) => { onClose(); openEvidence(term); }} />
-                        {leader && leader !== regimen && <ScoreComparisonDetail regimen={regimen} leader={leader} rank={rank} foundationalOrder={foundationalOrder} />}
+                        {leader && leader !== regimen && <ScoreComparisonDetail regimen={regimen} leader={leader} rank={rank} />}
                     </>
                 );
 
@@ -434,7 +432,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                 onClick={e => e.stopPropagation()}
             >
                 <div className="bg-indigo-600 p-4 flex justify-between items-center shrink-0">
-                    <h3 id="score-modal-title" className="font-bold text-white text-lg">{title} Score{domain === 'overall' && rank > 1 ? ` — Option ${rank}` : ''}</h3>
+                    <h3 id="score-modal-title" className="font-bold text-white text-lg">{title} Score{domain === 'overall' && rank > 1 ? `: Option ${rank}` : ''}</h3>
                     <button onClick={onClose} className="text-white/80 hover:text-white" aria-label="Close score details">
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>

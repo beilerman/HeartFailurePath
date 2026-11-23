@@ -1,0 +1,62 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1028 / 1032
+  (b) displayed pick set same:   1027 / 1032
+  (c) pick order identical:      1027 / 1032
+  (d) eligibility + alerts identical: NO (180 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 0 / median 66 / max 86
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 3 of 57 runs
+    LVEF <= 40: 1 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+
+Top pick changed in 4 runs:
+  GLP-1 Boundary LVEF Exactly 40 :: commercial
+     old: Carvedilol 3.125mg bid + Finerenone (Kerendia) 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 72, raw 72.46]
+     new: Carvedilol 3.125mg bid + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 72, raw 72.44]
+  Dual MRA Unknown History Keeps nsMRA :: cash
+     old: Carvedilol 3.125mg bid + Finerenone (Kerendia) 20mg qd + Lisinopril 10mg qd [overall 49, raw 48.67]
+     new: Carvedilol 3.125mg bid + Finerenone (Kerendia) 10mg qd + Lisinopril 20mg qd [overall 44, raw 43.51]
+  Dual MRA Unknown History Keeps nsMRA :: commercial
+     old: Carvedilol 3.125mg bid + Finerenone (Kerendia) 20mg qd + Lisinopril 10mg qd [overall 60, raw 60.41]
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Finerenone (Kerendia) 10mg qd + Lisinopril 10mg qd [overall 58, raw 58.16]
+  Dual MRA Unknown History Keeps nsMRA :: medicare
+     old: Carvedilol 3.125mg bid + Finerenone (Kerendia) 20mg qd + Lisinopril 10mg qd [overall 60, raw 59.77]
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Finerenone (Kerendia) 10mg qd + Lisinopril 10mg qd [overall 57, raw 57.46]
+
+BUGS (eligibility/alerts must not change):
+  John Doe (Wet & Warm) :: cash: clinicalAlerts differ
+  John Doe (Wet & Warm) :: commercial: clinicalAlerts differ
+  John Doe (Wet & Warm) :: medicare: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: cash: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: commercial: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: medicare: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: cash: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: commercial: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: medicare: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: cash: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: commercial: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: medicare: clinicalAlerts differ
+  African American (A-HeFT Indication) :: cash: clinicalAlerts differ
+  African American (A-HeFT Indication) :: commercial: clinicalAlerts differ
+  African American (A-HeFT Indication) :: medicare: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: cash: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: commercial: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: medicare: clinicalAlerts differ

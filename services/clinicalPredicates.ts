@@ -1,4 +1,5 @@
 import { Patient } from '../types';
+import { CHILDBEARING_POTENTIAL_AGE_BELOW } from './engine/thresholds';
 
 // Shared clinical predicates — single source of truth for logic consumed by BOTH the
 // engine (services/simulationService.ts) and the formulary (constants.ts). These were
@@ -16,9 +17,27 @@ import { Patient } from '../types';
 // Physiologically-impossible zero (or undefined / NaN) is treated as "not entered" for
 // safety-critical fields. A potassium of 0 is not a measured value — it is a blank field,
 // and must NOT be allowed to read as "safe" (e.g. clearing a hyperkalemia gate).
+/**
+ * Iron-study inputs typed as 0, a negative number or not a number are not measurements: they are read as not entered (R6 V18; "Hb 0 g/dL" was printed and a week-6 dose chosen from it).
+ * The form stores a blank as undefined; this guards every other caller. Mutates the clone the engine works on.
+ */
+export function blankIronInputsToUndefined(p: { hemoglobin?: number; ferritin?: number; tsat?: number }): void {
+    for (const k of ['hemoglobin', 'ferritin', 'tsat'] as const) { const v = p[k]; if (v !== undefined && !(typeof v === 'number' && Number.isFinite(v) && v > 0)) p[k] = undefined; }
+}
+
 export function valueUnknown(v: number | undefined): boolean {
     return v === undefined || Number.isNaN(v) || v <= 0;
 }
+
+/**
+ * What to call the kidney value(s) that were not entered, exactly (R6 V10): both blank is "renal function (eGFR / creatinine)"; only the creatinine blank is "creatinine"; only the eGFR blank is
+ * "eGFR". An entered eGFR is never called missing. (The form computes the eGFR from the creatinine, so one blank beside one entered comes only from a caller that sets them separately.)
+ */
+export function kidneyNotEntered(p: { egfr?: number; creatinine?: number }): 'both' | 'creatinine' | 'egfr' | null {
+    const e = valueUnknown(p.egfr), c = valueUnknown(p.creatinine);
+    return e && c ? 'both' : c ? 'creatinine' : e ? 'egfr' : null;
+}
+export const kidneyNotEnteredWords = (p: { egfr?: number; creatinine?: number }): string => ({ both: 'renal function (eGFR / creatinine)', creatinine: 'creatinine', egfr: 'eGFR', null: '' })[String(kidneyNotEntered(p)) as 'both' | 'creatinine' | 'egfr' | 'null'];
 
 // Documented prior LVEF <= 40 (HFimpEF detection). A previous_lvef of 0 or NaN is a blank
 // field, not a measured ejection fraction — fall back to the categorical ever_lvef_le_40
@@ -78,10 +97,17 @@ export function congestionFindingCount(findings: Set<string>): number {
 
 // Acutely decompensated heart failure, as the engine defines it everywhere (beta-blocker initiation block, ivabradine
 // contraindication): NYHA IV, or NYHA III with more than 2 kg above dry weight and at least two congestion exam findings.
-export function isAcutelyDecompensated(patient: Patient): boolean {
+/** The engine's own congestion criteria for decompensation: weight more than this many kg above the dry weight, and at least this many congestion findings. One definition (U9 reads them too). */
+export const DECOMPENSATION_EXCESS_KG_ABOVE = 2.0;
+export const DECOMPENSATION_MIN_CONGESTION_FINDINGS = 2;
+/** True when the weight and the examination meet the decompensation criteria, whatever NYHA class was entered. Both weights must be entered: a blank weight (0) is not a measurement and must not read as a large excess. */
+export function meetsDecompensationFindings(patient: Patient): boolean {
     const excess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
-    return patient.nyha_class === 'IV' ||
-        (patient.nyha_class === 'III' && excess > 2.0 && congestionFindingCount(patient.volume_status.exam_findings) >= 2);
+    const weightsEntered = !valueUnknown(patient.volume_status.current_weight_kg) && !valueUnknown(patient.volume_status.dry_weight_kg);
+    return weightsEntered && excess > DECOMPENSATION_EXCESS_KG_ABOVE && congestionFindingCount(patient.volume_status.exam_findings) >= DECOMPENSATION_MIN_CONGESTION_FINDINGS;
+}
+export function isAcutelyDecompensated(patient: Patient): boolean {
+    return patient.nyha_class === 'IV' || (patient.nyha_class === 'III' && meetsDecompensationFindings(patient));
 }
 
 // Vericiguat initiation NT-proBNP threshold (VICTORIA inclusion, NCT02861534): >= 1000 pg/mL in sinus rhythm, >= 1600 in atrial
@@ -180,4 +206,12 @@ export function describeDerivedStatus(p: { egfr: number; bmi: number }): { kidne
         : `Kidney function: eGFR ${Math.round(p.egfr)}${stage ? ` (CKD stage ${stage} range)` : ''}, from creatinine.`;
     const weight = valueUnknown(p.bmi) ? null : `BMI ${Math.round(p.bmi)}${p.bmi >= 30 ? ': obesity' : ''}, from height and weight.`;
     return { kidney, weight };
+}
+
+/**
+ * Pregnancy status is required for a female patient younger than CHILDBEARING_POTENTIAL_AGE_BELOW (policy number; thresholds.ts) and is "not applicable" otherwise (S12).
+ * An unrecorded age counts as required: the tool cannot say the patient is past childbearing age.
+ */
+export function pregnancyStatusRequired(patient: Pick<Patient, 'sex' | 'age'>): boolean {
+    return patient.sex === 'Female' && (valueUnknown(patient.age) || patient.age < CHILDBEARING_POTENTIAL_AGE_BELOW);
 }

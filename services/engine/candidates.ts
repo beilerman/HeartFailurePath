@@ -3,11 +3,23 @@ import { Patient, Medication, RegimenMed, ModificationAction, RegimenModificatio
 import { drugFacts } from './drugFacts';
 import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient, congestionFindingCount } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup, isDiureticClass } from './registry';
-import { isCongestedAboveDryWeight, isLowOutputState, isLoopDiureticResistant, adjacentTiers, hasCongestion, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, countNewClassGroups, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
+import { sortedByName, isCongestedAboveDryWeight, isLowOutputState, isColdState, weightBelowDryWeight, countVisitLimitChanges, renalContraindicationReason, isLoopDiureticResistant, adjacentTiers, hasCongestion, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication, MRA_POOL_CLASSES } from './intolerance';
 import { assessCreatinineChange } from './renalChange';
-import { UP_TITRATION_MAX_DAILY_FACTOR, BINDER_HOLD_REDUCTION_K, RAAS_EGFR_REVIEW_BELOW } from './thresholds';
+import { UP_TITRATION_MAX_DAILY_FACTOR, BINDER_HOLD_REDUCTION_K, RAAS_EGFR_REVIEW_BELOW, CONGESTION_EXCESS_KG_ABOVE } from './thresholds';
 import { regimenSatisfiesPillar, classifyPhenotype, isImprovedEF } from './domains';
+import { contraindicationReasons } from './contraindications';
+import { candidateHasMissingPrerequisite } from './decisionReadiness';
+import { doseAnchorMg } from './doseCredit';
+import { MEDICATION_FORMULARY } from '../../constants';
+import { loopsExcludedForAnotherReason } from './urgentStates';
+
+/**
+ * R8 X11: the round 7 rule that refuses an option which starts a drug whose own contraindication check fails on the regimen the option produces. A switch inside a class does not re-apply a start-only
+ * (trial-entry) criterion, and a forced switch whose replacement still cannot be started becomes a plain removal of the offending drug, so the rule can refuse a start but never empties the list.
+ * `enabled` exists only so the counterfactual check can run the same patients with the rule off.
+ */
+export const START_RULE = { enabled: true };
 
 export interface RegimenAnalysis {
     currentClassMap: Map<string, RegimenMed>;  // class group → current med+dose
@@ -30,6 +42,31 @@ export interface RegimenAnalysis {
     forcedReduceExactStep: Set<string>;
     /** Current meds withheld because of the potassium continuation rule (K+ >= 6.0, or 5.5-5.9 at the lowest dose) -> reason. */
     kWithholdReasons: Map<string, string>;
+    /** Why each contraindicated current drug must go, in plain words (the drug's own check text, or the kidney limit with the eGFR). Replaces the bare word "contraindicated" (S8). */
+    contraindicationReasonByName: Map<string, string>;
+    /** Duplicate agents of one class the patient arrived on: which is kept and why (S5). */
+    duplicateNotes: { group: string; kept: RegimenMed; removed: RegimenMed[]; basis: string }[];
+    /** Drugs an option would have started that the tool refused because its own check fails on the regimen the option produces (R8 X11c): name -> the check's reason. Filled while options are filtered; read after selection for the withheld list. */
+    startRuleDrops: Map<string, string>;
+    /** Unstable-state facts the generator and the output read (S1, S3). */
+    unstable: UnstableInfo;
+}
+
+export interface UnstableInfo {
+    /** Poor perfusion state (S1a): no option starts a drug or raises a dose except a diuretic when congested. */
+    cold: boolean;
+    /** Acute decompensation by the engine's own predicate (S1b). */
+    decompensated: boolean;
+    /** Congestion by the engine's predicate (weight criterion or an examination finding). */
+    congested: boolean;
+    /** Potassium 6.0 to 8.0 (S3): no option starts or raises any drug except a binder already on board. */
+    potassiumEmergency: boolean;
+    /** The loop diuretic step the congestion display rule puts in every option, when one is eligible. */
+    loopStep?: { action: 'add' | 'titrate_up'; source?: RegimenMed; target: RegimenMed };
+    /** Why no loop diuretic start or increase is available, when none is. */
+    loopUnavailableReason?: string;
+    /** True when the weight is the reason no new loop diuretic is offered (none on board, none excluded for another reason, the weight within the congestion threshold of dry weight) and the examination shows at least one congestion finding (R5 Y3). */
+    loopHeldForWeightWithFindings?: boolean;
 }
 
 export function analyzeCurrentRegimen(
@@ -115,6 +152,11 @@ export function analyzeCurrentRegimen(
     // than 1 kg BELOW dry weight, or at or below dry weight with no congestion finding on examination. Engine policy (2026 ESC Supplementary Table S7: use the
     // lowest dose that maintains euvolaemia). Before 2026-11-12 a loop could be doubled in a patient 3 kg below dry weight and was reduced again on the next run.
     const noCongestion = diureticHeldForNoCongestion(patient);
+    // Reducing or stopping a diuretic AS A VOLUME STEP needs weight at or below dry weight AND no congestion finding on examination (S2). A patient whose scale reads low but whose
+    // examination shows congestion gets neither a reduction nor a removal of the diuretic as a volume step (the scale-and-examination alert says the two disagree); an INCREASE stays held.
+    // T1: at potassium 6.0 or above a loop or thiazide-type diuretic (which LOWERS potassium) is never reduced or stopped as a volume step.
+    const potassiumEmergencyNow = patient.potassium >= 6.0 && patient.potassium <= 8.0;
+    const reduceAsVolumeStep = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg) <= 0 && congestionFindingCount(patient.volume_status.exam_findings) === 0 && !potassiumEmergencyNow;
     currentRegimen.forEach(r => {
         if (creatinineChange?.band === 'stop' && raasOrMra(r.med.drug_class)) {
             kWithholdReasons.set(r.med.name, `${creatinineChange.why}: ${RAAS_CLASSES.has(r.med.drug_class) ? 'stop' : 'withhold'} and seek specialist advice (2026 ESC Supplementary Tables S4/S5/S8)`);
@@ -123,7 +165,12 @@ export function analyzeCurrentRegimen(
         // is resolved with the dose tiers in the titration pass below.
         const kRule = kContinuationAction(r.med, patient);
         if (kRule?.action === 'withhold') kWithholdReasons.set(r.med.name, kRule.reason);
-        if (r.med.contraindications && r.med.contraindications(patient)) {
+        // T1: at potassium 6.0 or above a loop or thiazide-type diuretic or a binder (which LOWER potassium) is not force-removed for a reason that can wait (an indication rule such as
+        // "reserved for active congestion", or a kidney limit); it is removed only for a reason that cannot wait: a documented allergy or intolerance (handled below) or anuria.
+        const keptForPotassium = potassiumEmergencyNow && ['Loop Diuretic', 'Thiazide-like Diuretic', 'K+ Binder'].includes(r.med.drug_class) && !patient.comorbidities.has('Anuria');
+        if (keptForPotassium) {
+            // fall through to the allergy and intolerance checks below, which still apply
+        } else if (r.med.contraindications && r.med.contraindications(patient)) {
             // Blank renal data (0 sentinel) trips every `egfr < X` gate. Never force-remove
             // WORKING therapy on missing data — the DATA REQUIRED alert + the renal-unknown
             // caution penalty govern instead of a fabricated end-stage-CKD contraindication.
@@ -174,10 +221,82 @@ export function analyzeCurrentRegimen(
     // deprescribed — the engine synthesizes their removal into every candidate (below) so a
     // corrected regimen is produced rather than the whole regimen being filtered out. The keeper
     // must be a med the patient can actually STAY on — never the contraindicated/intolerable one.
+    // How two agents of one class are compared when the patient arrives on both (S5, T2). Doses of different drugs are never compared in milligrams. In order of preference:
+    //   1. the fraction of each drug's OWN trial-achieved daily dose (data/doseEvidence.json);
+    //   2. when the class has no trial dose for some member, the engine's verified furosemide-equivalent daily dose (the loop diuretics declare one each);
+    //   3. otherwise the fraction of each drug's labelled maximum daily dose (facts.max_daily_dose);
+    //   4. otherwise nothing is comparable and the drug listed first in the formulary is kept.
+    // One measure is used for the whole class, so every pair in it is compared on the same scale, whatever order the drugs were typed in.
+    const dupMembers = (r: RegimenMed) => currentRegimen.filter(x => !drugFacts(x.med).short_course_addon && getMedicationClassGroup(x.med.drug_class) === getMedicationClassGroup(r.med.drug_class));
+    const daily = (r: RegimenMed) => dailyDose(r);
+    type DupMeasure = { kind: 'trial' | 'equivalent' | 'label_max' | 'none'; value: (r: RegimenMed) => number | undefined };
+    const dupMeasure = (r: RegimenMed): DupMeasure => {
+        const ms = dupMembers(r);
+        const anchored = (x: RegimenMed) => { const a = doseAnchorMg(x, patient); return a !== undefined && a > 0 && !Number.isNaN(daily(x)); };
+        if (ms.every(anchored)) return { kind: 'trial', value: x => daily(x) / doseAnchorMg(x, patient)! };
+        if (ms.every(x => drugFacts(x.med).verified_furosemide_equivalent_per_mg !== undefined && !Number.isNaN(daily(x)))) return { kind: 'equivalent', value: x => daily(x) * drugFacts(x.med).verified_furosemide_equivalent_per_mg! };
+        if (ms.every(x => (drugFacts(x.med).max_daily_dose ?? 0) > 0 && !Number.isNaN(daily(x)))) return { kind: 'label_max', value: x => daily(x) / drugFacts(x.med).max_daily_dose! };
+        return { kind: 'none', value: () => undefined };
+    };
+    const trialFraction = (r: RegimenMed): number | undefined => dupMeasure(r).value(r);
+    const formularyOrder = (med: Medication) => { const i = MEDICATION_FORMULARY.findIndex(m => m.name === med.name); return i < 0 ? Number.MAX_SAFE_INTEGER : i; };
     const redundantCurrentMeds = computeRedundantCurrentMeds(
         currentRegimen,
-        med => contraindicatedCurrentMeds.has(med.name)
+        med => contraindicatedCurrentMeds.has(med.name),
+        { fraction: trialFraction, formularyOrder }
     );
+    // Which duplicate was kept and why (S5): said on every option and in an alert asking the clinician to confirm which one the patient actually takes.
+    const duplicateNotes: RegimenAnalysis['duplicateNotes'] = [];
+    {
+        const groups = new Map<string, RegimenMed[]>();
+        currentRegimen.forEach(r => {
+            if (drugFacts(r.med).short_course_addon) return;
+            const g = getMedicationClassGroup(r.med.drug_class);
+            if (g === 'RAAS Inhibitor' || g === 'MRA') return;
+            groups.set(g, [...(groups.get(g) ?? []), r]);
+        });
+        [...groups.entries()].sort((a, b) => a[0] < b[0] ? -1 : 1).forEach(([group, members]) => {
+            if (members.length < 2) return;
+            const removed = members.filter(r => redundantCurrentMeds.has(r.med.name)).sort((a, b) => a.med.name < b.med.name ? -1 : 1);
+            const kept = members.find(r => !redundantCurrentMeds.has(r.med.name));
+            if (!kept || removed.length === 0) return;
+            const measure = dupMeasure(kept);
+            const kv = measure.value(kept), gv = removed.map(r => measure.value(r));
+            const comparable = kv !== undefined && gv.every(x => x !== undefined);
+            // R8 X1: shown to one decimal when the whole-number figures of the kept and a removed drug would read the same while the values differ.
+            const sameWhole = (f: number | undefined, g: number | undefined) => f !== undefined && g !== undefined && Math.round(f * 100) === Math.round(g * 100);
+            const decimals = comparable && gv.some(x => sameWhole(kv, x) && Math.abs(kv! - x!) > 1e-9);
+            const pct = (f: number | undefined) => f === undefined ? undefined : decimals ? `${Math.round(f * 1000) / 10}%` : `${Math.round(f * 100)}%`;
+            const mg = (x: number) => `${Math.round(x * 10) / 10}`;
+            const dose = (r: RegimenMed) => `${r.med.name} ${mg(daily(r))} ${r.dose.unit} a day`;
+            // The measure is only the reason when the kept drug really has the larger value. Where the values are EQUAL the choice is the tie-break (the drug listed first in the formulary among those that can
+            // stay), and the sentence says so (R8 X1); when an unkeepable drug was set aside (it must go for its own reason) the basis says that.
+            const strictlyLarger = comparable && gv.every(x => kv! > x! + 1e-9);
+            const tied = comparable && !strictlyLarger && gv.every(x => kv! >= x! - 1e-9);
+            const names = removed.map(r => r.med.name);
+            const basis = !comparable || (!strictlyLarger && !tied)
+                ? 'there is no common dose scale for these drugs (or the larger one must go for a safety reason stated on it), so the one that can stay and is listed first in the formulary is kept (doses of different drugs are not compared in milligrams)'
+                : tied
+                    ? (measure.kind === 'equivalent'
+                        ? `the doses are equal in furosemide equivalents (${dose(kept)} is about ${mg(kv!)} mg of furosemide a day, ${removed.map((r, i) => `${dose(r)} about ${mg(gv[i]!)} mg`).join(' and ')}), so ${kept.med.name}, the one listed first in the formulary that can stay, is kept`
+                        : `${kept.med.name} and ${names.join(', ')} are at the same share of ${measure.kind === 'trial' ? 'the daily dose reached in their trials' : 'their labelled maximum daily dose'} (${pct(kv)}), so ${kept.med.name}, the one listed first in the formulary that can stay, is kept (doses of different drugs are not compared in milligrams)`)
+                : measure.kind === 'trial'
+                    ? `${kept.med.name} is at ${pct(kv)} of the daily dose reached in its trials and ${removed.map((r, i) => `${r.med.name} at ${pct(gv[i])}`).join(', ')} (doses of different drugs are not compared in milligrams)`
+                    : measure.kind === 'equivalent'
+                        ? `it is the larger loop diuretic dose: ${dose(kept)} is about ${mg(kv!)} mg of furosemide a day, against ${removed.map((r, i) => `${dose(r)}, about ${mg(gv[i]!)} mg of furosemide a day`).join(' and ')} (furosemide equivalents from the drug labels)`
+                        : `${kept.med.name} is at ${pct(kv)} of its labelled maximum daily dose and ${removed.map((r, i) => `${r.med.name} at ${pct(gv[i])}`).join(', ')} (doses of different drugs are not compared in milligrams)`;
+            duplicateNotes.push({ group, kept, removed, basis });
+        });
+    }
+    // Why each contraindicated current drug must go (S8): the drug's own check text, or the kidney limit with the patient's eGFR.
+    const contraindicationReasonByName = new Map<string, string>();
+    currentRegimen.forEach(r => {
+        if (!contraindicatedCurrentMeds.has(r.med.name)) return;
+        const hard = r.med.contraindications?.(patient) === true ? contraindicationReasons(r.med, patient) : [];
+        // The kidney reason carries the patient's eGFR and the limit, so it leads when the drug's renal table is what removes it.
+        const text = renalContraindicationReason(r.med, patient) ?? (hard.length > 0 ? hard.slice(0, 2).join('; ') : undefined);
+        if (text) contraindicationReasonByName.set(r.med.name, text);
+    });
 
     // Titration analysis: for each current med, find higher/lower dose tiers
     const titratableUp: RegimenAnalysis['titratableUp'] = [];
@@ -208,6 +327,7 @@ export function analyzeCurrentRegimen(
         const hrRule = hrContinuationAction(current.med, patient);
         const reduceReason = (kRule?.action === 'reduce' ? kRule.reason : undefined)
             ?? (aboveCap ? `${cap!.reason}: current dose is above the maximum` : undefined)
+            ?? (renalCapHit?.reason ? `${renalCapHit.reason}: dose ${renalCapHit.amount} ${current.dose.unit} is above the maximum of ${renalCapHit.cap} ${current.dose.unit}` : undefined)
             ?? (renalCapHit ? `eGFR ${patient.egfr}: ${renalCapHit.basis === 'daily' ? 'total daily dose' : 'dose'} ${renalCapHit.amount} ${current.dose.unit} is above the renal maximum of ${renalCapHit.cap} ${current.dose.unit}${renalCapHit.basis === 'daily' ? '/day' : ''}` : undefined)
             ?? (hrRule?.reduce ? hrRule.reduceReason : undefined)
             ?? (creatinineChange?.band === 'reduce' && raasOrMra(current.med.drug_class) ? `${creatinineChange.why}: halve the dose (one step), recheck in 1-2 weeks, no increase until stable (2026 ESC Supplementary Tables S4/S5/S8)` : undefined);
@@ -272,7 +392,7 @@ export function analyzeCurrentRegimen(
         // Mandatory safety reductions are preserved; decongested patients can still step down.
         const plateauInCongestion = loopReductionHeldAtModeledPlateau(current, gentlerDown, patient);
         // Unquantified loss of benefit cannot justify reducing established therapy for a cheaper or simpler score.
-        const reductionIndicated = reduceReason !== undefined || isBBForcedDown || (isDiureticClass(current.med.drug_class) && noCongestion);
+        const reductionIndicated = reduceReason !== undefined || isBBForcedDown || (isDiureticClass(current.med.drug_class) && reduceAsVolumeStep);
         const lowerDoses = gentlerDown && reductionIndicated && !(plateauInCongestion && reduceReason === undefined) ? [gentlerDown] : [];
         // A one-time label course (facts.single_course_dose: ferric carboxymaltose) is not a titratable dose: no up/down candidates.
         // A potassium binder is not reduced while the potassium that calls for it persists (measured potassium at or above BINDER_HOLD_REDUCTION_K): lowering it
@@ -290,7 +410,7 @@ export function analyzeCurrentRegimen(
                 if (hrRule?.reduce && kRule?.action !== 'reduce' && !aboveCap && !renalCapHit) forcedReduceExactStep.add(current.med.name);
             } else if (kRule?.action === 'reduce') {
                 // Already at the lowest dose: the label says withhold.
-                kWithholdReasons.set(current.med.name, kRule.reason);
+                kWithholdReasons.set(current.med.name, kRule.lowestDoseReason ?? kRule.reason);
                 contraindicatedCurrentMeds.add(current.med.name);
             } else if (hrRule?.reduce) {
                 // Already at the lowest dose and still bradycardic: withhold (carvedilol/metoprolol/ivabradine labels: reduce, and
@@ -300,6 +420,14 @@ export function analyzeCurrentRegimen(
             }
         }
     });
+
+    // S9: a switch inside a class must pass the SAFETY start limits of the drug switched to. The drug's own checks waive some start limits when any drug of the class is on board
+    // (the SGLT2 kidney limit); here they are evaluated as if the class were not on board, so the waiver cannot carry a patient onto a drug whose limit they fail. Checks marked
+    // `indication` (a trial-entry criterion such as body mass index for a GLP-1 drug) are not re-applied to a switch; `swapSummary` says so.
+    const switchSafetyBlocks = (target: Medication, source: RegimenMed): string[] => {
+        const asNew = { ...patient, current_regimen: currentRegimen.filter(r => r !== source) } as Patient;
+        return (target.contraindication_checks ?? []).filter(c => !c.indication && c.when(asNew)).map(c => c.reason);
+    };
 
     // Swap analysis: for each current med, find other meds in same class group.
     // Contraindicated current meds CAN be swapped to a non-contraindicated alternative
@@ -344,7 +472,8 @@ export function analyzeCurrentRegimen(
             t.med.name !== current.med.name &&
             !currentRegimen.some(r => r !== current && r.med.name === t.med.name) && // Don't swap TO a drug already on board (it would be listed twice)
             !contraindicatedCurrentMeds.has(t.med.name) && // Don't swap TO a contraindicated med
-            !drugFacts(t.med).short_course_addon           // A short-course add-on (Furoscix, "not for chronic use") is never a standing replacement
+            !drugFacts(t.med).short_course_addon &&        // A short-course add-on (Furoscix, "not for chronic use") is never a standing replacement
+            switchSafetyBlocks(t.med, current).length === 0 // A switch inside a class passes the kidney and other safety start limits of the drug switched to (S9)
         );
         // Within the RAAS group, a non-forced swap may only UPGRADE (ACEi/ARB → ARNI, the
         // guideline-preferred agent — PARADIGM-HF). Never recommend the reverse downgrade
@@ -417,10 +546,12 @@ export function analyzeCurrentRegimen(
             removable.push(r);
             return;
         }
-        if (r.med.drug_class === 'Loop Diuretic' && fluidExcess < 0.5) {
+        // Removal as a volume step also needs no congestion finding on examination (S2).
+        const noFindings = congestionFindingCount(patient.volume_status.exam_findings) === 0;
+        if (r.med.drug_class === 'Loop Diuretic' && fluidExcess < 0.5 && noFindings && !potassiumEmergencyNow) {
             removable.push(r);
         }
-        if (r.med.drug_class === 'Thiazide-like Diuretic' && fluidExcess < 0.5) {
+        if (r.med.drug_class === 'Thiazide-like Diuretic' && fluidExcess < 0.5 && noFindings && !potassiumEmergencyNow) {
             removable.push(r);
         }
     });
@@ -527,7 +658,9 @@ export function analyzeCurrentRegimen(
     }
 
     // Diuretics if congested and not already on one (an oral loop is started; a short-course add-on is never the first loop)
-    if (isCongestedAboveDryWeight(patient) && !currentClasses.has('Loop Diuretic')) {
+    // R10 A1: Furoscix alone is not an oral loop on board, so a congested patient taking only Furoscix is offered the same oral loop start as one who takes none.
+    const onAnyOralLoopForStart = currentRegimen.some(r => r.med.drug_class === 'Loop Diuretic' && !drugFacts(r.med).short_course_addon);
+    if (isCongestedAboveDryWeight(patient) && !onAnyOralLoopForStart) {
         const loopTiers = medTiers.filter(r => r.med.drug_class === 'Loop Diuretic' && !drugFacts(r.med).short_course_addon);
         // New loop start: the LOWEST tier of the first loop agent (start low, titrate to the weight response). The sampled tier list is
         // [lowest, highest, ...], and its "highest" tier is a titration step, not a start (furosemide 160 mg, i.e. 2 x 80 mg twice daily).
@@ -588,7 +721,43 @@ export function analyzeCurrentRegimen(
             .forEach(r => addableAdjuncts.push(r));
     }
 
+    // Unstable-state facts (S1, S3): the generator injects the congestion display rule's loop step and filters what a cold or potassium-emergency option may contain.
+    const congested = hasCongestion(patient);
+    const unstable: UnstableInfo = {
+        cold: isColdState(patient), decompensated: isAcutelyDecompensatedPatient(patient), congested,
+        potassiumEmergency: patient.potassium >= 6.0 && patient.potassium <= 8.0,
+    };
+    {
+        const standing = [...titratableUp].sort((a, b) => a.current.med.name < b.current.med.name ? -1 : 1).find(t => t.current.med.drug_class === 'Loop Diuretic' && !drugFacts(t.current.med).short_course_addon);
+        const startLoop = addableAdjuncts.find(a => a.med.drug_class === 'Loop Diuretic' && !drugFacts(a.med).short_course_addon);
+        // A loop step is eligible only if the engine's own prerequisites let it through (confirmed use and dose interval for an increase, a measured potassium and kidney function).
+        const passes = (action: 'add' | 'titrate_up', source: RegimenMed | undefined, target: RegimenMed) => !candidateHasMissingPrerequisite(patient, { modifications: [{ action, source, target, summary: '' }], resulting_regimen: [] });
+        let blockedByPrerequisite = false;
+        if (standing && passes('titrate_up', standing.current, standing.options[0])) unstable.loopStep = { action: 'titrate_up', source: standing.current, target: standing.options[0] };
+        else if (!standing && startLoop && passes('add', undefined, startLoop)) unstable.loopStep = { action: 'add', target: startLoop };
+        else if (standing || startLoop) blockedByPrerequisite = true;
+        if (!unstable.loopStep) {
+            // The loop that stays (a duplicate entry being cleaned up is not the loop whose dose the plan sets, T2).
+            const loopCurrent = sortedByName(currentRegimen).find(r => r.med.drug_class === 'Loop Diuretic' && !drugFacts(r.med).short_course_addon && !redundantCurrentMeds.has(r.med.name));
+            const anuria = patient.comorbidities.has('Anuria');
+            const maxed = !!loopCurrent && !adjacentTiers(loopCurrent, patient).up;
+            // R6 V1: only an allergy that names a loop diuretic is offered as a cause of "every loop diuretic is excluded", so an unrelated allergy entry changes nothing.
+            // R6 V15d: a recorded potassium below 3.5 is the reason (the hold is the engine's own rule), whether or not another prerequisite is also open.
+            unstable.loopUnavailableReason = patient.potassium > 0 && patient.potassium < 3.5 && !patient.comorbidities.has('Anuria') ? 'potassium is below 3.5: correct it first'
+                : blockedByPrerequisite ? 'a prerequisite is missing for the oral loop diuretic (confirm the current dose, actual use and the dose interval, or enter the missing laboratory value: see the review prompts in the alerts)'
+                : anuria ? 'anuria is a labeled contraindication to loop diuretics'
+                : MEDICATION_FORMULARY.some(m => m.drug_class === 'Loop Diuretic' && patient.allergies.has(m.name)) && !formulary.some(m => m.drug_class === 'Loop Diuretic' && !drugFacts(m).short_course_addon) && !loopCurrent ? 'every loop diuretic is excluded for this patient (allergy, anuria or another rule: see the withheld drugs)'
+                : weightBelowDryWeight(patient) ? 'the weight is more than 1 kg below the recorded dry weight'
+                : patient.potassium > 0 && patient.potassium < 3.5 ? 'potassium is below 3.5: correct it first'
+                : loopCurrent && maxed ? 'the oral loop diuretic is already at the highest dose the tool offers'
+                : !loopCurrent && !isCongestedAboveDryWeight(patient) ? `a new loop diuretic is started only when the weight is more than ${CONGESTION_EXCESS_KG_ABOVE} kg above dry weight`
+                : "no oral loop diuretic step passed the tool's rules for this patient";
+            unstable.loopHeldForWeightWithFindings = !loopCurrent && !blockedByPrerequisite && !weightBelowDryWeight(patient) && !isCongestedAboveDryWeight(patient) && !loopsExcludedForAnotherReason(patient) && congestionFindingCount(patient.volume_status.exam_findings) > 0;
+        }
+    }
+
     return {
+        contraindicationReasonByName, duplicateNotes, unstable, startRuleDrops: new Map<string, string>(),
         currentClassMap,
         missingPillars,
         titratableUp,
@@ -756,30 +925,84 @@ export function buildResultingRegimen(
 /** Summary for adding an adjunct. A short-course add-on (facts.short_course_addon) says so: label "not for chronic use", back to the oral loop afterwards. */
 export function addSummary(adj: RegimenMed): string {
     return drugFacts(adj.med).short_course_addon
-        ? `Add ${adj.med.name} ${formatDose(adj)} as a SHORT COURSE beside the oral loop diuretic (label: not for chronic use); return to the oral diuretic when congestion resolves`
+        ? `Add ${adj.med.name} ${formatDose(adj)} as a short course beside the oral loop diuretic (label: not for chronic use); return to the oral diuretic when congestion resolves`
         : `Add ${adj.med.name} ${formatDose(adj)}`;
 }
 
 export function formatSwapSummary(from: RegimenMed, to: RegimenMed): string {
-    if (from.med.drug_class === 'Beta Blocker' && to.med.drug_class === 'Beta Blocker') return `Consider transition from ${from.med.name} ${formatDose(from)} to ${to.med.name} ${formatDose(to)}; starting tier only, not dose equivalence. Confirm individualized taper/transition and reassessment before implementation.`;
+    if (from.med.drug_class === 'Beta Blocker' && to.med.drug_class === 'Beta Blocker') return `Consider transition from ${from.med.name} ${formatDose(from)} to ${to.med.name} ${formatDose(to)}; starting tier only, not dose equivalence. Confirm individualized taper/transition and reassessment before implementation`;
     if (from.med.drug_class === 'ACEi' && to.med.drug_class === 'ARNI') {
-        return `STOP ${from.med.name}. WAIT 36 hours. THEN start ${to.med.name} ${formatDose(to)}`;
+        return `Stop ${from.med.name}, wait 36 hours, then start ${to.med.name} ${formatDose(to)}`;
     }
     if (from.med.drug_class === 'ARNI' && to.med.drug_class === 'ACEi') {
         // Mirror rule (Zestril label 4): no ACEi within 36 hours of the last ARNI dose.
-        return `STOP ${from.med.name}. WAIT 36 hours. THEN start ${to.med.name} ${formatDose(to)}`;
+        return `Stop ${from.med.name}, wait 36 hours, then start ${to.med.name} ${formatDose(to)}`;
     }
     if (from.med.drug_class === 'Loop Diuretic' && to.med.drug_class === 'Loop Diuretic') {
         const fe = drugFacts(from.med).verified_furosemide_equivalent_per_mg, te = drugFacts(to.med).verified_furosemide_equivalent_per_mg;
         // Every non-add-on loop declares an equivalence (verify invariant), so an equivalent-dose summary is always available.
         if (fe !== undefined && te !== undefined) {
-            return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (approximate total daily conversion: ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name} is about ${dailyDose(from) * fe / te} ${to.dose.unit}/day ${to.med.name}; nearest tier, reassess response)`;
+            // The sentence states BOTH the equivalent daily dose and the dose the swap actually lands on (the nearest schedule the tool offers), and says when the landing is below or above it (S13).
+            const wanted = dailyDose(from) * fe / te, landed = dailyDose(to);
+            const relation = Math.abs(landed - wanted) < 1e-9 ? '' : landed < wanted ? ', which is below the equivalent dose' : ', which is above the equivalent dose';
+            return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)} (approximate total daily conversion: ${dailyDose(from)} ${from.dose.unit}/day ${from.med.name} is about ${wanted} ${to.dose.unit}/day ${to.med.name}; the nearest schedule offered is ${landed} ${to.dose.unit}/day${relation}; reassess response)`;
         }
     }
     return `Swap ${from.med.name} -> ${to.med.name} ${formatDose(to)}`;
 }
 
-export function generateCandidateModifications(
+/**
+ * The swap sentence plus, when the drug switched to has a trial-entry criterion (a check marked `indication`: body mass index or LVEF for a GLP-1 drug) that the patient
+ * does not meet, a statement that the criterion was not re-applied because this is a switch inside the class (S9).
+ */
+export function swapSummary(from: RegimenMed, to: RegimenMed, patient: Patient): string {
+    const asNew = { ...patient, current_regimen: (patient.current_regimen ?? []).filter(r => r.med.name !== from.med.name) } as Patient;
+    const skipped = (to.med.contraindication_checks ?? []).filter(c => c.indication && c.when(asNew)).map(c => c.reason.split(' — ')[0]);
+    const base = formatSwapSummary(from, to);
+    return skipped.length > 0 ? `${base} (the starting criterion was not re-applied because this is a switch inside the class: ${skipped.join('; ')})` : base;
+}
+
+/**
+ * R9 Z1: a forced switch states its reason beside the drug that must stop, never at the end of the line where it would read as a property of the drug being started. The reason goes right after the
+ * name of the drug stopped (after its dose where the line gives one): "Stop Lisinopril (reason). Wait 36 hours. Then start ...", "Swap A (reason) -> B ...".
+ */
+export function reasonBesideSource(summary: string, from: RegimenMed, reason: string): string {
+    const withDose = `${from.med.name} ${formatDose(from)}`;
+    const at = summary.indexOf(withDose) >= 0 ? summary.indexOf(withDose) + withDose.length : summary.indexOf(from.med.name) + from.med.name.length;
+    return `${summary.slice(0, at)} (${reason})${summary.slice(at)}`;
+}
+
+/**
+ * The short reason a change line carries (R9 Z8). First every parenthetical inside the reason is dropped (a source or a pointer to the alert); where the reason is still long, each cause is cut before
+ * its explanation (at the colon), the conditions ("if the patient is ...") are dropped, and at most two causes are kept. The alert and the withheld list carry the detail.
+ */
+export function shortLineReason(reason: string): string {
+    let t = reason;
+    for (let i = 0; i < 6 && /\([^()]*\)/.test(t); i++) t = t.replace(/\s*\([^()]*\)/g, '');
+    t = t.replace(/\s+/g, ' ').replace(/\s+([;,])/g, '$1').trim();
+    if (t.length <= 150) return t;
+    const parts = t.split(/;\s+/).map(x => (x.length > 100 ? x.split(':')[0]! : x).trim()).filter(x => x && !/^(if |the suggested |individuali[sz]e )/i.test(x));
+    return parts.slice(0, 2).join('; ').replace(/[.,;\s]+$/, '');
+}
+const EXEMPT_GROUPS = /^(approximate total daily conversion|the starting criterion)/;
+/** R9 Z8: a change line keeps a short reason: any parenthetical group with a parenthesis inside it, or longer than 170 characters, is replaced by its short form (two exact-dose groups are kept whole). */
+export function shortenChangeLine(summary: string): string {
+    let out = '', i = 0;
+    while (i < summary.length) {
+        if (summary[i] !== '(') { out += summary[i++]; continue; }
+        let depth = 0, j = i;
+        for (; j < summary.length; j++) { if (summary[j] === '(') depth++; else if (summary[j] === ')' && --depth === 0) break; }
+        if (j >= summary.length) { out += summary.slice(i); break; }
+        const inner = summary.slice(i + 1, j);
+        out += (!EXEMPT_GROUPS.test(inner) && (/[()]/.test(inner) || inner.length > 170)) ? `(${shortLineReason(inner)})` : summary.slice(i, j + 1);
+        i = j + 1;
+    }
+    return out.replace(/\(\)/g, '').replace(/\s+$/, '');
+}
+export function generateCandidateModifications(analysis: RegimenAnalysis, patient: Patient): ModificationSet[] {
+    return generateCandidateModificationsRaw(analysis, patient).map(c => ({ ...c, modifications: c.modifications.map(m => ({ ...m, summary: shortenChangeLine(m.summary) })) }));
+}
+function generateCandidateModificationsRaw(
     analysis: RegimenAnalysis,
     patient: Patient
 ): ModificationSet[] {
@@ -842,7 +1065,7 @@ export function generateCandidateModifications(
                 action: 'swap',
                 source: from,
                 target: to,
-                summary: formatSwapSummary(from, to)
+                summary: swapSummary(from, to, patient)
             }];
             candidates.push({
                 modifications: mods,
@@ -932,7 +1155,7 @@ export function generateCandidateModifications(
             if (!bestSwap) return;
             firstPillarMeds.forEach(topPillarMed => {
                 const mods: RegimenModification[] = [
-                    { action: 'swap', source: from, target: bestSwap, summary: formatSwapSummary(from, bestSwap) },
+                    { action: 'swap', source: from, target: bestSwap, summary: swapSummary(from, bestSwap, patient) },
                     { action: 'add', target: topPillarMed, summary: `Add ${topPillarMed.med.name} ${formatDose(topPillarMed)}` }
                 ];
                 candidates.push({
@@ -966,7 +1189,7 @@ export function generateCandidateModifications(
                 const bestSwap = swapCandidates[0];
                 if (bestSwap) {
                     const mods: RegimenModification[] = [
-                        { action: 'swap', source: from, target: bestSwap, summary: formatSwapSummary(from, bestSwap) },
+                        { action: 'swap', source: from, target: bestSwap, summary: swapSummary(from, bestSwap, patient) },
                         { action: 'add', target: adj, summary: addSummary(adj) }
                     ];
                     candidates.push({
@@ -979,7 +1202,8 @@ export function generateCandidateModifications(
     }
 
     // --- c) "No change" baseline for comparison when current regimen exists ---
-    if (currentRegimen.length > 0 && analysis.forcedBbDownTitrateNames.size === 0 && analysis.forcedReduceNames.size === 0) {
+    // An empty regimen gets the "no change" option only in a state where nothing may be started (cold, potassium emergency), so the screen has an option that says why.
+    if ((currentRegimen.length > 0 || analysis.unstable.cold || analysis.unstable.potassiumEmergency) && analysis.forcedBbDownTitrateNames.size === 0 && analysis.forcedReduceNames.size === 0) {
         candidates.push({
             modifications: currentRegimen.map(r => ({
                 action: 'keep' as ModificationAction,
@@ -1002,42 +1226,60 @@ export function generateCandidateModifications(
     // GDMT pillar; only when no tolerated alternative exists does it fall back to plain removal.
     const contraindicated = analysis.contraindicatedCurrentMeds;
     const redundant = analysis.redundantCurrentMeds;
+    const forcedReasons = new Map<string, string>();
     if (contraindicated.size > 0 || redundant.size > 0) {
         const forcedRemovals: RegimenModification[] = [];
-        currentRegimen.forEach(r => {
+        sortedByName(currentRegimen).forEach(r => {
             // A HARD contraindication (med.contraindications(patient) true, e.g. K+ > 5.5 on an
             // MRA) takes precedence over a historical intolerance — it gets the urgent
             // 'contraindicated' removal, never an elective-tolerability swap framing.
-            const hardContraindicated = r.med.contraindications?.(patient) === true;
+            // A check that fires only because a kidney value was not entered is no contraindication to state (V17): the real cause (an allergy or intolerance) is the reason.
+            const hardContraindicated = r.med.contraindications?.(patient) === true && contraindicationReasons(r.med, patient).length > 0;
             const intoleranceReason = hardContraindicated ? undefined : analysis.intolerableCurrentMeds.get(r.med.name);
             // A current drug that must go is REPLACED whenever an eligible agent of the same class group exists, for a contraindication as for an intolerance:
             // otherwise options 2 and 3 offered the plain removal of a pillar (carvedilol with asthma) beside option 1's switch to a selective agent
             // (adversarial review item 14). `swappable` already excludes drugs withheld by a potassium, heart-rate or kidney rule, redundant duplicates and
             // diuretics without congestion, so those are still stopped, not replaced.
             const mustGo = contraindicated.has(r.med.name);
-            const swapTarget = (intoleranceReason || mustGo)
+            // In the cold state and at potassium 6.0 or above no option starts a drug (S1a, S3): a drug that must go is stopped, not replaced.
+            // Exception (S1a): a forced beta-blocker switch (pregnancy) lands on the new drug's starting tier, which is a dose reduction in effect, and stopping a beta-blocker outright
+            // in this state is the harm the engine already avoids; it is the one forced switch kept in the cold state.
+            // R10 A2: a loop diuretic that must stop is also replaced in the cold state when congestion is recorded (the same replacement as outside it).
+            const coldBlocksSwap = analysis.unstable.cold && r.med.drug_class !== 'Beta Blocker' && !(r.med.drug_class === 'Loop Diuretic' && analysis.unstable.congested);
+            const swapTarget = (intoleranceReason || mustGo) && !coldBlocksSwap && !analysis.unstable.potassiumEmergency
                 ? analysis.swappable.find(s => s.from.med.name === r.med.name)?.candidates[0]
                 : undefined;
+            // The specific reason, the same in every option and in any entry order (S8): never the bare word "contraindicated".
+            const specificReason = analysis.kWithholdReasons.get(r.med.name)
+                ?? (hardContraindicated ? analysis.contraindicationReasonByName.get(r.med.name) : intoleranceReason ?? analysis.contraindicationReasonByName.get(r.med.name))
+                ?? analysis.contraindicationReasonByName.get(r.med.name) ?? 'a safety rule applies to this patient';
             if ((intoleranceReason || mustGo) && swapTarget) {
+                forcedReasons.set(r.med.name, intoleranceReason ?? specificReason);
                 forcedRemovals.push({
                     action: 'swap',
                     source: r,
                     target: swapTarget,
-                    summary: `${formatSwapSummary(r, swapTarget)} (${intoleranceReason ?? analysis.kWithholdReasons.get(r.med.name) ?? 'contraindicated'})`
+                    mandatory: true,
+                    forced_reason: intoleranceReason ?? specificReason,
+                    summary: reasonBesideSource(swapSummary(r, swapTarget, patient), r, intoleranceReason ?? specificReason)
                 });
             } else if (contraindicated.has(r.med.name)) {
-                const label = analysis.kWithholdReasons.get(r.med.name)
-                    ?? (hardContraindicated ? 'contraindicated' : intoleranceReason ?? 'contraindicated');
-                forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (${label})` });
+                forcedReasons.set(r.med.name, specificReason);
+                forcedRemovals.push({ action: 'remove', source: r, mandatory: true, ...(analysis.kWithholdReasons.has(r.med.name) ? { temporary_hold: true } : {}), summary: `Remove ${r.med.name} (${specificReason})` });
             } else if (redundant.has(r.med.name)) {
-                forcedRemovals.push({ action: 'remove', source: r, summary: `Remove ${r.med.name} (redundant — deprescribe duplicate ${getMedicationClassGroup(r.med.drug_class)} therapy)` });
+                const note = analysis.duplicateNotes.find(n => n.removed.some(x => x.med.name === r.med.name));
+                const text = note
+                    ? `duplicate ${note.group}: ${r.med.name} duplicates ${note.kept.med.name}, the one kept; the duplicate therapy alert gives the reason`
+                    : `duplicate ${getMedicationClassGroup(r.med.drug_class)} therapy: deprescribe the duplicate`;
+                forcedReasons.set(r.med.name, text);
+                forcedRemovals.push({ action: 'remove', source: r, mandatory: true, duplicate_cleanup: true, summary: `Remove ${r.med.name} (${text})` });
             }
         });
 
         // A pregnancy switch from a non-selective beta-blocker always states its reason, including when the swap came from the generic swap candidates.
         candidates.forEach(c => c.modifications.forEach(m => {
             const why = m.action === 'swap' && m.source ? analysis.intolerableCurrentMeds.get(m.source.med.name) : undefined;
-            if (why && why.startsWith('Pregnancy:') && !m.summary.includes(why)) m.summary += ` (${why})`;
+            if (why && why.startsWith('Pregnancy:') && !m.summary.includes(why)) m.summary = reasonBesideSource(m.summary, m.source!, why);
         }));
 
         candidates.forEach(c => {
@@ -1048,9 +1290,27 @@ export function generateCandidateModifications(
                 const alreadySwapped = c.modifications.some(m =>
                     m.action === 'swap' && m.source?.med.name === forced.source!.med.name
                 );
-                if (alreadyRemoved) {
+                if (alreadyRemoved && forced.action === 'swap' && forced.target) {
+                    // A drug that must go is REPLACED whenever an eligible agent of its class exists (above), so a plain removal of it becomes that swap: same text, same reason,
+                    // and the replacement is in the resulting regimen. Before 2026-11-19 the removal only took the swap's TEXT and showed a start the option did not contain (T22).
+                    c.modifications = c.modifications.filter(m => !(m.action === 'add' && m.target?.med.name === forced.target!.med.name));
+                    c.modifications[c.modifications.findIndex(m => m.action === 'remove' && m.source?.med.name === forced.source!.med.name)] = { ...forced };
+                    if (!c.resulting_regimen.some(r => r.med.name === forced.target!.med.name)) c.resulting_regimen.push(forced.target);
+                } else if (alreadyRemoved) {
                     const removal = c.modifications.find(m => m.action === 'remove' && m.source?.med.name === forced.source!.med.name)!;
                     removal.summary = forced.summary; // Preserve the specific mandatory reason, not an earlier generic removal label.
+                    removal.mandatory = true;
+                    if (forced.duplicate_cleanup) removal.duplicate_cleanup = true;
+                    // The hold flag travels with the reason: a withhold for a changeable state is a temporary hold whichever way the removal was built (W8).
+                    if (forced.temporary_hold) removal.temporary_hold = true;
+                }
+                if (alreadySwapped) {
+                    // A swap built by the generic pass states the same specific reason as the forced one, in every option (S8).
+                    const sw = c.modifications.find(m => m.action === 'swap' && m.source?.med.name === forced.source!.med.name)!;
+                    const reason = forcedReasons.get(forced.source!.med.name);
+                    if (reason && !sw.summary.includes(`(${reason})`) && !sw.summary.includes(reason)) sw.summary = reasonBesideSource(sw.summary, sw.source!, reason);
+                    sw.mandatory = true;
+                    if (reason) sw.forced_reason = reason;
                 }
                 if (!alreadyRemoved && !alreadySwapped) {
                     // Coherence: a med that is being force-removed must not also carry a
@@ -1060,7 +1320,11 @@ export function generateCandidateModifications(
                         !((m.action === 'titrate_up' || m.action === 'titrate_down' || m.action === 'keep')
                             && m.source?.med.name === forced.source!.med.name)
                     );
-                    c.modifications.push(forced);
+                    // One instruction per drug (S6): a candidate that already ADDS the drug this forced swap lands on gives that instruction up to the swap, which carries the reason.
+                    if (forced.action === 'swap' && forced.target) {
+                        c.modifications = c.modifications.filter(m => !(m.action === 'add' && m.target?.med.name === forced.target!.med.name));
+                    }
+                    c.modifications.push({ ...forced });
                     c.resulting_regimen = c.resulting_regimen.filter(
                         r => r.med.name !== forced.source!.med.name
                     );
@@ -1094,7 +1358,12 @@ export function generateCandidateModifications(
                     (m.action === 'titrate_down' || m.action === 'remove' || m.action === 'swap')
                     && m.source?.med.name === bbName
                 );
-                if (alreadyHandled) return;
+                if (alreadyHandled) {
+                    // A reduction already built by the generic titrate-down pass states the same reason as the injected one, whichever candidate survives (S8, B4).
+                    c.modifications = c.modifications.map(m => (m.action === 'titrate_down' && m.source?.med.name === bbName && !m.summary.includes('acute decompensation with hypoperfusion')
+                        ? { ...m, mandatory: true, temporary_hold: true, summary: `${m.summary} (acute decompensation with hypoperfusion)` } : m));
+                    return;
+                }
                 // Drop any incoherent up-titration / keep of the same BB before injecting the cut.
                 c.modifications = c.modifications.filter(m =>
                     !((m.action === 'titrate_up' || m.action === 'keep') && m.source?.med.name === bbName)
@@ -1103,6 +1372,8 @@ export function generateCandidateModifications(
                     action: 'titrate_down',
                     source: td.current,
                     target: lower,
+                    mandatory: true,
+                    temporary_hold: true,
                     summary: `Reduce ${bbName} ${formatDose(td.current)} → ${formatDose(lower)} (acute decompensation with hypoperfusion)`
                 });
                 c.resulting_regimen = c.resulting_regimen.map(r => (r.med.name === bbName ? lower : r));
@@ -1134,7 +1405,7 @@ export function generateCandidateModifications(
                     // A single reduction candidate built by the generic titrate-down pass has no reason in its summary: state the forced-reduction reason on it too (renal maximum,
                     // potassium, interaction cap, heart rate), so every displayed reduction says why.
                     c.modifications = c.modifications.map(m => (m.action === 'titrate_down' && m.source?.med.name === medName && !m.summary.includes(reason)
-                        ? { ...m, summary: `${m.summary} (${reason})` } : m));
+                        ? { ...m, mandatory: true, temporary_hold: true, summary: `${m.summary} (${reason})` } : m));
                     return;
                 }
                 c.modifications = c.modifications.filter(m =>
@@ -1144,6 +1415,8 @@ export function generateCandidateModifications(
                     action: 'titrate_down',
                     source: td.current,
                     target: lower,
+                    mandatory: true,
+                    temporary_hold: true,
                     summary: `Reduce ${medName} ${formatDose(td.current)} → ${formatDose(lower)} (${reason})`
                 });
                 c.resulting_regimen = c.resulting_regimen.map(r => (r.med.name === medName ? lower : r));
@@ -1151,8 +1424,104 @@ export function generateCandidateModifications(
         });
     }
 
-    // Filter by max_new_classes_per_visit
-    return candidates.filter(c => {
+    // --- f3) The congestion display rule (POLICY, not a ranking factor; S1): in acute decompensation or the cold state, when the patient is congested and a loop diuretic start or
+    // increase is eligible, every option includes it. A candidate that already raises or starts a loop keeps its own step; one that reduces, removes or swaps the loop is left alone.
+    // T23 (2026-11-19): the rule is a display rule and must never leave the patient with no option. The safety-required plan is built first; the loop step is added to a
+    // copy of it, and the copy is used only if it is still allowed in the patient's state (potassium emergency, per-visit limit, structure). Otherwise the plan is shown
+    // WITHOUT the step and says why (ModificationSet.loop_step_omitted).
+    // R8 X11: the reason a drug that an option STARTS fails its own contraindication check on the regimen the option produces (null when it does not). A check that was already true for the arriving
+    // patient is left to the eligibility stage; a start-only criterion (indication) is not re-applied to a switch inside a class (S9).
+    const startBlockedOnProducedRegimen = (c: ModificationSet, m: RegimenModification): string | null => {
+        if (!START_RULE.enabled || (m.action !== 'add' && m.action !== 'swap') || !m.target || !m.target.med.contraindications) return null;
+        const med = m.target.med;
+        try {
+            if (med.contraindications!(patient)) return null;
+            const produced = { ...patient, current_regimen: c.resulting_regimen.filter(r => r.med.name !== med.name) };
+            const sameGroupSwap = m.action === 'swap' && !!m.source && getMedicationClassGroup(m.source.med.drug_class) === getMedicationClassGroup(med.drug_class);
+            const checks = med.contraindication_checks;
+            if (checks) return checks.find(ch => !(sameGroupSwap && ch.indication) && ch.when(produced))?.reason ?? null;
+            return med.contraindications!(produced) ? 'a contraindication that applies to the regimen this option produces' : null;
+        } catch { return null; }
+    };
+    // A forced switch whose replacement still cannot be started is a plain removal of the drug that must go, with the same stated reason: a forced removal is never lost (R8 X11a).
+    candidates.forEach(c => {
+        c.modifications = c.modifications.map(m => {
+            if (m.action !== 'swap' || !m.mandatory || !m.source || !m.target) return m;
+            const why = startBlockedOnProducedRegimen(c, m);
+            if (why === null) return m;
+            analysis.startRuleDrops.set(m.target.med.name, why);
+            const reason = m.forced_reason ?? analysis.kWithholdReasons.get(m.source.med.name) ?? analysis.contraindicationReasonByName.get(m.source.med.name) ?? 'a safety rule applies to this patient';
+            c.resulting_regimen = c.resulting_regimen.filter(r => r.med.name !== m.target!.med.name);
+            return { action: 'remove', source: m.source, mandatory: true, ...(m.temporary_hold ? { temporary_hold: true } : {}), forced_reason: reason, summary: `Remove ${m.source.med.name} (${reason})` } as RegimenModification;
+        });
+    });
+
+    // R9 Z11: a short-course add-on (Furoscix) is used only beside an oral drug of its group. When an option stops the last oral loop diuretic (a forced removal for an allergy, an intolerance or a
+    // contraindication, or a forced switch that could not be made), the add-on goes with it, with that reason stated; otherwise the option would be structurally unsound and be dropped, and the
+    // patient would be left with an empty screen although the offending drug has to stop.
+    candidates.forEach(c => {
+        // R10 A12: only an add-on the patient TAKES goes with the oral loop; a candidate that merely ADDS Furoscix beside a loop this option stops is structurally unsound and is dropped, as before round 9.
+        c.resulting_regimen.filter(r => drugFacts(r.med).short_course_addon && currentRegimen.some(x => x.med.name === r.med.name)).forEach(addon => {
+            const g = getMedicationClassGroup(addon.med.drug_class);
+            if (c.resulting_regimen.some(o => o !== addon && !drugFacts(o.med).short_course_addon && getMedicationClassGroup(o.med.drug_class) === g)) return;
+            c.modifications = c.modifications.filter(m => !(m.source?.med.name === addon.med.name && m.action !== 'remove') && !(m.action === 'add' && m.target?.med.name === addon.med.name));
+            c.resulting_regimen = c.resulting_regimen.filter(r => r.med.name !== addon.med.name);
+            if (!c.modifications.some(m => m.action === 'remove' && m.source?.med.name === addon.med.name)) {
+                c.modifications.push({ action: 'remove', source: addon, mandatory: true, summary: `Remove ${addon.med.name} (Used only beside an oral loop diuretic, which this option stops)` });
+            }
+        });
+    });
+
+    const u = analysis.unstable;
+    const isLoopStepMod = (m: RegimenModification) => (m.action === 'add' || m.action === 'titrate_up') && m.target?.med.drug_class === 'Loop Diuretic' && !drugFacts(m.target.med).short_course_addon;
+    const loopRule = (u.decompensated || u.cold) && u.congested && !!u.loopStep;
+    const bases = candidates.map(c => ({ modifications: c.modifications.map(m => ({ ...m })), resulting_regimen: [...c.resulting_regimen] } as ModificationSet));
+    const augmented: boolean[] = candidates.map(() => false);
+    const touchesLoop: boolean[] = candidates.map(() => false);
+    if (loopRule) {
+        const step = u.loopStep!;
+        candidates.forEach((c, i) => {
+            if (c.modifications.some(isLoopStepMod)) return;
+            // The clean-up of a duplicate loop entry is not a change to the loop dose (T2); any other reduction, stop or switch of the loop is.
+            if (c.modifications.some(m => m.source?.med.drug_class === 'Loop Diuretic' && !drugFacts(m.source.med).short_course_addon && m.action !== 'keep' && !m.duplicate_cleanup)) { touchesLoop[i] = true; return; }
+            augmented[i] = true;
+            if (step.action === 'titrate_up') {
+                c.modifications = c.modifications.filter(m => !(m.action === 'keep' && m.source?.med.name === step.source!.med.name));
+                c.modifications.push({ action: 'titrate_up', source: step.source, target: step.target, summary: `Titrate ${step.source!.med.name} ${formatDose(step.source!)} → ${formatDose(step.target)}` });
+                c.resulting_regimen = c.resulting_regimen.map(r => (r.med.name === step.source!.med.name ? step.target : r));
+            } else {
+                c.modifications.push({ action: 'add', target: step.target, summary: addSummary(step.target) });
+                c.resulting_regimen = [...c.resulting_regimen, step.target];
+            }
+        });
+    }
+    // What an option may contain in the cold state (S1a) and at potassium 6.0 or above (S3): the engine's own forced reductions and withholds, a diuretic step when congested (cold),
+    // and a potassium binder already on board (potassium emergency). Nothing else is started or raised.
+    const stateAllows = (c: ModificationSet): boolean => c.modifications.every(m => {
+        // T1: at potassium 6.0 or above an option holds only actions that lower potassium or leave it alone, so a loop or thiazide-type diuretic or a binder is never cut
+        // (the safety-mandated removal of a drug the patient must not take, and the duplicate clean-up, are unaffected: they are marked mandatory).
+        if (u.potassiumEmergency && (m.action === 'remove' || m.action === 'titrate_down') && m.source && ['Loop Diuretic', 'Thiazide-like Diuretic', 'K+ Binder'].includes(m.source.med.drug_class) && !m.mandatory) return false;
+        if (m.action === 'keep' || m.action === 'titrate_down' || m.action === 'remove') return true;
+        if (u.cold && u.congested && isLoopStepMod(m)) return true;
+        // R10 A2: with congestion recorded, a loop diuretic that must stop is replaced by another oral loop in the cold state on the same terms as outside it (the scope page already allows a loop for recorded congestion).
+        if (u.cold && u.congested && !u.potassiumEmergency && m.action === 'swap' && m.mandatory && m.source?.med.drug_class === 'Loop Diuretic' && m.target?.med.drug_class === 'Loop Diuretic' && !drugFacts(m.target.med).short_course_addon) return true;
+        if (u.potassiumEmergency && m.action === 'titrate_up' && m.target?.med.drug_class === 'K+ Binder') return true;
+        if (u.cold && !u.potassiumEmergency && m.action === 'swap' && m.mandatory && m.source?.med.drug_class === 'Beta Blocker') return true;
+        return !(u.cold || u.potassiumEmergency);
+    }) && (!(u.cold && u.potassiumEmergency) || c.modifications.every(m => !['add', 'titrate_up', 'swap'].includes(m.action) || (u.potassiumEmergency && m.target?.med.drug_class === 'K+ Binder')));
+    // One instruction per drug (S6): when a candidate both adds a drug and swaps to it, the swap (which carries the reason) stands and the add is dropped; then identical options collapse.
+    const normalizeOne = (c: ModificationSet) => {
+        const swapTargets = new Set(c.modifications.filter(m => m.action === 'swap' && m.target).map(m => m.target!.med.name));
+        c.modifications = c.modifications.filter(m => !(m.action === 'add' && m.target && swapTargets.has(m.target.med.name)));
+        // Changes are listed in a fixed order of kind, then by drug name, and the resulting regimen in drug-name order, so the option and its warnings read the same whichever candidate survives de-duplication and whatever order the drugs were typed in.
+        const kindOrder: string[] = ['swap', 'add', 'titrate_up', 'titrate_down', 'remove', 'keep'];
+        const nameOf = (m: RegimenModification) => (m.target ?? m.source)?.med.name ?? '';
+        c.modifications = [...c.modifications].sort((a, b) => kindOrder.indexOf(a.action) - kindOrder.indexOf(b.action) || (nameOf(a) < nameOf(b) ? -1 : nameOf(a) > nameOf(b) ? 1 : 0));
+        c.resulting_regimen = sortedByName(c.resulting_regimen);
+    };
+    // Filter by max_new_classes_per_visit and the structural rules.
+    const acceptable = (c: ModificationSet): boolean => {
+        if (!stateAllows(c)) return false;
         // A forced BB dose-reduction (acute decompensation) is satisfied by EITHER a down-titration
         // OR a removal. Removal is the stronger reduction and is the correct action when the BB is
         // also contraindicated (e.g. decompensated HF + new bronchospasm). Without the `remove`
@@ -1171,7 +1540,7 @@ export function generateCandidateModifications(
                 (m.action === 'titrate_down' || m.action === 'remove' || m.action === 'swap') && m.source?.med.name === name
             )
         );
-        const newClassCount = countNewClassGroups(c.resulting_regimen, currentRegimen);
+        const newClassCount = countVisitLimitChanges(c, currentRegimen);
         const hasSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'MRA');
         const hasNonSteroidalMRA = c.resulting_regimen.some(r => r.med.drug_class === 'nsMRA');
         const hasDualMRA = hasSteroidalMRA && hasNonSteroidalMRA;
@@ -1181,8 +1550,46 @@ export function generateCandidateModifications(
         // A candidate that is structurally unprescribable is dropped UNLESS the patient arrived that way and the candidate does not make it worse
         // (the duplicate-therapy cleanup above removes arriving duplicates; what is left here was built by combining changes).
         const structurallySound = structuralProblems(c.resulting_regimen).length === 0;
-        return satisfiesForcedBbDownTitration && satisfiesForcedReduction && newClassCount <= maxNewPerVisit && !hasDualMRA && !hasDualRAAS && structurallySound;
+        // R7 W13b: a drug the option STARTS is judged on the regimen the option produces, not only on the regimen the patient arrives with. A contraindication that reads the regimen (finerenone is contraindicated
+        // at an ejection fraction above 40 with an unknown EF history while the patient is on heart failure therapy) can become true once the option adds or removes other drugs (a RAAS inhibitor
+        // started beside it); such an option is not shown. A check that was already true for the arriving patient is left to the eligibility stage as before.
+        const regimenMakesItContraindicated = c.modifications.some(m => {
+            const why = startBlockedOnProducedRegimen(c, m);
+            if (why !== null) analysis.startRuleDrops.set(m.target!.med.name, why);
+            return why !== null;
+        });
+        return satisfiesForcedBbDownTitration && satisfiesForcedReduction && newClassCount <= maxNewPerVisit && !hasDualMRA && !hasDualRAAS && structurallySound && !regimenMakesItContraindicated;
+    };
+    const whyNoLoopStep = (aug: ModificationSet): string =>
+        u.potassiumEmergency ? 'potassium is 6.0 or above, so no drug is started or raised until it is controlled'
+        : countVisitLimitChanges(aug, currentRegimen) > maxNewPerVisit ? `adding it would pass the limit of ${maxNewPerVisit} new drug class${maxNewPerVisit === 1 ? '' : 'es'} or switches per visit`
+        : "adding it did not pass the tool's rules for this option";
+    const collect = (pick: (c: ModificationSet, i: number) => ModificationSet | undefined): ModificationSet[] => {
+        const seenOption = new Set<string>();
+        const out: ModificationSet[] = [];
+        candidates.forEach((c, i) => {
+            const chosen = pick(c, i);
+            if (!chosen) return;
+            const key = chosen.modifications.map(m => m.summary).sort().join('|') + '#' + chosen.resulting_regimen.map(r => `${r.med.name} ${r.dose.strength} ${r.selected_frequency}`).sort().join('+');
+            if (seenOption.has(key)) return;
+            seenOption.add(key);
+            out.push(chosen);
+        });
+        return out;
+    };
+    candidates.forEach(normalizeOne);
+    // Normal rule: a plan is shown when it is acceptable WITH the loop step; a plan that reduces, stops or swaps the loop is not a decompensation plan.
+    const withStep = collect((c, i) => (loopRule && touchesLoop[i] ? undefined : acceptable(c) ? c : undefined));
+    if (withStep.length > 0 || !loopRule) return withStep;
+    // Nothing survives with the step: show the safety-required plans without it, each saying why (T23).
+    const withoutStep = collect((c, i) => {
+        if (!augmented[i]) return undefined;
+        const base = bases[i]; normalizeOne(base);
+        return acceptable(base) ? { ...base, loop_step_omitted: whyNoLoopStep(c) } : undefined;
     });
+    if (withoutStep.length > 0) return withoutStep;
+    // Last resort: a plan that itself reduces, stops or replaces the loop for a stated safety reason is better than no option at all.
+    return collect((c, i) => (touchesLoop[i] && acceptable(c) ? { ...c, loop_step_omitted: 'the loop diuretic is reduced, stopped or replaced in this option for a safety reason stated on it, so no further step is added' } : undefined));
 }
 
 // --- 1. Scoring Logic (The 6 Domains) ---

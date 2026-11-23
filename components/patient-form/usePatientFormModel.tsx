@@ -10,6 +10,7 @@ import { SymptomsSection } from './SymptomsSection';
 import { PhysicalExamSection } from './PhysicalExamSection';
 import { DiagnosticsSection } from './DiagnosticsSection';
 import { HistorySection } from './HistorySection';
+import { ScopeSection } from './ScopeSection';
 import { SocialSection } from './SocialSection';
 import { MedicationManager } from './MedicationManager';
 
@@ -51,7 +52,12 @@ export function usePatientFormModel({ patientData, setPatientData, onValidityCha
     }, [patientData.rhythm, patientData.comorbidities, setPatientData]);
 
     const validationErrors = useMemo(() => validatePatientForm(patientData), [patientData]);
-    const urgentFindings = knownUrgentFindings(patientData);
+    // An out-of-range entry (potassium 9, systolic 40) is a typing error to fix first, not a finding: it raises no emergency alert until it is valid.
+    const urgentFindings = useMemo(() => {
+        const q = { ...patientData };
+        for (const f of ['sbp', 'potassium', 'oxygen_saturation'] as const) if (validationErrors[f]) q[f] = 0;
+        return knownUrgentFindings(q);
+    }, [patientData, validationErrors]);
 
     // --- 2c. Clinical warnings ---
     const clinicalWarnings = useMemo(() => {
@@ -157,7 +163,7 @@ export function usePatientFormModel({ patientData, setPatientData, onValidityCha
 
 export type PatientFormModel = ReturnType<typeof usePatientFormModel>;
 
-export const FORM_SECTION_IDS = ['patient-demographics', 'patient-symptoms', 'patient-exam', 'patient-diagnostics', 'patient-history', 'patient-medications', 'patient-social'] as const;
+export const FORM_SECTION_IDS = ['patient-demographics', 'patient-symptoms', 'patient-exam', 'patient-diagnostics', 'patient-history', 'patient-scope', 'patient-medications', 'patient-social'] as const;
 export type FormSectionId = typeof FORM_SECTION_IDS[number];
 
 /** Renders one named section of the patient form against the shared model. */
@@ -168,6 +174,7 @@ export const FormSection: React.FC<{ id: FormSectionId; model: PatientFormModel 
         case 'patient-exam': return <PhysicalExamSection patientData={m.patientData} onChange={m.handleInputChange} onVolumeChange={m.handleVolumeChange} onToggleFinding={m.toggleFinding} validationErrors={m.validationErrors} clinicalWarnings={m.clinicalWarnings} />;
         case 'patient-diagnostics': return <DiagnosticsSection patientData={m.patientData} onChange={m.handleInputChange} validationErrors={m.validationErrors} clinicalWarnings={m.clinicalWarnings} />;
         case 'patient-history': return <HistorySection patientData={m.patientData} setPatientData={m.setPatientData} onPendingChange={m.setPendingHistory} />;
+        case 'patient-scope': return <ScopeSection patientData={m.patientData} setPatientData={m.setPatientData} />;
         case 'patient-medications': return <MedicationManager patientData={m.patientData} setPatientData={m.setPatientData} onPendingChange={m.setPendingMedication} />;
         case 'patient-social': return <SocialSection patientData={m.patientData} onChange={m.handleInputChange} setPatientData={m.setPatientData} validationErrors={m.validationErrors} clinicalWarnings={m.clinicalWarnings} />;
     }

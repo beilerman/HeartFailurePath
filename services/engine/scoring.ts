@@ -13,11 +13,11 @@ import {
 import { drugFacts } from './drugFacts';
 import { ivIronCreditTier } from '../clinicalPredicates';
 import { RAAS_CLASSES, MRA_POOL_CLASSES, VOLUME_SENSITIVE_INTENSIFICATION_CLASSES, getMedicationClassGroup } from './registry';
-import { countNewClassGroups, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, therapyDoseCredit, restrictToStartTiers } from './regimenUtils';
+import { countVisitLimitChanges, formatDose, hasDiureticDeEscalation, hasRelevantIntensification, therapyDoseCredit, restrictToStartTiers } from './regimenUtils';
 import { calculateAdherenceScore, calculateCostScore, calculateFunctionalScore, calculateGuidelineConcordanceScore, calculateNeurohormonalScore, calculateStructureScore, calculateVolumeScore, classifyPhenotype, describeConcordance, nsMraFillsMraSlot, Phenotype } from './domains';
 import { simulateModificationEffect } from './effects';
 import { symptomEstimateFor, describeSymptomEstimate, type SymptomEstimate } from './symptomBenefit';
-import { planCreditsFor } from './doseCredit';
+import { planCreditsFor, type CappedStart } from './doseCredit';
 import { harmBurdenFor, HARM_TABLE, type HarmBurden } from './harmBurden';
 import { outcomeEstimateFor, describeOutcomeEstimate, type OutcomeEstimate, type OutcomeKey } from './outcomeBenefit';
 import { IntolerancePolicy } from './intolerance';
@@ -52,10 +52,15 @@ export interface ScoringContext {
     /** Penalized warnings already true of the CURRENT regimen with nothing changed (number-free keys -> text). See `warningKey`. */
     baselineDangerWarnings: Map<string, string>;
     costAssessed: boolean;
+    /** Cold state or potassium emergency: nothing is started or raised, so no rescue drug is added either. */
+    noStarts: boolean;
 }
 
 /** A warning's identity without its numbers ("Low Perfusion Pressure (MAP 62 mmHg)" and "(MAP 63 mmHg)" are the same warning). */
-export const warningKey = (w: string): string => w.replace(/-?\d+(\.\d+)?/g, '#');
+export const warningKey = (w: string): string => w
+    // The beta-blocker named in the asthma warning is whichever beta-1-selective drug the regimen holds; removing a duplicate beta-blocker must not turn the SAME warning into a new one (T25).
+    .replace(/^(ASTHMA \+ BETA-BLOCKER: ).*? (\(β1-selective\) is acceptable)/, '$1<drug> $2')
+    .replace(/-?\d+(\.\d+)?/g, '#');
 const GUIDELINE_REFERENCE_DETAIL = 'Shown for reference; not a ranking input. Ranking uses measured outcome effects, cost and dosing burden.';
 const isPenalizedWarning = (w: string): boolean => !NON_PENALIZED_WARNING_MARKERS.some(marker => w.includes(marker)) && !WARNINGS_PRICED_BY_NAMED_ADJUSTMENT.some(marker => w.includes(marker));
 
@@ -141,9 +146,28 @@ export function buildScoringContext(
     return {
         patient, prices, intolerancePolicy, dataAudit, phenotype, isVolumeDepleted, hasDiureticInCurrent,
         rescueBinders, ivIron, ironDeficient, maxNewPerVisit, achievableSlots, indicatedFoundationalSlots, baselineDangerWarnings,
+        noStarts: analysis.unstable.cold || analysis.unstable.potassiumEmergency,
         costAssessed: budgetKnown(patient) && [...formulary, ...current.map(r => r.med)].every(m => m.available_doses.every(dose =>
             monthlyMedicationCost({ med: m, dose, selected_frequency: dose.frequency_options[0] }, patient.insurance_tier, prices) !== undefined)),
     };
+}
+
+/**
+ * Warnings that describe the patient's STATE (a slow heart rate, a high potassium) are shown on an option only when the option involves the drug that bears on it (S13):
+ * a bradycardia warning needs a rate-slowing drug in the resulting regimen, a hyperkalemia warning needs a potassium-raising one. Display only: the penalty has already been
+ * charged (baselineDangerWarnings carries the state warnings to every option), so no score changes.
+ */
+export function warningsForDisplay(warnings: string[], regimen: RegimenMed[], modifications: RegimenModification[] = []): string[] {
+    const changesLoop = modifications.some(m => m.action !== 'keep' && [m.source, m.target].some(x => x?.med.drug_class === 'Loop Diuretic'));
+    const slowsRate = regimen.some(r => ['Beta Blocker', 'If Inhibitor', 'Inotrope'].includes(r.med.drug_class));
+    const raisesK = regimen.some(r => RAAS_CLASSES.has(r.med.drug_class) || MRA_POOL_CLASSES.has(r.med.drug_class));
+    // R8 X15d: an identical warning is printed once on an option (two beta-blockers removed gave the discontinuation warning twice).
+    return [...new Set(warnings)].filter(w => {
+        if (w.startsWith('Risk of Bradycardia') || w.startsWith('Drug note: the rhythm is recorded as paced')) return slowsRate;
+        if (w.includes('Hyperkalemia Risk (K+ >')) return raisesK;
+        if (w.startsWith('Severe CKD Loop Strategy')) return changesLoop; // belongs to an option that changes the loop (S13)
+        return true;
+    });
 }
 
 /** Classes that raise potassium and so can make a binder rescue necessary: the RAAS pool and both MRA classes. */
@@ -196,11 +220,12 @@ export function applyRescueAdditions(modSet: ModificationSet, ctx: ScoringContex
     // the candidate over the limit, the candidate is scored WITHOUT it (the iron stays in the "also eligible" list; the potassium penalties apply). Before
     // 2026-11-12 the whole candidate was dropped, including the one that makes only the mandatory changes, so a patient with a limit of 0 was left with only the
     // options that happened to add no class, and the tool could reverse its own advice on the next run.
-    const withinVisitLimit = (set: ModificationSet) => countNewClassGroups(set.resulting_regimen, patient.current_regimen || []) <= ctx.maxNewPerVisit;
+    const withinVisitLimit = (set: ModificationSet) => countVisitLimitChanges(set, patient.current_regimen || []) <= ctx.maxNewPerVisit;
     const baseWithinLimit = withinVisitLimit(modSet);
 
     // Iron rescue: auto-append IV iron when criteria met (clinic-administered, not competing with oral GDMT)
-    if (ironDeficient && ivIron && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'IV Iron')
+    // No drug is added automatically in the cold state or at potassium 6.0 or above (S1a, S3).
+    if (ironDeficient && ivIron && !ctx.noStarts && !activeModSet.resulting_regimen.some(r => r.med.drug_class === 'IV Iron')
         && !(baseWithinLimit && !withinVisitLimit({ modifications: [], resulting_regimen: [...activeModSet.resulting_regimen, ivIron] }))) {
         const ironMod: RegimenModification = {
             action: 'add',
@@ -263,7 +288,7 @@ export function scoreDomains(
     sim: Simulation,
     activeModSet: ModificationSet,
     ctx: ScoringContext
-): { unrounded: Record<ScoreDomainKey, number>; rounded: DomainScores; completenessSlots: number; outcomes: Record<OutcomeKey, OutcomeEstimate>; symptoms: SymptomEstimate; harm: HarmBurden; titrated: string[]; doseNotMeasured: string[] } {
+): { unrounded: Record<ScoreDomainKey, number>; rounded: DomainScores; completenessSlots: number; outcomes: Record<OutcomeKey, OutcomeEstimate>; symptoms: SymptomEstimate; harm: HarmBurden; titrated: string[]; capped: CappedStart[]; doseNotMeasured: string[] } {
     const { patient, dataAudit, phenotype } = ctx;
     const p = sim.projectedPatient;
 
@@ -280,7 +305,7 @@ export function scoreDomains(
     // Attach the evidence basis (recommendation class + trials) for the pillars present.
     sim.rationale = [...sim.rationale, ...describeConcordance(activeModSet.resulting_regimen, patient, phenotype)];
     // Expected outcome benefit: trial relative risks of the candidate's resulting regimen (outcomeBenefit.ts). Recorded measurements are never altered.
-    // Each option is valued as the PLAN it starts (planCreditsFor): new starts and increases at the trial-achieved dose, everything else by its dose. Harm is not discounted.
+    // Each option is valued as the PLAN it starts (planCreditsFor): new starts at the highest dose this patient may be given, increases at the dose reached, everything else by its dose. Harm is not discounted.
     const plan = planCreditsFor(activeModSet, patient);
     const outcomes: Record<OutcomeKey, OutcomeEstimate> = {
         all_cause_death: outcomeEstimateFor(activeModSet.resulting_regimen, patient, 'all_cause_death', plan.creditFn),
@@ -310,7 +335,7 @@ export function scoreDomains(
         adherence: Math.round(s_adhere),
     };
 
-    return { unrounded: unroundedDomainScores, rounded: domainScores, completenessSlots: completeness.slots, outcomes, symptoms, harm, titrated: plan.titrated, doseNotMeasured: plan.doseNotMeasured };
+    return { unrounded: unroundedDomainScores, rounded: domainScores, completenessSlots: completeness.slots, outcomes, symptoms, harm, titrated: plan.titrated, capped: plan.capped, doseNotMeasured: plan.doseNotMeasured };
 }
 
 /**
@@ -328,7 +353,8 @@ export function aggregateScore(
     symptomEstimate?: SymptomEstimate,
     harm?: HarmBurden,
     titrated: string[] = [],
-    doseNotMeasured: string[] = []
+    doseNotMeasured: string[] = [],
+    capped: CappedStart[] = []
 ): { overall: number; raw: number; breakdown: ScoreBreakdown; normalizedSFBonus: number; gdmtCompleteness: number } {
     const { dataAudit, isVolumeDepleted } = ctx;
     const p = { ...sim.projectedPatient, ...sim.riskScreen, potassium: sim.riskScreen.potassium_high };
@@ -350,10 +376,10 @@ export function aggregateScore(
         weight: effectiveWeight(key),
         contribution: unroundedDomainScores[key] * effectiveWeight(key),
         ...(unassessed.has(key) ? { assessed: false, detail: ['neurohormonal','functional','volume','structure'].includes(key) ? 'Not assessed: treatment response is not quantified. Observed measurements do not establish the effect of this proposed regimen; this domain has zero ranking weight.' : 'Not assessed: required input is unavailable; excluded and remaining domain weights rescaled.' } : {}),
-        ...(key === 'mortality' && outcomes ? { detail: describeOutcomeEstimate(outcomes.all_cause_death, titrated, doseNotMeasured) } : {}),
-        ...(key === 'hf_hospitalization' && outcomes ? { detail: describeOutcomeEstimate(outcomes.hf_hospitalization, titrated, doseNotMeasured) } : {}),
-        ...(key === 'symptoms' && symptomEstimate ? { detail: describeSymptomEstimate(symptomEstimate, titrated) } : {}),
-        ...(key === 'side_effects' && harm ? { detail: `Burden ${harm.burden.toFixed(1)} points from measured one-year harm rates (score = 100 minus burden / ${SIDE_EFFECT_BURDEN_DIVISOR}); harm is charged in full at the trial rate; rates are trial averages and several multipliers multiply (an assumption); not a prediction for this patient.` } : {}),
+        ...(key === 'mortality' && outcomes ? { detail: describeOutcomeEstimate(outcomes.all_cause_death, titrated, doseNotMeasured, capped) } : {}),
+        ...(key === 'hf_hospitalization' && outcomes ? { detail: describeOutcomeEstimate(outcomes.hf_hospitalization, titrated, doseNotMeasured, capped) } : {}),
+        ...(key === 'symptoms' && symptomEstimate ? { detail: describeSymptomEstimate(symptomEstimate, titrated, capped) } : {}),
+        ...(key === 'side_effects' && harm ? { detail: `Burden ${harm.burden.toFixed(1)} points from measured one-year harm rates (score = 100 minus burden / ${SIDE_EFFECT_BURDEN_DIVISOR}); a harm measured for the drug or its class is charged in full at the measured rate; a harm not measured for the drug is borrowed from a measured row of another drug class with the same mechanism (shown as borrowed from a sibling class) or, when no such row exists, is not charged (shown as not measured); rates are trial averages and several multipliers multiply (an assumption); not a prediction for this patient.` } : {}),
         ...(key === 'functional' && !unassessed.has(key) && ctx.patient.kccq_score === undefined ? { detail: 'KCCQ not measured: average uses recorded NYHA and activity only; no KCCQ value or response is assumed.' } : {}),
         ...(key === 'guideline' || key === 'completeness'
             ? { detail: GUIDELINE_REFERENCE_DETAIL + (key === 'completeness' && completenessSlots === 0 ? ' No achievable indicated therapies for this patient - scored 0.' : '') }
@@ -516,12 +542,12 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
         if (dropped) return; // a new potassium-raising class that would need a binder to stay in range is not offered
         if (candidateHasMissingPrerequisite(patient, activeModSet)) return;
 
-        if (countNewClassGroups(activeModSet.resulting_regimen, patient.current_regimen || []) > maxNewPerVisit) {
+        if (countVisitLimitChanges(activeModSet, patient.current_regimen || []) > maxNewPerVisit) {
             return;
         }
 
         const domains = scoreDomains(sim, activeModSet, ctx);
-        const agg = aggregateScore(domains.unrounded, sim, activeModSet, ctx, domains.completenessSlots, domains.outcomes, domains.symptoms, domains.harm, domains.titrated, domains.doseNotMeasured);
+        const agg = aggregateScore(domains.unrounded, sim, activeModSet, ctx, domains.completenessSlots, domains.outcomes, domains.symptoms, domains.harm, domains.titrated, domains.doseNotMeasured, domains.capped);
         results.push({
             regimen: activeModSet.resulting_regimen,
             projected_patient: sim.projectedPatient,
@@ -536,19 +562,11 @@ export function scoreCandidates(candidateSets: ModificationSet[], ctx: ScoringCo
             domain_scores: domains.rounded,
             special_feature_bonus: Math.round(agg.normalizedSFBonus),
             gdmt_completeness: agg.gdmtCompleteness,
-            // Same per-slot credit rule, over the foundational (pillar) slots only; explanation/ranking-mode only, never scored.
-            // Over the INDICATED pillars, not only those startable today: with a pillar held (potassium 5.3) two of four on board read "80%" (review 2026-11-12).
-            foundational_coverage: gdmtCompletenessFraction(activeModSet, ctx, ctx.indicatedFoundationalSlots).fraction * 100,
-            foundational_slots: {
-                indicated: ctx.indicatedFoundationalSlots.length,
-                on_board: ctx.indicatedFoundationalSlots.filter(sl => activeModSet.resulting_regimen.some(r => sl.match(r.med.drug_class))).length,
-                not_startable: ctx.indicatedFoundationalSlots.filter(sl => !ctx.achievableSlots.includes(sl) && !activeModSet.resulting_regimen.some(r => sl.match(r.med.drug_class))).length,
-            },
             cost: sim.cost,
             complexity: sim.complexity,
             rationale: sim.rationale,
             risks: [],
-            warnings: sim.warnings,
+            warnings: warningsForDisplay(sim.warnings, activeModSet.resulting_regimen, activeModSet.modifications),
             // Display-only artifacts (monitoring plan, qualitative projections, trade-off labels)
             // are populated AFTER distinctPicks selection — building them for every scored
             // candidate was pure waste since only ≤ 3 are ever returned.

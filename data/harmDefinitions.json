@@ -3,7 +3,7 @@
   "preparedAt": "2026-11-15",
   "status": "Fixed before any rate was sought. A change after rates are collected must be recorded in `rulings` with its reason.",
   "method": {
-    "scale": "One burden scale for the whole regimen, the same as the hypertension engine (PathScore section 3.3), so the engines can be merged: burden = symptom figure % x symptomWeight + sum over harm rows of (one-year excess rate % x severity weight); side-effect score = max(0, 100 - burden). It is an index of expected harm, not a probability.",
+    "scale": "One burden scale for the whole regimen, the same as the hypertension engine (PathScore section 3.3), so the engines can be merged: burden = symptom figure % x symptomWeight + sum over harm rows of (one-year excess rate % x severity weight); side-effect score = max(0, 100 - burden / 2). The divisor of 2 is a weight (policy), not a measured quantity (text corrected 2026-11-18). It is an index of expected harm, not a probability.",
     "severityRule": "NCI Common Terminology Criteria for Adverse Events (CTCAE) version 5.0: grade 1 mild, grade 2 moderate, grade 3 or higher serious; the lowest grade whose definition matches how the heart-failure trials ordinarily ascertained the event.",
     "severityWeights": {
       "mild": 0.5,

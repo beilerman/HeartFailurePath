@@ -22,12 +22,33 @@ export const ci = (checks: ContraindicationCheck[]) => ({
 
 /** Reasons of every check that fires for this patient (formulary order); [] when none. */
 export function contraindicationReasons(med: Medication, patient: Patient): string[] {
-    return (med.contraindication_checks ?? []).filter(c => c.when(patient)).map(c => c.reason);
+    const neutral = kidneyBlankNeutral(patient);
+    return (med.contraindication_checks ?? []).filter(c => c.when(patient) && (neutral === undefined || c.when(neutral))).map(c => c.reason);
+}
+
+/**
+ * The patient with each kidney value that was NOT entered replaced by a normal one; undefined when both were entered. A check that fires on the patient but not on this
+ * copy fired only because a blank value reads as 0 ("eGFR below 25" is true of a blank), so its reason is never shown as a finding: a value that was not entered is never stated as a low one.
+ */
+function kidneyBlankNeutral(patient: Patient): Patient | undefined {
+    const blank = (v: number | undefined) => v === undefined || Number.isNaN(v) || v <= 0;
+    const egfrBlank = blank(patient.egfr), creatinineBlank = blank(patient.creatinine);
+    if (!egfrBlank && !creatinineBlank) return undefined;
+    return { ...patient, egfr: egfrBlank ? 90 : patient.egfr, creatinine: creatinineBlank ? 1.0 : patient.creatinine };
 }
 
 // Shared checks (the same condition across a drug class is defined once).
+/**
+ * An angioedema history by ANY entry route (W11): the "History of Angioedema" comorbidity, the word typed in the allergy box, or a stopped renin-angiotensin drug whose recorded reason names it.
+ * The one predicate: the check below, the intolerance policy (intolerance.ts `hasAngioedemaHistory`) and the ARB caution (effects.ts) all read it, so the routes cannot drift apart.
+ */
+export const hasAngioedemaHistoryEntered = (p: Patient): boolean =>
+    p.comorbidities.has("History of Angioedema")
+    || [...(p.allergies ?? [])].some(a => typeof a === 'string' && /angio-?(o)?edema/i.test(a))
+    // a stopped renin-angiotensin drug whose STRUCTURED reason is angioedema (the confirmed tier); free-text detail is the intolerance policy's suspected tier and may be negated ("no angioedema")
+    || (p.discontinued_meds ?? []).some(dm => ['ACEi', 'ARB', 'ARNI', 'RAAS'].includes(dm.drug_class) && String(dm.reason ?? '').toLowerCase().includes('angioedema'));
 export const CI_ANGIOEDEMA: ContraindicationCheck = {
-    reason: 'History of angioedema', when: p => p.comorbidities.has("History of Angioedema"),
+    reason: 'History of angioedema', when: hasAngioedemaHistoryEntered,
 };
 /** Anuria: a label contraindication of the loop diuretics (furosemide incl. Furoscix, torsemide, bumetanide) and the thiazide-type diuretics (metolazone, hydrochlorothiazide, chlorthalidone). The app has no urine-output field; the comorbidity option "Anuria" records it. */
 export const ANURIA = 'Anuria';
@@ -93,7 +114,7 @@ export const alreadyOnMed = (p: Patient, name: string): boolean =>
  * pacemaker is in place"). A blank pulse (0) still blocks a new start, as before.
  */
 export const bbStartBradycardiaCheck = (name: string, below: number, basis: string): ContraindicationCheck => ({
-    reason: `Heart rate below ${below} bpm, or not entered: do not START a beta-blocker (${basis}; an established beta-blocker is dose-reduced, not stopped)`,
+    reason: `Heart rate below ${below} bpm, or not entered: do not start a beta-blocker (${basis}; an established beta-blocker is dose-reduced, not stopped)`,
     when: p => !alreadyOnMed(p, name) && p.rhythm !== 'Paced' && p.pulse < below,
 });
 export const SICK_SINUS = 'Sick Sinus Syndrome / Sinoatrial Block';
@@ -117,7 +138,7 @@ export const CI_SEVERE_ASTHMA: ContraindicationCheck = {
 export const CI_TYPE1_OR_DKA: ContraindicationCheck = {
     // ENGINE-CONSERVATIVE, not a label contraindication: the Farxiga and Jardiance labels contraindicate only serious hypersensitivity
     // (type 1 diabetes is a limitation of use for glycemic control; ketoacidosis is a warning). verified-sglt2-glp1-adjuncts.md row 7.
-    reason: 'Type 1 diabetes or prior DKA / euglycemic DKA (engine-conservative choice: the label contraindicates only hypersensitivity)',
+    reason: 'Type 1 diabetes or prior DKA / euglycemic DKA (conservative choice made by this tool: the label contraindicates only hypersensitivity)',
     when: p => p.comorbidities.has("Type 1 Diabetes Mellitus") || p.comorbidities.has("Prior DKA / Euglycemic DKA"),
 };
 export const CI_MTC_MEN2: ContraindicationCheck = {
@@ -139,7 +160,7 @@ export const pregnancyCheck = (why?: string): ContraindicationCheck => ({
 // label text read for the 2026-11-10 review did not name: included as a class-effect extra (flagged).
 export const STRONG_CYP3A_INHIBITORS: readonly string[] = [
     'Ketoconazole', 'Itraconazole', 'Nefazodone', 'Troleandomycin', 'Clarithromycin', 'Ritonavir', 'Nelfinavir',
-    'Cobicistat',
+    'Cobicistat', 'Telithromycin',
 ];
 // Moderate CYP3A inhibitors: eplerenone in HF must not exceed 25 mg daily with one (Inspra label);
 // finerenone only needs potassium monitoring (Kerendia: erythromycin AUC +248%, verapamil +170%).
@@ -169,7 +190,7 @@ export const moderateCyp3aInhibitor = (p: Patient): boolean =>
     onAny(p, MODERATE_CYP3A_INHIBITORS) || p.comorbidities.has('On Verapamil/Diltiazem');
 
 export const CI_STRONG_CYP3A: ContraindicationCheck = {
-    reason: 'Taking a strong CYP3A4 inhibitor (ketoconazole, itraconazole, clarithromycin, ritonavir, nelfinavir, nefazodone, troleandomycin, cobicistat)',
+    reason: 'Taking a strong CYP3A4 inhibitor (ketoconazole, itraconazole, clarithromycin, ritonavir, nelfinavir, nefazodone, troleandomycin, telithromycin, cobicistat)',
     when: strongCyp3a4Inhibitor,
 };
 export const CI_ADRENAL_INSUFFICIENCY: ContraindicationCheck = {
@@ -205,7 +226,7 @@ export const WPW = 'Wolff-Parkinson-White / Accessory Pathway';
 export const CONDUCTION_DEFECT = 'Conduction Defect (history)';
 
 /** Strong CYP3A4 inhibitors named on the Corlanor label (adds telithromycin to the shared eplerenone/finerenone list). */
-export const IVABRADINE_STRONG_CYP3A4 = [...STRONG_CYP3A_INHIBITORS, 'Telithromycin'] as const;
+export const IVABRADINE_STRONG_CYP3A4 = [...new Set([...STRONG_CYP3A_INHIBITORS, 'Telithromycin'])] as const;
 /** CYP3A4 inducers the Corlanor label says to avoid (reduce ivabradine exposure): St John's wort, rifampin, barbiturates, phenytoin. */
 export const CYP3A4_INDUCERS: readonly string[] = ["St John's Wort", 'Rifampin', 'Phenobarbital', 'Phenytoin'];
 export const strongIvabradineCyp3a4 = (p: Patient): boolean => onAny(p, IVABRADINE_STRONG_CYP3A4);
@@ -234,3 +255,14 @@ export const onOtherSgcStimulator = (p: Patient): boolean => onAny(p, OTHER_SGC_
 /** Long-acting nitrates taken outside the formulary: VICTORIA excluded them (the label does not prohibit the combination). */
 export const LONG_ACTING_NITRATES: readonly string[] = ['Isosorbide Mononitrate', 'Isosorbide Dinitrate'];
 export const onLongActingNitrate = (p: Patient): boolean => onAny(p, LONG_ACTING_NITRATES);
+
+/** Any nitrate the patient takes: the formulary hydralazine/isosorbide dinitrate or a long-acting nitrate recorded under other medications. */
+export const onAnyNitrate = (p: Patient): boolean =>
+    (p.current_regimen ?? []).some(r => r.med.drug_class === 'Vasodilator') || onLongActingNitrate(p);
+export const nitrateNamesTaken = (p: Patient): string[] => [
+    ...(p.current_regimen ?? []).filter(r => r.med.drug_class === 'Vasodilator').map(r => r.med.name),
+    ...LONG_ACTING_NITRATES.filter(n => p.external_medications?.has(n)),
+];
+
+/** Digoxin with atrial fibrillation as today's rhythm and the accessory-pathway box ticked (Lanoxin label warning 5.1). A new start is held; a patient already taking it gets an alert. */
+export const digoxinAfibAccessoryPathway = (p: Patient): boolean => p.rhythm === 'AFib' && p.comorbidities.has(WPW);

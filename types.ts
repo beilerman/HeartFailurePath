@@ -5,6 +5,8 @@ export type InsuranceTier = 'cash' | 'commercial' | 'medicare';
 export interface ContraindicationCheck {
     reason: string;
     when: (patient: Patient) => boolean;
+    /** True for a trial-entry criterion that applies only when a class is first started (body mass index for a GLP-1 drug, NT-proBNP for vericiguat). A switch inside a class does not re-apply it (S9). */
+    indication?: boolean;
 }
 
 export interface ExcludedMedication {
@@ -82,6 +84,8 @@ export interface Patient {
     phosphate_review?: 'not_indicated' | 'acceptable' | 'low' | 'unknown';
 
     comorbidities: Set<string>;
+    /** Scope question (policy, services/engine/scopeGate.ts): undefined = not answered; an empty set = "None of these"; otherwise the ticked conditions. */
+    scope_conditions?: Set<string>;
     // Active non-formulary/concurrent medications relevant to DDI checks.
     external_medications?: Set<string>;
     allergies: Set<string>;
@@ -105,29 +109,13 @@ export interface Patient {
     cost_sensitivity: number; // 0 (Spend freely) to 10 (Every dollar counts)
     insurance_tier: InsuranceTier; // 'cash' | 'commercial' | 'medicare'
     complexity_tolerance: number; // 0-10
-    max_new_classes_per_visit: number; // Default 2. Class substitutions/dose changes do not count as new classes.
+    max_new_classes_per_visit: number; // Default 2. A new drug class counts, and so does a switch from an ACE inhibitor or ARB to sacubitril/valsartan; dose changes and other switches do not.
     /** What matters most to this patient; selects the score weight row only (never safety). Missing/unknown => 'default'. */
     care_priority?: WeightProfileName;
-    /**
-     * How eligible options are ordered. Missing => 'balanced' (the score ranking). 'foundational_first' applies only to
-     * HFrEF/HFimpEF and orders by projected-safety, then therapy completeness, then the balanced ranking; it never changes
-     * scores, eligibility, alerts or gaps.
-     */
-    ranking_mode?: RankingMode;
+    /** Retired 2026-11-20 (owner ruling: the "Prioritize foundational therapy" ranking toggle was removed). A patient object that still carries it is accepted and ranked the one way; nothing reads it. */
+    ranking_mode?: string;
 }
 
-export type RankingMode = 'balanced' | 'foundational_first';
-
-/** Explanation-only description of the ranking mode used for a run (not part of the golden comparison). */
-export interface RankingInfo {
-    mode: RankingMode;
-    /** True when the mode changed the ordering rule (foundational_first AND HFrEF/HFimpEF). */
-    applied: boolean;
-    reason_not_applied?: string;
-    /** True when Balanced would have led with a different regimen. */
-    balanced_lead_differs: boolean;
-    balanced_lead_summary?: string;
-}
 
 export interface TestScenario {
     title: string;
@@ -174,7 +162,7 @@ export interface Medication {
      * Most entries ignore `dose`; these numbers must never feed scoring or selection. Safety uses recorded findings, explicit contraindications, interactions and medication-specific monitoring. `npm run verify` fails if engine code reads this field.
      */
     side_effects: (dose: number | string) => { [key: string]: number };
-    renal_adjustment?: (egfr: number, patient?: Patient) => { start_dose_modifier?: number; max_dose?: number; caution?: boolean, contraindicated?: boolean };
+    renal_adjustment?: (egfr: number, patient?: Patient) => { start_dose_modifier?: number; max_dose?: number; caution?: boolean, contraindicated?: boolean; /** The eGFR limit in words, used when the drug is removed for kidney function ("below 30"). */ limit_text?: string; /** The cause of `max_dose` when it is NOT kidney function (carvedilol: body weight), in plain words with the patient's value. A cap without this is a kidney cap. */ max_dose_reason?: string };
     /** The function the engine calls. Derived from `contraindication_checks` via `ci()` (services/engine/contraindications.ts). */
     contraindications?: (patient: Patient) => boolean;
     /** Human-readable "not offered when" checks; `contraindications` is exactly `checks.some(c => c.when(p))`. */
@@ -332,10 +320,12 @@ export interface MedFacts {
     t2dm_scale?: { weight: number; kccq: number; basis: string };
     /** Lower-case brand and common names by which an allergy to this drug may be typed ("entresto", "lasix"); read by services/engine/allergy.ts. */
     allergy_aliases?: string[];
+    /** Lower-case words of this drug's generic name that are a salt or a modifier, not the drug ("succinate", "sodium"): read inside a typed sentence they name no drug (R7 W10c); read by services/engine/allergy.ts. */
+    allergy_modifier_words?: string[];
     /** Cash-pay monthly price by dose strength (used instead of the flat price when `patient.insurance_tier` is 'cash'). */
     cash_price_by_dose?: Record<string, number>;
     /** Plain-language warnings shown whenever this drug is in a recommended regimen (optionally only when `when(patient)`); informational, not score-penalized (text starts 'Drug note:'). */
-    regimen_warnings?: { text: string | ((p: Patient) => string); when?: (p: Patient, regimen: RegimenMed[]) => boolean }[];
+    regimen_warnings?: { text: string | ((p: Patient) => string); when?: (p: Patient, regimen: RegimenMed[]) => boolean; /** Shown only on an option that starts the drug (or switches to it), never on one that keeps or reduces it (S13). */ when_started?: boolean; /** The note says a prerequisite for STARTING the drug is not met (a value to correct first). An option that starts the drug while `when` is true is not shown (T3). */ start_prerequisite?: boolean }[];
     /** The loop a diuretic-resistance switch starts FROM (2026 ESC Supplementary Table S7: consider switching furosemide to bumetanide or torasemide). The reverse switch is never offered. */
     resistance_switch_source?: boolean;
     /**
@@ -344,7 +334,11 @@ export interface MedFacts {
      */
     source_differences?: { topic: string; label: string; guideline: string; tool_follows: 'label' | 'guideline'; why: string }[];
     /** Monitoring-plan items added whenever this drug is in a recommended regimen. */
-    monitoring_items?: (MonitoringPlanItem & { when?: (p: Patient) => boolean })[];
+    /**
+     * Drug-data monitoring items. `when_started`: the item is about STARTING (or raising) the drug and is shown only for an option that starts or raises it; for a drug already taken and unchanged the
+     * `ongoing` wording is shown instead (or nothing when there is none).
+     */
+    monitoring_items?: (MonitoringPlanItem & { when?: (p: Patient) => boolean; when_started?: boolean; ongoing?: MonitoringPlanItem })[];
 }
 
 export interface RegimenMed {
@@ -412,18 +406,31 @@ export interface OutcomeContributorView {
     ci_high_published: number | null;
     /** B = tau2 / (tau2 + se^2); 1 = unchanged. */
     shrinkage_b: number;
+    /** The prior variance this row was weighted with: the death prior for death rows, the hospitalization prior for hospitalization rows (change C3, 2026-11-18). */
+    prior_tau2: number;
+    prior_name: 'death' | 'hospitalization';
+    /** True when the weight B is below 0.2: the value used is mostly the prior (no effect), not the trial figure. */
+    mostly_prior: boolean;
+    /** The evidence row's population key (e.g. 'atrial_fibrillation' for a beta-blocker in current atrial fibrillation). */
+    population_key?: string;
+    /** The row ranks as no effect because randomized evidence conflicts (basis `conflicting`); no interval is displayed beside 1.00. */
+    conflicting_evidence?: boolean;
+    /** Plain sentence, present when the row used comes from a different ejection-fraction band than the one stated for the patient (X1). */
+    band_note?: string;
     interval_imputed: boolean;
     credit: number;
     dose_adjusted_rr: number;
-    basis: 'trial' | 'meta_analysis' | 'extrapolated' | 'assumed_neutral';
+    basis: import('./services/engine/outcomeBenefit').OutcomeBasis;
     trial: string;
     citation: string;
     /** True only when the row's basis is `extrapolated` (carried from another population or EF band). */
     extrapolated: boolean;
-    /** True when the row assumes no effect (relative risk 1) because no outcome trial exists. */
+    /** True when the row assumes no effect (relative risk 1): no outcome trial, no outcome evidence, or randomized evidence that conflicts (the basis says which). */
     assumed_neutral: boolean;
-    /** True when the option starts or increases this drug and it is valued as titrated to the trial-achieved dose (plan credit). */
+    /** True when the option STARTS this drug today and values it at the highest dose this patient may be given (plan credit; increases are valued at the new dose, not as titrated). */
     valued_as_titrated: boolean;
+    /** Set when a start's credit is below 1 because a kidney, interaction or maximum-dose rule caps the dose: says which rule and at what dose (change C1, 2026-11-18). */
+    start_cap_note?: string;
 }
 
 /** Expected relative risk of an outcome for a resulting regimen: a population average from randomized trials, not a prediction for this patient. */
@@ -434,7 +441,7 @@ export interface OutcomeEstimateView {
     rr: number;
     ci_low: number;
     ci_high: number;
-    /** `rr` is the ranking value: the option valued as the plan it starts (new starts and increases at the trial-achieved dose). Both views are kept: */
+    /** `rr` is the ranking value: the option valued as the plan it starts (new starts at the highest dose this patient may be given, increases at the dose reached). Both views are kept: */
     as_planned: { rr: number; ci_low: number; ci_high: number };
     /** Every drug valued at today's dose. */
     as_prescribed: { rr: number; ci_low: number; ci_high: number };
@@ -491,10 +498,6 @@ export interface ScoredRegimen {
     overall_score: number;
     domain_scores: DomainScores;
     special_feature_bonus?: number; // Bonus from guideline-specific special features
-    /** 0-100: share of the INDICATED foundational (pillar) slots on board (whether or not startable today), same credit rule as gdmt_completeness (1.0 at target/max/cap, 0.6 below). Used only by the foundational ranking mode; never scored. */
-    foundational_coverage?: number;
-    /** Counts behind foundational_coverage: pillars indicated for the phenotype, how many have a drug on board, and how many of the missing ones cannot be started today. */
-    foundational_slots?: { indicated: number; on_board: number; not_startable: number };
     /** Explanation only (never scored): why this option is on screen when it was not chosen by the normal ranking (the congestion-coverage selection step). */
     shown_because?: string;
     gdmt_completeness?: number; // Fraction (0-1) of indicated, achievable GDMT therapies present — display tiebreaker
@@ -533,8 +536,13 @@ export interface SimulationOutput {
     eligibleAdjuncts?: string[];     // criteria-met add-ons (H/ISDN, ivabradine, vericiguat, iron…) even if not in top picks
     missingDataNotices?: string[];   // inputs not entered → dependent inference withheld
     followUpCalendar?: MonitoringPlanItem[]; // STRONG-HF high-intensity follow-up schedule
-    ranking?: RankingInfo;           // which ranking mode was used, and what Balanced would have led with (explanation only)
     decisionReadiness?: DecisionReadiness;
+    /** Explanation only: why each displayed option holds its place, and why each indicated class is or is not started (services/engine/whyFirst.ts). */
+    why_first?: import('./services/engine/whyFirst').WhyFirst;
+    /** The ejection-fraction band of the trial evidence, decided once from the entered patient (U6), with the sentence the screen shows once. */
+    evidence_band?: { band: 'reduced' | 'mildly_reduced' | 'preserved'; text: string };
+    /** Whether the scope question was answered, and what it found (scopeGate.ts). */
+    scope_status?: { state: 'confirmed_none' | 'not_confirmed' | 'outside'; conditions: string[]; text: string };
 }
 
 /** Explicit scope of an assessment made from incomplete observations; never a safety clearance. */
@@ -554,11 +562,21 @@ export interface RegimenModification {
     target?: RegimenMed;   // New med+dose (for add, titrate, swap)
     source?: RegimenMed;   // Existing med+dose being changed (for titrate, swap, remove, keep)
     summary: string;       // "Add Dapagliflozin 10mg", "Titrate Carvedilol 12.5→25mg BID"
+    /** True for a change the safety rules require (a forced switch or removal). It does not count toward the per-visit limit. */
+    mandatory?: boolean;
+    /** Explanation only (never scored): a forced reduction or a withhold the safety rules apply for a state that can change (potassium, kidney function, heart rate, blood pressure, an interaction cap, acute decompensation), not a withdrawal for a lasting reason such as an allergy or pregnancy. */
+    temporary_hold?: boolean;
+    /** True for the removal of the second agent of one class when the patient arrived on two (the clean-up of a duplicate entry). It is not a dose reduction or a withdrawal of the class and is never scored or counted as a diuretic or other class change. */
+    duplicate_cleanup?: boolean;
+    /** The stated reason of a forced (mandatory) change, kept so that a forced switch whose replacement cannot be started becomes a plain removal that says the same reason (R8 X11). */
+    forced_reason?: string;
 }
 
 export interface ModificationSet {
     modifications: RegimenModification[];
     resulting_regimen: RegimenMed[];  // Full regimen after all modifications applied
+    /** Set when the congestion display rule could not put a loop diuretic step into this option: why (potassium emergency, per-visit limit, a tool rule). Shown as a note on the option. */
+    loop_step_omitted?: string;
 }
 
 // ExcludedMedication moved to top for broader reuse
