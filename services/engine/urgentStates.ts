@@ -4,7 +4,7 @@
  * The predicates these call ignore a value that is not entered (0, blank or NaN is "not measured", never a measurement).
  */
 import { Patient } from '../../types';
-import { isAcutelyDecompensated, meetsDecompensationFindings, DECOMPENSATION_EXCESS_KG_ABOVE, DECOMPENSATION_MIN_CONGESTION_FINDINGS, congestionFindingCount } from '../clinicalPredicates';
+import { isExamFinding, isAcutelyDecompensated, meetsDecompensationFindings, DECOMPENSATION_EXCESS_KG_ABOVE, DECOMPENSATION_MIN_CONGESTION_FINDINGS, congestionFindingCount } from '../clinicalPredicates';
 import { isColdState, isLowOutputState, scaleAndExamDisagree, hasCongestion, hasHypoperfusion, dedupeCurrentRegimen, congestionWithoutWeightGain, perfusionMarkersAboveEfLimit } from './regimenUtils';
 import { isActiveExposure } from './medicationExposure';
 import { LOW_OUTPUT, CONGESTION_EXCESS_KG_ABOVE, HYPOTENSION_SBP_BELOW } from './thresholds';
@@ -13,7 +13,7 @@ import { RAAS_CLASSES, MRA_POOL_CLASSES } from './registry';
 import { MEDICATION_FORMULARY } from '../../constants';
 import { expandAllergies } from './allergy';
 
-const blankToZero = (v: number | undefined | null): number => (v === undefined || v === null || Number.isNaN(v) || v < 0 ? 0 : v);
+const blankToZero = (v: number | undefined | null): number => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
 
 /** The patient with every blank numeric field read as 0 (the engine's one "not entered" sentinel), so the predicates below can be asked of an unaudited patient. */
 export function enteredValues(p: Patient): Patient {
@@ -25,7 +25,7 @@ export function enteredValues(p: Patient): Patient {
         sbp: blankToZero(p.sbp), dbp: blankToZero(p.dbp), pulse: blankToZero(p.pulse), potassium: Math.round(blankToZero(p.potassium) * 10) / 10,
         lvef: blankToZero(p.lvef), bun: blankToZero(p.bun), creatinine: blankToZero(p.creatinine), egfr: blankToZero(p.egfr),
         current_regimen: regimen, external_medications: p.external_medications instanceof Set ? p.external_medications : new Set<string>(),
-        volume_status: { ...vs, dry_weight_kg: blankToZero(vs.dry_weight_kg), current_weight_kg: blankToZero(vs.current_weight_kg), exam_findings: vs.exam_findings instanceof Set ? vs.exam_findings : new Set<string>() },
+        volume_status: { ...vs, dry_weight_kg: blankToZero(vs.dry_weight_kg), current_weight_kg: blankToZero(vs.current_weight_kg), exam_findings: new Set(vs.exam_findings instanceof Set ? [...vs.exam_findings].filter(isExamFinding) : []) },
     } as Patient;
 }
 
@@ -128,11 +128,13 @@ export function hypoxiaAlerts(p: { oxygen_saturation?: unknown }): string[] {
  * screen reacts to this value; the caution asks for the value to be confirmed and the cause looked for. Alert only: no option changes.
  */
 export const takesRaasOrMra = (patient: Patient): boolean => (patient.current_regimen ?? []).some(r => RAAS_CLASSES.has(r.med.drug_class) || MRA_POOL_CLASSES.has(r.med.drug_class));
+export const potassiumExposureContext = (p: Patient): string => p.medication_list_incomplete
+    ? 'the current medication list needs reconciliation' : 'the patient takes no renin-angiotensin drug or MRA';
 export function elevatedPotassiumNoRaiserAlerts(patient: Patient): string[] {
-    const k = Math.round(patient.potassium * 10) / 10;
+    const k = Math.round(blankToZero(patient.potassium) * 10) / 10;
     if (!(k >= 5.5 && k < 6.0)) return [];
     if (takesRaasOrMra(patient)) return [];
-    return [`ELEVATED POTASSIUM: potassium is ${k.toFixed(1)} mEq/L and the patient takes no renin-angiotensin drug or MRA. Confirm the value (a hemolyzed sample reads high) and look for the cause: potassium supplements or salt substitutes, potassium-sparing diuretics, NSAIDs, kidney function and acidosis. Recheck potassium.`];
+    return [`ELEVATED POTASSIUM: potassium is ${k.toFixed(1)} mEq/L and ${potassiumExposureContext(patient)}. Confirm the value (a hemolyzed sample reads high) and look for the cause: potassium supplements or salt substitutes, potassium-sparing diuretics, NSAIDs, kidney function and acidosis. Recheck potassium.`];
 }
 
 /**
@@ -140,7 +142,7 @@ export function elevatedPotassiumNoRaiserAlerts(patient: Patient): string[] {
  * removes for another reason, and a no-option screen raises none). Says only what is always true; the alert changes no option.
  */
 export function elevatedPotassiumOnRaiserAlerts(patient: Patient, existing: readonly string[]): string[] {
-    const k = Math.round(patient.potassium * 10) / 10;
+    const k = Math.round(blankToZero(patient.potassium) * 10) / 10;
     if (!(k >= 5.5 && k < 6.0) || !takesRaasOrMra(patient)) return [];
     if (existing.some(a => /potassium/i.test(a) && a.includes(k.toFixed(1)))) return [];
     const drugs = (patient.current_regimen ?? []).filter(r => RAAS_CLASSES.has(r.med.drug_class) || MRA_POOL_CLASSES.has(r.med.drug_class)).map(r => r.med.name).sort();
@@ -177,8 +179,11 @@ export function conductionAlerts(patient: Patient): string[] {
 
 /** A slow resting rate with no rate-slowing drug on board needs its own prompt (conduction disease, other causes), not a stray warning on every option (S13). */
 export function slowHeartRateAlerts(patient: Patient): string[] {
-    if (patient.pulse > 0 && patient.pulse < 50 && patient.rhythm !== 'Paced' && !(patient.current_regimen ?? []).some(r => ['Beta Blocker', 'If Inhibitor', 'Inotrope'].includes(r.med.drug_class))) {
-        return [`SLOW HEART RATE: the resting heart rate is ${patient.pulse} bpm and no rate-slowing drug is taken. Obtain an ECG to look for heart block or sinus node disease and review other causes (thyroid, medicines outside this tool). The tool does not start a beta-blocker or ivabradine at this rate.`];
+    if (patient.pulse > 0 && patient.pulse < 50 && patient.rhythm !== 'Paced') {
+        const { hf, other } = rateSlowingDrugNames(patient);
+        if (hf.length) return [];
+        const context = other.length ? `Review the recorded rate-slowing medication: ${other.join(', ')}.` : patient.medication_list_incomplete ? 'Reconcile the medication list for drugs that slow the heart rate.' : '';
+        return [`SLOW HEART RATE: the resting heart rate is ${patient.pulse} bpm${context ? `. ${context}` : ' and no rate-slowing drug is taken.'} Obtain an ECG to look for heart block or sinus node disease and review other causes (thyroid, medicines outside this tool). The tool does not start a beta-blocker or ivabradine at this rate.`];
     }
     return [];
 }

@@ -45,15 +45,17 @@ export interface ScopeStatus { state: ScopeState; conditions: string[]; text: st
 export const SCOPE_NOT_CONFIRMED_TEXT = 'Scope was not confirmed: the question about conditions the tool does not cover (amyloidosis, hypertrophic or restrictive cardiomyopathy, severe valve disease, congenital heart disease, cardiotoxic cancer treatment, heart transplant or assist device, dialysis) was not answered.';
 export const SCOPE_HEAD = "OUTSIDE THE TOOL'S SCOPE";
 
-const labels = new Set(SCOPE_CONDITIONS.map(c => c.label));
+const scopeLabels = new Map(SCOPE_CONDITIONS.flatMap(c => [[c.id, c.label], [c.label.toLowerCase(), c.label]] as const));
+const scopeLabel = (value: unknown) => typeof value === 'string' ? scopeLabels.get(value.trim().toLowerCase()) : undefined;
 const list = (xs: string[]): string => xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
 const lower = (s: string): string => s.charAt(0).toLowerCase() + s.slice(1);
 
-/** The ticked conditions in the order of the question; anything that is not one of the seven labels is ignored. */
+/** Recognized conditions in question order. The input contract separately rejects unknown entries. */
 export function scopeConditionsPresent(p: Pick<Patient, 'scope_conditions'> | undefined): string[] {
     const set = p?.scope_conditions;
     if (!(set instanceof Set)) return [];
-    return SCOPE_CONDITIONS.filter(c => set.has(c.label)).map(c => c.label);
+    const selected = new Set([...set].map(scopeLabel));
+    return SCOPE_CONDITIONS.filter(c => selected.has(c.label)).map(c => c.label);
 }
 
 /** The alert for a ticked condition: names it, says the trials did not study it and that the tool's estimates would not be reliable, and that regimen alerts still apply. The atrial fibrillation sentence is added only when that alert is shown (the patient has atrial fibrillation or a history of it). */
@@ -70,12 +72,12 @@ export function scopeStatusFor(p: Patient | undefined): ScopeStatus {
     if (!(set instanceof Set) && set !== undefined) return { state: 'not_confirmed', conditions: [], text: SCOPE_NOT_CONFIRMED_TEXT };
     const present = scopeConditionsPresent(p);
     if (present.length > 0) return { state: 'outside', conditions: present, text: scopeAlertText(present, atrialFibrillationShownFor(p)) };
-    if (set === undefined) return { state: 'not_confirmed', conditions: [], text: SCOPE_NOT_CONFIRMED_TEXT };
+    if (set === undefined || set.size > 0) return { state: 'not_confirmed', conditions: [], text: SCOPE_NOT_CONFIRMED_TEXT };
     return { state: 'confirmed_none', conditions: [], text: '' };
 }
 
-/** True for a label of the seven (used by the form and the input check). */
-export const isScopeLabel = (s: string): boolean => labels.has(s);
+/** Accept a registered condition ID or label. */
+export const isScopeLabel = (s: string): boolean => scopeLabel(s) !== undefined;
 
 /**
  * With a scope condition ticked the tool has said it cannot judge therapy for this patient (W5). These alert headings propose therapy or assess indication and are not shown; the scope

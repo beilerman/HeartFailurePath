@@ -45,7 +45,7 @@ check('X7: heading case keeps brand names (Entresto), and the screens of 60 gene
     assert.equal(sentenceCase('POTASSIUM HOLD ON SACUBITRIL/VALSARTAN (ENTRESTO)'), 'Potassium hold on sacubitril/valsartan (Entresto)');
     const bad: string[] = []; let screens = 0;
     for (let sd = 20100000; sd < 20100020; sd++) for (const [pn, f] of NO_OPTION_PATHS.slice(0, 11)) {
-        const p = patientOf(sd, f); let r; try { r = renderScreen(p); } catch { continue; }
+        const p = patientOf(sd, f); const r = renderScreen(p);
         screens++;
         for (const m of [/\(\s*\)/.exec(r.text), /[–—]/.exec(r.text), ARROWS.exec(r.text)]) if (m && bad.length < 5) bad.push(`seed ${sd} ${pn}: ${r.text.slice(Math.max(0, m.index - 40), m.index + 40)}`);
     }
@@ -63,7 +63,7 @@ check('X7: a stop screen does not print its "no medication change" sentence twic
 });
 check('X3/X15: on 344 reference screens the dosing pill reads as a comparison and no sentence about the number of daily doses contradicts the single-dose wording', () => {
     let screens = 0;
-    for (const s of SCENARIOS) { const p = clonePatient(s.patient); let r; try { r = renderScreen(p); } catch { continue; } screens++; assert.ok(!/plus 1 drug as a single dose|\b0 doses a day from 0 drugs/.test(r.text), s.title); }
+    for (const s of SCENARIOS) { const p = clonePatient(s.patient); const r = renderScreen(p); screens++; assert.ok(!/plus 1 drug as a single dose|\b0 doses a day from 0 drugs/.test(r.text), s.title); }
     assert.ok(screens > 300);
 });
 

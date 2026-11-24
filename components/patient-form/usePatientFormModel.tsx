@@ -65,7 +65,7 @@ export function usePatientFormModel({ patientData, setPatientData, onValidityCha
         const hasInvalidBP = patientData.sbp > 0 && patientData.dbp > 0 && patientData.sbp <= patientData.dbp;
 
         if (hasInvalidBP) warnings.sbp = 'Invalid BP entry: SBP must exceed DBP';
-        else if (patientData.sbp > 0 && patientData.sbp < HYPOTENSION_SBP_BELOW) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
+        else if (!validationErrors.sbp && patientData.sbp > 0 && patientData.sbp < HYPOTENSION_SBP_BELOW) warnings.sbp = 'Hemodynamic instability - no drug recs will be generated';
         // Potassium 0 / blank means "not entered" (the engine withholds K+-dependent conclusions).
         if (!(patientData.potassium > 0)) warnings.potassium = 'Not entered: RAAS inhibitor and MRA decisions will be withheld until a potassium is available';
         // The hint states what the engine does at each level (same constants the rules read).
@@ -78,7 +78,7 @@ export function usePatientFormModel({ patientData, setPatientData, onValidityCha
         if (patientData.is_pregnant) warnings.pregnancy = 'RAAS inhibitors, MRAs, SGLT2 inhibitors, vericiguat, ivabradine and GLP-1 therapies are excluded';
         if (patientData.nyha_class === 'IV') warnings.nyha = 'BB initiation blocked';
         if (!(patientData.pulse > 0)) warnings.pulse = 'Heart rate not recorded: rate-lowering starts, increases and switches wait for a measurement.';
-        else if (patientData.pulse < BB_HR_BELOW) warnings.pulse = 'Low heart rate: a new beta-blocker is not started and an established one is reduced a step below 55 bpm for carvedilol (label) or below 50 bpm for metoprolol succinate and bisoprolol (2026 ESC)';
+        else if (!validationErrors.pulse && patientData.pulse < BB_HR_BELOW) warnings.pulse = 'Low heart rate: a new beta-blocker is not started and an established one is reduced a step below 55 bpm for carvedilol (label) or below 50 bpm for metoprolol succinate and bisoprolol (2026 ESC)';
         if (patientData.rhythm === '2nd Degree AV Block' || patientData.rhythm === '3rd Degree AV Block') {
             warnings.av_block = 'AV block present: beta blockers and digoxin are contraindicated unless paced/specialist-directed.';
         }
@@ -90,9 +90,14 @@ export function usePatientFormModel({ patientData, setPatientData, onValidityCha
             warnings.egfr = 'Renal estimate unavailable: confirm age, sex and creatinine. Renal-dependent changes wait for assessment.';
         }
         // Same rule the engine applies (LVEF below 20 with at least TWO of: cool extremities, narrow pulse pressure, BUN/creatinine above 20), not one marker.
-        if (isLowOutputState(patientData)) warnings.low_output = `Low-output profile detected (LVEF < ${LOW_OUTPUT.lvefBelow} with hypoperfusion markers)`;
+        const perfusionInputs = { ...patientData };
+        for (const field of ['lvef', 'sbp', 'dbp', 'bun', 'creatinine'] as const) {
+            if (validationErrors[field]) perfusionInputs[field] = 0;
+        }
+        if (isLowOutputState(perfusionInputs)) warnings.low_output = `Low-output profile detected (LVEF < ${LOW_OUTPUT.lvefBelow} with hypoperfusion markers)`;
+        if (validationErrors.age || validationErrors.creatinine) delete warnings.egfr;
         return warnings;
-    }, [patientData]);
+    }, [patientData, validationErrors]);
 
     // --- 2d. Disable simulation when validation errors exist ---
     const hasValidationErrors = Object.keys(validationErrors).length > 0 || pending;
@@ -129,7 +134,7 @@ export function usePatientFormModel({ patientData, setPatientData, onValidityCha
         });
     };
 
-    const handleVolumeChange = (field: 'current_weight_kg' | 'dry_weight_kg', val: number) => {
+    const handleVolumeChange = (field: 'current_weight_kg' | 'dry_weight_kg', val: number | undefined) => {
         setPatientData(prev => ({
             ...prev,
             volume_status: { ...prev.volume_status, [field]: val }

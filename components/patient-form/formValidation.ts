@@ -68,6 +68,9 @@ export function validatePatientForm(patientData: Patient): Record<string, string
     check('nt_pro_bnp', patientData.nt_pro_bnp);
     check('kccq_score', patientData.kccq_score);
     check('potassium', patientData.potassium);
+    if (patientData.potassium > VALIDATION_BOUNDS.potassium.max) {
+        errors.potassium = 'Potassium exceeds the supported range. Verify the result and units immediately. If accurate, this is a hyperkalemic emergency requiring urgent hospital assessment.';
+    }
     check('creatinine', patientData.creatinine);
     check('baseline_creatinine', patientData.baseline_creatinine);
     check('bun', patientData.bun);

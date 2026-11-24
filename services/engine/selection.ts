@@ -208,7 +208,8 @@ export function chooseDisplayPicks(
     if (!budgetKnown(patient) || results.some(r => !Number.isFinite(r.cost))) {
         // An absent budget/price is not zero affordability and not proof of an over-budget regimen.
         // Keep safety filtering and clinical ordering; explicitly withhold affordability conclusions.
-        outputRegimens = [...results].sort(cmp).map(r => copyOf(r, { ...r, warnings: [
+        const eligible = results.filter(r => !budgetKnown(patient) || !Number.isFinite(r.cost) || r.cost <= patient.max_affordable_cost);
+        outputRegimens = eligible.sort(cmp).map(r => budgetKnown(patient) && Number.isFinite(r.cost) ? r : copyOf(r, { ...r, warnings: [
             'AFFORDABILITY UNASSESSED: budget or price data are unavailable. Confirm actual coverage and out-of-pocket cost before implementing this option.', ...r.warnings,
         ] }));
     } else if (affordableRegimens.length > 0) {

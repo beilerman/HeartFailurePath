@@ -51,7 +51,7 @@ check('Z1: on the screen, in the print summary and in the draft note, a forced s
 check('Z5: every no-option screen (13 paths x 40 patients), its print summary and its draft note carry the one sentence and never say no drug can be changed', () => {
     let seen = 0;
     for (let sd = 30400000; sd < 30400040; sd++) for (const [pn, f] of NO_OPTION_PATHS) {
-        const p = patientOf(sd, f); let r; try { r = renderScreen(p); } catch { continue; } if (r.o.scoredRegimens.length > 0) continue; seen++;
+        const p = patientOf(sd, f); const r = renderScreen(p); if (r.o.scoredRegimens.length > 0) continue; seen++;
         const note = buildChartSummary(chartInput(r.o), 0);
         for (const [where, t] of [['screen', r.text], ['note', note]] as const) assert.ok(!NO_CHANGE_CLAIMS.test(t), `seed ${sd} ${pn} ${where}: ${NO_CHANGE_CLAIMS.exec(t)?.[0]}`);
         if (r.o.decisionReadiness?.mode !== 'limited_review') assert.ok(/This tool proposes no medication option today/.test(r.text), `seed ${sd} ${pn}: the one sentence is missing`);
@@ -61,7 +61,7 @@ check('Z5: every no-option screen (13 paths x 40 patients), its print summary an
 check('Z8: no screen, print summary or draft note (200 patients) has a parenthesis inside a parenthesis in a change line, ".;" or ".."; the seed 30001394 note has no "implementation.."; a brand name keeps its capital in a heading', () => {
     let screens = 0;
     for (let sd = 30800000; sd < 30800200; sd++) {
-        const p = patientOf(sd); let r; try { r = renderScreen(p); } catch { continue; } screens++;
+        const p = patientOf(sd); const r = renderScreen(p); screens++;
         const note = buildChartSummary(chartInput(r.o), 0);
         for (const [where, t] of [['screen', r.text], ['note', note]] as const) { const m = /\.;|\.\.(?!\.)/.exec(t); assert.ok(!m, `seed ${sd} ${where}: ${m ? t.slice(Math.max(0, m.index - 50), m.index + 20) : ''}`); }
         for (const opt of r.o.scoredRegimens) for (const m of modsOfOpt(opt)) assert.ok(!nested(plainText(m.summary)), `seed ${sd}: nested parenthesis in "${plainText(m.summary).slice(0, 120)}"`);
@@ -72,7 +72,7 @@ check('Z8: no screen, print summary or draft note (200 patients) has a parenthes
 });
 check('Z12b: seed 30000758 (tirzepatide allergy, switch to semaglutide): each change line appears once in an option card, and 400 neighbours never print one line twice in an option', () => {
     for (let sd = 30000000; sd < 30000400; sd++) {
-        const p = patientOf(sd); let o: SimulationOutput; try { o = runTier(p); } catch { continue; }
+        const p = patientOf(sd); const o = runTier(p);
         for (const [i, opt] of o.scoredRegimens.entries()) { const ls = modsOfOpt(opt).map(m => plainText(m.summary)); assert.equal(new Set(ls).size, ls.length, `seed ${sd} option ${i + 1}: a change line is printed twice: ${ls.find((l, j) => ls.indexOf(l) !== j)}`); }
     }
     const r = renderScreen(patientOf(30000758)); const swap = modsOfOpt(r.o.scoredRegimens[0]!).find(m => m.action === 'swap');

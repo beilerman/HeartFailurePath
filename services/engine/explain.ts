@@ -1,12 +1,13 @@
 import { buildTreatmentAssessment } from './treatmentAssessment';
 /** Display/explanation builders: monitoring plan, qualitative projections, trade-offs, follow-up calendar. Moved verbatim from simulationService.ts (phase 4). */
+import { withoutImplausibleValues } from './gates';
 import { assessCreatinineChange } from './renalChange';
 import { hasHistoricalHFrEF } from '../clinicalPredicates';
 import { Patient, Medication, ScoredRegimen, ExcludedMedication, SimulationOutput, RegimenMed, ModificationSet, MonitoringPlanItem, QualitativeProjection, TradeOffLabel, TradeOffTone, DomainScores } from '../../types';
 import { valueUnknown, hasUnknownHistoricalHFrEF, isIronDeficient, ivIronCreditTier } from '../clinicalPredicates';
 import { DISEASE_MODIFYING_CLASSES, DIURETIC_CLASSES, RAAS_CLASSES, MRA_POOL_CLASSES, getMedicationClassGroup, isDiureticClass } from './registry';
 import { CREATININE_RISE_ACCEPTABLE_PCT, EGFR_FLOOR_FOR_CREATININE_RISE, HYPOTENSION_SBP_BELOW, RAAS_START_K_CAUTION, MRA_START_K_CEILING } from './thresholds';
-import { enteredValues, hypoxiaAlerts, LOOP_STEP_SENTENCE, takesRaasOrMra } from './urgentStates';
+import { enteredValues, potassiumExposureContext, hypoxiaAlerts, LOOP_STEP_SENTENCE, takesRaasOrMra } from './urgentStates';
 import { kUptitrationBlock, hasRelevantIntensification, hrContinuationAction, regimenDosesADay, fmtDosesADay, dedupeCurrentRegimen, loopDoseEffect, oralLoopFe } from './regimenUtils';
 export { loopDoseEffect, oralLoopFe };
 import { regimenSatisfiesPillar, classifyPhenotype } from './domains';
@@ -38,15 +39,15 @@ function slowRateEcgItem(pulse: number, drugs: string[]): MonitoringPlanItem {
 
 export function urgentStateMonitoring(patient: Patient): MonitoringPlanItem[] {
     if (!patient || typeof patient !== 'object') return [];
-    const p = enteredValues(patient);
+    const p = withoutImplausibleValues(enteredValues(patient));
     const items: MonitoringPlanItem[] = [];
     if (p.pulse > 0 && p.pulse < SLOW_RATE_BELOW && p.rhythm !== '3rd Degree AV Block' && p.rhythm !== '2nd Degree AV Block') items.push(slowRateEcgItem(p.pulse, []));
     if (p.potassium >= 6.0) items.push(URGENT_POTASSIUM_MONITORING);
     // R8 X5b: potassium 5.5 to 5.9 with no renin-angiotensin drug or MRA (the caution asks for the value to be confirmed and the cause looked for): the plan says the same.
-    if (p.potassium >= 5.5 && p.potassium < 6.0 && !takesRaasOrMra(patient)) items.push({
+    if (p.potassium >= 5.5 && p.potassium < 6.0 && !takesRaasOrMra(p)) items.push({
         test: 'Repeat potassium and look for the cause',
         timing: 'Promptly',
-        details: `Potassium is ${p.potassium.toFixed(1)} mEq/L and the patient takes no renin-angiotensin drug or MRA. Confirm the value (a hemolyzed sample reads high) and look for the cause: potassium supplements or salt substitutes, potassium-sparing diuretics, NSAIDs, kidney function and acidosis.`,
+        details: `Potassium is ${p.potassium.toFixed(1)} mEq/L and ${potassiumExposureContext(p)}. Confirm the value (a hemolyzed sample reads high) and look for the cause: potassium supplements or salt substitutes, potassium-sparing diuretics, NSAIDs, kidney function and acidosis.`,
     });
     // R8 X5c: a potassium below 3.5 carries its own row, with or without an option: correct it, find the cause, recheck it (the low potassium alert says the diuretic is withheld until then).
     if (p.potassium > 0 && p.potassium < 3.5) items.push({
@@ -100,8 +101,8 @@ export const kRaiserRow = (patient: Patient, regimen: ReadonlyArray<RegimenMed>)
     };
 };
 export const stopPathPotassiumMonitoring = (patient: Patient): MonitoringPlanItem[] => {
-    const p = patient && typeof patient === 'object' ? enteredValues(patient) : undefined;
-    return p && p.potassium >= 5.0 && p.potassium < 6.0 && takesRaasOrMra(patient) ? [kRaiserRow(p, p.current_regimen)] : [];
+    const p = patient && typeof patient === 'object' ? withoutImplausibleValues(enteredValues(patient)) : undefined;
+    return p && p.potassium >= 5.0 && p.potassium < 6.0 && takesRaasOrMra(p) ? [kRaiserRow(p, p.current_regimen)] : [];
 };
 
 const CHEMISTRY_CLASSES = new Set([...RAAS_CLASSES, 'MRA', 'nsMRA']);
@@ -535,7 +536,7 @@ export function assembleOutput(
         { const hb = harmBurdenFor(HARM_TABLE, r.regimen, patient); r.harm_burden = { ...hb, score: sideEffectScore(hb.burden) }; }
         r.qualitative_projections = r.treatment_assessment?.considerations ?? [];
         r.trade_offs = buildTradeOffLabels(r.domain_scores, r.regimen, dedupeCurrentRegimen(patient.current_regimen).regimen, { cost: r.cost, budget: patient.max_affordable_cost });
-        if (r.score_breakdown?.domains.some(d => d.key === 'cost' && d.assessed === false)) {
+        if (!Number.isFinite(r.cost) || !Number.isFinite(patient.max_affordable_cost)) {
             r.trade_offs = r.trade_offs.map(t => t.dimension === 'Cost' ? { dimension: 'Cost', label: 'Affordability not assessed', tone: 'neutral' } : t);
         }
     });

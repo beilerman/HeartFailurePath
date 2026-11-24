@@ -353,7 +353,7 @@ export function runEngineReadinessR9Checks(): { passed: number; failed: number }
         for (const [p, al] of cases) { p.allergies = new Set([al]); const o = runEngine(clonePatient(p)); assert.deepEqual(reasonPlacementFaults(o, (k, n = 1) => { if (k === 'forced switch lines') lines += n; }), []); }
         assert.ok(lines >= 3, `${lines} forced switch lines`);
         const faults: string[] = []; const counts: Record<string, number> = {};
-        for (let sd = 30100000; sd < 30101500; sd++) { const c = z11Case(sd); if (!c) continue; let o: SimulationOutput; try { o = runEngine(clonePatient(c.p)); } catch { continue; } for (const m of reasonPlacementFaults(o, (k, n = 1) => { counts[k] = (counts[k] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`); }
+        for (let sd = 30100000; sd < 30101500; sd++) { const c = z11Case(sd); if (!c) continue; const o = runEngine(clonePatient(c.p)); for (const m of reasonPlacementFaults(o, (k, n = 1) => { counts[k] = (counts[k] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`); }
         assert.deepEqual(faults, []); assert.ok((counts['forced switch lines'] ?? 0) > 100, JSON.stringify(counts));
     });
 
@@ -364,7 +364,7 @@ export function runEngineReadinessR9Checks(): { passed: number; failed: number }
         assert.ok(o.scoredRegimens.some(r => modsOfOpt(r).some(m => (m.action === 'remove' || m.action === 'titrate_down') && m.source?.med.name === 'Furosemide' && !m.mandatory)), 'the reviewer patient shows no score-driven loop reduction');
         assert.deepEqual(R9_CHECKS.z2(q, o, () => { }), []);
         const faults: string[] = []; const counts: Record<string, number> = {};
-        for (let sd = 30200000; sd < 30201500; sd++) { const p = coldPatient(gen3r(sd).p as Patient); let oo: SimulationOutput; try { oo = runEngine(clonePatient(p)); } catch { continue; } for (const m of R9_CHECKS.z2(p, oo, (k, n = 1) => { counts[k] = (counts[k] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`); }
+        for (let sd = 30200000; sd < 30201500; sd++) { const p = coldPatient(gen3r(sd).p as Patient); const oo = runEngine(clonePatient(p)); for (const m of R9_CHECKS.z2(p, oo, (k, n = 1) => { counts[k] = (counts[k] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`); }
         assert.deepEqual(faults, []); assert.ok((counts['cold screens with options'] ?? 0) > 100, JSON.stringify(counts));
     });
 
@@ -375,7 +375,7 @@ export function runEngineReadinessR9Checks(): { passed: number; failed: number }
         for (const sd of [30300099, 30008901, 30000203]) { const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); if (sd === 30000203) p.allergies = new Set(['bumetanide']); run1(p, `seed ${sd}`); }
         const dup = mk({ lvef: 30, nyha_class: 'III', sbp: 118, dbp: 70, pulse: 78, potassium: 4.4, creatinine: 1.2, egfr: 60, oxygen_saturation: 96, dry: 80, cur: 84, findings: ['Edema (2+)', 'JVP Elevated'] }, [entry('Furosemide', 80), entry('Torsemide', 40)]);
         const od = run1(dup, 'duplicate pair'); assert.ok(od.clinicalAlerts.some(a => /^DUPLICATE THERAPY/.test(a) && /total oral loop diuretic dose is about 240/.test(a) || /^DUPLICATE THERAPY/.test(a) && /total oral loop diuretic dose is about 160/.test(a)), 'the duplicate alert states no total: ' + od.clinicalAlerts.find(a => /^DUPLICATE/.test(a)));
-        for (let sd = 30300000; sd < 30310000 && (counts['loop step notes'] ?? 0) < 10; sd++) { const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); try { run1(p, `seed ${sd}`); } catch { /* skip */ } }
+        for (let sd = 30300000; sd < 30310000 && (counts['loop step notes'] ?? 0) < 10; sd++) { const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); run1(p, `seed ${sd}`); }
         assert.deepEqual(faults, []); assert.ok((counts['loop step notes'] ?? 0) >= 10, JSON.stringify(counts));
     });
 
@@ -384,7 +384,7 @@ export function runEngineReadinessR9Checks(): { passed: number; failed: number }
         const faults: string[] = []; const counts: Record<string, number> = {};
         const one = (p: Patient, label: string) => { const o = runEngine(clonePatient(p)); for (const m of R9_CHECKS.z4(p, o, (k, n = 1) => { counts[k] = (counts[k] ?? 0) + n; })) if (faults.length < 5) faults.push(`${label}: ${m}`); };
         for (const sd of [30700016, 30000191]) for (const k of [5.0, 5.1, 5.2, 5.3]) { const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); p.potassium = k; one(p, `seed ${sd} K ${k}`); }
-        for (let sd = 30700000; sd < 30701500; sd++) { const p = R9_PREP.z4!(clonePatient(gen3r(sd).p as Patient), sd) as Patient; p.scope_conditions = new Set(); try { one(p, `seed ${sd}`); } catch { /* skip */ } }
+        for (let sd = 30700000; sd < 30701500; sd++) { const p = R9_PREP.z4!(clonePatient(gen3r(sd).p as Patient), sd) as Patient; p.scope_conditions = new Set(); one(p, `seed ${sd}`); }
         assert.deepEqual(faults, []); assert.ok((counts['potassium rows'] ?? 0) > 100, JSON.stringify(counts));
     });
 
@@ -392,7 +392,7 @@ export function runEngineReadinessR9Checks(): { passed: number; failed: number }
     check('Z5 stop screens (seeds 30000861 and 30400012: NSAID "Deprecribe", duplicate beta-blockers; potassium 6.5; severe kidney disease) carry the one true sentence on every no-option path (1,000 patients x 13 paths)', () => {
         const faults: string[] = []; let seen = 0;
         for (let sd = 30400000; sd < 30401000; sd++) for (const [pn, f] of NO_OPTION_PATHS) {
-            const q = clonePatient(gen3r(sd).p as Patient); q.scope_conditions = new Set(); f(q); let o: SimulationOutput; try { o = runEngine(clonePatient(q)); } catch { continue; }
+            const q = clonePatient(gen3r(sd).p as Patient); q.scope_conditions = new Set(); f(q); const o = runEngine(clonePatient(q));
             if (o.scoredRegimens.length === 0) seen++;
             for (const m of R9_CHECKS.z5(q, o, () => { })) if (faults.length < 5) faults.push(`seed ${sd} ${pn}: ${m}`);
         }
@@ -447,21 +447,21 @@ export function runEngineReadinessR9Checks(): { passed: number; failed: number }
             const o = runEngine(clonePatient(p)); const c: Record<string, number> = {}; assert.deepEqual(R9_CHECKS.z7(p, o, (kq, n = 1) => { c[kq] = (c[kq] ?? 0) + n; }), []); assert.ok((c['reduce alerts, every option stops or replaces'] ?? 0) === 1, JSON.stringify(c));
         }
         const faults: string[] = []; const counts: Record<string, number> = {};
-        for (let sd = 30700000; sd < 30701500; sd++) { const p = R9_PREP.z7!(clonePatient(gen3r(sd).p as Patient), sd) as Patient; p.scope_conditions = new Set(); let o: SimulationOutput; try { o = runEngine(clonePatient(p)); } catch { continue; } for (const m of R9_CHECKS.z7(p, o, (kk, n = 1) => { counts[kk] = (counts[kk] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`); }
+        for (let sd = 30700000; sd < 30701500; sd++) { const p = R9_PREP.z7!(clonePatient(gen3r(sd).p as Patient), sd) as Patient; p.scope_conditions = new Set(); const o = runEngine(clonePatient(p)); for (const m of R9_CHECKS.z7(p, o, (kk, n = 1) => { counts[kk] = (counts[kk] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`); }
         assert.deepEqual(faults, [], faults.join(' || ')); assert.ok((counts['reduce alerts, every option stops or replaces'] ?? 0) > 5, JSON.stringify(counts));
     });
 
     // ---------------- Z8 ------------------------------------------------------------------------------------------------------------------------------------------------------------
     check('Z8 change lines: no parenthesis inside a parenthesis, none longer than 340 characters, no stray full stop, a raised thiazide is an increase, no internal class label (3,000 patients)', () => {
         const faults: string[] = []; const counts: Record<string, number> = {};
-        for (let sd = 30800000; sd < 30803000; sd++) { const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); let o: SimulationOutput; try { o = runEngine(clonePatient(p)); } catch { continue; } for (const m of R9_CHECKS.z8(p, o, (k, n = 1) => { counts[k] = (counts[k] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`); }
+        for (let sd = 30800000; sd < 30803000; sd++) { const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); const o = runEngine(clonePatient(p)); for (const m of R9_CHECKS.z8(p, o, (k, n = 1) => { counts[k] = (counts[k] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`); }
         assert.deepEqual(faults, [], faults.join(' || ')); assert.ok((counts['change lines'] ?? 0) > 3000, JSON.stringify(counts));
     });
 
     // ---------------- Z12 ------------------------------------------------------------------------------------------------------------------------------------------------------------
     check('Z12 (a) finerenone gap line for an unknown earlier ejection fraction (seed 30000381); (c) no raw "ENGINE POLICY" or "STOP ... WAIT ... THEN" in any output string (2,000 patients); (b) no change line twice in an option (3,000 patients)', () => {
         const faults: string[] = []; const counts: Record<string, number> = {};
-        const one = (sd: number) => { const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); let o: SimulationOutput; try { o = runEngine(clonePatient(p)); } catch { return; }
+        const one = (sd: number) => { const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); const o = runEngine(clonePatient(p));
             for (const m of R9_CHECKS.z12(p, o, (k, n = 1) => { counts[k] = (counts[k] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`);
             for (const [i, r] of o.scoredRegimens.entries()) { const ls = modsOfOpt(r).map(m => m.summary); if (new Set(ls).size !== ls.length && faults.length < 5) faults.push(`seed ${sd} option ${i + 1}: a change line twice: ${ls.find((l, j) => ls.indexOf(l) !== j)}`); } };
         one(30000381); for (let sd = 30000000; sd < 30003000; sd++) one(sd);

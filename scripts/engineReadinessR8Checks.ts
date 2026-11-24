@@ -450,7 +450,7 @@ export function runEngineReadinessR8Checks(): { passed: number; failed: number }
         for (let sd = first; sd < first + n; sd++) {
             const base = clonePatient(gen3r(sd).p as Patient); base.scope_conditions = new Set();
             const p = R8_PREP[mode] ? R8_PREP[mode](base, sd) : base; if (!p) continue;
-            let o: SimulationOutput; try { o = runEngine(clonePatient(p)); } catch { continue; }
+            const o = runEngine(clonePatient(p));
             for (const m of R8_CHECKS[mode](p, o, (k, c = 1) => { counts[k] = (counts[k] ?? 0) + c; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`);
         }
         return { faults, counts };
@@ -508,7 +508,7 @@ export function runEngineReadinessR8Checks(): { passed: number; failed: number }
         let seen = 0;
         for (let sd = 20100000; sd < 20100030; sd++) for (const [pn, f] of NO_OPTION_PATHS) {
             const p = oneDrugAllergyPatient(clonePatient(gen3r(sd).p as Patient), sd); if (!p) continue; f(p);
-            let o: SimulationOutput; try { o = runEngine(clonePatient(p)); } catch { continue; }
+            const o = runEngine(clonePatient(p));
             const names = [...expandAllergies(p.allergies ?? new Set<string>(), MEDICATION_FORMULARY).expanded]; const taken = p.current_regimen.filter(r => names.includes(r.med.name)); if (taken.length === 0) continue; seen++;
             for (const t of taken) assert.ok(o.clinicalAlerts.some(a => a.startsWith(`ALLERGY CONFLICT: ${t.med.name} `)), `seed ${sd} path ${pn}: no ALLERGY CONFLICT for ${t.med.name}`);
             assert.equal(o.clinicalAlerts.filter(a => a.startsWith('ALLERGY CONFLICT')).length, new Set(o.clinicalAlerts.filter(a => a.startsWith('ALLERGY CONFLICT'))).size, 'an alert is repeated');
@@ -563,7 +563,7 @@ export function runEngineReadinessR8Checks(): { passed: number; failed: number }
     });
     check('X2 generated: 600 random patients: every start, restart and raise sentence in a monitoring row, withheld reason or gap line is true of the regimen; no unknown wording about starting', () => {
         const r = sweep('x2', 600); assert.deepEqual(r.faults, []); assert.ok(Object.keys(r.counts).length >= 2, JSON.stringify(r.counts));
-        const bad: string[] = []; for (const sc of SCENARIOS) { const p = clonePatient(sc.patient); let o: SimulationOutput; try { o = runEngine(clonePatient(p)); } catch { continue; } for (const m of R8_CHECKS.x2(p, o, () => { })) if (bad.length < 5) bad.push(`${sc.title}: ${m}`); }
+        const bad: string[] = []; for (const sc of SCENARIOS) { const p = clonePatient(sc.patient); const o = runEngine(clonePatient(p)); for (const m of R8_CHECKS.x2(p, o, () => { })) if (bad.length < 5) bad.push(`${sc.title}: ${m}`); }
         assert.deepEqual(bad, []);
     });
 
@@ -657,7 +657,7 @@ export function runEngineReadinessR8Checks(): { passed: number; failed: number }
     check('X15 over 1,500 random patients on every no-option path: an identical warning once, no rehabilitation prompt beside an unstable alert, a gap line for finerenone gives its reason, classes named in clinical words, no option wording in a no-option duplicate alert, and "no medication change is proposed" never beside an alert that tells the clinician to stop, withhold, reduce, review or switch a drug', () => {
         const faults: string[] = []; let imperative = 0, finerenone = 0;
         for (let sd = 20100000; sd < 20100150; sd++) for (const [pn, f] of NO_OPTION_PATHS) {
-            const q = clonePatient(gen3r(sd).p as Patient); q.scope_conditions = new Set(); f(q); let o: SimulationOutput; try { o = runEngine(clonePatient(q)); } catch { continue; }
+            const q = clonePatient(gen3r(sd).p as Patient); q.scope_conditions = new Set(); f(q); const o = runEngine(clonePatient(q));
             const c: Record<string, number> = {}; for (const m of R8_CHECKS.x15(q, o, (k, n = 1) => { c[k] = (c[k] ?? 0) + n; })) if (faults.length < 5) faults.push(`seed ${sd} ${pn}: ${m}`);
             imperative += c['no-option screens with an imperative drug alert'] ?? 0; finerenone += c['MRA gap lines beside finerenone'] ?? 0;
         }

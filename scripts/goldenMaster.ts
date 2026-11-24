@@ -13,9 +13,9 @@
  * stripped before comparison so adding explanatory output does not invalidate the baseline.
  * Never list a pre-existing field here.
  */
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, realpathSync } from 'node:fs';
 import { gzipSync, gunzipSync } from 'node:zlib';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { generateAndScoreModifications } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
@@ -113,6 +113,7 @@ function selfCheck() {
 
 async function main() {
     const update = process.argv.includes('--update');
+    if (!update && !existsSync(SNAPSHOT)) throw new Error('Missing golden reference. Restore the reviewed snapshot before comparing outputs.');
     const actual = await capture();
     // A captured exception is evidence of a broken run, never an acceptable golden result.
     const thrown = Object.entries(actual).filter(([, run]) => run && typeof run === 'object' && 'THREW' in run);
@@ -120,7 +121,7 @@ async function main() {
         console.error('Golden capture failed:', thrown);
         process.exit(1);
     }
-    if (update || !existsSync(SNAPSHOT)) {
+    if (update) {
         writeFileSync(SNAPSHOT, gzipSync(JSON.stringify(actual)));
         console.log(`Golden master written: ${Object.keys(actual).length} runs -> ${SNAPSHOT}`);
         return;
@@ -142,4 +143,4 @@ async function main() {
 }
 
 // Only run the CLI when executed directly (rankingDiff.ts imports capture/normalize).
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();
+if (process.argv[1] && existsSync(process.argv[1]) && realpathSync(process.argv[1]) === realpathSync(fileURLToPath(import.meta.url))) main();

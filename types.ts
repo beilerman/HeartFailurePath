@@ -105,6 +105,8 @@ export interface Patient {
     current_regimen: RegimenMed[];
     /** Engine-owned canonical record, including held/completed entries; never trusted from a caller. */
     recorded_medication_exposures?: RegimenMed[];
+    /** Engine-owned flag for the input-error path when some current medications could not be reconciled. */
+    medication_list_incomplete?: boolean;
     max_affordable_cost: number;
     cost_sensitivity: number; // 0 (Spend freely) to 10 (Every dollar counts)
     insurance_tier: InsuranceTier; // 'cash' | 'commercial' | 'medicare'

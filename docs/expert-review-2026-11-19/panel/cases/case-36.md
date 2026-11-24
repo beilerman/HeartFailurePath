@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 64-year-old man with an ejection fraction of 20% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 86/54 mmHg and the heart rate is 84 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 50 mL/min/1.73 m². He takes Lisinopril 5 mg once daily, Carvedilol 6.25 mg twice daily.
 
@@ -54,7 +54,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Safety alerts (1)
 

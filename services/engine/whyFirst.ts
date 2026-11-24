@@ -576,7 +576,9 @@ export function buildWhyFirst(ctx: WhyContext, pillarLabels: Record<PillarKey, s
                 const budgetClause = aboveBudget && typeof patient.max_affordable_cost === 'number'
                     ? (inFallback
                         ? `; nothing fits the stated budget of $${Math.round(patient.max_affordable_cost)}, so the options shown are the least costly safe ones, and ${aboveBudget.cost > r.cost ? 'a costlier plan' : 'another plan'} (${aboveNamed}) scores higher`
-                        : `; this compares only options within the stated budget of $${Math.round(patient.max_affordable_cost)}, and a plan above it (${aboveNamed}) scores higher`)
+                        : ctx.candidates.some(c => !Number.isFinite(c.cost))
+                            ? `; costs are incomplete, and a plan known to exceed the stated budget (${aboveNamed}) scores higher`
+                            : `; this compares only options within the stated budget of $${Math.round(patient.max_affordable_cost)}, and a plan above it (${aboveNamed}) scores higher`)
                     : inFallback && typeof patient.max_affordable_cost === 'number' ? `; nothing fits the stated budget of $${Math.round(patient.max_affordable_cost)}, so the options shown are the least costly safe ones` : '';
                 if (leadsByRule) lines.unshift({ kind: 'no_change_reason', text: `No option scores ${TOO_CLOSE_TO_SEPARATE_POINTS === 1 ? '1 point' : `${TOO_CLOSE_TO_SEPARATE_POINTS} points`} or more above leaving the regimen unchanged, which is closer than the tool can separate${congested ? `; ${congestionClause}` : ''}${budgetClause}${picks.length > 1 ? '; the alternatives below are shown for discussion' : ''}.` });
                 else if (congested) lines.push({ kind: 'no_change_reason', text: `${cap(congestionClause)}.` });

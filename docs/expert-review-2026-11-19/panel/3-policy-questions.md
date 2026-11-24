@@ -82,8 +82,12 @@ No change in this base when crossing: potassium 5.0 to 5.1, 5.1 to 5.2, 5.3 to 5
 
 27. **Beta-blocker after recorded bronchospasm.** A recorded bronchospasm with a beta-blocker blocks a new start of a non-selective one, but carvedilol already taken is continued and may be raised. Should an established non-selective beta-blocker be switched or held?
 
+28. **Furoscix as the only loop diuretic.** The label describes Furoscix as a short course beside an oral loop diuretic. For a congested patient who takes Furoscix and no oral loop diuretic, every option stops Furoscix and starts an oral loop diuretic at the usual starting dose (for example furosemide 20 mg once daily), the same start offered to a patient who takes no loop diuretic. No sentence says that the diuretic dose falls. Should Furoscix be kept until the oral drug is established, or the oral start be higher?
+
+29. **Replacing a loop diuretic when output is low.** With poor perfusion the tool starts no drug and raises no dose, with one exception besides a diuretic step for congestion: a loop diuretic that must stop (for example for a recorded allergy) is replaced by another when congestion is recorded. The replacement drug may differ from the one offered to the same patient with normal perfusion. Is a replacement right in that state, or should the tool only advise urgent assessment?
+
 ## F. Open questions
 
-28. What is missing from the inputs that you would need before trusting any option?
-29. Which single change would most improve the tool?
-30. Would you be willing to see this used, as a second opinion beside your own plan, in a study that compares the two without changing care?
+30. What is missing from the inputs that you would need before trusting any option?
+31. Which single change would most improve the tool?
+32. Would you be willing to see this used, as a second opinion beside your own plan, in a study that compares the two without changing care?

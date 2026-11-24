@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 73-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/74 mmHg and the heart rate is 68 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.8 mEq/L and eGFR is 28 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily.
 
@@ -54,7 +54,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -323,7 +323,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 58-year-old man with an ejection fraction of 25% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 124/78 mmHg and the heart rate is 78 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.3 mEq/L and eGFR is 78 mL/min/1.73 m². He takes no heart failure medication.
 
@@ -374,7 +374,7 @@ Daily dosing: no drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -630,7 +630,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 56-year-old man with an ejection fraction of 28% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 128/80 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 68 mL/min/1.73 m². He takes Carvedilol 12.5 mg twice daily.
 
@@ -681,7 +681,7 @@ Daily dosing: 2 doses a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -939,7 +939,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 62-year-old woman with an ejection fraction of 58% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 136/82 mmHg and the heart rate is 74 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 80 mL/min/1.73 m². She takes no heart failure medication.
 
@@ -990,7 +990,7 @@ Daily dosing: no drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -1232,7 +1232,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 72-year-old man with an ejection fraction of 25% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/70 mmHg and the heart rate is 88 per minute in sinus rhythm. He is 4 kg above the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 48 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Furosemide 80 mg twice daily.
 
@@ -1284,7 +1284,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -1572,7 +1572,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 61-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 112/70 mmHg and the heart rate is 62 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.6 mEq/L and eGFR is 66 mL/min/1.73 m². He takes Sacubitril/Valsartan 97/103 mg twice daily, Carvedilol 25 mg twice daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
 
@@ -1626,7 +1626,7 @@ Daily dosing: 6 doses a day from 4 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -1797,7 +1797,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 63-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 122/76 mmHg and the heart rate is 88 per minute in atrial fibrillation. He is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 72 mL/min/1.73 m². He takes no heart failure medication.
 
@@ -1848,7 +1848,7 @@ Daily dosing: no drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -2099,7 +2099,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 60-year-old man with an ejection fraction of 25% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 96/60 mmHg and the heart rate is 80 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 68 mL/min/1.73 m². He takes Lisinopril 2.5 mg once daily, Carvedilol 3.125 mg twice daily.
 
@@ -2151,7 +2151,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -2422,7 +2422,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 61-year-old man with an ejection fraction of 28% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 124/78 mmHg and the heart rate is 76 per minute in sinus rhythm. He is at the recorded dry weight. Potassium and kidney function have not been entered. He takes no heart failure medication.
 
@@ -2473,7 +2473,7 @@ Daily dosing: no drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -2632,7 +2632,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 59-year-old man with an ejection fraction of 28% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 70 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.8 mEq/L and eGFR is 64 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Metoprolol Succinate 100 mg once daily, Spironolactone 25 mg once daily.
 
@@ -2685,7 +2685,7 @@ Daily dosing: 3 doses a day from 3 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -2953,7 +2953,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 70-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 120/72 mmHg and the heart rate is 70 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 5.6 mEq/L and eGFR is 44 mL/min/1.73 m². He takes Sacubitril/Valsartan 49/51 mg twice daily, Spironolactone 25 mg once daily.
 
@@ -3005,7 +3005,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -3287,7 +3287,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 63-year-old man with an ejection fraction of 28% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 76 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 74 mL/min/1.73 m². He takes no heart failure medication.
 
@@ -3338,7 +3338,7 @@ Daily dosing: no drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -3590,7 +3590,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 71-year-old man with an ejection fraction of 45% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 138/82 mmHg and the heart rate is 66 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 60 mL/min/1.73 m². He takes Metoprolol Succinate 50 mg once daily.
 
@@ -3641,7 +3641,7 @@ Daily dosing: 1 dose a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -3886,7 +3886,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 77-year-old man with an ejection fraction of 35% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 104/60 mmHg and the heart rate is 78 per minute in sinus rhythm. He is 2 kg below the recorded dry weight. Potassium is 4.2 mEq/L and eGFR is 38 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Furosemide 80 mg twice daily.
 
@@ -3939,7 +3939,7 @@ Daily dosing: 5 doses a day from 3 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -4190,7 +4190,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 67-year-old man with an ejection fraction of 28% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/72 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.6 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 5 mg once daily, Carvedilol 6.25 mg twice daily.
 
@@ -4242,7 +4242,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -4512,7 +4512,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 68-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 122/70 mmHg and the heart rate is 52 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 64 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Carvedilol 25 mg twice daily.
 
@@ -4564,7 +4564,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -4832,7 +4832,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 31-year-old woman with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 110/68 mmHg and the heart rate is 84 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.1 mEq/L and eGFR is 98 mL/min/1.73 m². She takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily.
 
@@ -4885,7 +4885,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -5038,7 +5038,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 66-year-old man with an ejection fraction of 25% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 108/68 mmHg and the heart rate is 70 per minute in sinus rhythm. He is 0.5 kg above the recorded dry weight. Potassium is 4.7 mEq/L and eGFR is 55 mL/min/1.73 m². He takes Sacubitril/Valsartan 97/103 mg twice daily, Carvedilol 25 mg twice daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
 
@@ -5092,7 +5092,7 @@ Daily dosing: 6 doses a day from 4 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -5268,7 +5268,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 68-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 114/68 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 5 mEq/L and eGFR is 41 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Spironolactone 25 mg once daily.
 
@@ -5320,7 +5320,7 @@ Daily dosing: 2 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -5597,7 +5597,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 70-year-old man with an ejection fraction of 28% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 112/70 mmHg and the heart rate is 128 per minute in atrial fibrillation. He is 1.5 kg above the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 60 mL/min/1.73 m². He takes Carvedilol 12.5 mg twice daily.
 
@@ -5648,7 +5648,7 @@ Daily dosing: 2 doses a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -5920,7 +5920,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 66-year-old man with an ejection fraction of 32% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 74 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 66 mL/min/1.73 m². He takes Carvedilol 12.5 mg twice daily.
 
@@ -5971,7 +5971,7 @@ Daily dosing: 2 doses a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -6228,7 +6228,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 78-year-old woman with an ejection fraction of 60% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 148/78 mmHg and the heart rate is 70 per minute in sinus rhythm. She is 3 kg above the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 54 mL/min/1.73 m². She takes no heart failure medication.
 
@@ -6279,7 +6279,7 @@ Daily dosing: no drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -6534,7 +6534,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 62-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 128/80 mmHg and the heart rate is 76 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 70 mL/min/1.73 m². He takes Lisinopril 10 mg once daily.
 
@@ -6585,7 +6585,7 @@ Daily dosing: 1 dose a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -6857,7 +6857,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 64-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/76 mmHg and the heart rate is 76 per minute in sinus rhythm. He is 3 kg above the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Furosemide 40 mg once daily.
 
@@ -6910,7 +6910,7 @@ Daily dosing: 4 doses a day from 3 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -7183,7 +7183,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 62-year-old woman with an ejection fraction of 30% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 114/70 mmHg and the heart rate is 72 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.6 mEq/L and eGFR is 58 mL/min/1.73 m². She takes Sacubitril/Valsartan 49/51 mg twice daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
 
@@ -7237,7 +7237,7 @@ Daily dosing: 6 doses a day from 4 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -7518,7 +7518,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 65-year-old man with an ejection fraction of 27% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 124/76 mmHg and the heart rate is 68 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 5.1 mEq/L and eGFR is 55 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Carvedilol 12.5 mg twice daily.
 
@@ -7570,7 +7570,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -7828,7 +7828,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 58-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 116/72 mmHg and the heart rate is 78 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 70 mL/min/1.73 m². He takes Sacubitril/Valsartan 97/103 mg twice daily, Metoprolol Succinate 200 mg once daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
 
@@ -7882,7 +7882,7 @@ Daily dosing: 5 doses a day from 4 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -8057,7 +8057,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 84-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 104/62 mmHg and the heart rate is 66 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 52 mL/min/1.73 m². He takes Lisinopril 2.5 mg once daily.
 
@@ -8108,7 +8108,7 @@ Daily dosing: 1 dose a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -8384,7 +8384,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 71-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily.
 
@@ -8437,7 +8437,7 @@ Daily dosing: 4 doses a day from 3 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 **What this setting changed (generated).** This patient is also shown with the Balanced setting elsewhere in the packet. With "Keep cost low" the weights are changed as follows: Starts from the base weights; cost counts three times as much. The budget limit and every safety rule still apply separately. The top options here are within one point of each other (the tie sentence below), a difference the tool cannot separate, so which of them comes first rests on it.
 
@@ -8707,7 +8707,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 74-year-old man with an ejection fraction of 55% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 142/80 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.6 mEq/L and eGFR is 42 mL/min/1.73 m². He takes no heart failure medication.
 
@@ -8758,7 +8758,7 @@ Daily dosing: no drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -9001,7 +9001,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 66-year-old woman with an ejection fraction of 30% and NYHA class IV symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 112/70 mmHg and the heart rate is 82 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 60 mL/min/1.73 m². She takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily.
 
@@ -9053,7 +9053,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -9314,7 +9314,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 74-year-old man with an ejection fraction of 35% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/70 mmHg and the heart rate is 54 per minute in second-degree AV block. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 60 mL/min/1.73 m². He takes Carvedilol 12.5 mg twice daily.
 
@@ -9365,7 +9365,7 @@ Daily dosing: 2 doses a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -9633,7 +9633,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 72-year-old man with an ejection fraction of 28% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/70 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 6.1 mEq/L and eGFR is 40 mL/min/1.73 m². He takes Sacubitril/Valsartan 49/51 mg twice daily, Spironolactone 25 mg once daily.
 
@@ -9685,7 +9685,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -9823,7 +9823,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 76-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/72 mmHg and the heart rate is 74 per minute in atrial fibrillation. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 34 mL/min/1.73 m². He takes Carvedilol 25 mg twice daily, Digoxin 125 mcg once daily.
 
@@ -9875,7 +9875,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -10171,7 +10171,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 55-year-old man with an ejection fraction of 48% and NYHA class I symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/74 mmHg and the heart rate is 64 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 74 mL/min/1.73 m². He takes Sacubitril/Valsartan 49/51 mg twice daily, Bisoprolol 5 mg once daily, Spironolactone 25 mg once daily, Empagliflozin 10 mg once daily.
 
@@ -10225,7 +10225,7 @@ Daily dosing: 5 doses a day from 4 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -10475,7 +10475,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 64-year-old man with an ejection fraction of 20% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 86/54 mmHg and the heart rate is 84 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 50 mL/min/1.73 m². He takes Lisinopril 5 mg once daily, Carvedilol 6.25 mg twice daily.
 
@@ -10527,7 +10527,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Safety alerts (1)
 
@@ -10616,7 +10616,7 @@ This tool proposes no medication option today because of this safety or data sta
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 78-year-old woman with an ejection fraction of 30% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 128/70 mmHg and the heart rate is 72 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 5 mEq/L and eGFR is 18 mL/min/1.73 m². She takes Lisinopril 5 mg once daily.
 
@@ -10667,7 +10667,7 @@ Daily dosing: 1 dose a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -10862,7 +10862,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 69-year-old woman with an ejection fraction of 32% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 132/76 mmHg and the heart rate is 68 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.7 mEq/L and eGFR is 38 mL/min/1.73 m². She takes Losartan 50 mg once daily, Carvedilol 12.5 mg twice daily.
 
@@ -10914,7 +10914,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -11188,7 +11188,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 69-year-old man with an ejection fraction of 25% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 130/78 mmHg and the heart rate is 84 per minute in sinus rhythm. He is 5 kg above the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 58 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily.
 
@@ -11240,7 +11240,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -11504,7 +11504,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 76-year-old woman with an ejection fraction of 55% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 130/74 mmHg and the heart rate is 76 per minute in atrial fibrillation. She is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 58 mL/min/1.73 m². She takes Metoprolol Succinate 50 mg once daily.
 
@@ -11555,7 +11555,7 @@ Daily dosing: 1 dose a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -11812,7 +11812,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 79-year-old man with an ejection fraction of 35% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 100/64 mmHg and the heart rate is 70 per minute in sinus rhythm. He is 1.5 kg above the recorded dry weight. Potassium is 5.7 mEq/L and eGFR is 45 mL/min/1.73 m². He takes Carvedilol 6.25 mg twice daily, Furosemide 40 mg once daily.
 
@@ -11864,7 +11864,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Safety alerts (3)
 
@@ -11933,7 +11933,7 @@ This tool proposes no medication option today: a condition recorded for this pat
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 40-year-old woman with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 116/72 mmHg and the heart rate is 82 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.2 mEq/L and eGFR is 91 mL/min/1.73 m². She takes Carvedilol 6.25 mg twice daily.
 
@@ -11985,7 +11985,7 @@ Daily dosing: 2 doses a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -12111,7 +12111,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 69-year-old man with an ejection fraction of 30% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 122/74 mmHg and the heart rate is 80 per minute in sinus rhythm. He is 3 kg above the recorded dry weight. Potassium is 3.3 mEq/L and eGFR is 56 mL/min/1.73 m². He takes Furosemide 80 mg once daily.
 
@@ -12162,7 +12162,7 @@ Daily dosing: 1 dose a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -12447,7 +12447,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 71-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily.
 
@@ -12500,7 +12500,7 @@ Daily dosing: 4 doses a day from 3 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 **What this setting changed (generated).** This patient is also shown with the Balanced setting elsewhere in the packet. With "Keep the regimen simple" the weights are changed as follows: Starts from the base weights; dosing burden counts three times as much. The budget limit and every safety rule still apply separately. The top options here are within one point of each other (the tie sentence below), a difference the tool cannot separate, so which of them comes first rests on it.
 
@@ -12766,7 +12766,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 71-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily.
 
@@ -12819,7 +12819,7 @@ Daily dosing: 4 doses a day from 3 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 

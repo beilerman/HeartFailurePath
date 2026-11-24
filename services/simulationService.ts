@@ -3,7 +3,7 @@ import { MEDICATION_FORMULARY } from '../constants';
 import { resolveAllergy } from './engine/allergy';
 import { hasAngioedemaHistory } from './engine/intolerance';
 import { classifyPhenotype as classifyPhenotypeForSwitch } from './engine/domains';
-import { validateEngineInput } from './engine/inputContract';
+import { reconciledHistory, validateEngineInput } from './engine/inputContract';
 import { isActiveExposure } from './engine/medicationExposure';
 import { Patient, RegimenMed, SimulationOutput } from '../types';
 import { blankIronInputsToUndefined, valueUnknown } from './clinicalPredicates';
@@ -85,8 +85,15 @@ export function generateAndScoreModifications(
     availableMedNames: Set<string>,
     prices: Record<string, number>
 ): SimulationOutput {
+    const input = validateEngineInput(patient);
+    if (!(availableMedNames instanceof Set) || [...availableMedNames].some(name => typeof name !== 'string')) input.errors.push('INPUT ERROR: Available medication names must be a set of text entries.');
+    if (!prices || typeof prices !== 'object' || Array.isArray(prices)) input.errors.push('INPUT ERROR: Supply a medication price map, or an empty map when prices are unavailable.');
+    // Every stage, including input-error alerts and final wording, uses the same reconciled drug identities and exposure history.
+    const resolved = dedupeCurrentRegimen(input.regimen);
+    const incomplete = !Array.isArray(patient?.current_regimen) || input.regimen.length !== patient.current_regimen.length;
+    patient = { ...patient, ...reconciledHistory(patient), medication_list_incomplete: incomplete || undefined, recorded_medication_exposures: resolved.regimen, current_regimen: resolved.regimen.filter(isActiveExposure) };
     const scope = scopeStatusFor(patient);
-    const out0 = runEngine(patient, availableMedNames, prices);
+    const out0 = runEngine(patient, availableMedNames, prices, input.errors, resolved);
     // R7 W7: the hold alert's clause about a switch to sacubitril/valsartan is true only where the tool would offer that switch for this patient: a reduced-EF upgrade (candidates.ts), with the
     // drug neither excluded, nor allergic, nor barred by an angioedema history. Applied to every output (a stop path never reaches the option stage).
     const switchClause = ', and before any switch to sacubitril/valsartan (a switch is held at the same potassium)';
@@ -122,10 +129,11 @@ export function generateAndScoreModifications(
 function runEngine(
     patient: Patient,
     availableMedNames: Set<string>,
-    prices: Record<string, number>
+    prices: Record<string, number>,
+    inputErrors: string[],
+    resolved: ReturnType<typeof dedupeCurrentRegimen>
 ): SimulationOutput {
 
-    const input = validateEngineInput(patient);
     // The stop sentence names the alerts raised BY the stage that stopped the run (those not present before it); when the stage raised none, every urgent alert in force.
     const withStop = (out: SimulationOutput, before: ReadonlySet<string> | number, limited = false): SimulationOutput => {
         const fresh = out.clinicalAlerts.filter(a => typeof before === 'number' || !before.has(a));
@@ -137,15 +145,15 @@ function runEngine(
     };
     // Every stop path keeps the urgent alerts the entered values justify (T16): the focused findings (pressure, potassium, oxygen) and the unstable states, heart block and slow rate.
     const urgentFromEntered = (p: Patient): string[] => allEnteredUrgentAlerts(p);
-    if (input.errors.length > 0) return withStop({ scoredRegimens: [], excludedMedications: [], clinicalAlerts: [...urgentFromEntered(patient), ...input.errors], monitoringPlan: [] }, 0);
+    if (inputErrors.length > 0) {
+        const duplicateAlerts = resolved.duplicateNames.length ? [duplicateEntryAlert(resolved)] : [];
+        return withStop({ scoredRegimens: [], excludedMedications: [], clinicalAlerts: [...urgentFromEntered(patient), ...duplicateAlerts, ...inputErrors], monitoringPlan: [] }, 0);
+    }
     const clinicalAlerts: string[] = [];
     patient = clonePatient(patient);
     blankIronInputsToUndefined(patient);
     // The same drug entered twice is resolved BEFORE the use records are read, so the kept use record (the more cautious one) never depends on entry order (U5).
-    const resolved = dedupeCurrentRegimen(input.regimen);
     if (resolved.duplicateNames.length > 0) clinicalAlerts.push(duplicateEntryAlert(resolved));
-    patient.recorded_medication_exposures = resolved.regimen;
-    patient.current_regimen = resolved.regimen.filter(isActiveExposure);
     for (const r of resolved.regimen.filter(r => !isActiveExposure(r)).sort((a, b) => a.med.name < b.med.name ? -1 : a.med.name > b.med.name ? 1 : 0)) clinicalAlerts.push(`EXPOSURE HISTORY: ${r.med.name} is recorded as ${r.exposure!.status}. It is not counted as active therapy. Recorded physiology is preserved; no loss of benefit is back-calculated. Confirm the course, or whether to restart, before a new dose.`);
     const unconfirmedUse = patient.current_regimen.filter(r => r.exposure?.status !== 'active' || r.exposure?.adherence !== 'consistent');
     if (unconfirmedUse.length) clinicalAlerts.push(`MEDICATION USE REVIEW: Confirm actual current dose and consistent use before increasing or substituting ${unconfirmedUse.map(r => r.med.name).sort().join(', ')}. Safety-driven reductions/removals and unrelated eligible decisions remain assessable. Treatment duration and individual response are not inferred.`);

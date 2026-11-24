@@ -320,7 +320,7 @@ export function runEngineReadinessR6Checks(): { passed: number; failed: number }
         let fallbackTies = 0, plainTies = 0; const bad: string[] = [];
         for (let sd = 9880000; sd < 9882500; sd++) for (const budget of [5, 20, 50]) {
             const p = budgetCase(sd, budget);
-            let o: SimulationOutput; try { o = runTier(p); } catch { continue; }
+            const o = runTier(p);
             const tie = tieOf(o); if (!tie) continue;
             if (inFallback(o)) {
                 fallbackTies++;
@@ -552,7 +552,7 @@ export function runEngineReadinessR6Checks(): { passed: number; failed: number }
         for (let sd = 9950000; sd < 9950300; sd++) { const p = clonePatient(gen3r(sd).p); p.scope_conditions = new Set(); all.push(p); }
         for (const [k, p0] of all.entries()) {
             const p = clonePatient(p0); if (!p.scope_conditions) p.scope_conditions = new Set();
-            let o: SimulationOutput; try { o = runEngine(p); } catch { continue; }
+            const o = runEngine(p);
             sentences += (o.why_first?.options ?? []).reduce((n, w) => n + w.lines.filter(l => clausesOf(l.text).length > 0).length, 0);
             gives += (o.why_first?.options ?? []).slice(0, 1).reduce((n, w) => n + w.lines.filter(l => clausesOf(l.text).some(c => c.subject && !/^option 1\b/i.test(c.subject))).length, 0);
             assert.deepEqual(reasonViolations(o), [], `case ${k}`);
@@ -649,7 +649,7 @@ export function runEngineReadinessR6Checks(): { passed: number; failed: number }
         for (let sd = 9970000; sd < 9970040; sd++) for (const f of fields) for (const [label, v] of BLANK_FORMS) {
             const p = clonePatient(gen3r(sd).p); p.scope_conditions = new Set();
             if (f.startsWith('vs.')) (p.volume_status as unknown as Record<string, unknown>)[f.slice(3)] = v; else (p as unknown as Record<string, unknown>)[f] = v;
-            let o: SimulationOutput; try { o = runEngine(p); } catch { continue; }
+            const o = runEngine(p);
             const t = allText(o).find(x => ZERO.test(x));
             if (t && bad.length < 6) bad.push(`seed ${sd} ${f} ${label}: ${ZERO.exec(t)?.[0]} in "${t.slice(0, 100)}"`);
         }

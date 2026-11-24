@@ -40,8 +40,10 @@ export function confirmUnassessedUse(regimen: RegimenMed[]): ConfirmResult {
     return { regimen: next, confirmed, leftAlone };
 }
 
-/** What a dose or frequency edit does to a drug's use record: everything about the use of the previous dose is cleared, so nothing stale reads "active" (T17). */
+/** What a dose or frequency edit does to a drug's use record: require fresh confirmation of the new dose while preserving explicit held, completed or uncertain status (T17). */
 export function exposureAfterDoseEdit(e: RegimenMed['exposure']): RegimenMed['exposure'] {
     if (!e) return e;
-    return { started_on: e.started_on, last_dose_on: e.last_dose_on };
+    // Correcting a historical strength cannot restart a held drug or repeat a completed course.
+    const status = e.status === 'active' ? undefined : e.status;
+    return { status, started_on: e.started_on, last_dose_on: e.last_dose_on };
 }

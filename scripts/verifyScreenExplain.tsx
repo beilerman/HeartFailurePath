@@ -333,10 +333,23 @@ check('W6: the entered patient survives a reload for the session (Sets and doses
     assert.deepEqual([...back.patient.comorbidities].sort(), [...p.comorbidities].sort());
     assert.deepEqual(back.patient.current_regimen.map(x => `${x.med.name} ${x.dose.strength} ${x.selected_frequency}`), p.current_regimen.map(x => `${x.med.name} ${x.dose.strength} ${x.selected_frequency}`));
     assert.equal(decodeSession('not json'), undefined);
+    const saved = JSON.parse(encodeSession({ patient: p, step: 3, phase: 'steps', scenario: 'custom' }));
+    const change = (edit: (draft: typeof saved) => void) => {
+        const copy = structuredClone(saved); edit(copy); return decodeSession(JSON.stringify(copy));
+    };
+    for (const field of ['name', 'unit', 'frequency']) {
+        assert.equal(change(x => { x.patient.current_regimen[0].__reg[field] = 'unrecognized'; }), undefined);
+    }
+    assert.equal(change(x => { x.step = 100; }), undefined);
+    assert.equal(change(x => { x.patient.allergies = []; }), undefined);
+    assert.ok(change(x => { delete x.patient.current_regimen[0].__reg.unit; }), 'older valid session must survive');
+    assert.equal(change(x => { x.patient.age = 12; })?.patient.age, 12, 'keep a draft value the user can correct');
+    assert.equal(change(x => { x.patient.volume_status = {}; }), undefined);
 });
 check('W6: an invalid entry is not echoed as an accepted value on the review step', () => {
-    const q = clonePatient(SCENARIOS[0].patient); q.lvef = 150; q.potassium = 9;
+    const q = clonePatient(SCENARIOS[0].patient); q.lvef = 150; q.potassium = 9; q.volume_status.dry_weight_kg = 999;
     const facts = enteredFacts(q);
+    assert.equal(facts.find(f => f.label === 'Dry weight (kg)')?.invalid, true);
     for (const f of facts) if (/LVEF|Potassium/.test(f.label)) assert.doesNotMatch(f.value, /150|9\.0/, f.label);
 });
 

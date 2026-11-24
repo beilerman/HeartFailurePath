@@ -33,8 +33,7 @@ async function main() {
     for (const sc of SCENARIOS) for (const tier of tiers) {
         const prices = await getDrugPrices(names, tier as never);
         const o = old[`${sc.title} :: ${tier}`]?.scoredRegimens?.[0];
-        let out;
-        try { out = generateAndScoreModifications({ ...sc.patient, insurance_tier: tier }, available, prices); } catch { continue; }
+        const out = generateAndScoreModifications({ ...sc.patient, insurance_tier: tier }, available, prices);
         const n = out.scoredRegimens[0];
         if (!o || !n) continue;
         const oldG = o.domain_scores?.guideline ?? NaN, newG = n.domain_scores.guideline;

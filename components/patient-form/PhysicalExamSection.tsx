@@ -1,3 +1,4 @@
+import { EXAM_FINDINGS } from '../../services/clinicalPredicates';
 import { PATIENT_RHYTHMS } from '../../types';
 import React from 'react';
 import { ActivityIcon } from '../icons';
@@ -9,7 +10,7 @@ import { isCongestedAboveDryWeight } from '../../services/engine/regimenUtils';
 interface PhysicalExamSectionProps {
     patientData: Patient;
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-    onVolumeChange: (field: 'current_weight_kg' | 'dry_weight_kg', val: number) => void;
+    onVolumeChange: (field: 'current_weight_kg' | 'dry_weight_kg', val: number | undefined) => void;
     onToggleFinding: (finding: string) => void;
     validationErrors?: Record<string, string>;
     clinicalWarnings?: Record<string, string>;
@@ -28,8 +29,9 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
     // Same predicates the engine uses; weight and exam can disagree, and the label says so.
     const isOverloaded = isCongestedAboveDryWeight(patientData);
     const isDehydrated = weightDiff < -1.0;
-    const hasWeights = Number.isFinite(weightDiff);
-    const weightStatusText = volumeDescription(patientData);
+    const weightsInvalid = !!(validationErrors.dry_weight_kg || validationErrors.current_weight_kg);
+    const hasWeights = !weightsInvalid && patientData.volume_status.dry_weight_kg > 0 && patientData.volume_status.current_weight_kg > 0;
+    const weightStatusText = weightsInvalid ? 'Verify the entered weights before assessing the weight difference.' : volumeDescription(patientData);
 
     const weightStatusColor = !hasWeights
         ? 'text-slate-600 bg-slate-50 border-slate-200'
@@ -39,7 +41,6 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
             ? 'text-amber-700 bg-amber-50 border-amber-200'
             : 'text-slate-700 bg-slate-50 border-slate-200';
 
-    const findingsList = ['Edema (1+)', 'Edema (2+)', 'Edema (3+)', 'JVP Elevated', 'Orthopnea', 'Crackles', 'Ascites', 'Cool Extremities'];
 
     return (
         <section id="patient-exam" tabIndex={-1}>
@@ -102,18 +103,18 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
                 <div className="grid grid-cols-2 gap-4 mb-2">
                     <div>
                         <Label htmlFor="dry_weight_kg">Estimated dry weight (kg)</Label>
-                        <Input type="number" min={0} name="dry_weight_kg" value={patientData.volume_status.dry_weight_kg ?? ''} onChange={(e) => onVolumeChange('dry_weight_kg', Number(e.target.value))} error={validationErrors.dry_weight_kg} />
+                        <Input type="number" min={0} name="dry_weight_kg" value={patientData.volume_status.dry_weight_kg ?? ''} onChange={(e) => onVolumeChange('dry_weight_kg', e.target.value === '' ? undefined : Number(e.target.value))} error={validationErrors.dry_weight_kg} />
                     </div>
                     <div>
                         <Label htmlFor="current_weight_kg">Current (kg)</Label>
-                        <Input type="number" min={0} name="current_weight_kg" value={patientData.volume_status.current_weight_kg ?? ''} onChange={(e) => onVolumeChange('current_weight_kg', Number(e.target.value))} error={validationErrors.current_weight_kg} />
+                        <Input type="number" min={0} name="current_weight_kg" value={patientData.volume_status.current_weight_kg ?? ''} onChange={(e) => onVolumeChange('current_weight_kg', e.target.value === '' ? undefined : Number(e.target.value))} error={validationErrors.current_weight_kg} />
                     </div>
                 </div>
             </div>
 
             <Label>Exam findings</Label>
             <div className="grid grid-cols-2 gap-2 mt-1">
-                {findingsList.map(finding => (
+                {EXAM_FINDINGS.map(finding => (
                     <button
                         key={finding}
                         onClick={() => onToggleFinding(finding)}

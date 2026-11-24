@@ -85,14 +85,21 @@ export function isIronDeficient(patient: Patient): boolean {
  * ticked used to count as two findings), and cool extremities is a perfusion sign, not congestion, so it is not counted (it is read by the low-output and
  * hypoperfusion rules instead). Before 2026-11-12 every rule used the raw size of the findings set.
  */
+export const EXAM_FINDINGS = ['Edema (1+)', 'Edema (2+)', 'Edema (3+)', 'JVP Elevated', 'Orthopnea', 'Crackles', 'Ascites', 'Cool Extremities'] as const;
+const findingGroups = new Map<string, string>([
+    ...EXAM_FINDINGS.map((name): [string, string] => [name, name.startsWith('Edema') ? 'Edema' : name]),
+    ['Edema', 'Edema'], ['Peripheral Edema', 'Edema'], ['Elevated JVP', 'JVP Elevated'],
+    ['Rales', 'Crackles'], ['Pulmonary Crackles', 'Crackles'],
+]);
+export const isExamFinding = (name: string): boolean => findingGroups.has(name);
+
 export function congestionFindingCount(findings: Set<string>): number {
-    let n = 0, edema = false;
-    findings.forEach(f => {
-        if (f === 'Cool Extremities') return;
-        if (f.startsWith('Edema')) { edema = true; return; }
-        n += 1;
-    });
-    return n + (edema ? 1 : 0);
+    const groups = new Set<string>();
+    for (const finding of findings) {
+        const group = findingGroups.get(finding);
+        if (group && group !== 'Cool Extremities') groups.add(group);
+    }
+    return groups.size;
 }
 
 // Acutely decompensated heart failure, as the engine defines it everywhere (beta-blocker initiation block, ivabradine

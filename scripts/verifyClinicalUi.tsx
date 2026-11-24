@@ -132,6 +132,11 @@ check('missing potassium and creatinine remain permitted and valid zero preferen
     const errors=validatePatientForm(q);
     for(const field of ['potassium','creatinine','kccq_score','max_affordable_cost']) assert.equal(errors[field],undefined);
 });
+check('a potassium above the supported range requires verification and urgent assessment if accurate', () => {
+    const q = clonePatient(p);
+    q.potassium = 9;
+    assert.match(validatePatientForm(q).potassium, /verify.*immediately.*if accurate.*urgent hospital assessment/i);
+});
 check('each alternative shows its own monitoring rather than borrowing option 1 monitoring', () => {
     const alternative={...lead,monitoring_plan:[{test:'Alternative-specific check',timing:'Before implementation',details:'Unique monitoring details'}]};
     const html=renderToStaticMarkup(<RecommendationCard regimen={alternative} leader={lead} rank={2}/>);

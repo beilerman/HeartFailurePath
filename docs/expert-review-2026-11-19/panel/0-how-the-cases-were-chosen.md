@@ -2,7 +2,7 @@
 
 **For the owner and the analysis. Give this page to reviewers only AFTER they have returned their ratings, because it reveals what each case is meant to test.**
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 There are 45 cases in ten groups. The order reviewers see is fixed and is deliberately not grouped, so the sequence does not reveal why a case was chosen. The last column is generated from the tool's output when the packet is built.
 

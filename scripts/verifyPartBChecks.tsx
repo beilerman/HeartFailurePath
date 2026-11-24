@@ -292,10 +292,14 @@ check('T17: the review step names how many drugs the control confirms and the on
     const q = { ...p, current_regimen: [rm('Lisinopril', { status: 'held' })] } as Patient;
     assert.doesNotMatch(textOf(renderToStaticMarkup(<ReviewStep patient={q} problems={[]} hints={{}} hasErrors={false} onGoToField={() => {}} onRun={() => {}} pricesReady onConfirmAllUse={() => {}} />)), /Confirm all as taking as recorded/);
 });
-check('T17: editing a drug\'s dose or frequency resets its use record to "not assessed" (no stale "active"), and the use label is in words', () => {
-    for (const e of [{ status: 'active', adherence: 'consistent', dose_interval_reviewed: true, dose_changed_on: '2026-01-01', started_on: '2025-01-01' }, { status: 'held', restart_or_repeat_reviewed: true }, { status: 'unknown', adherence: 'partial' }] as RegimenMed['exposure'][]) {
+check('T17: editing a drug\'s dose or frequency clears dose confirmation while preserving a hold, completed course or uncertain use, and the use label is in words', () => {
+    for (const e of [{ status: 'active', adherence: 'consistent', dose_interval_reviewed: true, dose_changed_on: '2026-01-01', started_on: '2025-01-01' }, { status: 'held', restart_or_repeat_reviewed: true }, { status: 'completed' }, { status: 'unknown', adherence: 'partial' }] as RegimenMed['exposure'][]) {
         const after = exposureAfterDoseEdit(e);
-        assert.equal(useStatusWords(after), 'not assessed');
+        assert.equal(after?.status, e?.status === 'active' ? undefined : e?.status);
+        if (e?.status === 'held' || e?.status === 'completed' || e?.status === 'unknown') {
+            const edited = { ...SCENARIOS[0].patient.current_regimen[0], exposure: after };
+            assert.equal(confirmUnassessedUse([edited]).regimen[0].exposure?.status, e.status);
+        }
         assert.equal(after?.adherence, undefined);
         assert.ok(!after?.dose_interval_reviewed && !after?.restart_or_repeat_reviewed && !after?.dose_changed_on);
     }

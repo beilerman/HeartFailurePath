@@ -7,6 +7,11 @@ import { LOW_OUTPUT, CONGESTION_EXCESS_KG_ABOVE, HYPOTENSION_SBP_BELOW } from '.
 import { COMPLETENESS_SUBTARGET_CREDIT, COMPLETENESS_GRADED_CREDIT_SPAN } from './scoreModel';
 
 // --- Helper Functions ---
+export function medicationComplexity(r: RegimenMed): number {
+    if (r.dose.formulation.includes('SQ') || r.dose.formulation.includes('Weekly') || r.selected_frequency === 'bid') return 2;
+    return r.selected_frequency === 'tid' ? 4 : 1;
+}
+
 const DOSES_PER_DAY: Record<string, number> = { qd: 1, bid: 2, tid: 3 };
 
 /**

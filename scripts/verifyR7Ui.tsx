@@ -37,7 +37,7 @@ const scanScreen = (text: string): string[] => SCREEN_BANNED.filter(([, re]) => 
 check('W7: no arrow of any kind, no "engine", no capitalised eGFR on the screen, draft note and print view of 60 generated patients on the full path and the stop paths', () => {
     const bad: string[] = []; let screens = 0;
     for (let sd = 10100000; sd < 10100020; sd++) for (const [pn, f] of NO_OPTION_PATHS.slice(0, 11)) {
-        const p = patientOf(sd, f); let r; try { r = renderScreen(p); } catch { continue; }
+        const p = patientOf(sd, f); const r = renderScreen(p);
         screens++;
         for (const m of scanScreen(r.text)) if (bad.length < 6) bad.push(`seed ${sd} ${pn}: ${m}`);
     }
@@ -51,7 +51,7 @@ check('W7: the Evidence tab and the logic page say "tool" never "engine", and ca
 check('W1: the trade-off pills on the screen compare dosing with the regimen now and never say "Lower dosing burden"; 344 reference screens', () => {
     let pills = 0;
     for (const s of SCENARIOS) {
-        const p = clonePatient(s.patient); let r; try { r = renderScreen(p); } catch { continue; }
+        const p = clonePatient(s.patient); const r = renderScreen(p);
         assert.ok(!/Lower dosing burden|Well within budget|Near the budget limit/.test(r.text), s.title);
         pills += (r.text.match(/Dosing burden: (More|Fewer|Same) doses a day/g) ?? []).length;
     }

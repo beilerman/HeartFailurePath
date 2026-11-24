@@ -20,23 +20,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Build
-        run: npm run build
-
-      - name: Golden master
-        run: npm run golden
-
-      - name: Verify scenarios
-        run: npm run verify
-
-      - name: Verify clinical UI content
-        run: npm run verify:ui
-
-      - name: Pricing audit
-        run: npm run audit:pricing
-
-      - name: Randomized-patient sweep
-        run: npm run fuzz
+      - name: Build and run the full verification suite
+        run: npm run ci

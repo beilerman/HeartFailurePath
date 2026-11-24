@@ -419,8 +419,8 @@ R7_CHECKS.w13 = (p, o, count) => {
         // (b) a drug an option starts is not contraindicated on the regimen the option produces when it was not on the regimen the patient arrives with
         for (const m of mods) if ((m.action === 'add' || m.action === 'swap') && m.target?.med.contraindications) {
             const med = m.target.med;
-            let before = false, after = false;
-            try { before = med.contraindications!(clonePatient(p)); after = med.contraindications!({ ...clonePatient(p), current_regimen: r.regimen.filter(x => x.med.name !== med.name) }); } catch { continue; }
+            const before = med.contraindications!(clonePatient(p));
+            const after = med.contraindications!({ ...clonePatient(p), current_regimen: r.regimen.filter(x => x.med.name !== med.name) });
             if (!before && after) out.push(`option ${i + 1} starts ${med.name} which its own contraindication check refuses on the regimen the option produces`);
         }
         // (g) a paced rhythm with a projected rate below 50: the warning is accompanied by the paced note, and the note appears only then
@@ -431,7 +431,7 @@ R7_CHECKS.w13 = (p, o, count) => {
     // (d) the over-budget ordering sentence is true of the order shown
     for (const [label, mod] of [['by score', (q: Patient) => { q.care_priority = undefined; }], ['cost first', (q: Patient) => { q.care_priority = 'cost_first' as never; }]] as Array<[string, (q: Patient) => void]>) {
         const q = clonePatient(p); q.scope_conditions = new Set(); q.max_affordable_cost = 1; mod(q);
-        let oq: SimulationOutput; try { oq = runEngine(q); } catch { continue; }
+        const oq = runEngine(q);
         if (oq.scoredRegimens.length < 2 || !oq.scoredRegimens.every(r => r.warnings.some(w => w.startsWith('BUDGET EXCEEDED')))) continue;
         count(`fallback orderings (${label})`);
         const w = oq.scoredRegimens[0].warnings.find(x => x.startsWith('BUDGET EXCEEDED'))!;
@@ -488,7 +488,7 @@ export function runEngineReadinessR7Checks(): { passed: number; failed: number }
             const p = clonePatient(gen3r(sd, [state]).p as Patient); p.scope_conditions = new Set();
             const isCold = isColdState(p), emergency = p.potassium >= 6.0;
             if (!isCold && !emergency) continue;
-            let o: SimulationOutput; try { o = runEngine(p); } catch { continue; }
+            const o = runEngine(p);
             if (isCold) cold++; if (emergency) k6++;
             for (const r of o.scoredRegimens) for (const m of r.modification_set?.modifications ?? []) {
                 if (!['add', 'titrate_up', 'swap'].includes(m.action)) continue;
@@ -508,7 +508,7 @@ export function runEngineReadinessR7Checks(): { passed: number; failed: number }
     check('W1 trade-off labels: the dosing-burden label compares with the regimen now (fewer, the same, more doses a day) and never says lower or lighter beside an option that raises the doses or the drug count; the cost label states the figures and is true; 344 reference scenarios', () => {
         const bad: string[] = []; let compared = 0, more = 0, fewer = 0, withinOver = 0;
         for (const s of SCENARIOS) {
-            const p = clonePatient(s.patient); let o: SimulationOutput; try { o = runEngine(clonePatient(p)); } catch { continue; }
+            const p = clonePatient(s.patient); const o = runEngine(clonePatient(p));
             const f = tradeOffFaults(p, o); if (f.length && bad.length < 5) bad.push(`${s.title}: ${f[0]}`);
             for (const r of o.scoredRegimens) { compared++; const l = r.trade_offs?.find(t => t.dimension === 'Dosing burden')?.label ?? ''; if (/^More/.test(l)) more++; if (/^Fewer/.test(l)) fewer++; if (/^(Within|Over) budget/.test(r.trade_offs?.find(t => t.dimension === 'Cost')?.label ?? '')) withinOver++; }
         }
@@ -518,7 +518,7 @@ export function runEngineReadinessR7Checks(): { passed: number; failed: number }
     check('W1 trade-off labels over 400 random patients (seeds from 10,100,000); case-45 style patient (tolerance 2 of 10, four drugs on board)', () => {
         const bad: string[] = [];
         for (let sd = 10100000; sd < 10100400; sd++) {
-            const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); let o: SimulationOutput; try { o = runEngine(clonePatient(p)); } catch { continue; }
+            const p = clonePatient(gen3r(sd).p as Patient); p.scope_conditions = new Set(); const o = runEngine(clonePatient(p));
             const f = tradeOffFaults(p, o); if (f.length && bad.length < 5) bad.push(`seed ${sd}: ${f[0]}`);
         }
         assert.deepEqual(bad, []);
@@ -534,7 +534,7 @@ export function runEngineReadinessR7Checks(): { passed: number; failed: number }
         const faults: string[] = []; const counts: Record<string, number> = {};
         for (let sd = first; sd < first + n; sd++) {
             const p = patientOf ? patientOf(sd) : (() => { const q = clonePatient(gen3r(sd).p as Patient); q.scope_conditions = new Set(); return q; })();
-            let o: SimulationOutput; try { o = runEngine(clonePatient(p)); } catch { continue; }
+            const o = runEngine(clonePatient(p));
             for (const m of R7_CHECKS[mode](p, o, (k, c = 1) => { counts[k] = (counts[k] ?? 0) + c; })) if (faults.length < 5) faults.push(`seed ${sd}: ${m}`);
         }
         return { faults, counts };
@@ -589,7 +589,7 @@ export function runEngineReadinessR7Checks(): { passed: number; failed: number }
         const faults: string[] = []; let withhold = 0;
         for (let sd = 10100000; sd < 10100100; sd++) for (const [pn, f] of NO_OPTION_PATHS) {
             const q = clonePatient(gen3r(sd).p as Patient); q.scope_conditions = new Set(); f(q);
-            let o: SimulationOutput; try { o = runEngine(q); } catch { continue; }
+            const o = runEngine(q);
             if (o.scoredRegimens.length > 0) continue;
             const c: Record<string, number> = {}; const v = R7_CHECKS.w5(q, o, (k, n = 1) => { c[k] = (c[k] ?? 0) + n; }); withhold += c['no-option outputs'] ?? 0;
             for (const m of v) if (faults.length < 5) faults.push(`seed ${sd} ${pn}: ${m}`);
@@ -657,7 +657,7 @@ export function runEngineReadinessR7Checks(): { passed: number; failed: number }
         let seen = 0; const faults: string[] = [];
         for (let sd = 10100000; sd < 10100040; sd++) for (const [pn, f] of NO_OPTION_PATHS) {
             const q = clonePatient(gen3r(sd).p as Patient); q.scope_conditions = new Set(); q.allergies = new Set(['angioedema', 'xyzzy']); f(q);
-            let o: SimulationOutput; try { o = runEngine(q); } catch { continue; }
+            const o = runEngine(q);
             if (o.scoredRegimens.length > 0) continue;
             seen++;
             if (pn === 'scope_ticked') continue;

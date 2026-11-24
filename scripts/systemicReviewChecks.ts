@@ -91,6 +91,81 @@ export function runSystemicReviewChecks(): { passed: number; failed: number } {
         assert.ok(out.scoredRegimens.every(o => !o.regimen.some(x => x.med.name === 'Spironolactone')));
         assert.equal(p.current_regimen[0].med.drug_class, 'SGLT2i', 'caller was mutated');
     });
+    check('an imported scope condition cannot silently clear the scope gate', () => {
+        for (const value of ['Dialysis', ' dialysis ', 'transplant_lvad', 'unrecognized condition']) {
+            const p = patient();
+            p.scope_conditions = new Set([value]);
+            const out = run(p);
+            assert.equal(out.scoredRegimens.length, 0);
+            assert.equal(out.scope_status?.state, value === 'unrecognized condition' ? 'not_confirmed' : 'outside');
+        }
+    });
+    check('held exposure is absent from current-use alerts on ranked and stopped reviews', () => {
+        for (const potassium of [4.3, 5.7, 6.7]) {
+            const r = entry('Lisinopril', 10);
+            const p = patient([{ ...r, exposure: { status: 'held' } }]);
+            p.allergies.add(r.med.name);
+            p.potassium = potassium;
+            const out = run(p);
+            assert.ok(!out.clinicalAlerts.some(a => a.startsWith('ALLERGY CONFLICT:')));
+            assert.ok(!out.monitoringPlan.some(row => row.details.includes('patient takes a RAAS inhibitor')));
+            assert.ok(out.clinicalAlerts.some(a => a.startsWith('EXPOSURE HISTORY:')));
+        }
+    });
+    check('invalid medication entries stop review without masking independent safety findings or implying a negative medication history', () => {
+        for (const records of [[null], [null, entry('Lisinopril', 10)], Array(2), [{ med: { name: 'Carvedilol' } }], {}, undefined]) {
+            const p = patient();
+            p.current_regimen = records as Patient['current_regimen'];
+            p.potassium = 5.7;
+            p.oxygen_saturation = 84;
+            const out = run(p);
+            assert.equal(out.scoredRegimens.length, 0);
+            assert.ok(out.clinicalAlerts.some(a => a.startsWith('INPUT ERROR:')));
+            assert.ok(out.clinicalAlerts.some(a => a.startsWith('HYPOXIA ALERT:')));
+            assert.doesNotMatch(JSON.stringify([out.clinicalAlerts, out.monitoringPlan]), /patient takes no renin-angiotensin/);
+        }
+        const p = patient();
+        Object.assign(p, { potassium: '6.8', pulse: 12, oxygen_saturation: 84 });
+        const out = run(p);
+        assert.doesNotMatch(JSON.stringify(out.monitoringPlan), /slow heart rate|Repeat potassium urgently/i);
+        assert.ok(out.clinicalAlerts.some(a => a.startsWith('HYPOXIA ALERT:')));
+    });
+    check('distinct exam findings and listed concurrent drugs retain their meaning at the public boundary', () => {
+        const p = patient();
+        p.nyha_class = 'III'; p.volume_status.current_weight_kg += 3;
+        p.volume_status.exam_findings = new Set(['Crackles', 'Rales']);
+        assert.ok(!run(p).clinicalAlerts.some(a => a.startsWith('ACUTE DECOMPENSATION:')));
+        p.volume_status.exam_findings.add('JVP Elevated');
+        assert.ok(run(p).clinicalAlerts.some(a => a.startsWith('ACUTE DECOMPENSATION:')));
+        p.volume_status.exam_findings = new Set(['clear lungs', 'no edema']);
+        const rejected = run(p);
+        assert.equal(rejected.scoredRegimens.length, 0);
+        assert.ok(!rejected.clinicalAlerts.some(a => a.startsWith('ACUTE DECOMPENSATION:')));
+        p.volume_status.exam_findings.clear(); p.pulse = 42;
+        for (const name of ['Diltiazem', 'Verapamil', 'Amiodarone']) {
+            p.external_medications = new Set([` ${name.toLowerCase()} `]);
+            const alert = run(p).clinicalAlerts.find(a => a.startsWith('SLOW HEART RATE:'));
+            assert.ok(alert?.includes(name));
+            assert.doesNotMatch(alert!, /no rate-slowing drug/);
+        }
+    });
+    check('one missing price does not clear the budget limit on a known expensive option', () => {
+        const p = patient(); p.max_affordable_cost = 10;
+        const options = run(p).scoredRegimens;
+        assert.ok(options.length >= 2);
+        const expensive = { ...options[0], cost: 1000, overall_score: 95, raw_score: 95 };
+        const unknown = { ...options[1], cost: Infinity };
+        const cheap = { ...options[0], cost: 5 };
+        for (const pool of [[expensive, unknown, cheap], [expensive, unknown]]) {
+            const out = chooseDisplayPicks(pool, p, byScoreThenCost);
+            assert.ok(out.picks.length > 0);
+            assert.equal(out.trace.fates.get(expensive), 'over_budget');
+            for (const pick of out.picks) {
+                assert.ok(pick.cost <= 10 || !Number.isFinite(pick.cost));
+                assert.equal(pick.warnings.some(w => w.startsWith('AFFORDABILITY UNASSESSED')), !Number.isFinite(pick.cost));
+            }
+        }
+    });
     check('per-dose renal caps do not silently become total-daily caps', () => {
         const p = patient([entry('Captopril', 6.25, 'tid')]); p.egfr = 35; p.creatinine = 2;
         const a = analyzeCurrentRegimen(p, MEDICATION_FORMULARY, MEDICATION_FORMULARY.flatMap(m => getDoseTiers(m,p)));

@@ -78,7 +78,7 @@ for (let sd = first; sd < first + n; sd++) {
     // ---- every path
     for (const [pathName, apply] of PATHS) {
         const p = clonePatient(base); apply(p);
-        let o: SimulationOutput; try { o = run(p); } catch { continue; }
+        const o = run(p);
         counts.runs++;
         const heads = o.clinicalAlerts.map(head);
         // Y7
@@ -126,7 +126,7 @@ for (let sd = first; sd < first + n; sd++) {
         if (pathName === 'potassium stop' && field === 'potassium') continue;
         if (pathName === 'hypotension stop' && (field === 'sbp' || field === 'dbp')) continue;
         const q = clonePatient(ref); (q as unknown as Record<string, unknown>)[field as string] = blank;
-        let a: SimulationOutput, b: SimulationOutput; try { a = run(ref); b = run(q); } catch { continue; }
+        const a = run(ref), b = run(q);
         counts.Y1_blank_runs++;
         const zero = b.clinicalAlerts.find(x => PRINTED_ZERO.test(x));
         if (zero) bad('Y1_printed_zero', sd, `${pathName} ${String(field)}=${String(blank)}: ${zero.slice(0, 120)}`);

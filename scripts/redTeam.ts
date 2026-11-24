@@ -300,6 +300,7 @@ async function run() {
     }
     console.log('─────────────────────────────────────────────────────');
     console.log(`CRITICAL: ${crit}   HIGH: ${high}   MED: ${med2}`);
+    if (crit + high + med2 > 0) process.exitCode = 1;
     console.log('─────────────────────────────────────────────────────\n');
 }
 

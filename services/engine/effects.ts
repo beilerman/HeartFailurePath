@@ -4,7 +4,7 @@ import { drugFacts } from './drugFacts';
 import { valueUnknown, hasGoutHistory, hasAtrialFibrillationHistory } from '../clinicalPredicates';
 import { hasChildPughBorC, hasChildPughBConfirmed, onPde5Inhibitor as onPde5InhibitorPatient } from './contraindications';
 import { RAAS_CLASSES, isDiureticClass } from './registry';
-import { clonePatient, isTargetDoseForPatient, sortedByName } from './regimenUtils';
+import { clonePatient, medicationComplexity, isTargetDoseForPatient, sortedByName } from './regimenUtils';
 import { IntolerancePolicy, currentMedIntoleranceReason, deriveIntolerancePolicy, hasAngioedemaHistory } from './intolerance';
 import { HYPOKALEMIA_K_BELOW } from './thresholds';
 import { MRA_POOL_CLASSES } from './registry';
@@ -103,11 +103,7 @@ export function simulateModificationEffect(
         } else {
             totalCost += monthlyCost;
         }
-        let medComplexity = 1;
-        if (r.dose.formulation.includes('SQ') || r.dose.formulation.includes('Weekly')) medComplexity = 2;
-        else if (r.selected_frequency === 'bid') medComplexity = 2;
-        else if (r.selected_frequency === 'tid') medComplexity = 4;
-        complexityScore += medComplexity;
+        complexityScore += medicationComplexity(r);
     });
 
     // Net exposure controls screening; withdrawal never creates an invented improvement.

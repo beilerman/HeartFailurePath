@@ -1,6 +1,6 @@
 # HeartFailurePath — Cross-Session Memory
 
-Current consolidated handoff: [docs/HANDOFF-2026-11-13.md](docs/HANDOFF-2026-11-13.md). It reconciles the historical sections below and records the local working tree, latest receipts and remaining clinical/workflow work. This is repository documentation; no personal Codex memory was updated.
+The [November 23 project handoff](docs/HANDOFF-2026-11-23.md) records the current local rule set, verified repairs and outstanding decisions. The entries below preserve earlier project work.
 
 ## Architecture / Clinical-Safety Decisions
 
@@ -24,7 +24,7 @@ Current consolidated handoff: [docs/HANDOFF-2026-11-13.md](docs/HANDOFF-2026-11-
 - Record: CLAUDE.md top note; checks `scripts/engineReadinessR6Checks.ts` (in verify; helpers exported for the sweep), `scripts/verifyR6Ui.tsx` (in verify:ui), sweeps `scripts/engineReadinessR6Sweep.ts` and `scripts/r6ScreenSweep.tsx` (run with `node scripts/r6ScreenSweep.mjs <seed> <count>`).
 - A check that fires only because a kidney value is blank is never a stated reason: `contraindicationReasons` re-tests each check with a normal value in place of each blank one. Do not read a blank eGFR as 0 in any new reason text.
 - Allergy wording the engine reads as text lives in ONE list (`ALLERGY_TEXT_RULES`, `allergy.ts`); the form, the unmatched note and the readiness list all read it. No drug-name literals in engine files (a verify check fails on a string that equals a drug-name fragment).
-- A no-option output goes through `withStop` (simulationService.ts): `forStopPath` rewrites alert sentences, `noMedicationChangeReadiness` the readiness text, adjuncts are dropped. Screen words: no "option", "plan", "recommend", "rank" on a no-option screen (the sweep scans the whole rendered screen, note and print).
+- A no-option output goes through `withStop` (simulationService.ts): `forStopPath` rewrites alert sentences, `noMedicationChangeReadiness` the readiness text, adjuncts are dropped. Screen words: no "plan", "recommend", "rank" on a no-option screen, and "option" only in the fixed sentences "This tool proposes no medication option today..." and "No medication option is shown/proposed ..." (round 10 A7) (the sweep scans the whole rendered screen, note and print).
 - Existing checks rewritten (they asserted behaviour a ruling changed): Y6 AF paragraph (digoxin sentence now only above resting rate 110), the "AF HFrEF Anticoagulation And Rate Control" scenario assertion, the profile-independence check for eligible adjuncts (compares the adjuncts, not the new reason), `panelCasesChecks.ts` case-count bound (44 to 45), C8 rule set identifier.
 - Gotcha: a row named "after starting <word>" is read by the W7a sweep as "after starting <drug>"; name a start-or-raise row with a different shape ("after a beta-blocker start or increase").
 - Gotcha: the sweeps use flat prices in `runEngine` and tier prices in `run` (lib); a patient found by search must be re-checked on the path the packet uses (`getDrugPrices`).

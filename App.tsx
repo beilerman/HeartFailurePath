@@ -30,14 +30,16 @@ const initialView = (): ViewMode => {
 };
 
 // A reload mid-entry restores the entered patient for this tab (session storage only). Results are not stored: a restored session reopens at the Review step.
-const restored = (() => { const s = loadSession(); return s && s.phase !== 'start' ? s : undefined; })();
+const savedSession = loadSession();
+const restored = savedSession && savedSession.phase !== 'start' ? savedSession : undefined;
 
 function App() {
     const [patient, setPatient] = useState<Patient>(() => restored?.patient ?? blankPatient());
+    const [restoreFailed, setRestoreFailed] = useState(savedSession === null);
     const [pendingEntry, setPendingEntry] = useState(false);
     // Two views over the SAME patient, run and stale state: the guided flow (default) and the original full form.
-    const [view, setView] = useState<ViewMode>(initialView);
-    const [phase, setPhase] = useState<GuidedPhase>(restored ? 'steps' : 'start');
+    const [view, setView] = useState<ViewMode>(() => restoreFailed ? 'guided' : initialView());
+    const [phase, setPhase] = useState<GuidedPhase>(restored || view === 'form' ? 'steps' : 'start');
     const [step, setStep] = useState(restored ? (restored.phase === 'results' ? REVIEW_STEP : restored.step) : 0);
     // Remounts the guided steps whenever a patient is loaded, so no draft entry from another patient survives.
     const [formEpoch, setFormEpoch] = useState(0);
@@ -119,7 +121,7 @@ function App() {
     }, [patient.insurance_tier, priceLoadAttempt]);
 
     // Session copy of the guided entry (nothing is sent anywhere). "Start over" clears it.
-    useEffect(() => { if (phase === 'start') clearSession(); else saveSession({ patient, step, phase, scenario }); }, [patient, step, phase, scenario]);
+    useEffect(() => { if (restoreFailed) return; if (phase === 'start') clearSession(); else saveSession({ patient, step, phase, scenario }); }, [patient, step, phase, scenario, restoreFailed]);
 
     // Browser Back moves one step back in the guided entry instead of leaving the app: every phase or step change is a history entry.
     const fromPopRef = useRef(false);
@@ -144,7 +146,14 @@ function App() {
         return () => window.removeEventListener('popstate', onPop);
     }, []);
 
-    const pricesReady = !pricesLoading && !priceLoadError && Object.keys(drugPrices).length > 0;
+    useEffect(() => {
+        if (!pendingEntry) return;
+        const protectDraft = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+        window.addEventListener('beforeunload', protectDraft);
+        return () => window.removeEventListener('beforeunload', protectDraft);
+    }, [pendingEntry]);
+
+    const pricesReady = pricesSettledTier === patient.insurance_tier && !pricesLoading && !priceLoadError && Object.keys(drugPrices).length > 0;
 
     // Serialize inputs for change detection (Sets → arrays; functions on med objects are dropped
     // by JSON.stringify, which is fine — name/dose still serialize and reflect edits).
@@ -152,19 +161,6 @@ function App() {
         JSON.stringify({ p, m: [...meds], case: scenario, prices: pricesReady ? drugPrices : {} }, (_k, v) => (v instanceof Set ? [...v] : v));
 
     const resultsStale = hasRun && serializeInputs(patient, simMeds) !== lastRunInputsRef.current;
-
-    const handleScenarioChange = (title: string) => {
-        setScenario(title);
-        if (title === 'custom') {
-            setPatient(blankPatient());
-            return;
-        }
-        const s = SCENARIOS.find(sc => sc.title === title);
-        if (s) {
-            // Use custom clone instead of JSON.parse/stringify to preserve Sets
-            setPatient(clonePatient(s.patient));
-        }
-    };
 
     /** Returns true when the inputs passed validation and a run was attempted (false when blocked). */
     const runSimulation = (): boolean => {
@@ -234,33 +230,43 @@ function App() {
         setMissingDataNotices([]); setFollowUpCalendar([]); setDecisionReadiness(undefined); setWhyFirst(undefined); setScopeStatus(undefined); setEvidenceBand(undefined);
         setRunSnapshot(undefined); setSimError(null);
     };
-    const loadForGuided = (title: string, next: Patient) => {
+    const loadPatient = (title: string, next: Patient) => {
         clearRun();
+        setAutoRun(false);
         setPendingEntry(false);
+        setRestoreFailed(false);
         setScenario(title);
         setPatient(next);
         setFormEpoch(n => n + 1);
     };
+    const handleScenarioChange = (title: string) => {
+        const next = title === 'custom' ? blankPatient() : SCENARIOS.find(s => s.title === title)?.patient;
+        if (!next) return;
+        loadPatient(title, clonePatient(next));
+        setStep(0);
+        setPhase('steps');
+    };
     const openExample = (title: string) => {
         const s = SCENARIOS.find(sc => sc.title === title);
         if (!s) return;
-        loadForGuided(title, clonePatient(s.patient));
+        loadPatient(title, clonePatient(s.patient));
         setAutoRun(true);
         setPhase('results');
     };
     const startOver = () => {
         clearSession();
-        loadForGuided('custom', blankPatient());
+        loadPatient('custom', blankPatient());
         setStep(0);
         setPhase('start');
     };
     const startNewPatient = () => {
-        loadForGuided('custom', blankPatient());
+        loadPatient('custom', blankPatient());
         setStep(0);
         setPhase('steps');
     };
     const runFromReview = () => { if (runSimulation()) setPhase('results'); };
     const changeView = (next: ViewMode) => {
+        if (next === 'form' && phase === 'start') startNewPatient();
         setView(next);
         try {
             const url = new URL(window.location.href);
@@ -313,8 +319,8 @@ function App() {
                 {/* View switch: both views edit the same patient */}
                 {activeTab === 'simulation' && (
                     <div role="group" aria-label="Input view" className="flex bg-slate-100 p-1 rounded-lg">
-                        <button type="button" onClick={() => changeView('guided')} aria-pressed={view === 'guided'} className={viewBtn('guided')}>Guided</button>
-                        <button type="button" onClick={() => changeView('form')} aria-pressed={view === 'form'} className={viewBtn('form')}>Full form</button>
+                        <button type="button" disabled={pendingEntry && view !== 'guided'} onClick={() => changeView('guided')} aria-pressed={view === 'guided'} className={viewBtn('guided')}>Guided</button>
+                        <button type="button" disabled={pendingEntry && view !== 'form'} onClick={() => changeView('form')} aria-pressed={view === 'form'} className={viewBtn('form')}>Full form</button>
                     </div>
                 )}
 
@@ -362,6 +368,10 @@ function App() {
             {/* The one always-visible line (U8a): on the landing page, every entry page and every results page, and in print. */}
             <p data-testid="research-line" role="note" className="bg-amber-50 border-b border-amber-300 px-3 sm:px-6 py-1.5 text-xs font-semibold text-amber-950">{RESEARCH_LINE}</p>
 
+            {pendingEntry && activeTab === 'simulation' && <p role="status" className="bg-amber-50 px-4 py-2 text-sm">Save or cancel the unfinished entry before switching input views.</p>}
+            {restoreFailed && <p role="alert" className="border-b border-amber-300 bg-amber-50 px-4 py-2 text-sm">
+                The saved patient could not be restored in full. Start a new case and re-enter the observations and medication history before running a review.
+            </p>}
             <main id="main-content" className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden relative min-w-0 print:block print:overflow-visible">
                 {/* Kept mounted (just hidden) when another tab is open, so the results and scroll position survive a visit to the Evidence tab. */}
                 {(
@@ -384,7 +394,7 @@ function App() {
                                             onStepChange={setStep}
                                             onRun={runFromReview}
                                             onPendingChange={setPendingEntry}
-                                            onBackToStart={() => setPhase('start')}
+                                            onBackToStart={startOver}
                                             pricesReady={pricesReady}
                                             priceLoadError={priceLoadError}
                                             onRetryPrices={() => setPriceLoadAttempt(n => n + 1)}
@@ -395,7 +405,7 @@ function App() {
                                             patient={patient}
                                             caseLabel={caseLabel}
                                             onEditInputs={() => { setStep(REVIEW_STEP); setPhase('steps'); }}
-                                            onNewPatient={() => setPhase('start')}
+                                            onNewPatient={startOver}
                                             running={autoRun}
                                             attempt={attempt}
                                             showNotice={autoRun || resultsStale || pendingEntry || !!simError || !hasRun}
@@ -417,7 +427,7 @@ function App() {
                                 setPatientData={setPatient}
                                 simulationMedicationNames={simMeds}
                                 setSimulationMedicationNames={setSimMeds}
-                                onRunSimulation={runSimulation}
+                                onRunSimulation={() => { if (runSimulation()) setPhase('results'); }}
                                 key={scenario}
                                 onPendingChange={setPendingEntry}
                                 pricesReady={pricesReady}
@@ -431,7 +441,7 @@ function App() {
 
                         {/* Middle: Summary */}
                         <aside aria-label="Patient status summary" className="w-[280px] border-r border-slate-200 bg-slate-50/50 hidden 2xl:flex flex-col flex-shrink-0 print:hidden">
-                            <ClinicalSummary patient={patient} drugPrices={drugPrices} />
+                            <ClinicalSummary patient={patient} drugPrices={pricesReady ? drugPrices : {}} />
                         </aside>
 
                         {/* Right: Results */}

@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 A 62-year-old woman with an ejection fraction of 30% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 114/70 mmHg and the heart rate is 72 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.6 mEq/L and eGFR is 58 mL/min/1.73 m². She takes Sacubitril/Valsartan 49/51 mg twice daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
 
@@ -56,7 +56,7 @@ Daily dosing: 6 doses a day from 4 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.3, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 

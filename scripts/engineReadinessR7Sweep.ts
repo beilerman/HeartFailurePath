@@ -31,7 +31,7 @@ for (let sd = first; sd < first + count; sd++) {
     } else {
         const f = R7_CHECKS[mode]; if (!f) { console.error('unknown mode', mode); process.exit(2); }
         const v = f(patientOf(sd), o, (k: string, n?: number) => inc(k, n ?? 1)); v.forEach(m => fail(`${mode} ${m.split(/;| option \d/)[0].slice(0, 70)}`, sd, m));
-        if (mode === 'w5') for (const [pn, pf] of NO_OPTION_PATHS) { if (pn === 'full') continue; const q = patientOf(sd, pf); let o2: SimulationOutput; try { o2 = runEngine(q); } catch { continue; } R7_CHECKS.w5(q, o2, (k: string, n?: number) => inc(`${pn}:${k}`, n ?? 1)).forEach(m => fail(`w5 ${pn} ${m.slice(0, 50)}`, sd, m)); }
+        if (mode === 'w5') for (const [pn, pf] of NO_OPTION_PATHS) { if (pn === 'full') continue; const q = patientOf(sd, pf); const o2 = runEngine(q); R7_CHECKS.w5(q, o2, (k: string, n?: number) => inc(`${pn}:${k}`, n ?? 1)).forEach(m => fail(`w5 ${pn} ${m.slice(0, 50)}`, sd, m)); }
     }
 }
 if (mode === 'templates') [...templates.entries()].sort((a, b) => b[1].n - a[1].n).forEach(([, v]) => console.log(String(v.n).padStart(5), '|', v.ex));

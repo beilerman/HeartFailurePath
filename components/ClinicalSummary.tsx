@@ -1,3 +1,4 @@
+import { validatePatientForm } from './patient-form/formValidation';
 import { isActiveExposure } from '../services/engine/medicationExposure';
 
 import React from 'react';
@@ -5,7 +6,7 @@ import { Patient } from '../types';
 import { monthlyMedicationCost } from '../services/medicationCost';
 import { volumeDescription } from './clinicalPresentation';
 import { congestionFindingCount } from '../services/clinicalPredicates';
-import { isCongestedAboveDryWeight } from '../services/engine/regimenUtils';
+import { dedupeCurrentRegimen, medicationComplexity, isCongestedAboveDryWeight } from '../services/engine/regimenUtils';
 
 interface ClinicalSummaryProps {
     patient: Patient;
@@ -13,31 +14,27 @@ interface ClinicalSummaryProps {
 }
 
 export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugPrices }) => {
+    const errors = validatePatientForm(patient);
     const weightDiff = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
     // Three-band status mirroring PhysicalExamSection: Overload > +1.0, Volume Depleted < -1.0, else Euvolemic.
     const isOverloaded = isCongestedAboveDryWeight(patient);
     const hasFindings = congestionFindingCount(patient.volume_status.exam_findings) > 0;
     const isDehydrated = Number.isFinite(weightDiff) && weightDiff < -1.0;
-    const weightStatus = volumeDescription(patient);
+    const weightStatus = errors.current_weight_kg || errors.dry_weight_kg ? 'Verify the entered weights.' : volumeDescription(patient);
     const weightColor = isOverloaded ? 'text-red-600' : (isDehydrated || hasFindings) ? 'text-amber-600' : 'text-slate-700';
 
     // Renal Calculations
-    const bunCrRatio = patient.creatinine > 0 && patient.bun != null ? patient.bun / patient.creatinine : 0;
+    const bunCrRatio = !errors.creatinine && !errors.bun && patient.creatinine > 0 && patient.bun != null ? patient.bun / patient.creatinine : 0;
     const isPrerenal = bunCrRatio > 20;
 
     // Calculate Current Cost & Complexity
-    const currentPrices = patient.current_regimen.filter(isActiveExposure).map(curr => monthlyMedicationCost(curr, patient.insurance_tier, drugPrices));
+    const active = dedupeCurrentRegimen(patient.current_regimen).regimen.filter(isActiveExposure);
+    const currentPrices = active.map(curr => monthlyMedicationCost(curr, patient.insurance_tier, drugPrices));
     const hasUnknownCurrentCost = currentPrices.some(price => price === undefined || !Number.isFinite(price));
     const currentCost = hasUnknownCurrentCost
         ? null
         : currentPrices.reduce<number>((acc, price) => acc + (price ?? 0), 0);
-    const currentComplexity = patient.current_regimen.filter(isActiveExposure).reduce((acc, curr) => {
-        let val = 1;
-        if (curr.dose.formulation.includes('SQ')) val = 2;
-        else if (curr.selected_frequency === 'bid') val = 2;
-        else if (curr.selected_frequency === 'tid') val = 4;
-        return acc + val;
-    }, 0);
+    const currentComplexity = active.reduce((total, r) => total + medicationComplexity(r), 0);
 
     return (
         <div className="flex flex-col h-full bg-slate-50/50 overflow-y-auto custom-scrollbar">
@@ -51,7 +48,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-xs font-bold text-indigo-500 uppercase mb-3 tracking-wide">Natriuretic peptide</h3>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-slate-900">{patient.nt_pro_bnp > 0 ? patient.nt_pro_bnp.toLocaleString() : 'Not entered'}</span>
+                        <span className="text-3xl font-black text-slate-900">{errors.nt_pro_bnp ? 'Verify entry' : patient.nt_pro_bnp > 0 ? patient.nt_pro_bnp.toLocaleString() : 'Not entered'}</span>
                         <span className="text-sm text-slate-500 font-bold">pg/mL</span>
                     </div>
                     <div className="mt-2 text-sm text-slate-500 font-medium">Measured value as entered; interpret with the clinical assessment.</div>
@@ -62,12 +59,12 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                      <h3 className="text-xs font-bold text-blue-500 uppercase mb-3 tracking-wide">Symptoms and function</h3>
                      <div className="flex justify-between items-center mb-2">
                         <div className="text-center flex-1">
-                            <div className="text-2xl font-black text-slate-900">Class {patient.nyha_class}</div>
+                            <div className="text-2xl font-black text-slate-900">{patient.nyha_class ? `Class ${patient.nyha_class}` : 'Not entered'}</div>
                             <div className="text-xs font-bold text-slate-400 uppercase mt-1">NYHA</div>
                         </div>
                         <div className="h-10 w-px bg-slate-100 mx-2"></div>
                         <div className="text-center flex-1">
-                            <div className="text-2xl font-black text-slate-900">{patient.kccq_score ?? 'not entered'}</div><p className="text-xs text-slate-500">{patient.kccq_instrument ?? 'Instrument not recorded'}</p>
+                            <div className="text-2xl font-black text-slate-900">{errors.kccq_score ? 'Verify entry' : patient.kccq_score ?? 'not entered'}</div><p className="text-xs text-slate-500">{patient.kccq_instrument ?? 'Instrument not recorded'}</p>
                             <div className="text-xs font-bold text-slate-400 uppercase mt-1">KCCQ Score</div>
                         </div>
                      </div>
@@ -77,7 +74,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                      <h3 className="text-xs font-bold text-emerald-500 uppercase mb-3 tracking-wide">Volume status</h3>
                      <p className={`text-sm font-semibold leading-relaxed ${weightColor} mb-1`}>{weightStatus}</p>
-                     <div className="text-sm text-slate-500 mb-4 font-medium">{patient.volume_status.dry_weight_kg != null ? `vs dry weight (${patient.volume_status.dry_weight_kg} kg)` : 'Dry weight not entered'}</div>
+                     <div className="text-sm text-slate-500 mb-4 font-medium">{errors.dry_weight_kg ? 'Verify dry weight' : patient.volume_status.dry_weight_kg != null ? `vs dry weight (${patient.volume_status.dry_weight_kg} kg)` : 'Dry weight not entered'}</div>
                      
                      {patient.volume_status.exam_findings.size > 0 ? (
                          <div className="flex flex-wrap gap-1.5 mb-4">
@@ -104,8 +101,8 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
                 {/* Structure */}
                 <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                      <h3 className="text-xs font-bold text-amber-500 uppercase mb-3 tracking-wide">Heart structure</h3>
-                     <p className="text-sm text-slate-700">LVEF <strong className="text-2xl text-slate-900">{patient.lvef > 0 ? `${patient.lvef}%` : 'Not entered'}</strong></p>
-                     {patient.lvedd && (
+                     <p className="text-sm text-slate-700">LVEF <strong className="text-2xl text-slate-900">{errors.lvef ? 'Verify entry' : patient.lvef > 0 ? `${patient.lvef}%` : 'Not entered'}</strong></p>
+                     {!errors.lvedd && !!patient.lvedd && (
                          <div className="text-sm font-medium text-slate-500 mt-2">LVEDD: <span className="text-slate-800">{patient.lvedd} mm</span></div>
                      )}
                 </div>

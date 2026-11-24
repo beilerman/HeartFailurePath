@@ -338,7 +338,7 @@ export function runEngineReadinessR5Checks(): { passed: number; failed: number }
         for (let sd = from; sd < from + n; sd++) {
             const [vn, apply] = NO_OPTION_VARIANTS[sd % NO_OPTION_VARIANTS.length];
             const p = gen3r(sd).p as Patient; apply(p);
-            let o: SimulationOutput; try { o = runRaw(p); } catch { continue; }
+            const o = runRaw(p);
             runs++;
             if (o.scoredRegimens.length > 0) continue;
             none++;
@@ -470,7 +470,7 @@ export function runEngineReadinessR5Checks(): { passed: number; failed: number }
             const [vn, apply] = NO_OPTION_VARIANTS[sd % NO_OPTION_VARIANTS.length];
             const p = gen3r(sd).p as Patient; apply(p);
             if (sd % 3 === 0) { p.sbp = 84; p.dbp = 50; p.potassium = 6.8; }
-            let o: SimulationOutput; try { o = runRaw(p); } catch { continue; }
+            const o = runRaw(p);
             const d = duplicateFindings(o);
             if (d.length && bad.length < 6) bad.push(`seed ${sd} (${vn}): ${d.join('; ')}`);
         }
@@ -526,7 +526,7 @@ export function runEngineReadinessR5Checks(): { passed: number; failed: number }
         let ties = 0, named = 0; const bad: string[] = [];
         for (let sd = 9503000; sd < 9505500; sd++) for (const budget of [undefined, 5, 20, 50]) {
             const p = gen3r(sd).p as Patient; if (budget !== undefined) p.max_affordable_cost = budget;
-            let o: SimulationOutput; try { o = runTierP(p); } catch { continue; }
+            const o = runTierP(p);
             const tie = visibleFirst(o).find(t => TIE.test(t));
             if (!tie) continue;
             ties++;
@@ -547,7 +547,7 @@ export function runEngineReadinessR5Checks(): { passed: number; failed: number }
     check('Y10 scan: 2,500 random patients: no option that starts, swaps or raises nothing carries monitoring wording about initiation or starting', () => {
         let options = 0, nothing = 0; const bad: string[] = [];
         for (let sd = 9740000; sd < 9742500; sd++) {
-            const p = gen3r(sd).p as Patient; let o: SimulationOutput; try { o = runRaw(p); } catch { continue; }
+            const p = gen3r(sd).p as Patient; const o = runRaw(p);
             for (const [i, r] of o.scoredRegimens.entries()) {
                 options++;
                 if (startsOrRaisesAnything(r)) continue;

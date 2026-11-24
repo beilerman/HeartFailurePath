@@ -408,6 +408,9 @@ export function checkPatient(seed: number, p: Patient): Violation[] {
 // ---- main -----------------------------------------------------------------------------------------------------------------
 function main() {
     const count = Number(process.argv[2] ?? 3000), seed0 = Number(process.argv[3] ?? 20261112);
+    if (!Number.isSafeInteger(count) || count < 1 || !Number.isSafeInteger(seed0) || !Number.isSafeInteger(seed0 + count)) {
+        throw new Error('Supply a positive integer patient count and an integer starting seed within the safe numeric range.');
+    }
     const quietWarn = console.warn; console.warn = () => { };
     const all: Violation[] = [];
     // Fixed checks of the allergy resolver: what a clinician types must exclude the drug; an unrelated allergy must exclude nothing.

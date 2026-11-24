@@ -972,7 +972,7 @@ export function runMeasuredModelChecks(): { passed: number; failed: number } {
     });
 
     // C8. Text and rule set.
-    check('C8 harmDefinitions describes the actual side-effect formula (burden divided by 2, a weight), and the rule set identifier is 2026-11-22.3', () => {
+    check('C8 harmDefinitions describes the actual side-effect formula (burden divided by 2, a weight), and the rule set identifier is 2026-11-22.4', () => {
         const defs = JSON.parse(readFileSync(join(import.meta.dirname, '..', 'data', 'harmDefinitions.json'), 'utf8')) as { method: { scale: string } };
         assert.ok(!defs.method.scale.includes('max(0, 100 - burden)'), defs.method.scale);
         assert.ok(defs.method.scale.includes('max(0, 100 - burden / 2)') && /divisor of 2 is a weight/.test(defs.method.scale), defs.method.scale);
@@ -984,7 +984,7 @@ export function runMeasuredModelChecks(): { passed: number; failed: number } {
         // Rewritten again after round 6 (rulings V1 to V19: allergy and potassium holds, blank kidney values, no-option screens, change-line wording, case packet): the rule set is now 2026-11-21.5.
         // Rewritten again after round 7 (rulings W1 to W14: trade-off labels, alerts true of the options, adjunct lines, one angioedema predicate, sentence allergies, no-option wording): the rule set is now 2026-11-21.6.
         // Rewritten again after round 8 (rulings X1 to X15: allergy reader, forced removals, duplicate and potassium wording, dosing count, loop sentences): the rule set is now 2026-11-22.1.
-        assert.equal(RULESET_VERSION, '2026-11-22.3');
+        assert.equal(RULESET_VERSION, '2026-11-22.4');
     });
 
     // C4. Beta-blockers by current rhythm.

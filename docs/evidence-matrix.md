@@ -1,6 +1,6 @@
 # HeartFailurePath Evidence Matrix
 
-Describes rule set 2026-11-22.3, the version stamped on printed notes. Each row was checked against the program code and the evidence tables for that rule set.
+Describes rule set 2026-11-22.4, the version stamped on printed notes. Each row was checked against the program code and the evidence tables for that rule set.
 Scope: every row says what the tool does, why, and what the rule rests on. The Evidence column opens with the basis: a drug label (which section), a trial or pooled analysis (which), a guideline (used by this tool for safety and eligibility rules only, never to rank options), or a choice made in building the tool. The tool's own name for that last basis is engine policy; it means a design decision, not a finding from a trial, label or guideline. Ranking uses measured trial effects, measured harm rates, price and dosing burden. Guideline recommendations are shown for reference and are checked against the result, not used as inputs. This table is a record of the rules, not an independent validation study.
 
 ## How options are scored
