@@ -25,7 +25,7 @@ export const PatientBar: React.FC<PatientBarProps> = ({ patient, caseLabel, onEd
             {patientFacts(patient).map(f => (
                 <div key={f.label} className="min-w-0">
                     <dt className="text-xs font-semibold uppercase tracking-wide text-slate-600">{f.label}</dt>
-                    <dd className={`mt-0.5 break-words text-sm ${f.entered ? 'font-bold text-slate-900' : 'italic text-slate-600'}`}>{f.value}</dd>
+                    <dd className={`mt-0.5 break-words text-sm ${f.entered ? 'font-bold text-slate-900' : 'italic text-slate-600'}`}>{f.value}{f.detail && f.label === 'Current drugs' && <span className="block text-xs font-normal text-slate-700">{f.detail}{f.held ? `; ${f.held}` : ''}</span>}</dd>
                 </div>
             ))}
         </dl>

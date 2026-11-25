@@ -1,6 +1,7 @@
 import { medicationEffectContext } from '../services/simulationService';
 
 import React, { useState } from 'react';
+import { drugClassLabel } from './drugClassLabel';
 import { MEDICATION_FORMULARY } from '../constants';
 import { Medication } from '../types';
 import { WarningIcon, BeakerIcon } from './icons';
@@ -18,7 +19,7 @@ const MedCard: React.FC<{ med: Medication }> = ({ med }) => {
                     <div>
                         <h3 className="font-bold text-lg text-slate-900 leading-tight">{med.name}</h3>
                         <span className="inline-block mt-1 text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 uppercase tracking-wide">
-                            {med.drug_class}
+                            {drugClassLabel(med.drug_class)}
                         </span>
                     </div>
                 </div>
@@ -78,7 +79,7 @@ export const MedicationLibrary: React.FC = () => {
         const matchesClass = filterClass === 'All' || m.drug_class === filterClass;
         const query = searchQuery.toLowerCase();
         const matchesSearch = m.name.toLowerCase().includes(query) || 
-                              m.drug_class.toLowerCase().includes(query);
+                              m.drug_class.toLowerCase().includes(query) || drugClassLabel(m.drug_class).toLowerCase().includes(query);
         return matchesClass && matchesSearch;
     });
 
@@ -119,7 +120,7 @@ export const MedicationLibrary: React.FC = () => {
                             onChange={(e) => setFilterClass(e.target.value)}
                             className="block w-full md:w-48 rounded-md border-slate-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm shadow-sm"
                         >
-                            {classes.map(c => <option key={c} value={c}>{c}</option>)}
+                            {classes.map(c => <option key={c} value={c}>{drugClassLabel(c)}</option>)}
                         </select>
                     </div>
                 </div>

@@ -44,7 +44,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({ patient, problems, hints
                                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-600">{f.label}</dt>
                                 <dd className={`mt-0.5 break-words text-sm ${f.entered ? 'font-bold text-slate-900' : 'italic text-slate-600'}`}>
                                     {f.value}
-                                    {f.detail && <span className="block text-xs font-normal text-slate-700">{f.detail}</span>}
+                                    {f.detail && <span className="block text-xs font-normal text-slate-700">{f.detail}{f.held ? `; ${f.held}` : ''}</span>}
                                 </dd>
                             </div>
                         ))}

@@ -5,7 +5,7 @@ import React from 'react';
 import { Patient } from '../types';
 import { monthlyMedicationCost } from '../services/medicationCost';
 import { volumeDescription } from './clinicalPresentation';
-import { congestionFindingCount } from '../services/clinicalPredicates';
+import { congestionFindingCount, weightAboveDryKg, bunToCreatinineRatio } from '../services/clinicalPredicates';
 import { dedupeCurrentRegimen, medicationComplexity, isCongestedAboveDryWeight } from '../services/engine/regimenUtils';
 
 interface ClinicalSummaryProps {
@@ -15,7 +15,7 @@ interface ClinicalSummaryProps {
 
 export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugPrices }) => {
     const errors = validatePatientForm(patient);
-    const weightDiff = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const weightDiff = weightAboveDryKg(patient);
     // Three-band status mirroring PhysicalExamSection: Overload > +1.0, Volume Depleted < -1.0, else Euvolemic.
     const isOverloaded = isCongestedAboveDryWeight(patient);
     const hasFindings = congestionFindingCount(patient.volume_status.exam_findings) > 0;
@@ -24,7 +24,7 @@ export const ClinicalSummary: React.FC<ClinicalSummaryProps> = ({ patient, drugP
     const weightColor = isOverloaded ? 'text-red-600' : (isDehydrated || hasFindings) ? 'text-amber-600' : 'text-slate-700';
 
     // Renal Calculations
-    const bunCrRatio = !errors.creatinine && !errors.bun && patient.creatinine > 0 && patient.bun != null ? patient.bun / patient.creatinine : 0;
+    const bunCrRatio = !errors.creatinine && !errors.bun ? bunToCreatinineRatio(patient) : 0;
     const isPrerenal = bunCrRatio > 20;
 
     // Calculate Current Cost & Complexity

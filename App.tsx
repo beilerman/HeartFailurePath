@@ -23,6 +23,7 @@ import { GuidedResults } from './components/guided/GuidedResults';
 import { REVIEW_STEP } from './components/guided/steps';
 import { loadSession, saveSession, clearSession } from './components/guided/sessionStore';
 import { SCENARIOS, clonePatient } from './data/scenarios';
+import { DiscardConfirm, caseIsTouched } from './components/guided/DiscardConfirm';
 type ViewMode = 'guided' | 'form';
 type GuidedPhase = 'start' | 'steps' | 'results';
 const initialView = (): ViewMode => {
@@ -231,6 +232,7 @@ function App() {
         setRunSnapshot(undefined); setSimError(null);
     };
     const loadPatient = (title: string, next: Patient) => {
+        setConfirmDiscard(false);
         clearRun();
         setAutoRun(false);
         setPendingEntry(false);
@@ -259,6 +261,26 @@ function App() {
         setStep(0);
         setPhase('start');
     };
+    // "Choose a different patient" and "New patient" ask first when anything has been entered (in the page, not a browser dialog).
+    const [confirmDiscard, setConfirmDiscard] = useState(false);
+    const discardOpenerRef = useRef<HTMLElement | null>(null);
+    const keepEditingRef = useRef<HTMLButtonElement>(null);
+    const requestStartOver = () => {
+        if (!caseIsTouched(patient, scenario, pendingEntry)) { startOver(); return; }
+        discardOpenerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        setConfirmDiscard(true);
+    };
+    const afterDiscardPrompt = useRef<'opener' | 'top' | null>(null);
+    useEffect(() => {
+        if (confirmDiscard) { keepEditingRef.current?.focus(); return; }
+        const where = afterDiscardPrompt.current; afterDiscardPrompt.current = null;
+        if (where === 'opener') { const opener = discardOpenerRef.current; if (opener?.isConnected) opener.focus(); }
+        else if (where === 'top') document.getElementById('guided-review')?.focus();
+    }, [confirmDiscard]);
+    // R12 D5(c): an open prompt belongs to the screen that opened it: any phase, step or view change (browser Back included) closes it.
+    useEffect(() => { setConfirmDiscard(false); }, [phase, step, view, activeTab]); // R13 E5(b): a tab round trip closes it too
+    const keepEditing = () => { afterDiscardPrompt.current = 'opener'; setConfirmDiscard(false); };
+    const discardCase = () => { afterDiscardPrompt.current = 'top'; setConfirmDiscard(false); startOver(); };
     const startNewPatient = () => {
         loadPatient('custom', blankPatient());
         setStep(0);
@@ -377,13 +399,14 @@ function App() {
                 {(
                     <div id="tabpanel-simulation" role="tabpanel" aria-labelledby="tab-simulation" hidden={activeTab !== 'simulation'} className={`${activeTab === 'simulation' ? 'flex' : 'hidden'} flex-col lg:flex-row flex-1 min-w-0 lg:min-h-0 print:block`}>
                         {view === 'guided' ? (
-                            <section aria-label="Guided review" className="flex-1 min-w-0 bg-slate-50 lg:overflow-y-auto p-4 sm:p-8 custom-scrollbar print:p-0 print:overflow-visible">
+                            <section id="guided-review" tabIndex={-1} aria-label="Guided review" className="focus:outline-none flex-1 min-w-0 bg-slate-50 lg:overflow-y-auto p-4 sm:p-8 custom-scrollbar print:p-0 print:overflow-visible">
                                 <div className="max-w-[1100px] mx-auto">
                                     {phase !== 'start' && (
                                         <div className="mb-3 flex justify-end print:hidden">
                                             <button type="button" onClick={startOver} className="min-h-[36px] rounded border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500">Start over: clear the entered patient</button>
                                         </div>
                                     )}
+                                    {confirmDiscard && <DiscardConfirm ref={keepEditingRef} onDiscard={discardCase} onKeep={keepEditing} />}
                                     {phase === 'start' && <StartScreen onOpenExample={openExample} onNewPatient={startNewPatient} />}
                                     {phase === 'steps' && (
                                         <StepsScreen
@@ -394,7 +417,7 @@ function App() {
                                             onStepChange={setStep}
                                             onRun={runFromReview}
                                             onPendingChange={setPendingEntry}
-                                            onBackToStart={startOver}
+                                            onBackToStart={requestStartOver}
                                             pricesReady={pricesReady}
                                             priceLoadError={priceLoadError}
                                             onRetryPrices={() => setPriceLoadAttempt(n => n + 1)}
@@ -405,7 +428,7 @@ function App() {
                                             patient={patient}
                                             caseLabel={caseLabel}
                                             onEditInputs={() => { setStep(REVIEW_STEP); setPhase('steps'); }}
-                                            onNewPatient={startOver}
+                                            onNewPatient={requestStartOver}
                                             running={autoRun}
                                             attempt={attempt}
                                             showNotice={autoRun || resultsStale || pendingEntry || !!simError || !hasRun}

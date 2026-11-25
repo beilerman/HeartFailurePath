@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 A 58-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 116/72 mmHg and the heart rate is 78 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 70 mL/min/1.73 m². He takes Sacubitril/Valsartan 97/103 mg twice daily, Metoprolol Succinate 200 mg once daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
 
@@ -56,7 +56,7 @@ Daily dosing: 5 doses a day from 4 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { ScoredRegimen } from '../types';
-import { congestionFindingCount } from '../services/clinicalPredicates';
+import { congestionFindingCount, weightDifferenceKg, kgText } from '../services/clinicalPredicates';
 import {
     calculateStructureScoreComponents, classifyPhenotype,
     // Scoring tables/constants imported from the ENGINE so this explanation panel can never
@@ -115,9 +115,9 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
             case 'volume':
                 const dry = p.volume_status.dry_weight_kg;
                 const curr = p.volume_status.current_weight_kg;
-                const diff = curr - dry;
+                const diff = weightDifferenceKg(curr, dry);
                 const findingsCount = congestionFindingCount(p.volume_status.exam_findings);
-                const weightPenalty = diff > 1.0 ? Math.round((diff - 1.0) * VOLUME_SCORING.weightPenaltyPerKgAbove1) : 0;
+                const weightPenalty = diff > 1.0 ? Math.round(Math.round((diff - 1.0) * VOLUME_SCORING.weightPenaltyPerKgAbove1 * 1e6) / 1e6) : 0; // R13 E6: the rounded difference and a penalty rounded to six decimals, as the engine's volume score
                 const findingsPenalty = findingsCount * VOLUME_SCORING.findingPenalty;
                 const spo2Penalty = p.oxygen_saturation === undefined
                     ? 0
@@ -128,7 +128,7 @@ export const ScoreDetailModal: React.FC<Props> = ({ domain, score, regimen, onCl
                         <div className="bg-slate-50 p-3 rounded border border-slate-200">
                             <div className="flex justify-between mb-1">
                                 <span className="text-sm text-slate-600">Weight relative to estimated dry weight:</span>
-                                <span className={`font-bold ${diff > 1 ? 'text-red-600' : 'text-slate-900'}`}>{diff > 0 ? '+' : ''}{diff.toFixed(1)} kg</span>
+                                <span className={`font-bold ${diff > 1 ? 'text-red-600' : 'text-slate-900'}`}>{diff > 0 ? '+' : diff < 0 ? '-' : ''}{kgText(diff)} kg</span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-sm text-slate-600">Recorded congestion findings:</span>

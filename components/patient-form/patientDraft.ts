@@ -1,4 +1,5 @@
 import type { Patient } from '../../types';
+import { derivedFields } from '../../services/clinicalPredicates';
 
 // "Custom profile" starts from an empty chart, never from the previously loaded sample, so no value
 // from another patient can carry into a new one unnoticed. Potassium/creatinine 0 is the engine's
@@ -22,3 +23,17 @@ export function blankPatient(): Patient {
     return blank as unknown as Patient;
 }
 
+
+/**
+ * R12 D5(d): a rhythm of AFib records the atrial fibrillation history (the comorbidity) so the two cannot disagree. The form (usePatientFormModel) applies this when it opens a case; `withFormDerivations`
+ * applies the same derivations to an unchanged example, so "has anything been changed?" compares like with like.
+ */
+export const withRhythmComorbidity = (p: Patient): Patient =>
+    p.rhythm === 'AFib' && !p.comorbidities.has('Atrial Fibrillation') ? { ...p, comorbidities: new Set(p.comorbidities).add('Atrial Fibrillation') } : p;
+
+/** The values the form computes rather than takes as entered (eGFR and BMI, the atrial fibrillation history), applied as the form applies them. */
+export function withFormDerivations(p: Patient): Patient {
+    const d = derivedFields(p as never);
+    const egfr = Number.isFinite(d.egfr) ? d.egfr : 0, bmi = Number.isFinite(d.bmi) ? d.bmi : 0;
+    return withRhythmComorbidity(Object.is(egfr, p.egfr) && Object.is(bmi, p.bmi) ? p : { ...p, egfr, bmi });
+}

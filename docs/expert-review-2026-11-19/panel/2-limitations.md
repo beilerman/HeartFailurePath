@@ -19,7 +19,7 @@ These are known. They are listed so that you can weigh the tool's output with th
 
 ## What is not modelled
 
-- **Congestion relief from diuretics.** The tool has outcome figures for diuretics in congested patients from a pooled analysis, but it does not model how much a given dose relieves congestion. A new loop diuretic starts at the lowest dose of the first eligible loop agent (furosemide 20 mg unless furosemide is excluded, then torsemide 5 mg). A diuretic step for a congested patient is kept in view by a stated rule, not by a measured benefit.
+- **Congestion relief from diuretics.** The tool has outcome figures for diuretics in congested patients from a pooled analysis, but it does not model how much a given dose relieves congestion. A new loop diuretic starts at the lowest dose of the first eligible loop agent (furosemide 20 mg unless furosemide is excluded, then torsemide 5 mg, then bumetanide 0.5 mg). A diuretic step for a congested patient is kept in view by a stated rule, not by a measured benefit.
 - **Dose-related side effects.** A higher dose is charged the same side-effect burden as the current dose, because the tables rarely report rates by dose. The screen says so.
 - **Side effects that were never measured.** Several are charged nothing and shown as "not measured": low magnesium and low blood pressure from loop and thiazide-type diuretics; advanced heart block from beta-blockers; serious kidney events from renin-angiotensin drugs beyond the measured rise in creatinine; the injection-site reaction of subcutaneous furosemide.
 - **Time.** The tool looks at one visit. It does not plan a titration sequence, and it does not know how long a patient has been on a dose beyond what is entered.

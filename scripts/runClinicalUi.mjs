@@ -16,7 +16,8 @@ try {
     const r8 = only ? { failed: 0 } : await vite.ssrLoadModule('/scripts/verifyR8Ui.tsx');
     const r9 = only ? { failed: 0 } : await vite.ssrLoadModule('/scripts/verifyR9Ui.tsx');
     const r10 = only ? { failed: 0 } : await vite.ssrLoadModule('/scripts/verifyR10Ui.tsx');
-    process.exitCode = base.failed || explain.failed || partB.failed || r3.failed || r4.failed || r5.failed || r6.failed || r7.failed || r8.failed || r9.failed || r10.failed ? 1 : 0;
+    const r11 = only ? { failed: 0 } : await vite.ssrLoadModule('/scripts/verifyR11Ui.tsx');
+    process.exitCode = base.failed || explain.failed || partB.failed || r3.failed || r4.failed || r5.failed || r6.failed || r7.failed || r8.failed || r9.failed || r10.failed || r11.failed ? 1 : 0;
 } finally {
     await vite.close();
 }

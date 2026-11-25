@@ -1,0 +1,20 @@
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1032 / 1032
+  (b) displayed pick set same:   1032 / 1032
+  (c) pick order identical:      1032 / 1032
+  (d) eligibility + alerts identical: NO (6 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 0 / median 66 / max 86
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 0 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+
+BUGS (eligibility/alerts must not change):
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: cash: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: commercial: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: medicare: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: cash: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: commercial: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: medicare: clinicalAlerts differ

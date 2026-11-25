@@ -102,6 +102,19 @@ export function congestionFindingCount(findings: Set<string>): number {
     return groups.size;
 }
 
+/**
+ * The current weight minus the dry weight in kg, rounded to six decimals once (R13 E1). Two one-decimal entries exactly 1.0 or 2.0 kg apart can differ by a floating-point hair (64.4 - 63.4 is
+ * 1.0000000000000071); every comparison of the difference with a stated kg threshold reads this value, so clinically identical entries are read identically. Never subtract the weights directly.
+ */
+export const weightDifferenceKg = (current: number, dry: number): number => Math.round((current - dry) * 1e6) / 1e6;
+/** The pulse pressure (systolic minus diastolic, mmHg) rounded to six decimals once (R13 E2-1): a decimal pair exactly 25 apart (50.2 and 25.2) must read as 25, not 25.000000000000004. Every comparison and every printed pulse pressure reads this. */
+export const pulsePressureMmHg = (p: { sbp: number; dbp: number }): number => Math.round((p.sbp - p.dbp) * 1e6) / 1e6;
+/** A kilogram difference as printed beside a kilogram criterion (R13 E2-2): one decimal, or two when the value has a second decimal, so 1.04 kg above never prints as the 1.0 of "more than 1.0 kg". The sign is dropped; the caller says above or below. */
+export const kgText = (kg: number): string => { const a = Math.abs(kg); return Math.abs(a * 10 - Math.round(a * 10)) < 1e-6 ? a.toFixed(1) : (Math.round(a * 100) / 100).toFixed(2); };
+/** BUN divided by creatinine, rounded to six decimals once (R13 E2-3): 9.4 over 0.47 is exactly 20, not 20.000000000000004. 0 when the creatinine is blank. Every comparison with the ratio's "above 20" reads this. */
+export const bunToCreatinineRatio = (p: { bun?: number | null; creatinine: number }): number => p.creatinine > 0 && p.bun != null ? Math.round((p.bun / p.creatinine) * 1e6) / 1e6 : 0;
+export const weightAboveDryKg = (p: { volume_status: { current_weight_kg: number; dry_weight_kg: number } }): number => weightDifferenceKg(p.volume_status.current_weight_kg, p.volume_status.dry_weight_kg);
+
 // Acutely decompensated heart failure, as the engine defines it everywhere (beta-blocker initiation block, ivabradine
 // contraindication): NYHA IV, or NYHA III with more than 2 kg above dry weight and at least two congestion exam findings.
 /** The engine's own congestion criteria for decompensation: weight more than this many kg above the dry weight, and at least this many congestion findings. One definition (U9 reads them too). */
@@ -109,7 +122,7 @@ export const DECOMPENSATION_EXCESS_KG_ABOVE = 2.0;
 export const DECOMPENSATION_MIN_CONGESTION_FINDINGS = 2;
 /** True when the weight and the examination meet the decompensation criteria, whatever NYHA class was entered. Both weights must be entered: a blank weight (0) is not a measurement and must not read as a large excess. */
 export function meetsDecompensationFindings(patient: Patient): boolean {
-    const excess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const excess = weightAboveDryKg(patient);
     const weightsEntered = !valueUnknown(patient.volume_status.current_weight_kg) && !valueUnknown(patient.volume_status.dry_weight_kg);
     return weightsEntered && excess > DECOMPENSATION_EXCESS_KG_ABOVE && congestionFindingCount(patient.volume_status.exam_findings) >= DECOMPENSATION_MIN_CONGESTION_FINDINGS;
 }

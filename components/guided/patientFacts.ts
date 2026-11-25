@@ -1,6 +1,6 @@
 import { dedupeCurrentRegimen } from '../../services/engine/regimenUtils';
 import { isActiveExposure } from '../../services/engine/medicationExposure';
-import type { Patient } from '../../types';
+import type { Patient, RegimenMed } from '../../types';
 import { validatePatientForm } from '../patient-form/formValidation';
 
 export const NOT_ENTERED = 'not entered';
@@ -9,9 +9,19 @@ export const NOT_ENTERED = 'not entered';
 export const shortDrugName = (name: string) => name.replace(/\s*\(.*\)\s*$/, '');
 export const currentDrugNames = (p: Patient) => dedupeCurrentRegimen(p.current_regimen).regimen.filter(isActiveExposure).map(r => shortDrugName(r.med.name));
 
+/** Use recorded as uncertain: status "use uncertain", or taking with partial or unknown consistency. A drug with nothing recorded is "not assessed", not uncertain. */
+const useUncertain = (r: RegimenMed) => r.exposure?.status === 'unknown' || r.exposure?.adherence === 'partial' || r.exposure?.adherence === 'unknown';
+/** The reconciled records (same duplicate rule as everywhere else): drugs counted as current (with the uncertain ones marked), then the held and the completed drugs by name. */
+export function drugRecords(p: Patient) {
+    const all = dedupeCurrentRegimen(p.current_regimen).regimen;
+    const current = all.filter(isActiveExposure);
+    const named = (status: 'held' | 'completed') => all.filter(r => r.exposure?.status === status).map(r => shortDrugName(r.med.name));
+    return { current: current.map(r => `${shortDrugName(r.med.name)}${useUncertain(r) ? ' (use uncertain)' : ''}`), held: named('held'), completed: named('completed') };
+}
+
 const num = (v: number | undefined | null) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : undefined);
 
-export interface PatientFact { label: string; value: string; detail?: string; entered: boolean; invalid?: boolean }
+export interface PatientFact { label: string; value: string; detail?: string; /** Drugs recorded as held or completed, by name ("held: Lisinopril"), shown beside the count of current drugs. */ held?: string; entered: boolean; invalid?: boolean }
 export const NOT_ACCEPTED = 'not accepted: fix before running';
 
 /** Values exactly as entered; a blank is "not entered", never 0. Shared by the results bar and the Review step. */
@@ -19,7 +29,9 @@ export function patientFacts(p: Patient, errors = validatePatientForm(p)): Patie
     const age = num(p.age); const sex = p.sex;
     const sbp = num(p.sbp); const dbp = num(p.dbp);
     const lvef = num(p.lvef); const hr = num(p.pulse); const k = num(p.potassium); const egfr = num(p.egfr);
-    const drugs = currentDrugNames(p);
+    const rec = drugRecords(p);
+    const drugs = rec.current;
+    const heldNote = [rec.held.length ? `held: ${rec.held.join(', ')}` : '', rec.completed.length ? `completed: ${rec.completed.join(', ')}` : ''].filter(Boolean).join('; ');
     const f = (label: string, value: string | undefined, detail?: string, ...fields: string[]): PatientFact => fields.some(x => errors[x])
         ? { label, value: NOT_ACCEPTED, detail, entered: true, invalid: true }
         : { label, value: value ?? NOT_ENTERED, detail, entered: value !== undefined };
@@ -31,7 +43,7 @@ export function patientFacts(p: Patient, errors = validatePatientForm(p)): Patie
         f('Heart rate', hr !== undefined ? `${hr} bpm` : undefined, undefined, 'pulse'),
         f('Potassium (mEq/L)', k !== undefined ? k.toFixed(1) : undefined, undefined, 'potassium'),
         f('eGFR (mL/min/1.73 m²)', egfr !== undefined ? `${Math.round(egfr)}` : undefined, undefined, 'age', 'creatinine'),
-        { label: 'Current drugs', value: String(drugs.length), detail: drugs.join(', ') || 'none entered', entered: drugs.length > 0 },
+        { label: 'Current drugs', value: String(drugs.length), detail: drugs.join(', ') || (heldNote ? 'none taking' : 'none entered'), held: heldNote || undefined, entered: drugs.length > 0 || !!heldNote },
     ];
     return base;
 }

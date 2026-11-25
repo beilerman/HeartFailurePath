@@ -1,4 +1,4 @@
-import { EXAM_FINDINGS } from '../../services/clinicalPredicates';
+import { EXAM_FINDINGS, weightAboveDryKg } from '../../services/clinicalPredicates';
 import { PATIENT_RHYTHMS } from '../../types';
 import React from 'react';
 import { ActivityIcon } from '../icons';
@@ -25,7 +25,7 @@ export const PhysicalExamSection: React.FC<PhysicalExamSectionProps> = ({
     clinicalWarnings = {}
 }) => {
     // Volume Status Calculations
-    const weightDiff = patientData.volume_status.current_weight_kg - patientData.volume_status.dry_weight_kg;
+    const weightDiff = weightAboveDryKg(patientData);
     // Same predicates the engine uses; weight and exam can disagree, and the label says so.
     const isOverloaded = isCongestedAboveDryWeight(patientData);
     const isDehydrated = weightDiff < -1.0;

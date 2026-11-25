@@ -1,6 +1,6 @@
 # Rating form
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 ## Instructions (one page)
 

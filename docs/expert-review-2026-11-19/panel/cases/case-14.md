@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 A 77-year-old man with an ejection fraction of 35% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 104/60 mmHg and the heart rate is 78 per minute in sinus rhythm. He is 2 kg below the recorded dry weight. Potassium is 4.2 mEq/L and eGFR is 38 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Furosemide 80 mg twice daily.
 
@@ -55,7 +55,7 @@ Daily dosing: 5 doses a day from 3 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -63,7 +63,7 @@ Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for th
 
 ### Safety alerts (2)
 
-- **Kidney function**: Creatinine 1.3 to 1.8 mg/dL (+43%, derived eGFR fall 36%). This meets the 2026 ESC criteria to halve the RAAS inhibitor and the MRA (Supplementary Tables S4/S5/S8; main text 6.1.6: a rise of less than 50% is acceptable). Each is reduced one dose step (a drug already at the lowest dose is kept, not increased), recheck chemistry in 1-2 weeks, no up-titration until stable. First steps: check volume status (dehydration, over-diuresis), stop NSAIDs and other nephrotoxins, review the diuretic dose.
+- **Kidney function**: Creatinine 1.26 to 1.8 mg/dL (+43%, derived eGFR fall 36%). The derived eGFR fall of 36% meets the 2026 ESC criterion (a fall above 30%); the creatinine rise of 43% alone would not. The 2026 ESC criteria call for halving the RAAS inhibitor and the MRA (Supplementary Tables S4/S5/S8; main text 6.1.6). Each is reduced one dose step (a drug already at the lowest dose is kept, not increased), recheck chemistry in 1-2 weeks, no up-titration until stable. First steps: check volume status (dehydration, over-diuresis), stop NSAIDs and other nephrotoxins, review the diuretic dose.
 - **Volume depletion**: Patient is 2.0kg below dry weight while on diuretics. Diuretic reduction or discontinuation is the priority intervention; what each option does: option 1 reduces or stops a diuretic; option 2 reduces or stops a diuretic; option 3 does not reduce or stop a diuretic and adds or raises Carvedilol. Risk of AKI and hemodynamic collapse.
 
 ### Other care prompts (2)
@@ -237,7 +237,7 @@ Population averages from randomized trials, not a prediction for this patient. T
 
 ### Indicated therapy currently missing
 
-- Mineralocorticoid receptor antagonist (MRA): not started in option 1; Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF); Spironolactone, Eplerenone withheld (No new RAAS inhibitor or MRA while kidney function is worsening): derived eGFR fall of more than 30% from baseline (creatinine 1.3 to 1.8 mg/dL (+43%, derived eGFR fall 36%)). The 2026 ESC guideline (Supplementary Tables S4/S5/S8) halves these drugs when already in use and allows no increase until kidney function is stable; not starting a new one in the same state is a rule set by this tool. Look for and stop other causes (NSAIDs, volume depletion), recheck in 1-2 weeks
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1; Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF); Spironolactone, Eplerenone withheld (No new RAAS inhibitor or MRA while kidney function is worsening): derived eGFR fall of more than 30% from baseline (creatinine 1.26 to 1.8 mg/dL (+43%, derived eGFR fall 36%)). The 2026 ESC guideline (Supplementary Tables S4/S5/S8) halves these drugs when already in use and allows no increase until kidney function is stable; not starting a new one in the same state is a rule set by this tool. Look for and stop other causes (NSAIDs, volume depletion), recheck in 1-2 weeks
 - SGLT2 inhibitor: not started in option 1. No plan that starts it passed the tool's safety checks today; could be started: Dapagliflozin, Empagliflozin
 
 ### Data not entered

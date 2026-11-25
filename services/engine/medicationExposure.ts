@@ -3,6 +3,9 @@ import type { MedicationExposure, RegimenMed } from '../../types';
 const validDate = (s: unknown): s is string => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s)
     && !Number.isNaN(Date.parse(`${s}T12:00:00Z`)) && new Date(`${s}T12:00:00Z`).toISOString().slice(0, 10) === s;
 
+/** Today's date as the user's calendar shows it (R13 E5(g)): the local year, month and day, not the UTC date, which is already tomorrow for a user east of Greenwich in the evening and still yesterday for one west of it in the morning. */
+const localCalendarDate = (): string => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
 export function exposureErrors(e: MedicationExposure | undefined, mode: 'review' | 'draft' = 'review'): string[] {
     if (e === undefined) return [];
     if (!e || typeof e !== 'object' || Array.isArray(e)) return ['Exposure history must be an object.'];
@@ -13,7 +16,7 @@ export function exposureErrors(e: MedicationExposure | undefined, mode: 'review'
         const value = e[field];
         if (value === undefined) continue;
         if (typeof value !== 'string' || (mode === 'review' && !validDate(value))) errors.push(`${field} must be a valid calendar date.`);
-        else if (mode === 'review' && value > new Date().toISOString().slice(0,10)) errors.push(`${field} cannot be a future exposure date.`);
+        else if (mode === 'review' && value > localCalendarDate()) errors.push(`${field} cannot be a future exposure date.`);
     }
     if (mode === 'review') {
         if (e.started_on && e.dose_changed_on && e.started_on > e.dose_changed_on) errors.push('The dose-change date precedes the start date.');

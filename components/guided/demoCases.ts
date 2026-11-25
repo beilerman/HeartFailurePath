@@ -14,11 +14,11 @@ export const DEMO_CASES: readonly DemoCase[] = [
     { scenarioTitle: 'Hyperkalemia (K+ 5.6) - Avoid MRA', title: 'High potassium',
       sentence: 'Potassium of 5.6 holds back the drugs that raise it; shows what the tool still offers and the reason for each hold.' },
     { scenarioTitle: 'Obese HFpEF (BMI 35, LVEF 58)', title: 'Preserved EF with obesity',
-      sentence: 'A different drug set than reduced EF: shows the SGLT2 inhibitor and finerenone pathway.' },
+      sentence: 'A different drug set than reduced EF: every option starts the SGLT2 inhibitor dapagliflozin, with semaglutide, furosemide or spironolactone.' },
     { scenarioTitle: 'Severe CKD Loop Resistance (eGFR 18)', title: 'Advanced kidney disease',
       sentence: 'An eGFR of 18 withholds RAAS inhibitors without specialist advice; the options centre on the diuretic.' },
     { scenarioTitle: 'Elderly >80 on All 4 Pillars (Age Dosing)', title: 'Four drugs below target dose',
-      sentence: 'All four foundational drugs are already on board; shows staying put compared with raising one dose.' },
+      sentence: 'All four foundational drugs are already on board; each option raises one dose: spironolactone, sacubitril/valsartan or metoprolol.' },
     { scenarioTitle: 'Severe Hypotension (BP 85/55) - No Drug Recs', title: 'Low blood pressure, safety stop',
       sentence: 'Systolic pressure under 90: the tool stops, shows safety alerts only and offers no drug options.' },
 ];

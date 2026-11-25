@@ -1,7 +1,7 @@
 /** Input audit and safety gates (stages 1-3 of the pipeline). Moved verbatim from simulationService.ts (phase 4). */
 import { Medication, Patient, RegimenMed, SimulationOutput } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown, congestionFindingCount, isAcutelyDecompensated, pregnancyStatusRequired, kidneyNotEntered } from '../clinicalPredicates';
+import { valueUnknown, congestionFindingCount, isAcutelyDecompensated, pregnancyStatusRequired, kidneyNotEntered, weightAboveDryKg, kgText } from '../clinicalPredicates';
 import { RAAS_CLASSES, MRA_POOL_CLASSES, getMedicationClassGroup } from './registry';
 import { hasUnknownHistoricalHFrEF, vericiguatNtProBnpThreshold, hasAtrialFibrillationHistory } from '../clinicalPredicates';
 import { PDE5_INHIBITORS, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, EXTERNAL_POTASSIUM_SPARING_DIURETICS, LONG_ACTING_NITRATES, potassiumRaisersTaken, nitrateNamesTaken, digoxinAfibAccessoryPathway } from './contraindications';
@@ -9,8 +9,8 @@ import { POTASSIUM_RAISER_REVIEW_K, RAAS_START_K_CAUTION } from './thresholds';
 import { taggedDiscontinuedMeds } from './eligibility';
 import { buildMissingDataNotices, computeGdmtGaps, URGENT_POTASSIUM_MONITORING } from './explain';
 import { dailyDose, isLoopDiureticResistant, dedupeCurrentRegimen, hrContinuationAction, kContinuationAction, kUptitrationBlock, isLowOutputState, isColdState, shouldPreserveQuadForUnknownHistory, sortedByName, isVolumeDepletedState, renalContraindicationReason } from './regimenUtils';
-import { AF_RESTING_RATE_LENIENT_TARGET, HYPOTENSION_SBP_BELOW, RAAS_EGFR_REVIEW_BELOW, CREATININE_RISE_ACCEPTABLE_PCT, EGFR_FLOOR_FOR_CREATININE_RISE, BREASTFEEDING_NOT_ASSESSED } from './thresholds';
-import { assessCreatinineChange, creatinineRiseIsAcceptable } from './renalChange';
+import { AF_RESTING_RATE_LENIENT_TARGET, HYPOTENSION_SBP_BELOW, RAAS_EGFR_REVIEW_BELOW, CREATININE_RISE_ACCEPTABLE_PCT, EGFR_FLOOR_FOR_CREATININE_RISE, BREASTFEEDING_NOT_ASSESSED, POTASSIUM_ABOVE_8_ACTION } from './thresholds';
+import { assessCreatinineChange, creatinineRiseIsAcceptable, reduceCriterionSentence } from './renalChange';
 import { scopeStatusFor } from './scopeGate';
 import { classFindingsDisagreeAlerts, hypoxiaAlerts, unstableStateAlerts, conductionAlerts, slowHeartRateAlerts, scaleDisagreementAlerts, congestionWithoutWeightAlerts, perfusionAboveEfLimitAlerts, OPTION_PHRASES } from './urgentStates';
 export { unstableStateAlerts };
@@ -54,9 +54,11 @@ export function auditCriticalData(patient: Patient): CriticalDataAudit {
 // physiology allows. These are flagged for verification rather than silently consumed, because a
 // typo like LVEF 250 or K+ 50 (mg instead of mEq/L) would otherwise drive confident output.
 /** One entry per implausible-value rule: the numeric fields it reads, the condition and the message. One table, so `implausibleFields` (below) can never drift from the alert. */
+const roundedPotassium = (p: Patient): number => (typeof p.potassium === 'number' && Number.isFinite(p.potassium) && p.potassium > 0 ? Math.round(p.potassium * 10) / 10 : 0);
 const PHYSIOLOGIC_CHECKS: ReadonlyArray<{ fields: readonly (keyof Patient)[]; bad: (p: Patient) => boolean; msg: (p: Patient) => string }> = [
     { fields: ['lvef'], bad: p => p.lvef > 80, msg: p => `LVEF ${p.lvef}% exceeds the physiologic maximum (~80%). Verify entry.` },
-    { fields: ['potassium'], bad: p => p.potassium > 8.0, msg: p => `Serum potassium ${p.potassium} mEq/L is extreme — confirm units (mEq/L, not mg) and rule out a transcription error. If accurate, this is a hyperkalemic emergency.` },
+    // R12 D5(e): potassium is rounded to one decimal on entry, so every path reads the same value: 8.01 to 8.04 is 8.0 (not above 8.0), 8.05 is 8.1.
+    { fields: ['potassium'], bad: p => roundedPotassium(p) > 8.0, msg: p => `Serum potassium ${roundedPotassium(p)} mEq/L is extreme — confirm units (mEq/L, not mg) and rule out a transcription error. ${POTASSIUM_ABOVE_8_ACTION}` },
     { fields: ['potassium'], bad: p => p.potassium > 0 && p.potassium < 2.0, msg: p => `Serum potassium ${p.potassium} mEq/L is below survivable range — verify entry.` },
     { fields: ['sbp', 'dbp'], bad: p => p.sbp > 260 || p.dbp > 200, msg: p => `Blood pressure ${p.sbp}/${p.dbp} mmHg is outside the recordable range — verify entry.` },
     { fields: ['egfr'], bad: p => p.egfr > 150, msg: p => `eGFR ${p.egfr} mL/min/1.73m² exceeds the physiologic maximum (~120). Verify entry.` },
@@ -165,7 +167,7 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     }
 
     // NT-proBNP above 5000 pg/mL with worsening symptoms or congestion: very high risk, admission generally recommended (2026 ESC section 7.2). Alert only; no ranking effect.
-    const congestedNow = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg) > 1.0 || congestionFindingCount(patient.volume_status.exam_findings) > 0 || patient.nyha_class === 'III' || patient.nyha_class === 'IV';
+    const congestedNow = weightAboveDryKg(patient) > 1.0 || congestionFindingCount(patient.volume_status.exam_findings) > 0 || patient.nyha_class === 'III' || patient.nyha_class === 'IV';
     if (patient.nt_pro_bnp > 5000 && congestedNow) {
         alerts.push(`VERY HIGH RISK: NT-proBNP ${patient.nt_pro_bnp} pg/mL (above 5000) with worsening symptoms or congestion. The 2026 ESC guideline says this indicates very high risk and admission is generally recommended; assess for admission before outpatient optimization.`);
     }
@@ -180,7 +182,7 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     if (onPde5i && nitrates.length > 0) {
         const taken = PDE5_INHIBITORS.filter(n => ext.has(n));
         alerts.push(`INAPPROPRIATE THERAPY: Nitrate (${nitrates.join(', ')}) with a PDE5 inhibitor (${taken.join(', ')}) is an absolute contraindication — risk of profound or fatal hypotension (FDA label). ` +
-            (current.some(r => r.med.drug_class === 'Vasodilator') ? 'The formulary nitrate has been removed from all recommendations; ' : '') + 'stop one of the two agents now and obtain urgent prescribing review.');
+            (current.some(r => r.med.drug_class === 'Vasodilator') ? 'The formulary nitrate has been removed from all recommendations; stop' : 'Stop') + ' one of the two agents now and obtain urgent prescribing review.'); // R13 E5(e): "Stop" begins its sentence when no clause precedes it
     }
     // Digoxin in atrial fibrillation with an accessory pathway (Lanoxin label warning 5.1): a new start is held (the drug's own check); one already taken raises this alert.
     if (digoxinAfibAccessoryPathway(patient) && current.some(r => r.med.drug_class === 'Inotrope')) {
@@ -191,7 +193,7 @@ export function detectInappropriateRegimen(patient: Patient): string[] {
     // down-titrated to the lowest effective dose to avoid hypovolemia and prerenal AKI — especially
     // when an SGLT2i is being added (additive diuresis). (Volume DEPLETION below dry weight is
     // handled separately by the volume-depletion alert.)
-    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const fluidExcess = weightAboveDryKg(patient);
     const euvolemic = Math.abs(fluidExcess) <= 1.0 && congestionFindingCount(patient.volume_status.exam_findings) === 0;
     // A short-course add-on (Furoscix) is not the oral loop the alert is about; the first qualifying loop in drug-name order is named, whatever the typing order.
     const highDoseLoop = sortedByName(current).find(r => {
@@ -435,13 +437,13 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
         );
     } else if (creatinineChange && creatinineChange.band === 'reduce') {
         clinicalAlerts.push(
-            `KIDNEY FUNCTION: ${creatinineChange.summary}. This meets the 2026 ESC criteria to halve the RAAS inhibitor and the MRA (Supplementary Tables S4/S5/S8; main text 6.1.6: a rise of less than 50% is acceptable). ` +
+            `KIDNEY FUNCTION: ${creatinineChange.summary}. ${reduceCriterionSentence(creatinineChange)} The 2026 ESC criteria call for halving the RAAS inhibitor and the MRA (Supplementary Tables S4/S5/S8; main text 6.1.6). ` +
             `${onRaasOrMra.length > 0 ? 'Each is reduced one dose step (a drug already at the lowest dose is kept, not increased), recheck chemistry in 1-2 weeks, no up-titration until stable. ' : 'Recheck chemistry in 1-2 weeks before any start. '}${kidneyFirstSteps}`
         );
     } else if (creatinineChange && creatinineRiseIsAcceptable(creatinineChange, patient.egfr)
         && (onRaasOrMra.length > 0 || (patient.current_regimen ?? []).some(r => r.med.drug_class === 'SGLT2i'))) {
         clinicalAlerts.push(
-            `KIDNEY FUNCTION: ${creatinineChange.summary}. This is within the 2026 ESC acceptable range (creatinine rise under ${CREATININE_RISE_ACCEPTABLE_PCT}%, derived eGFR fall under 30%, eGFR 20 or higher); an early dip after starting or raising a RAAS inhibitor, MRA or SGLT2 inhibitor should not prompt stopping. Recheck chemistry in 1-2 weeks.`
+            `KIDNEY FUNCTION: ${creatinineChange.summary}. This is within the 2026 ESC acceptable range (creatinine rise under ${CREATININE_RISE_ACCEPTABLE_PCT}%, derived eGFR fall of 30% or less, eGFR 20 or higher); an early dip after starting or raising a RAAS inhibitor, MRA or SGLT2 inhibitor should not prompt stopping. Recheck chemistry in 1-2 weeks.`
         );
     }
     if (egfrBelow20OnRaas) {
@@ -586,14 +588,14 @@ export function raiseClinicalAlerts(patient: Patient, dataAudit: CriticalDataAud
     // --- P5: Volume depletion alert (S2). "Volume depleted" needs weight more than 1 kg below dry weight AND no congestion finding on examination. When the scale says dry
     // but the examination shows congestion, the two disagree: say so and do not call diuretic reduction the priority.
     // A weight that was not entered is not 0 kg (R6 V18): with either weight blank there is no fluid balance to read (the examination findings alone say whether the patient is congested).
-    const currentFluidBalance = valueUnknown(patient.volume_status.current_weight_kg) || valueUnknown(patient.volume_status.dry_weight_kg) ? 0 : patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const currentFluidBalance = valueUnknown(patient.volume_status.current_weight_kg) || valueUnknown(patient.volume_status.dry_weight_kg) ? 0 : weightAboveDryKg(patient);
     const isVolumeDepleted = isVolumeDepletedState(patient);
     const hasDiureticInCurrent = (patient.current_regimen || []).some(r =>
         r.med.drug_class === 'Loop Diuretic' || r.med.drug_class === 'Thiazide-like Diuretic'
     );
     if (isVolumeDepleted && hasDiureticInCurrent) {
         clinicalAlerts.push(
-            'VOLUME DEPLETION: Patient is ' + Math.abs(currentFluidBalance).toFixed(1) + 'kg below dry weight while on diuretics. ' +
+            'VOLUME DEPLETION: Patient is ' + kgText(currentFluidBalance) + 'kg below dry weight while on diuretics. ' +
             (patient.potassium >= 6.0
                 ? 'Potassium is 6.0 or above and diuretics lower potassium, so no diuretic is reduced or stopped today; reassess the diuretic once potassium is controlled. Risk of AKI and hemodynamic collapse.'
                 : 'Diuretic reduction/discontinuation is the priority intervention before adding new agents. Risk of AKI and hemodynamic collapse.')

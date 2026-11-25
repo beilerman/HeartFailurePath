@@ -1,14 +1,14 @@
 import { LOWER_CASE_OPENERS } from './engine/textCase';
 import { MEDICATION_FORMULARY } from '../constants';
-import { resolveAllergy } from './engine/allergy';
+import { resolveAllergy, expandAllergies } from './engine/allergy';
 import { hasAngioedemaHistory } from './engine/intolerance';
 import { classifyPhenotype as classifyPhenotypeForSwitch } from './engine/domains';
 import { reconciledHistory, validateEngineInput } from './engine/inputContract';
 import { isActiveExposure } from './engine/medicationExposure';
 import { Patient, RegimenMed, SimulationOutput } from '../types';
-import { blankIronInputsToUndefined, valueUnknown } from './clinicalPredicates';
+import { blankIronInputsToUndefined, valueUnknown, weightAboveDryKg, kgText } from './clinicalPredicates';
 import { runEligibilityStage, taggedDiscontinuedMeds } from './engine/eligibility';
-import { getDoseTiers, clonePatient, dedupeCurrentRegimen, hasCongestion, loopDoseEffect, loopTotals, oralLoopFe } from './engine/regimenUtils';
+import { getDoseTiers, clonePatient, dedupeCurrentRegimen, hasCongestion, loopDoseEffect, loopTotals, oralLoopFe, dailyDose } from './engine/regimenUtils';
 import { auditInputs, raiseClinicalAlerts, checkSafetyHardStops, validatePhysiologicBounds, duplicateEntryAlert, withoutImplausibleValues } from './engine/gates';
 import { sameClassAllergies, allergyViaComponentOnly } from './engine/intolerance';
 import { assessDecisionReadiness, limitedInformationReview, needsDoseIntervalReview } from './engine/decisionReadiness';
@@ -21,8 +21,8 @@ import { evidenceBandStatement } from './engine/outcomeBenefit';
 import { PILLAR_LABELS } from './engine/explain';
 import { URGENT_POTASSIUM_MONITORING, describeAdjunct, buildEligibleAdjunctEntries, assembleOutput, reconcilePlanAlerts, annotateGdmtGapsWithMraPotassium, annotateGdmtGapsWithRaasPotassium, urgentStateMonitoring, mergeUrgentMonitoring, stopPathPotassiumMonitoring } from './engine/explain';
 import { settleOptionReferences, withPerfusionException, orderAlerts, lowPotassiumAlerts, elevatedPotassiumNoRaiserAlerts, elevatedPotassiumOnRaiserAlerts, POSSIBLE_POOR_PERFUSION_HEAD } from './engine/urgentStates';
-import { allEnteredUrgentAlerts, forStopPath, onePerFinding, noMedicationChangeReadiness, monitoringWithoutMissingAlertReferences, missingAllergyNotes, allergyConflictAlerts } from './engine/stopPathAlerts';
-import { CONGESTION_EXCESS_KG_ABOVE } from './engine/thresholds';
+import { allEnteredUrgentAlerts, forStopPath, onePerFinding, noMedicationChangeReadiness, noOptionKccqWording, monitoringWithoutMissingAlertReferences, missingAllergyNotes, allergyConflictAlerts } from './engine/stopPathAlerts';
+import { CONGESTION_EXCESS_KG_ABOVE, POTASSIUM_ABOVE_8_ACTION } from './engine/thresholds';
 import { scopeStatusFor, SCOPE_HIDDEN_ALERT_HEADS } from './engine/scopeGate';
 
 // Public facade: every symbol this module exported before the phase-4 split is re-exported here,
@@ -74,6 +74,12 @@ export function capitalizeAlertBody(a: string): string {
  * @param availableMedNames Formulary med names enabled for this simulation run (UI toggles).
  * @param prices            name → monthly cost map from pricingService.getDrugPrices.
  */
+/** R11 B2: the names the allergy list matches (the same matcher as the allergy conflict alert and the allergy exclusion); never throws on an unreadable list. */
+function allergyNames(p: Patient): ReadonlySet<string> { try { return p.allergies instanceof Set ? expandAllergies(p.allergies, MEDICATION_FORMULARY).expanded : new Set<string>(); } catch { return new Set<string>(); } }
+/** The EXPOSURE HISTORY alert of a drug recorded as held or completed. R11 B2: a drug that matches a listed allergy says so (the ALLERGY CONFLICT alert is for a drug taken now, which this is not). */
+function exposureHistoryAlert(r: RegimenMed, allergic: ReadonlySet<string>): string {
+    return `EXPOSURE HISTORY: ${r.med.name} is recorded as ${r.exposure!.status}. It is not counted as active therapy. Recorded physiology is preserved; no loss of benefit is back-calculated. Confirm the course, or whether to restart, before a new dose.${allergic.has(r.med.name) ? ` An allergy to ${r.med.name} is recorded: reconcile the allergy before any restart.` : ''}`;
+}
 /** R9 Z3: when removing a duplicate loop diuretic lowers the total oral loop dose, the duplicate-therapy alert states the total with both and with the one kept (computed from the regimen). */
 function loopDuplicateTotals(kept: RegimenMed, removed: RegimenMed[]): string {
     if (kept.med.drug_class !== 'Loop Diuretic') return '';
@@ -141,20 +147,25 @@ function runEngine(
         // Every stop state carries its own monitoring item (T24), and no alert points at "the options below" when none is shown (T18).
         // R6 V5: no medication change is proposed, so no therapy prompt (eligible adjuncts) is shown and the readiness text says so.
         const finalAlerts = orderAlerts(onePerFinding([...new Set(settleOptionReferences(out.clinicalAlerts, false).map(forStopPath))]), ADVISORY_ALERT_HEADS);
-        return { ...out, eligibleAdjuncts: [], excludedMedications: out.excludedMedications.map(e => ({ ...e, reason: forStopPath(e.reason), ...(e.why ? { why: e.why.map(forStopPath) } : {}) })), ...(out.decisionReadiness ? { decisionReadiness: noMedicationChangeReadiness(out.decisionReadiness) } : {}), clinicalAlerts: finalAlerts, monitoringPlan: mergeUrgentMonitoring(out.monitoringPlan, [...urgentStateMonitoring(patient), ...stopPathPotassiumMonitoring(patient)]), why_first: { options: [], gaps: [], stop: stopSentence(named, limited) } };
+        return noOptionKccqWording({ ...out, eligibleAdjuncts: [], excludedMedications: out.excludedMedications.map(e => ({ ...e, reason: forStopPath(e.reason), ...(e.why ? { why: e.why.map(forStopPath) } : {}) })), ...(out.decisionReadiness ? { decisionReadiness: noMedicationChangeReadiness(out.decisionReadiness) } : {}), clinicalAlerts: finalAlerts, monitoringPlan: mergeUrgentMonitoring(out.monitoringPlan, [...urgentStateMonitoring(patient), ...stopPathPotassiumMonitoring(patient)]), why_first: { options: [], gaps: [], stop: stopSentence(named, limited) } });
     };
     // Every stop path keeps the urgent alerts the entered values justify (T16): the focused findings (pressure, potassium, oxygen) and the unstable states, heart block and slow rate.
     const urgentFromEntered = (p: Patient): string[] => allEnteredUrgentAlerts(p);
     if (inputErrors.length > 0) {
         const duplicateAlerts = resolved.duplicateNames.length ? [duplicateEntryAlert(resolved)] : [];
-        return withStop({ scoredRegimens: [], excludedMedications: [], clinicalAlerts: [...urgentFromEntered(patient), ...duplicateAlerts, ...inputErrors], monitoringPlan: [] }, 0);
+        // R11 B2: a held or completed drug that matches a listed allergy is still said so on this path (the other history alerts are not raised here).
+        const allergic = allergyNames(patient);
+        const exposureAllergy = resolved.regimen.filter(r => !isActiveExposure(r) && allergic.has(r.med.name)).sort((a, b) => a.med.name < b.med.name ? -1 : 1).map(r => exposureHistoryAlert(r, allergic));
+        // R11 C8: a potassium above 8.0 is still said to be a value to verify (with what to do if it is accurate) when another entry stops the review.
+        const extremePotassium = patient && typeof patient === 'object' ? validatePhysiologicBounds(patient).filter(x => x.includes(POTASSIUM_ABOVE_8_ACTION)) : [];
+        return withStop({ scoredRegimens: [], excludedMedications: [], clinicalAlerts: [...urgentFromEntered(patient), ...extremePotassium, ...duplicateAlerts, ...exposureAllergy, ...inputErrors], monitoringPlan: [] }, 0);
     }
     const clinicalAlerts: string[] = [];
     patient = clonePatient(patient);
     blankIronInputsToUndefined(patient);
     // The same drug entered twice is resolved BEFORE the use records are read, so the kept use record (the more cautious one) never depends on entry order (U5).
     if (resolved.duplicateNames.length > 0) clinicalAlerts.push(duplicateEntryAlert(resolved));
-    for (const r of resolved.regimen.filter(r => !isActiveExposure(r)).sort((a, b) => a.med.name < b.med.name ? -1 : a.med.name > b.med.name ? 1 : 0)) clinicalAlerts.push(`EXPOSURE HISTORY: ${r.med.name} is recorded as ${r.exposure!.status}. It is not counted as active therapy. Recorded physiology is preserved; no loss of benefit is back-calculated. Confirm the course, or whether to restart, before a new dose.`);
+    for (const r of resolved.regimen.filter(r => !isActiveExposure(r)).sort((a, b) => a.med.name < b.med.name ? -1 : a.med.name > b.med.name ? 1 : 0)) clinicalAlerts.push(exposureHistoryAlert(r, allergyNames(patient)));
     const unconfirmedUse = patient.current_regimen.filter(r => r.exposure?.status !== 'active' || r.exposure?.adherence !== 'consistent');
     if (unconfirmedUse.length) clinicalAlerts.push(`MEDICATION USE REVIEW: Confirm actual current dose and consistent use before increasing or substituting ${unconfirmedUse.map(r => r.med.name).sort().join(', ')}. Safety-driven reductions/removals and unrelated eligible decisions remain assessable. Treatment duration and individual response are not inferred.`);
     clinicalAlerts.push(...lowPotassiumAlerts(withoutImplausibleValues(patient)));
@@ -259,11 +270,23 @@ function runEngine(
     // The congestion display rule (S1, POLICY, not a ranking factor): in acute decompensation or the cold state, a congested patient's options all carry a loop diuretic step when one is
     // eligible (candidates.ts); when none is eligible each option says why.
     const un = analysis.unstable;
+    // R13 E3: "; also, no oral loop diuretic step passed the tool's rules" follows the held-loop cause only when the same patient with the held and completed loop records removed still has no oral loop
+    // step (one more run of this engine, only for a patient whose loop is held by a record and for whom no standing or start step exists; the run has no record, so it cannot recurse).
+    let stepWithoutRecords: boolean | undefined;
+    const loopStepWithoutRecords = (): boolean => {
+        if (stepWithoutRecords === undefined) {
+            const kept = resolved.regimen.filter(r => !(r.med.drug_class === 'Loop Diuretic' && (r.exposure?.status === 'held' || r.exposure?.status === 'completed')));
+            const again = generateAndScoreModifications(clonePatient({ ...patient, current_regimen: kept, recorded_medication_exposures: undefined } as Patient), availableMedNames, prices);
+            stepWithoutRecords = again.scoredRegimens.some(o => (o.modification_set?.modifications ?? []).some(m => (m.action === 'add' || m.action === 'titrate_up') && m.target?.med.drug_class === 'Loop Diuretic' && !m.target.med.facts?.short_course_addon));
+        }
+        return stepWithoutRecords;
+    };
+    const loopReason = (): string => `${un.loopUnavailableReason ?? ''}${un.loopNoStepClause && !loopStepWithoutRecords() ? un.loopNoStepClause : ''}`;
     if ((un.decompensated || un.cold) && un.congested) {
         picks.forEach((r, i) => {
             // R10 A5: the note is not shown on an option that starts, switches to or raises a loop diuretic (it would contradict the option).
             const callsLoop = (r.modification_set?.modifications ?? []).some(m => (m.action === 'add' || m.action === 'swap' || m.action === 'titrate_up') && m.target?.med.drug_class === 'Loop Diuretic');
-            if (!un.loopStep) { if (!callsLoop) picks[i] = { ...r, warnings: [`Drug note: No oral loop diuretic start or increase is available today: ${un.loopUnavailableReason}.`, ...r.warnings] }; }
+            if (!un.loopStep) { if (!callsLoop) picks[i] = { ...r, warnings: [`Drug note: No oral loop diuretic start or increase is available today: ${loopReason()}.`, ...r.warnings] }; }
             else if (r.modification_set?.loop_step_omitted) picks[i] = { ...r, warnings: [`Drug note: No loop diuretic step is included in this option: ${r.modification_set.loop_step_omitted}.`, ...r.warnings] };
         });
     } else if (un.loopHeldForWeightWithFindings) {
@@ -284,9 +307,26 @@ function runEngine(
                 : patient.potassium > 0 && patient.potassium < 3.5 ? 'a loop diuretic is not started while potassium is below 3.5'
                 : oralLoops.every(m => allergic(m.name)) ? 'every loop diuretic is excluded by the recorded allergies'
                 : unconfirmedLoops.length > 0 ? `a replacement is offered once it is confirmed whether the patient takes ${unconfirmedLoops.join(' and ')}`
-                : !un.loopStep && un.loopUnavailableReason ? un.loopUnavailableReason : '';
+                : !un.loopStep && un.loopUnavailableReason ? loopReason() : '';
             picks[i] = { ...r, warnings: [`This option leaves the patient without a loop diuretic although congestion is recorded${cause ? `: ${cause}` : ''}.`, ...r.warnings] };
         });
+    }
+
+    // R11 B6: Furoscix taken as the only loop, replaced in an option by oral loop therapy at a lower furosemide-equivalent daily dose: the option says the diuretic dose falls (the rule and the dose are
+    // unchanged, panel question 28). Figures are the tool's own (Furoscix 2.0 x its daily dose; each oral loop's declared furosemide equivalent). Information only, added after scoring.
+    {
+        const isFuroscixEntry = (r: RegimenMed) => r.med.drug_class === 'Loop Diuretic' && !!r.med.facts?.short_course_addon;
+        const taken = patient.current_regimen.filter(isFuroscixEntry);
+        if (taken.length > 0 && !patient.current_regimen.some(r => r.med.drug_class === 'Loop Diuretic' && !isFuroscixEntry(r))) {
+            const from = taken.reduce((t, r) => t + dailyDose(r) * (r.med.facts?.oral_equivalent_multiplier ?? 1), 0);
+            const fe = (n: number) => `${Math.round(n * 10) / 10}`;
+            picks.forEach((r, i) => {
+                if (r.regimen.some(isFuroscixEntry)) return;
+                const oral = r.regimen.filter(x => x.med.drug_class === 'Loop Diuretic' && !isFuroscixEntry(x)); const to = oralLoopFe(oral);
+                if (oral.length === 0 || !(to < from - 1e-9)) return;
+                picks[i] = { ...r, warnings: [`Drug note: this option replaces Furoscix (counted by this tool as ${fe(from)} mg oral furosemide a day) with ${oral.map(x => `${x.med.name.replace(/\s*\(.*\)/, '')} ${x.dose.strength}mg ${x.selected_frequency}`).join(' and ')} (${fe(to)} mg oral furosemide equivalent a day): a lower diuretic dose. Reassess congestion early.`, ...r.warnings] };
+            });
+        }
     }
 
     // R8 X13 / X4: an oral loop step is said for what it is. (a) A raise with no recorded congestion: the tool holds a loop increase only at or below the recorded dry weight with no congestion finding, so a
@@ -314,8 +354,8 @@ function runEngine(
                 : `Drug note: The loop diuretic step in this option lowers the total oral loop diuretic dose, from about ${mgFe(before)} to about ${mgFe(after)} mg of furosemide a day: ${detail}.`, ...r.warnings] };
         } else if (effect === 'raises' && !hasCongestion(patient)) {
             const known = !valueUnknown(patient.volume_status.current_weight_kg) && !valueUnknown(patient.volume_status.dry_weight_kg);
-            const kg = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
-            const where = known ? `the weight is ${kg.toFixed(1)} kg above the recorded dry weight, which is not more than ${CONGESTION_EXCESS_KG_ABOVE.toFixed(1)} kg, and no congestion finding is recorded` : 'the weight or the dry weight is not entered, and no congestion finding is recorded';
+            const kg = weightAboveDryKg(patient);
+            const where = known ? `the weight is ${kgText(kg)} kg above the recorded dry weight, which is not more than ${CONGESTION_EXCESS_KG_ABOVE.toFixed(1)} kg, and no congestion finding is recorded` : 'the weight or the dry weight is not entered, and no congestion finding is recorded';
             picks[i] = { ...r, warnings: [`Drug note: This option raises the loop diuretic although no congestion is recorded (${where}). The tool holds a loop increase only when the weight is at or below the recorded dry weight with no congestion finding, so this increase was not held. Confirm that a higher dose is wanted.`, ...r.warnings] };
         }
     });

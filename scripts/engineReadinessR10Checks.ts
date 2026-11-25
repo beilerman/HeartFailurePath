@@ -198,7 +198,7 @@ R10_CHECKS.a4 = (p, o, count) => {
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // A7: no alert on a no-option screen says a medication change is not proposed or not shown (the screen carries the one sentence that says no option is shown)
 // ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-export const NO_CHANGE_ALERT = /no medication changes? (?:is|are) (?:shown|proposed)|medication changes? (?:is|are) not (?:shown|proposed)|no drug (?:is|are) (?:changed|proposed)/i;
+export const NO_CHANGE_ALERT = /no (?:medication|regimen) changes? (?:is|are) (?:shown|proposed)|(?:medication|regimen) changes? (?:is|are) not (?:shown|proposed)|no drug (?:is|are) (?:changed|proposed)/i; // R11 B7a: "regimen change" added
 R10_CHECKS.a7 = (_p, o, count) => {
     const out: string[] = []; if (o.scoredRegimens.length > 0) return out; count('no-option screens');
     for (const a of o.clinicalAlerts) if (NO_CHANGE_ALERT.test(a)) out.push(`an alert on a no-option screen says a change is not proposed or shown: "${a.slice(Math.max(0, a.search(NO_CHANGE_ALERT) - 40), a.search(NO_CHANGE_ALERT) + 90)}"`);

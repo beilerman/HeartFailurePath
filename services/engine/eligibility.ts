@@ -223,7 +223,7 @@ export const ELIGIBILITY_RULES: readonly EligibilityRule[] = [
     },
     {
         id: 'E15', name: 'New MRA start at potassium 5.0 or higher is staged',
-        summary: 'A NEW MRA or nsMRA start at potassium 5.0 or higher is withheld, with or without a potassium binder: recheck potassium and start once it is below 5.0. A binder is not a reason to start sooner (outcome benefit uncertain in the 2022 US guideline; no recommendation in the 2026 ESC guideline).',
+        summary: 'A NEW MRA or nonsteroidal MRA start at potassium 5.0 or higher is withheld, with or without a potassium binder: recheck potassium and start once it is below 5.0. A binder is not a reason to start sooner (outcome benefit uncertain in the 2022 US guideline; no recommendation in the 2026 ESC guideline).',
         // Decision 2026-11-11 (docs/medication-review-2026-11-10/verified-clinical-decisions-2026-11-11.md, rows 1, 2a, 2c, 3, 4):
         //  - row 1: 2022 AHA/ACC/HFSA section 7.3.3, PRIMARY text read 2026-11-11: "serum potassium 5.0 mEq/L or above ... contraindications to MRA initiation" (class label still secondary)
         //  - row 2a / 2c: Aldactone label (K <= 5.0) and Kerendia label (do not initiate if K > 5.0) - labels

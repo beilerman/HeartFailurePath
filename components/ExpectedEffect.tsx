@@ -1,4 +1,5 @@
 import React, { useId, useMemo } from 'react';
+import { drugClassLabel } from './drugClassLabel';
 import type { ScoredRegimen, OutcomeContributorView } from '../types';
 import { Disclosure } from './Disclosure';
 import { plainText } from './plainText';
@@ -93,7 +94,7 @@ const OutcomeContributorItem: React.FC<{ c: OutcomeContributorView; counted: boo
     const moved = movedReason(c.rr_published, c.rr);
     return (
         <li className="rounded border border-slate-200 bg-slate-50 p-2.5">
-            <p className="text-sm font-bold text-slate-900">{c.medication} <span className="font-normal text-slate-600">({c.drug_class}){counted ? '' : ': not counted'}</span></p>
+            <p className="text-sm font-bold text-slate-900">{c.medication} <span className="font-normal text-slate-600">({drugClassLabel(c.drug_class)}){counted ? '' : ': not counted'}</span></p>
             {note && <p className="text-xs text-slate-700 mb-1">{note}</p>}
             {c.band_note && <p className="text-xs text-slate-700 mb-1" data-band-note="1">{c.band_note}</p>}
             <dl className="space-y-0.5">
@@ -156,7 +157,7 @@ const SymptomEvidence: React.FC<{ regimen: ScoredRegimen }> = ({ regimen }) => {
         const moved = movedReason(c.kccq_points_published, c.kccq_points, 1);
         return (
             <li key={`${counted}-${c.row_id}-${c.medication}`} className="rounded border border-slate-200 bg-slate-50 p-2.5">
-                <p className="text-sm font-bold text-slate-900">{c.medication} <span className="font-normal text-slate-600">({c.drug_class}){counted ? '' : ': not counted'}</span></p>
+                <p className="text-sm font-bold text-slate-900">{c.medication} <span className="font-normal text-slate-600">({drugClassLabel(c.drug_class)}){counted ? '' : ': not counted'}</span></p>
                 {c.band_note && <p className="text-xs text-slate-700 mb-1" data-band-note="1">{c.band_note}</p>}
                 <dl className="space-y-0.5">
                     {c.not_measured ? (

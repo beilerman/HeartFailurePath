@@ -1,7 +1,7 @@
 /** Current-regimen analysis and candidate-modification generation. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, RegimenMed, ModificationAction, RegimenModification, ModificationSet } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient, congestionFindingCount } from '../clinicalPredicates';
+import { valueUnknown, ivIronCreditTier, isBlackRace, isAcutelyDecompensated as isAcutelyDecompensatedPatient, congestionFindingCount, weightAboveDryKg, pulsePressureMmHg } from '../clinicalPredicates';
 import { RAAS_CLASSES, getMedicationClassGroup, isDiureticClass } from './registry';
 import { sortedByName, isCongestedAboveDryWeight, isLowOutputState, isColdState, weightBelowDryWeight, countVisitLimitChanges, renalContraindicationReason, isLoopDiureticResistant, adjacentTiers, hasCongestion, dailyCapFor, renalCapExceeded, dailyDose, dosesPerDay, eligibleDoses, frequenciesWithinMax, kUptitrationBlock, computeRedundantCurrentMeds, formatDose, getDoseTiers, hrContinuationAction, isTargetDoseForPatient, carryFrequency, kContinuationAction, pickPreferredFrequency, restrictToStartTiers } from './regimenUtils';
 import { currentMedIntoleranceReason, deriveIntolerancePolicy, isRenalOnlyContraindication, MRA_POOL_CLASSES } from './intolerance';
@@ -65,6 +65,8 @@ export interface UnstableInfo {
     loopStep?: { action: 'add' | 'titrate_up'; source?: RegimenMed; target: RegimenMed };
     /** Why no loop diuretic start or increase is available, when none is. */
     loopUnavailableReason?: string;
+    /** R13 E3: set when only a held or completed loop record explains the missing loop step: the clause to append to `loopUnavailableReason` ONLY if the same patient with those records removed still has no oral loop step (the caller checks; analysis cannot). */
+    loopNoStepClause?: string;
     /** True when the weight is the reason no new loop diuretic is offered (none on board, none excluded for another reason, the weight within the congestion threshold of dry weight) and the examination shows at least one congestion finding (R5 Y3). */
     loopHeldForWeightWithFindings?: boolean;
 }
@@ -112,7 +114,7 @@ export function analyzeCurrentRegimen(
     // suppressed every safe guideline ADDITION (e.g. SGLT2i, which is beneficial in acute HF —
     // EMPULSE / SOLOIST-WHF). Abrupt discontinuation remains Class III harm — this is a dose
     // REDUCTION with taper guidance, never an abrupt stop.
-    const pulsePressure = patient.sbp - patient.dbp;
+    const pulsePressure = pulsePressureMmHg(patient);
     // NOTE: the sbp < 90 disjunct is defensive-only — generateAndScoreModifications returns
     // alerts-only before calling analyzeCurrentRegimen when input SBP < 90; it is kept in case
     // this function ever gains another caller.
@@ -156,7 +158,7 @@ export function analyzeCurrentRegimen(
     // examination shows congestion gets neither a reduction nor a removal of the diuretic as a volume step (the scale-and-examination alert says the two disagree); an INCREASE stays held.
     // T1: at potassium 6.0 or above a loop or thiazide-type diuretic (which LOWERS potassium) is never reduced or stopped as a volume step.
     const potassiumEmergencyNow = patient.potassium >= 6.0 && patient.potassium <= 8.0;
-    const reduceAsVolumeStep = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg) <= 0 && congestionFindingCount(patient.volume_status.exam_findings) === 0 && !potassiumEmergencyNow;
+    const reduceAsVolumeStep = weightAboveDryKg(patient) <= 0 && congestionFindingCount(patient.volume_status.exam_findings) === 0 && !potassiumEmergencyNow;
     currentRegimen.forEach(r => {
         if (creatinineChange?.band === 'stop' && raasOrMra(r.med.drug_class)) {
             kWithholdReasons.set(r.med.name, `${creatinineChange.why}: ${RAAS_CLASSES.has(r.med.drug_class) ? 'stop' : 'withhold'} and seek specialist advice (2026 ESC Supplementary Tables S4/S5/S8)`);
@@ -434,7 +436,7 @@ export function analyzeCurrentRegimen(
     // (preserves drug class coverage vs outright removal). Swap candidates that are
     // themselves contraindicated are filtered out.
     const swappable: RegimenAnalysis['swappable'] = [];
-    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const fluidExcess = weightAboveDryKg(patient);
     currentRegimen.forEach(current => {
         // A REDUNDANT duplicate (e.g. the second beta-blocker / loop diuretic) must be REMOVED, not
         // swapped to another agent in the same group — swapping would preserve the duplication. The
@@ -736,6 +738,15 @@ export function analyzeCurrentRegimen(
         if (standing && passes('titrate_up', standing.current, standing.options[0])) unstable.loopStep = { action: 'titrate_up', source: standing.current, target: standing.options[0] };
         else if (!standing && startLoop && passes('add', undefined, startLoop)) unstable.loopStep = { action: 'add', target: startLoop };
         else if (standing || startLoop) blockedByPrerequisite = true;
+        // R11 B1: a held or completed loop diuretic record (any loop, Furoscix included) stops every loop start or raise until its status is confirmed. When that record is what blocks the step, the note
+        // says so, instead of saying a prerequisite of the active loop is missing. `otherPrerequisiteMissing` is true only when the step still fails with those records set aside.
+        const loopRecordNames = [...new Set((patient.recorded_medication_exposures ?? []).filter(r => r.med.drug_class === 'Loop Diuretic' && !r.exposure?.restart_or_repeat_reviewed
+            && (r.exposure?.status === 'held' || r.exposure?.status === 'completed')).map(r => r.med.name.replace(/\s*\(.*\)/, '')))].sort();
+        const withoutLoopRecords: Patient = { ...patient, recorded_medication_exposures: (patient.recorded_medication_exposures ?? []).filter(r => r.med.drug_class !== 'Loop Diuretic') };
+        const passesWithoutRecords = (action: 'add' | 'titrate_up', source: RegimenMed | undefined, target: RegimenMed) => !candidateHasMissingPrerequisite(withoutLoopRecords, { modifications: [{ action, source, target, summary: '' }], resulting_regimen: [] });
+        const stepWithoutRecords = (standing && passesWithoutRecords('titrate_up', standing.current, standing.options[0])) || (!standing && !!startLoop && passesWithoutRecords('add', undefined, startLoop));
+        const otherPrerequisiteMissing = blockedByPrerequisite && !stepWithoutRecords;
+        const heldLoopCause = `a loop diuretic recorded as held or as a completed course (${loopRecordNames.join(', ')}) must be confirmed before any loop diuretic is started or raised`;
         if (!unstable.loopStep) {
             // The loop that stays (a duplicate entry being cleaned up is not the loop whose dose the plan sets, T2).
             const loopCurrent = sortedByName(currentRegimen).find(r => r.med.drug_class === 'Loop Diuretic' && !drugFacts(r.med).short_course_addon && !redundantCurrentMeds.has(r.med.name));
@@ -744,14 +755,18 @@ export function analyzeCurrentRegimen(
             // R6 V1: only an allergy that names a loop diuretic is offered as a cause of "every loop diuretic is excluded", so an unrelated allergy entry changes nothing.
             // R6 V15d: a recorded potassium below 3.5 is the reason (the hold is the engine's own rule), whether or not another prerequisite is also open.
             unstable.loopUnavailableReason = patient.potassium > 0 && patient.potassium < 3.5 && !patient.comorbidities.has('Anuria') ? 'potassium is below 3.5: correct it first'
+                : blockedByPrerequisite && loopRecordNames.length > 0 && !otherPrerequisiteMissing ? heldLoopCause
+                : blockedByPrerequisite && loopRecordNames.length > 0 ? `a prerequisite is missing for the oral loop diuretic (confirm the current dose, actual use and the dose interval, or enter the missing laboratory value: see the review prompts in the alerts); also, ${heldLoopCause}`
                 : blockedByPrerequisite ? 'a prerequisite is missing for the oral loop diuretic (confirm the current dose, actual use and the dose interval, or enter the missing laboratory value: see the review prompts in the alerts)'
                 : anuria ? 'anuria is a labeled contraindication to loop diuretics'
                 : MEDICATION_FORMULARY.some(m => m.drug_class === 'Loop Diuretic' && patient.allergies.has(m.name)) && !formulary.some(m => m.drug_class === 'Loop Diuretic' && !drugFacts(m).short_course_addon) && !loopCurrent ? 'every loop diuretic is excluded for this patient (allergy, anuria or another rule: see the withheld drugs)'
                 : weightBelowDryWeight(patient) ? 'the weight is more than 1 kg below the recorded dry weight'
                 : patient.potassium > 0 && patient.potassium < 3.5 ? 'potassium is below 3.5: correct it first'
-                : loopCurrent && maxed ? 'the oral loop diuretic is already at the highest dose the tool offers'
+                : loopCurrent && maxed && !contraindicatedCurrentMeds.has(loopCurrent.med.name) ? 'the oral loop diuretic is already at the highest dose the tool offers'
                 : !loopCurrent && !isCongestedAboveDryWeight(patient) ? `a new loop diuretic is started only when the weight is more than ${CONGESTION_EXCESS_KG_ABOVE} kg above dry weight`
+                : loopRecordNames.length > 0 ? heldLoopCause // R13 E3: the "also, no step passed" clause (R12 D2) is added by the caller only when the patient without the records still has no loop step
                 : "no oral loop diuretic step passed the tool's rules for this patient";
+            if (loopRecordNames.length > 0 && unstable.loopUnavailableReason === heldLoopCause) unstable.loopNoStepClause = "; also, no oral loop diuretic step passed the tool's rules for this patient";
             unstable.loopHeldForWeightWithFindings = !loopCurrent && !blockedByPrerequisite && !weightBelowDryWeight(patient) && !isCongestedAboveDryWeight(patient) && !loopsExcludedForAnotherReason(patient) && congestionFindingCount(patient.volume_status.exam_findings) > 0;
         }
     }
@@ -779,7 +794,7 @@ export function analyzeCurrentRegimen(
 
 /** True when a diuretic is not increased for this patient: more than 1 kg below dry weight, or at or below dry weight with no congestion finding on examination. */
 export function diureticHeldForNoCongestion(patient: Patient): boolean {
-    const weightExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const weightExcess = weightAboveDryKg(patient);
     return weightExcess < -1.0 || (weightExcess <= 0 && congestionFindingCount(patient.volume_status.exam_findings) === 0);
 }
 

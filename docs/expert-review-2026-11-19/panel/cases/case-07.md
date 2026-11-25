@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 A 63-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 122/76 mmHg and the heart rate is 88 per minute in atrial fibrillation. He is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 72 mL/min/1.73 m². He takes no heart failure medication.
 
@@ -53,7 +53,7 @@ Daily dosing: no drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 

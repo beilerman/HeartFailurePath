@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 A 59-year-old man with an ejection fraction of 28% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 70 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.8 mEq/L and eGFR is 64 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Metoprolol Succinate 100 mg once daily, Spironolactone 25 mg once daily.
 
@@ -55,7 +55,7 @@ Daily dosing: 3 doses a day from 3 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 

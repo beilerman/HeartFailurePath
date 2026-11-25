@@ -158,3 +158,6 @@ export const BREASTFEEDING_NOT_ASSESSED = 'This tool does not assess breastfeedi
  * switch from an ACE inhibitor or ARB to sacubitril/valsartan counts toward it; dose changes and other switches do not. A switch the safety rules require does not count.
  */
 export const VISIT_LIMIT_WORDS = 'Each new drug class (including IV iron) and each switch from an ACE inhibitor or ARB to sacubitril/valsartan counts toward the per-visit limit; dose changes and other switches do not.';
+
+/** R11 B4: said after the verify-the-value message for a potassium above 8.0 (engine alert and form error alike): what to do if the value is accurate. R12 D5(b): one sentence (the action words stay single-sourced here). */
+export const POTASSIUM_ABOVE_8_ACTION = 'If the value is accurate, this is a hyperkalemic emergency: obtain an ECG now, withhold potassium-raising drugs and potassium supplements, and arrange emergency assessment.';

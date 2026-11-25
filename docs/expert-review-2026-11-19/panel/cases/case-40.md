@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 A 76-year-old woman with an ejection fraction of 55% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 130/74 mmHg and the heart rate is 76 per minute in atrial fibrillation. She is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 58 mL/min/1.73 m². She takes Metoprolol Succinate 50 mg once daily.
 
@@ -53,7 +53,7 @@ Daily dosing: 1 dose a day from 1 drug.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 

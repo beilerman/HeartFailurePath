@@ -1,5 +1,6 @@
 import { plainText } from './plainText';
 import React, { useMemo, useState } from 'react';
+import { drugClassLabel } from './drugClassLabel';
 import { Disclosure } from './Disclosure';
 import { OUTCOME_EVIDENCE_TABLE, shrunkOutcomeRow, outcomeStats } from '../services/engine/outcomeBenefit';
 import { SYMPTOM_TABLE, shrunkSymptomRow, symptomStats } from '../services/engine/symptomBenefit';
@@ -60,7 +61,7 @@ export const EvidenceTables: React.FC = () => {
             <div className="max-w-xs">
                 <label htmlFor="evidence-class-filter" className="block text-sm font-semibold text-slate-700 mb-1">Filter by drug class</label>
                 <select id="evidence-class-filter" value={cls} onChange={e => setCls(e.target.value)} className="block w-full rounded-md border border-slate-300 bg-white py-2 px-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
-                    {classes.map(c => <option key={c} value={c}>{c}</option>)}
+                    {classes.map(c => <option key={c} value={c}>{drugClassLabel(c)}</option>)}
                 </select>
             </div>
             <p className="text-xs text-slate-600" role="status" aria-live="polite">Showing {outcomes.length} outcome rows, {symptoms.length} symptom rows, {harms.length} side-effect rows and {anchors.length} dose rows.</p>
@@ -75,7 +76,7 @@ export const EvidenceTables: React.FC = () => {
                                 const u = shrunkOutcomeRow(OUTCOME_EVIDENCE_TABLE, r);
                                 return (
                                     <tr key={r.id} data-evidence-row="outcome" data-row-id={r.id}>
-                                        <th scope="row" className="px-3 py-2 font-semibold text-slate-800 min-w-[9rem]">{r.drug_class}<span className="block font-normal text-slate-600">{r.drugs.join(', ')}</span>{r.population_key && <span className="block font-normal text-slate-600">Applies to: {populationKeyLabel(r.drug_class, r.population_key)}</span>}</th>
+                                        <th scope="row" className="px-3 py-2 font-semibold text-slate-800 min-w-[9rem]">{drugClassLabel(r.drug_class)}<span className="block font-normal text-slate-600">{r.drugs.join(', ')}</span>{r.population_key && <span className="block font-normal text-slate-600">Applies to: {populationKeyLabel(r.drug_class, r.population_key)}</span>}</th>
                                         <td className="px-3 py-2">{EF_BAND_LABELS[r.ef_band]}{efRangeText(r) && <span className="block font-normal text-slate-700" data-ef-range="1">{efRangeText(r)}</span>}</td>
                                         <td className="px-3 py-2">{OUTCOME_SHORT[r.outcome]}</td>
                                         <td className="px-3 py-2 min-w-[9rem]">{r.conflicting_evidence ? <>{CONFLICT_NO_EFFECT_TEXT} <span className="block text-slate-600">{r.conflict_summary}</span></> : <>{fmtRR(r.rr)} ({intervalText(r.ci_low, r.ci_high).replace('95% interval ', '')}) <span className="block text-slate-600">{MEASURE_LABELS[r.measure] ?? r.measure}</span></>}</td>
@@ -100,7 +101,7 @@ export const EvidenceTables: React.FC = () => {
                                 const u = shrunkSymptomRow(SYMPTOM_TABLE, r), nm = r.basis === 'not_measured';
                                 return (
                                     <tr key={r.id} data-evidence-row="symptom" data-row-id={r.id}>
-                                        <th scope="row" className="px-3 py-2 font-semibold text-slate-800 min-w-[9rem]">{r.drug_class}</th>
+                                        <th scope="row" className="px-3 py-2 font-semibold text-slate-800 min-w-[9rem]">{drugClassLabel(r.drug_class)}</th>
                                         <td className="px-3 py-2">{EF_BAND_LABELS[r.ef_band]}{efRangeText(r) && <span className="block font-normal text-slate-700" data-ef-range="1">{efRangeText(r)}</span>}</td>
                                         <td className="px-3 py-2 whitespace-nowrap">{nm ? 'Not measured' : `${fmtPoints(r.kccq_points)} ${SYMPTOM_UNIT} (${intervalText(r.ci_low, r.ci_high, 1).replace('95% interval ', '')})`}</td>
                                         <td className="px-3 py-2 min-w-[9rem]">{nm ? 'Not measured' : <>{fmtPoints(u.used)} {SYMPTOM_UNIT}<span className="block font-normal text-slate-600">{priorText('symptom', symptomStats(SYMPTOM_TABLE).tau2, u.B)}</span></>}</td>
@@ -126,7 +127,7 @@ export const EvidenceTables: React.FC = () => {
                                 const sev = def?.severity ? SEVERITY_LABELS[def.severity] : r.layer === 'symptomFigure' ? 'everyday symptom (combined)' : 'not charged (cross-check)';
                                 return (
                                     <tr key={r.id} data-evidence-row="harm" data-row-id={r.id}>
-                                        <th scope="row" className="px-3 py-2 font-semibold text-slate-800 min-w-[9rem]">{r.drugs.length > 0 ? r.drugs.join(', ') : 'Whole class'}<span className="block font-normal text-slate-600">{r.drug_class}</span></th>
+                                        <th scope="row" className="px-3 py-2 font-semibold text-slate-800 min-w-[9rem]">{r.drugs.length > 0 ? r.drugs.join(', ') : 'Whole class'}<span className="block font-normal text-slate-600">{drugClassLabel(r.drug_class)}</span></th>
                                         <td className="px-3 py-2">{harmLabel(r.effect)}</td>
                                         <td className="px-3 py-2">{sev}</td>
                                         <td className="px-3 py-2 whitespace-nowrap">{r.level === 'notMeasured' ? 'Not measured' : excessText(r.one_year_excess_pct, r.excess_window)}</td>
@@ -148,7 +149,7 @@ export const EvidenceTables: React.FC = () => {
                         <tbody className="divide-y divide-slate-100 align-top">
                             {anchors.map(a => (
                                 <tr key={a.id} data-evidence-row="dose">
-                                    <th scope="row" className="px-3 py-2 font-semibold text-slate-800 min-w-[9rem]">{a.drug}<span className="block font-normal text-slate-600">{a.drug_class}</span></th>
+                                    <th scope="row" className="px-3 py-2 font-semibold text-slate-800 min-w-[9rem]">{a.drug}<span className="block font-normal text-slate-600">{drugClassLabel(a.drug_class)}</span></th>
                                     <td className="px-3 py-2 whitespace-nowrap">{a.full_credit_daily_mg === null ? 'Not measured' : `${Math.round(a.full_credit_daily_mg * 10) / 10} ${a.unit ?? 'mg'}`}{(a as { dose_population?: string | null }).dose_population ? <span className="block font-normal text-slate-600 whitespace-normal">Whose mean: {(a as { dose_population?: string | null }).dose_population}</span> : null}</td>
                                     <td className="px-3 py-2 whitespace-nowrap">{typeof a.achieved_fraction_of_target === 'number' ? `${Math.round(a.achieved_fraction_of_target * 100)}%` : 'Not measured'}</td>
                                     <td className="px-3 py-2 min-w-[10rem]">{doseNotMeasuredText(a as unknown as DoseNoteRow) ?? DOSE_LEVEL_LABELS[a.level] ?? a.level}</td>

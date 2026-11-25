@@ -12,7 +12,7 @@ Deterministic heart-failure medication review and ranking UI built with React + 
 
 HeartFailurePATH evaluates medication changes against recorded findings for adults with chronic heart failure. It does not predict individual physiology or reconstruct an untreated state. Since 2026-11-16 options are ordered by six weighted factors from measured or priced inputs: death from any cause and heart-failure hospitalization (relative risks from randomized trials), symptoms (KCCQ points), side effects (one-year excess harm rates x severity), cost and dosing burden. These are trial population averages, not predictions for this patient; the weights are engine policy pending the owner's review; guideline concordance and completeness are shown for reference only. See the [first-principles model record](docs/first-principles-model-2026-11-16/README.md).
 
-The [November 22 code review and expert-review record](docs/expert-review-2026-11-19/README.md) covers rule set 2026-11-22.4, reproduced defects, local verification and open clinical decisions.
+The [November 22 code review and expert-review record](docs/expert-review-2026-11-19/README.md) covers rule sets up to 2026-11-25.1, reproduced defects, local verification and open clinical decisions.
 
 - Follows the 2026 ESC phenotypes: reduced EF (LVEF below 50, including improved EF) and HFpEF (LVEF 50 or higher, never below 50); HFmrEF is no longer a separate phenotype.
 - Includes formulary-level contraindication checks, renal dose constraints, and interaction warnings.
@@ -34,7 +34,7 @@ See the [incomplete-information review and validation record](docs/incomplete-da
 
 ## Current Engine Behavior
 
-Rule set **2026-11-22.4** evaluates proposed medication regimens against recorded treated physiology. It preserves observed measurements and does not calculate an untreated state, individual treatment response or withdrawal magnitude. Legacy response coefficients are audit-only and covered by isolation regressions.
+Rule set **2026-11-25.1** evaluates proposed medication regimens against recorded treated physiology. It preserves observed measurements and does not calculate an untreated state, individual treatment response or withdrawal magnitude. Legacy response coefficients are audit-only and covered by isolation regressions.
 
 - Candidate actions include addition, titration, substitution, removal and continuation; the UI returns up to three distinct options. A shared net-exposure transition makes equivalent descriptions consistent.
 - The public input boundary validates data and resolves medications to canonical formulary entries. Missing information limits dependent decisions; malformed data produces named input errors.

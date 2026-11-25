@@ -4,7 +4,7 @@
  * The predicates these call ignore a value that is not entered (0, blank or NaN is "not measured", never a measurement).
  */
 import { Patient } from '../../types';
-import { isExamFinding, isAcutelyDecompensated, meetsDecompensationFindings, DECOMPENSATION_EXCESS_KG_ABOVE, DECOMPENSATION_MIN_CONGESTION_FINDINGS, congestionFindingCount } from '../clinicalPredicates';
+import { isExamFinding, isAcutelyDecompensated, meetsDecompensationFindings, DECOMPENSATION_EXCESS_KG_ABOVE, DECOMPENSATION_MIN_CONGESTION_FINDINGS, congestionFindingCount, weightAboveDryKg, pulsePressureMmHg, kgText } from '../clinicalPredicates';
 import { isColdState, isLowOutputState, scaleAndExamDisagree, hasCongestion, hasHypoperfusion, dedupeCurrentRegimen, congestionWithoutWeightGain, perfusionMarkersAboveEfLimit } from './regimenUtils';
 import { isActiveExposure } from './medicationExposure';
 import { LOW_OUTPUT, CONGESTION_EXCESS_KG_ABOVE, HYPOTENSION_SBP_BELOW } from './thresholds';
@@ -73,7 +73,7 @@ export function unstableStateAlerts(patient: Patient): string[] {
     if (isColdState(patient)) {
         const signs: string[] = [];
         if (patient.volume_status.exam_findings.has('Cool Extremities')) signs.push('cool extremities');
-        if (patient.dbp > 0 && patient.sbp > patient.dbp && patient.sbp - patient.dbp <= LOW_OUTPUT.pulsePressureMax) signs.push(`a narrow pulse pressure (${patient.sbp - patient.dbp} mmHg)`);
+        if (patient.dbp > 0 && patient.sbp > patient.dbp && pulsePressureMmHg(patient) <= LOW_OUTPUT.pulsePressureMax) signs.push(`a narrow pulse pressure (${pulsePressureMmHg(patient)} mmHg)`);
         // R8 X15a: every finding that makes the state cold is named (hasHypoperfusion also reads a systolic pressure below the hypotension limit); the list is never empty.
         if (patient.sbp > 0 && patient.sbp < HYPOTENSION_SBP_BELOW) signs.push(`a systolic pressure of ${patient.sbp} mmHg (below ${HYPOTENSION_SBP_BELOW})`);
         if (isLowOutputState(patient) && signs.length === 0) signs.push('a low output pattern (LVEF below 20 with a high urea to creatinine ratio)');
@@ -109,9 +109,9 @@ export function unstableStateAlerts(patient: Patient): string[] {
  */
 export function classFindingsDisagreeAlerts(patient: Patient): string[] {
     if ((patient.nyha_class !== 'I' && patient.nyha_class !== 'II') || !meetsDecompensationFindings(patient)) return [];
-    const excess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const excess = weightAboveDryKg(patient);
     const found = [...patient.volume_status.exam_findings].filter(f => f !== 'Cool Extremities').sort();
-    return [`NYHA CLASS AND FINDINGS DISAGREE: the entered class is NYHA ${patient.nyha_class}, but the weight is ${excess.toFixed(1)} kg above the dry weight (the tool's criterion for acute decompensation is more than ${DECOMPENSATION_EXCESS_KG_ABOVE} kg) and the examination shows congestion (${found.join(', ')}). Confirm the NYHA class. No option is changed by this prompt: the tool reads the class as entered.`];
+    return [`NYHA CLASS AND FINDINGS DISAGREE: the entered class is NYHA ${patient.nyha_class}, but the weight is ${kgText(excess)} kg above the dry weight (the tool's criterion for acute decompensation is more than ${DECOMPENSATION_EXCESS_KG_ABOVE} kg) and the examination shows congestion (${found.join(', ')}). Confirm the NYHA class. No option is changed by this prompt: the tool reads the class as entered.`];
 }
 
 /** Recorded oxygen saturation below 90% (the engine's existing threshold, also used by the volume score and the monitoring row): one builder for the full path and every stop path (W1). */
@@ -150,7 +150,9 @@ export function elevatedPotassiumOnRaiserAlerts(patient: Patient, existing: read
 }
 
 export function lowPotassiumAlerts(patient: Patient): string[] {
-    return patient.potassium > 0 && patient.potassium < 3.5
+    // R13 E2-4: potassium is read to ONE decimal everywhere (auditInputs, the neighbouring alerts): 3.46 is 3.5 and raises no low-potassium alert, as every rule that holds a diuretic reads it.
+    const k = Math.round(blankToZero(patient.potassium) * 10) / 10;
+    return k > 0 && k < 3.5
         ? ['LOW POTASSIUM: New or intensified potassium-lowering diuretics are withheld until potassium is corrected and rechecked. A potassium-raising drug is not assumed to cancel this risk.'] : [];
 }
 
@@ -160,9 +162,19 @@ export function rateSlowingDrugNames(patient: Patient): { hf: string[]; other: s
     const other = ['Amiodarone', 'Diltiazem', 'Verapamil'].filter(n => patient.external_medications?.has(n)).sort();
     return { hf, other };
 }
+const UNREADABLE_LIST_REVIEW = 'the medication list could not be fully read: reconcile it for rate-slowing drugs';
+/** R12 D3: the rate-slowing drugs recorded as held, completed or of uncertain use, each in the words the AV-block alert uses; the slow-rate alert reads the same list. */
+const rateSlowingNotTaken = (patient: Patient): string[] =>
+    (patient.recorded_medication_exposures ?? patient.current_regimen ?? []).filter(r => ['Beta Blocker', 'Inotrope', 'If Inhibitor'].includes(r.med.drug_class) && !isActiveExposure(r))
+        .sort((a, b) => (a.med.name < b.med.name ? -1 : 1)).map(r => `${r.med.name} is recorded as ${r.exposure!.status}: confirm it is not being taken`);
 const rateSlowingReview = (patient: Patient): string => {
-    const { hf, other } = rateSlowingDrugNames(patient);
-    const named = [hf.length ? `heart failure drugs: ${hf.join(', ')}` : '', other.length ? `other: ${other.join(', ')}` : ''].filter(Boolean);
+    // R11 B5: every record of a rate-slowing drug is read, not only the active ones: a drug recorded as held or completed is to be confirmed as not taken, a drug whose use is uncertain is marked, and an
+    // unreadable medication list is said so. "None recorded here" is said only when nothing of the kind is recorded.
+    const recorded = (patient.recorded_medication_exposures ?? patient.current_regimen ?? []).filter(r => ['Beta Blocker', 'Inotrope', 'If Inhibitor'].includes(r.med.drug_class));
+    const taken = recorded.filter(isActiveExposure).map(r => `${r.med.name}${r.exposure?.status === 'unknown' || (r.exposure && r.exposure.adherence !== 'consistent') ? ' (use not confirmed)' : ''}`).sort();
+    const notTaken = rateSlowingNotTaken(patient);
+    const other = ['Amiodarone', 'Diltiazem', 'Verapamil'].filter(n => patient.external_medications?.has(n)).sort();
+    const named = [taken.length ? `heart failure drugs: ${taken.join(', ')}` : '', other.length ? `other: ${other.join(', ')}` : '', ...notTaken, patient.medication_list_incomplete ? UNREADABLE_LIST_REVIEW : ''].filter(Boolean);
     return `Review now every drug that slows the heart or conduction through the AV node (${named.length ? `${named.join('; ')}; ` : 'none recorded here; '}also any not recorded here).`;
 };
 
@@ -182,8 +194,11 @@ export function slowHeartRateAlerts(patient: Patient): string[] {
     if (patient.pulse > 0 && patient.pulse < 50 && patient.rhythm !== 'Paced') {
         const { hf, other } = rateSlowingDrugNames(patient);
         if (hf.length) return [];
-        const context = other.length ? `Review the recorded rate-slowing medication: ${other.join(', ')}.` : patient.medication_list_incomplete ? 'Reconcile the medication list for drugs that slow the heart rate.' : '';
-        return [`SLOW HEART RATE: the resting heart rate is ${patient.pulse} bpm${context ? `. ${context}` : ' and no rate-slowing drug is taken.'} Obtain an ECG to look for heart block or sinus node disease and review other causes (thyroid, medicines outside this tool). The tool does not start a beta-blocker or ivabradine at this rate.`];
+        // R12 D3: a rate-slowing drug recorded as held, completed or uncertain is said in the AV-block alert's words, so the two alerts never disagree; "is taken" only when none is recorded at all.
+        const notTaken = rateSlowingNotTaken(patient);
+        const context = other.length ? `Review the recorded rate-slowing medication: ${other.join(', ')}.` : notTaken.length ? '' : patient.medication_list_incomplete ? 'Reconcile the medication list for drugs that slow the heart rate.' : '';
+        const lead = notTaken.length && !other.length ? ` and no rate-slowing drug is recorded as taken (${[...notTaken, ...(patient.medication_list_incomplete ? [UNREADABLE_LIST_REVIEW] : [])].join('; ')}).` : context ? `. ${context}` : ' and no rate-slowing drug is taken.';
+        return [`SLOW HEART RATE: the resting heart rate is ${patient.pulse} bpm${lead} Obtain an ECG to look for heart block or sinus node disease and review other causes (thyroid, medicines outside this tool). The tool does not start a beta-blocker or ivabradine at this rate.`];
     }
     return [];
 }
@@ -191,10 +206,10 @@ export function slowHeartRateAlerts(patient: Patient): string[] {
 /** The scale reads below the dry weight but the examination shows congestion: the two disagree (S2). Not volume depletion. */
 export function scaleDisagreementAlerts(patient: Patient): string[] {
     if (!scaleAndExamDisagree(patient)) return [];
-    const balance = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const balance = weightAboveDryKg(patient);
     const found = [...patient.volume_status.exam_findings].filter(f => f !== 'Cool Extremities').sort().join(', ');
     return [
-        `SCALE AND EXAMINATION DISAGREE: the weight is ${Math.abs(balance).toFixed(1)} kg below the recorded dry weight, but the examination shows congestion (${found}). ` +
+        `SCALE AND EXAMINATION DISAGREE: the weight is ${kgText(balance)} kg below the recorded dry weight, but the examination shows congestion (${found}). ` +
         'The recorded dry weight may be out of date, or the scale reading may be wrong. Reassess volume at the bedside and update the dry weight. The tool does not treat this as volume depletion: it does not propose reducing or stopping the diuretic as a volume step.',
     ];
 }

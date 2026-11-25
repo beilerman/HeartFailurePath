@@ -13,6 +13,7 @@ import { HistorySection } from './HistorySection';
 import { ScopeSection } from './ScopeSection';
 import { SocialSection } from './SocialSection';
 import { MedicationManager } from './MedicationManager';
+import { withRhythmComorbidity } from './patientDraft';
 
 /**
  * The single implementation of form state, validation, hints and field handlers.
@@ -46,8 +47,8 @@ export function usePatientFormModel({ patientData, setPatientData, onValidityCha
 
     // Rhythm AFib records the atrial fibrillation history (the comorbidity) so the two cannot disagree.
     useEffect(() => {
-        if (patientData.rhythm === 'AFib' && !patientData.comorbidities.has('Atrial Fibrillation')) {
-            setPatientData(prev => ({ ...prev, comorbidities: new Set(prev.comorbidities).add('Atrial Fibrillation') }));
+        if (withRhythmComorbidity(patientData) !== patientData) {
+            setPatientData(prev => withRhythmComorbidity(prev)); // the same derivation caseIsTouched applies to an unchanged example (R12 D5(d))
         }
     }, [patientData.rhythm, patientData.comorbidities, setPatientData]);
 

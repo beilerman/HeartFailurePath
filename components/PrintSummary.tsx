@@ -39,7 +39,7 @@ export const PrintSummary: React.FC<Props> = ({ patient, caseLabel, ranAt, resul
             {evidenceBandText && results.length > 0 && <p className="text-xs" data-testid="print-evidence-band">{evidenceBandText}</p>}
             <p className="text-xs" data-testid="print-run-facts">Analysis run: {ranAt ? formatRunTime(ranAt) : 'not recorded'}. Rule-set version: {RULESET_VERSION}. Case label: {caseLabel ? plainText(caseLabel) : 'none entered'}.</p>
             {patient && (
-                <p className="text-xs">{patientFacts(patient).map(f => `${f.label}: ${f.value}${f.detail ? ` (${f.detail})` : ''}`).join('; ')}.</p>
+                <p className="text-xs">{patientFacts(patient).map(f => `${f.label}: ${f.value}${f.detail ? ` (${f.detail})` : ''}${f.held ? `; ${f.held}` : ''}`).join('; ')}.</p>
             )}
             {patient && (
                 <div className="text-xs" data-testid="print-regimen">

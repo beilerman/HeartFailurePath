@@ -1,5 +1,6 @@
 import { PATIENT_RHYTHMS, type Patient } from '../../types';
 import { exposureErrors } from '../../services/engine/medicationExposure';
+import { POTASSIUM_ABOVE_8_ACTION } from '../../services/engine/thresholds';
 
 // Missing observations narrow the decision scope; only invalid entered values block a review.
 export const REQUIRED_FIELDS: ReadonlySet<string> = new Set();
@@ -69,7 +70,7 @@ export function validatePatientForm(patientData: Patient): Record<string, string
     check('kccq_score', patientData.kccq_score);
     check('potassium', patientData.potassium);
     if (patientData.potassium > VALIDATION_BOUNDS.potassium.max) {
-        errors.potassium = 'Potassium exceeds the supported range. Verify the result and units immediately. If accurate, this is a hyperkalemic emergency requiring urgent hospital assessment.';
+        errors.potassium = 'Potassium exceeds the supported range. Verify the result and units immediately. ' + POTASSIUM_ABOVE_8_ACTION;
     }
     check('creatinine', patientData.creatinine);
     check('baseline_creatinine', patientData.baseline_creatinine);

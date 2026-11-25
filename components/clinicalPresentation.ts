@@ -1,5 +1,5 @@
 import type { Patient, RegimenMed, ScoredRegimen } from '../types';
-import { congestionFindingCount } from '../services/clinicalPredicates';
+import { congestionFindingCount, weightDifferenceKg, kgText } from '../services/clinicalPredicates';
 import { plainText } from './plainText';
 
 const FREQUENCIES: Record<string, string> = {
@@ -18,8 +18,8 @@ export const NO_CHANGE_TEXT = 'No medication change is proposed in this option. 
 export function volumeDescription(p: Patient): string {
     const { current_weight_kg: current, dry_weight_kg: dry, exam_findings: findings } = p.volume_status;
     if (!(current > 0) || !(dry > 0) || !Number.isFinite(current - dry)) return 'Enter current and estimated dry weight';
-    const delta = current - dry;
-    const weight = Math.abs(delta) <= 1 ? 'Near estimated dry weight' : `${Math.abs(delta).toFixed(1)} kg ${delta > 0 ? 'above' : 'below'} estimated dry weight`;
+    const delta = weightDifferenceKg(current, dry);
+    const weight = Math.abs(delta) <= 1 ? 'Near estimated dry weight' : `${kgText(delta)} kg ${delta > 0 ? 'above' : 'below'} estimated dry weight`;
     const exam = congestionFindingCount(findings) > 0 ? 'congestion findings recorded' : 'no congestion findings recorded';
     return `${weight}; ${exam}${findings.has('Cool Extremities') ? '; cool extremities recorded' : ''}. Assess volume and perfusion clinically.`;
 }

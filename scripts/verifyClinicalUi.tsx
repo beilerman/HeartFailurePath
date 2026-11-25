@@ -135,7 +135,7 @@ check('missing potassium and creatinine remain permitted and valid zero preferen
 check('a potassium above the supported range requires verification and urgent assessment if accurate', () => {
     const q = clonePatient(p);
     q.potassium = 9;
-    assert.match(validatePatientForm(q).potassium, /verify.*immediately.*if accurate.*urgent hospital assessment/i);
+    assert.match(validatePatientForm(q).potassium, /verify.*immediately.*if the value is accurate.*hyperkalemic emergency.*emergency assessment/i); // R12 D5(b) (rewritten): the form error is one sentence, "If the value is accurate, this is a hyperkalemic emergency: obtain an ECG now, ... emergency assessment."
 });
 check('each alternative shows its own monitoring rather than borrowing option 1 monitoring', () => {
     const alternative={...lead,monitoring_plan:[{test:'Alternative-specific check',timing:'Before implementation',details:'Unique monitoring details'}]};

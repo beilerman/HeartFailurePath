@@ -1,0 +1,38 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        1032 / 1032
+  (b) displayed pick set same:   1032 / 1032
+  (c) pick order identical:      1032 / 1032
+  (d) eligibility + alerts identical: NO (3 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 0 / median 66 / max 86
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 0 of 864 runs
+    LVEF >= 50: 0 of 111 runs
+
+BUGS (eligibility/alerts must not change):
+  MRA-Source Kidney-Baseline Rise 30% No Change :: cash: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 30% No Change :: commercial: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 30% No Change :: medicare: clinicalAlerts differ
+
+Golden mismatches before update (15 of 1032 runs):
+  - K+ Trajectory (K+ 4.8, RAAS+MRA) :: cash.scoredRegimens.2.rationale.2
+  - K+ Trajectory (K+ 4.8, RAAS+MRA) :: commercial.scoredRegimens.2.rationale.2
+  - K+ Trajectory (K+ 4.8, RAAS+MRA) :: medicare.scoredRegimens.2.rationale.2
+  - LVEF Recovery Cap (LVEF 20, Quad) :: cash.scoredRegimens.0.rationale.6
+  - LVEF Recovery Cap (LVEF 20, Quad) :: commercial.scoredRegimens.0.rationale.6
+  - LVEF Recovery Cap (LVEF 20, Quad) :: medicare.scoredRegimens.0.rationale.6
+  - Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: cash.scoredRegimens.0.rationale.5
+  - Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: commercial.scoredRegimens.0.rationale.5
+  - Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: medicare.scoredRegimens.0.rationale.5
+  - Severe Congestion + Loop (Thiazide Addition) :: cash.scoredRegimens.0.rationale.5
+  - Severe Congestion + Loop (Thiazide Addition) :: commercial.scoredRegimens.0.rationale.5
+  - Severe Congestion + Loop (Thiazide Addition) :: medicare.scoredRegimens.0.rationale.5
+  - MRA-Source Kidney-Baseline Rise 30% No Change :: cash.clinicalAlerts.0
+  - MRA-Source Kidney-Baseline Rise 30% No Change :: commercial.clinicalAlerts.0
+  - MRA-Source Kidney-Baseline Rise 30% No Change :: medicare.clinicalAlerts.0

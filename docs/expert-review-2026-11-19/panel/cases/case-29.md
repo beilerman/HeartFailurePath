@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 A 71-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily.
 
@@ -55,7 +55,7 @@ Daily dosing: 4 doses a day from 3 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 **What this setting changed (generated).** This patient is also shown with the Balanced setting elsewhere in the packet. With "Keep cost low" the weights are changed as follows: Starts from the base weights; cost counts three times as much. The budget limit and every safety rule still apply separately. The top options here are within one point of each other (the tie sentence below), a difference the tool cannot separate, so which of them comes first rests on it.
 

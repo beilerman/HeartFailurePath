@@ -1,7 +1,7 @@
 /** The domain scorers, their scoring constants, and the guideline-concordance table. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, RegimenMed } from '../../types';
 import type { ScoreDomainKey } from './scoreModel';
-import { hasHistoricalHFrEF, hasPriorLvefBelow50, congestionFindingCount } from '../clinicalPredicates';
+import { hasHistoricalHFrEF, hasPriorLvefBelow50, congestionFindingCount, weightAboveDryKg, weightDifferenceKg } from '../clinicalPredicates';
 import { DIURETIC_CLASSES, RAAS_CLASSES, getMedicationClassGroup } from './registry';
 import { isTargetDoseForPatient, shouldPreserveQuadForUnknownHistory } from './regimenUtils';
 
@@ -113,11 +113,12 @@ export function calculateFunctionalScore(nyha: string, kccq: number | undefined,
  */
 export function calculateVolumeScore(dryWeight: number, currentWeight: number, findings: Set<string>, spo2?: number): number {
     let score = 100;
-    const diff = currentWeight - dryWeight;
+    const diff = weightDifferenceKg(currentWeight, dryWeight);
 
-    // Weight Penalty: -15 pts per kg above 1kg buffer
+    // Weight Penalty: -15 pts per kg above 1kg buffer. R13 E1/E6: the rounded difference (exactly 1.0 kg is not above the buffer) sets both the test and the size of the penalty, and the penalty is rounded to
+    // six decimals, so two weight pairs with the same one-decimal difference always score the same (a half point no longer rounds either way on the noise of the entry digits).
     if (diff > 1.0) {
-        score -= (diff - 1.0) * VOLUME_SCORING.weightPenaltyPerKgAbove1;
+        score -= Math.round((diff - 1.0) * VOLUME_SCORING.weightPenaltyPerKgAbove1 * 1e6) / 1e6;
     }
 
     // Findings Penalty: -10 pts per finding
@@ -433,7 +434,7 @@ export function calculateGuidelineConcordanceScore(resultingRegimen: RegimenMed[
     });
     score += Math.min(table.targetBonusCap, targetBonusSum);
 
-    const fluidExcess = patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg;
+    const fluidExcess = weightAboveDryKg(patient);
     const hasDiuretic = resultingRegimen.some(r => DIURETIC_CLASSES.has(r.med.drug_class));
     if (fluidExcess <= 1.0 || hasDiuretic) score += table.volumeBonus;
 

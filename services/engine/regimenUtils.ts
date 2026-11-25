@@ -1,6 +1,6 @@
 /** Small regimen/patient helpers shared by the candidate, effects and scoring stages. Moved verbatim from simulationService.ts (phase 4). */
 import { Patient, Medication, MedicationDose, ScoredRegimen, RegimenMed, ModificationSet } from '../../types';
-import { hasUnknownHistoricalHFrEF, valueUnknown, congestionFindingCount, isAcutelyDecompensated } from '../clinicalPredicates';
+import { hasUnknownHistoricalHFrEF, valueUnknown, congestionFindingCount, isAcutelyDecompensated, weightAboveDryKg, pulsePressureMmHg, bunToCreatinineRatio } from '../clinicalPredicates';
 import { getMedicationClassGroup, isDiureticClass, MRA_POOL_CLASSES } from './registry';
 import { drugFacts } from './drugFacts';
 import { LOW_OUTPUT, CONGESTION_EXCESS_KG_ABOVE, HYPOTENSION_SBP_BELOW } from './thresholds';
@@ -475,7 +475,7 @@ export function hasCongestion(patient: Patient): boolean {
 /** Congested by the engine's weight criterion: current weight more than CONGESTION_EXCESS_KG_ABOVE kg above dry weight. */
 export function isCongestedAboveDryWeight(patient: Patient): boolean {
     if (valueUnknown(patient.volume_status.current_weight_kg) || valueUnknown(patient.volume_status.dry_weight_kg)) return false; // a blank weight is not a measurement
-    return patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg > CONGESTION_EXCESS_KG_ABOVE;
+    return weightAboveDryKg(patient) > CONGESTION_EXCESS_KG_ABOVE;
 }
 
 /**
@@ -495,7 +495,7 @@ export function isLoopDiureticResistant(patient: Patient, loop: RegimenMed): boo
 export function hasHypoperfusion(patient: Patient): boolean {
     // A blood pressure that is not entered (0) is not a low pressure or a narrow pulse pressure.
     return patient.volume_status.exam_findings.has('Cool Extremities') || (patient.sbp > 0 && patient.sbp < HYPOTENSION_SBP_BELOW)
-        || (patient.dbp > 0 && patient.sbp > patient.dbp && patient.sbp - patient.dbp <= LOW_OUTPUT.pulsePressureMax);
+        || (patient.dbp > 0 && patient.sbp > patient.dbp && pulsePressureMmHg(patient) <= LOW_OUTPUT.pulsePressureMax);
 }
 
 /**
@@ -509,7 +509,7 @@ export function isColdState(patient: Patient): boolean {
 /** Weight more than 1 kg below the recorded dry weight (the engine's depletion criterion). */
 export function weightBelowDryWeight(patient: Patient): boolean {
     if (valueUnknown(patient.volume_status.current_weight_kg) || valueUnknown(patient.volume_status.dry_weight_kg)) return false;
-    return patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg < -CONGESTION_EXCESS_KG_ABOVE;
+    return weightAboveDryKg(patient) < -CONGESTION_EXCESS_KG_ABOVE;
 }
 
 /** Volume depletion (S2): weight more than 1 kg below dry weight AND no congestion finding on examination. */
@@ -542,10 +542,10 @@ export function lowOutputMarkers(patient: Patient): string[] {
     if (patient.sbp <= patient.dbp) return [];
     const markers: string[] = [];
     if (patient.volume_status.exam_findings.has('Cool Extremities')) markers.push('cool extremities');
-    const pulsePressure = patient.sbp - patient.dbp;
+    const pulsePressure = pulsePressureMmHg(patient);
     if (pulsePressure <= LOW_OUTPUT.pulsePressureMax) markers.push(`pulse pressure ${pulsePressure} mmHg (${LOW_OUTPUT.pulsePressureMax} or less)`);
-    const bunCrRatio = patient.creatinine > 0 ? patient.bun / patient.creatinine : 0;
-    if (bunCrRatio > LOW_OUTPUT.bunCrAbove) markers.push(`BUN to creatinine ratio ${Math.round(bunCrRatio * 10) / 10} (above ${LOW_OUTPUT.bunCrAbove})`);
+    const bunCrRatio = bunToCreatinineRatio(patient);
+    if (bunCrRatio > LOW_OUTPUT.bunCrAbove) markers.push(`BUN to creatinine ratio ${Math.round(bunCrRatio * 10) / 10 === LOW_OUTPUT.bunCrAbove ? bunCrRatio.toFixed(2) : Math.round(bunCrRatio * 10) / 10} (above ${LOW_OUTPUT.bunCrAbove})`); // R13 E2-3: a ratio above the limit by under 0.05 keeps two decimals (20.03), never "20 (above 20)"
     return markers;
 }
 

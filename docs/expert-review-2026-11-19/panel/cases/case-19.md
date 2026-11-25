@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 A 68-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 114/68 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 5 mEq/L and eGFR is 41 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Spironolactone 25 mg once daily.
 
@@ -54,7 +54,7 @@ Daily dosing: 2 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Scope and evidence
 
@@ -63,7 +63,7 @@ Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for th
 ### Safety alerts (2)
 
 - **Potassium hold on spironolactone**: Potassium 5.0 mEq/L is 5.0 or above: the dose is not increased (maintain; recheck potassium). Spironolactone 25mg is not raised in any option shown (what each option does with it, including a reduction or a stop for another reason, is on its change lines); recheck potassium before any increase. Basis: A rule set by this tool: class rule from the eplerenone and finerenone labels applied to spironolactone (the Aldactone label gives no number).
-- **Kidney function**: Creatinine 1.1 to 1.8 mg/dL (+58%, derived eGFR fall 43%). This meets the 2026 ESC criteria to halve the RAAS inhibitor and the MRA (Supplementary Tables S4/S5/S8; main text 6.1.6: a rise of less than 50% is acceptable). Each is reduced one dose step (a drug already at the lowest dose is kept, not increased), recheck chemistry in 1-2 weeks, no up-titration until stable. First steps: check volume status (dehydration, over-diuresis), stop NSAIDs and other nephrotoxins, review the diuretic dose.
+- **Kidney function**: Creatinine 1.12 to 1.77 mg/dL (+58%, derived eGFR fall 43%). The creatinine rise of 58% and the derived eGFR fall of 43% each meet the 2026 ESC criteria (a rise of 50% or more, a fall above 30%). The 2026 ESC criteria call for halving the RAAS inhibitor and the MRA (Supplementary Tables S4/S5/S8; main text 6.1.6). Each is reduced one dose step (a drug already at the lowest dose is kept, not increased), recheck chemistry in 1-2 weeks, no up-titration until stable. First steps: check volume status (dehydration, over-diuresis), stop NSAIDs and other nephrotoxins, review the diuretic dose.
 
 ### Other care prompts (2)
 

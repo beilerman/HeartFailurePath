@@ -20,6 +20,7 @@ import { runEngineReadinessR7Checks } from './engineReadinessR7Checks';
 import { runEngineReadinessR8Checks } from './engineReadinessR8Checks';
 import { runEngineReadinessR9Checks } from './engineReadinessR9Checks';
 import { runEngineReadinessR10Checks } from './engineReadinessR10Checks';
+import { runEngineReadinessR11Checks } from './engineReadinessR11Checks';
 
 import { generateAndScoreModifications, isTargetDoseForPatient, clonePatient, DISPLAY_FLOORS, classifyPhenotype } from '../services/simulationService';
 import { getDoseTiers, dailyDose, doseProgressToTarget, isCongestedAboveDryWeight, effectDose, renalCapExceeded, adjacentTiers, kUptitrationBlock, hrContinuationAction } from '../services/engine/regimenUtils';
@@ -2691,7 +2692,7 @@ async function runVerification() {
                         if (!lis.includes(20) || !spi.includes(25)) fail('lisinopril 20 / spironolactone 25 not kept after an acceptable rise');
                     }
                     if (t.includes('Halves Both')) {
-                        if (!kidneyAlert || !kidneyAlert.includes('halve') || !kidneyAlert.includes('1-2 weeks') || !kidneyAlert.includes('NSAIDs')) fail('halving alert missing, or without the recheck interval and first steps');
+                        if (!kidneyAlert || !kidneyAlert.includes('halving the RAAS inhibitor') || !kidneyAlert.includes('1-2 weeks') || !kidneyAlert.includes('NSAIDs')) fail('halving alert missing, or without the recheck interval and first steps');
                         if (lis.length === 0 || lis.some(x => x > 10)) fail(`lisinopril not reduced one step to 10 mg (found ${lis.join(', ')})`);
                         if (spi.length === 0 || spi.some(x => x > 12.5)) fail(`spironolactone not reduced one step to 12.5 mg (found ${spi.join(', ')})`);
                         if (anyUp) fail('a RAAS inhibitor or MRA is up-titrated while the kidney rule says halve');
@@ -4412,6 +4413,8 @@ async function runVerification() {
         passed += rr9.passed; failed += rr9.failed;
         const rr10 = runEngineReadinessR10Checks();
         passed += rr10.passed; failed += rr10.failed;
+        const rr11 = runEngineReadinessR11Checks();
+        passed += rr11.passed; failed += rr11.failed;
     }
 
     console.log('');

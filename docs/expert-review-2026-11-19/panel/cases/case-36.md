@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 A 64-year-old man with an ejection fraction of 20% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 86/54 mmHg and the heart rate is 84 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 50 mL/min/1.73 m². He takes Lisinopril 5 mg once daily, Carvedilol 6.25 mg twice daily.
 
@@ -54,7 +54,7 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Safety alerts (1)
 
@@ -68,7 +68,7 @@ Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for th
 
 - No medication option is proposed.
 - Can be reviewed: This tool proposes no medication option today. The alerts say why, and may ask you to withhold, reduce or review a drug. These checks are not a complete assessment of the patient.
-- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+- Waiting for information: Measured KCCQ: No KCCQ value or response is invented; functional treatment response remains unquantified.
 
 ### What the tool shows instead of options
 
@@ -81,7 +81,7 @@ This tool proposes no medication option today because of this safety or data sta
 
 ### Data not entered
 
-- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- KCCQ not measured: no KCCQ value or response is assumed.
 - No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
 - No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
 - No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.

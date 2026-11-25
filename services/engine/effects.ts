@@ -1,7 +1,7 @@
 /** Evaluate regimen costs, cautions and evidence context while preserving observed physiology. */
 import { Patient, Medication, ModificationSet, ChfEffects } from '../../types';
 import { drugFacts } from './drugFacts';
-import { valueUnknown, hasGoutHistory, hasAtrialFibrillationHistory } from '../clinicalPredicates';
+import { valueUnknown, hasGoutHistory, hasAtrialFibrillationHistory, bunToCreatinineRatio } from '../clinicalPredicates';
 import { hasChildPughBorC, hasChildPughBConfirmed, onPde5Inhibitor as onPde5InhibitorPatient } from './contraindications';
 import { RAAS_CLASSES, isDiureticClass } from './registry';
 import { clonePatient, medicationComplexity, isTargetDoseForPatient, sortedByName } from './regimenUtils';
@@ -99,7 +99,7 @@ export function simulateModificationEffect(
         const monthlyCost = monthlyMedicationCost(r, currentPatient.insurance_tier, prices);
         if (monthlyCost === undefined || !Number.isFinite(monthlyCost) || monthlyCost < 0) {
             totalCost += Number.POSITIVE_INFINITY;
-            warnings.push(`PRICE UNKNOWN: ${r.med.name} has no loaded cost data. Re-run after pricing loads before comparing affordability.`);
+            warnings.push(currentPatient.insurance_tier ? `PRICE UNKNOWN: ${r.med.name} has no loaded cost data. Re-run after pricing loads before comparing affordability.` : `PRICE UNKNOWN: ${r.med.name} has no cost data because no pricing profile is selected. Select a pricing profile and re-run before comparing affordability.`); // R11 B7d: the cause is named
         } else {
             totalCost += monthlyCost;
         }
@@ -339,7 +339,7 @@ export function simulateModificationEffect(
         }
     }
 
-    const bunCrRatio = currentPatient.creatinine > 0 ? currentPatient.bun / currentPatient.creatinine : 0;
+    const bunCrRatio = bunToCreatinineRatio(currentPatient);
     if (bunCrRatio > 20 && hasDiuretic && !hasGLP1) {
         if (map < 70) {
             warnings.push('Prerenal Azotemia: Diuresis likely to worsen Creatinine due to low perfusion');

@@ -4,7 +4,7 @@ import { digoxinAfibAccessoryPathway, ci, CI_ANURIA, ANURIA, CI_ANGIOEDEMA, raas
     STRONG_CYP3A_INHIBITORS, MODERATE_CYP3A_INHIBITORS, CI_STRONG_CYP3A, CI_ADRENAL_INSUFFICIENCY, CI_MRA_WITHHOLD_K6, mraStartPotassiumCheck, mraStartEgfrCheck, creatinineRiseStopCheck, moderateCyp3aInhibitor,
     PDE5_INHIBITORS, onPde5Inhibitor, OTHER_SGC_STIMULATORS, onOtherSgcStimulator, LONG_ACTING_NITRATES, onLongActingNitrate, NSAID_COX2_EXTERNAL, TZD_SAXAGLIPTIN_EXTERNAL, EXTERNAL_POTASSIUM_RAISERS } from './services/engine/contraindications';
 import { arniStartDose } from './services/engine/raasStart';
-import { valueUnknown, congestionFindingCount, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier } from './services/clinicalPredicates';
+import { valueUnknown, congestionFindingCount, hasHistoricalHFrEF, isBlackRace, isAcutelyDecompensated, vericiguatNtProBnpThreshold, ivIronCreditTier, weightAboveDryKg } from './services/clinicalPredicates';
 import { SEVERE_CKD_EGFR_BELOW, MRA_HALVE_DOSE_EGFR_BELOW, BB_HR_BELOW, BB_HR_BELOW_ESC, HYPOKALEMIA_K_BELOW, RAAS_START_K_CAUTION, RAAS_REDUCE_K, RAAS_WITHHOLD_K } from './services/engine/thresholds';
 
 // Helper for logarithmic calculations (dose-response curves)
@@ -880,7 +880,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
         side_effects: () => ({ hyperkalemia: 0.08, hypotension: 0.04 }), // Lower hyperkalemia vs spironolactone/eplerenone
         special_features: [
             {
-                feature: 'nsMRA: 16% RRR CV death/HF events in LVEF≥40 (FINEARTS-HF); lower hyperkalemia vs steroidal MRA',
+                feature: 'nonsteroidal MRA: 16% RRR CV death/HF events in LVEF≥40 (FINEARTS-HF); lower hyperkalemia vs steroidal MRA',
                 replaced_by: 'outcome', points: 45,
                 criteria: (p) => p.lvef >= 40
             }
@@ -1283,7 +1283,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 feature: 'Outpatient worsening-HF decongestion option on background loop therapy',
                 replaced_by: 'not_modelled', points: 12,
                 criteria: (p) => {
-                    const fluidExcess = p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg;
+                    const fluidExcess = weightAboveDryKg(p);
                     const hasBaselineLoop = (p.current_regimen || []).some(r => r.med.drug_class === 'Loop Diuretic');
                     return fluidExcess >= 2.0 && hasBaselineLoop;
                 }
@@ -1296,7 +1296,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
             // hypersensitivity, and adhesive hypersensitivity for the on-body infusor). CKD is an INDICATION, so there is no eGFR exclusion.
             {
                 reason: 'Less than 1 kg above dry weight (reserved for active congestion)',
-                when: p => (p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg) < 1.0,
+                when: p => weightAboveDryKg(p) < 1.0,
             },
             {
                 reason: 'No oral loop diuretic on board (Furoscix is a short-course add-on to an oral loop, labeled "not for chronic use", not a replacement)',
@@ -1764,7 +1764,7 @@ export const MEDICATION_FORMULARY: Medication[] = [
                 feature: 'Sodium load risk in congested HF (about 400 mg sodium per 5 g; dose-related edema)',
                 replaced_by: 'harm', points: -10,
                 points_for_dose: (dose) => -Math.round(10 * LOKELMA_EDEMA_RATE(dose) / LOKELMA_EDEMA_RATE(10)),
-                criteria: (p) => (p.volume_status.current_weight_kg - p.volume_status.dry_weight_kg) > 2.0
+                criteria: (p) => weightAboveDryKg(p) > 2.0
             }
         ]
     },

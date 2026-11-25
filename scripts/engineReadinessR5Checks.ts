@@ -324,7 +324,8 @@ export function runEngineReadinessR5Checks(): { passed: number; failed: number }
     /** option, plan and recommend in any form, at the start of a word. */
     const OPTION_WORDS = /\b(options?|plans?|planned|planning|recommend\w*)/i;
     // R10 A7 (rewritten): the three sentences that say no medication option is shown or proposed are the allowed use of the word, as the Z5 sentence is.
-    const ALLOWED_OPTION_SENTENCES = /No medication option is (?:shown for this patient today|proposed at this pressure|proposed until the rhythm is managed)\./g;
+    // R11 B7a: the scope alert says "and no medication option is shown." (it said "regimen change"), a fourth sentence of the same kind.
+    const ALLOWED_OPTION_SENTENCES = /No medication option is (?:shown for this patient today|proposed at this pressure|proposed until the rhythm is managed)\.|and no medication option is shown\./g;
     const withoutAllowed = (a: string) => a.replace(ALLOWED_OPTION_SENTENCES, '');
     const NO_OPTION_VARIANTS: Array<[string, (p: Patient) => void]> = [
         ['natural', () => { /* the generated patient */ }], ['input error', p => { p.cost_sensitivity = -1; }], ['limited review', p => { p.age = 0; }], ['systolic not above diastolic', p => { p.dbp = p.sbp + 5; }],

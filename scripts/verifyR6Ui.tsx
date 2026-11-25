@@ -32,7 +32,7 @@ export const renderScreen = (p: Patient, o: SimulationOutput = runTier(p)) => {
 /** The words a screen with no ranked option never uses (option, plan, recommend, rank in any form). Phrases allowed on purpose, with the reason, are listed in ALLOWED. */
 export const OPTION_WORDS = /\b(options?|plans?|planned|planning|rank\w*|recommend\w*)\b/i;
 // R9 Z5 (ruling wording): the one sentence every no-option screen carries says there is no option, so it contains the word. Allowed as a whole sentence and nothing else.
-export const ALLOWED: ReadonlyArray<readonly [RegExp, string]> = [[/proposes no medication option today|no medication option is proposed|Having no option/, 'Z5 sentence'], [/No medication option is (?:shown for this patient today|proposed at this pressure|proposed until the rhythm is managed)/, 'R10 A7 sentences']];
+export const ALLOWED: ReadonlyArray<readonly [RegExp, string]> = [[/proposes no medication option today|no medication option is proposed|Having no option/, 'Z5 sentence'], [/No medication option is (?:shown for this patient today|proposed at this pressure|proposed until the rhythm is managed)/, 'R10 A7 sentences'], [/and no medication option is shown/, 'R11 B7a scope sentence']];
 export function optionWordSentences(text: string): string[] {
     const out: string[] = [];
     for (const seg of text.split(/ \| |(?<=[.!?:]) (?=[A-Z])/)) {

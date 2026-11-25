@@ -14,7 +14,7 @@ The `points` column is the RETIRED figure, kept in the data only as documentatio
 | Bisoprolol | Preferred in COPD / mild-moderate asthma (most beta-1 selective) | 10 | C | not_modelled |
 | Spironolactone | HFpEF Class IIb: TOPCAT Americas subgroup — reduced HF hospitalization (LVEF ≥ 45) | 18 | A | outcome |
 | Eplerenone | Fewer endocrine side effects (No gynecomastia risk) | 3 | C (tolerability) | harm |
-| Finerenone (Kerendia) | nsMRA: 16% RRR CV death/HF events in LVEF≥40 (FINEARTS-HF); lower hyperkalemia vs steroidal MRA | 45 | A/C | outcome |
+| Finerenone (Kerendia) | nonsteroidal MRA: 16% RRR CV death/HF events in LVEF≥40 (FINEARTS-HF); lower hyperkalemia vs steroidal MRA | 45 | A/C | outcome |
 | Dapagliflozin | Preferred in Diabetics | 10 | C | not_modelled |
 | Empagliflozin | Preferred in Diabetics | 10 | C | not_modelled |
 | Semaglutide (Wegovy) | STEP-HFpEF: improves symptoms and function in obesity-phenotype HFpEF (LVEF 45 or higher, BMI 30 or higher) | 40 | C | symptom |

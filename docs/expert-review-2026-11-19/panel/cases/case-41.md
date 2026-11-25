@@ -2,7 +2,7 @@
 
 ## Part 1. The patient
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 A 79-year-old man with an ejection fraction of 35% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 100/64 mmHg and the heart rate is 70 per minute in sinus rhythm. He is 1.5 kg above the recorded dry weight. Potassium is 5.7 mEq/L and eGFR is 45 mL/min/1.73 m². He takes Carvedilol 6.25 mg twice daily, Furosemide 40 mg once daily.
 
@@ -54,11 +54,11 @@ Daily dosing: 3 doses a day from 2 drugs.
 
 ## Part 2. What the tool shows
 
-Rule set 2026-11-22.4, dated 22 November 2026. The patient is constructed for this review and is not a real person.
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
 
 ### Safety alerts (3)
 
-- **Outside the tool's scope**: Cardiac amyloidosis is recorded. The trials behind this tool did not study it, and the tool has no way to take it into account, so the tool's estimates would not be reliable for this patient and no regimen change is shown. Alerts about the current regimen still apply and are shown. Prompts that propose therapy or assess whether a therapy is indicated (indicated therapy that is missing, eligibility for other drugs, device screening, cardiac rehabilitation, advanced-therapy evaluation) are not shown, because this condition is outside the tool's scope.
+- **Outside the tool's scope**: Cardiac amyloidosis is recorded. The trials behind this tool did not study it, and the tool has no way to take it into account, so the tool's estimates would not be reliable for this patient and no medication option is shown. Alerts about the current regimen still apply and are shown. Prompts that propose therapy or assess whether a therapy is indicated (indicated therapy that is missing, eligibility for other drugs, device screening, cardiac rehabilitation, advanced-therapy evaluation) are not shown, because this condition is outside the tool's scope.
 - **Elevated potassium**: Potassium is 5.7 mEq/L and the patient takes no renin-angiotensin drug or MRA. Confirm the value (a hemolyzed sample reads high) and look for the cause: potassium supplements or salt substitutes, potassium-sparing diuretics, NSAIDs, kidney function and acidosis. Recheck potassium.
 - **Very high risk**: NT-proBNP 5600 pg/mL (above 5000) with worsening symptoms or congestion. The 2026 ESC guideline says this indicates very high risk and admission is generally advised; assess for admission before outpatient optimization.
 

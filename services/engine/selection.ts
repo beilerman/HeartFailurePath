@@ -10,6 +10,7 @@ import { SCORE_ADJUSTMENTS } from './scoreModel';
 import { isCongestedAboveDryWeight, hasCongestion, loopDoseEffect } from './regimenUtils';
 import { CONGESTION_EXCESS_KG_ABOVE, TOO_CLOSE_TO_SEPARATE_POINTS } from './thresholds';
 import { budgetKnown } from './decisionReadiness';
+import { weightAboveDryKg, kgText } from '../clinicalPredicates';
 
 /**
  * Hard display floors on the PROJECTED state: a regimen that projects past any of these is never
@@ -367,7 +368,7 @@ export function ensureCongestionCoverage(picks: ScoredRegimen[], pool: ScoredReg
         if (!candidate && !picks.some(includesDiureticIntensification)) { candidate = pool.filter(r => safe(r) && includesDiureticIntensification(r))[0]; if (candidate) { const added = [...new Set((candidate.modification_set?.modifications ?? []).filter(m => m.target && (m.action === 'add' || m.action === 'titrate_up') && (m.target.med.drug_class === 'Loop Diuretic' || m.target.med.drug_class === 'Thiazide-like Diuretic')).map(m => m.target!.med.name))]; const addedActions = new Set((candidate.modification_set?.modifications ?? []).filter(m => m.target && (m.action === 'add' || m.action === 'titrate_up') && (m.target.med.drug_class === 'Loop Diuretic' || m.target.med.drug_class === 'Thiazide-like Diuretic')).map(m => m.action)); what = `a diuretic ${addedActions.size > 1 ? 'addition or increase' : addedActions.has('titrate_up') ? 'increase' : 'addition'} (${added.map(n => n.split(' (')[0]).join(' and ')})`; why = 'and no loop increase passed the safety and budget checks'; } }
     }
     if (!candidate) return picks;
-    const kg = (patient.volume_status.current_weight_kg - patient.volume_status.dry_weight_kg).toFixed(1);
+    const kg = kgText(weightAboveDryKg(patient));
     const tagged: ScoredRegimen = copyOf(candidate, { ...candidate, shown_because: `Includes ${what}: the patient is congested (${kg} kg above dry weight; the tool's loop criterion is more than ${CONGESTION_EXCESS_KG_ABOVE} kg), ${why}.` });
     return picks.length >= 3 ? [...picks.slice(0, picks.length - 1), tagged] : [...picks, tagged];
 }

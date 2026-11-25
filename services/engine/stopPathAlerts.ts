@@ -120,6 +120,28 @@ export function noMedicationChangeReadiness(dr: import('../../types').DecisionRe
     return { ...dr, available: [`${NO_OPTION_SENTENCE} These checks are not a complete assessment of the patient.`] };
 }
 
+/**
+ * R11 C5: on an output with no medication option no decision is on the page, so the two KCCQ lines (readiness consequence and missing-data notice) do not speak of "other eligible decisions".
+ * The words are the same sentences without that clause; an output with options keeps them as written.
+ */
+export function noOptionKccqWording<T extends { decisionReadiness?: import('../../types').DecisionReadiness; missingDataNotices?: string[]; clinicalAlerts?: string[] }>(out: T): T {
+    const dr = out.decisionReadiness;
+    // R12 D4: the same step deletes every "other eligible decisions remain available or assessable" clause (no decision is on the page); each is a deletion, no word is added.
+    const drop = (t: string) => t.replace('Not required for other eligible decisions. ', '')
+        .replace('; independent eligible decisions and indicated reductions remain available.', '.')
+        .replace('; other decisions may remain assessable.', '.')
+        .replace('; other indications remain assessable.', '.')
+        .replace('; other eligible decisions remain available.', '.')
+        .replace(' Safety-driven reductions/removals and unrelated eligible decisions remain assessable.', '')
+        .replace(' Hydralazine plus a nitrate and loop diuretics (only with congestion) remain available; beta-1-selective beta-blockers (metoprolol, bisoprolol) are the choice.', ''); // R13 E5(f): the pregnancy alert's availability sentence
+    return {
+        ...out,
+        ...(out.clinicalAlerts ? { clinicalAlerts: out.clinicalAlerts.map(drop) } : {}),
+        ...(dr ? { decisionReadiness: { ...dr, missing: dr.missing.map(m => ({ ...m, consequence: drop(m.consequence) })), available: dr.available.map(drop), deferred: dr.deferred.map(drop) } } : {}),
+        ...(out.missingDataNotices ? { missingDataNotices: out.missingDataNotices.map(n => drop(n).replace('KCCQ not measured — eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.', 'KCCQ not measured — no KCCQ value or response is assumed.')) } : {}),
+    };
+}
+
 /** An alert that a monitoring row points at ("see the low blood pressure alert") and the alert heading that must be on the screen for the row to say so. */
 const MONITORING_REFERENCES: ReadonlyArray<readonly [RegExp, RegExp]> = [
     [/\(see the hypoxia alert\)/, /^HYPOXIA ALERT/],

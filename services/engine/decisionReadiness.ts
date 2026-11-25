@@ -1,5 +1,5 @@
 import type { DecisionReadiness, Medication, ModificationSet, Patient, SimulationOutput } from '../../types';
-import { valueUnknown, isIronDeficient, pregnancyStatusRequired, kidneyNotEntered } from '../clinicalPredicates';
+import { valueUnknown, isIronDeficient, pregnancyStatusRequired, kidneyNotEntered, pulsePressureMmHg } from '../clinicalPredicates';
 import { RAAS_CLASSES, MRA_POOL_CLASSES, getMedicationClassGroup } from './registry';
 import { HYPOTENSION_SBP_BELOW, LOW_OUTPUT, BREASTFEEDING_NOT_ASSESSED } from './thresholds';
 import { PDE5_INHIBITORS, nitrateNamesTaken } from './contraindications';
@@ -110,7 +110,7 @@ export function assessDecisionReadiness(p: Patient): DecisionReadiness {
     add('insurance_tier', 'Pricing profile', 'Do not assume insurance coverage or an out-of-pocket price.', !p.insurance_tier);
     // One observed hypoperfusion marker plus an unavailable BUN/Cr marker cannot establish a stable low-EF state.
     if (p.lvef > 0 && p.lvef < LOW_OUTPUT.lvefBelow && (!renalDataKnown(p) || valueUnknown(p.bun))
-        && (p.volume_status.exam_findings.has('Cool Extremities') || (p.sbp > p.dbp && p.sbp - p.dbp <= LOW_OUTPUT.pulsePressureMax))) {
+        && (p.volume_status.exam_findings.has('Cool Extremities') || (p.sbp > p.dbp && pulsePressureMmHg(p) <= LOW_OUTPUT.pulsePressureMax))) {
         core.push('perfusion assessment with missing BUN/creatinine');
     }
     return {
