@@ -1,0 +1,26 @@
+# Ranking change: digoxin per 2026 ESC (IIa B1) and potassium binders without an evidence bonus, 2026-11-11
+
+`npm run ranking:diff` against the golden snapshot before the update. The 12 "(no pick)" runs and the 24 eligibility/alert differences
+are the four new ESC26-Digoxin scenarios (new keys, not changes). Among the 267 scenarios that already existed (801 runs):
+
+- Top pick changed in 1 run: "Critical Renal (eGFR 25, K+ 5.2) :: commercial", from sacubitril/valsartan 24/26 + patiromer (55) to dapagliflozin
+  alone (53). The patiromer bonus (+12 after normalization) had propped up a RAAS-inhibitor start at potassium 5.2 and eGFR 25; ESC 2026 says
+  ACEi/ARNI "with caution" at eGFR below 30 or potassium above 5.2 and makes no recommendation for binders, so an SGLT2i-first lead is clinically
+  acceptable. No pillar already in use is lost (the patient was not on the RAAS inhibitor).
+- Per-regimen warnings changed in 6 regimens: the new REALIZE-K note on sodium zirconium cyclosilicate (K6-Source K+ 6.0 No MRA, Rate-Source
+  Digoxin Potassium 5.8; three tiers each).
+- Digoxin eligibility: no existing scenario changed (none sits at NYHA II with optimized therapy, LVEF 40 or below, outside AF).
+
+  (c) pick order identical:      783 / 813
+  (d) eligibility + alerts identical: NO (24 differences)
+  (e) per-regimen warnings identical: NO (6 regimens)
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 79 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 3 of 57 runs
+    LVEF <= 40: 10 of 648 runs
+    LVEF >= 50: 0 of 108 runs
+
+Top pick changed in 13 runs:
+  Critical Renal (eGFR 25, K+ 5.2) :: commercial
+     old: Patiromer 16.8g qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 55, raw 55.00]

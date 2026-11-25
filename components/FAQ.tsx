@@ -1,218 +1,155 @@
-import React from 'react';
-import { QuestionMarkCircleIcon, LightBulbIcon, CalculationIcon, HeartIcon } from './icons';
+import React, { useEffect, useRef, useState } from 'react';
+import { ELIGIBILITY_RULES } from '../services/engine/eligibility';
+import { WEIGHT_PROFILES, WEIGHT_PROFILE_META, DOMAIN_LABELS, SCORE_ADJUSTMENTS, type ScoreDomainKey } from '../services/engine/scoreModel';
+import { EvidenceTables } from './EvidenceTables';
+import { VISIT_LIMIT_WORDS } from '../services/engine/thresholds';
+import { SCOPE_STATEMENT } from './appStatements';
+import { EVIDENCE_MATRIX, ALL_EVIDENCE_ROWS, rowMatches } from './evidenceMatrix';
 
-const domainCards = [
-    {
-        title: '1. Neurohormonal',
-        color: 'text-indigo-700',
-        description: 'Uses NT-proBNP as a congestion and neurohormonal burden signal.',
-        bullets: ['100 points at <= 125 pg/mL', '0 points at >= 4000 pg/mL', 'Linear interpolation between thresholds']
-    },
-    {
-        title: '2. Functional',
-        color: 'text-blue-700',
-        description: 'Combines NYHA class, KCCQ score, and optional daily step count.',
-        bullets: ['NYHA mapped I->IV', 'KCCQ contributes directly (0-100)', 'Steps included when available']
-    },
-    {
-        title: '3. Volume',
-        color: 'text-emerald-700',
-        description: 'Measures fluid status using weight delta, exam findings, and oxygenation.',
-        bullets: ['Weight penalty beyond +1.0 kg', '-10 points per exam finding', 'Additional SpO2 penalty if < 94%']
-    },
-    {
-        title: '4. Structure',
-        color: 'text-amber-700',
-        description: 'Blends current remodeling state with trajectory and chamber geometry.',
-        bullets: ['40% absolute LVEF state', '40% LVEF improvement trajectory', '20% LVEDD/LAVI chamber component']
-    },
-    {
-        title: '5. Cost',
-        color: 'text-slate-700',
-        description: 'Compares regimen cost to patient budget with sensitivity weighting.',
-        bullets: ['Budget-aware penalty curve', 'Sensitivity modifies under-budget sting', 'Zero-budget mode supported']
-    },
-    {
-        title: '6. Adherence',
-        color: 'text-teal-700',
-        description: 'Scores regimen complexity against patient complexity tolerance.',
-        bullets: ['Complexity from dose frequency/formulation', 'Tolerance input scales threshold', 'Score decays when complexity exceeds threshold']
-    },
-    {
-        title: '7. Guideline Concordance',
-        color: 'text-rose-700',
-        description: 'Phenotype-specific alignment with major HF guideline pathways.',
-        bullets: ['HFrEF: RAAS + BB + MRA + SGLT2i', 'HFmrEF: weighted hybrid pillar model', 'HFpEF: SGLT2i-first with adjunct logic']
-    }
-];
+// Render any web address in the matrix text as a link that opens in a new tab.
+const linkify = (text: string): React.ReactNode[] =>
+    text.split(/(https?:\/\/[^\s)]+)/g).map((part, i) =>
+        /^https?:\/\//.test(part)
+            ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-indigo-700 underline">{part}</a>
+            : <React.Fragment key={i}>{part}</React.Fragment>);
 
-const safetyChecks = [
-    'Input safety: SBP must be greater than DBP; duplicate current medications are removed before scoring.',
-    'Implausible inputs hard-stop: physiologically impossible values (e.g. LVEF 99, K+ > 8) return verification alerts only — no recommendations are computed on suspect data.',
-    'Hemodynamic hard gate: SBP < 90 mmHg returns alerts only (no regimen output).',
-    'Hyperkalemic emergency gate: baseline K+ >= 6.0 mEq/L fires a HYPERKALEMIC EMERGENCY alert (ECG and urgent treatment, not outpatient optimization); K+ >= 6.5 returns alerts only — no regimen output (parallel to the SBP < 90 gate). K+ > 8.0 is treated as an implausible value.',
-    'Display safety filter: regimens with projected SBP < 85, projected potassium > 6.0, or projected HR < 45 are not shown.',
-    'Blank safety-critical data is treated as "not entered", never as a value: a blank potassium (0) never clears a hyperkalemia gate and never flows into projected-K+ math, and blank renal data (eGFR/creatinine 0) never evaluates as end-stage CKD. Renal-gated new starts are withheld pending a BMP, current renal-gated medications are retained, and any candidate intensifying RAAS/MRA/SGLT2i carries an explicit data-unknown warning and ranking penalty.',
-    'Nitrate + PDE5 inhibitor (sildenafil/tadalafil) is an absolute exclusion — H/ISDN is removed from the formulary and force-removed from a current regimen, not merely warned about.',
-    'Rescue mechanisms: a K+ binder is auto-appended when a candidate projects K+ > 5.3 (reactive rescue) and is co-prescribed proactively when an MRA is initiated at baseline K+ > 5.0 (DIAMOND protocol); IV iron is appended for iron deficiency per ESC criteria (ferritin < 100, or ferritin 100-300 with TSAT < 20). Binder rescue enables a regimen to be considered but carries a residual-risk score penalty — a regimen needing rescue ranks below an equal regimen that does not. Rescue additions count toward the max-new-classes-per-visit limit (a deliberate patient-facing sequencing limit).',
-    'Pregnancy exclusions: RAAS classes, MRA/nsMRA, SGLT2i, vericiguat (FDA boxed warning — embryo-fetal toxicity), ivabradine (fetal harm), and GLP-1 therapy are excluded from recommendations. Hydralazine/isosorbide dinitrate remains available as the pregnancy-appropriate RAAS alternative.',
-    'Acute decompensation handling: beta-blocker initiation is blocked and beta-blocker up-titration is deferred in ANY acute decompensation (warm or cold) — continue the current dose and diurese. An existing beta-blocker is dose-REDUCED only with hypoperfusion (cold-and-wet), cutting one dose step (~50%) — never abruptly stopped — while warm-and-wet decompensation continues the beta-blocker. Safe additions (especially SGLT2i, beneficial in acute HF) are still offered alongside any mandated reduction.',
-    'Ivabradine initiation requires sinus rhythm, HR >= 70, LVEF <= 35, and a maximally-tolerated beta-blocker; continuation on an existing prescription is stopped only for HR < 50, AFib, or AV block. Pregnancy excludes ivabradine (initiation and continuation).',
-    'Vericiguat initiation requires the VICTORIA enrollment criteria: NYHA II-IV, NT-proBNP >= 1600, LVEF < 45, and a recent (within 6 months) worsening HF event. These criteria gate initiation only — a patient already on vericiguat is never force-removed for improved markers. Pregnancy forces removal (FDA boxed warning).',
-    'GLP-1 therapy is an obesity-phenotype adjunct for LVEF strictly > 40 (HFpEF/HFmrEF only — LVEF exactly 40 is HFrEF and receives no GLP-1; HFimpEF is managed as HFrEF). BMI >= 30 gates initiation only — continuation is blocked only by true safety contraindications (pregnancy, medullary thyroid carcinoma / MEN2 history), so weight-loss success never forces removal.',
-    'Warning penalties dock ranking only for genuine residual patient risk: purely procedural instructions (the mandatory ACEi-to-ARNI 36-hour washout, beta-blocker taper guidance, the Furoscix device instruction) are exempt from the ranking penalty, while residual-risk markers (binder rescue, MRA initiation at borderline K+, Furoscix CKD caution/triage) remain penalized.',
-    'Dual RAAS and dual MRA combinations are structurally blocked.',
-    'Documented intolerances (prior discontinued medications) apply to the CURRENT regimen, not just new starts: an arriving medication that violates the intolerance history is swapped to a tolerated same-group agent when one exists (ACEi cough → ARB/ARNI; spironolactone gynecomastia → eplerenone/finerenone) or removed. Changing CURRENT therapy requires the structured side-effect reason (dropdown); free-text details only block new starts — so negated notes like "no cough" can never strip working therapy. Gynecomastia is treated as agent-specific (spironolactone and the named offender avoided, non-offending agents preserved); MRA hyperkalemia intolerance applies to all MRA types; angioedema excludes ACEi and ARNI with ARB allowed under caution.',
-    'Monitoring plans are auto-generated for high-risk RAAS/MRA/diuretic/SGLT2i intensification.',
-    'GDMT-completeness ranking: among safe options, the regimen closing the most indicated, achievable therapies (pillars + eligible disease-modifying adjuncts such as GLP-1 in obesity) ranks first — the tool favors complete guideline therapy over the smallest change. Safety gates still override.',
-    'Cost-effectiveness: cost is the FINAL ranking tiebreaker — applied only after clinical benefit (overall score, GDMT completeness, uncapped raw score) is otherwise tied. The tool never trades away health benefit to save money, but among clinically-equivalent regimens it recommends the cheaper one (e.g. generic spironolactone over an equally-beneficial brand). When nothing fits the budget, the cheapest near-affordable options are shown ordered by clinical value (best benefit first) with a budget-exceeded warning.'
-];
-
-const evidenceRows = [
-    {
-        drugClass: 'RAAS / ARNI',
-        trials: 'PARADIGM-HF, PROVE-HF',
-        modeledImpact: 'Neurohormonal unload, remodeling support, guideline pillar weighting in reduced EF phenotypes.'
-    },
-    {
-        drugClass: 'Beta Blocker',
-        trials: 'MERIT-HF, COPERNICUS, CIBIS-II',
-        modeledImpact: 'Remodeling and rhythm protection with acute decompensation safety gating.'
-    },
-    {
-        drugClass: 'SGLT2 Inhibitor',
-        trials: 'DAPA-HF, EMPEROR-Reduced, EMPEROR-Preserved, DELIVER',
-        modeledImpact: 'Cross-phenotype support with symptom and hospitalization benefit weighting.'
-    },
-    {
-        drugClass: 'MRA / nsMRA',
-        trials: 'RALES, EPHESUS, TOPCAT, FINEARTS-HF',
-        modeledImpact: 'Guideline and adjunct contributions with hyperkalemia and dual-MRA protection logic.'
-    },
-    {
-        drugClass: 'Loop Strategy (including Furoscix)',
-        trials: 'Loop diuretic standard evidence + outpatient worsening-HF pathway assumptions',
-        modeledImpact: 'Volume-targeted decongestion scoring, CKD/over-diuresis guardrails, Furoscix-specific safety warnings.'
-    }
-];
-
-export const FAQ: React.FC = () => {
+const EvidenceMatrixSection: React.FC<{ query: string; onQueryChange: (q: string) => void }> = ({ query, onQueryChange }) => {
+    const sections = EVIDENCE_MATRIX.sections
+        .map(sec => ({ ...sec, rows: sec.rows.filter(r => !query.trim() || rowMatches(r, query)) }))
+        .filter(sec => sec.rows.length > 0);
+    const shown = sections.reduce((n, sec) => n + sec.rows.length, 0);
     return (
-        <div className="h-full overflow-y-auto bg-slate-50 custom-scrollbar p-8">
-            <div className="max-w-5xl mx-auto space-y-8 pb-16">
-
-                <div className="border-b border-slate-200 pb-6">
-                    <h2 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                        <QuestionMarkCircleIcon className="w-8 h-8 text-indigo-600" />
-                        Clinical Logic, Safety, and Evidence
-                    </h2>
-                    <p className="text-slate-500 mt-2 text-lg leading-relaxed">
-                        HeartFailurePATH uses a deterministic seven-domain simulation engine for regimen optimization across HFrEF, HFmrEF, HFpEF, and HFimpEF-preservation pathways.
+        <>
+            <div className="p-6 space-y-4 text-slate-700">
+                {EVIDENCE_MATRIX.intro.map((t, i) => <p key={i} className="text-sm text-slate-600">{linkify(t)}</p>)}
+                <div className="flex flex-wrap items-end gap-3">
+                    <div className="flex-1 min-w-[14rem]">
+                        <label htmlFor="evidence-filter" className="block text-sm font-semibold text-slate-700 mb-1">Filter by drug, trial or rule</label>
+                        <input
+                            id="evidence-filter"
+                            type="search"
+                            value={query}
+                            onChange={e => onQueryChange(e.target.value)}
+                            placeholder="e.g. eplerenone, DAPA-HF, potassium"
+                            className="block w-full rounded-md border border-slate-300 bg-white py-2 px-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                        />
+                    </div>
+                    <p className="text-sm text-slate-600 pb-2" role="status" aria-live="polite">
+                        Showing {shown} of {ALL_EVIDENCE_ROWS.length} rows
+                        {query.trim() && <> <button type="button" onClick={() => onQueryChange('')} className="ml-2 font-bold text-indigo-700 underline">Clear filter</button></>}
                     </p>
                 </div>
-
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
-                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                            <HeartIcon className="w-6 h-6 text-indigo-600" />
-                            Seven-Domain Scoring Framework
-                        </h3>
-                    </div>
-                    <div className="p-6 space-y-4 text-slate-700">
-                        <p>
-                            Each projected regimen receives seven domain scores (0-100), then a weighted overall score:
-                            Neuro 20%, Functional 15%, Volume 15%, Structure 10%, Cost 15%, Adherence 10%, Guideline 15%.
-                            These weights are heuristic prioritization aids, not individualized outcome-probability estimates.
-                        </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            {domainCards.map(card => (
-                                <div key={card.title} className="p-4 bg-slate-50 rounded-lg border border-slate-200">
-                                    <h4 className={`font-bold mb-2 ${card.color}`}>{card.title}</h4>
-                                    <p className="text-sm">{card.description}</p>
-                                    <ul className="text-xs mt-2 list-disc list-inside text-slate-500">
-                                        {card.bullets.map(bullet => <li key={bullet}>{bullet}</li>)}
-                                    </ul>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
-                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                            <CalculationIcon className="w-5 h-5 text-indigo-600" />
-                            Simulation and Safety Pipeline
-                        </h3>
-                    </div>
-                    <div className="p-6 space-y-6 text-slate-700">
-                        <div>
-                            <h4 className="font-bold text-lg mb-2">Engine Sequence</h4>
-                            <ol className="list-decimal list-inside text-sm space-y-2">
-                                <li>Validate and sanitize current patient data (for example duplicate current meds, BP consistency).</li>
-                                <li>Generate candidate modifications (add/up/down/swap/remove) under visit-class and contraindication constraints.</li>
-                                <li>Project physiologic and safety deltas for each candidate regimen.</li>
-                                <li>Score candidates across seven domains, apply safety penalties, and filter unsafe projections.</li>
-                                <li>Return up to three clinically distinct regimens plus structured monitoring plans.</li>
-                            </ol>
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-lg mb-2">Safety and Eligibility Checks</h4>
-                            <ul className="list-disc list-inside text-sm space-y-2 pl-2">
-                                {safetyChecks.map(check => <li key={check}>{check}</li>)}
-                            </ul>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="p-6 border-b border-slate-100 bg-indigo-50/50">
-                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                            <LightBulbIcon className="w-5 h-5 text-indigo-600" />
-                            Evidence and Furoscix Notes
-                        </h3>
-                    </div>
-                    <div className="p-6 space-y-4">
-                        <p className="text-sm text-slate-700">
-                            Trial alignment informs effect sizes and class-level priorities. Stable rule IDs and rule-to-evidence traceability are documented in <code>docs/evidence-matrix.md</code>. Furoscix is implemented as a loop-strategy option for persistent congestion, with explicit contraindication checks and mandatory device-use warnings when selected.
-                        </p>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm text-left">
-                                <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                {sections.length === 0 && <p className="text-sm text-slate-600">No rows match. Try a drug name or a shorter term.</p>}
+                {sections.map(sec => (
+                    <div key={sec.title}>
+                        <h4 className="font-bold text-slate-800 mb-1">{sec.title}</h4>
+                        {sec.notes.map((n, i) => <p key={i} className="text-xs text-slate-600 mb-2 [overflow-wrap:anywhere]">{linkify(n)}</p>)}
+                        <div className="overflow-x-auto rounded border border-slate-200">
+                            <table className="min-w-[56rem] w-full text-xs text-left">
+                                <caption className="sr-only">{sec.title}: rule, what the tool does, why, evidence, strength and calibration, risk if wrong</caption>
+                                <thead className="bg-slate-50 text-slate-600 font-bold uppercase text-[10px] tracking-wider">
                                     <tr>
-                                        <th className="px-4 py-3">Drug Class</th>
-                                        <th className="px-4 py-3">Key Evidence</th>
-                                        <th className="px-4 py-3">Modeled Impact</th>
+                                        <th scope="col" className="px-3 py-2">Rule</th>
+                                        <th scope="col" className="px-3 py-2">What the tool does</th>
+                                        <th scope="col" className="px-3 py-2">Why</th>
+                                        <th scope="col" className="px-3 py-2">Evidence</th>
+                                        <th scope="col" className="px-3 py-2">Strength and calibration</th>
+                                        <th scope="col" className="px-3 py-2">Risk if wrong</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-100">
-                                    {evidenceRows.map(row => (
-                                        <tr key={row.drugClass}>
-                                            <td className="px-4 py-3 font-bold text-slate-800">{row.drugClass}</td>
-                                            <td className="px-4 py-3 text-slate-600">{row.trials}</td>
-                                            <td className="px-4 py-3 text-slate-600">{row.modeledImpact}</td>
+                                <tbody className="divide-y divide-slate-100 align-top">
+                                    {sec.rows.map(r => (
+                                        <tr key={r.id} id={`ev-${r.id}`}>
+                                            <th scope="row" className="px-3 py-2 font-bold text-slate-700 whitespace-nowrap">{r.id}</th>
+                                            <td className="px-3 py-2 text-slate-800 min-w-[16rem] [overflow-wrap:anywhere]">{linkify(r.behavior)}</td>
+                                            <td className="px-3 py-2 text-slate-600 min-w-[12rem]">{r.rationale}</td>
+                                            <td className="px-3 py-2 text-slate-600 min-w-[14rem] [overflow-wrap:anywhere]">{linkify(r.anchor)}</td>
+                                            <td className="px-3 py-2 text-slate-600 min-w-[12rem]"><span className="font-semibold">{r.strength}.</span> {r.calibration}</td>
+                                            <td className="px-3 py-2 text-slate-600 min-w-[10rem]">{r.risk}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
-                        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 text-sm text-slate-700">
-                            <p className="font-semibold text-slate-800 mb-1">Furoscix-specific implementation summary</p>
-                            <ul className="list-disc list-inside space-y-1">
-                                <li>Modeled as `Furoscix (SC Furosemide)` in Loop Diuretic class.</li>
-                                <li>Preferred in eligible worsening-congestion loop escalation pathways.</li>
-                                <li>Blocked for hypersensitivity (furosemide or adhesive/acrylate), low congestion context, or severe renal limits.</li>
-                                <li>When selected, the regimen includes mandatory `FUROSCIX SAFETY` warning text.</li>
-                            </ul>
-                        </div>
                     </div>
-                </section>
-
-                <div className="bg-slate-100 p-4 rounded-lg text-xs text-slate-500 leading-relaxed border border-slate-200">
-                    <strong>Disclaimer:</strong> This software is a clinical decision-support simulation tool. It projects responses from deterministic model assumptions and trial-informed class effects, not individualized pharmacogenomic prediction. It should not be used as the sole basis for prescribing decisions.
-                </div>
-
+                ))}
             </div>
-        </div>
+        </>
     );
+};
+
+
+interface FAQProps {
+    evidenceQuery?: string;
+    onEvidenceQueryChange?: (q: string) => void;
+    jumpNonce?: number;
+}
+export const FAQ: React.FC<FAQProps> = ({ evidenceQuery, onEvidenceQueryChange, jumpNonce = 0 }) => {
+    const [localQuery, setLocalQuery] = useState('');
+    const query = evidenceQuery ?? localQuery;
+    const setQuery = onEvidenceQueryChange ?? setLocalQuery;
+    const matrixRef = useRef<HTMLElement>(null);
+    // The rules table is a technical reference (rule identifiers appear only inside it); it opens when a drug link or a filter asks for it.
+    const [matrixOpen, setMatrixOpen] = useState(Boolean((evidenceQuery ?? '').trim()) || jumpNonce > 0);
+    useEffect(() => { if (jumpNonce > 0 || query.trim()) setMatrixOpen(true); }, [jumpNonce, query]);
+    useEffect(() => { if (jumpNonce > 0) { matrixRef.current?.scrollIntoView({ block: 'start' }); matrixRef.current?.focus({ preventScroll: true }); } }, [jumpNonce]);
+    const weightKeys: ScoreDomainKey[] = ['mortality', 'hf_hospitalization', 'symptoms', 'side_effects', 'cost', 'adherence', 'guideline', 'completeness'];
+    const pct = (w: number) => `${Math.round(w * 1000) / 10}%`;
+    return <div className="h-full overflow-y-auto bg-slate-50 p-4 sm:p-8"><div className="max-w-5xl mx-auto space-y-6 pb-16">
+        <header><h2 className="text-3xl font-bold text-slate-900">Clinical logic, safety and evidence</h2><p className="mt-3 text-slate-700" data-testid="faq-scope">{SCOPE_STATEMENT}</p></header>
+        <section className="rounded-xl border bg-white p-6 space-y-3" aria-labelledby="faq-response">
+            <h3 id="faq-response" className="text-xl font-bold">What can this review tell me?</h3>
+            <p>It checks recorded findings, medication eligibility, treatment gaps, estimated cost and dosing burden. Each option is a proposal for clinician review, with medication-specific precautions and monitoring.</p>
+            <p>It also shows, for each option, the expected effect compared with the current regimen as population averages from randomized trials: death from any cause, heart-failure hospitalization, health status in KCCQ-equivalent points and side-effect burden. These are not predictions for this patient.</p>
+            <p>It does not calculate an untreated state. Individual changes in EF, BNP, KCCQ, weight, blood pressure, heart rate and potassium are not estimated. Recorded measurements remain unchanged; a proposed medication change is not a new clinical observation.</p>
+            <p>For substitutions and discontinuations, review the source and destination dose, washout or taper instructions, reason for the change and measured follow-up. A completed course is not ongoing exposure. Removing an iron-course entry does not subtract an assumed benefit.</p>
+        </section>
+        <section className="rounded-xl border bg-white p-6 space-y-3" aria-labelledby="faq-missing">
+            <h3 id="faq-missing" className="text-xl font-bold">Decisions with incomplete information</h3>
+            <p>Missing data limit the decisions that depend on them. Unknown potassium or renal function holds dependent starts, increases and switches. Unknown current use holds related increases and substitutions; it does not automatically stop therapy or block unrelated eligible decisions.</p>
+            <p>Core data gaps trigger a focused review that retains known urgent findings. Missing optional BNP or KCCQ does not prevent medication review. Unknown prices or budget leave affordability unassessed.</p>
+            <p>Confirm time at the current dose, consistent use and tolerability before escalation. Dates do not establish adherence or full treatment effect. Held medication needs a deliberate restart plan; repeat iron requires course and phosphate assessment. CSS, TSS and OSS KCCQ scores are recorded separately without conversion.</p>
+        </section>
+        <section className="rounded-xl border bg-white p-6 space-y-3" aria-labelledby="faq-score">
+            <h3 id="faq-score" className="text-xl font-bold">How options are ordered</h3>
+            <p>Each option is ranked by six weighted factors, all taken from measured or priced inputs: death from any cause and heart-failure hospitalization (relative risks from randomized trials), symptoms (change in health status, in KCCQ-equivalent points), side effects (one-year excess harm rates multiplied by a severity weight), cost, and dosing burden. The weights in the table are the tool&apos;s policy numbers, pending clinical review.</p>
+            <p>The first four estimates are population averages from trials, not predictions for this patient. Recorded measurements are never altered or projected, and the patient&apos;s own response at follow-up replaces these estimates.</p>
+            <h4 className="font-bold text-slate-800 pt-1">How the trial figures are used</h4>
+            <ul className="list-disc pl-5 space-y-1.5 text-slate-700">
+                <li><span className="font-semibold">Small or imprecise trials are pulled toward &ldquo;no effect&rdquo;</span> in proportion to their uncertainty. A figure from a few hundred patients moves more than one from tens of thousands. Every figure shows its published value, the value used and the prior it was weighted with, with one prior for death and a separate one for hospitalization; a figure that rests mostly on the prior is marked.</li>
+                <li><span className="font-semibold">Beta-blockers and rhythm.</span> For a patient in atrial fibrillation now, the death figure for a beta-blocker is the atrial fibrillation one, and it is never a reason to stop a beta-blocker used for rate control.</li>
+                <li><span className="font-semibold">Dose.</span> A drug earns full credit at the dose the trials achieved. A new drug is valued as titrated the way the trials did, but not beyond the highest dose allowed for this patient by kidney function, interactions and the maximum dose, and the option says so when that dose is lower; an increase is valued at the dose it reaches (&ldquo;as planned&rdquo;). A drug with its own trial dose earns at least the fraction of that dose that is taken, so spironolactone 25 mg earns about 96% of its trial effect. A drug left at a lower dose earns less. The option card also shows the figure at today&apos;s doses where it differs. Loop diuretics have no measured dose relation, so they earn full credit at any dose, and congestion relief by dose is not modelled; the congestion display rule still shows the best diuretic intensification for a congested patient.</li>
+                <li><span className="font-semibold">Drugs of one mechanism are not counted twice.</span> Effects of different mechanisms are combined as if independent, which no trial has tested; the interval shown makes the same assumption.</li>
+                <li><span className="font-semibold">Evidence basis.</span> Each figure is labelled: randomized trial, pooled analysis of trials, subgroup of a randomized trial, extrapolated (carried from another population), indirect comparison through enalapril, randomized evidence conflicts (no effect assumed), no outcome evidence (no effect assumed), assumed no effect (no outcome trial), borrowed from a sibling drug or class, or not measured (nothing is charged). A harm not measured for a drug is borrowed from a measured row of another drug class with the same mechanism, or is not charged. Each row also says what was checked against its source: the abstract, the full text, the drug label, a second-hand quotation, or nothing readable.</li>
+                <li><span className="font-semibold">Guideline concordance and therapy completeness</span> are still calculated and shown, for reference only, with weight 0. Guideline recommendations are a target the model is measured against, not an input to the ranking.</li>
+                <li><span className="font-semibold">Neurohormonal, functional, volume and structure</span> remain &ldquo;not assessed&rdquo; with weight 0, because the tool does not predict an individual&apos;s biomarker or exam response.</li>
+            </ul>
+            <p>The table assumes cost is assessable. When it is not, cost has no weight and the other weights are rescaled. Scores from different sets of available inputs are not comparable.</p>
+            <div className="overflow-x-auto"><table className="w-full text-sm text-left"><caption className="sr-only">Weight of each ranked factor under each preference; reference-only factors carry 0%</caption>
+                <thead><tr><th scope="col">Preference</th>{weightKeys.map(k=><th scope="col" key={k}>{DOMAIN_LABELS[k]}</th>)}</tr></thead>
+                <tbody>{Object.entries(WEIGHT_PROFILES).map(([name,weights])=><tr key={name}><th scope="row">{WEIGHT_PROFILE_META[name as keyof typeof WEIGHT_PROFILES].label}</th>{weightKeys.map(k=><td key={k}>{pct(weights[k])}</td>)}</tr>)}</tbody></table></div>
+            <h4 className="font-bold text-slate-800 pt-1">Fixed safety rules that are not measured models</h4>
+            <p>Eligibility rules; the penalty for each unresolved safety warning; the low blood pressure, slow heart rate and high potassium bands; the volume-depletion adjustment; the per-visit limit (two by default; {VISIT_LIMIT_WORDS.charAt(0).toLowerCase() + VISIT_LIMIT_WORDS.slice(1)}); and the rule for showing a diuretic option when the patient is congested. One hand-set number also remains: an option that replaces a drug that is contraindicated or has a documented intolerance earns +15 points before scaling (after scaling it is limited to between {SCORE_ADJUSTMENTS.SPECIAL_FEATURES.min} and +{SCORE_ADJUSTMENTS.SPECIAL_FEATURES.max} points). It applies to few options. No other drug feature adds bonus points.</p>
+            <p>That swap bonus is divided by the number of indicated foundational treatment slots, fixed across options, so an unrelated additional drug does not dilute it. Safety warnings and label restrictions still apply. Equal scores do not establish equivalent clinical benefit.</p>
+            <p>Cost-first and simpler-regimen preferences can trade clinical model score for affordability or dosing burden. Review the score breakdown and treatment considerations before choosing. Different doses and drugs are not presumed physiologically equivalent.</p>
+        </section>
+        <section className="rounded-xl border bg-white p-6 space-y-3" aria-labelledby="faq-safety">
+            <h3 id="faq-safety" className="text-xl font-bold">Safety and eligibility</h3>
+            <p>Checks use observed findings and medication-specific restrictions. An absent warning is not safety clearance. No assumed binder response or offsetting drug effect can normalize measured potassium or enable a restricted start.</p>
+            <p>Potassium at or above 6.0 triggers an urgent alert. From 6.0 up to but not including 6.5, no option starts a drug or raises a dose except a raise of a potassium binder the patient already takes; the other options contain only reductions, removals or no change at all; the abnormal value remains unresolved. At 6.5 or above, or systolic BP below 90, the tool returns alerts only. A measured potassium below 3.5 holds new or intensified potassium-lowering diuretics.</p>
+            <p>ACE inhibitor to ARNI transitions require the stated washout. Beta-blocker transitions use a starting-tier proposal and an individual taper plan, not target-dose equivalence. Oral loop conversions are approximate starting conventions that require reassessment.</p>
+            <details><summary className="font-semibold cursor-pointer">Technical reference: eligibility rules and their identifiers</summary><ul className="mt-3 space-y-2">{ELIGIBILITY_RULES.map(rule=><li key={rule.id}><strong>{rule.id}: {rule.name}.</strong> {rule.summary}</li>)}</ul></details>
+        </section>
+        <section className="rounded-xl border bg-white p-6 space-y-3" aria-labelledby="faq-evidence-tables">
+            <h3 id="faq-evidence-tables" className="text-xl font-bold">Measured evidence tables</h3>
+            <EvidenceTables />
+        </section>
+        <section id="faq-evidence-matrix" ref={matrixRef} tabIndex={-1} aria-labelledby="faq-evidence-matrix-title" className="rounded-xl border bg-white scroll-mt-4">
+            <h3 id="faq-evidence-matrix-title" className="text-xl font-bold p-6 pb-0">Technical reference: rules, sources and rule identifiers</h3>
+            <details className="px-6 pb-2" open={matrixOpen} onToggle={e => setMatrixOpen((e.currentTarget as HTMLDetailsElement).open)} data-testid="technical-reference">
+                <summary className="mt-2 cursor-pointer font-semibold text-indigo-800">Show the rules and sources table ({ALL_EVIDENCE_ROWS.length} rows, with their identifiers)</summary>
+                <EvidenceMatrixSection query={query} onQueryChange={setQuery}/>
+            </details>
+        </section>
+    </div></div>;
 };

@@ -1,0 +1,70 @@
+Clinical UI repair verification — 2026-11-12
+Branch: refactor/glucosepath-alignment
+Base commit: 9fba74d13915c57d66fc7938128e56627070db3f
+Ruleset: 2026-11-12.5
+Working tree includes preceding local engine repairs. No commit/push/merge/deploy.
+
+Observed command completion:
+  npm run gate: exit 0 (includes tsc --noEmit, golden, verify, verify:ui, all audits, fuzz)
+  npm run build: exit 0
+  git diff --check: exit 0
+
+Selected stdout below is condensed from the final gate.log and build.log.
+Full logs remain available locally; *.log is ignored by the repository.
+
+Golden master OK: 1032 runs byte-identical.
+Passed: 399
+Failed: 0
+100-SCENARIO AUDIT: 100/100 clean
+════════ MISTAKE AUDIT: 51/51 clean ════════
+CRITICAL: 0   HIGH: 0   MED: 0
+pricingAudit OK: 32 drugs x 3 profiles
+Randomized sweep: 5000 patients (seed 20261112), 3426 with options, 8.7 s
+No violations.
+
+[PASS] unchanged option does not assert that treatment is complete on screen or in the draft note
+[PASS] stale analysis has no medication recommendation markup to print or mistake for the current case
+[PASS] an analysis error is visible even before the first successful run and hides old options
+[PASS] draft header distinguishes valid zero values and unrecorded pregnancy
+[PASS] near-dry weight with an unrecorded examination is not presented as confirmed euvolemia
+[PASS] current-regimen cost agrees with dose-specific cash pricing used by the engine
+[PASS] dose guidance does not promise maximal patient benefit or issue generic escalation instructions
+[PASS] alternative cards explain concrete medication differences without opening score details
+[PASS] input help and error remain associated and required status is machine-readable
+[PASS] NYHA choices use activity limitations and distinguish symptoms at rest
+[PASS] every scenario renders its result state without an exception or NaN in visible text
+[PASS] a new case has no assumed clinical choices, insurance or budget and validation names each missing choice
+[PASS] pregnancy must be affirmatively assessed in the form when applicable
+[PASS] missing potassium and creatinine remain permitted and valid zero preferences are not missing
+[PASS] each alternative shows its own monitoring rather than borrowing option 1 monitoring
+[PASS] unavailable cost is not displayed as a numeric Infinity amount
+[PASS] sample case provenance is present in both the screen and draft note header
+[PASS] current medication editing is named accessibly and frequencies are expanded
+[PASS] pricing failure is distinct from loading and offers retry
+[PASS] library does not turn model parameters into comparative efficacy or tolerability claims
+[PASS] all score dialogs identify model references and retain a bounded scrolling body
+[PASS] unknown prices stay unavailable in score dialogs and tie explanations
+[PASS] methodology accurately states cost tradeoffs and fixed evidence-credit normalization
+Clinical UI checks: 23 passed; 0 failed. Server-rendered content only; browser behavior and visual layout are not verified.
+
+Production build output:
+
+> heartfailurepath@0.1.0 build
+> vite build
+
+vite v6.4.1 building for production...
+transforming...
+✓ 86 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.48 kB │ gzip:   0.32 kB
+dist/assets/index-CG6yx4t1.css   35.74 kB │ gzip:   6.70 kB
+dist/assets/index-CxXlVNWU.js   868.95 kB │ gzip: 251.90 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 1.06s
+
+Coverage limits: React server-rendered content only. Browser host unavailable; native Chrome control timed out. No successful browser layout, interaction, keyboard, clipboard, print or assistive-technology verification. Remote CI not run for unpushed changes. Clinical validation remains open.

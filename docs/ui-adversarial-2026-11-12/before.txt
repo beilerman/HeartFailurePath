@@ -1,0 +1,15 @@
+Initial UI regression probe, before the UI repair
+2026-11-12; condensed assertion messages (HTML payloads omitted).
+
+[FAIL] unchanged option does not assert that treatment is complete on screen or in the draft note: AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /No change needed/. Input:
+[FAIL] stale analysis has no medication recommendation markup to print or mistake for the current case: AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /id="results-option-1"/. Input:
+[FAIL] an analysis error is visible even before the first successful run and hides old options: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Pricing unavailable/. Input:
+[FAIL] draft header distinguishes valid zero values and unrecorded pregnancy: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /KCCQ: 0/. Input:
+[FAIL] near-dry weight with an unrecorded examination is not presented as confirmed euvolemia: AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression />Euvolemic</. Input:
+[FAIL] current-regimen cost agrees with dose-specific cash pricing used by the engine: AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+[FAIL] dose guidance does not promise maximal patient benefit or issue generic escalation instructions: AssertionError [ERR_ASSERTION]: The input was expected to not match the regular expression /maximal mortality|maximal reverse remodeling|maximal weight loss|titrate to target if tolerated|Titrate q2/i. Input:
+[FAIL] alternative cards explain concrete medication differences without opening score details: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /Does not include/. Input:
+[FAIL] input help and error remain associated and required status is machine-readable: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /aria-describedby="lvef-help lvef-error"/. Input:
+[FAIL] NYHA choices use activity limitations and distinguish symptoms at rest: AssertionError [ERR_ASSERTION]: The input did not match the regular expression /less than ordinary activity/. Input:
+[PASS] every scenario renders its result state without an exception or NaN in visible text
+Clinical UI checks: 1 passed; 10 failed. Server-rendered content only; browser behavior and visual layout are not verified.

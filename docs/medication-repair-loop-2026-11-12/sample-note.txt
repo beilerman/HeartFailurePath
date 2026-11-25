@@ -1,0 +1,84 @@
+Case: EXAMPLE / TEST CASE — John Doe (Wet & Warm)
+Analysis run: 2026-11-12 21:54
+Rule-set version: 2026-11-12.8
+INPUTS USED
+  Age/sex: 65 y, Male; race: White
+  LVEF: 25%; prior lowest LVEF: not entered; ever LVEF 40% or lower: not entered; NYHA class: III
+  Iron course: not entered; phosphate safety review: not entered
+  Recent HF worsening: not entered; KCCQ: 45 (instrument not recorded); SpO2: 96%
+  BP: 100/70 mmHg; heart rate: 68 bpm, rhythm AFib
+  Potassium: 4.9 mmol/L; creatinine: 1.66 mg/dL; eGFR: 45 mL/min/1.73m2; baseline creatinine: not entered
+  BUN: 35.4 mg/dL; ferritin: not entered; TSAT: not entered; hemoglobin: not entered
+  NT-proBNP: 2000 pg/mL
+  Weight: current 73 kg, dry 70 kg
+  Examination findings recorded: Edema (1+), JVP Elevated, Orthopnea
+  Comorbidities: Atrial Fibrillation, Chronic Kidney Disease, Diabetes Mellitus Type 2, HFrEF
+  Allergies: none recorded
+  Documented intolerances: none recorded
+  Other current medications: none recorded
+  Current regimen entered: Lisinopril 20 mg once daily [use: active; consistency: consistent; started: unknown; dose since: unknown; last dose: unknown; dose interval reviewed: yes; restart/course reviewed: no]; Carvedilol 25 mg twice daily [use: active; consistency: consistent; started: unknown; dose since: unknown; last dose: unknown; dose interval reviewed: yes; restart/course reviewed: no]; Furosemide 40 mg once daily [use: active; consistency: consistent; started: unknown; dose since: unknown; last dose: unknown; dose interval reviewed: yes; restart/course reviewed: no]
+  Pricing profile: commercial insurance; budget: $100/month; max new drug classes per visit: 2
+  Ranking approach: Balanced; what matters most: Balanced
+
+HEART FAILURE MEDICATION REVIEW — DRAFT (research decision support; clinician review required)
+
+SAFETY ALERTS:
+  - ATRIAL FIBRILLATION: oral anticoagulation is Class I, chosen by the CHA2DS2-VA score; a DOAC is preferred over warfarin except with a mechanical valve or moderate-severe mitral stenosis (2026 ESC Recommendation Table 15). The tool does not compute the score and has no anticoagulant field: confirm one is prescribed. Rate control: a beta-blocker is first line in stable HFrEF with AF (Class I C); digoxin should be considered when the rate stays high despite a beta-blocker or when it is not tolerated (Class IIa C).
+
+ASSESSMENT SCOPE: Medication options with recorded prerequisites
+
+WHAT CAN BE REVIEWED:
+  - Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+  Not recorded does not mean normal or absent. Retained medications are not certified safe by this assessment.
+
+TOP-ORDERED REGIMEN (option 1 of 3; the other options are on screen):
+  - Spironolactone 12.5 mg once daily
+  - Dapagliflozin 10 mg once daily (target dose)
+  - Lisinopril 20 mg once daily (target dose)
+  - Carvedilol 25 mg twice daily (target dose)
+  - Furosemide 40 mg once daily
+
+PROPOSED CHANGES IN OPTION 1:
+  - Add Spironolactone 12.5mg once daily
+  - Add Dapagliflozin 10mg once daily
+
+TREATMENT CONSIDERATIONS:
+  - Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+  - Spironolactone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+ASSESSMENT LIMITS:
+  - Individual changes in EF, BNP, KCCQ, NYHA class, body weight, BP, pulse and potassium are not estimated. Recorded observations remain unchanged until new measurements are entered.
+  - Cost is an estimate, usually a drug-level monthly price rather than a verified dose/formulation quote. Dosing burden is a frequency-based software proxy, not actual pill count or measured adherence.
+  - Safety checks use recorded findings and medication restrictions. Individual dose response is unknown; absence of a flagged hazard is not safety clearance, and offsetting medication effects are not credited as correction.
+  - Exposure duration, time at dose or consistent use is not fully documented. Full established benefit and tolerance are not assumed.
+
+OTHER OPTIONS SHOWN FOR A SPECIFIC REASON:
+  - option 3: Includes a diuretic increase: the patient is congested (3.0 kg above dry weight; the tool's criterion is more than 1 kg), and no other option raises the loop diuretic.
+
+INDICATED GDMT CURRENTLY MISSING:
+  - Mineralocorticoid receptor antagonist (MRA) - started in option 1 (Spironolactone) | Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+  - SGLT2 inhibitor - started in option 1 (Dapagliflozin)
+
+ELIGIBLE ADJUNCTS TO CONSIDER:
+  - Digoxin — AF rate control, or symptomatic HFrEF (LVEF 40 or below, NYHA II-IV) persisting on optimized GDMT (2026 ESC Class IIa B1; AHA/ACC 2022 Class 2b). Narrow therapeutic index: target serum concentration below 1.2 ng/mL.
+  - Loop diuretic — symptomatic volume management; titrate to daily weights.
+
+OTHER CARE PROMPTS:
+  - DEVICE THERAPY SCREENING: LVEF 25% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II-III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (mra), sglt2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT recommendations assume sinus rhythm; the recorded rhythm is AFib, so specialist review is needed. QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+  - CARDIAC REHABILITATION: HFrEF with NYHA Class III. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients — improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+  - VERICIGUAT ELIGIBILITY WARNING: Recent HF worsening status unknown. Document whether an HF hospitalization occurred within 6 months or outpatient IV diuretics within 3 months — required before Vericiguat use.
+
+DATA NOT ENTERED (conclusions withheld):
+  - No iron studies (ferritin / TSAT) entered — iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+
+MONITORING:
+  - BMP (potassium, creatinine, eGFR) after MRA start or increase (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+  - BMP (creatinine, eGFR) (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+  - Spironolactone starting dose (eGFR 30-50) (At initiation): Label: start 25 mg daily only if eGFR is above 50. For eGFR 30-50 the label suggests 25 mg every other day; this tool models that as the 12.5 mg daily tier. If hyperkalemia develops on 25 mg daily, go to 25 mg every other day.
+  - Renal dosing review (At initiation and after any eGFR change): Renal dose caution at eGFR 45: Spironolactone — confirm dosing against current renal function and monitor.
+
+FOLLOW-UP REVIEW PROMPTS (individualize timing):
+  - About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+  - About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+  - About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+  - About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.

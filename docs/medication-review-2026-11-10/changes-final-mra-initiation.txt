@@ -1,0 +1,104 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 936 runs
+  (a) top pick identical:        918 / 936
+  (b) displayed pick set same:   918 / 936
+  (c) pick order identical:      918 / 936
+  (d) eligibility + alerts identical: NO (81 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 77 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 18 of 771 runs
+    LVEF >= 50: 0 of 108 runs
+
+Top pick changed in 18 runs:
+  MRA-Source New Start K+ 5.0 Staged (guideline: 5.0 or above) :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 83, raw 83.43]
+  MRA-Source New Start K+ 5.0 Staged (guideline: 5.0 or above) :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 84, raw 83.64]
+  MRA-Source New Start K+ 5.0 Staged (guideline: 5.0 or above) :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 83, raw 83.44]
+  MRA-Source New Start K+ 4.9 Offered :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 79, raw 79.03]
+  MRA-Source New Start K+ 4.9 Offered :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 79, raw 79.24]
+  MRA-Source New Start K+ 4.9 Offered :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 79, raw 79.04]
+  MRA-Source Spironolactone New Start eGFR 30 Excluded :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 83, raw 83.43]
+  MRA-Source Spironolactone New Start eGFR 30 Excluded :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 84, raw 83.64]
+  MRA-Source Spironolactone New Start eGFR 30 Excluded :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 83, raw 83.44]
+  MRA-Source Spironolactone Current At eGFR 30 Continued :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 85, raw 84.70]
+  MRA-Source Spironolactone Current At eGFR 30 Continued :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 85, raw 84.91]
+  MRA-Source Spironolactone Current At eGFR 30 Continued :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 85, raw 84.71]
+  MRA-Source Halved Dose Cap eGFR 49 New Start :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 82, raw 82.19]
+  MRA-Source Halved Dose Cap eGFR 49 New Start :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 82, raw 82.35]
+  MRA-Source Halved Dose Cap eGFR 49 New Start :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 82, raw 82.19]
+  MRA-Source Halved Dose Cap eGFR 49 Current Spironolactone 50 :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 84.22]
+  MRA-Source Halved Dose Cap eGFR 49 Current Spironolactone 50 :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 84.43]
+  MRA-Source Halved Dose Cap eGFR 49 Current Spironolactone 50 :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 84.23]
+
+BUGS (eligibility/alerts must not change):
+  MRA Boundary (eGFR 31, K+ 5.4) :: cash: excludedMedications differ
+  MRA Boundary (eGFR 31, K+ 5.4) :: commercial: excludedMedications differ
+  MRA Boundary (eGFR 31, K+ 5.4) :: medicare: excludedMedications differ
+  MRA Start Staged At K+ 5.1 (No Binder Co-Start) :: cash: excludedMedications differ
+  MRA Start Staged At K+ 5.1 (No Binder Co-Start) :: commercial: excludedMedications differ
+  MRA Start Staged At K+ 5.1 (No Binder Co-Start) :: medicare: excludedMedications differ
+  Max New Classes Counts Binder Rescue :: cash: excludedMedications differ
+  Max New Classes Counts Binder Rescue :: commercial: excludedMedications differ
+  Max New Classes Counts Binder Rescue :: medicare: excludedMedications differ
+  MRA-Source Eplerenone eGFR 30 Boundary :: cash: excludedMedications differ
+  MRA-Source Eplerenone eGFR 30 Boundary :: commercial: excludedMedications differ
+  MRA-Source Eplerenone eGFR 30 Boundary :: medicare: excludedMedications differ
+  MRA-Source MRA Start K+ 5.3 Staged, Not Co-Started With A Binder :: cash: excludedMedications differ
+  MRA-Source MRA Start K+ 5.3 Staged, Not Co-Started With A Binder :: commercial: excludedMedications differ
+  MRA-Source MRA Start K+ 5.3 Staged, Not Co-Started With A Binder :: medicare: excludedMedications differ
+  MRA-Source MRA Start K+ 5.3 No Binder Available :: cash: excludedMedications differ
+  MRA-Source MRA Start K+ 5.3 No Binder Available :: commercial: excludedMedications differ
+  MRA-Source MRA Start K+ 5.3 No Binder Available :: medicare: excludedMedications differ
+  MRA-Source Lokelma HF Warning (No Patiromer Available) :: cash: excludedMedications differ
+  MRA-Source Lokelma HF Warning (No Patiromer Available) :: commercial: excludedMedications differ
+  MRA-Source Lokelma HF Warning (No Patiromer Available) :: medicare: excludedMedications differ
+  MRA-Source Patiromer Warnings (No Lokelma Available) :: cash: excludedMedications differ
+  MRA-Source Patiromer Warnings (No Lokelma Available) :: commercial: excludedMedications differ
+  MRA-Source Patiromer Warnings (No Lokelma Available) :: medicare: excludedMedications differ
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: cash: excludedMedications differ
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: commercial: excludedMedications differ
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: medicare: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: cash: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: commercial: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: medicare: excludedMedications differ

@@ -3,6 +3,7 @@
  * medications already on board. Each scenario declares what the engine SHOULD do; the
  * harness reports deviations. Standalone QA (not part of CI). Run: npx tsx scripts/mistakeAudit.ts
  */
+import { withCarePriority } from './carePriorityEnv';
 import { generateAndScoreModifications } from '../services/simulationService';
 import { getDrugPrices } from '../services/pricingService';
 import { MEDICATION_FORMULARY } from '../constants';
@@ -19,7 +20,7 @@ function reg(seeds: { name: string; strength: number | string; freq?: string }[]
         const dose = med.available_doses.find(d => String(d.strength) === String(s.strength));
         if (!dose) throw new Error(`no dose ${s.name} ${s.strength}`);
         const freq = s.freq && dose.frequency_options.includes(s.freq) ? s.freq : dose.frequency_options[0];
-        return { med, dose, selected_frequency: freq };
+        return { med, dose, selected_frequency: freq, exposure: { status: 'active', adherence: 'consistent', dose_interval_reviewed: true } };
     });
 }
 
@@ -53,7 +54,7 @@ const A = (o: SimulationOutput) => {
     const alert = (kw: string) => o.clinicalAlerts.some(a => a.toLowerCase().includes(kw.toLowerCase()));
     const anyWarn = (kw: string) => regs.some(r => r.warnings.some(w => w.toLowerCase().includes(kw.toLowerCase())));
     const adjunct = (kw: string) => (o.eligibleAdjuncts ?? []).some(a => a.toLowerCase().includes(kw.toLowerCase()));
-    const dualClass = (pred: (c: string) => boolean) => regs.some(r => r.regimen.filter(m => pred(m.med.drug_class)).length > 1);
+    const dualClass = (pred: (c: string) => boolean) => regs.some(r => r.regimen.filter(m => !m.med.facts?.short_course_addon && pred(m.med.drug_class)).length > 1);
     const removesMed = (n: string) => regs.length > 0 && regs.every(r => (r.modification_set?.modifications ?? []).some(m => (m.action === 'remove' || m.action === 'swap') && m.source?.med.name === n));
     return { regs, hasClassInAny, hasMedInAny, excludedClass, alert, anyWarn, adjunct, dualClass, removesMed };
 };
@@ -120,7 +121,7 @@ const S: Scenario[] = [
       expect: (o) => { const a = A(o); const e: string[] = []; if (a.hasMedInAny('Digoxin') && !a.anyWarn('digoxin')) e.push('Digoxin renal accumulation not addressed'); return e; } },
     { title: '26 Liver disease (Child-Pugh B/C) on ARNI', patient: base({ comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: reg([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '49/51', freq: 'bid' }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (a.hasClassInAny(c => c === 'ARNI')) e.push('ARNI retained in Child-Pugh B/C (hepatic CI)'); return e; } },
-    { title: '27 Liver disease on Finerenone', patient: base({ lvef: 45, ever_lvef_le_40: 'no', comorbidities: new Set(['HFmrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: reg([{ name: 'Finerenone (Kerendia)', strength: 10 }]) }),
+    { title: '27 Liver disease on Finerenone', patient: base({ lvef: 45, ever_lvef_le_40: 'no', comorbidities: new Set(['HFrEF', 'Liver Disease (Child-Pugh B/C)']), current_regimen: reg([{ name: 'Finerenone (Kerendia)', strength: 10 }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (a.hasMedInAny('Finerenone (Kerendia)')) e.push('Finerenone retained in Child-Pugh B/C (CYP3A4 CI)'); return e; } },
 
     // ===== E. Diuretic mistakes =====
@@ -172,7 +173,7 @@ const S: Scenario[] = [
         const removesPillar = a.regs[0] && (a.regs[0].modification_set?.modifications ?? []).some(m => m.action === 'remove' && (RAAS.has(m.source?.med.drug_class ?? '') || m.source?.med.drug_class === 'Beta Blocker' || m.source?.med.drug_class === 'MRA' || m.source?.med.drug_class === 'SGLT2i')); if (removesPillar) e.push('HFimpEF top pick deprescribes a pillar (should continue)'); return e; } },
     { title: '45 Obese HFpEF, no GLP-1', patient: base({ lvef: 56, bmi: 34, ever_lvef_le_40: 'no', comorbidities: new Set(['HFpEF']), current_regimen: reg([{ name: 'Dapagliflozin', strength: 10 }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (!a.hasClassInAny(c => c === 'GLP-1 RA' || c === 'GLP-1/GIP RA') && !a.adjunct('glp-1')) e.push('GLP-1 not surfaced for obese HFpEF'); return e; } },
-    { title: '46 Iron deficient (ferritin 40) on full GDMT', patient: base({ ferritin: 40, tsat: 15, current_regimen: reg([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Spironolactone', strength: 25 }, { name: 'Dapagliflozin', strength: 10 }]) }),
+    { title: '46 Iron deficient (ferritin 40) on full GDMT', patient: base({ ferritin: 40, tsat: 15, hemoglobin: 12, iron_course_review: 'first_course', phosphate_review: 'not_indicated', current_regimen: reg([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Spironolactone', strength: 25 }, { name: 'Dapagliflozin', strength: 10 }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (!a.hasClassInAny(c => c === 'IV Iron') && !a.adjunct('iron')) e.push('IV iron not surfaced despite iron deficiency'); return e; } },
     { title: '47 Black NYHA III HFrEF on quad, no H/ISDN', patient: base({ race: 'Black', nyha_class: 'III', kccq_score: 45, current_regimen: reg([{ name: 'Sacubitril/Valsartan (Entresto)', strength: '97/103', freq: 'bid' }, { name: 'Carvedilol', strength: 25, freq: 'bid' }, { name: 'Spironolactone', strength: 25 }, { name: 'Dapagliflozin', strength: 10 }]) }),
       expect: (o) => { const a = A(o); const e: string[] = []; if (!a.hasClassInAny(c => c === 'Vasodilator') && !a.adjunct('hydralazine')) e.push('H/ISDN not surfaced for Black NYHA III on GDMT'); return e; } },
@@ -189,7 +190,7 @@ async function run() {
     for (const sc of S) {
         const prices = await getDrugPrices(names, sc.patient.insurance_tier);
         let out: SimulationOutput;
-        try { out = generateAndScoreModifications(sc.patient, available, prices); }
+        try { out = generateAndScoreModifications(withCarePriority(sc.patient), available, prices); }
         catch (err) { problems.push({ title: sc.title, errs: ['THREW: ' + (err as Error).message] }); continue; }
         const errs = sc.expect(out, sc.patient);
         if (errs.length === 0) pass++;
@@ -200,5 +201,6 @@ async function run() {
         console.log(`\nPOTENTIAL ERRORS (${problems.length} scenarios):`);
         problems.forEach(p => { console.log(`\n• ${p.title}`); p.errs.forEach(e => console.log(`    ✗ ${e}`)); });
     }
+    process.exitCode = problems.length ? 1 : 0;
 }
 run();

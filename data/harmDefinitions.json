@@ -1,0 +1,337 @@
+{
+  "schemaVersion": 1,
+  "preparedAt": "2026-11-15",
+  "status": "Fixed before any rate was sought. A change after rates are collected must be recorded in `rulings` with its reason.",
+  "method": {
+    "scale": "One burden scale for the whole regimen, the same as the hypertension engine (PathScore section 3.3), so the engines can be merged: burden = symptom figure % x symptomWeight + sum over harm rows of (one-year excess rate % x severity weight); side-effect score = max(0, 100 - burden / 2). The divisor of 2 is a weight (policy), not a measured quantity (text corrected 2026-11-18). It is an index of expected harm, not a probability.",
+    "severityRule": "NCI Common Terminology Criteria for Adverse Events (CTCAE) version 5.0: grade 1 mild, grade 2 moderate, grade 3 or higher serious; the lowest grade whose definition matches how the heart-failure trials ordinarily ascertained the event.",
+    "severityWeights": {
+      "mild": 0.5,
+      "moderate": 1.0,
+      "serious": 3.0,
+      "basis": "policy (identical to PathScore policy-v5; no published utility weights were found)"
+    },
+    "symptomWeight": {
+      "value": 1.0,
+      "basis": "policy (identical to PathScore)"
+    },
+    "symptomFigure": "Percent of patients a year with one or more symptoms attributable to the drug: the placebo-subtracted excesses x_i of the symptomatic events below, each floored at 0, combined as 1 - product(1 - x_i). Near-synonyms count once, at the largest excess. Events charged as harm rows are excluded.",
+    "oneYearConversion": "A cumulative incidence p over T years (T above 1) becomes 1 - (1 - p)^(1/T). This assumes constant risk and understates early harms; the row says so. An incidence over less than a year is used as observed and the row says so.",
+    "ratePreferenceOrder": [
+      "1. placebo-controlled excess in heart failure, for the drug (level `drug`) or its class (level `class`)",
+      "2. a relative risk applied to the same harm's incidence in a heart-failure placebo arm: excess = (RR - 1) x placebo incidence (level `extrapolated`)",
+      "3. an incidence without a placebo arm, minus a heart-failure placebo-arm incidence of the same definition (level `extrapolated`); for a drug tested against an active comparator, the comparator's placebo-controlled excess plus the measured difference",
+      "4. a placebo-controlled excess in another population (hypertension, kidney disease, diabetes, obesity), as observed (level `extrapolated`)",
+      "5. a sibling drug's rate or the class's (level `siblingProxy`)",
+      "6. an upper bound: the largest placebo-controlled excess of that harm for any class in the table (level `extrapolated`, marked upper bound)"
+    ],
+    "sourceChoice": "By fixed definition first, heart failure before other populations, placebo-controlled before not, then more patients, then longer follow-up up to a year. Never by the result.",
+    "doseRelation": "By dose where a trial or label gives dose groups. Otherwise the studied dose's figure at every dose, marked `dose relation not measured`.",
+    "floor": "An excess below zero (fewer events than placebo) is charged as 0 and the row keeps the measured figure. A protective effect belongs in the outcome table, not here.",
+    "notCharged": "Death and heart-failure hospitalization are in data/outcomeEvidence.json and are never charged here. A harm that happens only on abrupt withdrawal is a caution, not charged. `discontinuationForAdverseEvent` is collected as a cross-check and is not charged, because it would count the same events twice."
+  },
+  "effects": [
+    {
+      "effect": "hyperkalemia",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "Serum potassium above 5.5 mmol/L on scheduled testing (same as PathScore). Charged on the share of patients above 5.5 and below 6.0 when the severe row is also available."
+    },
+    {
+      "effect": "hyperkalemiaSevere",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Serum potassium 6.0 mmol/L or above on scheduled testing, or hyperkalemia leading to hospitalization."
+    },
+    {
+      "effect": "hypokalemia",
+      "layer": "harmRow",
+      "severity": "mild",
+      "ctcaeGrade": 1,
+      "definition": "Serum potassium below 3.5 mmol/L on scheduled testing (same as PathScore)."
+    },
+    {
+      "effect": "creatinineRise",
+      "layer": "harmRow",
+      "severity": "mild",
+      "ctcaeGrade": 1,
+      "definition": "Serum creatinine rise of 0.5 mg/dL or more from baseline, or the trial's nearest laboratory definition of worsening renal function (stated on the row)."
+    },
+    {
+      "effect": "renalSeriousEvent",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Acute kidney injury or renal failure reported as a serious adverse event, or leading to hospitalization or dialysis."
+    },
+    {
+      "effect": "hyponatremia",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "Serum sodium below 130 mmol/L on scheduled testing (same as PathScore)."
+    },
+    {
+      "effect": "hyperuricemiaGout",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "A clinically diagnosed gout attack during follow-up (same as PathScore)."
+    },
+    {
+      "effect": "hyperglycemia",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "Incident diabetes in patients without it at baseline (same as PathScore)."
+    },
+    {
+      "effect": "gynecomastia",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "Breast enlargement or breast pain in men reported as an adverse event. A rate in men; charged to men only."
+    },
+    {
+      "effect": "angioedema",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Swelling of lips, face, tongue or larynx, diagnosed clinically or adjudicated (same as PathScore)."
+    },
+    {
+      "effect": "syncope",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Transient loss of consciousness reported as an adverse event (same as PathScore)."
+    },
+    {
+      "effect": "anemia",
+      "layer": "harmRow",
+      "severity": "mild",
+      "ctcaeGrade": 1,
+      "definition": "Haemoglobin fall of more than 2 g/dL, or anemia reported as an adverse event where no threshold is given (stated on the row)."
+    },
+    {
+      "effect": "avBlockFirstDegree",
+      "layer": "harmRow",
+      "severity": "mild",
+      "ctcaeGrade": 1,
+      "definition": "PR interval above 0.2 s on electrocardiogram (same as PathScore)."
+    },
+    {
+      "effect": "avBlockAdvanced",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Second- or third-degree atrioventricular block, or bradycardia leading to hospitalization or pacemaker implantation."
+    },
+    {
+      "effect": "atrialFibrillation",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "New or recurrent atrial fibrillation reported as an adverse event."
+    },
+    {
+      "effect": "ketoacidosis",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Diabetic ketoacidosis, adjudicated or reported as a serious adverse event."
+    },
+    {
+      "effect": "genitalMycoticInfection",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "Genital mycotic infection reported as an adverse event (needs treatment)."
+    },
+    {
+      "effect": "amputation",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Lower-limb amputation reported as an adverse event."
+    },
+    {
+      "effect": "hypoglycemiaSevere",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Hypoglycemia needing another person's help or reported as a serious adverse event."
+    },
+    {
+      "effect": "urinaryTractInfection",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "Urinary tract infection reported as an adverse event (needs oral treatment)."
+    },
+    {
+      "effect": "digoxinToxicityHospitalization",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Hospitalization for suspected digoxin toxicity."
+    },
+    {
+      "effect": "ventricularArrhythmia",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Ventricular tachycardia or fibrillation, or hospitalization for ventricular arrhythmia, reported as an adverse event (not as a cause of death)."
+    },
+    {
+      "effect": "pancreatitis",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Acute pancreatitis, adjudicated or reported as a serious adverse event."
+    },
+    {
+      "effect": "gallbladderDisease",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "Cholelithiasis or cholecystitis reported as an adverse event."
+    },
+    {
+      "effect": "hypophosphatemia",
+      "layer": "harmRow",
+      "severity": "mild",
+      "ctcaeGrade": 1,
+      "definition": "Serum phosphate below 2.0 mg/dL on scheduled testing."
+    },
+    {
+      "effect": "hypersensitivitySerious",
+      "layer": "harmRow",
+      "severity": "serious",
+      "ctcaeGrade": 3,
+      "definition": "Anaphylaxis or a serious hypersensitivity or infusion reaction."
+    },
+    {
+      "effect": "hypomagnesemia",
+      "layer": "harmRow",
+      "severity": "mild",
+      "ctcaeGrade": 1,
+      "definition": "Serum magnesium below the laboratory lower limit on scheduled testing."
+    },
+    {
+      "effect": "lupusLikeSyndrome",
+      "layer": "harmRow",
+      "severity": "moderate",
+      "ctcaeGrade": 2,
+      "definition": "Drug-induced lupus diagnosed clinically."
+    },
+    {
+      "effect": "hypotensionSymptomatic",
+      "layer": "symptomFigure",
+      "definition": "Symptomatic hypotension reported as an adverse event."
+    },
+    {
+      "effect": "dizziness",
+      "layer": "symptomFigure",
+      "definition": "Dizziness or light-headedness reported as an adverse event."
+    },
+    {
+      "effect": "bradycardiaSymptomatic",
+      "layer": "symptomFigure",
+      "definition": "Symptomatic bradycardia reported as an adverse event."
+    },
+    {
+      "effect": "fatigue",
+      "layer": "symptomFigure",
+      "definition": "Fatigue or asthenia reported as an adverse event."
+    },
+    {
+      "effect": "cough",
+      "layer": "symptomFigure",
+      "definition": "Cough reported as an adverse event."
+    },
+    {
+      "effect": "headache",
+      "layer": "symptomFigure",
+      "definition": "Headache reported as an adverse event. (PathScore excludes headache from its pooled figure because antihypertensives lower it; here it is counted for nitrates and hydralazine, where it is drug-caused.)"
+    },
+    {
+      "effect": "giUpset",
+      "layer": "symptomFigure",
+      "definition": "Nausea, vomiting, diarrhoea, abdominal pain or anorexia reported as an adverse event (near-synonyms: largest excess)."
+    },
+    {
+      "effect": "constipation",
+      "layer": "symptomFigure",
+      "definition": "Constipation reported as an adverse event."
+    },
+    {
+      "effect": "volumeDepletion",
+      "layer": "symptomFigure",
+      "definition": "Volume depletion or dehydration reported as an adverse event (near-synonym of hypotensionSymptomatic when the trial reports them as one group)."
+    },
+    {
+      "effect": "urinaryFrequency",
+      "layer": "symptomFigure",
+      "definition": "Excessive urination reported as an adverse event."
+    },
+    {
+      "effect": "peripheralEdema",
+      "layer": "symptomFigure",
+      "definition": "Oedema reported as an adverse event."
+    },
+    {
+      "effect": "visualPhosphenes",
+      "layer": "symptomFigure",
+      "definition": "Phosphenes or blurred vision reported as an adverse event."
+    },
+    {
+      "effect": "injectionSiteReaction",
+      "layer": "symptomFigure",
+      "definition": "Injection- or infusion-site reaction reported as an adverse event."
+    },
+    {
+      "effect": "sexualDysfunction",
+      "layer": "symptomFigure",
+      "definition": "Erectile dysfunction or reduced libido reported as an adverse event."
+    },
+    {
+      "effect": "bronchospasm",
+      "layer": "symptomFigure",
+      "definition": "Bronchospasm or wheeze reported as an adverse event."
+    },
+    {
+      "effect": "muscleSpasm",
+      "layer": "symptomFigure",
+      "definition": "Muscle cramps reported as an adverse event."
+    },
+    {
+      "effect": "rash",
+      "layer": "symptomFigure",
+      "definition": "Rash or pruritus reported as an adverse event."
+    },
+    {
+      "effect": "withdrawalRebound",
+      "layer": "caution",
+      "definition": "Worsening after abrupt withdrawal (beta-blockers). Shown as the label's caution, not charged."
+    },
+    {
+      "effect": "discontinuationForAdverseEvent",
+      "layer": "crossCheck",
+      "definition": "Permanent discontinuation of study drug because of an adverse event. Collected for every class as a cross-check on the burden index; not charged."
+    }
+  ],
+  "rulings": [
+    "2026-11-15 R1 (after the first collection, before any rate entered the engine): added `hypoglycemiaSevere` (serious) and `urinaryTractInfection` (moderate); the collectors found measured rows with no effect id.",
+    "2026-11-15 R2: definition match comes before everything else. A laboratory-threshold row is preferred to an investigator-reported event of the same harm; a reported-event row is used only when no laboratory row exists and is marked `definition mismatch: reported event; probably understates the laboratory rate` (TOPCAT: 18.7% vs 9.1% by laboratory value, 13.1% vs 5.6% as reported events).",
+    "2026-11-15 R3: an excess is placebo-controlled (step 1) only when both arms were followed over the same window. A drug-arm rate from long exposure set against a placebo rate from a short trial is step 3 and `extrapolated`.",
+    "2026-11-15 R4: at the same preference step and definition, the source with more patients is used, whether it is a pooled class row or a single-drug row; a class row then applies to every drug in the class.",
+    "2026-11-15 R5: for a drug tested only against an active comparator, step 3 uses the comparator's placebo-controlled excess of the nearest definition (marked as a mismatch if the definitions differ) plus the measured difference; if the comparator has none, step 5.",
+    "2026-11-15 R6: an event tied to each administration (infusion reactions) is charged per year at the number of administrations a year the trial used. An event concentrated in the first weeks (gastrointestinal symptoms on dose escalation) is charged as observed over the trial; the row says the rate falls after the first year.",
+    "2026-11-15 R7 (at merge): for step 5, these are sibling classes: ACE inhibitor and ARB; MRA and non-steroidal MRA; GLP-1 and GLP-1/GIP agonist; loop and thiazide-like diuretic. A sibling class's measured figure is used before a step-6 upper bound.",
+    "2026-11-15 R8 (at merge): a step-4 figure measured at doses below the heart-failure dose range, for a harm the label states is dose-related, does not qualify; the next step applies. (Loop-diuretic hypokalemia: the torsemide hypertension label figure was below placebo; replaced by the thiazide-like sibling figure.)",
+    "2026-11-15 R9 (at merge): every step-6 upper bound is the largest placebo-controlled excess of that harm anywhere in the merged table, recomputed by docs/harm-evidence-2026-11-15/merge_harm.py."
+  ]
+}

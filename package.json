@@ -11,12 +11,21 @@
     "build": "vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "verify": "tsx scripts/verifyScenarios.ts",
+    "verify": "tsx scripts/verifyScenarios.ts && tsx scripts/panelCasesChecks.ts",
     "test": "npm run verify",
     "audit:red": "tsx scripts/redTeam.ts",
     "audit:mistakes": "tsx scripts/mistakeAudit.ts",
     "audit:hundred": "tsx scripts/hundredScenarioAudit.ts",
-    "ci": "npm run typecheck && npm run build && npm run verify"
+    "golden": "tsx scripts/goldenMaster.ts",
+    "panel:cases": "tsx scripts/buildPanelCases.ts",
+    "golden:update": "tsx scripts/goldenMaster.ts --update",
+    "ranking:diff": "tsx scripts/rankingDiff.ts",
+    "guideline:report": "tsx scripts/guidelineReproduction.ts",
+    "gate": "npm run typecheck && npm run golden && npm run verify && npm run verify:ui && npm run audit:hundred && npm run audit:mistakes && npm run audit:red && npm run audit:pricing && npm run fuzz",
+    "ci": "npm run build && npm run gate",
+    "audit:pricing": "tsx scripts/pricingAudit.ts",
+    "fuzz": "tsx scripts/fuzzSweep.ts 5000",
+    "verify:ui": "node scripts/runClinicalUi.mjs"
   },
   "dependencies": {
     "react": "^19.2.0",

@@ -2,6 +2,37 @@
 
 All notable changes are recorded here.
 
+## 2026-11-25.1 - Computed quantities rounded once (round 13); round 14 clean
+
+Rule set `2026-11-25.1`. Round 13 found that current weight minus dry weight was compared with 1.0 and 2.0 kg thresholds in floating point, so two entries exactly 1.0 kg apart were read differently depending on the digits.
+
+- One helper rounds the weight difference, the pulse pressure and the BUN to creatinine ratio to six decimals, and every comparison and printed figure reads it (`services/clinicalPredicates.ts`). Options, order, eligibility and scores can change only for a patient exactly on a threshold.
+- The low-potassium alert reads potassium to one decimal like every other rule.
+- The held-loop clause is shown only when no oral loop step exists without the held or completed loop records.
+- The kidney sentence prints creatinines as entered; a percentage that rounds to a threshold without equalling it keeps its decimals.
+- The volume score uses the rounded weight difference for its penalty (693 volume-domain scores moved by one point in 20,000 random patients; no overall score, option set or order changed).
+- Screen and wording: an unchanged example is not "touched"; an open discard prompt closes on a tab change; no function name on the Evidence tab; the pregnancy availability sentence is removed on outputs with no option; the future-exposure-date test uses the local calendar date.
+- Round 14 (all three reviewers ready) made no code change; its minor findings are listed in `docs/expert-review-2026-11-19/README.md`.
+
+## 2026-11-24.2 - Exact 50% creatinine rise (round 12)
+
+Rule set `2026-11-24.2`. An exact 50% creatinine rise (for example 0.8 to 1.2) was computed as 49.99% and failed "50% or more".
+
+- The creatinine rise and the derived eGFR fall are rounded to six decimals once, where they are computed, for every band and every consumer.
+- No-option outputs no longer say that other eligible decisions remain available; the slow-heart-rate alert says "recorded as taken" when a rate-slowing drug is held; "nonsteroidal MRA" replaces "nsMRA" on the Evidence and Formulary tabs; the potassium form error and engine alert are one sentence; a potassium of 8.01 to 8.04 is read as 8.0 on every path.
+- An open discard prompt closes on any view change, and opening an example form no longer counts as a change.
+
+## 2026-11-24.1 - Round 11 minor findings (words and alerts only)
+
+Rule set `2026-11-24.1`. No first option, option set, order, eligibility result or score changed.
+
+- A held or completed loop diuretic record is named as the cause when it blocks a loop step; the "highest dose" reason is not given for a loop the option removes.
+- The EXPOSURE HISTORY sentence for a held drug that matches an allergy names the allergy.
+- Potassium above 8.0 carries one action sentence (ECG, withhold potassium-raising drugs, emergency assessment), in the engine alert, the form error and input-error stops.
+- The AV-block alert names held, uncertain or unreadable rate-slowing drugs; an option that replaces Furoscix with a lower oral loop dose carries a drug note.
+- Held and completed drugs are named on the guided header, Review step and print; "Discard the entered case?" is asked before "New patient" or "Choose a different patient" clears an entered case.
+- Wording: scope sentence, example cards, evidence row HF-SCORE-004, panel pages, kidney alert names the criterion met, price unknown cause.
+
 ## 2026-07-05 - Full verified audit-and-fix pass
 
 Comprehensive audit of the clinical engine, formulary, pricing, UI, tests, and build.

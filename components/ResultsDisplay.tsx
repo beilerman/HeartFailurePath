@@ -1,8 +1,23 @@
-
-import React, { useState } from 'react';
-import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem } from '../types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { ScoredRegimen, ExcludedMedication, MonitoringPlanItem, DecisionReadiness, SimulationOutput } from '../types';
+import { DecisionReadinessPanel } from './DecisionReadinessPanel';
 import { RecommendationCard } from './RecommendationCard';
-import { getTargetDosePatientContext, isTargetDoseForPatient } from '../services/simulationService';
+import { buildChartHeader, type RunSnapshot } from './chartHeader';
+import { RULESET_VERSION } from '../services/rulesetVersion';
+import { clinicalSentence, NO_CHANGE_TEXT } from './clinicalPresentation';
+import { Disclosure } from './Disclosure';
+import { plainText } from './plainText';
+import { PrintSummary } from './PrintSummary';
+import type { WhyFirst } from '../services/engine/whyFirst';
+import { useEvidenceLink } from './EvidenceContext';
+import { evidenceRowsForDrug, drugSearchTerm } from './evidenceMatrix';
+import {
+    buildChartSummary, partitionAlerts, partitionWarnings, groupExclusions, exclusionsForGap, startedByOption,
+    planForOption, normalizeOptionIndex, stopStateText, type ChartInput,
+    entryReasonText, isOverBudgetFallback,
+    type ExclusionEntry, type ExclusionGroup,
+} from './resultsModel';
+import { headWords } from '../services/engine/whyFirst';
 
 interface Props {
     results: ScoredRegimen[];
@@ -18,86 +33,134 @@ interface Props {
     eligibleAdjuncts?: string[];
     missingDataNotices?: string[];
     followUpCalendar?: MonitoringPlanItem[];
+    decisionReadiness?: DecisionReadiness;
+    /** Whether the scope question was answered (policy gate) and the one sentence naming the ejection-fraction evidence used. */
+    scopeStatus?: SimulationOutput['scope_status'];
+    evidenceBand?: SimulationOutput['evidence_band'];
+    /** The engine's reasons for each option's place and for each indicated class that is not started. */
+    whyFirst?: WhyFirst;
+    /** Time and patient inputs captured when the analysis ran; printed in the copied note header. */
+    runSnapshot?: RunSnapshot;
+    /** Print the case label line. The guided view shows the label once, in its patient bar, and turns this off. */
+    showCaseLabel?: boolean;
 }
 
-// Assemble a plain-text plan a clinician can paste into the chart. Built from the same
-// structured output shown on screen — top option's changes, then the supporting lists.
-function buildChartSummary(
-    results: ScoredRegimen[],
-    clinicalAlerts: string[],
-    gdmtGaps: string[],
-    eligibleAdjuncts: string[],
-    followUpCalendar: MonitoringPlanItem[],
-    monitoringPlan: MonitoringPlanItem[]
-): string {
-    const lines: string[] = [];
-    lines.push('HEART FAILURE GDMT PLAN (decision-support output — verify before acting)');
-    lines.push('');
+const modIcon: Record<string, string> = { add: '+', titrate_up: '+', titrate_down: '−', swap: '~', remove: '−' };
+const modWord: Record<string, string> = { add: 'Start', titrate_up: 'Increase', titrate_down: 'Reduce', swap: 'Switch', remove: 'Stop' };
+const modTone: Record<string, string> = {
+    add: 'text-emerald-800', titrate_up: 'text-blue-800', titrate_down: 'text-blue-800', swap: 'text-amber-800', remove: 'text-red-800',
+};
 
-    if (clinicalAlerts.length > 0) {
-        lines.push('SAFETY ALERTS:');
-        clinicalAlerts.forEach(a => lines.push(`  - ${a}`));
-        lines.push('');
-    }
+/** Scroll a result section into view and move keyboard focus to it. */
+const jumpTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ block: 'start' });
+    el.focus({ preventScroll: true });
+};
 
+const JumpLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, children }) => (
+    <button type="button" onClick={() => jumpTo(to)} className="font-bold text-indigo-700 underline hover:text-indigo-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">
+        {children}
+    </button>
+);
+
+const EvidenceButton: React.FC<{ drugNames: string[] }> = ({ drugNames }) => {
+    const { openEvidence } = useEvidenceLink();
+    const name = drugNames.find(n => evidenceRowsForDrug(n).length > 0);
+    if (!name) return null;
+    return (
+        <button type="button" onClick={() => openEvidence(drugSearchTerm(name))} className="text-xs font-bold text-indigo-700 underline hover:text-indigo-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 rounded">
+            Evidence for {name}
+        </button>
+    );
+};
+
+const ExclusionEntryRow: React.FC<{ entry: ExclusionEntry }> = ({ entry }) => {
+    const reason = entryReasonText(entry);
+    return (
+        <li className="text-sm text-slate-800 leading-snug">
+            <span className="font-bold">{entry.names.join(', ')}</span>
+            <span className="text-slate-600">{entry.ruleName ? `: ${plainText(entry.ruleName)}` : ''}</span>
+            {reason && <span className="block text-slate-700 mt-0.5">Why: {reason}</span>}
+            <span className="block mt-0.5"><EvidenceButton drugNames={entry.names} /></span>
+        </li>
+    );
+};
+
+const ExclusionList: React.FC<{ group: ExclusionGroup }> = ({ group }) => (
+    <>
+        <ul className="space-y-2">{group.entries.map((e, i) => <ExclusionEntryRow key={i} entry={e} />)}</ul>
+        {group.entries.some(e => e.ruleId) && (
+            <Disclosure className="mt-2 rounded border border-slate-200 bg-white" buttonClassName="px-2 py-1.5 text-[11px] font-bold text-slate-600" title="Technical reference: rule identifiers">
+                <ul className="px-2 pb-2 text-[11px] text-slate-600">{group.entries.filter(e => e.ruleId).map((e, i) => <li key={i}>{e.names.join(', ')}: rule {e.ruleId}</li>)}</ul>
+            </Disclosure>
+        )}
+    </>
+);
+
+export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runId = 0, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [], runSnapshot, decisionReadiness, whyFirst, scopeStatus, evidenceBand, showCaseLabel = true }: Props) {
+    const [copyState, setCopyState] = useState<'idle' | 'copied' | 'failed'>('idle');
+    const [showNote, setShowNote] = useState(false);
+    // Which option the draft note and visit summary describe (0-based). Option 1 unless the clinician chooses otherwise.
+    const [selectedOption, setSelectedOption] = useState(0);
+    const regionRef = useRef<HTMLDivElement>(null);
+
+    // After Run Analysis, bring the answer into view and move keyboard/screen-reader focus to it.
+    useEffect(() => {
+        if (runId > 0 && regionRef.current) {
+            regionRef.current.scrollIntoView({ block: 'start' });
+            regionRef.current.focus({ preventScroll: true });
+        }
+    }, [runId]);
+
+    const alerts = useMemo(() => partitionAlerts(clinicalAlerts), [clinicalAlerts]);
+    const exclusionGroups = useMemo(() => groupExclusions(excludedMedications), [excludedMedications]);
     const top = results[0];
-    if (top) {
-        const targetDoseContext = getTargetDosePatientContext(top);
-        lines.push('REGIMEN (top ordered option):');
-        top.regimen.forEach(r => {
-            const targetLabel = isTargetDoseForPatient(r, targetDoseContext) ? ' (target dose)' : '';
-            lines.push(`  - ${r.med.name} ${r.dose.strength}${r.dose.unit} ${r.selected_frequency}${targetLabel}`);
-        });
-        const changes = (top.modification_set?.modifications ?? []).filter(m => m.action !== 'keep');
-        if (changes.length > 0) {
-            lines.push('');
-            lines.push('CHANGES THIS VISIT:');
-            changes.forEach(m => lines.push(`  - ${m.summary}`));
-        }
-        if (top.warnings.length > 0) {
-            lines.push('');
-            lines.push('SAFETY & ADHERENCE NOTES:');
-            top.warnings.forEach(w => lines.push(`  - ${w}`));
-        }
-    }
+    const overBudget = isOverBudgetFallback(top);
+    const sel = normalizeOptionIndex(results.length, selectedOption);
+    const chartInput = useMemo<ChartInput>(() => ({ results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications, decisionReadiness, whyFirst, evidenceBandText: evidenceBand?.text, scopeNote: scopeStatus?.state === 'not_confirmed' ? scopeStatus.text : undefined }),
+        [results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, missingDataNotices, followUpCalendar, monitoringPlan, excludedMedications, decisionReadiness, whyFirst, scopeStatus, evidenceBand]);
+    const chartText = useMemo(() => {
+        const body = buildChartSummary(chartInput, sel);
+        return plainText(runSnapshot ? `${buildChartHeader(runSnapshot)}\n\n${body}` : `Rule-set version: ${RULESET_VERSION}\n\n${body}`);
+    }, [chartInput, sel, runSnapshot]);
+    useEffect(() => { setCopyState('idle'); setShowNote(false); setSelectedOption(0); }, [runId]);
+    // The status says what was copied last; once the selection changes it no longer describes the draft on screen.
+    useEffect(() => { setCopyState('idle'); }, [sel]);
+    useEffect(() => {
+        if (copyState !== 'copied') return;
+        const timer = setTimeout(() => setCopyState('idle'), 3000);
+        return () => clearTimeout(timer);
+    }, [copyState]);
 
-    if (gdmtGaps.length > 0) {
-        lines.push('');
-        lines.push('INDICATED GDMT CURRENTLY MISSING:');
-        gdmtGaps.forEach(g => lines.push(`  - ${g}`));
-    }
-    if (eligibleAdjuncts.length > 0) {
-        lines.push('');
-        lines.push('ELIGIBLE ADJUNCTS TO CONSIDER:');
-        eligibleAdjuncts.forEach(a => lines.push(`  - ${a}`));
-    }
-    if (followUpCalendar.length > 0) {
-        lines.push('');
-        lines.push('FOLLOW-UP CALENDAR (STRONG-HF):');
-        followUpCalendar.forEach(i => lines.push(`  - ${i.timing}: ${i.test} — ${i.details}`));
-    }
-    if (monitoringPlan.length > 0) {
-        lines.push('');
-        lines.push('MONITORING PLAN:');
-        monitoringPlan.forEach(i => lines.push(`  - ${i.test} (${i.timing}): ${i.details}`));
-    }
-
-    return lines.join('\n');
-}
-
-export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runId = 0, error, hasRun = false, resultsStale = false, onRerun, excludedMedications, clinicalAlerts = [], monitoringPlan = [], gdmtGaps = [], eligibleAdjuncts = [], missingDataNotices = [], followUpCalendar = [] }: Props) {
-    const [copied, setCopied] = useState(false);
-
-    const handleCopy = async () => {
-        const text = buildChartSummary(results, clinicalAlerts, gdmtGaps, eligibleAdjuncts, followUpCalendar, monitoringPlan);
+    const printWith = (mode: 'summary' | 'note') => {
         try {
-            await navigator.clipboard.writeText(text);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            document.body.dataset.print = mode;
+            window.addEventListener('afterprint', () => { delete document.body.dataset.print; }, { once: true });
+        } catch { /* printing still works without the mode */ }
+        window.print();
+    };
+    const handleCopy = async () => {
+        if (resultsStale || error || !hasRun) return;
+        try {
+            await navigator.clipboard.writeText(chartText);
+            setCopyState('copied');
         } catch {
-            // Clipboard API unavailable (e.g. insecure context) — no-op; button simply won't confirm.
+            setCopyState('failed');
+            setShowNote(true);
         }
     };
+
+    // Old/error output must not remain actionable or reappear in a browser-generated printout.
+    if (error || (hasRun && resultsStale)) return (
+        <section role="alert" aria-label="Analysis needs review" className="rounded-xl border-2 border-amber-400 bg-amber-50 p-5 space-y-3">
+            <h2 className="text-lg font-bold text-amber-950">{resultsStale ? 'Analysis is out of date' : 'Analysis could not be completed'}</h2>
+            <p className="text-sm text-amber-950">{resultsStale ? 'Inputs or an unfinished entry changed. Previous medication results are hidden. Save or clear pending entries, check the form, then run again.' : 'Correct the issue below and run the analysis again.'}</p>
+            {error && <p className="text-sm font-semibold text-red-800">{error}</p>}
+            {onRerun && <button type="button" onClick={onRerun} className="print:hidden px-4 py-2 rounded bg-indigo-700 text-white font-semibold focus-visible:ring-2">Re-run Analysis</button>}
+        </section>
+    );
 
     // First-run orientation: before any analysis is run, guide the user instead of showing a
     // bare empty pane next to a dense form.
@@ -106,7 +169,7 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
             <div className="space-y-6 pb-16">
                 <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4" role="note">
                     <p className="text-sm font-semibold text-amber-900">
-                        This is a guideline-concordance and safety <span className="underline">checklist</span>, not an outcome predictor. It surfaces GDMT gaps, contraindications, interactions, and monitoring needs, then orders valid options with a transparent guideline/safety/feasibility heuristic.
+                        Research decision support for heart-failure medication review. Check proposed changes, safety warnings, monitoring and affordability with the patient before choosing treatment.
                     </p>
                 </div>
                 <div className="rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/40 p-8">
@@ -114,218 +177,353 @@ export const ResultsDisplay = React.memo(function ResultsDisplay({ results, runI
                     <ol className="mt-4 space-y-3 text-sm text-slate-700">
                         <li className="flex gap-3">
                             <span className="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">1</span>
-                            <span><span className="font-semibold">Load a sample patient</span> from the “Load Patient Profile” menu at the top of the form, or enter this patient's data.</span>
+                            <span><span className="font-semibold">Load a sample patient</span> from the menu at the top of the form, or choose &ldquo;Custom profile&rdquo; to enter your own patient.</span>
                         </li>
                         <li className="flex gap-3">
                             <span className="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">2</span>
-                            <span><span className="font-semibold">LVEF is the only required field</span> — it sets the HF phenotype. Everything else refines the safety and dosing checks.</span>
+                            <span><span className="font-semibold">Enter what is known; leave unavailable information blank.</span> Run a focused review even with an incomplete case. Medication options appear only when their prerequisites can be assessed; the results explain which decisions wait for more information.</span>
                         </li>
                         <li className="flex gap-3">
                             <span className="flex-shrink-0 h-6 w-6 rounded-full bg-indigo-600 text-white font-bold text-xs flex items-center justify-center">3</span>
-                            <span>Click <span className="font-semibold">Run Analysis</span>. You'll get GDMT gaps, eligible adjuncts, contraindications, a monitoring plan, and a STRONG-HF follow-up calendar.</span>
+                            <span>Click <span className="font-semibold">Review available information</span>. Review safety checks first, then proposed changes, alternatives and the monitoring needed for each option.</span>
                         </li>
                     </ol>
-                    <p className="mt-5 text-xs text-slate-500">New to the tool? The <span className="font-semibold">Evidence</span> tab explains the scoring domains and safety logic.</p>
+                    <p className="mt-5 text-xs text-slate-600">New to the tool? The <span className="font-semibold">Evidence</span> tab explains the scoring and safety logic and lists the source behind each rule.</p>
                 </div>
             </div>
         );
     }
 
+    // The same helper builds the note's monitoring and follow-up, so the screen and the draft cannot disagree.
+    const plan = planForOption(chartInput, sel);
+    const chosen = plan.option;
+    const n = plan.number;
+    const chosenOverBudget = isOverBudgetFallback(chosen);
+    const changes = (chosen?.modification_set?.modifications ?? []).filter(m => m.action !== 'keep');
+    const topWarnings = chosen ? partitionWarnings(chosen.warnings) : { safety: [], notes: [] };
+    const selectOption = (index: number, thenJump = false) => { setSelectedOption(index); setCopyState('idle'); if (thenJump) jumpTo('results-this-visit'); };
+    const showActions = results.length > 0 || clinicalAlerts.length > 0;
+    const stopText = stopStateText(clinicalAlerts, decisionReadiness, whyFirst);
+    // The "Why" block holds the indicated-therapy gaps, eligible adjuncts, care prompts, missing data, monitoring, follow-up and withheld drugs: with none of them it is not drawn (a stop or scope screen).
+    const hasWhyContent = gdmtGaps.length > 0 || eligibleAdjuncts.length > 0 || alerts.advisory.length > 0 || missingDataNotices.length > 0 || plan.monitoring.length > 0 || plan.followUp.length > 0 || excludedMedications.length > 0;
+
     return (
-        <div className="space-y-8 pb-16">
-            <div className="rounded-xl border-2 border-amber-300 bg-amber-50 p-4" role="note" aria-live="polite">
-                <p className="text-sm font-semibold text-amber-900">
-                    This is a guideline-concordance and safety <span className="underline">checklist</span>, not an outcome predictor. It surfaces GDMT gaps, contraindications, interactions, and monitoring needs. It does <span className="font-bold">not</span> predict an individual's response; displayed options are ordered by an internal guideline/safety/feasibility heuristic and must be chosen with the patient using the labeled trade-offs.
+        <div ref={regionRef} tabIndex={-1} role="region" aria-label="Analysis results" className="space-y-6 pb-16 focus:outline-none">
+            <p className="sr-only" role="status">
+                Analysis complete: {results.length === 0 ? 'no medication option is proposed' : `${results.length} option${results.length === 1 ? '' : 's'}`}, {alerts.urgent.length} safety check{alerts.urgent.length === 1 ? '' : 's'}.
+            </p>
+
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2.5" role="note">
+                <p className="text-xs font-semibold text-amber-900">
+                    Research decision support. Review safety checks before choosing treatment. Expected effects are trial averages, not a prediction for this patient; reassess the patient&apos;s actual response after any change.
                 </p>
             </div>
 
-            {resultsStale && (
-                <div className="rounded-xl border-2 border-orange-300 bg-orange-50 p-4 flex items-center justify-between gap-4" role="status" aria-live="polite">
-                    <p className="text-sm font-semibold text-orange-900">
-                        Inputs changed since this analysis was run — the results below are out of date.
-                    </p>
-                    {onRerun && (
-                        <button
-                            onClick={onRerun}
-                            className="flex-shrink-0 bg-orange-600 text-white text-sm font-bold px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors"
-                        >
-                            Re-run Analysis
-                        </button>
-                    )}
-                </div>
-            )}
+            <PrintSummary patient={runSnapshot?.patient} caseLabel={runSnapshot?.caseLabel} ranAt={runSnapshot?.ranAt} results={results} clinicalAlerts={clinicalAlerts} monitoring={plan.monitoring} monitoringOption={n} whyFirst={whyFirst} decisionReadiness={decisionReadiness} evidenceBandText={evidenceBand?.text} scopeNote={scopeStatus?.state === 'not_confirmed' ? scopeStatus.text : undefined} />
+            <pre data-print-note className="hidden">{chartText}</pre>
 
-            {error && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4" role="alert">
-                    <p className="text-sm font-semibold text-red-700">Simulation error</p>
-                    <p className="text-sm text-red-600 mt-1">{error}</p>
-                </div>
-            )}
+            <div className="space-y-6" data-print-detail>
 
-            {clinicalAlerts.length > 0 && (
-                <div className="space-y-3" role="alert" aria-live="assertive">
-                    {clinicalAlerts.map((alert, i) => {
-                        // Alerts conventionally follow 'HEADER: body' — guard the parse so a
-                        // colon-less alert renders as a single line instead of mangled text.
-                        const sep = alert.indexOf(': ');
-                        const head = sep > 0 ? alert.slice(0, sep) : null;
-                        const body = sep > 0 ? alert.slice(sep + 2) : alert;
-                        return (
-                            <div key={i} className="rounded-xl border-2 border-red-300 bg-red-50 p-5 shadow-md">
-                                <div className="flex items-start gap-3">
-                                    <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                                    </svg>
-                                    <div>
-                                        {head && <p className="text-sm font-bold text-red-800">{head}</p>}
-                                        <p className={head ? 'text-sm text-red-700 mt-1 leading-relaxed' : 'text-sm font-bold text-red-800 leading-relaxed'}>{body}</p>
-                                    </div>
+            {showCaseLabel && runSnapshot?.caseLabel && <p className="text-sm font-semibold text-slate-700">{runSnapshot.caseLabel}</p>}
+            {runSnapshot && <Disclosure title="Inputs used for this analysis" className="border border-slate-200 rounded bg-white" buttonClassName="px-4 py-3 text-sm font-semibold">
+                <pre className="whitespace-pre-wrap break-words px-4 pb-4 text-xs text-slate-700">{buildChartHeader(runSnapshot)}</pre>
+            </Disclosure>}
+
+            {/* 1. Urgent safety */}
+            {alerts.urgent.length > 0 && (
+                <section id="results-alerts" tabIndex={-1} aria-labelledby="results-alerts-title" className="space-y-3 focus:outline-none scroll-mt-4" role="alert">
+                    <h2 id="results-alerts-title" className="text-lg font-bold text-red-800">Safety alerts ({alerts.urgent.length})</h2>
+                    {alerts.urgent.map((a, i) => (
+                        <div key={i} className="rounded-xl border-2 border-red-300 bg-red-50 p-4 shadow-sm break-inside-avoid">
+                            <div className="flex items-start gap-3">
+                                <svg className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                                </svg>
+                                <div>
+                                    {a.head && <h3 className="text-sm font-bold text-red-800">{plainText(a.head)}</h3>}
+                                    <p className={a.head ? 'text-sm text-red-800 mt-1 leading-relaxed' : 'text-sm font-bold text-red-800 leading-relaxed'}>{plainText(a.body)}</p>
                                 </div>
                             </div>
-                        );
-                    })}
-                </div>
+                        </div>
+                    ))}
+                </section>
             )}
 
-            {gdmtGaps.length > 0 && (
-                <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-5 shadow-sm">
-                    <h3 className="text-sm font-bold text-indigo-800 uppercase tracking-wide mb-1">Indicated GDMT — Currently Missing</h3>
-                    <p className="text-xs text-indigo-700 mb-3">Guideline-indicated classes for this EF phenotype that are not in the current regimen. Add unless contraindicated (see exclusions below).</p>
-                    <ul className="space-y-1.5">
-                        {gdmtGaps.map((gap, i) => (
-                            <li key={i} className="text-sm text-indigo-900 font-semibold flex items-start gap-2">
-                                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-indigo-500 flex-shrink-0" aria-hidden="true"></span>
-                                {gap}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+            {scopeStatus?.state === 'not_confirmed' && <p role="note" data-testid="scope-not-confirmed" className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-950">{scopeStatus.text}</p>}
+            {evidenceBand && results.length > 0 && <p data-testid="evidence-band" className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm text-slate-800">{evidenceBand.text}</p>}
 
-            {eligibleAdjuncts.length > 0 && (
-                <div className="rounded-xl border-2 border-violet-200 bg-violet-50 p-5 shadow-sm">
-                    <h3 className="text-sm font-bold text-violet-800 uppercase tracking-wide mb-1">Eligible Adjuncts to Consider</h3>
-                    <p className="text-xs text-violet-700 mb-3">Criteria-met add-on therapies for this patient. Shown even if they did not rank in the regimen options above, so a guideline-indicated adjunct is never silently omitted.</p>
-                    <ul className="space-y-1.5">
-                        {eligibleAdjuncts.map((a, i) => (
-                            <li key={i} className="text-sm text-violet-900 flex items-start gap-2">
-                                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-violet-500 flex-shrink-0" aria-hidden="true"></span>
-                                {a}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
+            <DecisionReadinessPanel assessment={decisionReadiness} noMedicationChange={results.length === 0} />
 
-            {missingDataNotices.length > 0 && (
-                <div className="rounded-xl border border-slate-300 bg-slate-50 p-5 shadow-sm">
-                    <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-1">Data Not Entered — Inference Withheld</h3>
-                    <p className="text-xs text-slate-500 mb-3">The tool withholds conclusions that depend on missing inputs rather than defaulting silently.</p>
-                    <ul className="space-y-1.5">
-                        {missingDataNotices.map((notice, i) => (
-                            <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
-                                <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-slate-400 flex-shrink-0" aria-hidden="true"></span>
-                                {notice}
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            {followUpCalendar.length > 0 && (
-                <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-5 shadow-sm">
-                    <h3 className="text-sm font-bold text-emerald-800 uppercase tracking-wide mb-1">Follow-Up Calendar (STRONG-HF)</h3>
-                    <p className="text-xs text-emerald-700 mb-3">Initiation is the start of a loop, not a single decision. Rapid-sequence and reassess on this schedule.</p>
-                    <ol className="space-y-2">
-                        {followUpCalendar.map((item, i) => (
-                            <li key={`${item.test}-${i}`} className="text-sm text-emerald-900 leading-relaxed">
-                                <span className="font-bold text-emerald-700">{item.timing}</span>
-                                <span className="font-semibold"> — {item.test}</span>
-                                <span className="text-emerald-800">: {item.details}</span>
-                            </li>
-                        ))}
-                    </ol>
-                </div>
-            )}
-
-            {monitoringPlan.length > 0 && (
-                <div className="rounded-xl border-2 border-blue-200 bg-blue-50 p-5 shadow-sm">
-                    <h3 className="text-sm font-bold text-blue-800 uppercase tracking-wide mb-3">Recommended Monitoring Plan</h3>
-                    <ul className="space-y-2">
-                        {monitoringPlan.map((item, i) => (
-                            <li key={`${item.test}-${i}`} className="text-sm text-blue-900 leading-relaxed">
-                                <span className="font-semibold">{item.test}</span>
-                                <span className="text-blue-700"> ({item.timing})</span>
-                                <span className="text-blue-800">: {item.details}</span>
-                            </li>
-                        ))}
-                    </ul>
-                </div>
-            )}
-
-            <div className="flex items-end justify-between border-b border-slate-200 pb-4 gap-4">
-                <div>
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Ordered Guideline-Concordant Options</h2>
-                    <p className="text-slate-500 mt-1 text-sm">Valid regimens that close GDMT gaps, ordered by the engine's guideline, safety, feasibility, and affordability heuristic. Compare the labeled trade-offs before choosing with the patient.</p>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                    {results.length > 0 && (
-                        <>
+            {/* 2. This visit */}
+            <section id="results-this-visit" tabIndex={-1} aria-labelledby="results-this-visit-title" className="rounded-2xl border-2 border-indigo-300 bg-white shadow-sm overflow-hidden focus:outline-none scroll-mt-4 break-inside-avoid">
+                <div className="px-5 py-3 bg-indigo-600 text-white flex flex-wrap items-center justify-between gap-2">
+                    <h2 id="results-this-visit-title" className="text-lg font-bold">Visit review</h2>
+                    {showActions && (
+                        <div className="flex items-center gap-2 print:hidden">
                             <button
                                 onClick={handleCopy}
-                                className="text-sm font-bold px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
-                                aria-live="polite"
+                                disabled={resultsStale}
+                                title={resultsStale ? 'Inputs changed: re-run the analysis before copying' : undefined}
+                                className="text-sm font-bold px-3 py-1.5 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 transition-colors min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {copied ? '✓ Copied' : 'Copy to chart'}
+                                {top ? `Copy draft for option ${n}` : 'Copy focused review draft'}
                             </button>
                             <button
-                                onClick={() => window.print()}
-                                className="text-sm font-bold px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition-colors"
+                                onClick={() => printWith('summary')}
+                                disabled={resultsStale}
+                                title={resultsStale ? 'Inputs changed: re-run the analysis before printing' : undefined}
+                                className="text-sm font-bold px-3 py-1.5 rounded-lg bg-white text-indigo-700 hover:bg-indigo-50 transition-colors min-h-[36px] focus:outline-none focus-visible:ring-2 focus-visible:ring-white disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Print
                             </button>
-                        </>
+                            <span className="text-xs font-semibold min-w-[3rem]" role="status" aria-live="polite">
+                                {copyState === 'copied' && 'Copied'}
+                                {copyState === 'failed' && 'Copy unavailable. Select the draft text below.'}
+                            </span>
+                        </div>
                     )}
-                    <span className="bg-slate-100 text-slate-600 text-sm font-bold px-3 py-1 rounded-full">{results.length} option{results.length === 1 ? '' : 's'}</span>
+                </div>
+                <div className="p-5 space-y-4">
+                    {top && overBudget && (
+                        <div className="rounded-lg border-2 border-red-300 bg-red-50 px-4 py-3" role="alert">
+                            <p className="text-sm font-bold text-red-800">{Number.isFinite(top.cost) ? 'Over the stated budget' : 'Cost cannot be assessed'}</p>
+                            <p className="text-sm text-red-800 mt-0.5">{Number.isFinite(top.cost) ? 'No displayed option fits the budget entered. Review coverage, assistance or an affordable alternative before choosing treatment.' : 'Pricing is incomplete. Obtain the missing costs before comparing affordability or choosing an option.'}</p>
+                        </div>
+                    )}
+                    {results.length > 1 && (
+                        <fieldset className="print:hidden rounded-lg border border-indigo-200 bg-indigo-50/50 px-4 py-2.5">
+                            <legend className="px-1 text-sm font-bold text-indigo-900">Draft note and visit summary describe</legend>
+                            <div className="flex flex-wrap gap-x-5 gap-y-1">
+                                {results.map((_, i) => (
+                                    <label key={i} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-800 min-h-[32px]">
+                                        <input type="radio" name="draft-option" value={i} checked={sel === i} onChange={() => selectOption(i)} className="h-4 w-4 accent-indigo-700" />
+                                        {i === 0 ? 'Option 1 (ordered first)' : `Option ${i + 1}`}
+                                    </label>
+                                ))}
+                            </div>
+                        </fieldset>
+                    )}
+                    {n > 1 && (
+                        <p className="text-sm font-semibold text-indigo-900" role="status">
+                            {`You selected option ${n}. The tool ordered option 1 first; check the differences, warnings and monitoring on the option ${n} card before using this draft.`}
+                        </p>
+                    )}
+                    {!top && (
+                        <p className="text-sm text-slate-800 font-semibold">
+                            {stopStateText(clinicalAlerts, decisionReadiness, whyFirst)}
+                        </p>
+                    )}
+                    {top && (
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wide mb-1.5">{chosenOverBudget ? `Changes in option ${n} (for discussion only)` : `Changes in option ${n}`}</h3>
+                            {changes.length === 0 ? (
+                                <p className="text-sm font-semibold text-slate-800">{NO_CHANGE_TEXT}</p>
+                            ) : (
+                                <ul className="space-y-1">
+                                    {changes.map((m, i) => (
+                                        <li key={i} className={`text-sm font-semibold flex items-start gap-2 ${modTone[m.action] ?? 'text-slate-800'}`}>
+                                            <span className="w-4 text-center font-bold" aria-hidden="true">{modIcon[m.action] ?? ''}</span>
+                                            <span><span className="sr-only">{modWord[m.action] ?? ''}: </span>{clinicalSentence(m.summary)}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </div>
+                    )}
+                    {top && plan.monitoring.length > 0 && (
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-600 uppercase tracking-wide mb-1.5">{`Monitoring for option ${n} and deferred therapy`}</h3>
+                            <ul className="space-y-0.5">
+                                {plan.monitoring.slice(0, 3).map((m, i) => (
+                                    <li key={i} className="text-sm text-slate-800"><span className="font-semibold">{m.test}</span> <span className="text-slate-600">({m.timing})</span></li>
+                                ))}
+                            </ul>
+                            {plan.monitoring.length > 3 && <p className="text-xs text-slate-600 mt-1">{plan.monitoring.length - 3} more in the <JumpLink to="results-monitoring">full monitoring plan</JumpLink>.</p>}
+                        </div>
+                    )}
+                    <p className="text-sm text-slate-700 flex flex-wrap gap-x-4 gap-y-1">
+                        {alerts.urgent.length > 0
+                            ? <JumpLink to="results-alerts">{alerts.urgent.length} safety alert{alerts.urgent.length === 1 ? '' : 's'}</JumpLink>
+                            : <span>No urgent finding from the recorded inputs; this is not a safety clearance.</span>}
+                        {chosen && <span>{topWarnings.safety.length > 0 ? <JumpLink to={`results-option-${n}`}>{topWarnings.safety.length} safety warning{topWarnings.safety.length === 1 ? '' : 's'}</JumpLink> : 'No safety warnings generated'}{` on option ${n}`}{topWarnings.notes.length > 0 && ` (plus ${topWarnings.notes.length} prescribing note${topWarnings.notes.length === 1 ? '' : 's'})`}</span>}
+                        {results.length > 1 && <JumpLink to="results-options">{results.length - 1} other option{results.length === 2 ? '' : 's'}</JumpLink>}
+                        {(gdmtGaps.length > 0 || excludedMedications.length > 0) && <JumpLink to="results-why">Why: gaps, withheld drugs, follow-up</JumpLink>}
+                    </p>
+                </div>
+            </section>
+
+            <div className="print:hidden">
+                <button type="button" onClick={() => printWith('note')} className="mr-4 text-sm font-semibold text-indigo-700 underline focus-visible:ring-2">Print draft note</button>
+                <button type="button" onClick={()=>setShowNote(v=>!v)} aria-expanded={showNote} aria-controls="chart-note-preview" className="text-sm font-semibold text-indigo-700 underline focus-visible:ring-2">{showNote ? 'Hide' : 'Review'} {top ? `draft note for option ${n}` : 'focused review draft'}</button>
+                <div hidden={!showNote} className="mt-3" id="chart-note-preview">
+                    <label htmlFor="chart-note-text" className="block text-sm font-semibold mb-1">Draft note: check before adding to the chart</label>
+                    <textarea id="chart-note-text" readOnly value={chartText} rows={14} className="w-full rounded border border-slate-300 p-3 text-sm" onFocus={e=>e.currentTarget.select()} />
+                    <p className="text-xs text-slate-600">{top ? `Contains option ${n} only.` : 'Contains the focused review and its limitations; no medication option is proposed.'} Select the text and copy manually if clipboard access is unavailable.</p>
                 </div>
             </div>
 
+            {/* 3. Options */}
             {results.length > 0 && (
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-                    {results.map((regimen, idx) => (
-                        // runId in the key remounts cards on each analysis run so per-card UI
-                        // state (details expansion, open modal) never carries onto a different regimen.
-                        <RecommendationCard key={`${runId}-${idx}`} regimen={regimen} rank={idx + 1} />
-                    ))}
-                </div>
-            )}
-
-            {excludedMedications.length > 0 && (
-                <div className="mt-12 p-6 bg-slate-100/50 rounded-2xl border border-slate-200">
-                    <h3 className="text-sm font-bold text-slate-500 uppercase mb-4 tracking-wider">Clinical Exclusions & Contraindications</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {excludedMedications.map((med, i) => (
-                            <div key={i} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
-                                <div className="flex justify-between items-start mb-1">
-                                    <span className="font-bold text-slate-900 text-sm">{med.name}</span>
-                                    <span className="text-[10px] font-bold text-slate-400 uppercase">{med.drug_class}</span>
-                                </div>
-                                <p className="text-xs text-slate-500 italic leading-snug">{med.reason}</p>
+                <section id="results-options" tabIndex={-1} className="focus:outline-none scroll-mt-4">
+                    <div className="border-b border-slate-200 pb-3 mb-5">
+                        <h2 id="results-options-title" className="text-2xl font-bold text-slate-900 tracking-tight">Options ({results.length})</h2>
+                        <p className="text-slate-600 mt-1 text-sm">Options to review with the patient. Check safety warnings, medication differences and monitoring before choosing; the first option is not a finalized prescription.</p>
+                    </div>
+                    <div className="grid grid-cols-1 2xl:grid-cols-2 gap-6">
+                        {results.map((regimen, idx) => (
+                            // runId in the key remounts cards on each analysis run so per-card UI
+                            // state (details expansion, open modal) never carries onto a different regimen.
+                            <div key={`${runId}-${idx}`} id={`results-option-${idx + 1}`} tabIndex={-1} className={`focus:outline-none scroll-mt-4 break-inside-avoid ${idx === 0 && results.length > 1 ? '2xl:col-span-2' : ''}`}>
+                                <RecommendationCard regimen={regimen} rank={idx + 1} leader={idx > 0 ? results[0] : undefined} why={whyFirst?.options[idx]} />
+                                {results.length > 1 && (
+                                    <button type="button" aria-pressed={sel === idx} onClick={() => selectOption(idx, true)}
+                                        className={`print:hidden mt-2 text-sm font-bold px-3 py-2 rounded-lg border-2 min-h-[40px] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${sel === idx ? 'bg-indigo-700 text-white border-indigo-700' : 'bg-white text-indigo-700 border-indigo-300 hover:bg-indigo-50'}`}>
+                                        {`Use option ${idx + 1} for the draft note`}
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>
-                </div>
+                </section>
             )}
 
-            {results.length === 0 && !error && (
-                <div className="text-center py-24 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
-                    <p className="text-slate-400 font-medium text-lg">
-                        {excludedMedications.length > 0
-                            ? 'No regimens generated after applying clinical exclusions and constraints.'
-                            : 'Adjust patient parameters and run analysis to see results.'}
-                    </p>
-                </div>
-            )}
+            {/* 4. Why: not rendered when it would be empty (stop and scope screens, R5 Y12) */}
+            {hasWhyContent && <section id="results-why" tabIndex={-1} aria-labelledby="results-why-title" className="space-y-5 focus:outline-none scroll-mt-4">
+                <h2 id="results-why-title" className="text-2xl font-bold text-slate-900 tracking-tight border-b border-slate-200 pb-3">Why: gaps, withheld drugs and follow-up</h2>
+
+                {gdmtGaps.length > 0 && (
+                    <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-5 shadow-sm">
+                        <h3 className="text-sm font-bold text-indigo-900 uppercase tracking-wide mb-1">Indicated GDMT currently missing</h3>
+                        <p className="text-xs text-indigo-900 mb-3">Guideline-indicated classes for this EF phenotype that are not in the current regimen. {top ? `Each row says whether option ${n} starts a drug in the class, why not when it does not, and which drugs could be started.` : stopText}</p>
+                        <ul className="space-y-3">
+                            {gdmtGaps.map((gap, i) => {
+                                const started = startedByOption(gap, chosen);
+                                const ex = exclusionsForGap(gap, exclusionGroups);
+                                const w = whyFirst?.gaps.find(x => x.gap === gap);
+                                const reason = w?.reasons[sel] ?? null;
+                                return (
+                                    <li key={i} className="text-sm text-indigo-950" data-testid="gap-row">
+                                        <p className="font-semibold">{plainText(gap)}</p>
+                                        <p className="text-xs text-indigo-900 mt-0.5">
+                                            {started.length > 0 ? `Option ${n} starts ${started.join(', ')}.`
+                                                : !top ? 'No drug in this class is started, because no medication is started or raised (see the stop state above).'
+                                                : `Option ${n} does not start a drug in this class.`}
+                                        </p>
+                                        {started.length === 0 && top && reason && <p className="text-xs text-indigo-900 mt-0.5" data-testid="gap-reason">{reason}</p>}
+                                        {started.length === 0 && top && w && w.eligible.length > 0 && <p className="text-xs text-indigo-900 mt-0.5">Could be started (no rule withholds them): {w.eligible.join(', ')}.</p>}
+                                        {started.length === 0 && top && w && w.eligible.length === 0 && ex && <p className="text-xs text-indigo-900 mt-0.5">Every drug in this class is withheld; the reasons are listed below.</p>}
+                                        {ex && (
+                                            <Disclosure
+                                                className="mt-1.5 rounded-lg bg-white/70 border border-indigo-200"
+                                                buttonClassName="px-3 py-2 text-xs font-bold text-indigo-900 hover:bg-white"
+                                                title={`Why not? ${ex.entries.reduce((n, e) => n + e.names.length, 0)} drug${ex.entries.reduce((n, e) => n + e.names.length, 0) === 1 ? '' : 's'} withheld in this class`}
+                                            >
+                                                <div className="px-3 pb-3 pt-1"><ExclusionList group={ex} /></div>
+                                            </Disclosure>
+                                        )}
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                )}
+
+                {eligibleAdjuncts.length > 0 && (
+                    <div className="rounded-xl border-2 border-violet-200 bg-violet-50 p-5 shadow-sm">
+                        <h3 className="text-sm font-bold text-violet-900 uppercase tracking-wide mb-1">Eligible adjuncts to consider</h3>
+                        <p className="text-xs text-violet-900 mb-3">Add-on therapies whose criteria are met for this patient. Shown even if they did not rank in the options above, so a guideline-indicated adjunct is never silently omitted.</p>
+                        <ul className="space-y-1.5">
+                            {eligibleAdjuncts.map((a, i) => (
+                                <li key={i} className="text-sm text-violet-950 flex items-start gap-2">
+                                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-violet-600 flex-shrink-0" aria-hidden="true"></span>
+                                    {plainText(a)}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {alerts.advisory.length > 0 && (
+                    <div className="rounded-xl border border-slate-300 bg-white p-5 shadow-sm">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-1">Other care prompts</h3>
+                        <ul className="space-y-2 mt-2">
+                            {alerts.advisory.map((a, i) => (
+                                <li key={i} className="text-sm text-slate-800 leading-relaxed">
+                                    {a.head && <span className="font-bold">{plainText(headWords(a.head))}. </span>}{plainText(a.body)}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {missingDataNotices.length > 0 && (
+                    <div className="rounded-xl border border-slate-300 bg-slate-50 p-5 shadow-sm">
+                        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-1">Data not entered: conclusions withheld</h3>
+                        <p className="text-xs text-slate-600 mb-3">The tool withholds conclusions that depend on missing inputs rather than defaulting silently.</p>
+                        <ul className="space-y-1.5">
+                            {missingDataNotices.map((notice, i) => (
+                                <li key={i} className="text-sm text-slate-800 flex items-start gap-2">
+                                    <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-slate-500 flex-shrink-0" aria-hidden="true"></span>
+                                    {plainText(notice)}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {plan.monitoring.length > 0 && (
+                    <div id="results-monitoring" tabIndex={-1} className="rounded-xl border-2 border-blue-200 bg-blue-50 p-5 shadow-sm focus:outline-none scroll-mt-4 break-inside-avoid">
+                        <h3 className="text-sm font-bold text-blue-900 uppercase tracking-wide mb-3">{results.length === 0 ? 'Monitoring' : 'Recommended monitoring plan'}</h3>
+                        <ul className="space-y-2">
+                            {plan.monitoring.map((item, i) => (
+                                <li key={`${item.test}-${i}`} className="text-sm text-blue-950 leading-relaxed">
+                                    <span className="font-semibold">{item.test}</span>
+                                    <span className="text-blue-900"> ({item.timing})</span>
+                                    <span>: {plainText(item.details)}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
+
+                {plan.followUp.length > 0 && (
+                    <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-5 shadow-sm break-inside-avoid">
+                        <h3 className="text-sm font-bold text-emerald-900 uppercase tracking-wide mb-1">{`Follow-up for option ${n} (STRONG-HF framework)`}</h3>
+                        <p className="text-xs text-emerald-900 mb-3">{`Review this suggested schedule for option ${n}. Timing must match the selected regimen and clinical circumstances.`}</p>
+                        <ol className="space-y-2">
+                            {plan.followUp.map((item, i) => (
+                                <li key={`${item.test}-${i}`} className="text-sm text-emerald-950 leading-relaxed">
+                                    <span className="font-bold">{item.timing}</span>
+                                    <span className="font-semibold">: {item.test}</span>
+                                    <span>: {plainText(item.details)}</span>
+                                </li>
+                            ))}
+                        </ol>
+                    </div>
+                )}
+
+                {excludedMedications.length > 0 && (
+                    <div className="rounded-xl border border-slate-200 bg-slate-100/60 p-5">
+                        <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wide mb-1">All drugs withheld, by class ({excludedMedications.length})</h3>
+                        <p className="text-xs text-slate-600 mb-3">Drugs with the same rule and reasons are merged into one line.</p>
+                        <div className="space-y-2">
+                            {exclusionGroups.map((g, gi) => (
+                                <Disclosure
+                                    key={g.key}
+                                    defaultOpen={gi === 0 && exclusionGroups.length === 1}
+                                    className="rounded-lg bg-white border border-slate-200"
+                                    buttonClassName="px-3 py-2.5 text-sm font-bold text-slate-800 hover:bg-slate-50"
+                                    title={<>{g.label} <span className="font-normal text-slate-600">({g.entries.reduce((n, e) => n + e.names.length, 0)})</span></>}
+                                >
+                                    <div className="px-3 pb-3 pt-1"><ExclusionList group={g} /></div>
+                                </Disclosure>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </section>}
+            <p className="text-[11px] text-slate-500 text-right">Rule-set version {RULESET_VERSION}</p>
+            </div>
         </div>
     );
 });

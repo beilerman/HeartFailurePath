@@ -1,0 +1,37 @@
+NOTE (written by hand, 2026-11-11): no top pick, pick set or order changed (774 / 774). The monitoring plan now states the sourced timings: MRA start or increase -
+potassium/creatinine/eGFR within 1 week and again at about 4 weeks (labels; guideline text, secondary); ACEi/ARB/ARNI start or increase - 1-2 weeks (European
+consensus, secondary). Before: a single "3-7 days" item and a "10-14 days" repeat for any RAAS/MRA change. The 48-72 hour early check is kept and labeled engine policy.
+The only differences listed below are the LABS REQUIRED alert, which gained one sentence (enter labs that reflect current medications and clinical state; no number).
+
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 774 runs
+  (a) top pick identical:        774 / 774
+  (b) displayed pick set same:   774 / 774
+  (c) pick order identical:      774 / 774
+  (d) eligibility + alerts identical: NO (18 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+BUGS (eligibility/alerts must not change):
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: cash: clinicalAlerts differ
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: commercial: clinicalAlerts differ
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: medicare: clinicalAlerts differ
+  Blank Renal Data Stable Spironolactone :: cash: clinicalAlerts differ
+  Blank Renal Data Stable Spironolactone :: commercial: clinicalAlerts differ
+  Blank Renal Data Stable Spironolactone :: medicare: clinicalAlerts differ
+  Lab-Prereq Naive HFrEF Blank Potassium :: cash: clinicalAlerts differ
+  Lab-Prereq Naive HFrEF Blank Potassium :: commercial: clinicalAlerts differ
+  Lab-Prereq Naive HFrEF Blank Potassium :: medicare: clinicalAlerts differ
+  Lab-Prereq Lisinopril 10 mg Blank Potassium :: cash: clinicalAlerts differ
+  Lab-Prereq Lisinopril 10 mg Blank Potassium :: commercial: clinicalAlerts differ
+  Lab-Prereq Lisinopril 10 mg Blank Potassium :: medicare: clinicalAlerts differ
+  Lab-Prereq Naive HFrEF Blank Renal :: cash: clinicalAlerts differ
+  Lab-Prereq Naive HFrEF Blank Renal :: commercial: clinicalAlerts differ
+  Lab-Prereq Naive HFrEF Blank Renal :: medicare: clinicalAlerts differ
+  Lab-Prereq Lisinopril 10 mg Blank Renal :: cash: clinicalAlerts differ
+  Lab-Prereq Lisinopril 10 mg Blank Renal :: commercial: clinicalAlerts differ
+  Lab-Prereq Lisinopril 10 mg Blank Renal :: medicare: clinicalAlerts differ

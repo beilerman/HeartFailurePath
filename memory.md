@@ -1,6 +1,185 @@
 # HeartFailurePath — Cross-Session Memory
 
+The [November 23 project handoff](docs/HANDOFF-2026-11-23.md) records the current local rule set, verified repairs and outstanding decisions. The entries below preserve earlier project work.
+
 ## Architecture / Clinical-Safety Decisions
+
+### Round 1 screen fixes (2026-11-19, local)
+- Record: CLAUDE.md top note; checks `scripts/verifyScreenExplain.tsx` (ONLY_EXPLAIN=1 runs just them; the full suite takes over two minutes, run it in the background). `why_first` is in `ADDITIVE_KEYS` with `temporary_hold`.
+- Existing checks rewritten: selected-option note headings and "started in this option" gap wording; "Expected effect of option N" heading; case label colon instead of em dash; jump-link regex; the visible-label count ignores the print summary.
+- Gotchas: engine strings stay unchanged (ranking:diff compares alerts, exclusions and warnings); every clean-up of them is `plainText` at display. The evidence tab cleans file names and underscored identifiers in `components/evidenceMatrix.ts`. Never print an interval whose ends round to one figure (`noInterval`).
+
+### Round 2 engine safety and consistency (2026-11-19, local)
+- Record: CLAUDE.md top note; checks `scripts/engineSafetyRound2Checks.ts` (in verify); sweep `scripts/engineRound2Sweep.ts`; evidence rows HF-S1-001 .. HF-S12-001. Rule set 2026-11-19.2.
+- Existing checks rewritten (they asserted the old behaviour): Severe Dilation, cold decompensation and washout scenarios (verifyScenarios.ts), third-degree AV block and sick sinus summaries, Jane Smith and African American generator checks (measuredModelChecks.ts), unknown pregnancy checks (age 40; incompleteDataChecks.ts, verifyClinicalUi.tsx), hundred-scenario 012, the fuzz empty-page reasons. Probes of "what the engine can offer" now read every scored candidate (`scoredCandidates`), not the displayed three.
+- Gotcha: never `open(f,'w').write(open(f).read())` in a scratch script (it truncates the file); there is no git here to recover from.
+
+### Round 2 readiness, part A (2026-11-19, local; rulings T1-T5, T16, T18, T22-T28)
+- Checks `scripts/engineReadinessR2Checks.ts` (in verify), seeded sweep `scripts/engineReadinessR2Sweep.ts` (shards + `--merge`), generator `scripts/r2Generator.ts` (adopted from the engine reviewer), debug `scripts/r2Show.ts`. Alert builders shared by the full path and every stop path live in `services/engine/urgentStates.ts` (T16): never copy an alert into a second path.
+- Predicates ignore a value that is not entered (0/blank/NaN): `isAcutelyDecompensated` (NYHA III route needs both weights), `hasHypoperfusion`, `isLowOutputState`, `weightBelowDryWeight`, `isCongestedAboveDryWeight`. Alerts written before the options exist point at "the options below" through `OPTION_PHRASES`; `settleOptionReferences` rewrites them when none is shown.
+- Congestion display rule (T23): the loop step goes into a COPY of each plan; a plan shown without it carries `ModificationSet.loop_step_omitted` and a Drug note. Duplicate removals carry `duplicate_cleanup` (never counted or scored as a diuretic change). Duplicate class keep-rule: trial dose fraction, else verified furosemide equivalent, else label-maximum fraction, else formulary order (T2). The S10 baseline is "no change" or the best plan with only mandatory changes (`selection.baselinePlan`, T3). Drug warnings flagged `start_prerequisite` block a start while true.
+
+
+### Round 6 readiness fixes (2026-11-21, local; rulings V1-V19; rule set 2026-11-21.5)
+- Record: CLAUDE.md top note; checks `scripts/engineReadinessR6Checks.ts` (in verify; helpers exported for the sweep), `scripts/verifyR6Ui.tsx` (in verify:ui), sweeps `scripts/engineReadinessR6Sweep.ts` and `scripts/r6ScreenSweep.tsx` (run with `node scripts/r6ScreenSweep.mjs <seed> <count>`).
+- A check that fires only because a kidney value is blank is never a stated reason: `contraindicationReasons` re-tests each check with a normal value in place of each blank one. Do not read a blank eGFR as 0 in any new reason text.
+- Allergy wording the engine reads as text lives in ONE list (`ALLERGY_TEXT_RULES`, `allergy.ts`); the form, the unmatched note and the readiness list all read it. No drug-name literals in engine files (a verify check fails on a string that equals a drug-name fragment).
+- A no-option output goes through `withStop` (simulationService.ts): `forStopPath` rewrites alert sentences, `noMedicationChangeReadiness` the readiness text, adjuncts are dropped. Screen words: no "plan", "recommend", "rank" on a no-option screen, and "option" only in the fixed sentences "This tool proposes no medication option today..." and "No medication option is shown/proposed ..." (round 10 A7; the scope sentence says "no medication option is shown", round 11 B7a) (the sweep scans the whole rendered screen, note and print). On a no-option output the two KCCQ lines (readiness text and missing-data notice) do not mention "eligible decisions" (`noOptionKccqWording`, round 11 C5); an input-error stop still shows an extreme potassium (above 8.0) message (round 11 C8).
+- Existing checks rewritten (they asserted behaviour a ruling changed): Y6 AF paragraph (digoxin sentence now only above resting rate 110), the "AF HFrEF Anticoagulation And Rate Control" scenario assertion, the profile-independence check for eligible adjuncts (compares the adjuncts, not the new reason), `panelCasesChecks.ts` case-count bound (44 to 45), C8 rule set identifier.
+- Gotcha: a row named "after starting <word>" is read by the W7a sweep as "after starting <drug>"; name a start-or-raise row with a different shape ("after a beta-blocker start or increase").
+- Gotcha: the sweeps use flat prices in `runEngine` and tier prices in `run` (lib); a patient found by search must be re-checked on the path the packet uses (`getDrugPrices`).
+
+### Guided entry view (2026-11-15, local, uncommitted)
+- Default view is Guided (Start / steps / Results); `?view=form` or the header switch gives the original Full form. Both edit the same App state; only one is mounted, and the form host clears `pendingEntry` on unmount (an unfinished medication/history draft is lost on a view switch by design).
+- One implementation of fields: `usePatientFormModel` + `FormSection`. Step panels all stay mounted (hidden) so drafts survive step changes. `.guided-fields` CSS in `index.css` reflows the sidebar sections' `grid-cols-2.gap-4` groups to fit the wide layout.
+- Example cards run only after the scenario's pricing tier has loaded (`pricesSettledTier`); `pricesLoading` is cleared in the same batch as the prices, or the run is marked out of date the moment prices arrive.
+- Curated examples are keyed by scenario title in `components/guided/demoCases.ts`; card facts are read from the patient. A verify:ui check requires their eGFR/BMI to equal the derived values so opening the form never marks results stale.
+- Receipt, screenshots and `browser-checks.mjs`: `docs/guided-entry-2026-11-15/`.
+
+### Repeated medication-transition repair (.8, local)
+Latest: **`medication-repair-loop-2026-11-12/README.md`**, rule set **2026-11-12.8**. Repeated review repaired all identified runtime medication-model and interface defects by removing unsupported individual forecasts, adding exposure/course/interval prerequisites and preserving observed physiology. All 32 drugs / 122 dose-frequency entries covered. Gate/build: 442 engine groups, 29 UI groups, 1,032 golden runs, 100/100 + 51/51 audits, red team/pricing and two 5,000-case sweeps pass. Local Chromium workflow and desktop/mobile visuals verified. Ranking changed intentionally (472/1,032 leads); pre-update review and old snapshot retained. No validated untreated-state or longitudinal response model is claimed. Local, uncommitted, unpushed and undeployed; clinical validation remains separate.
+
+The .7 model descriptions below are historical. CHF/hemodynamic functions are audit-only and mutation-tested as disconnected from clinical evaluation. Do not re-enable them or infer treatment response from unchanged observed fields. Proposed snapshots carry assessment_basis=proposed_regimen and cannot be submitted as observed follow-up. Dose increases require actual-use and interval/tolerance review; completed/held entries are excluded from active exposure.
+
+### Medication properties and transition repair (2026-11-12, Codex, local)
+- Record: `docs/medication-properties-2026-11-12/README.md`; rule set .7. All 32 drugs / 121 dose-frequency entries inspected; focused fresh primary-source checks, not all labels newly revalidated. Gate/build pass: 423 engine checks, 27 UI groups, golden 1,032, all audits/pricing/fuzz. No commit, push or deployment.
+- GlucosePath live source `src_common/patient.cpp` explicitly adds estimated current-drug A1c reduction to measured A1c. HeartFailurePath instead uses observed treated baseline plus marginal changes; do not call its `baseline_*` fields untreated measurements.
+- `regimenTransition.ts` canonicalizes net exposure for physiology, preserving original clinical instructions. Identity/self-replacement and swaps versus separate remove/add are invariant. Projected patient must carry resulting regimen; mutable dose records are copied.
+- KCCQ bounded 0–100, EF cannot become negative; nonpositive unbounded EF has explicit MODEL LIMIT warning. This is not validation of a zero-EF prediction. Unknown KCCQ stays unknown.
+- Open: incompatible trial comparators/instruments, unvalidated effect slopes, asymmetric initiation/withdrawal and combination effects, flat ivabradine/metolazone dose effects, episodic iron/Furoscix, exposure dates/adherence/actual response. Sequential add/remove non-inversion remains in diagnostics; do not force clinical reversibility or invent replacement coefficients.
+- All 1,032 existing fixture rankings/sets/orders and eligibility/alerts/matched warnings unchanged before golden refresh. New regressions cover missing identity/split-representation cases. Browser/clinical validation remain open.
+
+### Incomplete-information repair (2026-11-12, Codex, local)
+- Record: `docs/incomplete-data-2026-11-12/README.md`; ruleset .6. Gate/build pass with 415 engine checks, 27 UI content groups, golden 1,032, audits/pricing/fuzz. Local only; browser and clinical validation remain open.
+- Missing observations are separate from invalid entries. Core-model gaps produce focused safety findings; individual missing medication prerequisites only withhold dependent starts/increases/switches. Apply checks before and after rescue additions. Missing data alone do not stop established medication.
+- KCCQ remains measured or unknown; functional scoring averages recorded components only. Unknown BNP/unassessed cost have no weight; remaining weights are rescaled. N/A on screen; scores across different information completeness are not comparable.
+- Missing labs and deselected formulary items do not establish class intolerance or exhausted treatment. Exact IV iron dosing waits for hemoglobin. Known urgent BP/K/oxygenation findings remain visible even during unrelated input correction.
+- Draft notes carry assessment scope. Real cases never inherit synthetic pregnancy/Hb inputs. All 512 missing-core subsets preserve a known urgent potassium finding.
+
+
+### Clinical UI adversarial repair (2026-11-12, Codex, local)
+- Record: `docs/ui-adversarial-2026-11-12/README.md`. Twenty-three UI content groups pass, including all 344 scenario result states; gate/build pass. Browser control unavailable: visual layout, keyboard behavior, copy/paste and print remain unverified. Local only; no push/merge/deployment.
+- New cases are explicit blank drafts independent of samples. Required choices do not inherit clinical facts. Model preference defaults are displayed. Example origin belongs in both results and draft notes.
+- Stale/error output must omit old medication cards and note actions, including printable markup. Case identity is part of the input fingerprint. Pending medication/history drafts block analysis and hide prior options until saved or cleared.
+- `clinicalPresentation.ts` owns no-change, dose-frequency, cost and observation wording. No-change is a proposal, not a declaration of complete therapy. Unchecked findings mean not recorded. Weight relative to estimated dry weight does not establish euvolemia.
+- Actual drug/dose differences and each alternative's own monitoring must be visible without deciphering scores. Model coefficients and scores are unvalidated, not predicted patient outcomes or treatment targets.
+- `formValidation.ts` is shared by labels, errors and all run paths. `monthlyMedicationCost` is shared by current-regimen display and engine; golden .5 output remains byte-identical.
+- Selected-option note (2026-11-15, local): `planForOption`/`buildChartSummary(c, i)` in `resultsModel.ts`; option 1 note text must stay byte-identical (diffed over all 344 scenarios); selection state lives in `ResultsDisplay` and resets on `runId`; option k>1 monitoring = its own `monitoring_plan` + `deferredTherapyMonitoring(excluded)`, follow-up = `buildFollowUpCalendar(its modification_set)`. Rule set 2026-11-15.1.
+- `verify:ui` is in gate/ci/workflow and uses Vite SSR, not a browser. The subsequent incomplete-information review supersedes the KCCQ requirement with an explicit omission/rescaling policy; never impute a measured value. Note preview/copy currently covers option 1 only.
+
+### Systemic adversarial repair (2026-11-12, Codex, local)
+- Latest record: `docs/adversarial-systemic-2026-11-12/README.md`, rule set `2026-11-12.5`; 399 verification checks plus golden/audits/build pass. No commit, push, merge or deployment. Browser control unavailable; UI unverified.
+- `inputContract.ts` precedes cloning and rejects malformed controls, collections, history and medication identities. Clinical medication functions and dose metadata come from the canonical formulary, never caller-supplied objects. Rhythm options/type/validator share `PATIENT_RHYTHMS`.
+- No-change must preserve measured physiology and observed exam. Removed unsupported BNP multipliers and automatic exam clearing; do not infer resolution of crackles or hypoperfusion solely from weight.
+- Safety filters precede affordability; cost-first fallback sorts by cost. Coverage insertion preserves the selected lead and reorders only alternatives. Evidence bonus denominator is indicated foundational slots, independent of drug count.
+- Only explicitly daily renal caps restrict daily totals; per-dose caps stay per-dose. Negative prices are unavailable, never negative costs.
+- Digoxin exposure text requires checking prior adjustment and levels; no unconditional repeated reduction or individualized-dose claim without those inputs. Dose/formulation descriptions are source-linked in the review.
+- Golden capture supplies matching patient/price insurance tiers and refuses captured exceptions. Fuzz seeds enumerate consecutive patient seeds: two starts less than the count apart overlap; do not claim they are independent coverage.
+- Remaining third-pass decisions and defects are mapped in the latest review, which supersedes older open lists below.
+
+### First handoff repair batch (2026-11-12, Codex, local)
+- Record and validation: `docs/repair-2026-11-12/README.md`; rule set `2026-11-12.4`. No push, merge or deployment.
+- Third-pass #3/#4/#5 fixed: renal-capped completeness; gentlest eligible daily-dose reduction with both frequencies in summaries; low-potassium conflict identifies the shared drug removal.
+- #1 is PARTIAL: no automatic binder when all RAAS/MRA changes reduce/remove therapy (an unchanged sibling does not override this). Flat RAAS potassium projections and their residual penalties remain. DailyMed supports dose-related hyperkalemia risk but not a calibrated individual potassium curve; do not infer one from adverse-event percentages.
+- #17 is PARTIAL: ten durable regression groups added, including the prior ARB/angioedema allergy fixes. Remaining third-pass test gaps and unverified UI remain in the review.
+- MRA continuation thresholds remain unchanged pending the owner's decision; all other unresolved items stay open.
+
+
+### Outpatient scope, laboratory prerequisites and ranking toggle (2026-11-11)
+Brad's exact reply, the questions it answers, and a proposed implementation plan are recorded in
+`docs/clinical-decisions-2026-11-11.md`. This is a documentation-only checkpoint; no code or deployment changed.
+- **Scope:** outpatient only, but not restricted to stable patients. Acute escalation boundaries remain to be defined; do not infer new exclusions or relax existing safety gates.
+- **Labs:** clinically appropriate prerequisites are supported. No freshness window, numerical threshold or exception rule was supplied. The combined question does not establish an independent decision to machine-enforce binder/MRA sequencing; clarify that separately.
+- **Ranking:** add a balance-versus-foundational-priority toggle. Balanced is the proposed default. Affordability and actual ability to execute a regimen matter in both modes; distinguish confirmed impossibility from a preference for lower cost or less burden.
+- The four existing `care_priority` weight profiles are not this new toggle. Define its interaction with them, feasibility states and phenotype-specific ordering before coding. Safety, indication, contraindications and required prerequisites must not become optional under either ranking mode.
+- **Implemented 2026-11-11** (engine commits `8713147`..`2b39ba6`, UI `656a5e8`, docs after; golden 744 runs, verify Passed 263 at that time; local only, not pushed):
+  - **E16 laboratory prerequisite:** blank potassium or renal function withholds new starts (eligibility E16) and dose increases/switches (dropped in `scoreCandidates`) of RAAS inhibitors and MRAs; one `LABS REQUIRED` alert per run. `UNKNOWN_POTASSIUM` (-12) removed; `UNKNOWN_RENAL` stays for SGLT2i only. No freshness window (no lab dates).
+  - **Ranking mode (REMOVED 2026-11-20, one ranking now; kept here as history):** `Patient.ranking_mode` (`balanced` default / `foundational_first`), HFrEF/HFimpEF only; order = no severe projected harm vs baseline, then `foundational_coverage` (pillar slots, 1.0 / graded), then Balanced. Changes the lead in 99 of 630 HFrEF/HFimpEF golden runs. Only known fewer-pillar cases: `Jane Smith (Dry & Cold)` commercial and Medicare, where the balanced lead is demoted by rule (a). UI: "Ranking approach" select, results note, "Foundational coverage N%" on cards, mode in the copy-to-chart text; `components/appStatements.ts` holds the labels.
+  - **Over budget:** fallback warning reworded ("BUDGET EXCEEDED ... shown for discussion"); UI banner, card badge and "REGIMEN FOR DISCUSSION ONLY" chart heading.
+  - **Ramipril renal cap** judged on total daily dose (`facts.renal_cap_is_daily`); arriving above any renal cap is force-reduced one step. Captopril and valsartan caps remain per dose (undecided).
+  - **Scope sentence** in the footer and Evidence tab, worded to the gates (hard stops: SBP < 90, K+ >= 6.5, implausible values; K+ 6.0-6.4, low output and pregnancy alert and still list options).
+  - **Still open (do not claim otherwise):** binder-then-MRA staged sequencing is no longer offered (E15/E18 stage new starts; the binder is reactive only); no lab-freshness window; no "cannot do" feasibility states beyond the budget (complexity tolerance is a preference); outpatient escalation boundaries unchanged; foundational mode undefined for HFmrEF/HFpEF; a fully dosed single pillar outranks a starting-dose different pillar.
+
+### Aligned with the 2026 ESC guideline (2026-11-11, local branch refactor/glucosepath-alignment, not pushed)
+- Phenotype is two-tier: HFrEF = LVEF < 50 (or improved EF, or current >= 50 with a numeric prior < 50), HFpEF = >= 50 and never < 50; HFmrEF removed (`classifyPhenotype`, `isImprovedEF`, `nsMraFillsMraSlot`). HFpEF MRA is a Class I pillar; RAAS in HFpEF is IIb (credit 4, never added/swapped). Foundational-first ranking now applies to LVEF 41-49.
+- ESC Supplementary Tables S3-S9 were read (S26 and decompensated-HF tables were not). Data-driven rules: `facts.k_continuation` on RAAS (5.5 reduce / 6.0 stop, MRA first, `yields_to`), `RAAS_EGFR_REVIEW_BELOW` 20 (an ALERT, never a forced stop: ESC S4 describes a FALL from baseline and the tool has no baseline; a stable CKD 4 patient on an ARNI is kept), `facts.hr_continuation` 55 carvedilol / 50 metoprolol+bisoprolol (reduction on heart rate alone), `facts.target_reference_dose` (pregnancy switch by fraction of target, engine policy), `facts.chronic_use_review` (thiazides), binders no bonus, spironolactone target 50 (25 at eGFR <= 45), ARNI start 24/26 below eGFR 60 or with chronic hypotension, loops titrate-not-swap with forced and diuretic-resistance swaps.
+- Counts: 298 scenarios, verify Passed 314, golden 894 runs. Per-change effects and the odd results are in `docs/medication-review-2026-11-10/changes-esc2026-*.txt`; evidence rows HF-ESC-001..011 in `docs/evidence-matrix.md`.
+
+### Second pass: primary US text, baseline creatinine, device/AF alerts (2026-11-11, local, not pushed)
+- Record: `docs/clinical-decisions-2026-11-11.md` (last section), `changes-final-*.txt`, evidence rows HF-MRA-009, HF-ESC-013, HF-ESC-014, HF-TITR-001. Counts: 333 scenarios, golden 999 runs, verify Passed 353; mistake audit 51/51.
+- **Up-titration step cap** (`UP_TITRATION_MAX_DAILY_FACTOR` = 2): `higherDoses` in `candidates.ts` drops tiers above double the current total daily dose, always keeping the adjacent tier. Side effect: a congested patient's loop increase is now a doubling, which often ranks outside the displayed three (loop titrate-ups displayed in 35 scenario x tier runs before, 6 after) - see `changes-final-dose-step-cap.txt`. FIXED the same day by (a) graded below-target credit (`doseProgressToTarget`, HF-SCORE-002) and (b) `ensureCongestionCoverage` (HF-DIU-CONG-001, `changes-final-congestion-coverage.txt`): John Doe shows `Titrate Furosemide 40→80` again as option 3.
+- **E15 is now K+ 5.0 or HIGHER** (2022 US 7.3.3 primary text; labels allow exactly 5.0, stricter used); new spironolactone start contraindicated at eGFR <= 30 (`mraStartEgfrCheck`, never removes a current drug); spironolactone/eplerenone cap 25 mg below eGFR 50 (`MRA_HALVE_DOSE_EGFR_BELOW`).
+- **Baseline creatinine** (`Patient.baseline_creatinine`, optional; `services/engine/renalChange.ts`): none/reduce/stop. The derived eGFR fall (CKD-EPI from creatinine, age, sex) is an EXTRA trigger, so the effective creatinine trigger is about +35%, stricter than the main text's 50% (chosen on purpose: S4/S5/S8 say eGFR fall 30%). Stop = `creatinineRiseStopCheck` on every RAAS/MRA entry. Blank baseline must stay golden-byte-identical (the monitoring text and the eGFR<20 alert keep their old wording when it is blank).
+- **Device/advanced-HF/AF alerts** (gates.ts) are alert-only. Engine-policy numbers: NT-proBNP 4000 (NYHA III-IV), pulse above 100. Cardiac-rehab suppression keeps the OLD severe criteria (`severeAdvancedHF`) so the broader referral markers never silence it. Advanced-HF alert fires in ~10% of scenarios.
+- Loop maxima already matched 2022 US Table 12 (no change). ESC device/advanced HF/AF tables and the 2022 US text points are now primary; US class labels were images (still secondary).
+
+### Decisions made from sources (2026-11-11)
+Record: `docs/clinical-decisions-2026-11-11.md` (last section), `docs/medication-review-2026-11-10/verified-clinical-decisions-2026-11-11.md`, `esc-2026-reading-notes.md` (2026 ESC guideline, primary; Supplementary tables S3-S9 read), `changes-*` files. Local only, not pushed.
+- **Congestion coverage prefers the plain loop step** (`isPlainLoopStep`, safety-clean via `isProjectedSafetyClean`; `changes-final-congestion-plain-step.txt`): 'Bradycardia (HR 48)' option 3 went from `Add ARNI + Add Furosemide` (score 7) to `Add Furosemide 20` (score 0).
+- **Binder rescue only beside a current RAAS/MRA** (`keepsCurrentPotassiumRaiser`, 2026-11-11): a candidate with no RAAS/MRA on board gets no binder (31 top picks changed, `changes-final-binder-rescue.txt`); the carvedilol +0.05 K+ effect in constants.ts has NO cited source (unchanged, flagged). Verify has a structural invariant for it.
+- **E15 = staged MRA start**: no new MRA above K+ 5.0 with or without a binder; DIAMOND co-start removed (never re-add; it was a trial run-in). **E18 = staged RAAS start (2026-11-11)**: no new ACEi/ARB/ARNI (patient on none) above K+ 5.2 (ESC S4/S5 caution; staging is engine policy; `RAAS_START_K_CAUTION`). The binder rescue (projected K+ > 5.3) is REACTIVE ONLY: it attaches only when every potassium-raising class in the candidate (RAAS pool, MRA) was already on the current regimen; a candidate adding a new one that would need a binder is dropped (`addsNewPotassiumRaisingClass`, scoring.ts). Known consequence: at K+ 5.2 a new ARNI/ACEi projects above 5.3 and is dropped, so a new RAAS start is realistically offered up to about K+ 5.1.
+- **eGFR below 20 on a RAAS inhibitor = alert only** (never a stop on the current value; 2026-11-11 correction of an over-reach in 2cdc909).
+- **E17 pregnancy beta-blockers**: new starts beta-1-selective only (`facts.beta1_selective`), carvedilol switched with reason (ESC 2026 Class I C). Switch lands at the starting dose.
+- **Torsemide = 2 mg furosemide per mg** (TRANSFORM-HF protocol); no unconverted-swap fallback; every standing loop must declare `verified_furosemide_equivalent_per_mg` (verify invariant). Known side effects: equivalent torsemide swaps lead in 9 loop scenarios; "at or above" tier rule overshoots on sparse tiers.
+- Potassium 6.0 alert and 6.5 alerts-only stop are engine policy; RAAS contraindicated above 5.4 is policy stricter than any verified source.
+- No numeric lab-recency window (none sourced); monitoring timings follow labels/secondary guideline text.
+- Method: engine decisions each get a commit, `ranking:diff` saved to `changes-*.txt` (its "BUGS" section is expected for intended eligibility/alert changes), golden regenerated in a separate commit.
+
+### Medication review + source-verified corrections (2026-11-10)
+Full record: `docs/medication-review-2026-11-10/` (README = outcome + open items; `verified-*.md` =
+sources with URLs; `changes-*.txt` = which recommendations each pass changed). Non-obvious points:
+- **Review-from-memory was wrong in places; verification caught it.** E.g. the Entresto label's
+  default start is 49/51 (24/26 is the reduced start); the carvedilol label DOES say act at HR<55 —
+  by reducing the dose; CLOROTIC tested HCTZ with MORE drug at lower clearance. Never correct the
+  engine from a review that did not open the source.
+- **Guideline pages (ahajournals/jacc/ESC) return 403 to automated fetch.** DailyMed (incl. its
+  JSON/XML API), PubMed E-utilities (efetch) and Europe PMC work. Guideline-only claims stayed unverified.
+- **DIAMOND's -0.10 mmol/L is not patiromer's effect** (both arms had RAAS therapy adjusted to
+  potassium). Using it made the engine prefer Lokelma (sodium load) — reverted to PEARL-HF -0.45.
+  Watch for this class of error: a between-arm difference from a treat-to-target trial.
+- **A sweep over every scenario x tier x priority is how the carvedilol-25-mg new start was found**
+  after five targeted passes missed it. Run broad invariant sweeps, not only targeted scenarios.
+- **Scores are not comparable across this date** (scale change, then pricing/effect corrections).
+- **UI:** blank potassium/creatinine map to the engine's 0 = "not entered" sentinel (the form used
+  to reject 0, so the missing-potassium sample could not run). Evidence tab renders
+  `docs/evidence-matrix.md` via `?raw` — keep its table structure (8 cells per row). The colliding
+  HF-ADJ-001..006 in the 2026-11-10 GLP-1 rows were renumbered to HF-ADJ-015..020 on 2026-11-11.
+- **Not verified by anyone:** a real print preview, screen-reader behavior.
+
+### GlucosePATH alignment refactor (2026-11-10, behavior-preserving)
+Engine restructured to mirror GlucosePATH's shape (numbered exclusions -> enumerate -> factor
+scores x one weight table -> printed arithmetic). Structure is in `docs/scoring-architecture.md`
+and CLAUDE.md; what is NOT obvious from the code:
+- **Golden master was captured BEFORE any refactor** (commit 7c920fc) and never updated; every
+  phase was byte-identical against it. It is the proof the refactor changed no clinical output.
+- **Same day, intended scoring change (golden regenerated once):** completeness became an 8th
+  domain, the scale was divided by 1.3 and rounded to clean weights/penalties, patient-selected
+  weight profiles were added. Measured against the pre-refactor baseline: 309/315 top picks
+  unchanged; exclusions, alerts and warnings identical in all 315.
+- **The completeness tie-break in the sort is load-bearing.** Sorting on unrounded score alone
+  was tried and reverted the same day: it led with eplerenone monotherapy (HFmrEF obese), a
+  beta-blocker alone (pregnant on GLP-1) and dropped spironolactone in acute NYHA IV on <0.5-pt
+  differences. Keep displayed score → completeness → unrounded → cost.
+- **Six top picks differ from the pre-change baseline** (near-ties): MRA Boundary (commercial)
+  now leads with Furoscix + half-dose ARNI over patiromer-rescued full-dose ARNI; Acute
+  Decompensated NYHA IV (medicare) drops spironolactone; HFmrEF Obese (cash) and Pregnant on
+  GLP-1 (all tiers) now lead with two-drug regimens instead of monotherapy. Not yet reviewed by Brad.
+- **Weight profiles are uncalibrated.** `simplicity_first` can lead with SGLT2i monotherapy
+  (Angioedema Hx, Non-Compliant); `outcomes_first` barely differs from Balanced (2/98 scenarios).
+- **Not done:** per-patient numeric targets (HF targets are not individualized in guidelines).
+- `ExcludedMedication.why` (not `details` — that name collides with followUpCalendar items in
+  the golden harness's ADDITIVE_KEYS).
+- **Preserved quirk:** after projected SBP<85 zeroes the score, later penalties still apply, so
+  `raw_score` can go negative (only affects tie-breaks among display-hidden regimens). Recorded
+  as an override in `score_breakdown`; do not "fix" without a golden update.
+- **E14 (renal dosing contraindication) is probably unreachable** — E13 catches the same eGFR
+  cutoffs first. Kept as belt-and-braces. **E03 uses the 'suspected' free-text tier**, so
+  "denies cough" can withhold an ACEi for new starts (pre-existing).
+- **`Medication.facts` is plain data** and is in the golden harness's ADDITIVE_KEYS. An agent
+  first made it function-valued to hide it from the snapshot — don't do that again.
+- Still engine code, not formulary data: adjunct initiation criteria (candidates.ts) and DDI
+  warning prose (effects.ts). Moving warnings risks reordering, which changes the −10/warning
+  penalty and golden output — convert warnings to structured {code, penalizes, text} first.
 
 ### Full verified audit pass (2026-07-05)
 Whole-codebase audit; everything below is the CURRENT state (all landed, harnesses green:
@@ -168,7 +347,7 @@ standalone QA like redTeam.ts — run `npx tsx scripts/mistakeAudit.ts`). Found 
    (e.g. carvedilol target 25, sampled tiers were 3.125/12.5/50) — target dose now always included
    as a tier so "titrate to target" is a candidate.
 7. **Completeness rewarded presence, not dose** — made dose-aware: a sub-target titratable pillar
-   earns partial credit (`SUBTARGET_CREDIT=0.6`); single-dose / at-target / at-max = full. So
+   earns graded credit (2026-11-11: 0.6 at the start tier rising to 1.0 at target, `doseProgressToTarget`; 0.6 fallback `SUBTARGET_CREDIT` when no numeric target; new starts score as before); single-dose / at-target / at-max = full. So
    up-titration raises completeness and a starting-dose quad no longer reads as "done".
 8. **Euvolemic on high-dose loop** (over-diuresis) not flagged — `detectInappropriateRegimen` now
    emits a LOOP DIURETIC OVER-TREATMENT alert (euvolemic + Furosemide≥120 / Torsemide≥50 /
@@ -378,3 +557,125 @@ Adding/restating a pillar or phenotype is now a data edit in the table. Both pha
 red-team probes + typecheck + build all green. Red-team probe 17 locks evidence-surfacing + concordance
 consistency. NOTE: Phase-B recClass labels are metadata only — changing a label does NOT change the score
 (points are separate); to change scoring, edit `base`/`targetBonus`.
+
+## Adversarial review 2026-11-12 (record: docs/adversarial-review-2026-11-12.md)
+- `npm run fuzz` (scripts/fuzzSweep.ts, in `gate` and `ci`) is the fastest way to find a class of defect: seeded random patients, invariants restated in the
+  test (do NOT import engine class lists into it), consistency checks (reorder the regimen, flip ranking mode / care priority, re-enter option 1). Reproduce one
+  patient with `randomPatient(seed)`. Every code fails the sweep, including `ADVICE_REVERSED_NEXT_RUN` (it was a watched code until the second pass; 0 reversals in 45,000 patients).
+- Recurring root causes to look for first: (1) `Number()` on a combination strength ("24/26") is NaN and silently disables a numeric rule: use
+  `comparableDailyDose` for ordering; (2) a rule enforced on "add" but not on swap-in / titrate / rescue / the combination of two changes: put the check on the
+  finished candidate (`structuralProblems`) or in eligibility; (3) scoring that penalizes the patient's EXISTING state rewards cutting drugs: charge baseline
+  warnings to every option (`baselineDangerWarnings`) and read bands on the lower of projected and entered; (4) anything decided by array order or by the last
+  bits of a float sum: sort by name, round projections; (5) a fact declared on one drug of a class (anuria, hypokalemia caution).
+- Engine code may hold no drug names (verify invariant): allergy brand names live in `ALLERGY_ALIASES_BY_DRUG` in constants.ts and reach the engine as
+  `facts.allergy_aliases`.
+- Projected potassium: the renal multiplier now applies to RISES only (`kPair` in effects.ts), so falls are plain size and there IS a low floor (hidden below 3.0 when the option lowers potassium; `minProjectedPotassium`).
+- The high potassium display floor is absolute; the SBP and HR floors are baseline-aware (a regimen is hidden only if it worsens the value).
+- Open items the owner has not decided are listed at the end of the review record ("Still the owner's call").
+
+## Second pass 2026-11-12 (all 17 open items fixed; table in the review record)
+- Fixtures: the form recomputes eGFR/BMI on load, so `data/scenarios.ts` runs every fixture through `reconcileDerivedFields` (shared `derivedFields` in
+  clinicalPredicates). Without it the browser runs a different patient than verify checks. Verify asserts every fixture loads unchanged; a new fixture with
+  an eGFR or BMI that does not match its creatinine/height is silently rewritten, so author creatinine/height to fit.
+- Rescue additions (binder, iron) never discard a candidate: if they break the per-visit limit or the budget the option is scored without them. Discarding
+  removed "mandatory changes only" and caused self-reversal.
+- Tie-break order (selection.ts): displayed score, coverage, unrounded score, cost, FEWER CHANGES, then alphabetical. "Fewer changes" must stay above
+  alphabetical or a pointless dose cut can win a tie.
+- One potassium ladder: a RAAS increase is held above 5.2, same as a new start (verify invariant: an increase is never allowed where a start is held).
+  A binder in use is not reduced while measured potassium is 5.0 or higher. Both are engine policy, listed as owner's calls.
+- Label vs guideline differences are data (`facts.source_differences`), shown on the option and the formulary card. Vericiguat start follows the label (5 mg);
+  losartan target is 150 mg (ESC). Add a new difference as data, not as engine text.
+- `side_effects` rates are display-only; verify fails if engine code reads them. Do not use them to score.
+- Patient cost is capped at the cash price in `getDrugPrices`; `npm run audit:pricing` is in gate and ci. Entresto Medicare table copay 74 stays in the table.
+- Intolerance reasons live in one table (`INTOLERANCE_TABLE`); cautions are unpenalized "Intolerance history:" warnings. Every selectable option must be read
+  by the engine (verify fails otherwise; `DISPLAY_ONLY_OPTIONS` is empty). Do not re-add CKD or Obesity checkboxes.
+- `RULESET_VERSION` (services/rulesetVersion.ts, now 2026-11-12.2) must be bumped whenever engine output changes; it is printed on copied notes.
+- scripts/verifyScenarios.ts is near TypeScript's control-flow size limit: put new invariants in scripts/optionInvariants.ts / optionScenarioChecks.ts.
+- Gate after this pass: verify 371/0, golden 1032 runs, audit:hundred 100/100, audit:mistakes 51/51, audit:red clean, audit:pricing OK, fuzz no violations.
+
+## Third pass 2026-11-12 (commit fa34d68; handoff: docs/HANDOFF-2026-11-12.md)
+
+- Method that found the most: follow the top option visit after visit with unchanged inputs. A cycle means some state penalty or threshold is escaped by reversing the previous step. The sweep now does this for 30 visits (`OSCILLATION`).
+- Recurring root cause, now seen four times (SBP band, HR band, baseline warnings, MAP surcharge): a penalty on the patient's EXISTING state that an option escapes by cutting a drug. Rule: read the lower of projected and entered value, or charge it to every option. The potassium band is the deliberate exception (lowering potassium is the treatment).
+- A forced edit must satisfy every other forced-edit filter: the forced beta-blocker reduction filter did not accept a forced switch, which emptied the page. When adding a forced action, check `generateCandidateModifications`' final filter.
+- `eligibleDoses` no longer trims by age. Do not reintroduce a count-based ladder cut; a per-drug age cap belongs on the entry with a source.
+- Rule E20 and the eGFR-below-20 increase hold are engine policy derived from the ESC "stop and seek advice" text; owner has not reviewed them.
+- Alerts are written before options exist. Any alert sentence that says what "the plan" does must go through `reconcilePlanAlerts`.
+- Open, in priority order, in the review record: flat RAAS potassium effect (and binders attached to dose reductions), MRA kidney thresholds on continuation, completeness credit vs renal caps, dose-reduction steps and wording.
+- Reviewer probe scripts lived in a session scratch directory and were not kept; the review record carries enough detail to reproduce each open item.
+
+## First-principles scoring model (2026-11-16; record: docs/first-principles-model-2026-11-16/README.md)
+
+### Gotchas
+- **Rule set 2026-11-18.1 (owner: "implement the recommended changes and run them as one package").** Record: `docs/owner-decisions-2026-11-18/README.md`. Starts are capped at the best dose the patient may be given and increases earn the credit at the dose reached (`planCreditsFor`, `highestAllowedDose`); credit floor = dose / own-trial dose; priors are per outcome and a prior row is distinct by SOURCE plus numbers (never by drug class: that double counted one pooled MRA analysis); beta-blocker death rows are keyed by current rhythm (`population_key`, derived rows carry `source_of` on the pooled row); harm levels now include `classAverage` and `notMeasured` (charges nothing, always shown in words); a harm row can be conditioned on a drug class being in the option (thiazide-type and metolazone creatinine rows need a loop).
+- **Prior estimator fixed 2026-11-19 (E13):** the zero-centred estimator now divides by the sum of the weights (death 0.0288 -> 0.0262, hospitalization 0.0935 -> 0.0853, symptoms 12.559 -> 7.280 on the 2026-11-18 tables; 0.0244 / 0.0817 / 6.198 on the final tables). It changed 48 first options on its own.
+- **Test only on the reference runs and you will miss things.** The swap bonus and the band penalties changed nothing in 1,032 reference runs and changed first options in 15 and 39 of 6,000 random patients. Any claim that a number is inert needs random patients.
+- **The shared check fixture's default rhythm is AFib**, so a check that does not set a rhythm is testing an atrial fibrillation patient (beta-blocker death row 0.79, not 0.64).
+- **Reference cases compare numbers to 1e-9, not byte for byte** (`NUMBER_TOLERANCE` in `scripts/goldenMaster.ts`, same precision as `stable` in `selection.ts`). The measured model takes `Math.log`/`Math.exp` of relative risks, and those differ in the last binary digit between this Mac (arm64) and the Linux x64 machine that runs CI: commit 02cf246 passed the whole gate locally and failed CI on four raw scores at the 15th significant digit (Node 22 on the Mac did NOT reproduce it, so it is the processor, not the Node version). Text, structure and key sets are still exact, and a self-check inside the script fails if the tolerance is loosened. A green local gate therefore does not prove CI; check `gh pr checks` after every push.
+- Header comments of `scoreModel.ts`, `outcomeBenefit.ts`, `harmBurden.ts`, `selection.ts` and `scoring.ts` and the `WEIGHT_PROFILE_META` descriptions were brought to the six-factor model at the final pass 2026-11-16 (comment/text only; `npm run golden` stayed byte-identical). `harmBurden.ts`'s own `score` field is still `100 - burden`; the side_effects domain uses `sideEffectScore` (burden / 2).
+- The notes-resolved files in `docs/harm-evidence-2026-11-15/` describe the table BEFORE merge rulings R7-R9; `data/harmEvidence.json` is current (e.g. loop hypokalemia is now a 6.2 sibling row; ARB syncope and eplerenone gynecomastia are no longer upper bounds).
+- Dose anchors carry a `unit` and a check (`measuredModelChecks.ts`) asserts each lies inside its drug's dose range; the digoxin anchor was once 0.125 (mg) against a mcg formulary (found by review, fixed: 125 mcg/day). Keep the check.
+- `guideline:report` rewrites `docs/outcome-evidence-2026-11-15/guideline-reproduction.txt` every run. Targets are TARGET MET/MISSED lines, never a failure.
+- Congested loop rows apply only when `hasCongestion(patient)`. Loops have no measured dose relation: credit 1 at any dose (the old c0 for an unchanged loop in a congested patient was removed). Keeping a loop in a congested patient must score above removing it (hard check in `measuredModelChecks.ts`); congestion relief by dose is not modelled.
+- Unknown patient values are charged as the higher-risk case (`harmBurden.ts`: sex-specific rows, multipliers with ratio above 1); `unknown_assumptions` feeds the drill-down. Never turn this back into "not applied".
+- `guideline:report` compares with the frozen `data/golden/guideline-baseline-a6cb28f.json`, not the live golden reference (which was refreshed with the new engine).
+- The UI computes three comparisons the engine does not output (symptom change, burden change, "at today's doses" versus current) with engine functions and rebuilds the current regimen from the option's modification set; a UI check asserts the rebuilt regimen equals the patient's for every scenario.
+- `SPECIAL_FEATURES` still appears in raw-score ledgers: it carries only the forced-swap +15 (normalized, clamped to 12). Special-feature `points` in `constants.ts` are retired documentation.
+- `components/evidenceMatrix.ts` parses `docs/evidence-matrix.md`: a table row must have exactly 8 cells split on " | " (no pipes inside cells) or it becomes a note; `## ` starts a section.
+- UI display model file is `components/expectedEffectModel.ts` (not `expectedEffect.ts`: casing collision with `ExpectedEffect.tsx`).
+
+### Decisions worth remembering
+- Evidence labels exist so extrapolation is never presented as a finding; "assumed neutral" is a decision, not a result.
+- Owner decisions still open are numbered in README section 10 (ordered by estimated influence: titrated valuation, weights, side-effect scale, upper-bound rows, loop rows, shrinkage, class limit, finerenone at LVEF 41-49, KCCQ anchor, c0, safety penalties, swap +15, beta-blocker figure, interval widening, weak harm rows, SOLVD denominator, baseline risk).
+- Ruled 2026-11-16: section 10 item 5, in the owner's words "use the Cochrane diuretic figures for congested patients". The engine already did this (no output change). Not covered by that ruling: how the figures are precision-weighted, the neutral rows for non-congested patients, full loop credit at any dose.
+- Attribution rule: write "owner ruling" only for something the owner said (the four quotes in README section 1). Decisions Claude made while building are "controller ruling". On 2026-11-16 about 40 labels in `data/outcomeEvidence.json`, code comments and README section 6a had this wrong (including a sentence quoted as the owner's that Claude wrote) and were corrected; sub-agent briefs had passed controller rulings on as owner rulings.
+
+### Round 1 evidence repair (2026-11-19)
+- Record: `docs/expert-review-2026-11-19/evidence-status.md` (every row, what it was checked against, first options touched; regenerate with `influence.ts` then `make_evidence_status.py`). Patches were applied from scripts outside the repository; the data files are now the record.
+- Never fill a gap from memory: a figure enters a table only if its source text was read (PubMed abstract, PMC full text, DailyMed label, ClinicalTrials.gov results entry). TOPCAT all-cause death 0.91 (0.77-1.08) comes from the ClinicalTrials.gov entry NCT00094302, not the NEJM abstract.
+- A table row that is copied across drugs must keep one basis; the prior counts only `trial`, `meta_analysis` and `subgroup` rows with an interval.
+- Sodium zirconium cyclosilicate and patiromer no longer share a hospitalization row (the K+ binder sibling check is deliberately relaxed for that outcome).
+
+### Round 7 fixes (2026-11-21, rule set 2026-11-21.6; checks `scripts/engineReadinessR7Checks.ts`, `scripts/verifyR7Ui.tsx`)
+- Alert sentences that say what the options do, or that a drug stays, are tested against every displayed option (`reconcilePlanAlerts`, explain.ts). The recurring fault class of rounds 5 to 8 is a sentence that is false of the patient or of the options on the same screen: fix it as a class with a generated check, never as one case.
+- Dosing-burden label compares with the regimen now; cost label states the figures; adjunct lines name their drug; staged monitoring rows name the drug the rule holds; one angioedema predicate for the comorbidity, a stopped drug and the allergy box; a typed allergy sentence is read word by word; a started drug is judged on the regimen the option produces.
+- Never run `npm run golden:update` without the owner; the controller refreshes the reference after each verified round.
+
+### Round 8 fixes (2026-11-22, rule set 2026-11-22.1; checks `scripts/engineReadinessR8Checks.ts` (sweep `scripts/engineReadinessR8Sweep.ts <mode> <firstSeed> <count> [paths]`), `scripts/verifyR8Ui.tsx`)
+- Safety: the round 7 start rule (`startBlockedOnProducedRegimen`, candidates.ts) emptied the screen for a patient taking a GLP-1 drug they are allergic to. A start-only (`indication`) check is not re-applied to a switch inside a class; a forced switch whose replacement cannot be started becomes a plain removal (`forced_reason` on the modification); the rule never empties a list (counterfactual toggle `START_RULE.enabled`, check `x11`); a drug it keeps out of every option is named in the withheld list (rule id E13); ALLERGY CONFLICT is raised on every path (`allergyConflictAlerts`).
+- The allergy reader (allergy.ts) splits an entry at every separator and reads each part; combination products (sacubitril/valsartan, hydralazine/isosorbide) are recognised first; a salt or modifier word alone names no drug; swelling of the face, lips, tongue or throat beside an ACE inhibitor, ARB or ARNI is read as angioedema (the token `angioedema` is added to the expanded set); an entry longer than a bare name says how it was read. Negated, tolerated and family-history sentences still exclude (conservative, stated on screen).
+- Duplicate clean-up: equal doses say so and name the tie-break. One doses-a-day count (`dosingProfile`, regimenUtils.ts): a single course dose is not a daily dose; the dosing-burden SCORE uses its own complexity figure (effects.ts) and is unchanged. Net loop dose (`loopDoseEffect`): a raise is a rise over everything the patient takes; the clean-up of a duplicate is read as T2 for the other categories.
+- A drug the patient takes is never told to be "started" (E15 reason and the staged potassium row); potassium rows and cautions follow the alerts (`K_ON_RAISER_ROW`, `elevatedPotassiumNoRaiserAlerts`); stop-screen "no medication change" wording follows the TEXT of the alerts (`alertTextAdvisesDrugChange`), not a list of headings.
+- Gotcha: a test-only toggle (`START_RULE`) exists in candidates.ts for the counterfactual; never set it off outside a check. `planForOption` (resultsModel.ts) takes the deferred monitoring rows from the top plan, not from the excluded list, so a row built for this patient is the one shown beside option 2 or 3.
+
+### Round 10 fixes (2026-11-22, rule set 2026-11-22.3; checks `scripts/engineReadinessR10Checks.ts` (sweep `scripts/engineReadinessR10Sweep.ts <mode> <firstSeed> <count>`), `scripts/verifyR10Ui.tsx`)
+- Behaviour: Furoscix alone is not an oral loop for the START rule (`onAnyOralLoopForStart`); a forced loop switch is allowed in the cold state when congestion is recorded; an option with no loop for a congested patient carries a warning with the true cause; the "no oral loop available" note is not shown on an option that starts, switches to or raises a loop.
+- Gotcha: the R9 Furoscix co-removal block must act only on an add-on the patient TAKES (`currentRegimen`); applied to a candidate that ADDS Furoscix it turned that candidate into a plain removal and changed budget-fallback option lists (seeds 40121150, 40120013).
+- Wording that is now a check: a removal at the lowest dose says it is withheld; no-option alerts say "No medication option is shown / proposed" (HF-PRES-003 in the matrix: the scope-condition, limited-review and print variants carry their own cause sentence instead of the generic one); potassium 5.5 to 5.9 on a renin-angiotensin drug or MRA always has an alert naming the value (`elevatedPotassiumOnRaiserAlerts`); no displayed string says "engine".
+- The reference comparison is refreshed by the controller after each round; do not run golden:update in a fixing session.
+
+### Round 9 fixes (2026-11-22, rule set 2026-11-22.2; checks `scripts/engineReadinessR9Checks.ts` (sweep `scripts/engineReadinessR9Sweep.ts <mode> <firstSeed> <count>`, mode `z11`), `scripts/verifyR9Ui.tsx`)
+- Safety: a forced removal of the last oral loop diuretic left Furoscix without an oral loop, `structuralProblems` dropped every option, and the screen was empty (an allergy, intolerance or contraindication to a loop diuretic taken with Furoscix). Fixed in `candidates.ts`: the add-on is removed in the same option with the reason stated. The guarantee sweep (`z11`) builds every (drug, allergy / intolerance / contraindication) case with the drugs that depend on it or pair with it (read from `structuralProblems`, no hand list) on random background patients and requires options wherever the entry-free run had options and every option to stop the drug. Other routes to "0 candidate regimens built" found by instrumenting `acceptable()`: only a patient who takes no drug and has every start excluded (no candidate exists at all), reported with a reason alert.
+- Text that is generated, not typed: a forced switch's reason is inserted by `reasonBesideSource`; any change line's parenthesis with a parenthesis inside, or over 170 characters, is cut to `shortLineReason`; totals of loop diuretic dose come from `loopTotals`; the no-option sentence is `NO_OPTION_SENTENCE` (whyFirst.ts), and nothing else on such a screen may say a change is not proposed.
+- Gotcha: `loopDoseEffect` now compares total oral loop doses strictly (a duplicate clean-up that lowers the total is "lowers", not "unchanged"); R8 sentence checks were rewritten for it.
+- Open, report only: Furoscix beside an oral loop is deliberately not a duplicate (gates.ts); a recorded beta-blocker bronchospasm blocks new carvedilol starts only (`currentMedIntoleranceReason` has no bronchospasm branch; the carvedilol label contraindicates bronchospastic disease); the duplicate "Switch" line of seed 30000758 did not reproduce in the engine.
+
+### Round 11 fix pass (2026-11-24, rule set 2026-11-24.1; checks `scripts/engineReadinessR11Checks.ts`, `scripts/verifyR11Ui.tsx`, discard run in `scripts/verifyBrowserSession.mjs`)
+- Words and added alerts only (rulings B1 to B7, C1 to C8, controller's, not the owner's); the reference comparison showed no changed first option, option set, order, eligibility or score. Round 11's minor findings 1, 2, 3, 5, 6, 7, 8, 9 fixed; item 4 (cold forced loop replacement is the first eligible loop; panel question 29) and item 10 (engine-only states) stand.
+- Gotchas: a held or completed loop record blocks a loop start or raise class-wide (a panel matter), so the note must name that cause (`heldLoopCause`, candidates.ts); a held drug that matches an allergy gets no ALLERGY CONFLICT (it is not current) but its EXPOSURE HISTORY sentence names the allergy; the "Discard the entered case?" prompt (`DiscardConfirm.tsx`, `caseIsTouched`) must not fire for a blank case or an unmodified example.
+
+### Round 12 fixes (2026-11-24, rule set 2026-11-24.2; checks in the "R12 SECTION" of `scripts/engineReadinessR11Checks.ts` and `scripts/verifyR11Ui.tsx`)
+- Verdicts: clinical and screen ready, engine not ready on one fault. An exact 50% creatinine rise (0.8 to 1.2) was computed as 49.999999999999986% and failed "50% or more". `assessCreatinineChange` (renalChange.ts) now rounds the rise and the derived eGFR fall to six decimals once (`round6`) and every consumer reads them (D1, the only ruling that can change a band, and only exactly on a threshold).
+- Also: potassium is read to one decimal on every engine path (`roundedPotassium`, gates.ts; 8.01 to 8.04 reads as 8.0); an open discard prompt closes on any phase, step, view change; `caseIsTouched` compares an example after the form's own derivations (`withFormDerivations`); "nonsteroidal MRA" replaces "nsMRA" everywhere displayed.
+
+### Round 13 fixes (2026-11-25, rule set 2026-11-25.1; checks in the "R13 SECTION" of `scripts/engineReadinessR11Checks.ts` (`R13_ONLY=1` runs just them) and `scripts/verifyR11Ui.tsx`)
+- Verdicts: clinical not ready, engine and screen ready. Current minus dry weight was compared in floating point in about a dozen places (dry 63.0 / current 64.0 read as not congested; 63.4 / 64.4 as more than 1.0 kg above). Fix: `weightDifferenceKg` / `weightAboveDryKg`, `pulsePressureMmHg`, `bunToCreatinineRatio` in `services/clinicalPredicates.ts`, each rounded to six decimals once; `kgText`, `creatinineText` and `pctFigure` print figures that do not contradict their criterion.
+- E3: the held-loop clause is printed only when the same patient with the held and completed loop records removed still has no loop step (`loopStepWithoutRecords`, simulationService.ts; one extra engine run, memoised). E6 (controller): the volume score uses the rounded difference for the penalty too and rounds the penalty to six decimals before the integer rounding (693 volume points moved by 1 in 20,000 patients; no overall score changed).
+
+### Round 14 (2026-11-25, rule set 2026-11-25.1): CLEAN, no code change
+- All three reviewers ready. Minor findings left unfixed (listed with files in `docs/expert-review-2026-11-19/README.md`): held-loop clause shown when a passing step is not among the three options (5% to 9% of clause outputs), modal volume arithmetic one point off (lines not displayed), MAP and ferric carboxymaltose weight printed rounded, two-decimal potassium and BUN, POOR PERFUSION alert omits BUN/creatinine, fuzz seed 913377 (item 72). New panel question 33 (congested, narrow pulse pressure, up-titration first) is in the README only.
+- Rulings of rounds 11 to 13 are the controller's, not the owner's; never call them owner rulings.
+
+### Durable lesson: computed quantities against round-number thresholds
+- A comparison of a COMPUTED quantity (a difference, ratio, percentage or product of entered numbers) against a round-number threshold must be rounded once, where it is computed (six decimals), and every comparison and every printed figure must read it from that one helper. Never subtract two entries or divide in place. Rounds 12 (creatinine rise), 13 (weight difference, pulse pressure, BUN/creatinine ratio) each found a new instance.
+- Random patients almost never land exactly on a threshold, so random sweeps and the earlier rounds missed these. Checks must aim generators AT the thresholds (every dry weight in 0.1 steps at offsets 1.0, 1.04, 0.96, 2.0; creatinine pairs exactly 50% apart) and compare against an exact integer-arithmetic oracle, and each oracle must be shown to fail on the old code.

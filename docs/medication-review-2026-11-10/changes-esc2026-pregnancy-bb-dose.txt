@@ -1,0 +1,27 @@
+# Ranking change: pregnancy beta-blocker switch lands at the same fraction of target dose, 2026-11-11
+
+A pregnant patient on a non-selective beta-blocker (carvedilol) switched to a beta-1-selective agent at the new agent's starting dose (carvedilol 25 mg bid ->
+bisoprolol 2.5 mg or metoprolol 12.5-25 mg). It now lands at the tier nearest the SAME FRACTION OF THE TARGET DOSE (facts.target_reference_dose, ESC Table 11 per-dose
+targets: carvedilol 25 mg, metoprolol succinate 200 mg, bisoprolol 10 mg; the fraction is capped at 1), rounded down, never below the start tier. ENGINE POLICY: no source
+gives a beta-blocker dose equivalence. The switch text says so and asks for heart rate and blood pressure to be reassessed after the switch.
+
+`npm run ranking:diff` against the golden snapshot before the update (867 runs; 6 runs are two new scenarios). Existing pregnancy runs that changed top pick
+(old -> new): Pregnancy-Source Carvedilol Switched (carvedilol 12.5 bid): metoprolol 12.5 -> 100 mg; "Pregnant Vericiguat + Ivabradine Exclusion": metoprolol 12.5 -> 200 mg;
+"Pregnant on GLP-1 (Force Removal)": 12.5 -> 100 mg; "Pregnant on Existing ACEi (Contraindicated Med Removal)": bisoprolol 2.5 -> metoprolol 100 mg.
+Eligibility and alert differences are the two new scenario keys only; warnings identical.
+
+Clinically odd, kept as instructed: a pregnant patient on a full-dose carvedilol (25 mg bid) is switched straight to metoprolol succinate 200 mg (a full target dose of a
+different drug in one step), and metoprolol (not bisoprolol) leads because it scores marginally higher at the higher dose. The reassessment note is the only mitigation.
+
+Ranking diff vs golden snapshot: 867 runs
+  (a) top pick identical:        849 / 867
+  (b) displayed pick set same:   849 / 867
+  (c) pick order identical:      849 / 867
+  (d) eligibility + alerts identical: NO (12 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 18 of 702 runs
+    LVEF >= 50: 0 of 108 runs

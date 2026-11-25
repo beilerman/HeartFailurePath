@@ -1,0 +1,113 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 957 runs
+  (a) top pick identical:        936 / 957
+  (b) displayed pick set same:   936 / 957
+  (c) pick order identical:      936 / 957
+  (d) eligibility + alerts identical: NO (42 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 21 of 792 runs
+    LVEF >= 50: 0 of 108 runs
+
+Top pick changed in 21 runs:
+  MRA-Source Kidney-Baseline Blank Keeps Behaviour :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd + Spironolactone 25mg qd [overall 85, raw 84.82]
+  MRA-Source Kidney-Baseline Blank Keeps Behaviour :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd + Spironolactone 25mg qd [overall 85, raw 84.93]
+  MRA-Source Kidney-Baseline Blank Keeps Behaviour :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd + Spironolactone 25mg qd [overall 85, raw 84.87]
+  MRA-Source Kidney-Baseline Rise 30% No Change :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 83, raw 82.87]
+  MRA-Source Kidney-Baseline Rise 30% No Change :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd + Spironolactone 25mg qd [overall 83, raw 82.57]
+  MRA-Source Kidney-Baseline Rise 30% No Change :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd + Spironolactone 25mg qd [overall 83, raw 82.51]
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 81, raw 81.25]
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 81, raw 81.47]
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 81, raw 81.26]
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 81, raw 81.25]
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 81, raw 81.47]
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 81, raw 81.26]
+  MRA-Source Kidney-Baseline Rise 130% Stops Both :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 71, raw 71.48]
+  MRA-Source Kidney-Baseline Rise 130% Stops Both :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 72, raw 71.58]
+  MRA-Source Kidney-Baseline Rise 130% Stops Both :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 72, raw 71.53]
+  MRA-Source Kidney-Baseline Rise 59% With eGFR Below 20 Stops Both :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 71, raw 71.48]
+  MRA-Source Kidney-Baseline Rise 59% With eGFR Below 20 Stops Both :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 72, raw 71.58]
+  MRA-Source Kidney-Baseline Rise 59% With eGFR Below 20 Stops Both :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 72, raw 71.53]
+  MRA-Source Kidney-Baseline Stable eGFR 19 Kept No Stop :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd [overall 74, raw 73.68]
+  MRA-Source Kidney-Baseline Stable eGFR 19 Kept No Stop :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd [overall 74, raw 73.78]
+  MRA-Source Kidney-Baseline Stable eGFR 19 Kept No Stop :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Lisinopril 20mg qd [overall 74, raw 73.72]
+
+BUGS (eligibility/alerts must not change):
+  MRA-Source Kidney-Baseline Blank Keeps Behaviour :: cash: excludedMedications differ
+  MRA-Source Kidney-Baseline Blank Keeps Behaviour :: cash: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Blank Keeps Behaviour :: commercial: excludedMedications differ
+  MRA-Source Kidney-Baseline Blank Keeps Behaviour :: commercial: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Blank Keeps Behaviour :: medicare: excludedMedications differ
+  MRA-Source Kidney-Baseline Blank Keeps Behaviour :: medicare: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 30% No Change :: cash: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 30% No Change :: cash: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 30% No Change :: commercial: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 30% No Change :: commercial: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 30% No Change :: medicare: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 30% No Change :: medicare: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: cash: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: cash: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: commercial: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: commercial: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: medicare: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 60% Halves Both :: medicare: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: cash: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: cash: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: commercial: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: commercial: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: medicare: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 40% eGFR Fall Over 30% Halves Both :: medicare: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 130% Stops Both :: cash: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 130% Stops Both :: cash: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 130% Stops Both :: commercial: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 130% Stops Both :: commercial: clinicalAlerts differ
+  MRA-Source Kidney-Baseline Rise 130% Stops Both :: medicare: excludedMedications differ
+  MRA-Source Kidney-Baseline Rise 130% Stops Both :: medicare: clinicalAlerts differ

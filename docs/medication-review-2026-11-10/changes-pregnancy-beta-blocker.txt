@@ -1,0 +1,126 @@
+NOTE (written by hand, 2026-11-11): intended change. In pregnancy a NEW beta-blocker start is limited to beta-1-selective agents (rule E17, read from
+facts.beta1_selective) and a non-selective one the patient already takes (carvedilol) is switched to a beta-1-selective agent with the reason stated
+(2026 ESC heart failure guideline, Recommendation Table 27, Class I C; primary). Eligibility/alert differences are therefore expected. 5 existing pregnancy
+scenarios x 3 tiers changed top pick (carvedilol -> metoprolol succinate or bisoprolol); 3 new Pregnancy-Source scenarios.
+Clinical read: nobody lost a beta-blocker; no RAAS/MRA/SGLT2i/ivabradine/vericiguat appears. LOOKS ODD (not fixed, no sourced beta-blocker dose equivalence):
+the switch lands at the new agent's STARTING dose, so a patient on carvedilol 25 mg bid (target) is shown on bisoprolol 2.5 mg or metoprolol succinate
+12.5 mg (scores fall, e.g. 77 -> 66, 71 -> 64); the dose then has to be titrated back up. A clinician may prefer a closer starting dose.
+
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 774 runs
+  (a) top pick identical:        750 / 774
+  (b) displayed pick set same:   750 / 774
+  (c) pick order identical:      750 / 774
+  (d) eligibility + alerts identical: NO (39 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+Top pick changed in 24 runs:
+  Pregnant Woman with HFrEF :: cash
+     old: Carvedilol 3.125mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 68, raw 67.78]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 68, raw 67.82]
+  Pregnant Woman with HFrEF :: commercial
+     old: Carvedilol 3.125mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 68, raw 67.81]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 68, raw 67.88]
+  Pregnant Woman with HFrEF :: medicare
+     old: Carvedilol 3.125mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 68, raw 67.81]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 68, raw 67.88]
+  Pregnant on Existing ACEi (Contraindicated Med Removal) :: cash
+     old: Carvedilol 25mg bid [overall 77, raw 76.62]
+     new: Bisoprolol 2.5mg qd [overall 66, raw 66.04]
+  Pregnant on Existing ACEi (Contraindicated Med Removal) :: commercial
+     old: Carvedilol 25mg bid [overall 77, raw 76.63]
+     new: Bisoprolol 2.5mg qd [overall 66, raw 66.08]
+  Pregnant on Existing ACEi (Contraindicated Med Removal) :: medicare
+     old: Carvedilol 25mg bid [overall 77, raw 76.63]
+     new: Bisoprolol 2.5mg qd [overall 66, raw 66.08]
+  Pregnant + CKD4 (eGFR 28) :: cash
+     old: Carvedilol 3.125mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 69, raw 68.58]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 69, raw 68.62]
+  Pregnant + CKD4 (eGFR 28) :: commercial
+     old: Carvedilol 3.125mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 69, raw 68.60]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 69, raw 68.67]
+  Pregnant + CKD4 (eGFR 28) :: medicare
+     old: Carvedilol 3.125mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 69, raw 68.60]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 69, raw 68.67]
+  Pregnant Vericiguat + Ivabradine Exclusion :: cash
+     old: Carvedilol 25mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 71, raw 71.42]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 64, raw 64.02]
+  Pregnant Vericiguat + Ivabradine Exclusion :: commercial
+     old: Carvedilol 25mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 71, raw 71.43]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 64, raw 64.05]
+  Pregnant Vericiguat + Ivabradine Exclusion :: medicare
+     old: Carvedilol 25mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 71, raw 71.43]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 64, raw 64.05]
+  Pregnant on GLP-1 (Force Removal) :: cash
+     old: Carvedilol 12.5mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 59, raw 58.50]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 58, raw 57.73]
+  Pregnant on GLP-1 (Force Removal) :: commercial
+     old: Carvedilol 12.5mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 59, raw 58.52]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 58, raw 57.76]
+  Pregnant on GLP-1 (Force Removal) :: medicare
+     old: Carvedilol 12.5mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 59, raw 58.52]
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 58, raw 57.76]
+  Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only :: cash
+     old: (no pick)
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 72, raw 71.82]
+  Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only :: commercial
+     old: (no pick)
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 72, raw 71.84]
+  Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only :: medicare
+     old: (no pick)
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 72, raw 71.84]
+  Pregnancy-Source Carvedilol Switched To Beta-1-Selective :: cash
+     old: (no pick)
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 69, raw 68.72]
+  Pregnancy-Source Carvedilol Switched To Beta-1-Selective :: commercial
+     old: (no pick)
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 69, raw 68.75]
+  Pregnancy-Source Carvedilol Switched To Beta-1-Selective :: medicare
+     old: (no pick)
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 12.5mg qd [overall 69, raw 68.75]
+  Pregnancy-Source Metoprolol Continued :: cash
+     old: (no pick)
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd [overall 69, raw 69.48]
+  Pregnancy-Source Metoprolol Continued :: commercial
+     old: (no pick)
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd [overall 70, raw 69.51]
+  Pregnancy-Source Metoprolol Continued :: medicare
+     old: (no pick)
+     new: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd [overall 70, raw 69.51]
+
+BUGS (eligibility/alerts must not change):
+  Pregnant Woman with HFrEF :: cash: excludedMedications differ
+  Pregnant Woman with HFrEF :: cash: clinicalAlerts differ
+  Pregnant Woman with HFrEF :: commercial: excludedMedications differ
+  Pregnant Woman with HFrEF :: commercial: clinicalAlerts differ
+  Pregnant Woman with HFrEF :: medicare: excludedMedications differ
+  Pregnant Woman with HFrEF :: medicare: clinicalAlerts differ
+  Pregnant on Existing ACEi (Contraindicated Med Removal) :: cash: clinicalAlerts differ
+  Pregnant on Existing ACEi (Contraindicated Med Removal) :: commercial: clinicalAlerts differ
+  Pregnant on Existing ACEi (Contraindicated Med Removal) :: medicare: clinicalAlerts differ
+  Pregnant + CKD4 (eGFR 28) :: cash: excludedMedications differ
+  Pregnant + CKD4 (eGFR 28) :: cash: clinicalAlerts differ
+  Pregnant + CKD4 (eGFR 28) :: commercial: excludedMedications differ
+  Pregnant + CKD4 (eGFR 28) :: commercial: clinicalAlerts differ
+  Pregnant + CKD4 (eGFR 28) :: medicare: excludedMedications differ
+  Pregnant + CKD4 (eGFR 28) :: medicare: clinicalAlerts differ
+  Pregnant Vericiguat + Ivabradine Exclusion :: cash: clinicalAlerts differ
+  Pregnant Vericiguat + Ivabradine Exclusion :: commercial: clinicalAlerts differ
+  Pregnant Vericiguat + Ivabradine Exclusion :: medicare: clinicalAlerts differ
+  Pregnant on GLP-1 (Force Removal) :: cash: clinicalAlerts differ
+  Pregnant on GLP-1 (Force Removal) :: commercial: clinicalAlerts differ
+  Pregnant on GLP-1 (Force Removal) :: medicare: clinicalAlerts differ
+  Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only :: cash: excludedMedications differ
+  Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only :: cash: clinicalAlerts differ
+  Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only :: commercial: excludedMedications differ
+  Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only :: commercial: clinicalAlerts differ
+  Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only :: medicare: excludedMedications differ
+  Pregnancy-Source New Beta-Blocker Start Beta-1-Selective Only :: medicare: clinicalAlerts differ
+  Pregnancy-Source Carvedilol Switched To Beta-1-Selective :: cash: excludedMedications differ
+  Pregnancy-Source Carvedilol Switched To Beta-1-Selective :: cash: clinicalAlerts differ
+  Pregnancy-Source Carvedilol Switched To Beta-1-Selective :: commercial: excludedMedications differ

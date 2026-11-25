@@ -1,0 +1,523 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 1032 runs
+  (a) top pick identical:        885 / 1032
+  (b) displayed pick set same:   744 / 1032
+  (c) pick order identical:      724 / 1032
+  (d) eligibility + alerts identical: NO (288 differences)
+  (e) per-regimen warnings identical: NO (321 regimens)
+  top-pick overall_score  old: min 4 / median 67 / max 87
+  top-pick overall_score  new: min 0 / median 66 / max 86
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 7 of 57 runs
+    LVEF <= 40: 138 of 864 runs
+    LVEF >= 50: 2 of 111 runs
+
+Top pick changed in 147 runs:
+  John Doe (Wet & Warm) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 72, raw 72.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd [overall 69, raw 68.82]
+  John Doe (Wet & Warm) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 73, raw 72.76]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd [overall 69, raw 69.24]
+  John Doe (Wet & Warm) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 73, raw 72.58]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd [overall 69, raw 69.06]
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash
+     old: Carvedilol 25mg bid + Furosemide 40mg qd + Lisinopril 20mg qd + Spironolactone 12.5mg qd [overall 55, raw 55.34]
+     new: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 20mg qd + Spironolactone 12.5mg qd [overall 51, raw 51.01]
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial
+     old: Carvedilol 25mg bid + Furosemide 40mg qd + Lisinopril 20mg qd + Spironolactone 12.5mg qd [overall 55, raw 55.34]
+     new: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 20mg qd + Spironolactone 12.5mg qd [overall 51, raw 51.01]
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare
+     old: Carvedilol 25mg bid + Furosemide 40mg qd + Lisinopril 20mg qd + Spironolactone 12.5mg qd [overall 55, raw 55.34]
+     new: Carvedilol 25mg bid + Furosemide 80mg qd + Lisinopril 20mg qd + Spironolactone 12.5mg qd [overall 51, raw 51.01]
+  Jane Smith (Dry & Cold) :: cash
+     old: Captopril 6.25mg tid + Eplerenone 25mg qd [overall 25, raw 56.01]
+     new:  [overall 25, raw 32.00]
+  Jane Smith (Dry & Cold) :: commercial
+     old: Captopril 6.25mg tid + Eplerenone 25mg qd [overall 25, raw 56.18]
+     new:  [overall 25, raw 32.00]
+  Jane Smith (Dry & Cold) :: medicare
+     old: Captopril 6.25mg tid + Eplerenone 25mg qd [overall 25, raw 56.18]
+     new:  [overall 25, raw 32.00]
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash
+     old: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 24, raw 24.24]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 18, raw 17.62]
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial
+     old: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 25, raw 25.24]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 18, raw 18.49]
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare
+     old: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 24, raw 24.36]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 18, raw 17.62]
+  Angioedema Hx - Avoid ACEi/ARNI :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 59, raw 59.36]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd [overall 57, raw 56.52]
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 60, raw 59.74]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd [overall 57, raw 56.64]
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 60, raw 59.57]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd [overall 57, raw 56.64]
+  Severe Asthma - Selective BB Only :: cash
+     old: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 64, raw 64.27]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 58, raw 57.62]
+  Severe Asthma - Selective BB Only :: commercial
+     old: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 65, raw 65.26]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 58, raw 58.49]
+  Severe Asthma - Selective BB Only :: medicare
+     old: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 64, raw 64.39]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 58, raw 57.62]
+  African American (A-HeFT Indication) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 20mg qd [overall 71, raw 70.84]
+     new: Carvedilol 25mg bid + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 20mg qd [overall 65, raw 65.17]
+  African American (A-HeFT Indication) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 20mg qd [overall 71, raw 71.26]
+     new: Carvedilol 25mg bid + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 20mg qd [overall 65, raw 65.33]
+  African American (A-HeFT Indication) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 20mg qd [overall 71, raw 71.09]
+     new: Carvedilol 25mg bid + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 20mg qd [overall 65, raw 65.33]
+  HFpEF with Resistant Edema :: cash
+     old: Dapagliflozin 10mg qd + Furosemide 20mg qd [overall 49, raw 48.73]
+     new: Furosemide 20mg qd + Spironolactone 12.5mg qd [overall 48, raw 48.22]
+  HFpEF with Resistant Edema :: medicare
+     old: Dapagliflozin 10mg qd + Furosemide 20mg qd [overall 49, raw 48.87]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd [overall 48, raw 48.28]
+  Critical Renal (eGFR 25, K+ 5.2) :: commercial
+     old: Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 61, raw 61.37]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 58, raw 58.40]
+  Borderline Renal (eGFR 22) - Avoid Dapagliflozin Initiation :: commercial
+     old: Empagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 61, raw 61.33]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 58, raw 58.49]
+  Non-Compliant (Tolerance 0) :: cash
+     old: Eplerenone 25mg qd + Lisinopril 2.5mg qd [overall 62, raw 62.01]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd [overall 57, raw 56.52]
+  Non-Compliant (Tolerance 0) :: commercial
+     old: Eplerenone 25mg qd + Lisinopril 2.5mg qd [overall 62, raw 62.15]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd [overall 57, raw 56.64]
+  Non-Compliant (Tolerance 0) :: medicare
+     old: Eplerenone 25mg qd + Lisinopril 2.5mg qd [overall 62, raw 62.15]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd [overall 57, raw 56.64]
+  Severe Dilation (LVEF 20%, LVEDD 72) :: cash
+     old: Captopril 6.25mg tid + Eplerenone 25mg qd [overall 62, raw 62.03]
+     new: Furosemide 20mg qd [overall 44, raw 43.73]
+  Severe Dilation (LVEF 20%, LVEDD 72) :: commercial
+     old: Captopril 6.25mg tid + Eplerenone 25mg qd [overall 62, raw 62.21]
+     new: Furosemide 20mg qd [overall 44, raw 43.73]
+  Severe Dilation (LVEF 20%, LVEDD 72) :: medicare
+     old: Captopril 6.25mg tid + Eplerenone 25mg qd [overall 62, raw 62.21]
+     new: Furosemide 20mg qd [overall 44, raw 43.73]
+  ACEi-to-ARNI Swap (Washout Warning) :: cash
+     old: Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 56, raw 55.54]
+     new: Lisinopril 20mg qd [overall 51, raw 50.98]
+  ACEi-to-ARNI Swap (Washout Warning) :: commercial
+     old: Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 56, raw 55.60]
+     new: Lisinopril 20mg qd [overall 51, raw 50.98]
+  ACEi-to-ARNI Swap (Washout Warning) :: medicare
+     old: Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 56, raw 55.54]
+     new: Lisinopril 20mg qd [overall 51, raw 50.98]
+  Budget-Constrained ($25) :: cash
+     old: Lisinopril 2.5mg qd + Spironolactone 12.5mg qd [overall 61, raw 61.12]
+     new: Furosemide 20mg qd + Lisinopril 2.5mg qd + Spironolactone 12.5mg qd [overall 63, raw 63.24]
+  Budget-Constrained ($25) :: commercial
+     old: Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 64, raw 63.80]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 65, raw 65.27]
+  Budget-Constrained ($25) :: medicare
+     old: Lisinopril 2.5mg qd + Spironolactone 12.5mg qd [overall 61, raw 61.35]
+     new: Furosemide 20mg qd + Lisinopril 2.5mg qd + Spironolactone 12.5mg qd [overall 63, raw 63.47]
+  Elderly >80 on All 4 Pillars (Age Dosing) :: cash
+     old: Empagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 12.5mg qd [overall 63, raw 62.88]
+     new: Empagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 63, raw 62.60]
+  Elderly >80 on All 4 Pillars (Age Dosing) :: commercial
+     old: Empagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 12.5mg qd [overall 68, raw 68.50]
+     new: Empagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 68, raw 68.22]
+  Elderly >80 on All 4 Pillars (Age Dosing) :: medicare
+     old: Empagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 12.5mg qd [overall 68, raw 68.04]
+     new: Empagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 68, raw 67.77]
+  Liver Disease + AFib (Carvedilol CI + Digoxin) :: cash
+     old: Captopril 6.25mg tid + Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 67, raw 67.30]
+     new: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 20mg qd [overall 65, raw 64.68]
+  Liver Disease + AFib (Carvedilol CI + Digoxin) :: commercial
+     old: Captopril 6.25mg tid + Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 68, raw 67.52]
+     new: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 20mg qd [overall 65, raw 64.77]
+  Liver Disease + AFib (Carvedilol CI + Digoxin) :: medicare
+     old: Captopril 6.25mg tid + Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 67, raw 67.43]
+     new: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 20mg qd [overall 65, raw 64.77]
+  Projected SBP Safety (SBP 100, No Meds) :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 69, raw 69.35]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 66.73]
+  Projected SBP Safety (SBP 100, No Meds) :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 69.98]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 67.23]
+  Projected SBP Safety (SBP 100, No Meds) :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 69, raw 69.46]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 66.79]
+  LVEF Recovery Cap (LVEF 20, Quad) :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.02]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 71, raw 71.28]
+  LVEF Recovery Cap (LVEF 20, Quad) :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.27]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 72, raw 71.53]
+  LVEF Recovery Cap (LVEF 20, Quad) :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.06]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 71, raw 71.32]
+  Hepatic BB Selection (Liver Disease) :: cash
+     old: Captopril 6.25mg tid + Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 67, raw 67.30]
+     new: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 20mg qd [overall 65, raw 64.68]
+  Hepatic BB Selection (Liver Disease) :: commercial
+     old: Captopril 6.25mg tid + Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 68, raw 67.52]
+     new: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 20mg qd [overall 65, raw 64.77]
+  Hepatic BB Selection (Liver Disease) :: medicare
+     old: Captopril 6.25mg tid + Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 67, raw 67.43]
+     new: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 20mg qd [overall 65, raw 64.77]
+  Digoxin Renal Dosing (eGFR 25, AFib) :: cash
+     old: Dapagliflozin 10mg qd + Furosemide 40mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 66, raw 65.53]
+     new: Dapagliflozin 10mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 63, raw 62.96]
+  Digoxin Renal Dosing (eGFR 25, AFib) :: commercial
+     old: Dapagliflozin 10mg qd + Furosemide 40mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 66, raw 66.35]
+     new: Dapagliflozin 10mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 64, raw 63.78]
+  Digoxin Renal Dosing (eGFR 25, AFib) :: medicare
+     old: Dapagliflozin 10mg qd + Furosemide 40mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 66, raw 65.65]
+     new: Dapagliflozin 10mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 63, raw 63.08]
+  Severe CKD Loop Resistance (eGFR 18) :: cash
+     old: Carvedilol 12.5mg bid + Furosemide 80mg qd [overall 47, raw 47.18]
+     new: Carvedilol 12.5mg bid + Furosemide 80mg bid [overall 46, raw 46.23]
+  Severe CKD Loop Resistance (eGFR 18) :: commercial
+     old: Carvedilol 12.5mg bid + Furosemide 80mg qd [overall 47, raw 47.19]
+     new: Carvedilol 12.5mg bid + Furosemide 80mg bid [overall 46, raw 46.24]
+  Severe CKD Loop Resistance (eGFR 18) :: medicare
+     old: Carvedilol 12.5mg bid + Furosemide 80mg qd [overall 47, raw 47.19]
+     new: Carvedilol 12.5mg bid + Furosemide 80mg bid [overall 46, raw 46.24]
+  Acute Decompensated NYHA IV (No BB Initiation) :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 69.66]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 66.92]
+  Acute Decompensated NYHA IV (No BB Initiation) :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.11]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 67.28]
+  Acute Decompensated NYHA IV (No BB Initiation) :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 69.73]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 66.96]
+  Acute Decompensated NYHA IV (Existing BB Requires Down-Titration) :: cash
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 72, raw 72.47]
+     new: Carvedilol 12.5mg bid + Furosemide 80mg bid + Lisinopril 10mg qd [overall 60, raw 60.24]
+  Acute Decompensated NYHA IV (Existing BB Requires Down-Titration) :: commercial
+     old: Carvedilol 12.5mg bid + Eplerenone 25mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 73, raw 72.73]
+     new: Carvedilol 12.5mg bid + Furosemide 80mg bid + Lisinopril 10mg qd [overall 60, raw 60.25]
+  Acute Decompensated NYHA IV (Existing BB Requires Down-Titration) :: medicare
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 73, raw 72.56]
+     new: Carvedilol 12.5mg bid + Furosemide 80mg bid + Lisinopril 10mg qd [overall 60, raw 60.25]
+  AV Block (No BB/Digoxin) :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 69.66]
+     new: (no pick)
+  AV Block (No BB/Digoxin) :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.11]
+     new: (no pick)
+  AV Block (No BB/Digoxin) :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 69.73]
+     new: (no pick)
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: cash
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 37, raw 36.86]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 34, raw 33.72]
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: commercial
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 37, raw 37.32]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 34, raw 34.19]
+  Non-Formulary DDI Exposures (Amio/CCB/Lithium) :: medicare
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 37, raw 36.94]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 34, raw 33.81]
+  Duplicate Current Medications (Safety Dedup) :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 10mg qd [overall 67, raw 66.84]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 66, raw 66.38]
+  Duplicate Current Medications (Safety Dedup) :: commercial
+     old: Eplerenone 25mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 68, raw 67.67]
+     new: Eplerenone 25mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 67.00]
+  Duplicate Current Medications (Safety Dedup) :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 10mg qd [overall 67, raw 67.07]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 67, raw 66.60]
+  Severe Congestion + Loop (Thiazide Addition) :: cash
+     old: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg bid + Lisinopril 10mg qd [overall 69, raw 68.79]
+     new: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 160mg bid + Lisinopril 10mg qd [overall 67, raw 66.79]
+  Severe Congestion + Loop (Thiazide Addition) :: commercial
+     old: Carvedilol 6.25mg bid + Eplerenone 25mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 69, raw 69.17]
+     new: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 160mg bid + Lisinopril 10mg qd [overall 67, raw 67.00]
+  Severe Congestion + Loop (Thiazide Addition) :: medicare
+     old: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg bid + Lisinopril 10mg qd [overall 69, raw 68.91]
+     new: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 160mg bid + Lisinopril 10mg qd [overall 67, raw 66.91]
+  Hypoxia Alert (SpO2 85%) :: cash
+     old: Carvedilol 6.25mg bid + Eplerenone 25mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 61, raw 60.66]
+     new: Carvedilol 6.25mg bid + Eplerenone 25mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 58, raw 58.46]
+  Hypoxia Alert (SpO2 85%) :: commercial
+     old: Carvedilol 6.25mg bid + Eplerenone 25mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 61, raw 61.17]
+     new: Carvedilol 6.25mg bid + Eplerenone 25mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 59, raw 58.97]
+  Hypoxia Alert (SpO2 85%) :: medicare
+     old: Carvedilol 6.25mg bid + Eplerenone 25mg qd + Furosemide 40mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 61, raw 60.73]
+     new: Carvedilol 6.25mg bid + Eplerenone 25mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 59, raw 58.53]
+  NYHA III Acute Decompensation (BB Initiation Blocked) :: cash
+     old: Eplerenone 25mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 67.40]
+     new: Eplerenone 25mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 66.73]
+  NYHA III Acute Decompensation (BB Initiation Blocked) :: commercial
+     old: Eplerenone 25mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 68, raw 67.89]
+     new: Eplerenone 25mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 67.23]
+  NYHA III Acute Decompensation (BB Initiation Blocked) :: medicare
+     old: Eplerenone 25mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 67.46]
+     new: Eplerenone 25mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 66.79]
+  Furoscix Candidate (Persistent Congestion on Oral Loop) :: cash
+     old: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg bid + Lisinopril 10mg qd [overall 69, raw 69.24]
+     new: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 160mg bid + Lisinopril 10mg qd [overall 67, raw 67.24]
+  Furoscix Candidate (Persistent Congestion on Oral Loop) :: commercial
+     old: Carvedilol 6.25mg bid + Eplerenone 25mg qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 69, raw 69.32]
+     new: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 160mg bid + Lisinopril 10mg qd [overall 67, raw 67.31]
+  Furoscix Candidate (Persistent Congestion on Oral Loop) :: medicare
+     old: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg bid + Lisinopril 10mg qd [overall 69, raw 69.28]
+     new: Carvedilol 6.25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 160mg bid + Lisinopril 10mg qd [overall 67, raw 67.28]
+  Furoscix Allergy Guardrail (Furosemide Hypersensitivity) :: cash
+     old: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 10mg qd + Torsemide 20mg bid [overall 71, raw 71.44]
+     new: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 10mg qd + Torsemide 40mg bid [overall 71, raw 70.96]
+  Furoscix Allergy Guardrail (Furosemide Hypersensitivity) :: commercial
+     old: Bisoprolol 5mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Torsemide 20mg bid [overall 72, raw 71.64]
+     new: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 10mg qd + Torsemide 40mg bid [overall 71, raw 71.09]
+  Furoscix Allergy Guardrail (Furosemide Hypersensitivity) :: medicare
+     old: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 10mg qd + Torsemide 20mg bid [overall 72, raw 71.53]
+     new: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 10mg qd + Torsemide 40mg bid [overall 71, raw 71.04]
+  ARNI Hepatic CI (Liver Disease) :: cash
+     old: Captopril 6.25mg tid + Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 68, raw 67.54]
+     new: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 20mg qd [overall 65, raw 64.77]
+  ARNI Hepatic CI (Liver Disease) :: commercial
+     old: Captopril 6.25mg tid + Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 68, raw 67.68]
+     new: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 20mg qd [overall 65, raw 64.82]
+  ARNI Hepatic CI (Liver Disease) :: medicare
+     old: Captopril 6.25mg tid + Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 68, raw 67.62]
+     new: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 20mg qd [overall 65, raw 64.82]
+  Inappropriate Dual RAAS on Arrival (ACEi + ARB) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 10mg qd [overall 61, raw 61.13]
+     new: Carvedilol 25mg bid + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 20mg qd [overall 57, raw 57.20]
+  Inappropriate Dual RAAS on Arrival (ACEi + ARB) :: commercial
+     old: Carvedilol 25mg bid + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 62, raw 61.97]
+     new: Carvedilol 25mg bid + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 20mg qd [overall 57, raw 57.36]
+  Inappropriate Dual RAAS on Arrival (ACEi + ARB) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Lisinopril 10mg qd [overall 61, raw 61.38]
+     new: Carvedilol 25mg bid + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 20mg qd [overall 57, raw 57.36]
+  Inappropriate Non-DHP CCB in HFrEF (Verapamil) :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 64, raw 64.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd [overall 61, raw 60.82]
+  Inappropriate Non-DHP CCB in HFrEF (Verapamil) :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 65, raw 64.76]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd [overall 61, raw 61.24]
+  Inappropriate Non-DHP CCB in HFrEF (Verapamil) :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 65, raw 64.58]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd [overall 61, raw 61.06]
+  BB Intolerance Defer New Initiation :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 10mg qd [overall 67, raw 66.84]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 66, raw 66.38]
+  BB Intolerance Defer New Initiation :: commercial
+     old: Eplerenone 25mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 68, raw 67.67]
+     new: Eplerenone 25mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 67.00]
+  BB Intolerance Defer New Initiation :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 10mg qd [overall 67, raw 67.07]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 67, raw 66.60]
+  Sulfa Allergy Diuretic Caution :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 72, raw 72.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd [overall 69, raw 68.82]
+  Sulfa Allergy Diuretic Caution :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 73, raw 72.76]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd [overall 69, raw 69.24]
+  Sulfa Allergy Diuretic Caution :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 20mg qd [overall 73, raw 72.58]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd [overall 69, raw 69.06]
+  Decompensated HFrEF + Contraindicated BB (Asthma) :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 10mg qd [overall 67, raw 66.87]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 66, raw 66.40]
+  Decompensated HFrEF + Contraindicated BB (Asthma) :: commercial
+     old: Eplerenone 25mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 68, raw 67.69]
+     new: Eplerenone 25mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 67, raw 67.02]
+  Decompensated HFrEF + Contraindicated BB (Asthma) :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 40mg qd + Lisinopril 10mg qd [overall 67, raw 67.09]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 67, raw 66.63]
+  Mild Asthma BB Selection (Beta-1 Selective) :: cash
+     old: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 64, raw 64.27]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 58, raw 57.62]
+  Mild Asthma BB Selection (Beta-1 Selective) :: commercial
+     old: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 65, raw 65.26]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 58, raw 58.49]
+  Mild Asthma BB Selection (Beta-1 Selective) :: medicare
+     old: Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 64, raw 64.39]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 58, raw 57.62]
+  Inappropriate Dual MRA on Arrival (Steroidal + nsMRA) :: cash
+     old: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd + Spironolactone 25mg qd [overall 61, raw 60.76]
+     new: Dapagliflozin 10mg qd + Lisinopril 20mg qd + Spironolactone 25mg qd [overall 58, raw 57.95]
+  Inappropriate Dual MRA on Arrival (Steroidal + nsMRA) :: commercial
+     old: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 61, raw 61.49]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 58, raw 58.49]
+  Inappropriate Dual MRA on Arrival (Steroidal + nsMRA) :: medicare
+     old: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd + Spironolactone 25mg qd [overall 61, raw 60.90]
+     new: Dapagliflozin 10mg qd + Lisinopril 20mg qd + Spironolactone 25mg qd [overall 58, raw 58.07]
+  ACEi Cough Intolerance on Current ACEi :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 78, raw 78.10]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 76, raw 75.62]
+  Dual MRA With Steroidal Intolerance :: medicare
+     old: Carvedilol 3.125mg bid + Finerenone (Kerendia) 20mg qd + Lisinopril 10mg qd [overall 36, raw 36.27]
+     new: Finerenone (Kerendia) 10mg qd + Furosemide 20mg qd + Lisinopril 10mg qd [overall 36, raw 35.63]
+  Gynecomastia on Current Spironolactone :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 10mg qd [overall 75, raw 75.47]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 20mg qd [overall 77, raw 76.96]
+  Gynecomastia on Current Spironolactone :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 78, raw 78.10]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 20mg qd [overall 77, raw 77.36]
+  Gynecomastia on Current Spironolactone :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 10mg qd [overall 76, raw 75.69]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 20mg qd + Lisinopril 20mg qd [overall 77, raw 77.18]
+  ACEi Cough Intolerance Budget-Constrained :: cash
+     old: Candesartan 4mg qd [overall 52, raw 52.04]
+     new: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 61, raw 61.36]
+  ACEi Cough Intolerance Budget-Constrained :: commercial
+     old: Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 61, raw 61.08]
+     new: Candesartan 4mg qd + Furosemide 20mg qd [overall 57, raw 57.24]
+  ACEi Cough Intolerance Budget-Constrained :: medicare
+     old: Candesartan 4mg qd [overall 54, raw 53.61]
+     new: Candesartan 4mg qd + Furosemide 20mg qd [overall 57, raw 57.24]
+  Negated Free-Text Intolerance Detail :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Ramipril 5mg qd [overall 64, raw 64.08]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Ramipril 10mg qd [overall 64, raw 64.07]
+  Negated Free-Text Intolerance Detail :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Ramipril 5mg qd [overall 65, raw 64.50]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Ramipril 10mg qd [overall 64, raw 64.23]
+  Negated Free-Text Intolerance Detail :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Ramipril 5mg qd [overall 64, raw 64.33]
+     new: Eplerenone 25mg qd + Furosemide 20mg qd + Ramipril 10mg qd [overall 64, raw 64.23]
+  HFimpEF Categorical Prior EF Excludes Finerenone :: cash
+     old: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 62, raw 61.59]
+     new: Dapagliflozin 10mg qd + Lisinopril 2.5mg qd [overall 58, raw 57.61]
+  HFimpEF Categorical Prior EF Excludes Finerenone :: commercial
+     old: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 62, raw 62.48]
+     new: Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 61, raw 61.12]
+  HFimpEF Categorical Prior EF Excludes Finerenone :: medicare
+     old: Carvedilol 3.125mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 62, raw 61.61]
+     new: Dapagliflozin 10mg qd + Lisinopril 2.5mg qd [overall 58, raw 57.71]
+  Pregnant on GLP-1 (Force Removal) :: commercial
+     old: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd [overall 51, raw 50.58]
+     new: Bisoprolol 1.25mg qd [overall 50, raw 50.06]
+  Pregnant on GLP-1 (Force Removal) :: medicare
+     old: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd [overall 51, raw 50.58]
+     new: Bisoprolol 1.25mg qd [overall 50, raw 50.06]
+  GLP-1 Boundary LVEF Exactly 40 :: commercial
+     old: Carvedilol 3.125mg bid + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 73, raw 73.16]
+     new: Carvedilol 3.125mg bid + Finerenone (Kerendia) 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 72, raw 72.46]
+  Warm-Wet Decompensation on Existing BB :: cash
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 73, raw 72.53]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg bid + Lisinopril 10mg qd [overall 72, raw 72.05]
+  Warm-Wet Decompensation on Existing BB :: commercial
+     old: Carvedilol 12.5mg bid + Eplerenone 25mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 73, raw 72.75]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg bid + Lisinopril 10mg qd [overall 72, raw 72.18]
+  Warm-Wet Decompensation on Existing BB :: medicare
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 10mg qd [overall 73, raw 72.60]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Eplerenone 25mg qd + Furosemide 80mg bid + Lisinopril 10mg qd [overall 72, raw 72.13]
+  K6-Source K+ 6.0 On Quad :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 21, raw 21.43]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd [overall 18, raw 17.73]
+  K6-Source K+ 6.0 On Quad :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 21, raw 21.47]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd [overall 18, raw 17.78]
+  K6-Source K+ 6.0 On Quad :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 21, raw 21.45]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd [overall 18, raw 17.75]
+  K6-Source K+ 6.0 No MRA :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 21, raw 21.43]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd [overall 18, raw 17.73]
+  K6-Source K+ 6.0 No MRA :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 21, raw 21.47]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd [overall 18, raw 17.78]
+  K6-Source K+ 6.0 No MRA :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 21, raw 21.45]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd [overall 18, raw 17.75]
+  Rate-Source Third-Degree AV Block Beta-Blocker Removed :: cash
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.42]
+     new: (no pick)
+  Rate-Source Third-Degree AV Block Beta-Blocker Removed :: commercial
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.44]
+     new: (no pick)
+  Rate-Source Third-Degree AV Block Beta-Blocker Removed :: medicare
+     old: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.42]
+     new: (no pick)
+  Diuretic-Source Furoscix Short-Course Add-On Not Swap :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 77.40]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+  Diuretic-Source Furoscix Short-Course Add-On Not Swap :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 77.40]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+  Diuretic-Source Furoscix Short-Course Add-On Not Swap :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 77.40]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 76.71]
+  Pregnancy-Source Carvedilol Switched To Beta-1-Selective :: cash
+     old: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd [overall 51, raw 50.57]
+     new: Metoprolol Succinate 25mg qd [overall 50, raw 50.05]
+  Pregnancy-Source Carvedilol Switched To Beta-1-Selective :: commercial
+     old: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd [overall 51, raw 50.60]
+     new: Bisoprolol 1.25mg qd [overall 50, raw 50.06]
+  Pregnancy-Source Carvedilol Switched To Beta-1-Selective :: medicare
+     old: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd [overall 51, raw 50.60]
+     new: Bisoprolol 1.25mg qd [overall 50, raw 50.06]
+
+BUGS (eligibility/alerts must not change):
+  John Doe (Wet & Warm) :: cash: clinicalAlerts differ
+  John Doe (Wet & Warm) :: commercial: clinicalAlerts differ
+  John Doe (Wet & Warm) :: medicare: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: cash: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: commercial: clinicalAlerts differ
+  Dose-Step Cap: Congested On Furosemide 40 With A $1 Budget (Over-Budget Fallback) :: medicare: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: cash: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: commercial: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: medicare: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: cash: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: commercial: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: medicare: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: cash: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: commercial: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: medicare: clinicalAlerts differ
+  African American (A-HeFT Indication) :: cash: clinicalAlerts differ
+  African American (A-HeFT Indication) :: commercial: clinicalAlerts differ
+  African American (A-HeFT Indication) :: medicare: clinicalAlerts differ
+  HFpEF with Resistant Edema :: cash: clinicalAlerts differ
+  HFpEF with Resistant Edema :: commercial: clinicalAlerts differ
+  HFpEF with Resistant Edema :: medicare: clinicalAlerts differ
+
+Warning differences:
+  John Doe (Wet & Warm) :: cash: Carvedilol 25mg bid + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd
+  John Doe (Wet & Warm) :: commercial: Carvedilol 25mg bid + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd
+  John Doe (Wet & Warm) :: medicare: Carvedilol 25mg bid + Eplerenone 25mg qd + Furosemide 80mg qd + Lisinopril 20mg qd
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: Dapagliflozin 10mg qd + Furosemide 20mg qd
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: Dapagliflozin 10mg qd + Furosemide 20mg qd
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: Dapagliflozin 10mg qd + Furosemide 20mg qd
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: cash: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: commercial: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Sinus Tachycardia (No BB Available) - No Automatic Ivabradine Fallback :: medicare: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Pregnant Woman with HFrEF :: cash: Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Metoprolol Succinate 25mg qd
+  Vericiguat LVEF Boundary (LVEF 46) :: cash: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Metoprolol Succinate 100mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid
+  Vericiguat LVEF Boundary (LVEF 46) :: cash: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Metoprolol Succinate 200mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid
+  Vericiguat LVEF Boundary (LVEF 46) :: commercial: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Metoprolol Succinate 100mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid
+  Vericiguat LVEF Boundary (LVEF 46) :: commercial: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Metoprolol Succinate 200mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid
+  Vericiguat LVEF Boundary (LVEF 46) :: medicare: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Metoprolol Succinate 100mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid
+  Vericiguat LVEF Boundary (LVEF 46) :: medicare: Dapagliflozin 10mg qd + Eplerenone 25mg qd + Metoprolol Succinate 200mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid
+  Digoxin Renal Dosing (eGFR 25, AFib) :: cash: Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Renal Dosing (eGFR 25, AFib) :: commercial: Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Renal Dosing (eGFR 25, AFib) :: medicare: Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: cash: Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: cash: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: cash: Dapagliflozin 10mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: commercial: Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: commercial: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: commercial: Dapagliflozin 10mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: medicare: Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid
+  Digoxin Hypokalemia Contraindication (K+ 3.2) :: medicare: Captopril 6.25mg tid + Eplerenone 25mg qd + Furosemide 80mg qd + Metoprolol Succinate 50mg qd

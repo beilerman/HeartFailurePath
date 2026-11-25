@@ -1,0 +1,26 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 723 runs
+  (a) top pick identical:        723 / 723
+  (b) displayed pick set same:   717 / 723
+  (c) pick order identical:      717 / 723
+  (d) eligibility + alerts identical: NO (12 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+BUGS (eligibility/alerts must not change):
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: cash: excludedMedications differ
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: cash: clinicalAlerts differ
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: commercial: excludedMedications differ
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: commercial: clinicalAlerts differ
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: medicare: excludedMedications differ
+  Incomplete Data: Missing Potassium (K+ Not Entered) :: medicare: clinicalAlerts differ
+  Blank Renal Data Stable Spironolactone :: cash: excludedMedications differ
+  Blank Renal Data Stable Spironolactone :: cash: clinicalAlerts differ
+  Blank Renal Data Stable Spironolactone :: commercial: excludedMedications differ
+  Blank Renal Data Stable Spironolactone :: commercial: clinicalAlerts differ
+  Blank Renal Data Stable Spironolactone :: medicare: excludedMedications differ
+  Blank Renal Data Stable Spironolactone :: medicare: clinicalAlerts differ

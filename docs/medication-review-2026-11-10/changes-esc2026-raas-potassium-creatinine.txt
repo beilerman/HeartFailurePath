@@ -1,0 +1,15 @@
+# Ranking change: RAAS inhibitor in use and potassium; creatinine-rise text (2026 ESC section 6.1), 2026-11-11
+
+`npm run ranking:diff` against the golden snapshot before the update. Among the 813 runs that existed (271 scenarios x 3 tiers) the top pick,
+displayed set and order are identical in every run, and eligibility, alerts and per-regimen warnings are identical: no existing scenario has a
+current RAAS inhibitor at potassium 5.5 or higher. The only snapshot differences are the monitoring-plan text (creatinine guidance) and the six
+new ESC26-RAAS-K scenarios (new keys, 18 runs).
+
+New-scenario top picks (cash tier), read for clinical sense:
+- K+ 5.6, lisinopril 10: lisinopril 5 (one step down) + carvedilol 25 + dapagliflozin + patiromer 25.2 g. The RAAS inhibitor is kept and reduced; the
+  binder is the existing reactive rescue (projected K+ above 5.3).
+- K+ 5.6, lisinopril 2.5 (lowest tier): lisinopril withheld; carvedilol + dapagliflozin + patiromer.
+- K+ 5.6, lisinopril 10 + spironolactone 25: spironolactone reduced to 12.5, lisinopril held at 10 (MRA first), patiromer 16.8 g.
+- K+ 6.1, both: both stopped; carvedilol + dapagliflozin.
+- K+ 5.5 and 5.3 with no RAAS inhibitor: a new start is blocked at 5.5 and offered (sacubitril/valsartan 24/26 + binder) at 5.3.
+Odd but unchanged policy: at K+ 5.3 a new ARNI start plus a binder leads; ESC advises "caution" above 5.2.

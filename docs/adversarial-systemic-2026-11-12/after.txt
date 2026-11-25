@@ -1,0 +1,19 @@
+[PASS] Systemic: no-change preserves every observed physiological field and examination finding across fixtures
+[PASS] Systemic: non-finite, missing and invalid control inputs never yield non-finite scores
+[PASS] Systemic: unsupported dose, wrong units, missing medication and unsupported frequency stop with named input errors
+[PASS] Systemic: input medication metadata cannot override canonical clinical facts
+[PASS] Systemic: per-dose renal caps do not silently become total-daily caps
+[PASS] Systemic: unsafe affordable candidates do not hide safe over-budget candidates
+[PASS] Systemic: cost-first over-budget fallback leads with lower cost within the safe pool
+[PASS] Systemic: exam-confirmed congestion prevents contradictory euvolemia/over-treatment alerts
+[PASS] Systemic: digoxin interaction guidance includes each supported interacting exposure
+[PASS] Systemic: every supported rhythm reaches clinical assessment instead of a schema rejection
+[PASS] Systemic: every declared drug strength and frequency is accepted without trusting supplied functions
+[PASS] Systemic: adding a drug with no special-feature points does not dilute existing evidence credit
+[PASS] Systemic: pregnancy switch during low output lands at or below the selective beta-blocker start dose
+[PASS] Systemic: duplicate nitrate and renal aliskiren warnings cover the actual exposures
+[PASS] Systemic: potassium interaction warning names every relevant co-medication
+[PASS] Systemic: negative creatinine produces a finite unknown eGFR rather than a NaN update loop
+[PASS] Systemic: malformed nested inputs and numeric strings cannot bypass the public boundary
+[PASS] Systemic: negative prices cannot make a regimen artificially affordable
+{ passed: 18, failed: 0 }

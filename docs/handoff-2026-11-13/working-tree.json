@@ -1,0 +1,572 @@
+{
+  "purpose": "Pre-handoff working-tree inventory; not a backup or exact-test-run attestation",
+  "date": "2026-11-13",
+  "repository": "/Users/bradeilerman/Projects/HeartFailurePath",
+  "branch": "refactor/glucosepath-alignment",
+  "head": "9fba74d13915c57d66fc7938128e56627070db3f",
+  "ruleset": "2026-11-12.8",
+  "tracked_modified": 52,
+  "untracked_files": 60,
+  "files": [
+    {
+      "path": ".github/workflows/ci.yml",
+      "git_status": " M",
+      "sha256": "486fedb124f8b159b13b2e5ab08f86a41c056463529c88d1e0e40ddb0c528c14"
+    },
+    {
+      "path": "App.tsx",
+      "git_status": " M",
+      "sha256": "dd433bb3749f8e8dc54b7a1161d2f7d15bf76e5084b89171c593519ed15d0a4b"
+    },
+    {
+      "path": "CLAUDE.md",
+      "git_status": " M",
+      "sha256": "ce0e93c2c0643fa12054d9860e3a7754ca01cea59cdc9d3c55b14dda38f8ed7b"
+    },
+    {
+      "path": "README.md",
+      "git_status": " M",
+      "sha256": "5fd88caa82dc7f5c42ae0c547934e66ce6dc6931eb446c22586f251a28c172c1"
+    },
+    {
+      "path": "components/ClinicalSummary.tsx",
+      "git_status": " M",
+      "sha256": "90fa222d454d5454ef60321fb4ce8141a892e5a4945b21e01c0564e538be490e"
+    },
+    {
+      "path": "components/DecisionReadinessPanel.tsx",
+      "git_status": "??",
+      "sha256": "f3c6e31a822a87b369be19fb95adadd193e033fedc417e02ffce86a40224c5f8"
+    },
+    {
+      "path": "components/FAQ.tsx",
+      "git_status": " M",
+      "sha256": "7eef17030d59f7b1d5550ec7fb130a750888394abb8a257040f016883506cf37"
+    },
+    {
+      "path": "components/MedicationLibrary.tsx",
+      "git_status": " M",
+      "sha256": "1ad274e7241522853f9e580cc9bc56eb55c667e0662e0d2aabc0821982315aec"
+    },
+    {
+      "path": "components/PatientForm.tsx",
+      "git_status": " M",
+      "sha256": "bc706f906edd47d624039db994d84f3fc1947cbdf7f4396ae9dc319d75f8cd71"
+    },
+    {
+      "path": "components/RecommendationCard.tsx",
+      "git_status": " M",
+      "sha256": "f4e636afac50ec259b45374a1c59082675395095dd0f6a9c7ab350aa1742bd18"
+    },
+    {
+      "path": "components/ResultsDisplay.tsx",
+      "git_status": " M",
+      "sha256": "fa6092ddb528d673e8e7d945d01c5a4b1829b2b33bd0bf53fb1d1a8939628d03"
+    },
+    {
+      "path": "components/ScoreDetailModal.tsx",
+      "git_status": " M",
+      "sha256": "dc22b4114bcd06c2f083f3db36e439d12a3191ef52e54d19d264cb42bcd21b58"
+    },
+    {
+      "path": "components/ScoreLedger.tsx",
+      "git_status": " M",
+      "sha256": "69a6ec314c67b0e27a2272e255f9da48a2964b0f4184f3692c593fcb67e9306e"
+    },
+    {
+      "path": "components/chartHeader.ts",
+      "git_status": " M",
+      "sha256": "d4a96f8cf4389ac2191f40cdc016afc2846cd3bb1ab0c5584d078e87e6e6b0b4"
+    },
+    {
+      "path": "components/clinicalPresentation.ts",
+      "git_status": "??",
+      "sha256": "e0fdd995826459572c334d502cdd92e18e66822086724f7fc8b556014aa9b444"
+    },
+    {
+      "path": "components/patient-form/Common.tsx",
+      "git_status": " M",
+      "sha256": "f66f1f7f9cb8887afb086c1ebabecc6e2952671e661e676cf16573b8d064b3b5"
+    },
+    {
+      "path": "components/patient-form/DemographicsSection.tsx",
+      "git_status": " M",
+      "sha256": "c3ee0cefa2d527ef78d05d436a8729eb0e2a83242543c23c2bc47a9f30bebe80"
+    },
+    {
+      "path": "components/patient-form/DiagnosticsSection.tsx",
+      "git_status": " M",
+      "sha256": "ffe8b2b9e68aef6a1f00e578f4c734a9cd48753b57c6f3c75e6332d769729ad6"
+    },
+    {
+      "path": "components/patient-form/HistorySection.tsx",
+      "git_status": " M",
+      "sha256": "c918da5e42d1a7775f25abd666b7db6073f14e04ce047d23fb9a25f20b2a54a4"
+    },
+    {
+      "path": "components/patient-form/MedicationManager.tsx",
+      "git_status": " M",
+      "sha256": "619bb2eefb054d96d442e32cbf8f8b4371e9b94fc12107e7d1af3e51493eff59"
+    },
+    {
+      "path": "components/patient-form/PhysicalExamSection.tsx",
+      "git_status": " M",
+      "sha256": "f5af3119e6f2ece4c68a751a127647c828434e3505f1b2a667ee11677e5f5165"
+    },
+    {
+      "path": "components/patient-form/SocialSection.tsx",
+      "git_status": " M",
+      "sha256": "15097806f427b4af03d216ccf302887fc16a15b3e71b1b0fba9a5e2f2f83adb8"
+    },
+    {
+      "path": "components/patient-form/SymptomsSection.tsx",
+      "git_status": " M",
+      "sha256": "456bc9a6c25723675a9d1f6dd0af098496cc6cf83b8b869a7a6530f1e51d0348"
+    },
+    {
+      "path": "components/patient-form/formValidation.ts",
+      "git_status": "??",
+      "sha256": "5d3b1fc32f501e0c9081eae514a0c0037b8b56126680ba2e64db655d60b9eab4"
+    },
+    {
+      "path": "components/patient-form/patientDraft.ts",
+      "git_status": "??",
+      "sha256": "94d0d8c8ab8c6b0ea9b1aab2732dc0f4b347bb13dd76a511e08f950938c823a1"
+    },
+    {
+      "path": "components/rankingModeMeta.ts",
+      "git_status": " M",
+      "sha256": "dcf6ca0d6d4c0405c0c156b7178727f8a9ef458204f68562ec7ed5393b447345"
+    },
+    {
+      "path": "components/resultsModel.ts",
+      "git_status": " M",
+      "sha256": "8262abbf8f9b0d3c2b70723443c3312656432560b0d84f5be6611dfa9c7d2395"
+    },
+    {
+      "path": "components/scoreExplain.ts",
+      "git_status": " M",
+      "sha256": "5b2b80946e947ab29cab61fcbf47bb8f2597968e0a0fa47a648ba6cd12b58ba0"
+    },
+    {
+      "path": "constants.ts",
+      "git_status": " M",
+      "sha256": "1251b87cdf20b6a1f635550f87c8fa57fc9e7c05b325470f4eb9201f77cc0c17"
+    },
+    {
+      "path": "data/golden/engine-output.json.gz",
+      "git_status": " M",
+      "sha256": "4370ee86094f5c72f1a4901aeb9618b68570131fef7b30dc03fa818e0d8b4ba7"
+    },
+    {
+      "path": "data/scenarios.ts",
+      "git_status": " M",
+      "sha256": "147ca0dfdf9fe930014edd9f2abd2c510e96063dc914f8c5d39f2edd4866f689"
+    },
+    {
+      "path": "docs/HANDOFF-2026-11-12.md",
+      "git_status": " M",
+      "sha256": "9021487ae2d3665b872d79999b60ccd0437d936e900b853b42393aa46c8ec771"
+    },
+    {
+      "path": "docs/adversarial-review-2026-11-12.md",
+      "git_status": " M",
+      "sha256": "df28fa9ba5e0b99c3620caa01dbd9317418df82a2e7bc38e3390691433b0b8fe"
+    },
+    {
+      "path": "docs/adversarial-systemic-2026-11-12/README.md",
+      "git_status": "??",
+      "sha256": "0248fb850ff20c9525b727f7a5bda8fc5e20fac9a149e2d3b28e126e0ae7a6f3"
+    },
+    {
+      "path": "docs/adversarial-systemic-2026-11-12/after.txt",
+      "git_status": "??",
+      "sha256": "d42cafbfaf6c3cdc944b71b85c96fd94f2d4572913ca8e1fed22ead151e40ff1"
+    },
+    {
+      "path": "docs/adversarial-systemic-2026-11-12/before.txt",
+      "git_status": "??",
+      "sha256": "601ffe8f1be9acf67c017551758e0c00c099d19614b1ec74bf98c2571e15de82"
+    },
+    {
+      "path": "docs/adversarial-systemic-2026-11-12/ranking-diff-engine-only.txt",
+      "git_status": "??",
+      "sha256": "e6f5276da221a0f841b849ec43ad8daed5bd4fe1f4809ac47d3fb5314a0b8728"
+    },
+    {
+      "path": "docs/adversarial-systemic-2026-11-12/ranking-diff.txt",
+      "git_status": "??",
+      "sha256": "e6f5276da221a0f841b849ec43ad8daed5bd4fe1f4809ac47d3fb5314a0b8728"
+    },
+    {
+      "path": "docs/evidence-matrix.md",
+      "git_status": " M",
+      "sha256": "cd2c1c6e91c1a0086a9bde138ba00a4e116eeefa350fa05107ccc5389abd3ede"
+    },
+    {
+      "path": "docs/incomplete-data-2026-11-12/README.md",
+      "git_status": "??",
+      "sha256": "7774ae90fe7d2e042d556d3c464c74f3d3dddf116ded465533f8e9ce02e17b03"
+    },
+    {
+      "path": "docs/incomplete-data-2026-11-12/ranking-before-update.txt",
+      "git_status": "??",
+      "sha256": "4bdc159737be1d0c1c875f2bcb5d71b2191230ad395a9ec99411c877eff99fae"
+    },
+    {
+      "path": "docs/incomplete-data-2026-11-12/ranking-reviewed.json",
+      "git_status": "??",
+      "sha256": "9db69dd622921d17389eb9c61ba1c1e4ddd4dc12854861e65bd9ef91f2f2426d"
+    },
+    {
+      "path": "docs/incomplete-data-2026-11-12/verification.txt",
+      "git_status": "??",
+      "sha256": "7034a0a2f26eab17264ee9c88238ea852066bc341e6257d0f5ded10575457ecb"
+    },
+    {
+      "path": "docs/medication-properties-2026-11-12/README.md",
+      "git_status": "??",
+      "sha256": "aa51e3d87fc68a0eed4a4ad10016610d8d45aad620a137226fd6a34ee15f37c1"
+    },
+    {
+      "path": "docs/medication-properties-2026-11-12/inventory.json",
+      "git_status": "??",
+      "sha256": "95eb6475a6481d3b8b5d26170f8c759d5d6ab594fc988a81f7c3005fe73bcece"
+    },
+    {
+      "path": "docs/medication-properties-2026-11-12/probes-after.json",
+      "git_status": "??",
+      "sha256": "26390f58bca53aca0d55fcd5bb9b08538a76e32692f3266c8ef4baa4b9eb9131"
+    },
+    {
+      "path": "docs/medication-properties-2026-11-12/probes-before.json",
+      "git_status": "??",
+      "sha256": "f1ec7e1c3ce4468a120215d1c09020c65c3028aa2854f8ccbfce8a76fad89f57"
+    },
+    {
+      "path": "docs/medication-properties-2026-11-12/ranking-before-update.txt",
+      "git_status": "??",
+      "sha256": "0bf69130fb0d40aaeedc179feea6f37196ab59f93b4128f5a6032d9489a53d24"
+    },
+    {
+      "path": "docs/medication-properties-2026-11-12/verification.txt",
+      "git_status": "??",
+      "sha256": "ff70b9e6c9d21a8fdb74c8fd863b1bd17e965bc18880285f6ed93d973c3a50d3"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/README.md",
+      "git_status": "??",
+      "sha256": "f29f9a0ddb40119c6e00b45df2f300ba92136d258cacfb8c4820543b58df8a4e"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/browser-checks.json",
+      "git_status": "??",
+      "sha256": "5bd4efbfd15f8fdbeaf9eb8e63a681d259ff2294b1ace9768d077be82d66d4bf"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/browser-checks.mjs",
+      "git_status": "??",
+      "sha256": "f047f5d9135496ef040ab509ee53d4d25388a966774dc21d8082eeafb5379bac"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/browser-verification.txt",
+      "git_status": "??",
+      "sha256": "2688d31f058a7985917d1c096ca66b3674d271c41defdd6fb8c3ed67a8c044da"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/desktop-evidence.png",
+      "git_status": "??",
+      "sha256": "71a1db48eb518f751f39274a8d38cc851f080ec666120d90b921946cf5d3da79"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/desktop-input.png",
+      "git_status": "??",
+      "sha256": "48186e6871f017326ff036ca04a4c20cf5a782d0b7ab5506a5e6328093b1e5d4"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/desktop-results.png",
+      "git_status": "??",
+      "sha256": "a58b3932aa308ff9a606d953d60087945478f92cd79a096ecec1699f6a855b3e"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/evidence-matrix-before.md",
+      "git_status": "??",
+      "sha256": "72bd64d54031e902fe0198e2343436a4fa1b1bfb5a58bd75ff30a08b4d497354"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/exposure-controls.png",
+      "git_status": "??",
+      "sha256": "ca530f1690c390e2dd24191dfca7250e4b331f083506255f9826d37cae2833e3"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/final-ui-build.txt",
+      "git_status": "??",
+      "sha256": "2fa6bd87fcbee00472b638893ba5ae125eb02ed2a53b08b66a67002eed1ae5d0"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/golden-before.json.gz",
+      "git_status": "??",
+      "sha256": "5988a5cf2a2b3db3c88f1cb29890bc4f9b6db90e93f865658bef2c85aea7e2a5"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/golden-update.txt",
+      "git_status": "??",
+      "sha256": "d0a250efb8ef02337d5b9414c9ec776b740b8bb896263266005cec51ffbf47fe"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/inventory-summary.jsonl",
+      "git_status": "??",
+      "sha256": "16bee2addbe9a78b69541667bbcdbec8227afdd7adb6cd75a5535177416cbde9"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/inventory.json",
+      "git_status": "??",
+      "sha256": "1acf42229154d5667da84d19a343410251073f9bce3dc2008086d05ba65ed09c"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/mobile-results.png",
+      "git_status": "??",
+      "sha256": "13fe802a9d60cb4d10f946cecb945b9abb4abd448d3a08c5c3d133c356552d6d"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/probes-after.json",
+      "git_status": "??",
+      "sha256": "26c8c9c4c691422b5e5ff6d6578e6c06743a4d8057d526466c75735079dbd996"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/probes-summary.json",
+      "git_status": "??",
+      "sha256": "22895c7d026e02dc2addb0edbc2bdef560961b18481b8e8dc98125befbd40dd1"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/ranking-before-update.txt",
+      "git_status": "??",
+      "sha256": "f2ba5ee4e2b159527ed5670905870685f56bdda1c4b515c477e05c22d27ce4cb"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/sample-note.txt",
+      "git_status": "??",
+      "sha256": "d3de06356357e598099e64a6ed690b01832867dfc00a04d8e20dde41d2e89f4f"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/second-fuzz.txt",
+      "git_status": "??",
+      "sha256": "c6b5243f0cc698d9e957e79d0bdb2fcd29c85085ecb0fc9acd9643efb36be959"
+    },
+    {
+      "path": "docs/medication-repair-loop-2026-11-12/verification.txt",
+      "git_status": "??",
+      "sha256": "f64af427b0985282e6e04ec985e18dfbf210552bb4e05ff60a8dc96250d3bdc1"
+    },
+    {
+      "path": "docs/repair-2026-11-12/README.md",
+      "git_status": "??",
+      "sha256": "9d8d2125233f678cfef128f167f8a8cc5fb273352dfa30af6988a28721ff5189"
+    },
+    {
+      "path": "docs/repair-2026-11-12/ranking-diff.txt",
+      "git_status": "??",
+      "sha256": "6dc2595b4fbdb52a191b0fef207eb146b3a8ec3a7ab5a70e6abd923ee9577c60"
+    },
+    {
+      "path": "docs/scoring-architecture.md",
+      "git_status": " M",
+      "sha256": "56efbdea17dd96a35dc6596d41b8ea6ce150a4f6c4ea26aef6a1fb4f7de5e5bf"
+    },
+    {
+      "path": "docs/ui-adversarial-2026-11-12/README.md",
+      "git_status": "??",
+      "sha256": "62f40cbe8a517439a1fce9ece623a982c32e68e24c4f1f9de563ceec2902d418"
+    },
+    {
+      "path": "docs/ui-adversarial-2026-11-12/before.txt",
+      "git_status": "??",
+      "sha256": "37f47e2a1cf3a181552dfea158e3acdbcd54faaab5223dae35a8e09c33c4d8dd"
+    },
+    {
+      "path": "docs/ui-adversarial-2026-11-12/verification.txt",
+      "git_status": "??",
+      "sha256": "d9dc55e95f0ecfdbd32a4eef5cfa41ff7ee6c83c30b390445c0eb6220a2e26a5"
+    },
+    {
+      "path": "memory.md",
+      "git_status": " M",
+      "sha256": "ff75cd28a3168a16d0905ae7faf541f1d2f6660ff316286620d785bf0b13f808"
+    },
+    {
+      "path": "package.json",
+      "git_status": " M",
+      "sha256": "2566af1c36608b454dc3a46c2bab8667e1f05555f592029e71fd46ef6fe09998"
+    },
+    {
+      "path": "scripts/adversarialHandoffChecks.ts",
+      "git_status": "??",
+      "sha256": "e450ea508712b5fcc957cbe1db9e148f1fafe91693b4c168950c9912b18069c5"
+    },
+    {
+      "path": "scripts/fuzzSweep.ts",
+      "git_status": " M",
+      "sha256": "425979967bda27f1647c0761173ca94b7bed0a3c3c37e901714097335479b559"
+    },
+    {
+      "path": "scripts/goldenMaster.ts",
+      "git_status": " M",
+      "sha256": "cb0eeb473bcb2d63c815401ce49ecdbe49c197d9e63088bdf7f74d550282a35f"
+    },
+    {
+      "path": "scripts/hundredScenarioAudit.ts",
+      "git_status": " M",
+      "sha256": "c05a5af1160c56abd5c3ae8c1505c06be63210dcbf04d8784d63e7815cf73f63"
+    },
+    {
+      "path": "scripts/incompleteDataChecks.ts",
+      "git_status": "??",
+      "sha256": "5fee031a1f758e5a0ca96d7981640b04cb949eba5877f0ab075cbecbfa7f3175"
+    },
+    {
+      "path": "scripts/medicationInventory.ts",
+      "git_status": "??",
+      "sha256": "322a01999999aba6d9a42f56648a6191d3dc28920f428f629cf48e18aeee9630"
+    },
+    {
+      "path": "scripts/medicationPropertyChecks.ts",
+      "git_status": "??",
+      "sha256": "faec1188b9a5ff73a2d55cf94f4547a5d182bd2e18267eeccc8ed730bda62da2"
+    },
+    {
+      "path": "scripts/medicationTransitionProbes.ts",
+      "git_status": "??",
+      "sha256": "633ac96e71e6624b891d309c9b4729df1c5d47fa77bf11d0484073ea03efcc4a"
+    },
+    {
+      "path": "scripts/mistakeAudit.ts",
+      "git_status": " M",
+      "sha256": "7f2e63261a35dd2714c777cf8f9a9defe8f741713a2ab2015247529b637e6da6"
+    },
+    {
+      "path": "scripts/runClinicalUi.mjs",
+      "git_status": "??",
+      "sha256": "7c79d7203273261c20bc46f71b281255061bce3d6eec63ddf41286fa2eabc233"
+    },
+    {
+      "path": "scripts/systemicReviewChecks.ts",
+      "git_status": "??",
+      "sha256": "3c054f405b03b1f60054833d8081922be5a710f629e47e030361ed7be4a96cfe"
+    },
+    {
+      "path": "scripts/treatmentTransitionChecks.ts",
+      "git_status": "??",
+      "sha256": "07b19e3368cfc8e002be24a98ea26e0c83bc211a62d25c733b625d7a6d45cf93"
+    },
+    {
+      "path": "scripts/verifyClinicalUi.tsx",
+      "git_status": "??",
+      "sha256": "7c72c55d0060374c4e0592af6d43c86fce3144b98ffaf5757b52db9c15a0938f"
+    },
+    {
+      "path": "scripts/verifyScenarios.ts",
+      "git_status": " M",
+      "sha256": "756965133cfac15152a32e37ed1a4a20ee9594ad5a98c27e6c0f20ba6cfdfeac"
+    },
+    {
+      "path": "services/clinicalPredicates.ts",
+      "git_status": " M",
+      "sha256": "b22b917be0b02d3511f2b8661cfae1a4a0a826dc45627d60e6e40505a0c3137c"
+    },
+    {
+      "path": "services/engine/candidates.ts",
+      "git_status": " M",
+      "sha256": "3d5824167ed7d8196b69a3480deee6e9211683a2bbadf47301fd646ea547df50"
+    },
+    {
+      "path": "services/engine/decisionReadiness.ts",
+      "git_status": "??",
+      "sha256": "fccc3736c97234f588e17c1e3ed16d182a4f7224166894a7513e92749fb50125"
+    },
+    {
+      "path": "services/engine/domains.ts",
+      "git_status": " M",
+      "sha256": "94fb309015f6129f8f743895019b9a5320dc0d9a9825a4c34a66d0fd84dd4748"
+    },
+    {
+      "path": "services/engine/effects.ts",
+      "git_status": " M",
+      "sha256": "3ad9f0a52d9c9fdcc1ddfe9c12e4703c1aa80c65896c76926e4adcd018415450"
+    },
+    {
+      "path": "services/engine/eligibility.ts",
+      "git_status": " M",
+      "sha256": "ef48b77e5764176f30e2eda02ef75421f7f91f88cb7aed9bb3222e529d4bef75"
+    },
+    {
+      "path": "services/engine/explain.ts",
+      "git_status": " M",
+      "sha256": "eda6b8296752334a9552e4d907d3877781550a079e7d2ac4e98ba49119475279"
+    },
+    {
+      "path": "services/engine/gates.ts",
+      "git_status": " M",
+      "sha256": "18b056add98e8837674a29e885f4ee0aae8dcf6b7188f71e6f8934c3120445e8"
+    },
+    {
+      "path": "services/engine/inputContract.ts",
+      "git_status": "??",
+      "sha256": "1f171dd0b2436f0af320ea8ad29213dd661b20e106c24abcb8fa22a245fa9e9a"
+    },
+    {
+      "path": "services/engine/medicationExposure.ts",
+      "git_status": "??",
+      "sha256": "fa14d55dac86fce9be262ee2261f91fbde3ce8795af8d7c21014b0806064ad49"
+    },
+    {
+      "path": "services/engine/regimenTransition.ts",
+      "git_status": "??",
+      "sha256": "464ced273373c6638961a76b3c8055e4816bf0f7b828baaf4272019705c3289a"
+    },
+    {
+      "path": "services/engine/regimenUtils.ts",
+      "git_status": " M",
+      "sha256": "3091ba1a539a058f60399a1a09ead53c71b0409c9f41dffcfc98bf5e881e7227"
+    },
+    {
+      "path": "services/engine/scoreModel.ts",
+      "git_status": " M",
+      "sha256": "b4aa29ed95592c1ecf9476c41fc14c76e382b720bd8667b2029b66899bc98e94"
+    },
+    {
+      "path": "services/engine/scoring.ts",
+      "git_status": " M",
+      "sha256": "389ddea3d6212290f60c558077933b79ab9e1b889e1aa2d215d26e76111ec862"
+    },
+    {
+      "path": "services/engine/selection.ts",
+      "git_status": " M",
+      "sha256": "695ad962743ae23714c6784ee9283cebc449a6ad5ffa859c70e746d15c126d0d"
+    },
+    {
+      "path": "services/engine/treatmentAssessment.ts",
+      "git_status": "??",
+      "sha256": "bc82c72eba6d74f953706fd48b5796915bcf2f12e848c924ff5d9c1a1cc9f053"
+    },
+    {
+      "path": "services/medicationCost.ts",
+      "git_status": "??",
+      "sha256": "9c04340bda8fe48157a0aaf81b62f651a7b77647d30995f72494aa92bf98c885"
+    },
+    {
+      "path": "services/rulesetVersion.ts",
+      "git_status": " M",
+      "sha256": "baac03265492856490ab95de6c8c50316a3ea1c71ca3a6da31c6ac5ab4366e17"
+    },
+    {
+      "path": "services/simulationService.ts",
+      "git_status": " M",
+      "sha256": "34e5ac016a94f9bc0eb312f8c76d20b8d246a03a5e626f181c300fe82f5d934c"
+    },
+    {
+      "path": "types.ts",
+      "git_status": " M",
+      "sha256": "d77982ca959f54fe0531e0c5507ed0a049a1082079939864ed49af802892d1f9"
+    }
+  ]
+}

@@ -1,0 +1,123 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 921 runs
+  (a) top pick identical:        897 / 921
+  (b) displayed pick set same:   897 / 921
+  (c) pick order identical:      897 / 921
+  (d) eligibility + alerts identical: NO (48 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 77 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 21 of 753 runs
+    LVEF >= 50: 0 of 108 runs
+    unknown: 3 of 3 runs
+
+Top pick changed in 24 runs:
+  ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text :: cash
+     old: Carvedilol 25mg bid + Patiromer 16.8g qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 66, raw 65.53]
+     new: (no pick)
+  ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text :: commercial
+     old: Carvedilol 25mg bid + Patiromer 16.8g qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 66, raw 65.55]
+     new: (no pick)
+  ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text :: medicare
+     old: Carvedilol 25mg bid + Patiromer 16.8g qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 66, raw 65.54]
+     new: (no pick)
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: cash
+     old: (no pick)
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 73, raw 72.67]
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: commercial
+     old: (no pick)
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 73, raw 72.67]
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: medicare
+     old: (no pick)
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 73, raw 72.67]
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: cash
+     old: (no pick)
+     new: Dapagliflozin 10mg qd [overall 56, raw 55.92]
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: commercial
+     old: (no pick)
+     new: Dapagliflozin 10mg qd [overall 56, raw 55.92]
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: medicare
+     old: (no pick)
+     new: Dapagliflozin 10mg qd [overall 56, raw 55.92]
+  ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered :: cash
+     old: (no pick)
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [overall 73, raw 72.78]
+  ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered :: commercial
+     old: (no pick)
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [overall 73, raw 72.78]
+  ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered :: medicare
+     old: (no pick)
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [overall 73, raw 72.78]
+  ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18 :: cash
+     old: (no pick)
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.78]
+  ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18 :: commercial
+     old: (no pick)
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.78]
+  ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18 :: medicare
+     old: (no pick)
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.78]
+  ESC26-RAAS-Start K+ 5.0 Naive No MRA Binder Co-Start :: cash
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 71, raw 70.94]
+  ESC26-RAAS-Start K+ 5.0 Naive No MRA Binder Co-Start :: commercial
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 71, raw 70.94]
+  ESC26-RAAS-Start K+ 5.0 Naive No MRA Binder Co-Start :: medicare
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 71, raw 70.94]
+  ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd [overall 74, raw 74.28]
+  ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd [overall 74, raw 74.28]
+  ESC26-RAAS-Start K+ 5.3 On Lisinopril Kept, Not Staged :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Lisinopril 10mg qd [overall 74, raw 74.28]
+  ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept :: cash
+     old: (no pick)
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 71, raw 71.22]
+  ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept :: commercial
+     old: (no pick)
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 71, raw 71.23]
+  ESC26-RAAS-Start K+ 5.4 On Lisinopril Binder Rescue Of Existing Therapy Kept :: medicare
+     old: (no pick)
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 71, raw 71.23]
+
+BUGS (eligibility/alerts must not change):
+  ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text :: cash: excludedMedications differ
+  ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text :: cash: clinicalAlerts differ
+  ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text :: commercial: excludedMedications differ
+  ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text :: commercial: clinicalAlerts differ
+  ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text :: medicare: excludedMedications differ
+  ESC26-RAAS-K K+ 5.3 New RAAS Start Allowed Creatinine Text :: medicare: clinicalAlerts differ
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: cash: excludedMedications differ
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: cash: clinicalAlerts differ
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: commercial: excludedMedications differ
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: commercial: clinicalAlerts differ
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: medicare: excludedMedications differ
+  ESC26-RAAS-K K+ 5.1 New RAAS Start Allowed Creatinine Text :: medicare: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: cash: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: cash: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: commercial: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: commercial: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: medicare: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: medicare: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered :: cash: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered :: cash: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered :: commercial: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered :: commercial: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered :: medicare: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.1 Naive RAAS Start Offered :: medicare: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18 :: cash: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18 :: cash: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18 :: commercial: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18 :: commercial: clinicalAlerts differ
+  ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18 :: medicare: excludedMedications differ
+  ESC26-RAAS-Start K+ 5.2 Naive Not Staged By E18 :: medicare: clinicalAlerts differ

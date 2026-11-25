@@ -1,0 +1,46 @@
+NOTE: this diff is against the golden snapshot from BEFORE the graded dose credit (commit 5569b30), to show that new starts score as they did before and only titration steps gain.
+Differences: 3 runs Semaglutide 0.25 -> 0.5 (an up-titration step now earns credit); 5 runs of beta-blocker one-step heart-rate reductions (the reduced dose is credited by its progress from the start dose, 0.6 -> about 0.66, which moves a regimen across a rounded-score boundary: 74.36 -> 74.66 flips the order of two near-tied regimens).
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 999 runs
+  (a) top pick identical:        991 / 999
+  (b) displayed pick set same:   778 / 999
+  (c) pick order identical:      772 / 999
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 5 of 831 runs
+    LVEF >= 50: 3 of 111 runs
+
+Top pick changed in 8 runs:
+  Rate-Source Metoprolol Succinate 100 mg HR 48 One-Step Reduction :: cash
+     old: Dapagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 74, raw 73.84]
+     new: Dapagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 75, raw 74.64]
+  Rate-Source Metoprolol Succinate 100 mg HR 48 One-Step Reduction :: commercial
+     old: Dapagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 74, raw 73.86]
+     new: Dapagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 75, raw 74.66]
+  Rate-Source Metoprolol Succinate 100 mg HR 48 One-Step Reduction :: medicare
+     old: Dapagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 74, raw 73.84]
+     new: Dapagliflozin 10mg qd + Metoprolol Succinate 50mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 75, raw 74.64]
+  Rate-Source Bisoprolol 10 mg HR 48 One-Step Reduction :: cash
+     old: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 74, raw 73.59]
+     new: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 74, raw 74.23]
+  Rate-Source Bisoprolol 10 mg HR 48 One-Step Reduction :: medicare
+     old: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 74, raw 73.59]
+     new: Bisoprolol 5mg qd + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 12.5mg qd [overall 74, raw 74.23]
+  Adjunct-Source Semaglutide Titration One Step 0.25 To 0.5 :: cash
+     old: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 96.71]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.5mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.05]
+  Adjunct-Source Semaglutide Titration One Step 0.25 To 0.5 :: commercial
+     old: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 96.75]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.5mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.10]
+  Adjunct-Source Semaglutide Titration One Step 0.25 To 0.5 :: medicare
+     old: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 96.75]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.5mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.09]
+(node:92485) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)

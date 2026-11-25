@@ -1,0 +1,1604 @@
+[
+ {
+  "id": "vasodilator-black-reduced-death",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": "self_identified_black",
+  "rr": 0.57,
+  "ci_low": 0.37,
+  "ci_high": 0.88,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "A-HeFT",
+   "citation": "Taylor AL, et al. N Engl J Med 2004;351:2049-57 (event counts also quoted in PMID 31092128, PMC6535737)",
+   "pmid": "15533851"
+  },
+  "population": "Self-identified Black patients, NYHA III-IV HF with dilated ventricles, on standard therapy incl. neurohormonal blockers; fixed-dose ISDN/hydralazine vs placebo; 1050 patients (518 vs 532); stopped early for mortality",
+  "comparator": "placebo (on standard HF therapy)",
+  "verification": "computed_from_verified",
+  "quote": "43 percent reduction in the rate of death from any cause [hazard ratio, 0.57; P=0.01]; secondary: 54 deaths in placebo group versus 32 deaths in hydralazine/ISDN group",
+  "extrapolation": "",
+  "notes": "HR 0.57 is the published figure; the paper's abstract gives no CI. Interval computed from the deaths: se(ln HR)=sqrt(1/32+1/54)=0.2231; 0.57*exp(+-1.96*0.2231)=0.368-0.883 -> 0.37-0.88. Check: z=ln(0.57)/0.2231=-2.52, P~0.012, agrees with the reported P=0.01. Stopped early (6.2% vs 10.2% mortality), so the effect is probably overstated. Background therapy 1999-2003 (no SGLT2i, little ARNI)."
+ },
+ {
+  "id": "vasodilator-black-reduced-hfhosp",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": "self_identified_black",
+  "rr": 0.67,
+  "ci_low": 0.51,
+  "ci_high": 0.89,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "A-HeFT",
+   "citation": "Taylor AL, et al. N Engl J Med 2004;351:2049-57 (event counts also quoted in PMID 31092128, PMC6535737)",
+   "pmid": "15533851"
+  },
+  "population": "Self-identified Black patients, NYHA III-IV HF with dilated ventricles, on standard therapy incl. neurohormonal blockers; fixed-dose ISDN/hydralazine vs placebo; 1050 patients (518 vs 532); stopped early for mortality",
+  "comparator": "placebo (on standard HF therapy)",
+  "verification": "computed_from_verified",
+  "quote": "33 percent relative reduction in the rate of first hospitalization for heart failure [16.4 percent vs. 22.4 percent, P=0.001]",
+  "extrapolation": "",
+  "notes": "Outcome is FIRST hospitalization for HF. 0.67 = the published 33% reduction in the rate. Event counts are not quoted in any text I reached, so they are derived: 16.4% x 518 = 85 and 22.4% x 532 = 119. se(ln)=sqrt(1/85+1/119)=0.1420; 0.67*exp(+-1.96*0.1420)=0.507-0.885 -> 0.51-0.89. This is wider than the published P=0.001 implies (about 0.53-0.85), so conservative. The raw proportions give a risk ratio of 0.73 (0.164/0.224); the paper's own figure is the rate-based 0.67 and is used."
+ },
+ {
+  "id": "vasodilator-black-mildly_reduced-death",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": "self_identified_black",
+  "rr": 0.57,
+  "ci_low": 0.37,
+  "ci_high": 0.88,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "A-HeFT",
+   "citation": "Taylor AL, et al. N Engl J Med 2004;351:2049-57 (event counts also quoted in PMID 31092128, PMC6535737)",
+   "pmid": "15533851"
+  },
+  "population": "Self-identified Black patients, NYHA III-IV HF with dilated ventricles, on standard therapy incl. neurohormonal blockers; fixed-dose ISDN/hydralazine vs placebo; 1050 patients (518 vs 532); stopped early for mortality",
+  "comparator": "placebo (on standard HF therapy)",
+  "verification": "computed_from_verified",
+  "quote": "43 percent reduction in the rate of death from any cause [hazard ratio, 0.57; P=0.01]; secondary: 54 deaths in placebo group versus 32 deaths in hydralazine/ISDN group",
+  "extrapolation": "No EF-band split exists for A-HeFT (entry was dilated ventricles, NYHA III-IV); no trial of H/ISDN in LVEF 41-49. Reduced-band estimate carried unchanged to mildly reduced on the assumption that the vasodilator/preload-afterload effect does not switch off at LVEF 41-49; interval not widened because no data say by how much.",
+  "notes": "HR 0.57 is the published figure; the paper's abstract gives no CI. Interval computed from the deaths: se(ln HR)=sqrt(1/32+1/54)=0.2231; 0.57*exp(+-1.96*0.2231)=0.368-0.883 -> 0.37-0.88. Check: z=ln(0.57)/0.2231=-2.52, P~0.012, agrees with the reported P=0.01. Stopped early (6.2% vs 10.2% mortality), so the effect is probably overstated. Background therapy 1999-2003 (no SGLT2i, little ARNI)."
+ },
+ {
+  "id": "vasodilator-black-mildly_reduced-hfhosp",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": "self_identified_black",
+  "rr": 0.67,
+  "ci_low": 0.51,
+  "ci_high": 0.89,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "A-HeFT",
+   "citation": "Taylor AL, et al. N Engl J Med 2004;351:2049-57 (event counts also quoted in PMID 31092128, PMC6535737)",
+   "pmid": "15533851"
+  },
+  "population": "Self-identified Black patients, NYHA III-IV HF with dilated ventricles, on standard therapy incl. neurohormonal blockers; fixed-dose ISDN/hydralazine vs placebo; 1050 patients (518 vs 532); stopped early for mortality",
+  "comparator": "placebo (on standard HF therapy)",
+  "verification": "computed_from_verified",
+  "quote": "33 percent relative reduction in the rate of first hospitalization for heart failure [16.4 percent vs. 22.4 percent, P=0.001]",
+  "extrapolation": "No EF-band split exists for A-HeFT (entry was dilated ventricles, NYHA III-IV); no trial of H/ISDN in LVEF 41-49. Reduced-band estimate carried unchanged to mildly reduced on the assumption that the vasodilator/preload-afterload effect does not switch off at LVEF 41-49; interval not widened because no data say by how much.",
+  "notes": "Outcome is FIRST hospitalization for HF. 0.67 = the published 33% reduction in the rate. Event counts are not quoted in any text I reached, so they are derived: 16.4% x 518 = 85 and 22.4% x 532 = 119. se(ln)=sqrt(1/85+1/119)=0.1420; 0.67*exp(+-1.96*0.1420)=0.507-0.885 -> 0.51-0.89. This is wider than the published P=0.001 implies (about 0.53-0.85), so conservative. The raw proportions give a risk ratio of 0.73 (0.164/0.224); the paper's own figure is the rate-based 0.67 and is used."
+ },
+ {
+  "id": "vasodilator-black-preserved-death",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": "self_identified_black",
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "none identified",
+   "citation": "No randomized H/ISDN outcome trial in LVEF >=50% found (PubMed searches 2026-11-15)",
+   "pmid": ""
+  },
+  "population": "Chronic HF, LVEF >=50%",
+  "comparator": "placebo",
+  "verification": "unverified",
+  "quote": "",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "Searched PubMed for randomized hydralazine/isosorbide dinitrate trials in preserved EF: none with death or HF-hospitalization outcomes. Nitrate-only trials (NEAT-HFpEF) tested activity, not events, and are not H/ISDN. Alternative would be to attenuate the reduced-EF estimate; not done because the mechanism rationale is weaker at preserved EF."
+ },
+ {
+  "id": "vasodilator-black-preserved-hfhosp",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": "self_identified_black",
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "none identified",
+   "citation": "No randomized H/ISDN outcome trial in LVEF >=50% found",
+   "pmid": ""
+  },
+  "population": "Chronic HF, LVEF >=50%",
+  "comparator": "placebo",
+  "verification": "unverified",
+  "quote": "",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "As for death: no randomized outcome evidence in preserved EF."
+ },
+ {
+  "id": "vasodilator-other-reduced-death",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": "other",
+  "rr": 0.72,
+  "ci_low": 0.51,
+  "ci_high": 1.02,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "H-HeFT (DANHEART)",
+   "citation": "Kober L, et al. Eur Heart J 2026 (online 4 Nov 2026); doi:10.1093/eurheartj/ehag773",
+   "pmid": "42978512"
+  },
+  "population": "HFrEF (LVEF <=40%, NYHA II-IV, raised NT-proBNP), 23 Danish hospitals, 592 predominantly White patients (median age 72, 18% women), contemporary treatment, mean follow-up 3.7 years; H-ISDN 75/40 mg tid target vs placebo",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "There were 57 deaths in the H-ISDN group vs 72 in the placebo group (HR 0.72; 95% CI 0.51-1.02)",
+  "extrapolation": "",
+  "notes": "H-HeFT is real (PMID 42978512 resolves to this paper). Death was a SECONDARY component; the primary composite (HF hospitalization, urgent visit with IV/metolazone, transplant, LVAD or death) was null: 90/294 vs 91/298, HR 0.90 (0.67-1.21). 'Other' means not self-identified Black; H-HeFT was predominantly White. Used as 0.72 as is, per the no-cliff rule."
+ },
+ {
+  "id": "vasodilator-other-reduced-hfhosp",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": "other",
+  "rr": 1.01,
+  "ci_low": 0.68,
+  "ci_high": 1.5,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "H-HeFT (DANHEART)",
+   "citation": "Kober L, et al. Eur Heart J 2026 (online 4 Nov 2026); doi:10.1093/eurheartj/ehag773",
+   "pmid": "42978512"
+  },
+  "population": "HFrEF (LVEF <=40%, NYHA II-IV, raised NT-proBNP), 23 Danish hospitals, 592 predominantly White patients (median age 72, 18% women), contemporary treatment, mean follow-up 3.7 years; H-ISDN 75/40 mg tid target vs placebo",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "worsening heart failure events occurred in 52 vs 47 patients (HR 1.01; 95% CI 0.68-1.50)",
+  "extrapolation": "",
+  "notes": "Outcome definition: 'worsening heart failure events' (hospitalization for worsening HF or urgent outpatient visit with IV/metolazone), counted per patient, not hospitalization alone and not an A-HeFT-style first hospitalization. The death and HF-event results point in different directions (0.72 vs 1.01); both carried, neither adjusted."
+ },
+ {
+  "id": "vasodilator-other-mildly_reduced-death",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": "other",
+  "rr": 0.72,
+  "ci_low": 0.51,
+  "ci_high": 1.02,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "H-HeFT (DANHEART)",
+   "citation": "Kober L, et al. Eur Heart J 2026 (online 4 Nov 2026); doi:10.1093/eurheartj/ehag773",
+   "pmid": "42978512"
+  },
+  "population": "HFrEF (LVEF <=40%, NYHA II-IV, raised NT-proBNP), 23 Danish hospitals, 592 predominantly White patients (median age 72, 18% women), contemporary treatment, mean follow-up 3.7 years; H-ISDN 75/40 mg tid target vs placebo",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "There were 57 deaths in the H-ISDN group vs 72 in the placebo group (HR 0.72; 95% CI 0.51-1.02)",
+  "extrapolation": "H-HeFT enrolled LVEF <=40% only; no trial of H/ISDN at LVEF 41-49. Reduced-band estimate carried unchanged on the assumption the vasodilator effect extends; interval not widened.",
+  "notes": "H-HeFT is real (PMID 42978512 resolves to this paper). Death was a SECONDARY component; the primary composite (HF hospitalization, urgent visit with IV/metolazone, transplant, LVAD or death) was null: 90/294 vs 91/298, HR 0.90 (0.67-1.21). 'Other' means not self-identified Black; H-HeFT was predominantly White. Used as 0.72 as is, per the no-cliff rule."
+ },
+ {
+  "id": "vasodilator-other-mildly_reduced-hfhosp",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": "other",
+  "rr": 1.01,
+  "ci_low": 0.68,
+  "ci_high": 1.5,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "H-HeFT (DANHEART)",
+   "citation": "Kober L, et al. Eur Heart J 2026 (online 4 Nov 2026); doi:10.1093/eurheartj/ehag773",
+   "pmid": "42978512"
+  },
+  "population": "HFrEF (LVEF <=40%, NYHA II-IV, raised NT-proBNP), 23 Danish hospitals, 592 predominantly White patients (median age 72, 18% women), contemporary treatment, mean follow-up 3.7 years; H-ISDN 75/40 mg tid target vs placebo",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "worsening heart failure events occurred in 52 vs 47 patients (HR 1.01; 95% CI 0.68-1.50)",
+  "extrapolation": "H-HeFT enrolled LVEF <=40% only; no trial of H/ISDN at LVEF 41-49. Reduced-band estimate carried unchanged on the assumption the vasodilator effect extends; interval not widened.",
+  "notes": "Outcome definition: 'worsening heart failure events' (hospitalization for worsening HF or urgent outpatient visit with IV/metolazone), counted per patient, not hospitalization alone and not an A-HeFT-style first hospitalization. The death and HF-event results point in different directions (0.72 vs 1.01); both carried, neither adjusted."
+ },
+ {
+  "id": "vasodilator-other-preserved-death",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": "other",
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "none identified",
+   "citation": "No randomized H/ISDN outcome trial in LVEF >=50% found",
+   "pmid": ""
+  },
+  "population": "Chronic HF, LVEF >=50%",
+  "comparator": "placebo",
+  "verification": "unverified",
+  "quote": "",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "No randomized outcome evidence in preserved EF."
+ },
+ {
+  "id": "vasodilator-other-preserved-hfhosp",
+  "drug_class": "Vasodilator",
+  "drugs": [
+   "Hydralazine/Isosorbide Dinitrate"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": "other",
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "none identified",
+   "citation": "No randomized H/ISDN outcome trial in LVEF >=50% found",
+   "pmid": ""
+  },
+  "population": "Chronic HF, LVEF >=50%",
+  "comparator": "placebo",
+  "verification": "unverified",
+  "quote": "",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "No randomized outcome evidence in preserved EF."
+ },
+ {
+  "id": "ivabradine-reduced-death",
+  "drug_class": "If Inhibitor",
+  "drugs": [
+   "Ivabradine"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.9,
+  "ci_low": 0.8,
+  "ci_high": 1.02,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "SHIFT",
+   "citation": "Swedberg K, et al. Lancet 2010;376:875-85; death counts quoted in Medicine 2017 review (PMID 28984762, PMC5737998)",
+   "pmid": "20801500"
+  },
+  "population": "Symptomatic HF, LVEF <=35%, sinus rhythm, HR >=70, HF admission within 12 months, stable background therapy incl. beta-blocker if tolerated; 6558 randomized; median follow-up 22.9 months",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "all-cause mortality was 503 (16%) versus 552 (17%), P = .092 (PMC5737998, quoting SHIFT)",
+  "extrapolation": "",
+  "notes": "SHIFT's all-cause HR is not in the abstract and I could not reach the full text. Quotable counts and P exist: 503 vs 552 deaths, P=0.092. Reconstruction: se(ln HR)=sqrt(1/503+1/552)=0.0616; z for two-sided P=0.092 is 1.685; ln HR=-1.685*0.0616=-0.1038, HR 0.90; 95% CI exp(-0.1038+-1.96*0.0616)=0.80-1.02. This reproduces the first researcher's recalled 0.90 (0.80-1.02) from quoted counts, but P is rounded so the interval is +-0.01. Mortality was not a primary endpoint."
+ },
+ {
+  "id": "ivabradine-reduced-hfhosp",
+  "drug_class": "If Inhibitor",
+  "drugs": [
+   "Ivabradine"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.74,
+  "ci_low": 0.66,
+  "ci_high": 0.83,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "SHIFT",
+   "citation": "Swedberg K, et al. Lancet 2010;376:875-85; death counts quoted in Medicine 2017 review (PMID 28984762, PMC5737998)",
+   "pmid": "20801500"
+  },
+  "population": "Symptomatic HF, LVEF <=35%, sinus rhythm, HR >=70, HF admission within 12 months, stable background therapy incl. beta-blocker if tolerated; 6558 randomized; median follow-up 22.9 months",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "hospital admissions for worsening heart failure (672 [21%] placebo vs 514 [16%] ivabradine; HR 0.74, 0.66-0.83; p<0.0001)",
+  "extrapolation": "",
+  "notes": "Hospital admission for worsening HF (time to first). Population: sinus rhythm, HR >=70, EF <=35%; most had beta-blocker; 2010 background (no SGLT2i/ARNI)."
+ },
+ {
+  "id": "ivabradine-mildly_reduced-death",
+  "drug_class": "If Inhibitor",
+  "drugs": [
+   "Ivabradine"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.9,
+  "ci_low": 0.8,
+  "ci_high": 1.02,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "SHIFT",
+   "citation": "Swedberg K, et al. Lancet 2010;376:875-85; death counts quoted in Medicine 2017 review (PMID 28984762, PMC5737998)",
+   "pmid": "20801500"
+  },
+  "population": "Symptomatic HF, LVEF <=35%, sinus rhythm, HR >=70, HF admission within 12 months, stable background therapy incl. beta-blocker if tolerated; 6558 randomized; median follow-up 22.9 months",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "",
+  "extrapolation": "SHIFT enrolled LVEF <=35% only. Carried unchanged to LVEF 41-49 on the assumption that heart-rate lowering in sinus rhythm with HR >=70 works the same; no outcome trial at LVEF 41-49. Interval not widened.",
+  "notes": "Same derivation as the reduced row."
+ },
+ {
+  "id": "ivabradine-mildly_reduced-hfhosp",
+  "drug_class": "If Inhibitor",
+  "drugs": [
+   "Ivabradine"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.74,
+  "ci_low": 0.66,
+  "ci_high": 0.83,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "SHIFT",
+   "citation": "Swedberg K, et al. Lancet 2010;376:875-85; death counts quoted in Medicine 2017 review (PMID 28984762, PMC5737998)",
+   "pmid": "20801500"
+  },
+  "population": "Symptomatic HF, LVEF <=35%, sinus rhythm, HR >=70, HF admission within 12 months, stable background therapy incl. beta-blocker if tolerated; 6558 randomized; median follow-up 22.9 months",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "",
+  "extrapolation": "SHIFT enrolled LVEF <=35% only. Carried unchanged to LVEF 41-49 on the assumption that heart-rate lowering in sinus rhythm with HR >=70 works the same; no outcome trial at LVEF 41-49. Interval not widened.",
+  "notes": "Same as the reduced row."
+ },
+ {
+  "id": "ivabradine-preserved-death",
+  "drug_class": "If Inhibitor",
+  "drugs": [
+   "Ivabradine"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "EDIFY",
+   "citation": "Komajda M, et al. Eur J Heart Fail 2017;19:1495-1503",
+   "pmid": "28462519"
+  },
+  "population": "LVEF >=45%, sinus rhythm, HR >=70, NT-proBNP >=220; 179 patients, 8 months",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "In patients with HFpEF, HR reduction with ivabradine did not improve outcomes.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EDIFY measured E/e', 6-minute walk and NT-proBNP, not events (no death or hospitalization numbers in the abstract). No ivabradine outcome RCT in preserved EF found. Neutral is the nearest-evidence answer."
+ },
+ {
+  "id": "ivabradine-preserved-hfhosp",
+  "drug_class": "If Inhibitor",
+  "drugs": [
+   "Ivabradine"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "EDIFY",
+   "citation": "Komajda M, et al. Eur J Heart Fail 2017;19:1495-1503",
+   "pmid": "28462519"
+  },
+  "population": "LVEF >=45%, sinus rhythm, HR >=70, NT-proBNP >=220; 179 patients, 8 months",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "In patients with HFpEF, HR reduction with ivabradine did not improve outcomes.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EDIFY measured E/e', 6-minute walk and NT-proBNP, not events (no death or hospitalization numbers in the abstract). No ivabradine outcome RCT in preserved EF found. Neutral is the nearest-evidence answer."
+ },
+ {
+  "id": "vericiguat-reduced-death",
+  "drug_class": "sGC Stimulator",
+  "drugs": [
+   "Vericiguat"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.9,
+  "ci_low": 0.8,
+  "ci_high": 1.01,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "VICTORIA + VICTOR (2-trial random-effects meta-analysis)",
+   "citation": "Batista PG, et al. Eur J Clin Pharmacol 2026;82:95",
+   "pmid": "41843131"
+  },
+  "population": "HFrEF: VICTORIA (LVEF <45%, recent worsening, n=5050) + VICTOR (LVEF <=40%, no recent worsening, n=6105); contemporary guideline-directed therapy",
+  "comparator": "placebo",
+  "verification": "secondary_source_quote",
+  "quote": "Effects on all-cause death were not significant in HFrEF (Two RCTs, 11,155 patients; HR 0.90; 95% CI 0.80-1.01).",
+  "extrapolation": "",
+  "notes": "Second-hand: the Lancet pooled IPD abstract (PMID 40897188) gives CV death 0.89 (0.80-0.98) but not all-cause death. Component trials: VICTORIA all-cause death HR 0.93 (0.81-1.06) (NEJM abstract, PMID 32222134), VICTOR 0.84 (0.74-0.97) (Lancet abstract, PMID 40897189, nominal because its primary endpoint was null). A fixed-effect pool of those two is 0.88 (0.80-0.97); the published random-effects 0.90 (0.80-1.01) is used per the prefer-published-pool rule. The 11,155 patients match the Zannad IPD pool."
+ },
+ {
+  "id": "vericiguat-reduced-hfhosp",
+  "drug_class": "sGC Stimulator",
+  "drugs": [
+   "Vericiguat"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.92,
+  "ci_low": 0.84,
+  "ci_high": 1.0,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "VICTORIA + VICTOR pooled individual participant data",
+   "citation": "Zannad F, et al. Lancet 2025;406:1351-62",
+   "pmid": "40897188"
+  },
+  "population": "HFrEF: VICTORIA (LVEF <45%, recent worsening, n=5050) + VICTOR (LVEF <=40%, no recent worsening, n=6105); contemporary guideline-directed therapy",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "cardiovascular death (0.89 [0.80-0.98]; p=0.020) and hospitalisation for heart failure (0.92 [0.84-1.00]; p=0.043) as first events",
+  "extrapolation": "",
+  "notes": "First hospitalization for HF. Pool of a recent-worsening and a stable population (VICTOR alone: HF hospitalization 0.95 (0.82-1.10), PMID 40897189)."
+ },
+ {
+  "id": "vericiguat-mildly_reduced-death",
+  "drug_class": "sGC Stimulator",
+  "drugs": [
+   "Vericiguat"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.9,
+  "ci_low": 0.8,
+  "ci_high": 1.01,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "VICTORIA + VICTOR (2-trial meta-analysis)",
+   "citation": "Batista PG, et al. Eur J Clin Pharmacol 2026;82:95",
+   "pmid": "41843131"
+  },
+  "population": "HFrEF: VICTORIA (LVEF <45%, recent worsening, n=5050) + VICTOR (LVEF <=40%, no recent worsening, n=6105); contemporary guideline-directed therapy",
+  "comparator": "placebo",
+  "verification": "secondary_source_quote",
+  "quote": "",
+  "extrapolation": "VICTORIA enrolled LVEF <45% and VICTOR <=40%; no vericiguat outcome data at LVEF 45-49. Reduced-band pooled estimate carried unchanged (VICTORIA's LVEF <45% ceiling is the nearest edge); interval not widened.",
+  "notes": "As reduced row."
+ },
+ {
+  "id": "vericiguat-mildly_reduced-hfhosp",
+  "drug_class": "sGC Stimulator",
+  "drugs": [
+   "Vericiguat"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.92,
+  "ci_low": 0.84,
+  "ci_high": 1.0,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "VICTORIA + VICTOR pooled IPD",
+   "citation": "Zannad F, et al. Lancet 2025;406:1351-62",
+   "pmid": "40897188"
+  },
+  "population": "HFrEF: VICTORIA (LVEF <45%, recent worsening, n=5050) + VICTOR (LVEF <=40%, no recent worsening, n=6105); contemporary guideline-directed therapy",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "",
+  "extrapolation": "VICTORIA enrolled LVEF <45% and VICTOR <=40%; no vericiguat outcome data at LVEF 45-49. Reduced-band pooled estimate carried unchanged (VICTORIA's LVEF <45% ceiling is the nearest edge); interval not widened.",
+  "notes": "As reduced row."
+ },
+ {
+  "id": "vericiguat-preserved-death",
+  "drug_class": "sGC Stimulator",
+  "drugs": [
+   "Vericiguat"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "VITALITY-HFpEF",
+   "citation": "Armstrong PW, et al. JAMA 2020;324:1512-21",
+   "pmid": "33079152"
+  },
+  "population": "LVEF >=45%, recent decompensation; 789 patients, 24 weeks",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "Among patients with HFpEF and recent decompensation, 24-week treatment with vericiguat at either 15-mg/d or 10-mg/d dosages compared with placebo did not improve the physical limitation score of the KCCQ.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "VITALITY tested symptoms at 24 weeks, not events. A two-trial pool across the LVEF range (PMID 38524633) found no CV-mortality effect (RR 0.97, 0.86-1.09) but it is not preserved-specific. Neutral by lack of evidence."
+ },
+ {
+  "id": "vericiguat-preserved-hfhosp",
+  "drug_class": "sGC Stimulator",
+  "drugs": [
+   "Vericiguat"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "VITALITY-HFpEF",
+   "citation": "Armstrong PW, et al. JAMA 2020;324:1512-21",
+   "pmid": "33079152"
+  },
+  "population": "LVEF >=45%, recent decompensation; 789 patients, 24 weeks",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "Among patients with HFpEF and recent decompensation, 24-week treatment with vericiguat at either 15-mg/d or 10-mg/d dosages compared with placebo did not improve the physical limitation score of the KCCQ.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "VITALITY tested symptoms at 24 weeks, not events. A two-trial pool across the LVEF range (PMID 38524633) found no CV-mortality effect (RR 0.97, 0.86-1.09) but it is not preserved-specific. Neutral by lack of evidence."
+ },
+ {
+  "id": "digoxin-reduced-death",
+  "drug_class": "Inotrope",
+  "drugs": [
+   "Digoxin"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.98,
+  "ci_low": 0.91,
+  "ci_high": 1.06,
+  "measure": "RR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "DIG main trial + DECISION (fixed-effect inverse-variance pool)",
+   "citation": "Digitalis Investigation Group. N Engl J Med 1997;336:525-33; van Veldhuisen DJ, et al. Nat Med 2026;32:2647-53",
+   "pmid": "9036306; 42108270"
+  },
+  "population": "DIG: LVEF <=45%, sinus rhythm, on ACE inhibitor + diuretic, n=6800, 37 months, pre-beta-blocker/MRA/SGLT2i. DECISION: symptomatic HF, LVEF <=50% (79% <=40, 21% 41-50), 29% atrial fibrillation, n=1001, low-dose digoxin (0.5-0.9 ng/ml), median 36.5 months, >85% on beta-blocker + RAS blocker, >70% MRA, 41% SGLT2i",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "DIG: There were 1181 deaths (34.8 percent) with digoxin and 1194 deaths (35.1 percent) with placebo (risk ratio, 0.99; 95 percent confidence interval, 0.91 to 1.07). DECISION: 118 patients (24%) in the digoxin group and 126 patients (25%) in the placebo group died from any cause (hazard ratio 0.93, 95% CI 0.72-1.19)",
+  "extrapolation": "Fixed-effect inverse-variance pool on the log scale of the two verified results: DIG 0.99 (0.91-1.07): se=(ln1.07-ln0.91)/3.92=0.0413, w=586; DECISION 0.93 (0.72-1.19): se=(ln1.19-ln0.72)/3.92=0.1282, w=61. Pooled ln RR=(586*ln0.99+61*ln0.93)/647=-0.0159 -> 0.98; se=1/sqrt(647)=0.0393 -> 95% CI 0.91-1.06.",
+  "notes": "DIG predates beta-blockers, MRAs and SGLT2 inhibitors; DECISION (contemporary background) is much smaller and gets ~7-9% of the weight. DECISION population is LVEF <=50%, so it informs the reduced and mildly reduced bands (not preserved). DECISION's all-cause death is from the full text (Nat Med, PMC13375525), not the abstract (abstract has CV death 0.93 (0.69-1.26))."
+ },
+ {
+  "id": "digoxin-reduced-hfhosp",
+  "drug_class": "Inotrope",
+  "drugs": [
+   "Digoxin"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.72,
+  "ci_low": 0.66,
+  "ci_high": 0.79,
+  "measure": "RR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "DIG main trial + DECISION (fixed-effect inverse-variance pool)",
+   "citation": "Digitalis Investigation Group. N Engl J Med 1997;336:525-33; van Veldhuisen DJ, et al. Nat Med 2026;32:2647-53",
+   "pmid": "9036306; 42108270"
+  },
+  "population": "DIG: LVEF <=45%, sinus rhythm, on ACE inhibitor + diuretic, n=6800, 37 months, pre-beta-blocker/MRA/SGLT2i. DECISION: symptomatic HF, LVEF <=50% (79% <=40, 21% 41-50), 29% atrial fibrillation, n=1001, low-dose digoxin (0.5-0.9 ng/ml), median 36.5 months, >85% on beta-blocker + RAS blocker, >70% MRA, 41% SGLT2i",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "DIG: fewer patients were hospitalized for worsening heart failure (26.8 percent vs. 34.7 percent; risk ratio, 0.72; 95 percent confidence interval, 0.66 to 0.79). DECISION: total number of worsening heart failure events was 155 and 203 (rate ratio 0.76, 95% CI 0.54-1.05)",
+  "extrapolation": "Fixed-effect inverse-variance pool: DIG 0.72 (0.66-0.79): se=0.0459, w=475; DECISION 0.76 (0.54-1.05): se=0.1696, w=35. Pooled ln=(475*ln0.72+35*ln0.76)/510=-0.3248 -> 0.72; se=0.0443 -> CI 0.66-0.79.",
+  "notes": "Outcome definitions differ and are pooled anyway per the owner's rule: DIG = proportion ever hospitalized for worsening HF (risk ratio); DECISION = TOTAL worsening-HF events (hospitalizations plus urgent visits), a rate ratio. DIG predates beta-blockers, MRAs and SGLT2 inhibitors; DECISION (contemporary background) is much smaller and gets ~7-9% of the weight. DECISION's primary composite (total worsening-HF events + CV death) was 0.81 (0.61-1.07); effect HFmrEF 0.72 vs HFrEF 0.82 (P-interaction 0.75)."
+ },
+ {
+  "id": "digoxin-mildly_reduced-death",
+  "drug_class": "Inotrope",
+  "drugs": [
+   "Digoxin"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.98,
+  "ci_low": 0.91,
+  "ci_high": 1.06,
+  "measure": "RR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "DIG main trial + DECISION (fixed-effect inverse-variance pool)",
+   "citation": "Digitalis Investigation Group. N Engl J Med 1997;336:525-33; van Veldhuisen DJ, et al. Nat Med 2026;32:2647-53",
+   "pmid": "9036306; 42108270"
+  },
+  "population": "DIG: LVEF <=45%, sinus rhythm, on ACE inhibitor + diuretic, n=6800, 37 months, pre-beta-blocker/MRA/SGLT2i. DECISION: symptomatic HF, LVEF <=50% (79% <=40, 21% 41-50), 29% atrial fibrillation, n=1001, low-dose digoxin (0.5-0.9 ng/ml), median 36.5 months, >85% on beta-blocker + RAS blocker, >70% MRA, 41% SGLT2i",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "",
+  "extrapolation": "No band-specific estimate exists. Patients with LVEF 41-45 are in DIG's main trial and 41-50 in DECISION (21%); DECISION reports a similar effect in HFmrEF and HFrEF (rate ratio 0.72 vs 0.82 on its primary composite, P-interaction 0.75). Reduced-band pooled estimate therefore carried unchanged.",
+  "notes": "Same pool as the reduced row. DIG predates beta-blockers, MRAs and SGLT2 inhibitors; DECISION (contemporary background) is much smaller and gets ~7-9% of the weight."
+ },
+ {
+  "id": "digoxin-mildly_reduced-hfhosp",
+  "drug_class": "Inotrope",
+  "drugs": [
+   "Digoxin"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.72,
+  "ci_low": 0.66,
+  "ci_high": 0.79,
+  "measure": "RR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "DIG main trial + DECISION (fixed-effect inverse-variance pool)",
+   "citation": "Digitalis Investigation Group. N Engl J Med 1997;336:525-33; van Veldhuisen DJ, et al. Nat Med 2026;32:2647-53",
+   "pmid": "9036306; 42108270"
+  },
+  "population": "DIG: LVEF <=45%, sinus rhythm, on ACE inhibitor + diuretic, n=6800, 37 months, pre-beta-blocker/MRA/SGLT2i. DECISION: symptomatic HF, LVEF <=50% (79% <=40, 21% 41-50), 29% atrial fibrillation, n=1001, low-dose digoxin (0.5-0.9 ng/ml), median 36.5 months, >85% on beta-blocker + RAS blocker, >70% MRA, 41% SGLT2i",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "",
+  "extrapolation": "No band-specific estimate exists. Patients with LVEF 41-45 are in DIG's main trial and 41-50 in DECISION (21%); DECISION reports a similar effect in HFmrEF and HFrEF (rate ratio 0.72 vs 0.82 on its primary composite, P-interaction 0.75). Reduced-band pooled estimate therefore carried unchanged.",
+  "notes": "Same pool as the reduced row. Note this differs from the first researcher, who used DECISION alone (0.76, 0.54-1.05) here and DIG alone for reduced. DIG predates beta-blockers, MRAs and SGLT2 inhibitors; DECISION (contemporary background) is much smaller and gets ~7-9% of the weight."
+ },
+ {
+  "id": "digoxin-preserved-death",
+  "drug_class": "Inotrope",
+  "drugs": [
+   "Digoxin"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.99,
+  "ci_low": 0.76,
+  "ci_high": 1.28,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "DIG ancillary trial (LVEF >45%)",
+   "citation": "Ahmed A, et al. Circulation 2006;114:397-403",
+   "pmid": "16864724"
+  },
+  "population": "Ambulatory chronic HF, sinus rhythm, LVEF >45% (median 53%), n=988, on ACE inhibitor + diuretic; mean 37 months",
+  "comparator": "placebo",
+  "verification": "full_text_quote",
+  "quote": "All-cause mortality 116 (23.4%) 115 (23.4%) ... 0.99 (0.76-1.28); p=0.925 (PMC2628473 Table 2; text: 115 deaths from all causes in the digoxin group (23%) and 116 deaths in the placebo group)",
+  "extrapolation": "",
+  "notes": "Only DIG ancillary informs preserved EF (DECISION is LVEF <=50%). 1990s background therapy. Abstract has no number ('no effect on all-cause or cause-specific mortality')."
+ },
+ {
+  "id": "digoxin-preserved-hfhosp",
+  "drug_class": "Inotrope",
+  "drugs": [
+   "Digoxin"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.79,
+  "ci_low": 0.59,
+  "ci_high": 1.04,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "DIG ancillary trial (LVEF >45%)",
+   "citation": "Ahmed A, et al. Circulation 2006;114:397-403",
+   "pmid": "16864724"
+  },
+  "population": "Ambulatory chronic HF, sinus rhythm, LVEF >45% (median 53%), n=988, on ACE inhibitor + diuretic; mean 37 months",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "a trend toward a reduction in hospitalizations resulting from worsening heart failure (HR, 0.79; 95% CI, 0.59 to 1.04; P = 0.094)",
+  "extrapolation": "",
+  "notes": "Hospitalization for worsening HF (HR). Same population caveat as above."
+ },
+ {
+  "id": "fcm-reduced-death",
+  "drug_class": "IV Iron",
+  "drugs": [
+   "Ferric Carboxymaltose"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.93,
+  "ci_low": 0.78,
+  "ci_high": 1.1,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "FCM individual-patient-data meta-analysis (CONFIRM-HF, AFFIRM-AHF, HEART-FID)",
+   "citation": "Ponikowski P, et al. Eur Heart J 2023;44:5077-91",
+   "pmid": "37632415"
+  },
+  "population": "Iron-deficient HF with LVEF <=45% (CONFIRM-HF), <50% (AFFIRM-AHF) or <=40% (HEART-FID); 4501 patients, 52 weeks",
+  "comparator": "placebo",
+  "verification": "full_text_quote",
+  "quote": "time to all-cause death (HR 0.93; 95% CI 0.78-1.10; P = .393)",
+  "extrapolation": "",
+  "notes": "Outcome: time to first all-cause death through 52 weeks. 257 (11.5%) vs 284 (12.7%). The paper's own conclusion: 'no apparent effect on mortality'. Alternative longer-follow-up pool (Anker 2025, includes ferric derisomaltose) is in the first researcher's notes; not re-verified here."
+ },
+ {
+  "id": "fcm-reduced-hfhosp",
+  "drug_class": "IV Iron",
+  "drugs": [
+   "Ferric Carboxymaltose"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.83,
+  "ci_low": 0.72,
+  "ci_high": 0.95,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "FCM individual-patient-data meta-analysis (CONFIRM-HF, AFFIRM-AHF, HEART-FID)",
+   "citation": "Ponikowski P, et al. Eur Heart J 2023;44:5077-91",
+   "pmid": "37632415"
+  },
+  "population": "Iron-deficient HF with LVEF <=45% (CONFIRM-HF), <50% (AFFIRM-AHF) or <=40% (HEART-FID); 4501 patients, 52 weeks",
+  "comparator": "placebo",
+  "verification": "full_text_quote",
+  "quote": "time to first HF hospitalization (HR 0.83; 95% CI 0.72-0.95; P = .006)",
+  "extrapolation": "",
+  "notes": "Outcome definition: time to FIRST HF hospitalization (381 [17.0%] vs 452 [20.2%]). Other definitions in the same paper: TOTAL HF hospitalizations RR 0.84 (0.71-0.98); co-primary total HF hospitalizations + CV death RR 0.87 (0.75-1.01); total CV hospitalizations + CV death RR 0.86 (0.75-0.98). The engine's outcome is first/any HF hospitalization, so the first-event HR is used."
+ },
+ {
+  "id": "iviron-mildly_reduced-death",
+  "drug_class": "IV Iron",
+  "drugs": [
+   "Ferric Carboxymaltose"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.93,
+  "ci_low": 0.78,
+  "ci_high": 1.1,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "FCM individual-patient-data meta-analysis (CONFIRM-HF, AFFIRM-AHF, HEART-FID)",
+   "citation": "Ponikowski P, et al. Eur Heart J 2023;44:5077-91",
+   "pmid": "37632415"
+  },
+  "population": "Iron-deficient HF with LVEF <=45% (CONFIRM-HF), <50% (AFFIRM-AHF) or <=40% (HEART-FID); 4501 patients, 52 weeks",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "",
+  "extrapolation": "The IPD trials admitted LVEF up to 45% and <50%, so some LVEF 41-49 patients are inside the pool, but no band-specific estimate was published. Reduced-band estimate carried; interval not widened.",
+  "notes": "Copied from the reduced row."
+ },
+ {
+  "id": "iviron-mildly_reduced-hfhosp",
+  "drug_class": "IV Iron",
+  "drugs": [
+   "Ferric Carboxymaltose"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.83,
+  "ci_low": 0.72,
+  "ci_high": 0.95,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "FCM individual-patient-data meta-analysis (CONFIRM-HF, AFFIRM-AHF, HEART-FID)",
+   "citation": "Ponikowski P, et al. Eur Heart J 2023;44:5077-91",
+   "pmid": "37632415"
+  },
+  "population": "Iron-deficient HF with LVEF <=45% (CONFIRM-HF), <50% (AFFIRM-AHF) or <=40% (HEART-FID); 4501 patients, 52 weeks",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "",
+  "extrapolation": "The IPD trials admitted LVEF up to 45% and <50%, so some LVEF 41-49 patients are inside the pool, but no band-specific estimate was published. Reduced-band estimate carried; interval not widened.",
+  "notes": "Copied from the reduced row (first HF hospitalization)."
+ },
+ {
+  "id": "iviron-preserved-death",
+  "drug_class": "IV Iron",
+  "drugs": [
+   "Ferric Carboxymaltose"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.93,
+  "ci_low": 0.78,
+  "ci_high": 1.1,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "FCM IPD meta-analysis (reduced EF); FAIR-HFpEF supporting only",
+   "citation": "Ponikowski P, et al. Eur Heart J 2023;44:5077-91; von Haehling S, et al. Eur Heart J 2024;45:3789-3800",
+   "pmid": "37632415; 39185895"
+  },
+  "population": "Iron-deficient HF with LVEF <=45% (CONFIRM-HF), <50% (AFFIRM-AHF) or <=40% (HEART-FID); 4501 patients, 52 weeks",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "",
+  "extrapolation": "No outcome trial in LVEF >=50%. FAIR-HFpEF stopped after 39 patients (6MWT +49 m, 95% CI 5-93; no event data). Estimate extrapolated on the reasoning that iron deficiency, not EF, is what is treated. Lowest confidence of the iron rows; alternative is neutral.",
+  "notes": "Copied from the reduced row."
+ },
+ {
+  "id": "iviron-preserved-hfhosp",
+  "drug_class": "IV Iron",
+  "drugs": [
+   "Ferric Carboxymaltose"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.83,
+  "ci_low": 0.72,
+  "ci_high": 0.95,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "FCM IPD meta-analysis (reduced EF); FAIR-HFpEF supporting only",
+   "citation": "Ponikowski P, et al. Eur Heart J 2023;44:5077-91; von Haehling S, et al. Eur Heart J 2024;45:3789-3800",
+   "pmid": "37632415; 39185895"
+  },
+  "population": "Iron-deficient HF with LVEF <=45% (CONFIRM-HF), <50% (AFFIRM-AHF) or <=40% (HEART-FID); 4501 patients, 52 weeks",
+  "comparator": "placebo",
+  "verification": "computed_from_verified",
+  "quote": "",
+  "extrapolation": "No outcome trial in LVEF >=50%. FAIR-HFpEF stopped after 39 patients (6MWT +49 m, 95% CI 5-93; no event data). Estimate extrapolated on the reasoning that iron deficiency, not EF, is what is treated. Lowest confidence of the iron rows; alternative is neutral.",
+  "notes": "Copied from the reduced row (first HF hospitalization)."
+ },
+ {
+  "id": "glp1-preserved-hfhosp",
+  "drug_class": "GLP-1 RA / GLP-1/GIP RA",
+  "drugs": [
+   "Semaglutide (Wegovy)",
+   "Tirzepatide (Zepbound)"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.52,
+  "ci_low": 0.33,
+  "ci_high": 0.82,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "SUMMIT (tirzepatide) + SELECT HFpEF subgroup (semaglutide), published random-effects pool",
+   "citation": "Musa EYA, Musa AYA. BMC Cardiovasc Disord 2026;26:406 (incl. Packer M, NEJM 2025;392:427-37 and Deanfield J, Lancet 2024;404:773-86)",
+   "pmid": "41906074"
+  },
+  "population": "Obesity-related HF with LVEF >=45-50% (SUMMIT LVEF >=50%, BMI >=30, n=731; SELECT investigator-defined HFpEF, n=2273, ASCVD with BMI >=27)",
+  "comparator": "placebo",
+  "verification": "secondary_source_quote",
+  "quote": "Two trials contributed adjudicated first heart failure hospitalization, demonstrating pooled hazard ratio 0.52 (95% confidence interval 0.33-0.82).",
+  "extrapolation": "",
+  "notes": "Outcome: adjudicated FIRST HF hospitalization. Inputs from the paper's table: SUMMIT HR 0.44 (0.22-0.87), SELECT HFpEF subgroup HR 0.59 (0.31-1.06); my fixed-effect check gives 0.518 (0.328-0.819), matching the published random-effects pool (I2=0%). One estimate for both drugs by owner ruling (no head-to-head trial). SELECT HFpEF is a prespecified but power-limited subgroup. Not the same measure as semaglutide's pooled 'worsening HF event' (hospitalization or urgent visit) HR 0.59 (0.41-0.82), Kosiborod, Lancet 2024 (PMID 39222642), whose SELECT patients overlap, so the two cannot be combined."
+ },
+ {
+  "id": "glp1-preserved-death",
+  "drug_class": "GLP-1 RA / GLP-1/GIP RA",
+  "drugs": [
+   "Semaglutide (Wegovy)",
+   "Tirzepatide (Zepbound)"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.9,
+  "ci_low": 0.67,
+  "ci_high": 1.22,
+  "measure": "HR",
+  "basis": "meta_analysis",
+  "source": {
+   "trial": "SUMMIT (tirzepatide) + SELECT HFpEF subgroup (semaglutide), published random-effects pool",
+   "citation": "Musa EYA, Musa AYA. BMC Cardiovasc Disord 2026;26:406 (incl. Packer M, NEJM 2025;392:427-37 and Deanfield J, Lancet 2024;404:773-86)",
+   "pmid": "41906074"
+  },
+  "population": "Obesity-related HF with LVEF >=45-50% (SUMMIT LVEF >=50%, BMI >=30, n=731; SELECT investigator-defined HFpEF, n=2273, ASCVD with BMI >=27)",
+  "comparator": "placebo",
+  "verification": "secondary_source_quote",
+  "quote": "In SUMMIT, mortality was numerically higher with tirzepatide (HR 1.25, 95% CI 0.63-2.45), while in SELECT HFpEF subgroup, mortality was numerically lower with semaglutide (HR 0.83, 95% CI 0.59-1.16). Pooled analysis showed no statistically significant difference in all-cause mortality (HR 0.90, 95% CI 0.67-1.22)",
+  "extrapolation": "",
+  "notes": "All-cause death. SUMMIT 19 vs 15 deaths; SELECT HFpEF 170 deaths in 3,004 patients across the two. My fixed-effect check 0.900 (0.665-1.219) matches the published pool. The authors call this inconclusive/underpowered; per the no-cliff rule 0.90 is used as is. SUMMIT's own abstract gives only CV death 8 vs 5 (HR 1.58, 0.52-4.83)."
+ },
+ {
+  "id": "glp1-mildly_reduced-hfhosp",
+  "drug_class": "GLP-1 RA / GLP-1/GIP RA",
+  "drugs": [
+   "Semaglutide (Wegovy)",
+   "Tirzepatide (Zepbound)"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.52,
+  "ci_low": 0.33,
+  "ci_high": 0.82,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "SUMMIT (tirzepatide) + SELECT HFpEF subgroup (semaglutide), published random-effects pool",
+   "citation": "Musa EYA, Musa AYA. BMC Cardiovasc Disord 2026;26:406 (incl. Packer M, NEJM 2025;392:427-37 and Deanfield J, Lancet 2024;404:773-86)",
+   "pmid": "41906074"
+  },
+  "population": "Obesity-related HF with LVEF >=45-50% (SUMMIT LVEF >=50%, BMI >=30, n=731; SELECT investigator-defined HFpEF, n=2273, ASCVD with BMI >=27)",
+  "comparator": "placebo",
+  "verification": "secondary_source_quote",
+  "quote": "Two trials contributed adjudicated first heart failure hospitalization, demonstrating pooled hazard ratio 0.52 (95% confidence interval 0.33-0.82).",
+  "extrapolation": "No trial reports a LVEF 41-49 estimate for these drugs. The pooled populations are 'HFpEF' as investigators defined it (SUMMIT >=50%; SELECT investigator-defined HFpEF; Kosiborod's semaglutide pool is explicitly 'mildly reduced or preserved'), so some LVEF 41-49 patients are probably included. Preserved-band pooled estimate carried; interval not widened.",
+  "notes": "Outcome: adjudicated FIRST HF hospitalization. Inputs from the paper's table: SUMMIT HR 0.44 (0.22-0.87), SELECT HFpEF subgroup HR 0.59 (0.31-1.06); my fixed-effect check gives 0.518 (0.328-0.819), matching the published random-effects pool (I2=0%). One estimate for both drugs by owner ruling (no head-to-head trial). SELECT HFpEF is a prespecified but power-limited subgroup. Not the same measure as semaglutide's pooled 'worsening HF event' (hospitalization or urgent visit) HR 0.59 (0.41-0.82), Kosiborod, Lancet 2024 (PMID 39222642), whose SELECT patients overlap, so the two cannot be combined."
+ },
+ {
+  "id": "glp1-mildly_reduced-death",
+  "drug_class": "GLP-1 RA / GLP-1/GIP RA",
+  "drugs": [
+   "Semaglutide (Wegovy)",
+   "Tirzepatide (Zepbound)"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.9,
+  "ci_low": 0.67,
+  "ci_high": 1.22,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "SUMMIT (tirzepatide) + SELECT HFpEF subgroup (semaglutide), published random-effects pool",
+   "citation": "Musa EYA, Musa AYA. BMC Cardiovasc Disord 2026;26:406 (incl. Packer M, NEJM 2025;392:427-37 and Deanfield J, Lancet 2024;404:773-86)",
+   "pmid": "41906074"
+  },
+  "population": "Obesity-related HF with LVEF >=45-50% (SUMMIT LVEF >=50%, BMI >=30, n=731; SELECT investigator-defined HFpEF, n=2273, ASCVD with BMI >=27)",
+  "comparator": "placebo",
+  "verification": "secondary_source_quote",
+  "quote": "In SUMMIT, mortality was numerically higher with tirzepatide (HR 1.25, 95% CI 0.63-2.45), while in SELECT HFpEF subgroup, mortality was numerically lower with semaglutide (HR 0.83, 95% CI 0.59-1.16). Pooled analysis showed no statistically significant difference in all-cause mortality (HR 0.90, 95% CI 0.67-1.22)",
+  "extrapolation": "No trial reports a LVEF 41-49 estimate for these drugs. The pooled populations are 'HFpEF' as investigators defined it (SUMMIT >=50%; SELECT investigator-defined HFpEF; Kosiborod's semaglutide pool is explicitly 'mildly reduced or preserved'), so some LVEF 41-49 patients are probably included. Preserved-band pooled estimate carried; interval not widened.",
+  "notes": "All-cause death. SUMMIT 19 vs 15 deaths; SELECT HFpEF 170 deaths in 3,004 patients across the two. My fixed-effect check 0.900 (0.665-1.219) matches the published pool. The authors call this inconclusive/underpowered; per the no-cliff rule 0.90 is used as is. SUMMIT's own abstract gives only CV death 8 vs 5 (HR 1.58, 0.52-4.83)."
+ },
+ {
+  "id": "glp1-reduced-hfhosp",
+  "drug_class": "GLP-1 RA / GLP-1/GIP RA",
+  "drugs": [
+   "Semaglutide (Wegovy)",
+   "Tirzepatide (Zepbound)"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 0.79,
+  "ci_low": 0.58,
+  "ci_high": 1.08,
+  "measure": "HR",
+  "basis": "trial",
+  "source": {
+   "trial": "SELECT, prespecified analysis of patients with prevalent HF (semaglutide), HFrEF and all-HF strata",
+   "citation": "Deanfield J, et al. Lancet 2024;404:773-86",
+   "pmid": "39181597"
+  },
+  "population": "Semaglutide 2.4 mg in SELECT patients with prevalent HF: 4286 (1347 investigator-defined HFrEF, 2273 HFpEF, 666 unclassified); ASCVD with BMI >=27, mostly not recently hospitalized; median follow-up ~3 years",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "Treatment with semaglutide resulted in improved outcomes in both the heart failure with reduced ejection fraction (HR 0.65, 95% CI 0.49-0.87 for MACE; 0.79, 0.58-1.08 for the composite heart failure endpoint)",
+  "extrapolation": "",
+  "notes": "OUTCOME DEFINITION DIFFERS: the 'composite heart failure endpoint' is cardiovascular death OR hospitalization OR urgent hospital visit for HF (abstract Methods), not HF hospitalization alone. It is the only quotable HFrEF-specific semaglutide HF result and is used as the proxy. Same drug, same EF band, so it outranks liraglutide per owner ruling 3. Tirzepatide has no HFrEF data and shares this row. CONTRARY SIGNAL (liraglutide, a different drug, much sicker recently hospitalized HFrEF): FIGHT HF rehospitalization HR 1.30 (0.89-1.88), death HR 1.10 (0.57-2.14) (JAMA 2016, PMID 27483064); FIGHT + LIVE pooled HF hospitalization RR 1.38 (1.03-1.85) (Christophides, J Clin Med 2026, PMID 42355618). LIVE death HR 1.10 is quoted second-hand in PMC13254196."
+ },
+ {
+  "id": "glp1-reduced-death",
+  "drug_class": "GLP-1 RA / GLP-1/GIP RA",
+  "drugs": [
+   "Semaglutide (Wegovy)",
+   "Tirzepatide (Zepbound)"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 0.81,
+  "ci_low": 0.66,
+  "ci_high": 1.0,
+  "measure": "HR",
+  "basis": "extrapolated",
+  "source": {
+   "trial": "SELECT, prespecified analysis of patients with prevalent HF (semaglutide), HFrEF and all-HF strata",
+   "citation": "Deanfield J, et al. Lancet 2024;404:773-86",
+   "pmid": "39181597"
+  },
+  "population": "Semaglutide 2.4 mg in SELECT patients with prevalent HF: 4286 (1347 investigator-defined HFrEF, 2273 HFpEF, 666 unclassified); ASCVD with BMI >=27, mostly not recently hospitalized; median follow-up ~3 years",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "Semaglutide improved all outcome measures in patients with heart failure ... 0.81, 0.66-1.00 for all-cause death; all pinteraction>0.19",
+  "extrapolation": "",
+  "notes": "The SELECT abstract gives no HFrEF-specific all-cause death (full text not reachable: Lancet pages blocked, not in PMC/Europe PMC). Used instead: all-cause death in ALL SELECT patients with prevalent HF (HFrEF 31%, HFpEF 53%, unclassified 15%). Transport to HFrEF rests on SELECT's finding that HF subtype did not modify effect on MACE (HFrEF 0.65 vs HFpEF 0.69) or the HF composite (0.79 vs 0.75); no such test is quoted for death. Same drug, so it outranks liraglutide (ruling 3). CONTRARY SIGNAL: FIGHT death HR 1.10 (0.57-2.14), 35 deaths; LIVE death HR 1.10. Tirzepatide has no HFrEF data and shares this row."
+ },
+ {
+  "id": "loop-reduced-death",
+  "drug_class": "Loop Diuretic",
+  "drugs": [
+   "Furosemide",
+   "Furoscix (SC Furosemide)",
+   "Torsemide",
+   "Bumetanide"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "Cochrane review of diuretics for chronic HF",
+   "citation": "Faris RF, et al. Cochrane Database Syst Rev 2012;(2):CD003838",
+   "pmid": "22336795"
+  },
+  "population": "Chronic HF, any EF; placebo-controlled evidence is 169-202 patients, 1980s-90s",
+  "comparator": "no diuretic (placebo)",
+  "verification": "abstract_quote",
+  "quote": "Mortality was lower for participants treated with diuretics than for placebo, odds ratio (OR) for death 0.24, 95% confidence interval (CI) 0.07 to 0.83; P = 0.02. Admission for worsening heart failure was reduced in those taking diuretics in two trials (169 participants), OR 0.07 (95% CI 0.01 to 0.52; P = 0.01).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE FOR benefit: Cochrane 2012 (14 trials, 525 participants, 7 placebo-controlled): mortality in 3 placebo-controlled trials (202 participants) OR 0.24 (95% CI 0.07-0.83; P=0.02); admission for worsening HF in 2 trials (169 participants) OR 0.07 (0.01-0.52; P=0.01). AGAINST using those numbers: tiny pre-ACE-inhibitor/beta-blocker/MRA/SGLT2i trials, implausibly large effects, and a no-diuretic arm cannot be rerun in congested patients. NO DIFFERENCE between loops: TRANSFORM-HF (torsemide vs furosemide, n=2859): death 373/1431 (26.1%) vs 374/1428 (26.2%), HR 1.02 (0.89-1.18); total hospitalizations rate ratio 0.94 (0.84-1.07); 'Results were similar across prespecified subgroups, including among patients with reduced, mildly reduced, or preserved ejection fraction' (JAMA 2023, PMID 36648467). DOSE (PMID 21366472) compared bolus vs infusion and low vs high dose, not drug vs none. Furoscix/SC furosemide: no outcome trial vs none; SUBCUT-HF II (PMID 42872757) tested an early-discharge strategy (HF readmissions 13 [14%] vs 5 [6%], OR 2.45, 0.81-7.43), not the drug. OWNER DECISION: neutral (1.0) vs Cochrane ORs as a low-credibility meta-analysis row."
+ },
+ {
+  "id": "loop-reduced-hfhosp",
+  "drug_class": "Loop Diuretic",
+  "drugs": [
+   "Furosemide",
+   "Furoscix (SC Furosemide)",
+   "Torsemide",
+   "Bumetanide"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "Cochrane review of diuretics for chronic HF",
+   "citation": "Faris RF, et al. Cochrane Database Syst Rev 2012;(2):CD003838",
+   "pmid": "22336795"
+  },
+  "population": "Chronic HF, any EF; placebo-controlled evidence is 169-202 patients, 1980s-90s",
+  "comparator": "no diuretic (placebo)",
+  "verification": "abstract_quote",
+  "quote": "Mortality was lower for participants treated with diuretics than for placebo, odds ratio (OR) for death 0.24, 95% confidence interval (CI) 0.07 to 0.83; P = 0.02. Admission for worsening heart failure was reduced in those taking diuretics in two trials (169 participants), OR 0.07 (95% CI 0.01 to 0.52; P = 0.01).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE FOR benefit: Cochrane 2012 (14 trials, 525 participants, 7 placebo-controlled): mortality in 3 placebo-controlled trials (202 participants) OR 0.24 (95% CI 0.07-0.83; P=0.02); admission for worsening HF in 2 trials (169 participants) OR 0.07 (0.01-0.52; P=0.01). AGAINST using those numbers: tiny pre-ACE-inhibitor/beta-blocker/MRA/SGLT2i trials, implausibly large effects, and a no-diuretic arm cannot be rerun in congested patients. NO DIFFERENCE between loops: TRANSFORM-HF (torsemide vs furosemide, n=2859): death 373/1431 (26.1%) vs 374/1428 (26.2%), HR 1.02 (0.89-1.18); total hospitalizations rate ratio 0.94 (0.84-1.07); 'Results were similar across prespecified subgroups, including among patients with reduced, mildly reduced, or preserved ejection fraction' (JAMA 2023, PMID 36648467). DOSE (PMID 21366472) compared bolus vs infusion and low vs high dose, not drug vs none. Furoscix/SC furosemide: no outcome trial vs none; SUBCUT-HF II (PMID 42872757) tested an early-discharge strategy (HF readmissions 13 [14%] vs 5 [6%], OR 2.45, 0.81-7.43), not the drug. OWNER DECISION: neutral (1.0) vs Cochrane ORs as a low-credibility meta-analysis row."
+ },
+ {
+  "id": "loop-mildly_reduced-death",
+  "drug_class": "Loop Diuretic",
+  "drugs": [
+   "Furosemide",
+   "Furoscix (SC Furosemide)",
+   "Torsemide",
+   "Bumetanide"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "Cochrane review of diuretics for chronic HF",
+   "citation": "Faris RF, et al. Cochrane Database Syst Rev 2012;(2):CD003838",
+   "pmid": "22336795"
+  },
+  "population": "Chronic HF, any EF; placebo-controlled evidence is 169-202 patients, 1980s-90s",
+  "comparator": "no diuretic (placebo)",
+  "verification": "abstract_quote",
+  "quote": "Mortality was lower for participants treated with diuretics than for placebo, odds ratio (OR) for death 0.24, 95% confidence interval (CI) 0.07 to 0.83; P = 0.02. Admission for worsening heart failure was reduced in those taking diuretics in two trials (169 participants), OR 0.07 (95% CI 0.01 to 0.52; P = 0.01).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE FOR benefit: Cochrane 2012 (14 trials, 525 participants, 7 placebo-controlled): mortality in 3 placebo-controlled trials (202 participants) OR 0.24 (95% CI 0.07-0.83; P=0.02); admission for worsening HF in 2 trials (169 participants) OR 0.07 (0.01-0.52; P=0.01). AGAINST using those numbers: tiny pre-ACE-inhibitor/beta-blocker/MRA/SGLT2i trials, implausibly large effects, and a no-diuretic arm cannot be rerun in congested patients. NO DIFFERENCE between loops: TRANSFORM-HF (torsemide vs furosemide, n=2859): death 373/1431 (26.1%) vs 374/1428 (26.2%), HR 1.02 (0.89-1.18); total hospitalizations rate ratio 0.94 (0.84-1.07); 'Results were similar across prespecified subgroups, including among patients with reduced, mildly reduced, or preserved ejection fraction' (JAMA 2023, PMID 36648467). DOSE (PMID 21366472) compared bolus vs infusion and low vs high dose, not drug vs none. Furoscix/SC furosemide: no outcome trial vs none; SUBCUT-HF II (PMID 42872757) tested an early-discharge strategy (HF readmissions 13 [14%] vs 5 [6%], OR 2.45, 0.81-7.43), not the drug. OWNER DECISION: neutral (1.0) vs Cochrane ORs as a low-credibility meta-analysis row."
+ },
+ {
+  "id": "loop-mildly_reduced-hfhosp",
+  "drug_class": "Loop Diuretic",
+  "drugs": [
+   "Furosemide",
+   "Furoscix (SC Furosemide)",
+   "Torsemide",
+   "Bumetanide"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "Cochrane review of diuretics for chronic HF",
+   "citation": "Faris RF, et al. Cochrane Database Syst Rev 2012;(2):CD003838",
+   "pmid": "22336795"
+  },
+  "population": "Chronic HF, any EF; placebo-controlled evidence is 169-202 patients, 1980s-90s",
+  "comparator": "no diuretic (placebo)",
+  "verification": "abstract_quote",
+  "quote": "Mortality was lower for participants treated with diuretics than for placebo, odds ratio (OR) for death 0.24, 95% confidence interval (CI) 0.07 to 0.83; P = 0.02. Admission for worsening heart failure was reduced in those taking diuretics in two trials (169 participants), OR 0.07 (95% CI 0.01 to 0.52; P = 0.01).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE FOR benefit: Cochrane 2012 (14 trials, 525 participants, 7 placebo-controlled): mortality in 3 placebo-controlled trials (202 participants) OR 0.24 (95% CI 0.07-0.83; P=0.02); admission for worsening HF in 2 trials (169 participants) OR 0.07 (0.01-0.52; P=0.01). AGAINST using those numbers: tiny pre-ACE-inhibitor/beta-blocker/MRA/SGLT2i trials, implausibly large effects, and a no-diuretic arm cannot be rerun in congested patients. NO DIFFERENCE between loops: TRANSFORM-HF (torsemide vs furosemide, n=2859): death 373/1431 (26.1%) vs 374/1428 (26.2%), HR 1.02 (0.89-1.18); total hospitalizations rate ratio 0.94 (0.84-1.07); 'Results were similar across prespecified subgroups, including among patients with reduced, mildly reduced, or preserved ejection fraction' (JAMA 2023, PMID 36648467). DOSE (PMID 21366472) compared bolus vs infusion and low vs high dose, not drug vs none. Furoscix/SC furosemide: no outcome trial vs none; SUBCUT-HF II (PMID 42872757) tested an early-discharge strategy (HF readmissions 13 [14%] vs 5 [6%], OR 2.45, 0.81-7.43), not the drug. OWNER DECISION: neutral (1.0) vs Cochrane ORs as a low-credibility meta-analysis row."
+ },
+ {
+  "id": "loop-preserved-death",
+  "drug_class": "Loop Diuretic",
+  "drugs": [
+   "Furosemide",
+   "Furoscix (SC Furosemide)",
+   "Torsemide",
+   "Bumetanide"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "Cochrane review of diuretics for chronic HF",
+   "citation": "Faris RF, et al. Cochrane Database Syst Rev 2012;(2):CD003838",
+   "pmid": "22336795"
+  },
+  "population": "Chronic HF, any EF; placebo-controlled evidence is 169-202 patients, 1980s-90s",
+  "comparator": "no diuretic (placebo)",
+  "verification": "abstract_quote",
+  "quote": "Mortality was lower for participants treated with diuretics than for placebo, odds ratio (OR) for death 0.24, 95% confidence interval (CI) 0.07 to 0.83; P = 0.02. Admission for worsening heart failure was reduced in those taking diuretics in two trials (169 participants), OR 0.07 (95% CI 0.01 to 0.52; P = 0.01).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE FOR benefit: Cochrane 2012 (14 trials, 525 participants, 7 placebo-controlled): mortality in 3 placebo-controlled trials (202 participants) OR 0.24 (95% CI 0.07-0.83; P=0.02); admission for worsening HF in 2 trials (169 participants) OR 0.07 (0.01-0.52; P=0.01). AGAINST using those numbers: tiny pre-ACE-inhibitor/beta-blocker/MRA/SGLT2i trials, implausibly large effects, and a no-diuretic arm cannot be rerun in congested patients. NO DIFFERENCE between loops: TRANSFORM-HF (torsemide vs furosemide, n=2859): death 373/1431 (26.1%) vs 374/1428 (26.2%), HR 1.02 (0.89-1.18); total hospitalizations rate ratio 0.94 (0.84-1.07); 'Results were similar across prespecified subgroups, including among patients with reduced, mildly reduced, or preserved ejection fraction' (JAMA 2023, PMID 36648467). DOSE (PMID 21366472) compared bolus vs infusion and low vs high dose, not drug vs none. Furoscix/SC furosemide: no outcome trial vs none; SUBCUT-HF II (PMID 42872757) tested an early-discharge strategy (HF readmissions 13 [14%] vs 5 [6%], OR 2.45, 0.81-7.43), not the drug. OWNER DECISION: neutral (1.0) vs Cochrane ORs as a low-credibility meta-analysis row."
+ },
+ {
+  "id": "loop-preserved-hfhosp",
+  "drug_class": "Loop Diuretic",
+  "drugs": [
+   "Furosemide",
+   "Furoscix (SC Furosemide)",
+   "Torsemide",
+   "Bumetanide"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "Cochrane review of diuretics for chronic HF",
+   "citation": "Faris RF, et al. Cochrane Database Syst Rev 2012;(2):CD003838",
+   "pmid": "22336795"
+  },
+  "population": "Chronic HF, any EF; placebo-controlled evidence is 169-202 patients, 1980s-90s",
+  "comparator": "no diuretic (placebo)",
+  "verification": "abstract_quote",
+  "quote": "Mortality was lower for participants treated with diuretics than for placebo, odds ratio (OR) for death 0.24, 95% confidence interval (CI) 0.07 to 0.83; P = 0.02. Admission for worsening heart failure was reduced in those taking diuretics in two trials (169 participants), OR 0.07 (95% CI 0.01 to 0.52; P = 0.01).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE FOR benefit: Cochrane 2012 (14 trials, 525 participants, 7 placebo-controlled): mortality in 3 placebo-controlled trials (202 participants) OR 0.24 (95% CI 0.07-0.83; P=0.02); admission for worsening HF in 2 trials (169 participants) OR 0.07 (0.01-0.52; P=0.01). AGAINST using those numbers: tiny pre-ACE-inhibitor/beta-blocker/MRA/SGLT2i trials, implausibly large effects, and a no-diuretic arm cannot be rerun in congested patients. NO DIFFERENCE between loops: TRANSFORM-HF (torsemide vs furosemide, n=2859): death 373/1431 (26.1%) vs 374/1428 (26.2%), HR 1.02 (0.89-1.18); total hospitalizations rate ratio 0.94 (0.84-1.07); 'Results were similar across prespecified subgroups, including among patients with reduced, mildly reduced, or preserved ejection fraction' (JAMA 2023, PMID 36648467). DOSE (PMID 21366472) compared bolus vs infusion and low vs high dose, not drug vs none. Furoscix/SC furosemide: no outcome trial vs none; SUBCUT-HF II (PMID 42872757) tested an early-discharge strategy (HF readmissions 13 [14%] vs 5 [6%], OR 2.45, 0.81-7.43), not the drug. OWNER DECISION: neutral (1.0) vs Cochrane ORs as a low-credibility meta-analysis row."
+ },
+ {
+  "id": "thiazide-reduced-death",
+  "drug_class": "Thiazide-like Diuretic",
+  "drugs": [
+   "Metolazone",
+   "Chlorthalidone",
+   "Hydrochlorothiazide"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "CLOROTIC (HCTZ added to IV furosemide)",
+   "citation": "Trullas JC, et al. Eur Heart J 2023;44:411-21; EF split JACC Heart Fail 2024;12:1719-30 (PMID 38934966)",
+   "pmid": "36423214"
+  },
+  "population": "Acute HF inpatients (median LVEF 55%), n=230; no chronic outcome trial",
+  "comparator": "placebo added to IV furosemide",
+  "verification": "abstract_quote",
+  "quote": "There were no differences in mortality or rehospitalizations.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: CLOROTIC (230 acute-HF inpatients, median LVEF 55%, 72% LVEF >40%; HCTZ vs placebo added to IV furosemide for 4 days): 'There were no differences in mortality or rehospitalizations'; the EF-split paper: 'no significant differences observed with the addition of HCTZ in terms of mortality, rehospitalizations, or safety endpoints ... among the 2 LVEF groups'. No hazard ratios are in any abstract, so none is entered. HCTZ added weight loss (2.3 vs 1.5 kg) but more renal-function worsening (46.5% vs 17.2%). This is an acute diuretic-response trial, not a chronic outcome trial; metolazone and chlorthalidone have no HF outcome RCT that I found, so CLOROTIC is applied to all three. OWNER DECISION: neutral (1.0)."
+ },
+ {
+  "id": "thiazide-reduced-hfhosp",
+  "drug_class": "Thiazide-like Diuretic",
+  "drugs": [
+   "Metolazone",
+   "Chlorthalidone",
+   "Hydrochlorothiazide"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "CLOROTIC (HCTZ added to IV furosemide)",
+   "citation": "Trullas JC, et al. Eur Heart J 2023;44:411-21; EF split JACC Heart Fail 2024;12:1719-30 (PMID 38934966)",
+   "pmid": "36423214"
+  },
+  "population": "Acute HF inpatients (median LVEF 55%), n=230; no chronic outcome trial",
+  "comparator": "placebo added to IV furosemide",
+  "verification": "abstract_quote",
+  "quote": "There were no differences in mortality or rehospitalizations.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: CLOROTIC (230 acute-HF inpatients, median LVEF 55%, 72% LVEF >40%; HCTZ vs placebo added to IV furosemide for 4 days): 'There were no differences in mortality or rehospitalizations'; the EF-split paper: 'no significant differences observed with the addition of HCTZ in terms of mortality, rehospitalizations, or safety endpoints ... among the 2 LVEF groups'. No hazard ratios are in any abstract, so none is entered. HCTZ added weight loss (2.3 vs 1.5 kg) but more renal-function worsening (46.5% vs 17.2%). This is an acute diuretic-response trial, not a chronic outcome trial; metolazone and chlorthalidone have no HF outcome RCT that I found, so CLOROTIC is applied to all three. OWNER DECISION: neutral (1.0)."
+ },
+ {
+  "id": "thiazide-mildly_reduced-death",
+  "drug_class": "Thiazide-like Diuretic",
+  "drugs": [
+   "Metolazone",
+   "Chlorthalidone",
+   "Hydrochlorothiazide"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "CLOROTIC (HCTZ added to IV furosemide)",
+   "citation": "Trullas JC, et al. Eur Heart J 2023;44:411-21; EF split JACC Heart Fail 2024;12:1719-30 (PMID 38934966)",
+   "pmid": "36423214"
+  },
+  "population": "Acute HF inpatients (median LVEF 55%), n=230; no chronic outcome trial",
+  "comparator": "placebo added to IV furosemide",
+  "verification": "abstract_quote",
+  "quote": "There were no differences in mortality or rehospitalizations.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: CLOROTIC (230 acute-HF inpatients, median LVEF 55%, 72% LVEF >40%; HCTZ vs placebo added to IV furosemide for 4 days): 'There were no differences in mortality or rehospitalizations'; the EF-split paper: 'no significant differences observed with the addition of HCTZ in terms of mortality, rehospitalizations, or safety endpoints ... among the 2 LVEF groups'. No hazard ratios are in any abstract, so none is entered. HCTZ added weight loss (2.3 vs 1.5 kg) but more renal-function worsening (46.5% vs 17.2%). This is an acute diuretic-response trial, not a chronic outcome trial; metolazone and chlorthalidone have no HF outcome RCT that I found, so CLOROTIC is applied to all three. OWNER DECISION: neutral (1.0)."
+ },
+ {
+  "id": "thiazide-mildly_reduced-hfhosp",
+  "drug_class": "Thiazide-like Diuretic",
+  "drugs": [
+   "Metolazone",
+   "Chlorthalidone",
+   "Hydrochlorothiazide"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "CLOROTIC (HCTZ added to IV furosemide)",
+   "citation": "Trullas JC, et al. Eur Heart J 2023;44:411-21; EF split JACC Heart Fail 2024;12:1719-30 (PMID 38934966)",
+   "pmid": "36423214"
+  },
+  "population": "Acute HF inpatients (median LVEF 55%), n=230; no chronic outcome trial",
+  "comparator": "placebo added to IV furosemide",
+  "verification": "abstract_quote",
+  "quote": "There were no differences in mortality or rehospitalizations.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: CLOROTIC (230 acute-HF inpatients, median LVEF 55%, 72% LVEF >40%; HCTZ vs placebo added to IV furosemide for 4 days): 'There were no differences in mortality or rehospitalizations'; the EF-split paper: 'no significant differences observed with the addition of HCTZ in terms of mortality, rehospitalizations, or safety endpoints ... among the 2 LVEF groups'. No hazard ratios are in any abstract, so none is entered. HCTZ added weight loss (2.3 vs 1.5 kg) but more renal-function worsening (46.5% vs 17.2%). This is an acute diuretic-response trial, not a chronic outcome trial; metolazone and chlorthalidone have no HF outcome RCT that I found, so CLOROTIC is applied to all three. OWNER DECISION: neutral (1.0)."
+ },
+ {
+  "id": "thiazide-preserved-death",
+  "drug_class": "Thiazide-like Diuretic",
+  "drugs": [
+   "Metolazone",
+   "Chlorthalidone",
+   "Hydrochlorothiazide"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "CLOROTIC (HCTZ added to IV furosemide)",
+   "citation": "Trullas JC, et al. Eur Heart J 2023;44:411-21; EF split JACC Heart Fail 2024;12:1719-30 (PMID 38934966)",
+   "pmid": "36423214"
+  },
+  "population": "Acute HF inpatients (median LVEF 55%), n=230; no chronic outcome trial",
+  "comparator": "placebo added to IV furosemide",
+  "verification": "abstract_quote",
+  "quote": "There were no differences in mortality or rehospitalizations.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: CLOROTIC (230 acute-HF inpatients, median LVEF 55%, 72% LVEF >40%; HCTZ vs placebo added to IV furosemide for 4 days): 'There were no differences in mortality or rehospitalizations'; the EF-split paper: 'no significant differences observed with the addition of HCTZ in terms of mortality, rehospitalizations, or safety endpoints ... among the 2 LVEF groups'. No hazard ratios are in any abstract, so none is entered. HCTZ added weight loss (2.3 vs 1.5 kg) but more renal-function worsening (46.5% vs 17.2%). This is an acute diuretic-response trial, not a chronic outcome trial; metolazone and chlorthalidone have no HF outcome RCT that I found, so CLOROTIC is applied to all three. OWNER DECISION: neutral (1.0)."
+ },
+ {
+  "id": "thiazide-preserved-hfhosp",
+  "drug_class": "Thiazide-like Diuretic",
+  "drugs": [
+   "Metolazone",
+   "Chlorthalidone",
+   "Hydrochlorothiazide"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "CLOROTIC (HCTZ added to IV furosemide)",
+   "citation": "Trullas JC, et al. Eur Heart J 2023;44:411-21; EF split JACC Heart Fail 2024;12:1719-30 (PMID 38934966)",
+   "pmid": "36423214"
+  },
+  "population": "Acute HF inpatients (median LVEF 55%), n=230; no chronic outcome trial",
+  "comparator": "placebo added to IV furosemide",
+  "verification": "abstract_quote",
+  "quote": "There were no differences in mortality or rehospitalizations.",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: CLOROTIC (230 acute-HF inpatients, median LVEF 55%, 72% LVEF >40%; HCTZ vs placebo added to IV furosemide for 4 days): 'There were no differences in mortality or rehospitalizations'; the EF-split paper: 'no significant differences observed with the addition of HCTZ in terms of mortality, rehospitalizations, or safety endpoints ... among the 2 LVEF groups'. No hazard ratios are in any abstract, so none is entered. HCTZ added weight loss (2.3 vs 1.5 kg) but more renal-function worsening (46.5% vs 17.2%). This is an acute diuretic-response trial, not a chronic outcome trial; metolazone and chlorthalidone have no HF outcome RCT that I found, so CLOROTIC is applied to all three. OWNER DECISION: neutral (1.0)."
+ },
+ {
+  "id": "kbinder-reduced-death",
+  "drug_class": "K+ Binder",
+  "drugs": [
+   "Patiromer",
+   "Sodium Zirconium Cyclosilicate (Lokelma)"
+  ],
+  "ef_band": "reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "DIAMOND (patiromer); REALIZE-K (SZC)",
+   "citation": "Butler J, et al. Eur Heart J 2022;43:4362-73; Kosiborod MN, et al. J Am Coll Cardiol 2025;85:971-84",
+   "pmid": "35900838; 39566872"
+  },
+  "population": "HFrEF with hyperkalemia on RAAS inhibitors (DIAMOND n=878 randomized; REALIZE-K n=203); no outcome trial",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "CONCLUSION: Concurrent use of patiromer and high-dose MRAs reduces the risk of recurrent hyperkalemia (DIAMOND). Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group ... and 3 (3%) participants in the placebo group (REALIZE-K).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: DIAMOND (patiromer, HFrEF with RAASi-related hyperkalemia, 439 vs 439 randomized, median 27 weeks): its primary endpoint was REVISED from time to CV death/CV hospitalization to change in potassium (full text: 'the primary endpoint was revised during the study from time to first occurrence of cardiovascular death or cardiovascular hospitalization, to changes in serum potassium levels'); no clinical-event HR was reported. Effects were on potassium (HR 0.63 for K >5.5) and MRA dose reduction (HR 0.62), so any benefit is indirect, via enabling RAAS inhibitor/MRA. AGAINST (SZC): REALIZE-K (n=203, LVEF <=40%): 'Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group (1 with CV death, 10 with HF events) and 3 (3%) participants in the placebo group (1 with CV death, 2 with HF events; log-rank nominal P = 0.034)'; an exploratory endpoint on 12 events, so not entered as an estimate but a safety signal for SZC. OWNER DECISION: neutral (1.0) for both; the engine should credit binders only through MRA/RAASi enablement."
+ },
+ {
+  "id": "kbinder-reduced-hfhosp",
+  "drug_class": "K+ Binder",
+  "drugs": [
+   "Patiromer",
+   "Sodium Zirconium Cyclosilicate (Lokelma)"
+  ],
+  "ef_band": "reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "DIAMOND (patiromer); REALIZE-K (SZC)",
+   "citation": "Butler J, et al. Eur Heart J 2022;43:4362-73; Kosiborod MN, et al. J Am Coll Cardiol 2025;85:971-84",
+   "pmid": "35900838; 39566872"
+  },
+  "population": "HFrEF with hyperkalemia on RAAS inhibitors (DIAMOND n=878 randomized; REALIZE-K n=203); no outcome trial",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "CONCLUSION: Concurrent use of patiromer and high-dose MRAs reduces the risk of recurrent hyperkalemia (DIAMOND). Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group ... and 3 (3%) participants in the placebo group (REALIZE-K).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: DIAMOND (patiromer, HFrEF with RAASi-related hyperkalemia, 439 vs 439 randomized, median 27 weeks): its primary endpoint was REVISED from time to CV death/CV hospitalization to change in potassium (full text: 'the primary endpoint was revised during the study from time to first occurrence of cardiovascular death or cardiovascular hospitalization, to changes in serum potassium levels'); no clinical-event HR was reported. Effects were on potassium (HR 0.63 for K >5.5) and MRA dose reduction (HR 0.62), so any benefit is indirect, via enabling RAAS inhibitor/MRA. AGAINST (SZC): REALIZE-K (n=203, LVEF <=40%): 'Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group (1 with CV death, 10 with HF events) and 3 (3%) participants in the placebo group (1 with CV death, 2 with HF events; log-rank nominal P = 0.034)'; an exploratory endpoint on 12 events, so not entered as an estimate but a safety signal for SZC. OWNER DECISION: neutral (1.0) for both; the engine should credit binders only through MRA/RAASi enablement."
+ },
+ {
+  "id": "kbinder-mildly_reduced-death",
+  "drug_class": "K+ Binder",
+  "drugs": [
+   "Patiromer",
+   "Sodium Zirconium Cyclosilicate (Lokelma)"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "DIAMOND (patiromer); REALIZE-K (SZC)",
+   "citation": "Butler J, et al. Eur Heart J 2022;43:4362-73; Kosiborod MN, et al. J Am Coll Cardiol 2025;85:971-84",
+   "pmid": "35900838; 39566872"
+  },
+  "population": "HFrEF with hyperkalemia on RAAS inhibitors (DIAMOND n=878 randomized; REALIZE-K n=203); no outcome trial",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "CONCLUSION: Concurrent use of patiromer and high-dose MRAs reduces the risk of recurrent hyperkalemia (DIAMOND). Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group ... and 3 (3%) participants in the placebo group (REALIZE-K).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: DIAMOND (patiromer, HFrEF with RAASi-related hyperkalemia, 439 vs 439 randomized, median 27 weeks): its primary endpoint was REVISED from time to CV death/CV hospitalization to change in potassium (full text: 'the primary endpoint was revised during the study from time to first occurrence of cardiovascular death or cardiovascular hospitalization, to changes in serum potassium levels'); no clinical-event HR was reported. Effects were on potassium (HR 0.63 for K >5.5) and MRA dose reduction (HR 0.62), so any benefit is indirect, via enabling RAAS inhibitor/MRA. AGAINST (SZC): REALIZE-K (n=203, LVEF <=40%): 'Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group (1 with CV death, 10 with HF events) and 3 (3%) participants in the placebo group (1 with CV death, 2 with HF events; log-rank nominal P = 0.034)'; an exploratory endpoint on 12 events, so not entered as an estimate but a safety signal for SZC. OWNER DECISION: neutral (1.0) for both; the engine should credit binders only through MRA/RAASi enablement."
+ },
+ {
+  "id": "kbinder-mildly_reduced-hfhosp",
+  "drug_class": "K+ Binder",
+  "drugs": [
+   "Patiromer",
+   "Sodium Zirconium Cyclosilicate (Lokelma)"
+  ],
+  "ef_band": "mildly_reduced",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "DIAMOND (patiromer); REALIZE-K (SZC)",
+   "citation": "Butler J, et al. Eur Heart J 2022;43:4362-73; Kosiborod MN, et al. J Am Coll Cardiol 2025;85:971-84",
+   "pmid": "35900838; 39566872"
+  },
+  "population": "HFrEF with hyperkalemia on RAAS inhibitors (DIAMOND n=878 randomized; REALIZE-K n=203); no outcome trial",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "CONCLUSION: Concurrent use of patiromer and high-dose MRAs reduces the risk of recurrent hyperkalemia (DIAMOND). Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group ... and 3 (3%) participants in the placebo group (REALIZE-K).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: DIAMOND (patiromer, HFrEF with RAASi-related hyperkalemia, 439 vs 439 randomized, median 27 weeks): its primary endpoint was REVISED from time to CV death/CV hospitalization to change in potassium (full text: 'the primary endpoint was revised during the study from time to first occurrence of cardiovascular death or cardiovascular hospitalization, to changes in serum potassium levels'); no clinical-event HR was reported. Effects were on potassium (HR 0.63 for K >5.5) and MRA dose reduction (HR 0.62), so any benefit is indirect, via enabling RAAS inhibitor/MRA. AGAINST (SZC): REALIZE-K (n=203, LVEF <=40%): 'Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group (1 with CV death, 10 with HF events) and 3 (3%) participants in the placebo group (1 with CV death, 2 with HF events; log-rank nominal P = 0.034)'; an exploratory endpoint on 12 events, so not entered as an estimate but a safety signal for SZC. OWNER DECISION: neutral (1.0) for both; the engine should credit binders only through MRA/RAASi enablement."
+ },
+ {
+  "id": "kbinder-preserved-death",
+  "drug_class": "K+ Binder",
+  "drugs": [
+   "Patiromer",
+   "Sodium Zirconium Cyclosilicate (Lokelma)"
+  ],
+  "ef_band": "preserved",
+  "outcome": "all_cause_death",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "DIAMOND (patiromer); REALIZE-K (SZC)",
+   "citation": "Butler J, et al. Eur Heart J 2022;43:4362-73; Kosiborod MN, et al. J Am Coll Cardiol 2025;85:971-84",
+   "pmid": "35900838; 39566872"
+  },
+  "population": "HFrEF with hyperkalemia on RAAS inhibitors (DIAMOND n=878 randomized; REALIZE-K n=203); no outcome trial",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "CONCLUSION: Concurrent use of patiromer and high-dose MRAs reduces the risk of recurrent hyperkalemia (DIAMOND). Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group ... and 3 (3%) participants in the placebo group (REALIZE-K).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: DIAMOND (patiromer, HFrEF with RAASi-related hyperkalemia, 439 vs 439 randomized, median 27 weeks): its primary endpoint was REVISED from time to CV death/CV hospitalization to change in potassium (full text: 'the primary endpoint was revised during the study from time to first occurrence of cardiovascular death or cardiovascular hospitalization, to changes in serum potassium levels'); no clinical-event HR was reported. Effects were on potassium (HR 0.63 for K >5.5) and MRA dose reduction (HR 0.62), so any benefit is indirect, via enabling RAAS inhibitor/MRA. AGAINST (SZC): REALIZE-K (n=203, LVEF <=40%): 'Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group (1 with CV death, 10 with HF events) and 3 (3%) participants in the placebo group (1 with CV death, 2 with HF events; log-rank nominal P = 0.034)'; an exploratory endpoint on 12 events, so not entered as an estimate but a safety signal for SZC. OWNER DECISION: neutral (1.0) for both; the engine should credit binders only through MRA/RAASi enablement."
+ },
+ {
+  "id": "kbinder-preserved-hfhosp",
+  "drug_class": "K+ Binder",
+  "drugs": [
+   "Patiromer",
+   "Sodium Zirconium Cyclosilicate (Lokelma)"
+  ],
+  "ef_band": "preserved",
+  "outcome": "hf_hospitalization",
+  "population_key": null,
+  "rr": 1.0,
+  "ci_low": null,
+  "ci_high": null,
+  "measure": "RR",
+  "basis": "assumed_neutral",
+  "source": {
+   "trial": "DIAMOND (patiromer); REALIZE-K (SZC)",
+   "citation": "Butler J, et al. Eur Heart J 2022;43:4362-73; Kosiborod MN, et al. J Am Coll Cardiol 2025;85:971-84",
+   "pmid": "35900838; 39566872"
+  },
+  "population": "HFrEF with hyperkalemia on RAAS inhibitors (DIAMOND n=878 randomized; REALIZE-K n=203); no outcome trial",
+  "comparator": "placebo",
+  "verification": "abstract_quote",
+  "quote": "CONCLUSION: Concurrent use of patiromer and high-dose MRAs reduces the risk of recurrent hyperkalemia (DIAMOND). Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group ... and 3 (3%) participants in the placebo group (REALIZE-K).",
+  "extrapolation": "No direct randomized evidence of benefit or harm for this outcome in this band; assumed neutral (rr 1.0, null interval) per owner ruling.",
+  "notes": "EVIDENCE: DIAMOND (patiromer, HFrEF with RAASi-related hyperkalemia, 439 vs 439 randomized, median 27 weeks): its primary endpoint was REVISED from time to CV death/CV hospitalization to change in potassium (full text: 'the primary endpoint was revised during the study from time to first occurrence of cardiovascular death or cardiovascular hospitalization, to changes in serum potassium levels'); no clinical-event HR was reported. Effects were on potassium (HR 0.63 for K >5.5) and MRA dose reduction (HR 0.62), so any benefit is indirect, via enabling RAAS inhibitor/MRA. AGAINST (SZC): REALIZE-K (n=203, LVEF <=40%): 'Composite of cardiovascular (CV) death or worsening HF occurred in 11 (11%) participants in the SZC group (1 with CV death, 10 with HF events) and 3 (3%) participants in the placebo group (1 with CV death, 2 with HF events; log-rank nominal P = 0.034)'; an exploratory endpoint on 12 events, so not entered as an estimate but a safety signal for SZC. OWNER DECISION: neutral (1.0) for both; the engine should credit binders only through MRA/RAASi enablement."
+ }
+]

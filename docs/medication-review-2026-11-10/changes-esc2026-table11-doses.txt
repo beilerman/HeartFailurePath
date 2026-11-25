@@ -1,0 +1,115 @@
+# Ranking change: Table 11 doses (2026 ESC), 2026-11-11
+
+Changes: (1) spironolactone target is 50 mg (25 mg is the target only at eGFR 45 or below, where the engine's own renal cap is 25 mg); it was 25 or 50.
+(2) The sacubitril/valsartan start is 24/26 mg below eGFR 60 (ESC Table 11 optional lower start; the label halves only below 30) and with chronic hypotension
+(ESC optional lower start); it was 49/51 unless ACEi/ARB-naive or low dose, eGFR below 30 or Child-Pugh B. The stricter of ESC and label is kept.
+(3) In HFpEF a non-forced ACEi/ARB to ARNI swap is no longer offered (the ESC switch recommendation, Class I B1, is for HFrEF; a RAAS inhibitor in
+HFpEF is Class IIb and interchangeable). Also edited fixtures: "High Body Weight Carvedilol Target Requires 50 BID" and "Rate-Source Digoxin Sinus Rhythm
+Offered After Maximal GDMT" now start on spironolactone 50 mg (at 25 mg a pillar is still titratable, so the scenarios' premise no longer held); their
+diff rows below are fixture effects, not engine effects.
+
+`npm run ranking:diff` against the golden snapshot before the update (831 runs; the 15 new ESC26-Table11 runs are new keys). Eligibility and alerts identical.
+
+
+Ranking diff vs golden snapshot: 831 runs
+  (a) top pick identical:        806 / 831
+  (b) displayed pick set same:   775 / 831
+  (c) pick order identical:      753 / 831
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: NO (2 regimens)
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 25 of 666 runs
+    LVEF >= 50: 0 of 108 runs
+Top pick changed in 25 runs:
+  Over-Budget Value Ordering :: commercial
+     old: Spironolactone 25mg qd [overall 51, raw 51.02]
+     new: Carvedilol 3.125mg bid [overall 49, raw 48.91]
+  Over-Budget Value Ordering :: medicare
+     old: Spironolactone 25mg qd [overall 51, raw 51.02]
+     new: Carvedilol 3.125mg bid [overall 49, raw 48.91]
+  High Body Weight Carvedilol Target Requires 50 BID :: cash
+     old: Carvedilol 50mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 78, raw 77.92]
+     new: Carvedilol 50mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 78, raw 77.92]
+  High Body Weight Carvedilol Target Requires 50 BID :: commercial
+     old: Carvedilol 50mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 80.79]
+     new: Carvedilol 50mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 81, raw 80.79]
+  High Body Weight Carvedilol Target Requires 50 BID :: medicare
+     old: Carvedilol 50mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 77, raw 77.35]
+     new: Carvedilol 50mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 77, raw 77.35]
+  Rate-Source Third-Degree AV Block Beta-Blocker Removed :: cash
+     old: Dapagliflozin 10mg qd + Spironolactone 25mg qd [overall 70, raw 70.48]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 70, raw 70.19]
+  Rate-Source Third-Degree AV Block Beta-Blocker Removed :: commercial
+     old: Dapagliflozin 10mg qd + Spironolactone 25mg qd [overall 70, raw 70.49]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 70, raw 70.20]
+  Rate-Source Third-Degree AV Block Beta-Blocker Removed :: medicare
+     old: Dapagliflozin 10mg qd + Spironolactone 25mg qd [overall 70, raw 70.48]
+     new: Dapagliflozin 10mg qd + Eplerenone 25mg qd [overall 70, raw 70.20]
+  Rate-Source Digoxin Sinus Rhythm Offered After Maximal GDMT :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.84]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 83, raw 82.84]
+  Rate-Source Digoxin Sinus Rhythm Offered After Maximal GDMT :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.86]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 83, raw 82.86]
+  Rate-Source Digoxin Sinus Rhythm Offered After Maximal GDMT :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.84]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 83, raw 82.84]
+  Adjunct-Source Vericiguat Not Offered At NT-proBNP 1200 AFib :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 62.5mcg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 85, raw 84.79]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 84.05]
+  Adjunct-Source Vericiguat Not Offered At NT-proBNP 1200 AFib :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 62.5mcg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 85, raw 84.80]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 84.06]
+  Adjunct-Source Vericiguat Not Offered At NT-proBNP 1200 AFib :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 62.5mcg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 85, raw 84.79]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 84.05]
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 72, raw 71.53]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 70, raw 69.55]
+  Adjunct-Source Vericiguat NT-proBNP Above 8000 Advisory :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Vericiguat 10mg qd [overall 71, raw 71.50]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd + Vericiguat 10mg qd [overall 70, raw 69.52]
+  Adjunct-Source A-HeFT Bonus Present On RAAS And Beta-Blocker :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 75/40mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 90, raw 89.99]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 89, raw 88.50]
+  Adjunct-Source A-HeFT Bonus Present On RAAS And Beta-Blocker :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 75/40mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 90, raw 90.00]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 89, raw 88.51]
+  Adjunct-Source A-HeFT Bonus Present On RAAS And Beta-Blocker :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 75/40mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 90, raw 89.99]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 89, raw 88.50]
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 86, raw 85.59]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 5mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 86, raw 85.59]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 5mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 86, raw 85.59]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Ramipril 5mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Final-Gaps Ramipril 5 mg bid eGFR 40 Exceeds Renal Cap :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 86, raw 85.59]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 84, raw 84.10]
+  Final-Gaps Ramipril 5 mg bid eGFR 40 Exceeds Renal Cap :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 86, raw 85.59]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 84, raw 84.11]
+  Final-Gaps Ramipril 5 mg bid eGFR 40 Exceeds Renal Cap :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 86, raw 85.59]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 84, raw 84.10]
+
+Warning differences:
+  Rate-Source Digoxin Sinus Rhythm Offered After Maximal GDMT :: cash: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+  Rate-Source Digoxin Sinus Rhythm Offered After Maximal GDMT :: medicare: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd
+
+Clinical read (what the diff shows, and what is odd):
+- Spironolactone 25 mg is now below target outside the renal cap, so every regimen carrying it earns the sub-target completeness credit and a titration to 50 mg
+  is offered. Real engine effects: "Adjunct-Source Vericiguat ..." and "A-HeFT Bonus ..." leads now titrate spironolactone to 50 mg (and in the A-HeFT case H/ISDN
+  is shown at its 37.5/20 start tier); "Over-Budget Value Ordering" now leads with a carvedilol start instead of a spironolactone 25 mg start (a new MRA start at
+  25 mg is below the 50 mg target, like any pillar started at its starting dose); "Third-Degree AV Block Beta-Blocker Removed" prefers dapagliflozin + eplerenone 25 over
+  dapagliflozin + spironolactone 25 by under 0.3 raw points.
+- Odd, left in place per the "keep the stricter" instruction: "Final-Gaps Ramipril 5 mg bid Counts As Target" (eGFR in the 30-59 band) no longer leads with the
+  ACEi to ARNI switch; it keeps ramipril because the ARNI would now start at 24/26 (below the ACEi's dose credit). At eGFR 40 the switch still leads, at 24/26.
+  ESC calls the 24/26 start "optional" at eGFR 30-60, so this is a systematic preference for staying on a target-dose ACEi that a prescriber may not share.

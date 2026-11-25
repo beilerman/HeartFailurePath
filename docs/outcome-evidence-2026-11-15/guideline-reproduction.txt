@@ -1,0 +1,87 @@
+Guideline reproduction report (a report, not a gate). 1005 runs with a lead in both the guideline-driven baseline (commit a6cb28f) and the current engine.
+(1) mean guideline-concordance score of the lead: new 70.91 vs guideline-driven baseline 73.42
+(2) runs where the new lead's concordance is at least the old lead's: 769 of 1005 (76.5%)
+(3) runs where the new lead has the highest concordance among the displayed options: 657 of 1005 (65.4%)
+(4) the 15 scenario groups with the largest mean shortfall (old lead concordance minus new lead concordance, mean over insurance tiers):
+  1. Jane Smith (Dry & Cold) [shortfall 45.0; tier cash]
+     old lead: Carvedilol 3.125 + Dapagliflozin 10  (concordance 45.0)
+     new lead:   (concordance 0.0)
+     new lead: death RR 1.00 (1.00-1.00); HFH RR 1.00 (1.00-1.00); symptom 0.0 KCCQ points; side-effect burden 0.0
+  2. Severe Dilation (LVEF 20%, LVEDD 72) [shortfall 45.0; tier cash]
+     old lead: Spironolactone 12.5 + Dapagliflozin 10  (concordance 45.0)
+     new lead: Furosemide 20  (concordance 0.0)
+     new lead: death RR 0.92 (0.68-1.24); HFH RR 0.82 (0.48-1.41); symptom 0.0 KCCQ points; side-effect burden 7.7
+  3. Acute Decompensated NYHA IV (Existing BB Requires Down-Titration) [shortfall 45.0; tier cash]
+     old lead: Spironolactone 12.5 + Dapagliflozin 10 + Carvedilol 12.5 + Furosemide 80 + Lisinopril 10  (concordance 85.0)
+     new lead: Carvedilol 12.5 + Furosemide 80 + Lisinopril 10  (concordance 40.0)
+     new lead: death RR 0.61 (0.44-0.83); HFH RR 0.46 (0.26-0.81); symptom 2.1 KCCQ points; side-effect burden 32.5
+  4. HFpEF with Resistant Edema [shortfall 36.7; tier cash]
+     old lead: Dapagliflozin 10 + Spironolactone 12.5  (concordance 85.0)
+     new lead: Furosemide 20 + Spironolactone 12.5  (concordance 48.3)
+     new lead: death RR 0.86 (0.62-1.19); HFH RR 0.70 (0.40-1.23); symptom 1.1 KCCQ points; side-effect burden 14.3
+  5. Obese HFpEF (BMI 35, LVEF 58) [shortfall 26.7; tier cash]
+     old lead: Dapagliflozin 10 + Spironolactone 12.5  (concordance 85.0)
+     new lead: Dapagliflozin 10 + Furosemide 20  (concordance 58.3)
+     new lead: death RR 0.90 (0.66-1.22); HFH RR 0.61 (0.35-1.06); symptom 2.1 KCCQ points; side-effect burden 15.8
+  6. Bradycardia (HR 48) - No BB/Ivabradine [shortfall 25.0; tier cash]
+     old lead: Spironolactone 12.5 + Dapagliflozin 10  (concordance 45.0)
+     new lead: Furosemide 20 + Sacubitril/Valsartan 24/26  (concordance 20.0)
+     new lead: death RR 0.71 (0.51-0.99); HFH RR 0.45 (0.25-0.79); symptom 2.3 KCCQ points; side-effect burden 16.2
+  7. Angioedema Hx - Avoid ACEi/ARNI [shortfall 25.0; tier cash]
+     old lead: Spironolactone 12.5 + Dapagliflozin 10  (concordance 45.0)
+     new lead: Eplerenone 25 + Furosemide 20  (concordance 20.0)
+     new lead: death RR 0.70 (0.51-0.96); HFH RR 0.53 (0.30-0.92); symptom 1.1 KCCQ points; side-effect burden 13.8
+  8. Severe Asthma - Selective BB Only [shortfall 25.0; tier cash]
+     old lead: Spironolactone 12.5 + Dapagliflozin 10  (concordance 45.0)
+     new lead: Furosemide 20 + Sacubitril/Valsartan 24/26  (concordance 20.0)
+     new lead: death RR 0.71 (0.51-0.99); HFH RR 0.45 (0.25-0.79); symptom 2.3 KCCQ points; side-effect burden 16.2
+  9. African American (A-HeFT Indication) [shortfall 25.0; tier cash]
+     old lead: Spironolactone 12.5 + Dapagliflozin 10 + Lisinopril 20 + Carvedilol 25  (concordance 95.0)
+     new lead: Carvedilol 25 + Eplerenone 25 + Furosemide 20 + Lisinopril 20  (concordance 70.0)
+     new lead: death RR 0.56 (0.39-0.79); HFH RR 0.31 (0.17-0.58); symptom 4.0 KCCQ points; side-effect burden 39.3
+  10. Non-Compliant (Tolerance 0) [shortfall 25.0; tier cash]
+     old lead: Spironolactone 12.5 + Dapagliflozin 10  (concordance 45.0)
+     new lead: Eplerenone 25 + Furosemide 20  (concordance 20.0)
+     new lead: death RR 0.70 (0.51-0.96); HFH RR 0.53 (0.30-0.92); symptom 1.1 KCCQ points; side-effect burden 13.8
+  11. Liver Disease + AFib (Carvedilol CI + Digoxin) [shortfall 25.0; tier cash]
+     old lead: Lisinopril 2.5 + Spironolactone 12.5 + Dapagliflozin 10  (concordance 65.0)
+     new lead: Captopril 6.25 + Eplerenone 25 + Furosemide 20  (concordance 40.0)
+     new lead: death RR 0.57 (0.41-0.79); HFH RR 0.36 (0.20-0.63); symptom 2.8 KCCQ points; side-effect burden 21.1
+  12. Projected SBP Safety (SBP 100, No Meds) [shortfall 25.0; tier cash]
+     old lead: Sacubitril/Valsartan 24/26 + Spironolactone 12.5 + Dapagliflozin 10  (concordance 65.0)
+     new lead: Eplerenone 25 + Furosemide 20 + Sacubitril/Valsartan 24/26  (concordance 40.0)
+     new lead: death RR 0.54 (0.38-0.77); HFH RR 0.29 (0.16-0.52); symptom 3.4 KCCQ points; side-effect burden 22.3
+  13. Hepatic BB Selection (Liver Disease) [shortfall 25.0; tier cash]
+     old lead: Lisinopril 2.5 + Spironolactone 12.5 + Dapagliflozin 10  (concordance 65.0)
+     new lead: Captopril 6.25 + Eplerenone 25 + Furosemide 20  (concordance 40.0)
+     new lead: death RR 0.57 (0.41-0.79); HFH RR 0.36 (0.20-0.63); symptom 2.8 KCCQ points; side-effect burden 21.1
+  14. Acute Decompensated NYHA IV (No BB Initiation) [shortfall 25.0; tier cash]
+     old lead: Sacubitril/Valsartan 24/26 + Spironolactone 12.5 + Dapagliflozin 10  (concordance 65.0)
+     new lead: Eplerenone 25 + Furosemide 20 + Sacubitril/Valsartan 24/26  (concordance 40.0)
+     new lead: death RR 0.54 (0.38-0.77); HFH RR 0.29 (0.16-0.52); symptom 3.4 KCCQ points; side-effect burden 22.3
+  15. NYHA III Acute Decompensation (BB Initiation Blocked) [shortfall 25.0; tier cash]
+     old lead: Spironolactone 12.5 + Dapagliflozin 10 + Furosemide 80 + Lisinopril 5  (concordance 65.0)
+     new lead: Eplerenone 25 + Furosemide 80 + Sacubitril/Valsartan 24/26  (concordance 40.0)
+     new lead: death RR 0.54 (0.38-0.77); HFH RR 0.29 (0.16-0.52); symptom 3.4 KCCQ points; side-effect burden 22.3
+Guideline targets reproduced: 4 of 7
+  missed: finerenone is not offered as an extra option in the former HFmrEF range (steroidal MRA per 2026 ESC) [ESC26-Phenotype LVEF 41 Is HFrEF]: finerenone is displayed at LVEF 41-49. FINEARTS-HF enrolled LVEF 40 and above, so the evidence table supports finerenone there: a guideline-versus-evidence difference for the owner
+  missed: finerenone is not offered as an extra option in the former HFmrEF range (steroidal MRA per 2026 ESC) [ESC26-Phenotype LVEF 45 Is HFrEF]: finerenone is displayed at LVEF 41-49. FINEARTS-HF enrolled LVEF 40 and above, so the evidence table supports finerenone there: a guideline-versus-evidence difference for the owner
+  missed: finerenone is not offered as an extra option in the former HFmrEF range (steroidal MRA per 2026 ESC) [ESC26-Phenotype LVEF 49 Is HFrEF]: finerenone is displayed at LVEF 41-49. FINEARTS-HF enrolled LVEF 40 and above, so the evidence table supports finerenone there: a guideline-versus-evidence difference for the owner
+Scale check: the five highest and five lowest raw scores among the leads (weighted contributions in points):
+    raw 86.3 [RAAS-Source ARNI To ACEi Washout No ARB Available; commercial] Dapagliflozin 10 + Eplerenone 25 + Lisinopril 2.5 + Metoprolol Succinate 25 = mortality 18.5 + hf_hospitalization 17.3 + symptoms 3.0 + side_effects 11.5 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 12.0
+    raw 86.3 [RAAS-Source ARNI To ACEi Washout No ARB Available; medicare] Dapagliflozin 10 + Eplerenone 25 + Lisinopril 2.5 + Metoprolol Succinate 25 = mortality 18.5 + hf_hospitalization 17.3 + symptoms 3.0 + side_effects 11.5 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 12.0
+    raw 86.3 [RAAS-Source ARNI To ACEi Washout No ARB Available; cash] Dapagliflozin 10 + Eplerenone 25 + Lisinopril 2.5 + Metoprolol Succinate 25 = mortality 18.5 + hf_hospitalization 17.3 + symptoms 3.0 + side_effects 11.5 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 12.0
+    raw 86.0 [Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded; commercial] Dapagliflozin 10 + Lisinopril 2.5 + Metoprolol Succinate 25 + Spironolactone 50 = mortality 18.5 + hf_hospitalization 17.3 + symptoms 3.0 + side_effects 11.1 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 12.0
+    raw 86.0 [Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded; medicare] Dapagliflozin 10 + Lisinopril 2.5 + Metoprolol Succinate 25 + Spironolactone 50 = mortality 18.5 + hf_hospitalization 17.3 + symptoms 3.0 + side_effects 11.1 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 12.0
+    ...
+    raw 10.1 [Hyperkalemic Emergency K+ 6.2 (Deprescribe Offered); medicare] Carvedilol 12.5 = mortality 7.1 + hf_hospitalization 5.7 + symptoms 0.4 + side_effects 12.9 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 0.0, PROJECTED_K_GT_5_5 -40.0
+    raw 10.1 [Hyperkalemic Emergency K+ 6.2 (Deprescribe Offered); cash] Carvedilol 12.5 = mortality 7.1 + hf_hospitalization 5.7 + symptoms 0.4 + side_effects 12.9 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 0.0, PROJECTED_K_GT_5_5 -40.0
+    raw -1.9 [Rate-Source Digoxin Potassium 5.8 Not Excluded Warned; commercial] Carvedilol 25 + Dapagliflozin 10 + Digoxin 125 = mortality 4.5 + hf_hospitalization 11.9 + symptoms 1.6 + side_effects 12.0 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 0.0, PROJECTED_K_GT_5_5 -40.0, DANGEROUS_WARNINGS -16.0
+    raw -1.9 [Rate-Source Digoxin Potassium 5.8 Not Excluded Warned; medicare] Carvedilol 25 + Dapagliflozin 10 + Digoxin 125 = mortality 4.5 + hf_hospitalization 11.9 + symptoms 1.6 + side_effects 12.0 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 0.0, PROJECTED_K_GT_5_5 -40.0, DANGEROUS_WARNINGS -16.0
+    raw -1.9 [Rate-Source Digoxin Potassium 5.8 Not Excluded Warned; cash] Carvedilol 25 + Dapagliflozin 10 + Digoxin 125 = mortality 4.5 + hf_hospitalization 11.9 + symptoms 1.6 + side_effects 12.0 + cost 14.0 + adherence 10.0; adjustments SPECIAL_FEATURES 0.0, PROJECTED_K_GT_5_5 -40.0, DANGEROUS_WARNINGS -16.0
+Implied exchange rates, default profile (points of the 0-100 ranking score):
+  1 point of death-domain score (1 percentage point of relative risk reduction): 0.300  (HF-hospitalization domain: 0.220 per point)
+  1 burden point of side effects: 0.070  (side-effect weight 0.14 / divisor 2)
+  1 KCCQ point: 0.500  (symptom weight 0.1 x 100 / 20)
+  $10 a month at the default budget ($100) and cost sensitivity (5): 0.175 from $50, 1.623 from $100, 0.151 from $300
+  so one burden point is worth 0.23 death-domain points; one KCCQ point 1.67; $10 a month (from $100) 5.409.

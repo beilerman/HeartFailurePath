@@ -1,0 +1,47 @@
+/**
+ * Precision-weighted estimates (ENGINE POLICY, statistical method; controller ruling 2026-11-16; awaiting the owner, first-principles README section 10 item 6).
+ *
+ * Why: ranking used every evidence row's point estimate at face value, however small the trials (loop-diuretic death 0.24 from 202 patients; beta-blocker at LVEF 41-49
+ * 0.59 with interval 0.34-1.03). One uniform rule, no per-row exception: the value used is the POSTERIOR MEAN under a prior centred on no effect,
+ *
+ *     x_used  = B x x_published          x = ln(relative risk) for outcomes, KCCQ points for symptoms
+ *     B       = tau2 / (tau2 + se^2)     se = (ci_high - ci_low) / 3.92 on the same scale (log scale for relative risks)
+ *     se_used = sqrt(B) x se             (the posterior standard error)
+ *
+ * A precisely measured row barely moves (B near 1); a row from tiny trials is pulled toward no effect (B small). tau2 is the between-row variance of true effects,
+ * COMPUTED from the table, never typed, with a moment estimator centred on no effect (the DerSimonian-Laird form with the divisor that suits a zero centre): over rows whose basis is `trial` or `meta_analysis` and that have an
+ * interval, after counting one row copied across bands or drugs once (same value, interval and source, in any band, drug or drug class; two different trials with identical numbers are two rows),
+ *     w_i = 1 / se_i^2,  Q = sum(w_i x_i^2),  tau2 = max(0, (Q - k) / sum(w_i))        (k = number of distinct rows)
+ * The outcome table gets one prior for death and a separate one for hospitalization (change C3, controller recommendation 2026-11-18, approved by the owner); the symptom table has its own.
+ * The divisor is the sum of the weights, because Q is centred on zero (E13, controller ruling 2026-11-19, round 1 review; it was the mean-centred quantity before).
+ * WHY WEIGHTED: a row's influence on the prior should follow its precision. The earlier unweighted form (mean(x^2) - mean(se^2)) let two very imprecise rows (the loop-diuretic
+ * figures from 202 and 169 patients) set the prior for all 38 rows. No row is excluded. A row with a value but no interval uses the MEDIAN se of the rows that have one and is flagged
+ * `interval_imputed`. A row with no effect (value 0) stays 0. Zero width (se 0) gives B = 1: unchanged.
+ */
+export interface Shrunk { used: number; se_used: number; B: number; imputed: boolean; se: number }
+
+export const shrinkB = (tau2: number, se: number): number => (se <= 0 ? 1 : tau2 / (tau2 + se * se));
+
+export function tau2From(items: { x: number; se: number }[]): number {
+    const rows = items.filter(i => i.se > 0);          // a zero-width row has infinite precision and carries no between-row information
+    if (rows.length === 0) return 0;
+    const w = rows.map(i => 1 / (i.se * i.se));
+    const sw = w.reduce((a, b) => a + b, 0);
+    const Q = rows.reduce((a, i, j) => a + w[j] * i.x * i.x, 0);
+    // The estimator is centred on NO EFFECT (Q = sum(w x^2)), so the divisor is the sum of the weights (controller ruling 2026-11-19, round 1 review, E13). The mean-centred quantity sum(w) - sum(w^2)/sum(w) belongs to a Q centred on the weighted mean.
+    return sw > 0 ? Math.max(0, (Q - rows.length) / sw) : 0;
+}
+
+export function median(xs: number[]): number {
+    if (xs.length === 0) return 0;
+    const s = [...xs].sort((a, b) => a - b), m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/** x with its standard error (null = no interval): the shrunk value. */
+export function shrinkValue(x: number, se: number | null, tau2: number, imputedSe: number): Shrunk {
+    const imputed = se === null;
+    const s = se === null ? imputedSe : se;
+    const B = shrinkB(tau2, s);
+    return { used: B * x, se_used: Math.sqrt(B) * s, B, imputed, se: s };
+}

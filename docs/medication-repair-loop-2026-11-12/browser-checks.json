@@ -1,0 +1,18 @@
+{
+  "checks": [
+    "Sample inputs -> actual calculation -> treatment considerations -> copied note carries exposure review and response limits",
+    "Uncertain current use invalidates prior result and produces a focused hold after rerun",
+    "Editing a dose clears prior adherence/interval confirmation",
+    "Completed IV iron is preserved in history and explicitly excluded from active exposure",
+    "Repeat iron waits for phosphate review; independent medication review remains available",
+    "Evidence and formulary explain the current nonquantitative response policy",
+    "390px mobile layout has no document horizontal overflow"
+  ],
+  "errors": [],
+  "completed": true,
+  "browser": "153.0.8010.12",
+  "viewportWidths": [
+    1440,
+    390
+  ]
+}

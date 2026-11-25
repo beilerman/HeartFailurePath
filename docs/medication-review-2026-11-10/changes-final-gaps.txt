@@ -1,0 +1,129 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 723 runs
+  (a) top pick identical:        700 / 723
+  (b) displayed pick set same:   693 / 723
+  (c) pick order identical:      693 / 723
+  (d) eligibility + alerts identical: NO (36 differences)
+  (e) per-regimen warnings identical: NO (12 regimens)
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+Top pick changed in 23 runs:
+  MRA-Source Current MRA K+ 5.6 One-Step Reduction :: cash
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Patiromer 16.8g qd + Spironolactone 12.5mg qd [overall 68, raw 67.89]
+     new: Carvedilol 12.5mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Patiromer 16.8g qd + Spironolactone 12.5mg qd [overall 63, raw 63.35]
+  MRA-Source Current MRA K+ 5.7 Lowest Dose Withheld :: cash
+     old: Carvedilol 12.5mg bid + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Patiromer 8.4g qd [overall 36, raw 36.07]
+     new: Carvedilol 25mg bid + Patiromer 8.4g qd [overall 34, raw 34.49]
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 20mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 56, raw 55.73]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 53, raw 52.87]
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 20mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 56, raw 55.73]
+     new: Bumetanide 2mg bid + Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 53, raw 52.87]
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 20mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 56, raw 55.73]
+     new: Bumetanide 2mg bid + Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 53, raw 52.87]
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 86, raw 85.83]
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 86, raw 85.83]
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 49/51mg bid + Spironolactone 25mg qd [overall 86, raw 85.83]
+  Final-Gaps Lisinopril 5 mg Offers 10 mg Next :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 85, raw 84.85]
+  Final-Gaps Lisinopril 5 mg Offers 10 mg Next :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 85, raw 84.85]
+  Final-Gaps Lisinopril 5 mg Offers 10 mg Next :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 24/26mg bid + Spironolactone 25mg qd [overall 85, raw 84.85]
+  Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 85, raw 85.09]
+  Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 85, raw 85.09]
+  Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 85, raw 85.09]
+  Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased :: cash
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Finerenone (Kerendia) 20mg qd [overall 96, raw 96.29]
+  Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased :: commercial
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Finerenone (Kerendia) 20mg qd [overall 96, raw 96.30]
+  Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased :: medicare
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Finerenone (Kerendia) 20mg qd [overall 96, raw 96.30]
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 83.47]
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.56]
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.55]
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 83.47]
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.56]
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.55]
+
+BUGS (eligibility/alerts must not change):
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: cash: excludedMedications differ
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: cash: clinicalAlerts differ
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: commercial: excludedMedications differ
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: commercial: clinicalAlerts differ
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: medicare: excludedMedications differ
+  Final-Gaps Ramipril 5 mg bid Counts As Target :: medicare: clinicalAlerts differ
+  Final-Gaps Lisinopril 5 mg Offers 10 mg Next :: cash: excludedMedications differ
+  Final-Gaps Lisinopril 5 mg Offers 10 mg Next :: cash: clinicalAlerts differ
+  Final-Gaps Lisinopril 5 mg Offers 10 mg Next :: commercial: excludedMedications differ
+  Final-Gaps Lisinopril 5 mg Offers 10 mg Next :: commercial: clinicalAlerts differ
+  Final-Gaps Lisinopril 5 mg Offers 10 mg Next :: medicare: excludedMedications differ
+  Final-Gaps Lisinopril 5 mg Offers 10 mg Next :: medicare: clinicalAlerts differ
+  Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased :: cash: excludedMedications differ
+  Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased :: cash: clinicalAlerts differ
+  Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased :: commercial: excludedMedications differ
+  Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased :: commercial: clinicalAlerts differ
+  Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased :: medicare: excludedMedications differ
+  Final-Gaps Spironolactone 25 mg Potassium 5.2 Not Increased :: medicare: clinicalAlerts differ
+  Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased :: cash: excludedMedications differ
+  Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased :: cash: clinicalAlerts differ
+  Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased :: commercial: excludedMedications differ
+  Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased :: commercial: clinicalAlerts differ
+  Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased :: medicare: excludedMedications differ
+  Final-Gaps Finerenone 20 mg Potassium 5.1 Not Increased :: medicare: clinicalAlerts differ
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: cash: excludedMedications differ
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: cash: clinicalAlerts differ
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: commercial: excludedMedications differ
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: commercial: clinicalAlerts differ
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: medicare: excludedMedications differ
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: medicare: clinicalAlerts differ
+
+Warning differences:
+  Negated Free-Text Intolerance Detail :: cash: Dapagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: cash: Furosemide 20mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: cash: Digoxin 62.5mcg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: commercial: Dapagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: commercial: Empagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: commercial: Furosemide 20mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: medicare: Dapagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: medicare: Empagliflozin 10mg qd + Ramipril 5mg qd
+  Negated Free-Text Intolerance Detail :: medicare: Furosemide 20mg qd + Ramipril 5mg qd
+  Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded :: cash: Dapagliflozin 10mg qd + Ramipril 1.25mg qd + Spironolactone 25mg qd
+  Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded :: commercial: Dapagliflozin 10mg qd + Ramipril 1.25mg qd + Spironolactone 25mg qd
+  Rate-Source Ivabradine Hepatic Child-Pugh B/C Unspecified Excluded :: medicare: Dapagliflozin 10mg qd + Ramipril 1.25mg qd + Spironolactone 25mg qd

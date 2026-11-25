@@ -1,0 +1,31 @@
+[FAIL] Systemic: no-change preserves every observed physiological field and examination finding across fixtures: AssertionError [ERR_ASSERTION]: Jane Smith (Dry & Cold): exam erased; Volume Depleted / Prerenal (BUN/Cr > 25): weight changed; Severe Hypotension (BP 80/50): nt_pro_bnp 2000 -> 2400; Severe Hypotension (SBP 82) - No Drug Recs: nt_pro_bnp 8000 -> 9600
+
+4 !== 0
+
+[FAIL] Systemic: non-finite, missing and invalid control inputs never yield non-finite scores: AssertionError [ERR_ASSERTION]: kccq_score NaN: recommendations issued
+
+3 !== 0
+
+[FAIL] Systemic: unsupported dose, wrong units, missing medication and unsupported frequency stop with named input errors: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+3 !== 0
+
+[FAIL] Systemic: input medication metadata cannot override canonical clinical facts: AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(out.scoredRegimens.every(o => !o.regimen.some(x => x.med.name === 'Spironolactone')))
+
+[PASS] Systemic: per-dose renal caps do not silently become total-daily caps
+[FAIL] Systemic: unsafe affordable candidates do not hide safe over-budget candidates: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+0 !== 1
+
+[FAIL] Systemic: cost-first over-budget fallback leads with lower cost within the safe pool: AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+30 !== 10
+
+[FAIL] Systemic: exam-confirmed congestion prevents contradictory euvolemia/over-treatment alerts: AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(!out.clinicalAlerts.some(a => a.includes('LOOP DIURETIC OVER-TREATMENT') || a.includes('stable euvolemic')))
+
+[FAIL] Systemic: digoxin interaction guidance includes each supported interacting exposure: AssertionError [ERR_ASSERTION]: Amiodarone
+{ passed: 1, failed: 8 }

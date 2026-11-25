@@ -1,0 +1,167 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 996 runs
+  (a) top pick identical:        957 / 996
+  (b) displayed pick set same:   957 / 996
+  (c) pick order identical:      957 / 996
+  (d) eligibility + alerts identical: NO (876 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 36 of 828 runs
+    LVEF >= 50: 3 of 111 runs
+
+Top pick changed in 39 runs:
+  Alert-Source Device LVEF 30 NYHA II Ischaemic Sinus :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source Device LVEF 30 NYHA II Ischaemic Sinus :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source Device LVEF 30 NYHA II Ischaemic Sinus :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source Device LVEF 30 NYHA II Not Recorded Ischaemic Sinus :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source Device LVEF 30 NYHA II Not Recorded Ischaemic Sinus :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source Device LVEF 30 NYHA II Not Recorded Ischaemic Sinus :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source Device LVEF 30 NYHA III AFib CRT Needs Sinus :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 83.69]
+  Alert-Source Device LVEF 30 NYHA III AFib CRT Needs Sinus :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 83.69]
+  Alert-Source Device LVEF 30 NYHA III AFib CRT Needs Sinus :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 84, raw 83.69]
+  Alert-Source Device LVEF 30 NYHA IV Refractory :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 81, raw 80.94]
+  Alert-Source Device LVEF 30 NYHA IV Refractory :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 81, raw 80.94]
+  Alert-Source Device LVEF 30 NYHA IV Refractory :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 81, raw 80.94]
+  Alert-Source Device Not Raised At LVEF 40 :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 86, raw 86.38]
+  Alert-Source Device Not Raised At LVEF 40 :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 86, raw 86.38]
+  Alert-Source Device Not Raised At LVEF 40 :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 86, raw 86.38]
+  Alert-Source Advanced HF LVEF 18 Marker :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 80.01]
+  Alert-Source Advanced HF LVEF 18 Marker :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 80.01]
+  Alert-Source Advanced HF LVEF 18 Marker :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 80.01]
+  Alert-Source Advanced HF NYHA III High NT-proBNP Marker :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 71, raw 70.72]
+  Alert-Source Advanced HF NYHA III High NT-proBNP Marker :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 71, raw 70.73]
+  Alert-Source Advanced HF NYHA III High NT-proBNP Marker :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 71, raw 70.73]
+  Alert-Source Advanced HF Diuretic Resistance Marker :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 82, raw 81.81]
+  Alert-Source Advanced HF Diuretic Resistance Marker :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 82, raw 81.89]
+  Alert-Source Advanced HF Diuretic Resistance Marker :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 82, raw 81.89]
+  Alert-Source Advanced HF Stable Not Raised :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source Advanced HF Stable Not Raised :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source Advanced HF Stable Not Raised :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source AF HFrEF Anticoagulation And Rate Control :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 85, raw 85.09]
+  Alert-Source AF HFrEF Anticoagulation And Rate Control :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 85, raw 85.09]
+  Alert-Source AF HFrEF Anticoagulation And Rate Control :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 50mg qd [overall 85, raw 85.09]
+  Alert-Source AF HFrEF No Beta-Blocker On Board :: cash
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.31]
+  Alert-Source AF HFrEF No Beta-Blocker On Board :: commercial
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.31]
+  Alert-Source AF HFrEF No Beta-Blocker On Board :: medicare
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 70, raw 70.31]
+  Alert-Source AF HFpEF Anticoagulation Only :: cash
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Finerenone (Kerendia) 20mg qd [overall 98, raw 98.05]
+  Alert-Source AF HFpEF Anticoagulation Only :: commercial
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Finerenone (Kerendia) 20mg qd [overall 98, raw 98.07]
+  Alert-Source AF HFpEF Anticoagulation Only :: medicare
+     old: (no pick)
+     new: Dapagliflozin 10mg qd + Finerenone (Kerendia) 20mg qd [overall 98, raw 98.07]
+  Alert-Source No AF Alert In Sinus Rhythm :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source No AF Alert In Sinus Rhythm :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+  Alert-Source No AF Alert In Sinus Rhythm :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 82.73]
+
+BUGS (eligibility/alerts must not change):
+  John Doe (Wet & Warm) :: cash: clinicalAlerts differ
+  John Doe (Wet & Warm) :: commercial: clinicalAlerts differ
+  John Doe (Wet & Warm) :: medicare: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: cash: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: commercial: clinicalAlerts differ
+  Jane Smith (Dry & Cold) :: medicare: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: clinicalAlerts differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: cash: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: commercial: clinicalAlerts differ
+  Severe Hypotension (BP 85/55) - No Drug Recs :: medicare: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: clinicalAlerts differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: clinicalAlerts differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: cash: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: commercial: clinicalAlerts differ
+  Severe Asthma - Selective BB Only :: medicare: clinicalAlerts differ
+  African American (A-HeFT Indication) :: cash: clinicalAlerts differ
+  African American (A-HeFT Indication) :: commercial: clinicalAlerts differ
+  African American (A-HeFT Indication) :: medicare: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: cash: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: commercial: clinicalAlerts differ
+  Gout & Congestion - Diuretic Caution :: medicare: clinicalAlerts differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: cash: clinicalAlerts differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: commercial: clinicalAlerts differ
+  Volume Depleted / Prerenal (BUN/Cr > 25) :: medicare: clinicalAlerts differ

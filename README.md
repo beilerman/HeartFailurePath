@@ -4,13 +4,17 @@
 
 # HeartFailurePATH
 
-Deterministic heart-failure regimen simulation and ranking UI built with React + Vite + TypeScript.
+Deterministic heart-failure medication review and ranking UI built with React + Vite + TypeScript.
+
+**Start with the [November 23 handoff](docs/HANDOFF-2026-11-23.md)** for the local branch, verified repairs, reproduction commands and outstanding clinical decisions.
 
 ## Clinical Scope
 
-HeartFailurePATH simulates projected effects of medication changes for adults with chronic heart failure and ranks regimens using a weighted multi-domain model.
+HeartFailurePATH evaluates medication changes against recorded findings for adults with chronic heart failure. It does not predict individual physiology or reconstruct an untreated state. Since 2026-11-16 options are ordered by six weighted factors from measured or priced inputs: death from any cause and heart-failure hospitalization (relative risks from randomized trials), symptoms (KCCQ points), side effects (one-year excess harm rates x severity), cost and dosing burden. These are trial population averages, not predictions for this patient; the weights are engine policy pending the owner's review; guideline concordance and completeness are shown for reference only. See the [first-principles model record](docs/first-principles-model-2026-11-16/README.md).
 
-- Supports HFrEF, HFmrEF, HFpEF, and HFimpEF preservation logic.
+The [November 22 code review and expert-review record](docs/expert-review-2026-11-19/README.md) covers rule sets up to 2026-11-25.1, reproduced defects, local verification and open clinical decisions.
+
+- Follows the 2026 ESC phenotypes: reduced EF (LVEF below 50, including improved EF) and HFpEF (LVEF 50 or higher, never below 50); HFmrEF is no longer a separate phenotype.
 - Includes formulary-level contraindication checks, renal dose constraints, and interaction warnings.
 - Supports outpatient loop strategy escalation, including `Furoscix (SC Furosemide)` eligibility and safety messaging.
 
@@ -22,96 +26,29 @@ This is a clinical decision support prototype and simulation environment, not an
 - It must not be used as the sole basis for treatment decisions.
 - It has not been validated as a regulated medical device.
 
-## Key Engine Behavior
+## Incomplete information
 
-### 1) Regimen generation model
+Enter the information that is known. Missing core observations allow a focused safety review; with the core assessment present, medication options are limited to changes with recorded prerequisites. Measured KCCQ and pricing are not universal prerequisites. Results name what remains unassessed and what information a deferred decision needs. Missing data are not treated as normal findings or reasons to stop established therapy.
 
-- Delta-based engine: only the incremental effect of modifications is simulated.
-- Candidate actions: `add`, `titrate_up`, `titrate_down`, `swap`, `remove`, `keep`.
-- Distinct output: up to 3 clinically distinct regimens are returned.
+See the [incomplete-information review and validation record](docs/incomplete-data-2026-11-12/README.md) for the dependency matrix, scoring policy and limitations. These local changes have not been deployed or clinically validated.
 
-### 2) Visit intensification limit
+## Current Engine Behavior
 
-- Default: at most `2` new medication class groups per visit.
-- Dose titration and same-group swaps do not consume this limit.
-- Rescue additions (K+ binder, IV iron) DO count toward the limit — intentional and test-ratified (it is a patient-facing sequencing limit).
-- Configurable in UI: `Social Determinants -> Max New Classes Per Visit`.
+Rule set **2026-11-25.1** evaluates proposed medication regimens against recorded treated physiology. It preserves observed measurements and does not calculate an untreated state, individual treatment response or withdrawal magnitude. Legacy response coefficients are audit-only and covered by isolation regressions.
 
-### 3) Seven-domain scoring (0-100 each)
+- Candidate actions include addition, titration, substitution, removal and continuation; the UI returns up to three distinct options. A shared net-exposure transition makes equivalent descriptions consistent.
+- The public input boundary validates data and resolves medications to canonical formulary entries. Missing information limits dependent decisions; malformed data produces named input errors.
+- Current-use, adherence, interval/tolerance, restart and course-history review are explicit. Held/completed courses are excluded from active exposure. Proposed snapshots cannot be reused as observed follow-up visits.
+- Eligibility and safety depend on recorded findings and drug-specific restrictions. There is no automatic potassium-binder rescue or assumed potassium normalization. Stable therapy is not reduced solely to improve cost or dosing-burden scores.
+- The default visit limit is two new medication classes. An elective switch from an ACE inhibitor or ARB to sacubitril/valsartan also counts toward that limit. Conditional IV iron additions must satisfy prerequisites, visit limits and budget rules. Furoscix remains a short-course adjunct beside an oral loop.
+- Neurohormonal, functional, volume and structural domains are not assessed (weight 0). Ranking uses six factors (death, HF hospitalization, symptoms, side effects, cost, dosing burden; weights 0.30 / 0.22 / 0.10 / 0.14 / 0.14 / 0.10, engine policy); unknown cost is unassessed and the other weights are rescaled. Each figure is a trial average with its evidence basis (trial, pooled analysis, extrapolated, borrowed from a sibling, assumed neutral, not measured, upper bound), pulled toward no effect when the trials are small, and valued at the dose the trials achieved (an option that starts or increases a drug is valued as titrated). There is no baseline risk, so only relative effects are shown. A patient value that is not recorded is charged as the higher-risk case rather than ignored, and loop diuretics earn full credit at any dose because no dose relation was measured (congestion relief by dose is not modelled). The score is a model-based ordering, not a validated outcome prediction (2026-11-16; this replaces the earlier statement that treatment evidence and completeness alone informed ranking).
+- Input changes suppress stale options and copied notes. Every option shows its own monitoring and medication differences. The copied draft and Visit review describe option 1 by default; the clinician can choose another option (radio group or the card button) and the note, monitoring and follow-up then describe that option (2026-11-15). A separate finalized-plan state is not built.
 
-Weighted overall score:
-
-- Neurohormonal `20%`
-- Functional `15%`
-- Volume `15%`
-- Structure `10%`
-- Cost `15%`
-- Adherence `10%`
-- Guideline concordance `15%`
-
-Plus a **GDMT-completeness bonus** (up to +30) proportional to the share of indicated, achievable
-therapies present (phenotype pillars + eligible disease-modifying adjuncts such as GLP-1 in
-obesity). This makes the engine favor complete guideline therapy over the smallest safe change.
-It is applied before the hemodynamic/electrolyte penalties, so safety gates still override.
-Displayed options are ranked by score, then completeness, then uncapped raw score, then cost as a final
-tiebreaker. Cost must not override an evidence-based preference, but among clinically indistinguishable
-regimens the cheaper option wins. Budget-constrained outputs should be read as best affordable interim
-options, not proof that complete GDMT is financially reachable.
-
-### 4) Hard safety gates and output filters
-
-- Input hard stop: `SBP < 90` -> no regimen output, alerts only.
-- Input hard stop: baseline `K+ >= 6.5` -> alerts only (hyperkalemic emergency); `K+ >= 6.0` fires a HYPERKALEMIC EMERGENCY alert (ECG, urgent treatment).
-- Input hard stop: physiologically impossible values (e.g. `LVEF > 80`, `K+ > 8`) -> verification alerts only, no recommendations computed on suspect data.
-- Display safety filter: excludes regimens with projected `SBP < 85`, `K+ > 6.0`, or `HR < 45`.
-- Pregnancy exclusions: RAAS classes, steroidal/non-steroidal MRAs, SGLT2 inhibitors, vericiguat (boxed warning), ivabradine, and GLP-1 therapy are excluded. H/ISDN remains available as the RAAS alternative.
-- Nitrate + PDE5 inhibitor exposure: H/ISDN is hard-excluded from the formulary and force-removed from an arriving regimen (absolute contraindication — fatal hypotension risk).
-- Acute decompensation handling: blocks beta-blocker initiation and defers up-titration in ANY decompensation (warm or cold); forces existing beta-blocker dose reduction (one step, ~50%) only with hypoperfusion (cold-and-wet), continues it for warm-and-wet; safe additions (esp. SGLT2i) are still offered alongside any mandated reduction.
-- Blank safety-critical data (eGFR/creatinine or K+ = 0/empty) is treated as "not entered" — it never clears a safety gate and never reads as end-stage disease. Renal-gated new starts are withheld pending a BMP; retained meds and RAAS/MRA/SGLT2i intensification carry explicit data-unknown warnings and ranking penalties.
-- Initiation-vs-continuation carve-outs: trial-enrollment criteria (vericiguat VICTORIA markers, GLP-1 `BMI >= 30`, SGLT2i eGFR floor) gate initiation only — patients already on the drug are not force-removed for improved markers; true safety contraindications still force removal.
-- K+ binder rescue carries a residual-risk score penalty: rescue enables consideration (DIAMOND) but never erases the underlying hyperkalemia risk in ranking.
-
-### 5) Furoscix implementation
-
-`Furoscix (SC Furosemide)` is modeled as a loop-diuretic option for worsening congestion contexts.
-
-- Preferred in severe congestion loop-swap/add pathways.
-- Contraindicated when escalation context is absent, with severe renal impairment (`eGFR < 15`), or with furosemide/device-material hypersensitivity.
-- Adds mandatory regimen warning:
-  - `FUROSCIX SAFETY: On-body SQ infusor delivers 80mg over ~5 hours...`
-- Additional triage warning appears when hypoxemia suggests possible acute pulmonary edema.
+The [November 13 handoff](docs/HANDOFF-2026-11-13.md) records the disposition of the original 17 findings. The [evidence matrix](docs/evidence-matrix.md) distinguishes sourced rules from conservative software policies. Earlier reports preserve historical calculations and stage-specific findings; they do not override the current contract.
 
 ## Verification Strategy
 
-Clinical logic is guarded by a four-harness QA gate. `npm run verify` is the CI regression gate;
-the three audit harnesses are standalone (not part of CI) but constitute the full pre-release gate.
-
-| Harness | Command | Pass criteria |
-|---------|---------|---------------|
-| Scenario assertions (`scripts/verifyScenarios.ts`) | `npm run verify` | All pass — currently `106` (105 clinical scenarios + 1 structural pricing invariant); the harness output is authoritative |
-| Adversarial red team (`scripts/redTeam.ts`) | `npm run audit:red` | 0 CRITICAL / HIGH / MEDIUM findings |
-| Treatment-error audit (`scripts/mistakeAudit.ts`) | `npm run audit:mistakes` | 51/51 clean |
-| Broad clinical audit (`scripts/hundredScenarioAudit.ts`) | `npm run audit:hundred` | 100/100 clean |
-
-- CI command: `npm run ci` (typecheck + build + verify)
-
-Global invariants covered include:
-
-- no dual RAAS overlap
-- no dual MRA overlap
-- every formulary medication has an explicit pricing entry
-- score bounds stay within `0-100`
-- display safety floors are respected (projected SBP, K+, and HR)
-- no nitrate is ever displayed alongside confirmed PDE5 inhibitor exposure
-- implausible inputs hard-stop recommendation generation
-- duplicate medications are removed
-- key DDI warnings are present when high-risk combinations exist
-
-Furoscix-specific checks include:
-
-- eligible candidate is not incorrectly excluded
-- mandatory Furoscix safety warning appears when selected
-- furosemide hypersensitivity excludes Furoscix while preserving other loop options
+The November 22 review passed the production build and full verification suite, including 910 scenario checks, 1,000 expert-packet checks and 181 server-rendered interface checks. All 1,032 reference comparisons passed. The [November 23 handoff](docs/HANDOFF-2026-11-23.md) records the randomized sweeps, desktop and mobile browser results, commands and limits of the review.
 
 ## Requirements
 
@@ -132,16 +69,25 @@ Default dev host/port: `0.0.0.0:3000` (Vite auto-increments if occupied).
 ```bash
 npm run typecheck        # tsc --noEmit
 npm run build            # production build
-npm run verify           # scenario assertion harness (its printed count is authoritative; currently 106 passing)
+npm run verify           # scenario and expert-packet checks
+npm run verify:ui        # server-rendered interface checks
 npm run test             # alias of verify
+npm run golden           # compare reference outputs across three tiers (numeric tolerance 1e-9)
+npm run golden:update    # rewrite the golden master after an intended output change (review the diff first)
+npm run ranking:diff     # compare the current engine with the golden snapshot and report what an intended scoring change did to the ranking (run before golden:update)
+npm run audit:pricing    # every drug under every plan: patient cost never above the cash price, tiers consistent
+npm run fuzz             # seeded randomized-patient sweep (5,000 patients): safety invariants written independently of the engine, plus consistency checks (same answer when the regimen is listed in another order; ranking mode and care priority change ordering only; an allergy typed in lower case still excludes the drug)
 npm run audit:red        # adversarial red-team probes (standalone)
 npm run audit:mistakes   # 51-scenario treatment-error audit (standalone)
 npm run audit:hundred    # 100-scenario broad clinical audit (standalone)
-npm run ci               # typecheck + build + verify
+npm run gate             # full pre-release gate: typecheck + golden + verify + verify:ui + the three audits + audit:pricing + fuzz
+npm run ci               # production build followed by the full gate
 npm run preview          # preview production build
 ```
 
 ## Deployment (Vercel)
+
+These are setup notes, not a release authorization. The latest repairs remain local; remote state must be checked before any authorized release.
 
 Typical production deployment:
 
@@ -163,11 +109,13 @@ HeartFailurePath/
   components/
   services/
   data/
-  scripts/         # verifyScenarios, redTeam, mistakeAudit, hundredScenarioAudit
+  scripts/         # verifyScenarios, goldenMaster, fuzzSweep, rankingDiff, redTeam, mistakeAudit, hundredScenarioAudit
   docs/
 ```
 
 ## Documentation Map
+
+- [Current project handoff](docs/HANDOFF-2026-11-23.md)
 
 - Evidence matrix and rule traceability: `docs/evidence-matrix.md`
 - Clinical scenario observations: `docs/clinical-scenario-observations-2026-07-03.md`

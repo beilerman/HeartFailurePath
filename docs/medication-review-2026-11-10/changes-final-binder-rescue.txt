@@ -1,0 +1,113 @@
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 999 runs
+  (a) top pick identical:        968 / 999
+  (b) displayed pick set same:   966 / 999
+  (c) pick order identical:      966 / 999
+  (d) eligibility + alerts identical: YES
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 57 runs
+    LVEF <= 40: 31 of 831 runs
+    LVEF >= 50: 0 of 111 runs
+
+Top pick changed in 31 runs:
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial
+     old: Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 45, raw 45.06]
+     new: Dapagliflozin 10mg qd + Furosemide 20mg qd [overall 45, raw 44.76]
+  MRA-Source Current MRA K+ 5.7 Lowest Dose Withheld :: cash
+     old: Carvedilol 25mg bid + Patiromer 8.4g qd [overall 34, raw 34.49]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 64, raw 63.59]
+  MRA-Source Current MRA K+ 5.7 Lowest Dose Withheld :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd [overall 54, raw 53.54]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 64, raw 63.64]
+  MRA-Source Current MRA K+ 5.7 Lowest Dose Withheld :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd [overall 53, raw 53.12]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 64, raw 63.62]
+  MRA-Source Current MRA K+ 6.1 Withheld :: cash
+     old: Carvedilol 25mg bid + Patiromer 16.8g qd [overall 44, raw 44.23]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 68, raw 67.54]
+  MRA-Source Current MRA K+ 6.1 Withheld :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 16.8g qd [overall 65, raw 64.75]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 68, raw 67.59]
+  MRA-Source Current MRA K+ 6.1 Withheld :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 16.8g qd [overall 64, raw 64.34]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 68, raw 67.57]
+  K6-Source K+ 6.0 No MRA :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 51, raw 50.58]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 27, raw 26.51]
+  K6-Source K+ 6.0 No MRA :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 58, raw 58.46]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 27, raw 26.54]
+  K6-Source K+ 6.0 No MRA :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 58, raw 58.18]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 27, raw 26.52]
+  K6-Source K+ 6.2 On Quad :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 16.8g qd [overall 56, raw 56.43]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.77]
+  K6-Source K+ 6.2 On Quad :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 16.8g qd [overall 65, raw 64.80]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.80]
+  K6-Source K+ 6.2 On Quad :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 16.8g qd [overall 64, raw 64.39]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.78]
+  K6-Source K+ 6.4 On Quad :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 56, raw 56.43]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 25, raw 24.77]
+  K6-Source K+ 6.4 On Quad :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 65, raw 64.80]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 25, raw 24.80]
+  K6-Source K+ 6.4 On Quad :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 64, raw 64.39]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 25, raw 24.78]
+  Rate-Source Digoxin Potassium 5.8 Not Excluded Warned :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 63, raw 63.11]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 26, raw 25.68]
+  Rate-Source Digoxin Potassium 5.8 Not Excluded Warned :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 63, raw 63.38]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 26, raw 25.69]
+  Rate-Source Digoxin Potassium 5.8 Not Excluded Warned :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid + Sodium Zirconium Cyclosilicate (Lokelma) 10g qd [overall 63, raw 63.34]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Digoxin 125mcg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 26, raw 25.69]
+  Adjunct-Source H/ISDN Class 2b When RAAS Cannot Be Taken :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Patiromer 25.2g qd [overall 63, raw 62.78]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 26, raw 25.78]
+  Adjunct-Source H/ISDN Class 2b When RAAS Cannot Be Taken :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Patiromer 25.2g qd [overall 63, raw 62.91]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 26, raw 25.78]
+  Adjunct-Source H/ISDN Class 2b When RAAS Cannot Be Taken :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Patiromer 25.2g qd [overall 63, raw 62.88]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid [overall 26, raw 25.78]
+  ESC26-RAAS-K K+ 5.6 Lisinopril 2.5 Lowest Tier Withheld :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd [overall 58, raw 57.96]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 66, raw 65.98]
+  ESC26-RAAS-K K+ 5.6 Lisinopril 2.5 Lowest Tier Withheld :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd [overall 58, raw 57.98]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 66, raw 65.98]
+  ESC26-RAAS-K K+ 5.6 Lisinopril 2.5 Lowest Tier Withheld :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 8.4g qd [overall 58, raw 57.98]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd [overall 66, raw 65.98]
+  ESC26-RAAS-K K+ 5.5 New RAAS Start Blocked :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 67, raw 67.46]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 30, raw 30.42]
+  ESC26-RAAS-K K+ 5.5 New RAAS Start Blocked :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 67, raw 67.48]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 30, raw 30.42]
+  ESC26-RAAS-K K+ 5.5 New RAAS Start Blocked :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Patiromer 25.2g qd [overall 67, raw 67.48]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Hydralazine/Isosorbide Dinitrate 37.5/20mg tid [overall 30, raw 30.42]
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: cash
+     old: Dapagliflozin 10mg qd [overall 56, raw 55.92]
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.78]
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: commercial
+     old: Dapagliflozin 10mg qd [overall 56, raw 55.92]
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.78]
+  ESC26-RAAS-Start K+ 5.3 Naive RAAS Start Staged, No Binder :: medicare
+     old: Dapagliflozin 10mg qd [overall 56, raw 55.92]
+     new: Carvedilol 3.125mg bid + Dapagliflozin 10mg qd [overall 65, raw 64.78]
+(node:93063) [DEP0205] DeprecationWarning: `module.register()` is deprecated. Use `module.registerHooks()` instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)

@@ -1,0 +1,184 @@
+NOTE (added by the author of this change): output of `npm run ranking:diff` run before `npm run golden:update`.
+705 runs = 666 existing + 39 new Diuretic-Source runs (13 scenarios x 3 tiers; they show as 'changed' because the old snapshot has no pick).
+Existing runs: 4 of 666 top picks changed. The "BUGS" lines are INTENDED eligibility differences (Furoscix now needs an oral loop on board and is no
+longer excluded by eGFR < 15; HCTZ is no longer excluded at eGFR 15-29), so the script exits non-zero.
+Furoscix as the top pick: 2 of the 666 existing runs before, 2 after; in any of the 3 displayed picks: 16 before, 11 after.
+
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 705 runs
+  (a) top pick identical:        662 / 705
+  (b) displayed pick set same:   622 / 705
+  (c) pick order identical:      621 / 705
+  (d) eligibility + alerts identical: NO (201 differences)
+  (e) per-regimen warnings identical: NO (1 regimens)
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+Top pick changed in 43 runs:
+  Iron-Deficient HFrEF :: cash
+     old: Carvedilol 3.125mg bid + Ferric Carboxymaltose 1000mg once [overall 60, raw 59.61]
+     new: Carvedilol 25mg bid + Ferric Carboxymaltose 1000mg once [overall 64, raw 64.17]
+  MRA Boundary (eGFR 31, K+ 5.4) :: commercial
+     old: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 49/51mg bid [overall 70, raw 69.53]
+     new: Carvedilol 12.5mg bid + Dapagliflozin 10mg qd + Furosemide 20mg qd + Sacubitril/Valsartan (Entresto) 49/51mg bid [overall 65, raw 65.12]
+  Severe CKD Loop Resistance (eGFR 18) :: commercial
+     old: Carvedilol 12.5mg bid + Furosemide 160mg tid + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 54, raw 53.60]
+     new: Carvedilol 12.5mg bid + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg qd + Sacubitril/Valsartan (Entresto) 24/26mg bid [overall 54, raw 54.31]
+  NYHA III Acute Decompensation (BB Initiation Blocked) :: commercial
+     old: Furoscix (SC Furosemide) 80mg/10mL qd + Lisinopril 5mg qd + Spironolactone 12.5mg qd [overall 52, raw 51.87]
+     new: Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg qd + Lisinopril 5mg qd + Spironolactone 12.5mg qd [overall 55, raw 54.76]
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 20mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 56, raw 55.73]
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 20mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 56, raw 55.73]
+  Diuretic-Source Bumetanide eGFR 15 Never Above 10 mg Daily :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 20mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid [overall 56, raw 55.73]
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg tid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg tid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg tid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+  Diuretic-Source Furosemide 40 mg bid Below High-Dose Alert :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+  Diuretic-Source Furosemide 40 mg bid Below High-Dose Alert :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+  Diuretic-Source Furosemide 40 mg bid Below High-Dose Alert :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 40mg bid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+  Diuretic-Source Daily Dose Credit :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.87]
+  Diuretic-Source Daily Dose Credit :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.95]
+  Diuretic-Source Daily Dose Credit :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.95]
+  Diuretic-Source Furoscix Short-Course Add-On Not Swap :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 81.27]
+  Diuretic-Source Furoscix Short-Course Add-On Not Swap :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 81.35]
+  Diuretic-Source Furoscix Short-Course Add-On Not Swap :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 81.35]
+  Diuretic-Source Furoscix Not Offered Without Oral Loop :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 73, raw 72.72]
+  Diuretic-Source Furoscix Not Offered Without Oral Loop :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 73, raw 72.72]
+  Diuretic-Source Furoscix Not Offered Without Oral Loop :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 73, raw 72.72]
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+  Diuretic-Source Thiazide Add-On Credit And Gout Caution :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 71, raw 70.81]
+  Diuretic-Source Thiazide Add-On Credit And Gout Caution :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 71, raw 70.89]
+  Diuretic-Source Thiazide Add-On Credit And Gout Caution :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 71, raw 70.89]
+  Diuretic-Source HCTZ eGFR 25 Cautioned Not Excluded :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg qd [overall 62, raw 61.65]
+  Diuretic-Source HCTZ eGFR 25 Cautioned Not Excluded :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg qd [overall 62, raw 61.65]
+  Diuretic-Source HCTZ eGFR 25 Cautioned Not Excluded :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg qd [overall 62, raw 61.65]
+  Diuretic-Source Metolazone Electrolyte Monitoring :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 100mg qd [overall 67, raw 67.29]
+  Diuretic-Source Metolazone Electrolyte Monitoring :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 100mg qd [overall 67, raw 67.29]
+  Diuretic-Source Metolazone Electrolyte Monitoring :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 100mg qd [overall 67, raw 67.29]
+  Diuretic-Source Low eGFR Loop Response Note And Titration :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 100mg qd [overall 60, raw 59.91]
+  Diuretic-Source Low eGFR Loop Response Note And Titration :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 100mg qd [overall 60, raw 59.91]
+  Diuretic-Source Low eGFR Loop Response Note And Titration :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 100mg qd [overall 60, raw 59.91]
+  Diuretic-Source Formulary Strengths And Badges :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 81.12]
+  Diuretic-Source Formulary Strengths And Badges :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 81.12]
+  Diuretic-Source Formulary Strengths And Badges :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 81.12]
+
+BUGS (eligibility/alerts must not change):
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: cash: excludedMedications differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: commercial: excludedMedications differ
+  Hyperkalemia (K+ 5.6) - Avoid MRA :: medicare: excludedMedications differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: cash: excludedMedications differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: commercial: excludedMedications differ
+  Bradycardia (HR 48) - No BB/Ivabradine :: medicare: excludedMedications differ
+  Angioedema Hx - Avoid ACEi/ARNI :: cash: excludedMedications differ
+  Angioedema Hx - Avoid ACEi/ARNI :: commercial: excludedMedications differ
+  Angioedema Hx - Avoid ACEi/ARNI :: medicare: excludedMedications differ
+  Severe Asthma - Selective BB Only :: cash: excludedMedications differ
+  Severe Asthma - Selective BB Only :: commercial: excludedMedications differ
+  Severe Asthma - Selective BB Only :: medicare: excludedMedications differ
+  African American (A-HeFT Indication) :: cash: excludedMedications differ
+  African American (A-HeFT Indication) :: commercial: excludedMedications differ
+  African American (A-HeFT Indication) :: medicare: excludedMedications differ
+  Gout & Congestion - Diuretic Caution :: cash: excludedMedications differ
+  Gout & Congestion - Diuretic Caution :: commercial: excludedMedications differ
+  Gout & Congestion - Diuretic Caution :: medicare: excludedMedications differ
+  HFpEF with Resistant Edema :: cash: excludedMedications differ
+  HFpEF with Resistant Edema :: commercial: excludedMedications differ
+  HFpEF with Resistant Edema :: medicare: excludedMedications differ
+  Critical Renal (eGFR 25, K+ 5.2) :: cash: excludedMedications differ
+  Critical Renal (eGFR 25, K+ 5.2) :: commercial: excludedMedications differ
+  Critical Renal (eGFR 25, K+ 5.2) :: medicare: excludedMedications differ
+  Borderline Renal (eGFR 22) - Avoid Dapagliflozin Initiation :: cash: excludedMedications differ
+  Borderline Renal (eGFR 22) - Avoid Dapagliflozin Initiation :: commercial: excludedMedications differ
+  Borderline Renal (eGFR 22) - Avoid Dapagliflozin Initiation :: medicare: excludedMedications differ
+  Non-Compliant (Tolerance 0) :: cash: excludedMedications differ
+  Non-Compliant (Tolerance 0) :: commercial: excludedMedications differ
+  Non-Compliant (Tolerance 0) :: medicare: excludedMedications differ
+
+Warning differences:
+  NYHA III Acute Decompensation (BB Initiation Blocked) :: cash: Furosemide 80mg qd + Lisinopril 5mg qd + Metolazone 2.5mg qd + Spironolactone 12.5mg qd

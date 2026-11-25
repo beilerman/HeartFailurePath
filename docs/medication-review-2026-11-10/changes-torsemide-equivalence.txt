@@ -1,0 +1,167 @@
+NOTE (written by hand, 2026-11-11): intended change = torsemide declares verified_furosemide_equivalent_per_mg 2 (TRANSFORM-HF protocol 1 mg torsemide :
+2 mg furosemide; trial protocol, registry arm text says 2-4), so a furosemide <-> torsemide swap lands at the equivalent total daily dose instead of torsemide's
+lowest tier (5 mg). The "Prescriber Converts" scenario is renamed "Equivalent Daily Dose"; one reverse scenario was added.
+The duplicate engine field loop_furosemide_equivalent_per_mg was removed (the Furoscix crediting now reads the verified field; numbers 1 / 2 / 40 unchanged).
+
+WHAT CHANGED (9 existing Diuretic-Source scenarios x 3 tiers = 27 top picks, plus renamed/new keys): where a patient takes furosemide and is volume-overloaded,
+the top pick is now often "swap furosemide to torsemide at the equivalent dose" (e.g. furosemide 80 mg bid -> torsemide 40 mg bid), by +0.1 to +0.7 raw points.
+Before, the swap landed at torsemide 5 mg and never won. CLINICAL READ - TWO ISSUES, both pre-existing behaviours exposed by the correct dose, NOT fixed here:
+ 1. The gain comes from the engine's torsemide weight-loss curve being higher than furosemide's at the SAME furosemide-equivalent dose (calibration "better
+    bioavailability", not verified). TRANSFORM-HF showed no outcome difference between the drugs, so a swap with no stated clinical reason now leads in
+    many loop-diuretic scenarios.
+ 2. "Nearest tier at or above the equivalent daily dose" can overshoot when tiers are sparse: furosemide 80 mg tid (240 mg/day, equivalent torsemide 120 mg)
+    lands on torsemide 100 mg bid (200 mg/day, about 400 mg furosemide-equivalent), the torsemide label maximum.
+Options for the owner: treat non-forced loop swaps like GLP-1 (titrate, do not swap), equalize the curves at equal equivalent dose, or choose the nearest tier
+on either side. No change was made.
+
+
+> heartfailurepath@0.1.0 ranking:diff
+> tsx scripts/rankingDiff.ts
+
+Ranking diff vs golden snapshot: 768 runs
+  (a) top pick identical:        729 / 768
+  (b) displayed pick set same:   706 / 768
+  (c) pick order identical:      706 / 768
+  (d) eligibility + alerts identical: NO (18 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+
+Top pick changed in 39 runs:
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg tid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 100mg bid [overall 80, raw 80.09]
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg tid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 100mg bid [overall 80, raw 80.09]
+  Diuretic-Source Furosemide 80 mg tid High-Dose Alert :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furosemide 80mg tid + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.97]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 100mg bid [overall 80, raw 80.09]
+  Diuretic-Source Daily Dose Credit :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.87]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 80, raw 80.49]
+  Diuretic-Source Daily Dose Credit :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.95]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 81, raw 80.57]
+  Diuretic-Source Daily Dose Credit :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 80, raw 79.95]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 81, raw 80.57]
+  Diuretic-Source Furoscix Short-Course Add-On Not Swap :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 81.27]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 82, raw 81.89]
+  Diuretic-Source Furoscix Short-Course Add-On Not Swap :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 81.35]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 82, raw 81.97]
+  Diuretic-Source Furoscix Short-Course Add-On Not Swap :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 40mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 81, raw 81.35]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 82, raw 81.97]
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Allowed Anuria Excluded :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Furoscix CKD Without Anuria Offered With Caution :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg bid [overall 54, raw 53.78]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 52, raw 51.53]
+  Diuretic-Source Thiazide Add-On Credit And Gout Caution :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 71, raw 70.81]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 71, raw 71.42]
+  Diuretic-Source Thiazide Add-On Credit And Gout Caution :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 71, raw 70.89]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 72, raw 71.50]
+  Diuretic-Source Thiazide Add-On Credit And Gout Caution :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 71, raw 70.89]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 72, raw 71.50]
+  Diuretic-Source HCTZ eGFR 25 Cautioned Not Excluded :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg qd [overall 62, raw 61.65]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 58, raw 57.73]
+  Diuretic-Source HCTZ eGFR 25 Cautioned Not Excluded :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg qd [overall 62, raw 61.65]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 58, raw 57.73]
+  Diuretic-Source HCTZ eGFR 25 Cautioned Not Excluded :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 5mg qd [overall 62, raw 61.65]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 40mg bid [overall 58, raw 57.73]
+  Diuretic-Source Metolazone Electrolyte Monitoring :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 100mg qd [overall 67, raw 67.29]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 69, raw 69.46]
+  Diuretic-Source Metolazone Electrolyte Monitoring :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 100mg qd [overall 67, raw 67.29]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 69, raw 69.46]
+  Diuretic-Source Metolazone Electrolyte Monitoring :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 100mg qd [overall 67, raw 67.29]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Metolazone 5mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 69, raw 69.46]
+  Diuretic-Source Low eGFR Loop Response Note And Titration :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 100mg qd [overall 60, raw 59.91]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 20mg qd [overall 60, raw 59.67]
+  Diuretic-Source Low eGFR Loop Response Note And Titration :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 100mg qd [overall 60, raw 59.91]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 20mg qd [overall 60, raw 59.67]
+  Diuretic-Source Low eGFR Loop Response Note And Titration :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 100mg qd [overall 60, raw 59.91]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Ivabradine 5mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Torsemide 20mg qd [overall 60, raw 59.67]
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 83.47]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 84, raw 84.17]
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.56]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 84, raw 84.25]
+  Final-Gaps Furosemide 80 mg bid To Bumetanide Equivalent Daily Dose :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.55]
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 84, raw 84.25]
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: cash
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 83, raw 83.47]
+     new: (no pick)
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: commercial
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.56]
+     new: (no pick)
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: medicare
+     old: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Furosemide 80mg bid + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd [overall 84, raw 83.55]
+     new: (no pick)
+  Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 84, raw 84.17]
+  Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 84, raw 84.25]
+  Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 40mg bid [overall 84, raw 84.25]
+  Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose :: cash
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 85, raw 85.09]
+  Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose :: commercial
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 85, raw 85.17]
+  Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose :: medicare
+     old: (no pick)
+     new: Carvedilol 25mg bid + Dapagliflozin 10mg qd + Furoscix (SC Furosemide) 80mg/10mL qd + Sacubitril/Valsartan (Entresto) 97/103mg bid + Spironolactone 25mg qd + Torsemide 20mg qd [overall 85, raw 85.17]
+
+BUGS (eligibility/alerts must not change):
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: cash: excludedMedications differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: cash: clinicalAlerts differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: commercial: excludedMedications differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: commercial: clinicalAlerts differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: medicare: excludedMedications differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Prescriber Converts :: medicare: clinicalAlerts differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose :: cash: excludedMedications differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose :: cash: clinicalAlerts differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose :: commercial: excludedMedications differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose :: commercial: clinicalAlerts differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose :: medicare: excludedMedications differ
+  Final-Gaps Furosemide 80 mg bid To Torsemide Equivalent Daily Dose :: medicare: clinicalAlerts differ
+  Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose :: cash: excludedMedications differ
+  Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose :: cash: clinicalAlerts differ
+  Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose :: commercial: excludedMedications differ
+  Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose :: commercial: clinicalAlerts differ
+  Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose :: medicare: excludedMedications differ
+  Final-Gaps Torsemide 20 mg qd To Furosemide Equivalent Daily Dose :: medicare: clinicalAlerts differ

@@ -1,0 +1,130 @@
+# Ranking change: 2026 ESC phenotype (HFmrEF removed), 2026-11-11
+
+Produced by `npm run ranking:diff` against the golden snapshot before the update, over the 258 scenarios that existed before this change
+(774 runs = 258 x 3 insurance tiers). Two scenarios were renamed and nine added in the same commit; they are not in this comparison.
+
+Summary: top pick changed in 31 of 774 runs, all with baseline LVEF 50 or higher (HFpEF now has MRA as a Class I foundational therapy,
+so the guideline domain no longer saturates at 100 on SGLT2i alone). 0 of 42 runs at LVEF 41-49 and 0 of 639 runs at LVEF 40 or lower changed
+their top pick (their guideline-domain table changed, the leading regimens did not). The three alert differences are the missing-LVEF alert
+text (HFmrEF wording removed).
+
+Clinical read of the 31 changes: all are HFpEF patients (LVEF 58) on or near SGLT2i. (1) Obese HFpEF de novo now leads with SGLT2i + MRA
+(finerenone, or spironolactone under Medicare) instead of SGLT2i + tirzepatide: MRA is Class I in HFpEF, the GLP-1/GIP agonist is Class IIa for
+symptoms. (2) The "Adjunct-Source" obese HFpEF scenarios (current regimen dapagliflozin) now lead with SGLT2i + MRA + semaglutide (two new classes, within
+the visit limit of two) instead of SGLT2i + MRA, because the removed saturation lets the completeness domain count the GLP-1 slot.
+(3) Dose-step ties (semaglutide 1.7 to 2.4, 0.5 to 1, tirzepatide 10 to 12.5, spironolactone 12.5 to 25) flip by under 0.6 raw points.
+No pillar is lost and no drug starts outside its evidence range.
+
+
+Ranking diff vs golden snapshot: 774 runs
+  (a) top pick identical:        743 / 774
+  (b) displayed pick set same:   705 / 774
+  (c) pick order identical:      704 / 774
+  (d) eligibility + alerts identical: NO (3 differences)
+  (e) per-regimen warnings identical: YES
+  top-pick overall_score  old: min 17 / median 78 / max 100
+  top-pick overall_score  new: min 17 / median 78 / max 100
+  top pick changed, by baseline LVEF band:
+    LVEF 41-49: 0 of 42 runs
+    LVEF <= 40: 0 of 639 runs
+    LVEF >= 50: 31 of 93 runs
+
+Top pick changed in 31 runs:
+  Obese HFpEF (BMI 35, LVEF 58) :: commercial
+     old: Dapagliflozin 10mg qd + Tirzepatide (Zepbound) 2.5mg weekly [overall 90, raw 89.85]
+     new: Dapagliflozin 10mg qd + Finerenone (Kerendia) 20mg qd [overall 89, raw 88.56]
+  Obese HFpEF (BMI 35, LVEF 58) :: medicare
+     old: Dapagliflozin 10mg qd + Tirzepatide (Zepbound) 2.5mg weekly [overall 90, raw 89.58]
+     new: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 88, raw 88.42]
+  GLP-1 Continuation Carve-Out (BMI 28) :: commercial
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd + Tirzepatide (Zepbound) 15mg weekly [overall 100, raw 101.08]
+     new: Dapagliflozin 10mg qd + Spironolactone 25mg qd + Tirzepatide (Zepbound) 15mg weekly [overall 100, raw 104.22]
+  GLP-1 Continuation Carve-Out (BMI 28) :: medicare
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd + Tirzepatide (Zepbound) 15mg weekly [overall 100, raw 100.98]
+     new: Dapagliflozin 10mg qd + Spironolactone 25mg qd + Tirzepatide (Zepbound) 15mg weekly [overall 100, raw 104.11]
+  Adjunct-Source GLP-1 KCCQ And Weight Placebo-Adjusted :: cash
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.15]
+  Adjunct-Source GLP-1 KCCQ And Weight Placebo-Adjusted :: commercial
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.19]
+  Adjunct-Source GLP-1 KCCQ And Weight Placebo-Adjusted :: medicare
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.18]
+  Adjunct-Source GLP-1 New Start Is Lowest Tier :: cash
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.15]
+  Adjunct-Source GLP-1 New Start Is Lowest Tier :: commercial
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.19]
+  Adjunct-Source GLP-1 New Start Is Lowest Tier :: medicare
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.18]
+  Adjunct-Source Semaglutide Titration One Step 1.7 To 2.4 :: cash
+     old: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 1.7mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.31]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 2.4mg weekly + Spironolactone 12.5mg qd [overall 100, raw 100.15]
+  Adjunct-Source Semaglutide Titration One Step 1.7 To 2.4 :: commercial
+     old: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 1.7mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.35]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 2.4mg weekly + Spironolactone 12.5mg qd [overall 100, raw 100.19]
+  Adjunct-Source Semaglutide Titration One Step 1.7 To 2.4 :: medicare
+     old: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 1.7mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.35]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 2.4mg weekly + Spironolactone 12.5mg qd [overall 100, raw 100.19]
+  Adjunct-Source Tirzepatide Titration One Step 10 To 12.5 :: cash
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd + Tirzepatide (Zepbound) 10mg weekly [overall 97, raw 97.27]
+     new: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd + Tirzepatide (Zepbound) 12.5mg weekly [overall 97, raw 96.69]
+  Adjunct-Source Tirzepatide Titration One Step 10 To 12.5 :: commercial
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd + Tirzepatide (Zepbound) 10mg weekly [overall 97, raw 97.35]
+     new: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd + Tirzepatide (Zepbound) 12.5mg weekly [overall 97, raw 96.78]
+  Adjunct-Source Tirzepatide Titration One Step 10 To 12.5 :: medicare
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd + Tirzepatide (Zepbound) 10mg weekly [overall 97, raw 97.35]
+     new: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd + Tirzepatide (Zepbound) 12.5mg weekly [overall 97, raw 96.77]
+  Adjunct-Source GLP-1 Cautions Pancreatitis Gastroparesis Retinopathy :: cash
+     old: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.5mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.31]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 1mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.08]
+  Adjunct-Source GLP-1 Cautions Pancreatitis Gastroparesis Retinopathy :: commercial
+     old: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.5mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.35]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 1mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.12]
+  Adjunct-Source GLP-1 Cautions Pancreatitis Gastroparesis Retinopathy :: medicare
+     old: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.5mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.35]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 1mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.11]
+  Adjunct-Source GLP-1 Type 2 Diabetes Reduces Effect :: cash
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.14]
+  Adjunct-Source GLP-1 Type 2 Diabetes Reduces Effect :: commercial
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.18]
+  Adjunct-Source GLP-1 Type 2 Diabetes Reduces Effect :: medicare
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.18]
+  Adjunct-Source GLP-1 Evidence Bonus Equal No Superior Claim :: cash
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.15]
+  Adjunct-Source GLP-1 Evidence Bonus Equal No Superior Claim :: commercial
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.19]
+  Adjunct-Source GLP-1 Evidence Bonus Equal No Superior Claim :: medicare
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.18]
+  Adjunct-Source Tirzepatide Dose Map And NT-proBNP :: cash
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.15]
+  Adjunct-Source Tirzepatide Dose Map And NT-proBNP :: commercial
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.19]
+  Adjunct-Source Tirzepatide Dose Map And NT-proBNP :: medicare
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.18]
+  Adjunct-Source Tirzepatide Cash Price By Dose :: cash
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.15]
+  Adjunct-Source Tirzepatide Cash Price By Dose :: commercial
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.19]
+  Adjunct-Source Tirzepatide Cash Price By Dose :: medicare
+     old: Dapagliflozin 10mg qd + Spironolactone 12.5mg qd [overall 93, raw 92.96]
+     new: Dapagliflozin 10mg qd + Semaglutide (Wegovy) 0.25mg weekly + Spironolactone 12.5mg qd [overall 97, raw 97.18]
+
+BUGS (eligibility/alerts must not change):
+  Incomplete Data: Missing LVEF (Phenotype Unknown) :: cash: clinicalAlerts differ
+  Incomplete Data: Missing LVEF (Phenotype Unknown) :: commercial: clinicalAlerts differ
+  Incomplete Data: Missing LVEF (Phenotype Unknown) :: medicare: clinicalAlerts differ

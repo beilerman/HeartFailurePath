@@ -1,0 +1,42 @@
+HeartFailurePath medication-property review — local rule set 2026-11-12.7
+Date: 2026-11-12
+Branch: refactor/glucosepath-alignment; base HEAD 9fba74d13915c57d66fc7938128e56627070db3f
+Existing mixed working tree preserved. No commit, push, merge, deployment or clinical activation.
+
+npm run ranking:diff (BEFORE snapshot refresh): exit 0
+  1,032/1,032 top regimens, displayed sets and ordering identical.
+  Eligibility, clinical alerts and matched-option warnings identical.
+  Full comparison: ranking-before-update.txt
+npm run golden:update: exit 0, after comparison review.
+npm run gate: exit 0
+  TypeScript: pass
+  Golden: 1,032 runs byte-identical
+  Scenario/structural engine assertions: 423 passed; 0 failed
+  Clinical UI: 27 passed; 0 failed (server-rendered content, not browser testing)
+  Hundred-scenario audit: 100/100 clean
+  Mistake audit: 51/51 clean
+  Red-team audit: CRITICAL 0; HIGH 0; MED 0
+  Pricing: 32 drugs x 3 profiles pass
+  Fuzz: 5,000 patients, seed 20261112, 3,413 with options; no violations
+npm run build: exit 0
+  Existing >500 kB JavaScript bundle warning persists.
+  Node module.register deprecation notices are non-failing.
+
+Targeted diagnostics (first-dose per drug, before -> after):
+  Self-replacement physiological discrepancies: 14 -> 0
+  Within-class cross-drug swap/split-description discrepancies: 68 -> 0
+  Negative EF/KCCQ removal outputs: 29 -> 0
+  Projected regimen Lisinopril->Valsartan: stale Lisinopril -> correct Valsartan
+  Sequential add/remove non-inversion: 25 -> 25 (OPEN model characteristic)
+  None of the 29 original invalid-range cases had EF exactly zero.
+
+New regression: scripts/medicationPropertyChecks.ts, eight groups, wired into verify.
+All 121 dose/frequency entries plus all within-class dose pairs exercised.
+Raw artifacts: inventory.json, probes-before.json, probes-after.json.
+
+These checks establish engineering consistency only. They do not validate
+individual pharmacodynamics, withdrawal response, clinical usability or readiness.
+Browser interaction/visual verification was not performed in this pass.
+
+After evidence-matrix and handoff edits: verify:ui again 27/27, build exit 0.
+git diff --check: exit 0.

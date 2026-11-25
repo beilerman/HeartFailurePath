@@ -1,5 +1,5 @@
 {
   "name": "HeartFailurePATH",
-  "description": "Deterministic clinical decision support for chronic heart failure (HFrEF / HFmrEF / HFpEF / HFimpEF), ranking guideline-directed regimen modifications across seven weighted domains: neurohormonal, functional, volume, structure, cost, adherence, and guideline concordance.",
+  "description": "Deterministic clinical decision support for chronic heart failure (reduced EF, LVEF below 50 including improved EF / HFpEF, per the 2026 ESC guideline), ranking guideline-directed regimen modifications across seven weighted domains: neurohormonal, functional, volume, structure, cost, adherence, and guideline concordance.",
   "requestFramePermissions": []
 }

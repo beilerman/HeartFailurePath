@@ -1,0 +1,13087 @@
+# Case 1: 73-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 73-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/74 mmHg and the heart rate is 68 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.8 mEq/L and eGFR is 28 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 73 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 126/74 mmHg; 68 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 78 kg now; recorded dry weight 78 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 2800 pg/mL |
+| Potassium | 4.8 mEq/L |
+| Kidney function | creatinine 2.36 mg/dL; eGFR 28 mL/min/1.73 m²; earlier creatinine not entered; BUN 42.5 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 1: 73-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $114.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.66).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.52 against 1.00).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.80 against 1.00) and an expected gain in health status (+3.2 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 20% lower (relative risk 0.80, 95% interval 0.66 to 0.96)
+  - At today's doses: 7% lower (relative risk 0.93, 95% interval 0.82 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 48% lower (relative risk 0.52, 95% interval 0.42 to 0.64)
+  - At today's doses: 24% lower (relative risk 0.76, 95% interval 0.68 to 0.86)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +5.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 1**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($114 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 10 mg once daily
+
+The tool's ordering score for this option: 66 out of 100. Monthly cost: $58.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.66).
+
+**Drug differences from option 1**
+
+- Carvedilol: 25 mg twice daily here; 12.5 mg twice daily in option 1.
+- Includes Lisinopril 10 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 19% lower (relative risk 0.81, 95% interval 0.72 to 0.91)
+- Heart-failure hospitalization: 34% lower (relative risk 0.66, 95% interval 0.60 to 0.72)
+- Health status (KCCQ-equivalent): gain of 2.4 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($58 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Lisinopril from 10mg once daily to 20mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 20 mg once daily (target dose)
+
+The tool's ordering score for this option: 66 out of 100. Monthly cost: $58.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.64).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.80 against 0.83).
+
+**Drug differences from option 1**
+
+- Includes Lisinopril 20 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 17% lower (relative risk 0.83, 95% interval 0.74 to 0.93)
+- Heart-failure hospitalization: 36% lower (relative risk 0.64, 95% interval 0.59 to 0.70)
+- Health status (KCCQ-equivalent): gain of 2.6 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril.
+
+Side effects at the higher dose were not measured separately; the burden shown for Lisinopril is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 3**
+
+- Lisinopril: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($58 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1; Spironolactone withheld (Clinical contraindication): eGFR below 30; eGFR 30 or below (new start; 2022 AHA/ACC/HFSA: contraindication to MRA initiation); Eplerenone withheld (Clinical contraindication): eGFR 30 or below (label: CrCl 30 mL/min or less); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+- **Early potassium check** (48-72 hours): A rule set by this tool for CKD and/or borderline potassium at baseline (no source gives this window).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+- **Urinalysis + volume status assessment** (1-2 weeks after SGLT2i initiation): CKD patients: monitor for volume depletion from osmotic diuresis. Adjust concurrent loop diuretic dose if needed.
+- **Renal dosing review** (At initiation and after any eGFR change): Renal dose caution at eGFR 28: Sacubitril/Valsartan (Entresto): confirm dosing against current renal function and monitor.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan; Add Dapagliflozin 10mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 2: 58-year-old man, reduced ejection fraction (25%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 58-year-old man with an ejection fraction of 25% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 124/78 mmHg and the heart rate is 78 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.3 mEq/L and eGFR is 78 mL/min/1.73 m². He takes no heart failure medication.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 58 years, male; self-identified race: White |
+| Ejection fraction | 25%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 124/78 mmHg; 78 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 82 kg now; recorded dry weight 82 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1400 pg/mL |
+| Potassium | 4.3 mEq/L |
+| Kidney function | creatinine 1.1 mg/dL; eGFR 78 mL/min/1.73 m²; earlier creatinine not entered; BUN 19.8 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| None | not applicable | not applicable |
+
+Daily dosing: no drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 2: 58-year-old man, reduced ejection fraction (25%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 25%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 25% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $64.00/month (estimate). Dosing burden: 4 doses a day from 2 drugs (now no drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected reduction in death (relative risk 0.54 against 0.59); option 2 has fewer side effects (side-effect burden +14.6 against +24.7 points).
+
+More on why:
+
+- Mineralocorticoid receptor antagonist: Option 1 already uses the limit of 2 new drug classes (Carvedilol and Sacubitril/Valsartan); adding an MRA means dropping one. It appears in option 2 (Eplerenone) and option 3 (Eplerenone).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Carvedilol and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. A plan that starts it (Dapagliflozin) is not among the options shown: it ranks below the three options shown.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 46% lower (relative risk 0.54, 95% interval 0.45 to 0.65)
+  - At today's doses: 20% lower (relative risk 0.80, 95% interval 0.75 to 0.86)
+- Heart-failure hospitalization: 63% lower (relative risk 0.37, 95% interval 0.28 to 0.48)
+  - At today's doses: 31% lower (relative risk 0.69, 95% interval 0.63 to 0.76)
+- Health status (KCCQ-equivalent): gain of 3.5 points
+- Side-effect burden: +24.7 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 1**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($64 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 0), 2 more drugs
+- Evidence: Limited concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $77.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 2 has fewer side effects (side-effect burden +14.6 against +24.7 points); option 1 has a larger expected reduction in death (relative risk 0.54 against 0.59).
+
+**Drug differences from option 1**
+
+- Includes Eplerenone 25 mg once daily; option 1 does not.
+- Does not include Carvedilol, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 41% lower (relative risk 0.59, 95% interval 0.49 to 0.71)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.71 to 0.85)
+- Heart-failure hospitalization: 65% lower (relative risk 0.35, 95% interval 0.28 to 0.44)
+  - At today's doses: 38% lower (relative risk 0.62, 95% interval 0.56 to 0.68)
+- Health status (KCCQ-equivalent): gain of 3.4 points
+- Side-effect burden: +14.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 2**
+
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($77 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 0), 2 more drugs
+- Evidence: Limited concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 64 out of 100. Monthly cost: $21.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.37 against 0.43).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected gain in health status (+3.5 against +2.3 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Includes Eplerenone 25 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 47% lower (relative risk 0.53, 95% interval 0.45 to 0.63)
+  - At today's doses: 25% lower (relative risk 0.75, 95% interval 0.69 to 0.81)
+- Heart-failure hospitalization: 57% lower (relative risk 0.43, 95% interval 0.35 to 0.55)
+  - At today's doses: 33% lower (relative risk 0.67, 95% interval 0.60 to 0.74)
+- Health status (KCCQ-equivalent): gain of 2.3 points
+- Side-effect burden: +22.2 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Eplerenone, high potassium (above 5.5) (+2.2).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 3**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 3**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($21 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 0), 2 more drugs
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): started in option 1 (Sacubitril/Valsartan (Entresto))
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): started in option 1 (Carvedilol)
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1. Option 1 already uses the limit of 2 new drug classes (Carvedilol and Sacubitril/Valsartan); adding an MRA means dropping one. It appears in option 2 (Eplerenone) and option 3 (Eplerenone); could be started: Spironolactone, Eplerenone; Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Carvedilol and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. A plan that starts it (Dapagliflozin) is not among the options shown: it ranks below the three options shown; could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Carvedilol 3.125mg twice daily; Add Sacubitril/Valsartan) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 3: 56-year-old man, reduced ejection fraction (28%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 56-year-old man with an ejection fraction of 28% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 128/80 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 68 mL/min/1.73 m². He takes Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 56 years, male; self-identified race: Black |
+| Ejection fraction | 28%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 128/80 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 88 kg now; recorded dry weight 88 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1500 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.24 mg/dL; eGFR 68 mL/min/1.73 m²; earlier creatinine not entered; BUN 22.3 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | History of Angioedema |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | Lisinopril: Angioedema, Lip and tongue swelling after about two months; the drug was stopped. |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 2 doses a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 3: 56-year-old man, reduced ejection fraction (28%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 28%, 40% or below).
+
+### Safety alerts (1)
+
+- **Advanced heart failure alert**: Early consultation with an advanced heart failure centre is Class I for patients with or at risk of advanced HF (2026 ESC Recommendation Table 11; "I NEED HELP" markers, any one is enough). Markers present: documented stop or intolerance of foundational therapy (Lisinopril). The tool cannot see hospitalizations in the past year (two or more, or one needing inotropes, is a "rule of three" trigger; the form records only whether a recent worsening event occurred), inotrope use, end-organ dysfunction, defibrillator shocks or right-ventricular function: check them. Consider IV inotropic support, mechanical circulatory support (LVAD), transplant evaluation and a palliative care discussion; device assessment is in the device alert when LVEF is 35 or below.
+
+### Other care prompts (1)
+
+- **Device therapy screening**: LVEF 28% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 67 out of 100. Monthly cost: $71.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 2 doses a day from 1 drug).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.59).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.47 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +11.2 points).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected gain in health status (+3.2 against +1.4 KCCQ-equivalent points).
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.68 against 1.00) and an expected gain in health status (+3.2 against 0.0 KCCQ-equivalent points).
+- RAAS inhibitor: Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Eplerenone); adding a RAAS inhibitor means dropping one. A plan that starts it (Losartan) is not among the options shown: it ranks below the three options shown.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.58 to 0.79)
+  - At today's doses: 25% lower (relative risk 0.75, 95% interval 0.66 to 0.86)
+- Heart-failure hospitalization: 53% lower (relative risk 0.47, 95% interval 0.40 to 0.54)
+  - At today's doses: 44% lower (relative risk 0.56, 95% interval 0.50 to 0.62)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +11.2 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($71 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 2), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 64 out of 100. Monthly cost: $21.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now 2 doses a day from 1 drug).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.59).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected gain in health status (+3.2 against +1.4 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Carvedilol: 25 mg twice daily here; 12.5 mg twice daily in option 1.
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 30% lower (relative risk 0.70, 95% interval 0.62 to 0.78)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.72 to 0.84)
+- Heart-failure hospitalization: 41% lower (relative risk 0.59, 95% interval 0.51 to 0.67)
+  - At today's doses: 30% lower (relative risk 0.70, 95% interval 0.64 to 0.77)
+- Health status (KCCQ-equivalent): gain of 1.4 points
+- Side-effect burden: +6.1 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.2); Eplerenone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($21 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 2), one more drug
+- Evidence: Limited concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 61 out of 100. Monthly cost: $21.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now 2 doses a day from 1 drug).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.65).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.68 against 0.76) and a larger expected gain in health status (+3.2 against +1.1 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 24% lower (relative risk 0.76, 95% interval 0.68 to 0.85)
+  - At today's doses: 15% lower (relative risk 0.85, 95% interval 0.80 to 0.91)
+- Heart-failure hospitalization: 35% lower (relative risk 0.65, 95% interval 0.57 to 0.74)
+  - At today's doses: 23% lower (relative risk 0.77, 95% interval 0.71 to 0.83)
+- Health status (KCCQ-equivalent): gain of 1.1 points
+- Side-effect burden: +6.1 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.2); Eplerenone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($21 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 2), one more drug
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): not started in option 1. Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Eplerenone); adding a RAAS inhibitor means dropping one. A plan that starts it (Losartan) is not among the options shown: it ranks below the three options shown; could be started: Valsartan, Candesartan, Losartan; Lisinopril withheld (Previously discontinued): Angioedema; Enalapril, Ramipril, Captopril withheld (ACE inhibitor intolerance): Angioedema is recorded: an ACE inhibitor is not used after angioedema; Sacubitril/Valsartan (Entresto) withheld (ARNI after angioedema): ARNI excluded: neprilysin inhibition worsens bradykinin-mediated angioedema risk
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Eplerenone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 4: 62-year-old woman, preserved ejection fraction (58%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 62-year-old woman with an ejection fraction of 58% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 136/82 mmHg and the heart rate is 74 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 80 mL/min/1.73 m². She takes no heart failure medication.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 62 years, female; self-identified race: White |
+| Ejection fraction | 58%; lowest earlier ejection fraction not entered; ever 40% or lower: no |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 136/82 mmHg; 74 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 108 kg now; recorded dry weight 108 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 450 pg/mL |
+| Potassium | 4.4 mEq/L |
+| Kidney function | creatinine 0.83 mg/dL; eGFR 80 mL/min/1.73 m²; earlier creatinine not entered; BUN 14.9 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| None | not applicable | not applicable |
+
+Daily dosing: no drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 4: 62-year-old woman, preserved ejection fraction (58%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of preserved ejection fraction (LVEF 58%, 50% or above).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Semaglutide (Wegovy) 0.25mg weekly
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Semaglutide (Wegovy) 0.25 mg once weekly
+
+The tool's ordering score for this option: 52 out of 100. Monthly cost: $399.00/month (estimate). Dosing burden: 1 dose a day from 1 drug, plus 1 drug once a week (now no drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.50 against 0.63); option 2 is cheaper each month ($54.00 against $399.00).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected gain in health status (+8.3 against +3.2 KCCQ-equivalent points); option 2 has fewer side effects (side-effect burden +14.7 against +30.3 points) and a larger expected reduction in death (relative risk 0.90 against 0.92).
+- Mineralocorticoid receptor antagonist: Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Semaglutide); adding an MRA means dropping one. It appears in option 2 (Spironolactone).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 8% lower (relative risk 0.92, 95% interval 0.73 to 1.16; the interval includes no effect)
+  - At today's doses: 5% lower (relative risk 0.95, 95% interval 0.85 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 50% lower (relative risk 0.50, 95% interval 0.35 to 0.73)
+  - At today's doses: 35% lower (relative risk 0.65, 95% interval 0.55 to 0.77)
+- Health status (KCCQ-equivalent): gain of 8.3 points
+- Side-effect burden: +30.3 points (more measured harm)
+  - Largest contributors to the change: Semaglutide (Wegovy), everyday symptoms (combined) (+16.7); Dapagliflozin, genital fungal infection (+5.4).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 1**
+
+- Semaglutide titration is one labeled step at a time (0.25, 0.5, 1.0, 1.7, then 2.4 mg weekly), at least 4 weeks per step; escalation can be delayed 4 weeks for tolerability. 1.7 mg is a labeled maintenance dose, 2.4 mg is the dose studied in STEP-HFpEF (injection only; the oral tablets have no heart-failure data).
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Semaglutide (Wegovy): Assess tolerance, weight and symptoms over time. Trial-average weight loss is not applied to current weight; fluid loss, adiposity change and weight regain are not quantified.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($399 of $500 a month)
+- Dosing burden: More doses a day than now (1, now 0), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Spironolactone 25mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 49 out of 100. Monthly cost: $54.00/month (estimate). Dosing burden: 2 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 2 is cheaper each month ($54.00 against $399.00); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.50 against 0.63).
+
+More on why:
+
+- Also against option 1: option 2 has fewer side effects (side-effect burden +14.7 against +30.3 points) and a larger expected reduction in death (relative risk 0.90 against 0.92); option 1 has a larger expected gain in health status (+8.3 against +3.2 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Includes Spironolactone 25 mg once daily; option 1 does not.
+- Does not include Semaglutide (Wegovy), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 10% lower (relative risk 0.90, 95% interval 0.76 to 1.07; the interval includes no effect)
+  - At today's doses: 9% lower (relative risk 0.91, 95% interval 0.77 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 37% lower (relative risk 0.63, 95% interval 0.52 to 0.77)
+  - At today's doses: 36% lower (relative risk 0.64, 95% interval 0.52 to 0.77)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +14.7 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+5.4); Spironolactone, high potassium (above 5.5) (+2.6).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 2**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Spironolactone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($54 of $500 a month)
+- Dosing burden: More doses a day than now (2, now 0), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Semaglutide (Wegovy) 0.25mg weekly
+
+**Resulting regimen**
+
+- Semaglutide (Wegovy) 0.25 mg once weekly
+
+The tool's ordering score for this option: 47 out of 100. Monthly cost: $349.00/month (estimate). Dosing burden: 1 drug once a week (now no drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 3 has fewer side effects (side-effect burden +22.2 against +30.3 points); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.50 against 0.67).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected gain in health status (+8.3 against +6.2 KCCQ-equivalent points) and a larger expected reduction in death (relative risk 0.92 against 0.95).
+
+**Drug differences from option 1**
+
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 5% lower (relative risk 0.95, 95% interval 0.77 to 1.17; the interval includes no effect)
+  - At today's doses: 2% lower (relative risk 0.98, 95% interval 0.91 to 1.06; the interval includes no effect)
+- Heart-failure hospitalization: 33% lower (relative risk 0.67, 95% interval 0.47 to 0.96)
+  - At today's doses: 13% lower (relative risk 0.87, 95% interval 0.76 to 0.99)
+- Health status (KCCQ-equivalent): gain of 6.2 points
+- Side-effect burden: +22.2 points (more measured harm)
+  - Largest contributors to the change: Semaglutide (Wegovy), everyday symptoms (combined) (+16.7); Semaglutide (Wegovy), serious kidney event (+4.2).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 3**
+
+- Semaglutide titration is one labeled step at a time (0.25, 0.5, 1.0, 1.7, then 2.4 mg weekly), at least 4 weeks per step; escalation can be delayed 4 weeks for tolerability. 1.7 mg is a labeled maintenance dose, 2.4 mg is the dose studied in STEP-HFpEF (injection only; the oral tablets have no heart-failure data).
+
+**Treatment considerations for option 3**
+
+- Semaglutide (Wegovy): Assess tolerance, weight and symptoms over time. Trial-average weight loss is not applied to current weight; fluid loss, adiposity change and weight regain are not quantified.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($349 of $500 a month)
+- Dosing burden: Same doses a day as now (0), one more drug
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1. Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Semaglutide); adding an MRA means dropping one. It appears in option 2 (Spironolactone); could be started: Spironolactone, Eplerenone, Finerenone (Kerendia)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Semaglutide) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 5: 72-year-old man, reduced ejection fraction (25%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 72-year-old man with an ejection fraction of 25% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/70 mmHg and the heart rate is 88 per minute in sinus rhythm. He is 4 kg above the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 48 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Furosemide 80 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 72 years, male; self-identified race: White |
+| Ejection fraction | 25%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 118/70 mmHg; 88 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 96 kg now; recorded dry weight 92 kg (4 kg above dry weight) |
+| Examination findings | Crackles, Edema (2+), JVP Elevated |
+| NT-proBNP | 5200 pg/mL |
+| Potassium | 4.4 mEq/L |
+| Kidney function | creatinine 1.52 mg/dL; eGFR 48 mL/min/1.73 m²; earlier creatinine not entered; BUN 27.4 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Furosemide | 80 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 5: 72-year-old man, reduced ejection fraction (25%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 25%, 40% or below).
+
+### Safety alerts (4)
+
+- **Acute decompensation**: This patient may need same-day evaluation, intravenous diuresis or admission (the tool reads NYHA class IV, or NYHA class III with more than 2 kg above dry weight and at least two congestion findings, as acute decompensation). The options below apply only if the patient is judged well enough to stay an outpatient. When the patient is congested and an oral loop diuretic start or increase is eligible, every option includes one.
+- **Very high risk**: NT-proBNP 5200 pg/mL (above 5000) with worsening symptoms or congestion. The 2026 ESC guideline says this indicates very high risk and admission is generally recommended; assess for admission before outpatient optimization.
+- **Beta-blocker start deferred**: NYHA class III with more than 2 kg above dry weight and at least two congestion findings is treated as acute decompensation, so no beta-blocker is started in any option (2022 AHA/ACC/HFSA: do not start during decompensation; 2026 ESC Supplementary Table S6: seek specialist advice in NYHA IV or a recent exacerbation, achieve euvolemia first). Start at a low dose once the patient is stable and decongested.
+- **Advanced heart failure alert**: Early consultation with an advanced heart failure centre is Class I for patients with or at risk of advanced HF (2026 ESC Recommendation Table 11; "I NEED HELP" markers, any one is enough). Markers present: NYHA III with NT-proBNP 5200 pg/mL (high; persistence on treatment is not visible to the tool); diuretic resistance (congested on Furosemide 160 mg/day, its high-dose level). The tool cannot see hospitalizations in the past year (two or more, or one needing inotropes, is a "rule of three" trigger; the form records only whether a recent worsening event occurred), inotrope use, end-organ dysfunction, defibrillator shocks or right-ventricular function: check them. Consider IV inotropic support, mechanical circulatory support (LVAD), transplant evaluation and a palliative care discussion; device assessment is in the device alert when LVEF is 35 or below.
+
+### Other care prompts (1)
+
+- **Device therapy screening**: LVEF 25% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Eplerenone 25mg once daily
+- Titrate Furosemide from 80mg twice daily to 160mg twice daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Eplerenone 25 mg once daily
+- Furosemide 160 mg twice daily
+- Lisinopril 10 mg once daily
+
+The tool's ordering score for this option: 67 out of 100. Monthly cost: $74.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected gain in health status (+3.2 against +2.2 KCCQ-equivalent points).
+
+More on why:
+
+- Evidence-based beta-blocker: Not started: no beta-blocker is started during acute decompensation.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.58 to 0.79)
+- Heart-failure hospitalization: 53% lower (relative risk 0.47, 95% interval 0.40 to 0.54)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +11.2 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The effect of the loop diuretic dose on death and hospitalization is not modelled: the figures above do not include it.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 1**
+
+- Furosemide: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured weight, congestion, BP, sodium, potassium and renal response after the change. Dose conversion is a starting convention, not proof of equivalent diuresis or safety.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($74 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Eplerenone 25mg once daily
+- Titrate Furosemide from 80mg twice daily to 160mg twice daily
+
+**Resulting regimen**
+
+- Eplerenone 25 mg once daily
+- Furosemide 160 mg twice daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 67 out of 100. Monthly cost: $80.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 1 has a larger expected gain in health status (+3.2 against +2.2 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Includes Sacubitril/Valsartan (Entresto) 24/26 mg twice daily; option 1 does not.
+- Does not include Dapagliflozin, which is included in option 1.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.56 to 0.83)
+  - At today's doses: 20% lower (relative risk 0.80, 95% interval 0.70 to 0.92)
+- Heart-failure hospitalization: 54% lower (relative risk 0.46, 95% interval 0.37 to 0.58)
+  - At today's doses: 32% lower (relative risk 0.68, 95% interval 0.58 to 0.80)
+- Health status (KCCQ-equivalent): gain of 2.2 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +6.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT).
+
+The effect of the loop diuretic dose on death and hospitalization is not modelled: the figures above do not include it.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (2)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 2**
+
+- Furosemide: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured weight, congestion, BP, sodium, potassium and renal response after the change. Dose conversion is a starting convention, not proof of equivalent diuresis or safety.
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($80 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Limited concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Titrate Furosemide from 80mg twice daily to 160mg twice daily
+- Titrate Lisinopril from 10mg once daily to 20mg once daily
+
+**Resulting regimen**
+
+- Eplerenone 25 mg once daily
+- Furosemide 160 mg twice daily
+- Lisinopril 20 mg once daily (target dose)
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $24.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.57).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.68 against 0.72) and a larger expected gain in health status (+3.2 against +1.6 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Lisinopril: 20 mg once daily here; 10 mg once daily in option 1.
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 28% lower (relative risk 0.72, 95% interval 0.64 to 0.80)
+- Heart-failure hospitalization: 43% lower (relative risk 0.57, 95% interval 0.50 to 0.66)
+- Health status (KCCQ-equivalent): gain of 1.6 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +6.1 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.2); Eplerenone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The effect of the loop diuretic dose on death and hospitalization is not modelled: the figures above do not include it.
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril.
+
+Side effects at the higher dose were not measured separately; the burden shown for Lisinopril is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 3**
+
+- Furosemide: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured weight, congestion, BP, sodium, potassium and renal response after the change. Dose conversion is a starting convention, not proof of equivalent diuresis or safety.
+- Lisinopril: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($24 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): not started in option 1. Not started: no beta-blocker is started during acute decompensation; could be started: Carvedilol, Metoprolol Succinate, Bisoprolol
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Other eligible therapy to consider
+
+- Furoscix (SC Furosemide): a short course beside the oral loop diuretic for congestion that persists; the label says it is not for chronic use. Not in an option shown: the plan that starts it costs $5824 a month, over the stated budget of $500.
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+- **Daily weight, BP, orthostasis, dizziness** (Daily for 7 days): Flag over-diuresis if weight loss >1 kg/day, symptomatic hypotension, or presyncope.
+- **BMP (electrolytes, creatinine)** (3-7 days after a diuretic start or increase, and again at 1-2 weeks (2026 ESC Supplementary Table S7)): Screen for pre-renal AKI, hypokalemia, and hyponatremia after dose escalation.
+- **Renal dosing review** (At initiation and after any eGFR change): Renal dose caution at eGFR 48: Eplerenone: confirm dosing against current renal function and monitor.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Eplerenone 25mg once daily; Titrate Furosemide from 80mg twice daily to 160mg twice daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 6: 61-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 61-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 112/70 mmHg and the heart rate is 62 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.6 mEq/L and eGFR is 66 mL/min/1.73 m². He takes Sacubitril/Valsartan 97/103 mg twice daily, Carvedilol 25 mg twice daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 61 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 112/70 mmHg; 62 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 82 kg now; recorded dry weight 82 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 600 pg/mL |
+| Potassium | 4.6 mEq/L |
+| Kidney function | creatinine 1.24 mg/dL; eGFR 66 mL/min/1.73 m²; earlier creatinine not entered; BUN 22.3 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Sacubitril/Valsartan (Entresto) | 97/103 mg twice daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 25 mg twice daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+| Dapagliflozin | 10 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 6 doses a day from 4 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 6: 61-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy; Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- No medication change is proposed in this option. Review remaining treatment gaps, safety warnings and monitoring before deciding to continue.
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 97/103 mg twice daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 75 out of 100. Monthly cost: $118.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 6 doses a day from 4 drugs).
+
+**Why this is first**
+
+- No option scores 1 point or more above leaving the regimen unchanged, which is closer than the tool can separate; the alternatives below are shown for discussion.
+- Option 1 and option 2 are too close to separate.
+
+More on why:
+
+- Starting IV iron is withheld because information is missing: hemoglobin for dose selection, prior iron-course dates and first-versus-repeat course assessment, phosphate safety assessment (testing when indicated).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- No medication change is proposed, so there is no change in expected effect.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Recorded regimen: No net medication change is proposed. Reassess the recorded condition; unchanged medication does not establish clinical stability or complete treatment.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($118 of $500 a month)
+- Dosing burden: Same doses a day as now (6)
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Titrate Spironolactone from 25mg once daily to 50mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 97/103 mg twice daily (target dose)
+- Spironolactone 50 mg once daily (target dose)
+
+The tool's ordering score for this option: 75 out of 100. Monthly cost: $118.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 6 doses a day from 4 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate.
+
+**Drug differences from option 1**
+
+- Spironolactone: 50 mg once daily here; 25 mg once daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 1% lower (relative risk 0.99, estimated from the dose relationship; no interval)
+- Heart-failure hospitalization: 2% lower (relative risk 0.98, estimated from the dose relationship; no interval)
+- Health status (KCCQ-equivalent): about the same
+- Side-effect burden: not changed in the model, because side effects at the higher dose were not measured separately
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Side effects at the higher dose were not measured separately; the burden shown for Spironolactone is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Spironolactone: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($118 of $500 a month)
+- Dosing burden: Same doses a day as now (6)
+- Evidence: Strong guideline concordance
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (No medication change) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 7: 63-year-old man, reduced ejection fraction (30%), atrial fibrillation
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 63-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 122/76 mmHg and the heart rate is 88 per minute in atrial fibrillation. He is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 72 mL/min/1.73 m². He takes no heart failure medication.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 63 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 122/76 mmHg; 88 per minute; rhythm: atrial fibrillation; oxygen saturation 97% |
+| Weight | 84 kg now; recorded dry weight 84 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1700 pg/mL |
+| Potassium | 4.4 mEq/L |
+| Kidney function | creatinine 1.14 mg/dL; eGFR 72 mL/min/1.73 m²; earlier creatinine not entered; BUN 20.5 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Atrial Fibrillation |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| None | not applicable | not applicable |
+
+Daily dosing: no drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 7: 63-year-old man, reduced ejection fraction (30%), atrial fibrillation
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (1)
+
+- **Atrial fibrillation**: Oral anticoagulation is Class I, chosen by the CHA2DS2-VA score; a DOAC is preferred over warfarin except with a mechanical valve or moderate-severe mitral stenosis (2026 ESC Recommendation Table 15). The tool does not compute the score and has no anticoagulant field: confirm one is prescribed. Rate control: a beta-blocker is first line in HFrEF with AF once the patient is stable (Class I C) and none is on board.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT recommendations assume sinus rhythm; the recorded rhythm is AFib, so specialist review is needed. QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $77.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now no drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+- Evidence-based beta-blocker: Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding a beta-blocker means dropping one. A plan that starts it (Carvedilol) is not among the options shown: it ranks below the three options shown.
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 41% lower (relative risk 0.59, 95% interval 0.49 to 0.71)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.71 to 0.85)
+- Heart-failure hospitalization: 65% lower (relative risk 0.35, 95% interval 0.28 to 0.44)
+  - At today's doses: 38% lower (relative risk 0.62, 95% interval 0.56 to 0.68)
+- Health status (KCCQ-equivalent): gain of 3.4 points
+- Side-effect burden: +14.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($77 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 0), 2 more drugs
+- Evidence: Limited concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Captopril 6.25mg three times daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Captopril 6.25 mg three times daily
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 62 out of 100. Monthly cost: $25.00/month (estimate). Dosing burden: 4 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+
+**Drug differences from option 1**
+
+- Includes Captopril 6.25 mg three times daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 38% lower (relative risk 0.62, 95% interval 0.54 to 0.71)
+  - At today's doses: 21% lower (relative risk 0.79, 95% interval 0.73 to 0.85)
+- Heart-failure hospitalization: 56% lower (relative risk 0.44, 95% interval 0.37 to 0.51)
+  - At today's doses: 33% lower (relative risk 0.67, 95% interval 0.61 to 0.73)
+- Health status (KCCQ-equivalent): gain of 2.8 points
+- Side-effect burden: +13.4 points (more measured harm)
+  - Largest contributors to the change: Captopril, everyday symptoms (combined) (+4.1); Captopril, fainting (+2.4).
+
+Borrowed evidence: Captopril borrowed from Valsartan (Val-HeFT); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 2**
+
+- Captopril: Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($25 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 0), 2 more drugs
+- Evidence: Limited concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 62 out of 100. Monthly cost: $110.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.69).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.40).
+
+**Drug differences from option 1**
+
+- Includes Dapagliflozin 10 mg once daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 31% lower (relative risk 0.69, 95% interval 0.57 to 0.83)
+  - At today's doses: 19% lower (relative risk 0.81, 95% interval 0.71 to 0.91)
+- Heart-failure hospitalization: 60% lower (relative risk 0.40, 95% interval 0.33 to 0.48)
+  - At today's doses: 42% lower (relative risk 0.58, 95% interval 0.53 to 0.64)
+- Health status (KCCQ-equivalent): gain of 4.4 points
+- Side-effect burden: +13.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($110 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 0), 2 more drugs
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): started in option 1 (Sacubitril/Valsartan (Entresto))
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): not started in option 1. Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding a beta-blocker means dropping one. A plan that starts it (Carvedilol) is not among the options shown: it ranks below the three options shown; could be started: Carvedilol, Metoprolol Succinate, Bisoprolol
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin); could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Eplerenone 25mg once daily; Add Sacubitril/Valsartan) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 8: 60-year-old man, reduced ejection fraction (25%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 60-year-old man with an ejection fraction of 25% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 96/60 mmHg and the heart rate is 80 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 68 mL/min/1.73 m². He takes Lisinopril 2.5 mg once daily, Carvedilol 3.125 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 60 years, male; self-identified race: White |
+| Ejection fraction | 25%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 96/60 mmHg; 80 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 76 kg now; recorded dry weight 76 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1800 pg/mL |
+| Potassium | 4.4 mEq/L |
+| Kidney function | creatinine 1.22 mg/dL; eGFR 68 mL/min/1.73 m²; earlier creatinine not entered; BUN 22 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 2.5 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 3.125 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 8: 60-year-old man, reduced ejection fraction (25%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 25%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 25% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Eplerenone 25 mg once daily
+- Lisinopril 2.5 mg once daily
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $75.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.61).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.47 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +11.2 points).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.68 against 0.73) and a larger expected gain in health status (+3.2 against +1.3 KCCQ-equivalent points).
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.68 against 1.00) and an expected gain in health status (+3.2 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.58 to 0.79)
+  - At today's doses: 25% lower (relative risk 0.75, 95% interval 0.66 to 0.86)
+- Heart-failure hospitalization: 53% lower (relative risk 0.47, 95% interval 0.40 to 0.54)
+  - At today's doses: 44% lower (relative risk 0.56, 95% interval 0.50 to 0.62)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +11.2 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($75 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Titrate Carvedilol from 3.125mg twice daily to 6.25mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 6.25 mg twice daily
+- Eplerenone 25 mg once daily
+- Lisinopril 2.5 mg once daily
+
+The tool's ordering score for this option: 61 out of 100. Monthly cost: $25.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.61).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.68 against 0.73) and a larger expected gain in health status (+3.2 against +1.3 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Carvedilol: 6.25 mg twice daily here; 3.125 mg twice daily in option 1.
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 27% lower (relative risk 0.73, 95% interval 0.65 to 0.82)
+  - At today's doses: 19% lower (relative risk 0.81, 95% interval 0.76 to 0.87)
+- Heart-failure hospitalization: 39% lower (relative risk 0.61, 95% interval 0.54 to 0.70)
+  - At today's doses: 27% lower (relative risk 0.73, 95% interval 0.68 to 0.79)
+- Health status (KCCQ-equivalent): gain of 1.3 points
+- Side-effect burden: +6.1 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.2); Eplerenone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($25 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Titrate Lisinopril from 2.5mg once daily to 5mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Eplerenone 25 mg once daily
+- Lisinopril 5 mg once daily
+
+The tool's ordering score for this option: 61 out of 100. Monthly cost: $25.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.62).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.68 against 0.74) and a larger expected gain in health status (+3.2 against +1.3 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Lisinopril: 5 mg once daily here; 2.5 mg once daily in option 1.
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 26% lower (relative risk 0.74, 95% interval 0.66 to 0.83)
+  - At today's doses: 17% lower (relative risk 0.83, 95% interval 0.78 to 0.89)
+- Heart-failure hospitalization: 38% lower (relative risk 0.62, 95% interval 0.54 to 0.71)
+  - At today's doses: 26% lower (relative risk 0.74, 95% interval 0.68 to 0.80)
+- Health status (KCCQ-equivalent): gain of 1.3 points
+- Side-effect burden: +6.1 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.2); Eplerenone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril.
+
+Side effects at the higher dose were not measured separately; the burden shown for Lisinopril is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 3**
+
+- Lisinopril: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($25 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Eplerenone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 9: 61-year-old man, reduced ejection fraction (28%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 61-year-old man with an ejection fraction of 28% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 124/78 mmHg and the heart rate is 76 per minute in sinus rhythm. He is at the recorded dry weight. Potassium and kidney function have not been entered. He takes no heart failure medication.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 61 years, male; self-identified race: White |
+| Ejection fraction | 28%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 124/78 mmHg; 76 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 80 kg now; recorded dry weight 80 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1500 pg/mL |
+| Potassium | not entered |
+| Kidney function | creatinine not entered; eGFR not entered; earlier creatinine not entered; BUN not entered |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| None | not applicable | not applicable |
+
+Daily dosing: no drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 9: 61-year-old man, reduced ejection fraction (28%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 28%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (5)
+
+- **Data required**: Serum potassium not entered. Obtain a BMP before initiating or up-titrating a RAAS inhibitor or MRA: hyperkalemia risk cannot be assessed and must not be assumed absent.
+- **Data required**: Renal function (eGFR / creatinine) not entered. Required for renal dose adjustment and RAAS / MRA / SGLT2i safety. Obtain a BMP.
+- **Device therapy screening**: LVEF 28% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+- **Labs required**: Potassium/renal function not entered: RAAS inhibitor and MRA starts and dose increases are withheld until a basic metabolic panel is available. Enter labs that reflect the patient's current medications and clinical state.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Serum potassium: RAAS/MRA, diuretic, digoxin and binder starts/increases/switches wait for potassium.
+- Waiting for information: Renal function: RAAS/MRA, SGLT2 inhibitor, diuretic and digoxin starts/increases/switches wait for renal assessment.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+- Waiting for information: BUN: BUN/creatinine perfusion marker cannot be assessed; no normal ratio is assumed.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+
+The tool's ordering score for this option: 54 out of 100. Monthly cost: $4.00/month (estimate). Dosing burden: 2 doses a day from 1 drug (now no drugs).
+
+**Why this is first**
+
+- Only one option is shown: the tool built no other plan that passed its safety checks for this patient today.
+
+More on why:
+
+- Starting RAAS inhibitors is withheld because information is missing: laboratory prerequisite: potassium and renal function (eGFR/creatinine) not entered; obtain a BMP before starting this drug.
+- Starting mineralocorticoid receptor antagonists is withheld because information is missing: renal data required: cannot assess renal safety (obtain BMP before initiation).
+- Starting SGLT2 inhibitors is withheld because information is missing: renal function.
+- Starting loop diuretics, digoxin and thiazide-type diuretics is withheld because information is missing: serum potassium, renal function.
+- Starting potassium binders is withheld because information is missing: serum potassium.
+- Starting IV iron is withheld because information is missing: hemoglobin for dose selection, prior iron-course dates and first-versus-repeat course assessment, phosphate safety assessment (testing when indicated).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 30% lower (relative risk 0.70, 95% interval 0.62 to 0.78)
+  - At today's doses: 12% lower (relative risk 0.88, 95% interval 0.84 to 0.91)
+- Heart-failure hospitalization: 33% lower (relative risk 0.67, 95% interval 0.56 to 0.81)
+  - At today's doses: 13% lower (relative risk 0.87, 95% interval 0.81 to 0.93)
+- Health status (KCCQ-equivalent): gain of 1.2 points
+- Side-effect burden: +16.1 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Carvedilol, new diabetes (+2.0).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 1**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($4 of $500 a month)
+- Dosing burden: More doses a day than now (2, now 0), one more drug
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): not started in option 1; Sacubitril/Valsartan (Entresto) withheld (Potassium and renal function required): potassium and renal function (eGFR/creatinine) are blank (not entered): a new angiotensin receptor-neprilysin inhibitor start needs a current potassium and renal function: obtain a BMP first; Lisinopril, Enalapril, Ramipril, Captopril withheld (Potassium and renal function required): potassium and renal function (eGFR/creatinine) are blank (not entered): a new ACE inhibitor start needs a current potassium and renal function: obtain a BMP first; Valsartan, Candesartan, Losartan withheld (Potassium and renal function required): potassium and renal function (eGFR/creatinine) are blank (not entered): a new angiotensin receptor blocker start needs a current potassium and renal function: obtain a BMP first
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): started in option 1 (Carvedilol)
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1; Spironolactone, Eplerenone withheld (Decision-specific information required): Renal data required: cannot assess renal safety (obtain BMP before initiation); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1; Dapagliflozin, Empagliflozin withheld (Decision-specific information required): Information required before starting: renal function
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- BUN not entered: the BUN/creatinine perfusion marker is unassessed, not normal.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Carvedilol 3.125mg twice daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 10: 59-year-old man, reduced ejection fraction (28%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 59-year-old man with an ejection fraction of 28% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 70 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.8 mEq/L and eGFR is 64 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Metoprolol Succinate 100 mg once daily, Spironolactone 25 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 59 years, male; self-identified race: Black |
+| Ejection fraction | 28%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 126/78 mmHg; 70 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 92 kg now; recorded dry weight 92 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 2600 pg/mL |
+| Potassium | 4.8 mEq/L |
+| Kidney function | creatinine 1.28 mg/dL; eGFR 64 mL/min/1.73 m²; earlier creatinine not entered; BUN 23 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 20 mg once daily | taking as recorded; consistent use confirmed |
+| Metoprolol Succinate | 100 mg once daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 3 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 10: 59-year-old man, reduced ejection fraction (28%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 28%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 28% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class III. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Metoprolol Succinate from 100mg once daily to 200mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 20 mg once daily (target dose)
+- Metoprolol Succinate 200 mg once daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 73 out of 100. Monthly cost: $68.00/month (estimate). Dosing burden: 4 doses a day from 4 drugs (now 3 doses a day from 3 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected reduction in death (relative risk 0.81 against 0.85); option 2 has a larger expected reduction in heart-failure hospitalization (relative risk 0.58 against 0.65).
+- Compared with making no medication change: option 1 has an expected reduction in death (relative risk 0.81 against 1.00).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.65 against 1.00) and an expected gain in health status (+2.4 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 19% lower (relative risk 0.81, 95% interval 0.72 to 0.91)
+- Heart-failure hospitalization: 35% lower (relative risk 0.65, 95% interval 0.60 to 0.72)
+- Health status (KCCQ-equivalent): gain of 2.4 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors); Metoprolol Succinate borrowed from Bisoprolol (CIBIS-II).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Metoprolol Succinate.
+
+Side effects at the higher dose were not measured separately; the burden shown for Metoprolol Succinate is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 1**
+
+- Metoprolol Succinate: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($68 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 49/51mg twice daily
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Metoprolol Succinate 100 mg once daily
+- Sacubitril/Valsartan (Entresto) 49/51 mg twice daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 73 out of 100. Monthly cost: $124.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 3 doses a day from 3 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 2 has a larger expected reduction in heart-failure hospitalization (relative risk 0.58 against 0.65); option 1 has a larger expected reduction in death (relative risk 0.81 against 0.85).
+
+**Drug differences from option 1**
+
+- Metoprolol Succinate: 100 mg once daily here; 200 mg once daily in option 1.
+- Includes Sacubitril/Valsartan (Entresto) 49/51 mg twice daily; option 1 does not.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 15% lower (relative risk 0.85, 95% interval 0.69 to 1.03; the interval includes no effect)
+  - At today's doses: 5% lower (relative risk 0.95, 95% interval 0.81 to 1.12; the interval includes no effect)
+- Heart-failure hospitalization: 42% lower (relative risk 0.58, 95% interval 0.47 to 0.72)
+  - At today's doses: 23% lower (relative risk 0.77, 95% interval 0.66 to 0.90)
+- Health status (KCCQ-equivalent): gain of 2.7 points
+- Side-effect burden: +6.7 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Metoprolol Succinate borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 2**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($124 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Hydralazine/Isosorbide Dinitrate 37.5/20mg three times daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Hydralazine/Isosorbide Dinitrate 37.5/20 mg three times daily
+- Lisinopril 20 mg once daily (target dose)
+- Metoprolol Succinate 100 mg once daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 73 out of 100. Monthly cost: $88.00/month (estimate). Dosing burden: 7 doses a day from 5 drugs (now 3 doses a day from 3 drugs).
+
+**Why this is option 3**
+
+- Option 3 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 3 has a larger expected reduction in heart-failure hospitalization (relative risk 0.49 against 0.65); option 1 has fewer side effects (side-effect burden +5.1 against +63.1 points).
+
+More on why:
+
+- Also against option 1: option 3 has a larger expected gain in health status (+4.6 against +2.4 KCCQ-equivalent points) and a larger expected reduction in death (relative risk 0.74 against 0.81).
+
+**Drug differences from option 1**
+
+- Includes Hydralazine/Isosorbide Dinitrate 37.5/20 mg three times daily; option 1 does not.
+- Metoprolol Succinate: 100 mg once daily here; 200 mg once daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 26% lower (relative risk 0.74, 95% interval 0.56 to 0.97)
+  - At today's doses: 17% lower (relative risk 0.83, 95% interval 0.72 to 0.96)
+- Heart-failure hospitalization: 51% lower (relative risk 0.49, 95% interval 0.38 to 0.63)
+  - At today's doses: 37% lower (relative risk 0.63, 95% interval 0.56 to 0.70)
+- Health status (KCCQ-equivalent): gain of 4.6 points
+- Side-effect burden: +63.1 points (more measured harm)
+  - Largest contributors to the change: Hydralazine/Isosorbide Dinitrate, everyday symptoms (combined) (+49.0); Hydralazine/Isosorbide Dinitrate, dangerous ventricular rhythm (+6.0).
+
+Borrowed evidence: Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors); Metoprolol Succinate borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 3**
+
+- Hydralazine can cause a drug-induced lupus-like syndrome (dose- and acetylator-dependent) and peripheral neuritis (pyridoxine / vitamin B6 is used for prevention or treatment) (BiDil label). Ask about joint pain, fever, rash and numbness or tingling at each visit.
+- Hydralazine can cause tachycardia and hypotension that may worsen ischemia (BiDil label; hypotension 8% vs 4% in A-HeFT). Titrate from one tablet three times daily to two tablets three times daily over several days as tolerated.
+
+**Treatment considerations for option 3**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Hydralazine/Isosorbide Dinitrate: Assess BP and symptoms after each dose step and check nitrate interactions. A flat stored effect coefficient does not establish unchanged hypotension risk.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($88 of $500 a month)
+- Dosing burden: More doses a day than now (7, now 3), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Indicated therapy currently missing
+
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Titrate Metoprolol Succinate from 100mg once daily to 200mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 11: 70-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 70-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 120/72 mmHg and the heart rate is 70 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 5.6 mEq/L and eGFR is 44 mL/min/1.73 m². He takes Sacubitril/Valsartan 49/51 mg twice daily, Spironolactone 25 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 70 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 120/72 mmHg; 70 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 80 kg now; recorded dry weight 80 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1600 pg/mL |
+| Potassium | 5.6 mEq/L |
+| Kidney function | creatinine 1.65 mg/dL; eGFR 44 mL/min/1.73 m²; earlier creatinine not entered; BUN 29.7 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Sacubitril/Valsartan (Entresto) | 49/51 mg twice daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 11: 70-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (2)
+
+- **Potassium hold on sacubitril/valsartan (Entresto)**: Potassium 5.6 mEq/L is above 5.2: the dose is not increased (maintain; recheck potassium). Sacubitril/Valsartan (Entresto) 49/51mg stays at the current dose; recheck potassium before any increase. Basis: A rule set by this tool: the dose is not raised above potassium 5.2, the same threshold that holds a new start (2026 ESC Supplementary Tables S4/S5: seek advice above 5.2; a rise to 5.5 on treatment is acceptable).
+- **Potassium reduce on spironolactone**: Potassium 5.6 mEq/L is 5.5-5.9: reduce one dose step (withhold if already at the lowest dose); do not increase the dose again until potassium is below 5.0 (Eplerenone/finerenone label rule applied to spironolactone by analogy (the Aldactone label gives no numeric rule)). Recheck potassium and kidney function in 1-2 weeks and look for other causes first (2026 ESC Supplementary Table S8: above 5.5 halve the dose; above 6.0 interrupt and seek specialist advice). ESC says therapy held for less than 14 days can usually restart at the previous dose; the US labels restart a withheld MRA at a low dose (not the previous dose) once potassium is below 5.5; this tool uses that label rule. A dose that was only reduced is not increased again until potassium is below 5.0.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Dapagliflozin 10mg once daily
+- Reduce Spironolactone from 25mg once daily to 12.5mg once daily (potassium 5.6 mEq/L is 5.5-5.9: reduce one dose step; do not increase the dose again until potassium is below 5.0)
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 49/51 mg twice daily
+- Spironolactone 12.5 mg once daily
+
+The tool's ordering score for this option: 29 out of 100. Monthly cost: $118.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.60 against 0.83).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.71 against 0.80) and a larger expected gain in health status (+2.8 against +0.7 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 29% lower (relative risk 0.71, 95% interval 0.60 to 0.84)
+  - At today's doses: 11% lower (relative risk 0.89, 95% interval 0.78 to 1.01; the interval includes no effect)
+- Heart-failure hospitalization: 40% lower (relative risk 0.60, 95% interval 0.49 to 0.74)
+  - At today's doses: 23% lower (relative risk 0.77, 95% interval 0.69 to 0.87)
+- Health status (KCCQ-equivalent): gain of 2.8 points
+- Side-effect burden: +21.2 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Dapagliflozin, genital fungal infection (+2.4).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Spironolactone.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- DANGER: High Hyperkalemia Risk (K+ > 5.5)
+
+**Prescribing notes for option 1**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 1**
+
+- Spironolactone: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($118 of $500 a month)
+- Dosing burden: More doses a day than now (6, now 3), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Reduce Spironolactone from 25mg once daily to 12.5mg once daily (potassium 5.6 mEq/L is 5.5-5.9: reduce one dose step; do not increase the dose again until potassium is below 5.0)
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Sacubitril/Valsartan (Entresto) 49/51 mg twice daily
+- Spironolactone 12.5 mg once daily
+
+The tool's ordering score for this option: 25 out of 100. Monthly cost: $68.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.60 against 0.83).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.71 against 0.80) and a larger expected gain in health status (+2.8 against +0.7 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 20% lower (relative risk 0.80, 95% interval 0.70 to 0.90)
+  - At today's doses: no measurable difference (relative risk 1.00, 95% interval 0.93 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 17% lower (relative risk 0.83, 95% interval 0.68 to 1.01; the interval includes no effect)
+  - At today's doses: 7% higher (relative risk 1.07, 95% interval 0.97 to 1.17; the interval includes no effect)
+- Health status (KCCQ-equivalent): gain of 0.7 points
+- Side-effect burden: +16.1 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Carvedilol, new diabetes (+2.0).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Spironolactone.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- DANGER: High Hyperkalemia Risk (K+ > 5.5)
+
+**Prescribing notes for option 2**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 2**
+
+- Spironolactone: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($68 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Reduce Spironolactone from 25mg once daily to 12.5mg once daily (potassium 5.6 mEq/L is 5.5-5.9: reduce one dose step; do not increase the dose again until potassium is below 5.0)
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 49/51 mg twice daily
+- Spironolactone 12.5 mg once daily
+
+The tool's ordering score for this option: 21 out of 100. Monthly cost: $114.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 3 has fewer side effects (side-effect burden +5.1 against +21.2 points); option 1 has an expected reduction in death (relative risk 0.71 against 1.01; an increase).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.60 against 0.89) and a larger expected gain in health status (+2.8 against +1.6 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Does not include Carvedilol, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 1% higher (relative risk 1.01, 95% interval 0.89 to 1.14; the interval includes no effect)
+- Heart-failure hospitalization: 11% lower (relative risk 0.89, 95% interval 0.81 to 0.99)
+- Health status (KCCQ-equivalent): gain of 1.6 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Spironolactone.
+
+The higher figures are the trial effect of not taking Spironolactone at all. Here it is a temporary hold or reduction for the safety reason stated in the change, not a permanent withdrawal. Reassess at the first follow-up (about 1 week; sooner if indicated), and restore the drug when the stated reason has been rechecked and has resolved.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- DANGER: High Hyperkalemia Risk (K+ > 5.5)
+
+**Treatment considerations for option 3**
+
+- Spironolactone: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($114 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): started in option 1 (Carvedilol)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+- **Urinalysis + volume status assessment** (1-2 weeks after SGLT2i initiation): CKD patients: monitor for volume depletion from osmotic diuresis. Adjust concurrent loop diuretic dose if needed.
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+- **BMP (potassium, creatinine, eGFR) after a change to a RAAS inhibitor or MRA** (1-2 weeks): Potassium and kidney function recheck at the interval the potassium alert states (1-2 weeks), earlier if symptoms or ECG changes. Do not raise the dose again until potassium is below 5.0.
+- **Renal dosing review** (After any eGFR change): Renal dose caution at eGFR 44: Spironolactone: confirm dosing against current renal function and monitor.
+- **Repeat potassium; do not raise Spironolactone again until below 5.0** (Before any MRA dose increase): Potassium is 5.0 or higher and Spironolactone is reduced or withheld by the potassium rule. The dose is not raised again, and no other MRA is started, until potassium is below 5.0 (the labelled limit for raising an MRA). Recheck potassium. Whether potassium binders improve outcomes is uncertain in the 2022 US guideline; the 2026 ESC guideline makes no recommendation for them.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Carvedilol 3.125mg twice daily; Add Dapagliflozin 10mg once daily; Reduce Spironolactone from 25mg once daily to 12.5mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 12: 63-year-old man, reduced ejection fraction (28%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 63-year-old man with an ejection fraction of 28% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 76 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 74 mL/min/1.73 m². He takes no heart failure medication.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 63 years, male; self-identified race: White |
+| Ejection fraction | 28%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 126/78 mmHg; 76 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 82 kg now; recorded dry weight 82 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1700 pg/mL |
+| Potassium | 4.4 mEq/L |
+| Kidney function | creatinine 1.12 mg/dL; eGFR 74 mL/min/1.73 m²; earlier creatinine not entered; BUN 20.2 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $20; cost worry 9 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| None | not applicable | not applicable |
+
+Daily dosing: no drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 12: 63-year-old man, reduced ejection fraction (28%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 28%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 28% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Spironolactone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 62 out of 100. Monthly cost: $8.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now no drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in death (relative risk 0.53 against 0.57).
+
+More on why:
+
+- RAAS inhibitor: Option 1 already uses the limit of 2 new drug classes (Carvedilol and Spironolactone); adding a RAAS inhibitor means dropping one. It appears in option 2 (Lisinopril) and option 3 (Lisinopril).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Carvedilol and Spironolactone); adding an SGLT2 inhibitor means dropping one. A plan that starts it (Dapagliflozin) is not among the options shown: its plan costs $54 a month, over budget.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 47% lower (relative risk 0.53, 95% interval 0.45 to 0.63)
+  - At today's doses: 32% lower (relative risk 0.68, 95% interval 0.60 to 0.76)
+- Heart-failure hospitalization: 57% lower (relative risk 0.43, 95% interval 0.35 to 0.55)
+  - At today's doses: 43% lower (relative risk 0.57, 95% interval 0.49 to 0.66)
+- Health status (KCCQ-equivalent): gain of 2.3 points
+- Side-effect burden: +27.4 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Spironolactone, breast enlargement or pain (men) (+4.6).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 1**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Spironolactone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($8 of $20 a month)
+- Dosing burden: More doses a day than now (3, now 0), 2 more drugs
+- Evidence: Limited concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Lisinopril 2.5mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Lisinopril 2.5 mg once daily
+
+The tool's ordering score for this option: 61 out of 100. Monthly cost: $8.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.53 against 0.57).
+
+**Drug differences from option 1**
+
+- Includes Lisinopril 2.5 mg once daily; option 1 does not.
+- Does not include Spironolactone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 43% lower (relative risk 0.57, 95% interval 0.49 to 0.65)
+  - At today's doses: 19% lower (relative risk 0.81, 95% interval 0.77 to 0.86)
+- Heart-failure hospitalization: 54% lower (relative risk 0.46, 95% interval 0.37 to 0.56)
+  - At today's doses: 25% lower (relative risk 0.75, 95% interval 0.70 to 0.81)
+- Health status (KCCQ-equivalent): gain of 2.9 points
+- Side-effect burden: +24.8 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Lisinopril, everyday symptoms (combined) (+5.4).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 2**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Lisinopril: Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($8 of $20 a month)
+- Dosing burden: More doses a day than now (3, now 0), 2 more drugs
+- Evidence: Limited concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Lisinopril 2.5mg once daily
+- Add Spironolactone 25mg once daily
+
+**Resulting regimen**
+
+- Lisinopril 2.5 mg once daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 61 out of 100. Monthly cost: $8.00/month (estimate). Dosing burden: 2 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 3 has fewer side effects (side-effect burden +19.8 against +27.4 points); option 1 has a larger expected reduction in death (relative risk 0.53 against 0.62).
+
+**Drug differences from option 1**
+
+- Includes Lisinopril 2.5 mg once daily; option 1 does not.
+- Does not include Carvedilol, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 38% lower (relative risk 0.62, 95% interval 0.54 to 0.71)
+  - At today's doses: 29% lower (relative risk 0.71, 95% interval 0.64 to 0.80)
+- Heart-failure hospitalization: 56% lower (relative risk 0.44, 95% interval 0.37 to 0.51)
+  - At today's doses: 43% lower (relative risk 0.57, 95% interval 0.50 to 0.65)
+- Health status (KCCQ-equivalent): gain of 2.8 points
+- Side-effect burden: +19.8 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (+5.4); Spironolactone, breast enlargement or pain (men) (+4.6).
+
+Borrowed evidence: Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Lisinopril: Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Spironolactone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($8 of $20 a month)
+- Dosing burden: More doses a day than now (2, now 0), 2 more drugs
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): not started in option 1. Option 1 already uses the limit of 2 new drug classes (Carvedilol and Spironolactone); adding a RAAS inhibitor means dropping one. It appears in option 2 (Lisinopril) and option 3 (Lisinopril); could be started: Sacubitril/Valsartan (Entresto), Lisinopril, Enalapril, Ramipril, Captopril, Valsartan, Candesartan, Losartan
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): started in option 1 (Carvedilol)
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Spironolactone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Carvedilol and Spironolactone); adding an SGLT2 inhibitor means dropping one. A plan that starts it (Dapagliflozin) is not among the options shown: its plan costs $54 a month, over budget; could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Carvedilol 3.125mg twice daily; Add Spironolactone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 13: 71-year-old man, mildly reduced ejection fraction (45%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 71-year-old man with an ejection fraction of 45% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 138/82 mmHg and the heart rate is 66 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 60 mL/min/1.73 m². He takes Metoprolol Succinate 50 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 71 years, male; self-identified race: White |
+| Ejection fraction | 45%; lowest earlier ejection fraction not entered; ever 40% or lower: no |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 138/82 mmHg; 66 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 86 kg now; recorded dry weight 86 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 800 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.27 mg/dL; eGFR 60 mL/min/1.73 m²; earlier creatinine not entered; BUN 22.9 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Coronary Artery Disease |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Metoprolol Succinate | 50 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 1 dose a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 13: 71-year-old man, mildly reduced ejection fraction (45%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of mildly reduced ejection fraction (LVEF 45%, 41% to 49%).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Metoprolol Succinate 50 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 55 out of 100. Monthly cost: $120.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.53 against 0.60); option 2 has a larger expected reduction in death (relative risk 0.77 against 0.80).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.53 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +13.6 points).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.80 against 1.00) and an expected gain in health status (+3.1 against 0.0 KCCQ-equivalent points).
+- Mineralocorticoid receptor antagonist: Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Sacubitril/Valsartan); adding an MRA means dropping one. It appears in option 2 (Eplerenone).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 20% lower (relative risk 0.80, 95% interval 0.69 to 0.93)
+  - At today's doses: 9% lower (relative risk 0.91, 95% interval 0.82 to 1.00)
+- Heart-failure hospitalization: 47% lower (relative risk 0.53, 95% interval 0.38 to 0.75)
+  - At today's doses: 34% lower (relative risk 0.66, 95% interval 0.56 to 0.77)
+- Health status (KCCQ-equivalent): gain of 3.1 points
+- Side-effect burden: +13.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($120 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Eplerenone 25 mg once daily
+- Metoprolol Succinate 50 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 54 out of 100. Monthly cost: $87.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 2 has a larger expected reduction in death (relative risk 0.77 against 0.80); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.53 against 0.60).
+
+**Drug differences from option 1**
+
+- Includes Eplerenone 25 mg once daily; option 1 does not.
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 23% lower (relative risk 0.77, 95% interval 0.64 to 0.93)
+  - At today's doses: 11% lower (relative risk 0.89, 95% interval 0.81 to 0.98)
+- Heart-failure hospitalization: 40% lower (relative risk 0.60, 95% interval 0.42 to 0.87)
+  - At today's doses: 20% lower (relative risk 0.80, 95% interval 0.68 to 0.94)
+- Health status (KCCQ-equivalent): gain of 2.1 points
+- Side-effect burden: +14.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 2**
+
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($87 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Captopril 6.25mg three times daily
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Captopril 6.25 mg three times daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Metoprolol Succinate 50 mg once daily
+
+The tool's ordering score for this option: 52 out of 100. Monthly cost: $68.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.80 against 0.89).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.53 against 0.57).
+
+**Drug differences from option 1**
+
+- Includes Captopril 6.25 mg three times daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 11% lower (relative risk 0.89, 95% interval 0.79 to 1.01; the interval includes no effect)
+  - At today's doses: 6% lower (relative risk 0.94, 95% interval 0.86 to 1.04; the interval includes no effect)
+- Heart-failure hospitalization: 43% lower (relative risk 0.57, 95% interval 0.44 to 0.75)
+  - At today's doses: 32% lower (relative risk 0.68, 95% interval 0.59 to 0.78)
+- Health status (KCCQ-equivalent): gain of 2.1 points
+  - Not measured, so not counted: Captopril.
+- Side-effect burden: +12.4 points (more measured harm)
+  - Largest contributors to the change: Captopril, everyday symptoms (combined) (+4.1); Captopril, fainting (+2.4).
+
+Borrowed evidence: Captopril borrowed from Candesartan (CHARM).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Captopril: Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($68 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 1), 2 more drugs
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): started in option 1 (Sacubitril/Valsartan (Entresto))
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1. Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Sacubitril/Valsartan); adding an MRA means dropping one. It appears in option 2 (Eplerenone); could be started: Spironolactone, Eplerenone, Finerenone (Kerendia)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Sacubitril/Valsartan) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 14: 77-year-old man, reduced ejection fraction (35%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 77-year-old man with an ejection fraction of 35% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 104/60 mmHg and the heart rate is 78 per minute in sinus rhythm. He is 2 kg below the recorded dry weight. Potassium is 4.2 mEq/L and eGFR is 38 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Furosemide 80 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 77 years, male; self-identified race: White |
+| Ejection fraction | 35%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 104/60 mmHg; 78 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 76 kg now; recorded dry weight 78 kg (2 kg below dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1900 pg/mL |
+| Potassium | 4.2 mEq/L |
+| Kidney function | creatinine 1.8 mg/dL; eGFR 38 mL/min/1.73 m²; earlier creatinine 1.26 mg/dL; BUN 32.4 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+| Furosemide | 80 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 5 doses a day from 3 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 14: 77-year-old man, reduced ejection fraction (35%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 35%, 40% or below).
+
+### Safety alerts (2)
+
+- **Kidney function**: Creatinine 1.26 to 1.8 mg/dL (+43%, derived eGFR fall 36%). The derived eGFR fall of 36% meets the 2026 ESC criterion (a fall above 30%); the creatinine rise of 43% alone would not. The 2026 ESC criteria call for halving the RAAS inhibitor and the MRA (Supplementary Tables S4/S5/S8; main text 6.1.6). Each is reduced one dose step (a drug already at the lowest dose is kept, not increased), recheck chemistry in 1-2 weeks, no up-titration until stable. First steps: check volume status (dehydration, over-diuresis), stop NSAIDs and other nephrotoxins, review the diuretic dose.
+- **Volume depletion**: Patient is 2.0kg below dry weight while on diuretics. Diuretic reduction or discontinuation is the priority intervention; what each option does: option 1 reduces or stops a diuretic; option 2 reduces or stops a diuretic; option 3 does not reduce or stop a diuretic and adds or raises Carvedilol. Risk of AKI and hemodynamic collapse.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 35% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Reduce Lisinopril from 10mg once daily to 5mg once daily (derived eGFR fall of more than 30% from baseline: halve the dose, recheck in 1-2 weeks, no increase until stable)
+- Remove Furosemide 80mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Lisinopril 5 mg once daily
+
+The tool's ordering score for this option: 70 out of 100. Monthly cost: $8.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now 5 doses a day from 3 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has fewer side effects (side-effect burden −7.7 against 0.0 points).
+
+More on why:
+
+- SGLT2 inhibitor: No plan that starts it passed the tool's safety checks today.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 5% higher (relative risk 1.05, 95% interval 1.03 to 1.07)
+- Heart-failure hospitalization: 9% higher (relative risk 1.09, 95% interval 1.07 to 1.11)
+- Health status (KCCQ-equivalent): loss of 0.4 points
+- Side-effect burden: −7.7 points (less measured harm)
+  - Largest contributors to the change: Furosemide, low potassium (−3.1); Furosemide, low sodium (−2.2).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The effect of the loop diuretic dose on death and hospitalization is not modelled: the figures above do not include it.
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril.
+
+The higher figures are the trial effect of not taking Lisinopril at all. Here it is a temporary hold or reduction for the safety reason stated in the change, not a permanent withdrawal. Reassess at the next review, and restore the drug when the stated reason has been rechecked and has resolved.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Lisinopril: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Furosemide: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured weight, congestion, BP, sodium, potassium and renal response after the change. Dose conversion is a starting convention, not proof of equivalent diuresis or safety.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($8 of $500 a month)
+- Dosing burden: Fewer doses a day than now (3, now 5)
+- Evidence: Limited concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Reduce Furosemide from 80mg twice daily to 40mg twice daily
+- Reduce Lisinopril from 10mg once daily to 5mg once daily (derived eGFR fall of more than 30% from baseline: halve the dose, recheck in 1-2 weeks, no increase until stable)
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Furosemide 40 mg twice daily
+- Lisinopril 5 mg once daily
+
+The tool's ordering score for this option: 69 out of 100. Monthly cost: $11.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 5 doses a day from 3 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 1 has fewer side effects (side-effect burden −7.7 against 0.0 points).
+
+**Drug differences from option 1**
+
+- Includes Furosemide 40 mg twice daily; option 1 does not.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 5% higher (relative risk 1.05, estimated from the dose relationship; no interval)
+- Heart-failure hospitalization: 9% higher (relative risk 1.09, estimated from the dose relationship; no interval)
+- Health status (KCCQ-equivalent): loss of 0.4 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: about the same
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The effect of the loop diuretic dose on death and hospitalization is not modelled: the figures above do not include it.
+
+The higher figures are the trial effect of not taking Lisinopril at all. Here it is a temporary hold or reduction for the safety reason stated in the change, not a permanent withdrawal. Reassess at the next review, and restore the drug when the stated reason has been rechecked and has resolved.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 2**
+
+- Furosemide: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured weight, congestion, BP, sodium, potassium and renal response after the change. Dose conversion is a starting convention, not proof of equivalent diuresis or safety.
+- Lisinopril: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($11 of $500 a month)
+- Dosing burden: Same doses a day as now (5)
+- Evidence: Limited concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily
+- Reduce Lisinopril from 10mg once daily to 5mg once daily (derived eGFR fall of more than 30% from baseline: halve the dose, recheck in 1-2 weeks, no increase until stable)
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Furosemide 80 mg twice daily
+- Lisinopril 5 mg once daily
+
+The tool's ordering score for this option: 57 out of 100. Monthly cost: $11.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 5 doses a day from 3 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 3 has an expected reduction in death (relative risk 0.96 against 1.05; an increase); option 1 reduces a diuretic, which the tool favours when the patient appears volume depleted.
+
+More on why:
+
+- Also against option 1: option 3 has an expected reduction in heart-failure hospitalization (relative risk 0.99 against 1.09; an increase); option 1 has fewer side effects (side-effect burden −7.7 against 0.0 points).
+
+**Drug differences from option 1**
+
+- Carvedilol: 25 mg twice daily here; 12.5 mg twice daily in option 1.
+- Includes Furosemide 80 mg twice daily; option 1 does not.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 4% lower (relative risk 0.96, estimated from the dose relationship; no interval)
+- Heart-failure hospitalization: 1% lower (relative risk 0.99, estimated from the dose relationship; no interval)
+- Health status (KCCQ-equivalent): loss of 0.1 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: not changed in the model, because side effects at the higher dose were not measured separately
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 3**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Lisinopril: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($11 of $500 a month)
+- Dosing burden: Same doses a day as now (5)
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1; Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF); Spironolactone, Eplerenone withheld (No new RAAS inhibitor or MRA while kidney function is worsening): derived eGFR fall of more than 30% from baseline (creatinine 1.26 to 1.8 mg/dL (+43%, derived eGFR fall 36%)). The 2026 ESC guideline (Supplementary Tables S4/S5/S8) halves these drugs when already in use and allows no increase until kidney function is stable; not starting a new one in the same state is a rule set by this tool. Look for and stop other causes (NSAIDs, volume depletion), recheck in 1-2 weeks
+- SGLT2 inhibitor: not started in option 1. No plan that starts it passed the tool's safety checks today; could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after a change to a RAAS inhibitor or MRA** (1-2 weeks): Recheck potassium, creatinine and eGFR after any dose change, reduction or withhold of a RAAS inhibitor or MRA (a reduction can still change potassium and kidney function).
+- **Weight and symptoms after a loop diuretic reduction or stop** (3-7 days after a diuretic change, and again at 1-2 weeks): Weigh daily and ask about breathlessness, orthopnea, swelling and reduced exercise tolerance: a lower dose or a stop can let fluid return. Restart or raise the diuretic if congestion returns.
+- **BMP (electrolytes, creatinine) after a diuretic change** (3-7 days after a diuretic change, and again at 1-2 weeks): Check electrolytes and kidney function after any diuretic increase, reduction or stop, and review weight and symptoms.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Reduce Lisinopril from 10mg once daily to 5mg once daily; Remove Furosemide 80mg twice daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 15: 67-year-old man, reduced ejection fraction (28%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 67-year-old man with an ejection fraction of 28% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/72 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.6 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 5 mg once daily, Carvedilol 6.25 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 67 years, male; self-identified race: White |
+| Ejection fraction | 28%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 118/72 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 88 kg now; recorded dry weight 88 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1900 pg/mL |
+| Potassium | 4.6 mEq/L |
+| Kidney function | creatinine 1.27 mg/dL; eGFR 62 mL/min/1.73 m²; earlier creatinine not entered; BUN 22.9 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Coronary Artery Disease |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 5 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 6.25 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 15: 67-year-old man, reduced ejection fraction (28%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 28%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 28% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 6.25 mg twice daily
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $81.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.42 against 0.47).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.42 against 1.00).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.65 against 0.68).
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.65 against 1.00) and an expected gain in health status (+2.6 against 0.0 KCCQ-equivalent points).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Sacubitril/Valsartan and Eplerenone); adding an SGLT2 inhibitor means dropping one. It appears in option 2 (Dapagliflozin).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 35% lower (relative risk 0.65, 95% interval 0.54 to 0.79)
+  - At today's doses: 14% lower (relative risk 0.86, 95% interval 0.78 to 0.94)
+- Heart-failure hospitalization: 58% lower (relative risk 0.42, 95% interval 0.34 to 0.53)
+  - At today's doses: 26% lower (relative risk 0.74, 95% interval 0.67 to 0.83)
+- Health status (KCCQ-equivalent): gain of 2.6 points
+- Side-effect burden: +6.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 1**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($81 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 6.25 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Eplerenone 25 mg once daily
+- Lisinopril 5 mg once daily
+
+The tool's ordering score for this option: 67 out of 100. Monthly cost: $75.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.42 against 0.47).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.65 against 0.68).
+
+**Drug differences from option 1**
+
+- Includes Dapagliflozin 10 mg once daily; option 1 does not.
+- Includes Lisinopril 5 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.58 to 0.79)
+  - At today's doses: 25% lower (relative risk 0.75, 95% interval 0.66 to 0.86)
+- Heart-failure hospitalization: 53% lower (relative risk 0.47, 95% interval 0.40 to 0.54)
+  - At today's doses: 44% lower (relative risk 0.56, 95% interval 0.50 to 0.62)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +11.2 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 2**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($75 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Titrate Carvedilol from 6.25mg twice daily to 12.5mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Lisinopril 5 mg once daily
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $25.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.42 against 0.58).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.65 against 0.69) and a larger expected gain in health status (+2.6 against +1.4 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Carvedilol: 12.5 mg twice daily here; 6.25 mg twice daily in option 1.
+- Includes Lisinopril 5 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 31% lower (relative risk 0.69, 95% interval 0.62 to 0.78)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.72 to 0.83)
+- Heart-failure hospitalization: 42% lower (relative risk 0.58, 95% interval 0.51 to 0.67)
+  - At today's doses: 30% lower (relative risk 0.70, 95% interval 0.63 to 0.76)
+- Health status (KCCQ-equivalent): gain of 1.4 points
+- Side-effect burden: +6.1 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.2); Eplerenone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 3**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($25 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Sacubitril/Valsartan and Eplerenone); adding an SGLT2 inhibitor means dropping one. It appears in option 2 (Dapagliflozin); could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan; Add Eplerenone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 16: 68-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 68-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 122/70 mmHg and the heart rate is 52 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 64 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Carvedilol 25 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 68 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 122/70 mmHg; 52 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 84 kg now; recorded dry weight 84 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1300 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.23 mg/dL; eGFR 64 mL/min/1.73 m²; earlier creatinine not entered; BUN 22.1 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 20 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 25 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 16: 68-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (1)
+
+- **Bradycardia on carvedilol**: Resting heart rate 52 bpm on Carvedilol 25mg. The plan reduces it one dose step; it is not removed. Basis: Coreg label: reduce the dose if heart rate is below 55 (the 55 is also used as the start threshold); no up-titration below 60 is a rule set by this tool (no source). ESC advises lowering the dose when the rate is below 50 with worsening symptoms; this tool applies the reduction on heart rate alone, so confirm symptoms and exclude heart block with an ECG; review digoxin, ivabradine and amiodarone. No up-titration while the rate is low (below 60 is a rule set by this tool).
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Eplerenone 25mg once daily
+- Reduce Carvedilol from 25mg twice daily to 12.5mg twice daily (heart rate 52 bpm is below 55: one step down, not stopped)
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Eplerenone 25 mg once daily
+- Lisinopril 20 mg once daily (target dose)
+
+The tool's ordering score for this option: 72 out of 100. Monthly cost: $75.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in death (relative risk 0.74 against 0.80).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected gain in health status (+2.9 against +1.4 KCCQ-equivalent points) and a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.57).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 26% lower (relative risk 0.74, 95% interval 0.63 to 0.87)
+  - At today's doses: 18% lower (relative risk 0.82, 95% interval 0.72 to 0.94)
+- Heart-failure hospitalization: 48% lower (relative risk 0.52, 95% interval 0.44 to 0.60)
+  - At today's doses: 38% lower (relative risk 0.62, 95% interval 0.55 to 0.69)
+- Health status (KCCQ-equivalent): gain of 2.9 points
+- Side-effect burden: +11.2 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($75 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 49/51mg twice daily
+- Add Eplerenone 25mg once daily
+- Reduce Carvedilol from 25mg twice daily to 12.5mg twice daily (heart rate 52 bpm is below 55: one step down, not stopped)
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 49/51 mg twice daily
+
+The tool's ordering score for this option: 70 out of 100. Monthly cost: $81.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.74 against 0.80).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected gain in health status (+2.9 against +1.4 KCCQ-equivalent points) and a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.57).
+
+**Drug differences from option 1**
+
+- Includes Sacubitril/Valsartan (Entresto) 49/51 mg twice daily; option 1 does not.
+- Does not include Dapagliflozin, which is included in option 1.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 20% lower (relative risk 0.80, 95% interval 0.65 to 0.98)
+  - At today's doses: no measurable difference (relative risk 1.00, 95% interval 0.88 to 1.14; the interval includes no effect)
+- Heart-failure hospitalization: 43% lower (relative risk 0.57, 95% interval 0.45 to 0.73)
+  - At today's doses: 9% lower (relative risk 0.91, 95% interval 0.77 to 1.07; the interval includes no effect)
+- Health status (KCCQ-equivalent): gain of 1.4 points
+- Side-effect burden: +6.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($81 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Reduce Carvedilol from 25mg twice daily to 12.5mg twice daily (heart rate 52 bpm is below 55: one step down, not stopped)
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Lisinopril 20 mg once daily (target dose)
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $25.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.71).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.74 against 0.83) and a larger expected gain in health status (+2.9 against +0.8 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 17% lower (relative risk 0.83, 95% interval 0.74 to 0.94)
+  - At today's doses: 7% lower (relative risk 0.93, 95% interval 0.86 to 1.00; the interval includes no effect)
+- Heart-failure hospitalization: 29% lower (relative risk 0.71, 95% interval 0.62 to 0.82)
+  - At today's doses: 15% lower (relative risk 0.85, 95% interval 0.78 to 0.93)
+- Health status (KCCQ-equivalent): gain of 0.8 points
+- Side-effect burden: +6.1 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.2); Eplerenone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Carvedilol: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($25 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **ECG for a slow heart rate** (At this visit): Record an ECG: Carvedilol is reduced or withheld because of the heart rate (resting rate 52 bpm). Look for heart block or sinus node disease, and review every drug that slows the heart or the AV node.
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Eplerenone 25mg once daily; Reduce Carvedilol from 25mg twice daily to 12.5mg twice daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 17: 31-year-old woman, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 31-year-old woman with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 110/68 mmHg and the heart rate is 84 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.1 mEq/L and eGFR is 98 mL/min/1.73 m². She takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 31 years, female; self-identified race: White |
+| Pregnancy | Pregnant |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 110/68 mmHg; 84 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 72 kg now; recorded dry weight 72 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1300 pg/mL |
+| Potassium | 4.1 mEq/L |
+| Kidney function | creatinine 0.82 mg/dL; eGFR 98 mL/min/1.73 m²; earlier creatinine not entered; BUN 14.8 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 17: 31-year-old woman, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (2)
+
+- **Pregnancy alert**: ACE inhibitors, ARBs, ARNI (RAAS inhibitors: fetotoxicity) and MRAs (spironolactone, eplerenone, finerenone) are contraindicated. SGLT2 inhibitors, ivabradine and vericiguat are not recommended (paucity of safety data; vericiguat carries an FDA boxed warning for embryo-fetal toxicity). GLP-1 therapy is excluded. These agents have been excluded from all recommendations. Hydralazine plus a nitrate and loop diuretics (only with congestion) remain available; beta-1-selective beta-blockers (metoprolol, bisoprolol) are the choice. Sources: 2026 ESC heart failure guideline (primary; RAAS inhibitors, MRAs, ivabradine and SGLT2 inhibitors not recommended, Class III C) and a peer-reviewed peripartum cardiomyopathy review (Heart Fail Rev 2024, secondary). This tool does not assess breastfeeding; check each drug against lactation advice.
+- **Pregnancy**: Carvedilol is non-selective. The 2026 ESC heart failure guideline (Class I, level C) says to switch non-selective beta-blockers to beta-1-selective ones (metoprolol, bisoprolol) in pregnancy; a switch is offered. Do not stop the beta-blocker abruptly.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Consider transition from Carvedilol 12.5mg twice daily (Pregnancy: switch to a beta-1-selective beta-blocker) to Metoprolol Succinate 25mg once daily; starting tier only, not dose equivalence. Confirm individualized taper/transition and reassessment before implementation
+- Remove Lisinopril (Pregnancy)
+
+**Resulting regimen**
+
+- Metoprolol Succinate 25 mg once daily
+
+The tool's ordering score for this option: 50 out of 100. Monthly cost: $10.00/month (estimate). Dosing burden: 1 dose a day from 1 drug (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Only one option is shown: of the 2 other plans scored, 2 scored below the plan that makes only the required changes.
+
+More on why:
+
+- Starting IV iron is withheld because information is missing: hemoglobin for dose selection, prior iron-course dates and first-versus-repeat course assessment, phosphate safety assessment (testing when indicated).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 16% higher (relative risk 1.16, 95% interval 1.10 to 1.22)
+  - At today's doses: 33% higher (relative risk 1.33, 95% interval 1.24 to 1.43)
+- Heart-failure hospitalization: 31% higher (relative risk 1.31, 95% interval 1.23 to 1.40)
+  - At today's doses: 53% higher (relative risk 1.53, 95% interval 1.39 to 1.69)
+- Health status (KCCQ-equivalent): loss of 1.2 points
+- Side-effect burden: −8.6 points (less measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (−12.3); Metoprolol Succinate, everyday symptoms (combined) (+12.3).
+
+Borrowed evidence: Metoprolol Succinate borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 1**
+
+- Beta-blocker (Metoprolol Succinate) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 1**
+
+- Metoprolol Succinate: Switch Carvedilol to Metoprolol Succinate. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy. No untreated state or exact replacement response is inferred.
+- Lisinopril: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($10 of $500 a month)
+- Dosing burden: Fewer doses a day than now (1, now 3)
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1; Spironolactone withheld (Clinical contraindication): Pregnancy (label advises avoiding it in pregnancy; may affect male sex differentiation); Eplerenone withheld (Clinical contraindication): Pregnancy; Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF); Pregnancy
+- SGLT2 inhibitor: not started in option 1; Dapagliflozin, Empagliflozin withheld (Clinical contraindication): Pregnancy
+
+### Other eligible therapy to consider
+
+- Digoxin: symptomatic HFrEF (LVEF 40 or below, NYHA II to IV) persisting on optimized GDMT (2026 ESC Class IIa B1; AHA/ACC 2022 Class 2b). Narrow therapeutic index: target serum concentration below 1.2 ng/mL. Not in an option shown: it scores below the plan that makes only the required changes.
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+- **BMP (potassium, creatinine, eGFR) after a change to a RAAS inhibitor or MRA** (1-2 weeks): Recheck potassium, creatinine and eGFR after any dose change, reduction or withhold of a RAAS inhibitor or MRA (a reduction can still change potassium and kidney function).
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Consider transition from Carvedilol 12.5mg twice daily; Remove Lisinopril) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 18: 66-year-old man, reduced ejection fraction (25%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 66-year-old man with an ejection fraction of 25% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 108/68 mmHg and the heart rate is 70 per minute in sinus rhythm. He is 0.5 kg above the recorded dry weight. Potassium is 4.7 mEq/L and eGFR is 55 mL/min/1.73 m². He takes Sacubitril/Valsartan 97/103 mg twice daily, Carvedilol 25 mg twice daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 66 years, male; self-identified race: White |
+| Ejection fraction | 25%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: yes |
+| Blood pressure and heart rate | 108/68 mmHg; 70 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 78.5 kg now; recorded dry weight 78 kg (0.5 kg above dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 2400 pg/mL |
+| Potassium | 4.7 mEq/L |
+| Kidney function | creatinine 1.4 mg/dL; eGFR 55 mL/min/1.73 m²; earlier creatinine not entered; BUN 25.2 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Sacubitril/Valsartan (Entresto) | 97/103 mg twice daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 25 mg twice daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+| Dapagliflozin | 10 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 6 doses a day from 4 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 18: 66-year-old man, reduced ejection fraction (25%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 25%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 25% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy; Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class III. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- No medication change is proposed in this option. Review remaining treatment gaps, safety warnings and monitoring before deciding to continue.
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 97/103 mg twice daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 75 out of 100. Monthly cost: $118.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 6 doses a day from 4 drugs).
+
+**Why this is first**
+
+- No option scores 1 point or more above leaving the regimen unchanged, which is closer than the tool can separate; the alternatives below are shown for discussion.
+- Option 1 and option 2 are too close to separate.
+
+More on why:
+
+- Starting IV iron is withheld because information is missing: hemoglobin for dose selection, prior iron-course dates and first-versus-repeat course assessment, phosphate safety assessment (testing when indicated).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- No medication change is proposed, so there is no change in expected effect.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Recorded regimen: No net medication change is proposed. Reassess the recorded condition; unchanged medication does not establish clinical stability or complete treatment.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($118 of $500 a month)
+- Dosing burden: Same doses a day as now (6)
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Titrate Spironolactone from 25mg once daily to 50mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 97/103 mg twice daily (target dose)
+- Spironolactone 50 mg once daily (target dose)
+
+The tool's ordering score for this option: 75 out of 100. Monthly cost: $118.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 6 doses a day from 4 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate.
+
+**Drug differences from option 1**
+
+- Spironolactone: 50 mg once daily here; 25 mg once daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 1% lower (relative risk 0.99, estimated from the dose relationship; no interval)
+- Heart-failure hospitalization: 2% lower (relative risk 0.98, estimated from the dose relationship; no interval)
+- Health status (KCCQ-equivalent): about the same
+- Side-effect burden: not changed in the model, because side effects at the higher dose were not measured separately
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Side effects at the higher dose were not measured separately; the burden shown for Spironolactone is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Spironolactone: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($118 of $500 a month)
+- Dosing burden: Same doses a day as now (6)
+- Evidence: Strong guideline concordance
+
+### Other eligible therapy to consider
+
+- Ivabradine: SHIFT: sinus rhythm, LVEF ≤ 35, HR ≥ 70 on maximally tolerated beta-blocker (or beta-blocker contraindicated); AHA/ACC 2022 Class 2a, ESC 2021 IIa. Not in an option shown: it scores below making no change.
+- Vericiguat: VICTORIA: LVEF < 45 with a recent worsening event (HF hospitalization within 6 months or outpatient IV diuretics within 3 months) and NT-proBNP ≥ 1000 in sinus rhythm (≥ 1600 in atrial fibrillation); AHA/ACC 2022 Class 2b. Not in an option shown: the plan that starts it costs $768 a month, over the stated budget of $500.
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (No medication change) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 19: 68-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 68-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 114/68 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 5 mEq/L and eGFR is 41 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Spironolactone 25 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 68 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 114/68 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 86 kg now; recorded dry weight 86 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 2000 pg/mL |
+| Potassium | 5 mEq/L |
+| Kidney function | creatinine 1.77 mg/dL; eGFR 41 mL/min/1.73 m²; earlier creatinine 1.12 mg/dL; BUN 31.9 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 20 mg once daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 2 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 19: 68-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (2)
+
+- **Potassium hold on spironolactone**: Potassium 5.0 mEq/L is 5.0 or above: the dose is not increased (maintain; recheck potassium). Spironolactone 25mg is not raised in any option shown (what each option does with it, including a reduction or a stop for another reason, is on its change lines); recheck potassium before any increase. Basis: A rule set by this tool: class rule from the eplerenone and finerenone labels applied to spironolactone (the Aldactone label gives no number).
+- **Kidney function**: Creatinine 1.12 to 1.77 mg/dL (+58%, derived eGFR fall 43%). The creatinine rise of 58% and the derived eGFR fall of 43% each meet the 2026 ESC criteria (a rise of 50% or more, a fall above 30%). The 2026 ESC criteria call for halving the RAAS inhibitor and the MRA (Supplementary Tables S4/S5/S8; main text 6.1.6). Each is reduced one dose step (a drug already at the lowest dose is kept, not increased), recheck chemistry in 1-2 weeks, no up-titration until stable. First steps: check volume status (dehydration, over-diuresis), stop NSAIDs and other nephrotoxins, review the diuretic dose.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Dapagliflozin 10mg once daily
+- Reduce Lisinopril from 20mg once daily to 10mg once daily (creatinine 50% or more above baseline: halve the dose, recheck in 1-2 weeks, no increase until stable)
+- Reduce Spironolactone from 25mg once daily to 12.5mg once daily (creatinine 50% or more above baseline: halve the dose, recheck in 1-2 weeks, no increase until stable)
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 10 mg once daily
+- Spironolactone 12.5 mg once daily
+
+The tool's ordering score for this option: 69 out of 100. Monthly cost: $62.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 2 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.68 against 0.93).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.75 against 0.85) and a larger expected gain in health status (+2.2 against +0.1 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 25% lower (relative risk 0.75, 95% interval 0.63 to 0.89)
+  - At today's doses: 6% lower (relative risk 0.94, 95% interval 0.83 to 1.08; the interval includes no effect)
+- Heart-failure hospitalization: 32% lower (relative risk 0.68, 95% interval 0.55 to 0.84)
+  - At today's doses: 13% lower (relative risk 0.87, 95% interval 0.77 to 0.98)
+- Health status (KCCQ-equivalent): gain of 2.2 points
+- Side-effect burden: +21.2 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Dapagliflozin, genital fungal infection (+2.4).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril and Spironolactone.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 1**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 1**
+
+- Lisinopril: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Spironolactone: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($62 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 2), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Reduce Lisinopril from 20mg once daily to 10mg once daily (creatinine 50% or more above baseline: halve the dose, recheck in 1-2 weeks, no increase until stable)
+- Reduce Spironolactone from 25mg once daily to 12.5mg once daily (creatinine 50% or more above baseline: halve the dose, recheck in 1-2 weeks, no increase until stable)
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Lisinopril 10 mg once daily
+- Spironolactone 12.5 mg once daily
+
+The tool's ordering score for this option: 64 out of 100. Monthly cost: $12.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 2 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.68 against 0.93).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.75 against 0.85) and a larger expected gain in health status (+2.2 against +0.1 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 15% lower (relative risk 0.85, 95% interval 0.75 to 0.96)
+  - At today's doses: 6% higher (relative risk 1.06, 95% interval 0.99 to 1.14; the interval includes no effect)
+- Heart-failure hospitalization: 7% lower (relative risk 0.93, 95% interval 0.76 to 1.14; the interval includes no effect)
+  - At today's doses: 20% higher (relative risk 1.20, 95% interval 1.09 to 1.32)
+- Health status (KCCQ-equivalent): gain of 0.1 points
+- Side-effect burden: +16.1 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Carvedilol, new diabetes (+2.0).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril and Spironolactone.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 2**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 2**
+
+- Lisinopril: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Spironolactone: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($12 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 2), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Reduce Lisinopril from 20mg once daily to 10mg once daily (creatinine 50% or more above baseline: halve the dose, recheck in 1-2 weeks, no increase until stable)
+- Reduce Spironolactone from 25mg once daily to 12.5mg once daily (creatinine 50% or more above baseline: halve the dose, recheck in 1-2 weeks, no increase until stable)
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 10 mg once daily
+- Spironolactone 12.5 mg once daily
+
+The tool's ordering score for this option: 60 out of 100. Monthly cost: $58.00/month (estimate). Dosing burden: 3 doses a day from 3 drugs (now 2 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 3 has fewer side effects (side-effect burden +5.1 against +21.2 points); option 1 has an expected reduction in death (relative risk 0.75 against 1.08; an increase).
+
+More on why:
+
+- Also against option 1: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.68 against 1.00; no effect) and a larger expected gain in health status (+2.2 against +1.1 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Does not include Carvedilol, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 8% higher (relative risk 1.08, 95% interval 0.95 to 1.22; the interval includes no effect)
+- Heart-failure hospitalization: no measurable difference (relative risk 1.00, 95% interval 0.91 to 1.11; the interval includes no effect)
+- Health status (KCCQ-equivalent): gain of 1.1 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril and Spironolactone.
+
+The higher figures are the trial effect of not taking Lisinopril and Spironolactone at all. Here it is a temporary hold or reduction for the safety reason stated in the change, not a permanent withdrawal. Reassess at the first follow-up (about 1 week; sooner if indicated), and restore the drug when the stated reason has been rechecked and has resolved.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Lisinopril: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Spironolactone: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($58 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 2), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): started in option 1 (Carvedilol)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+- **Urinalysis + volume status assessment** (1-2 weeks after SGLT2i initiation): CKD patients: monitor for volume depletion from osmotic diuresis. Adjust concurrent loop diuretic dose if needed.
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+- **BMP (potassium, creatinine, eGFR) after a change to a RAAS inhibitor or MRA** (1-2 weeks): Recheck potassium, creatinine and eGFR after any dose change, reduction or withhold of a RAAS inhibitor or MRA (a reduction can still change potassium and kidney function).
+- **Renal dosing review** (After any eGFR change): Renal dose caution at eGFR 41: Spironolactone: confirm dosing against current renal function and monitor.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Carvedilol 3.125mg twice daily; Add Dapagliflozin 10mg once daily; Reduce Lisinopril from 20mg once daily to 10mg once daily; Reduce Spironolactone from 25mg once daily to 12.5mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 20: 70-year-old man, reduced ejection fraction (28%), atrial fibrillation
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 70-year-old man with an ejection fraction of 28% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 112/70 mmHg and the heart rate is 128 per minute in atrial fibrillation. He is 1.5 kg above the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 60 mL/min/1.73 m². He takes Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 70 years, male; self-identified race: White |
+| Ejection fraction | 28%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 112/70 mmHg; 128 per minute; rhythm: atrial fibrillation; oxygen saturation 97% |
+| Weight | 81.5 kg now; recorded dry weight 80 kg (1.5 kg above dry weight) |
+| Examination findings | Edema (1+) |
+| NT-proBNP | 3000 pg/mL |
+| Potassium | 4.4 mEq/L |
+| Kidney function | creatinine 1.28 mg/dL; eGFR 60 mL/min/1.73 m²; earlier creatinine not entered; BUN 23 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Atrial Fibrillation |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 2 doses a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 20: 70-year-old man, reduced ejection fraction (28%), atrial fibrillation
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 28%, 40% or below).
+
+### Safety alerts (1)
+
+- **Atrial fibrillation**: Oral anticoagulation is Class I, chosen by the CHA2DS2-VA score; a DOAC is preferred over warfarin except with a mechanical valve or moderate-severe mitral stenosis (2026 ESC Recommendation Table 15). The tool does not compute the score and has no anticoagulant field: confirm one is prescribed. The recorded resting heart rate is 128 bpm, above the lenient target of 110 bpm for atrial fibrillation (RACE II, Van Gelder, NEJM 2010; used by the 2022 US and 2026 ESC guidelines): rate control needs assessment. Rate control: a beta-blocker is first line in HFrEF with AF once the patient is stable (Class I C); digoxin should be considered when the rate stays high despite a beta-blocker or when it is not tolerated (Class IIa C).
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 28% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT recommendations assume sinus rhythm; the recorded rhythm is AFib, so specialist review is needed. QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class III. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $81.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 2 doses a day from 1 drug).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.35 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +14.6 points).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.59 against 1.00) and an expected gain in health status (+3.4 against 0.0 KCCQ-equivalent points).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. A plan that starts it (Dapagliflozin) is not among the options shown: the congestion display rule used its place.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 41% lower (relative risk 0.59, 95% interval 0.49 to 0.71)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.71 to 0.85)
+- Heart-failure hospitalization: 65% lower (relative risk 0.35, 95% interval 0.28 to 0.44)
+  - At today's doses: 38% lower (relative risk 0.62, 95% interval 0.56 to 0.68)
+- Health status (KCCQ-equivalent): gain of 3.4 points
+- Side-effect burden: +14.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+For this patient in atrial fibrillation the beta-blocker figures are the atrial fibrillation ones: death is a subgroup of a pooled analysis of all beta-blockers studied, and hospitalization is an extrapolation from cardiovascular hospitalization. Neither shows a benefit that can be told from no effect. This is not a reason to stop a beta-blocker used for rate control.
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- This option leaves the patient without a loop diuretic although congestion is recorded.
+
+**Treatment considerations for option 1**
+
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($81 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 2), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Captopril 6.25mg three times daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Captopril 6.25 mg three times daily
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 63 out of 100. Monthly cost: $29.00/month (estimate). Dosing burden: 6 doses a day from 3 drugs (now 2 doses a day from 1 drug).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+
+**Drug differences from option 1**
+
+- Includes Captopril 6.25 mg three times daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 38% lower (relative risk 0.62, 95% interval 0.54 to 0.71)
+  - At today's doses: 21% lower (relative risk 0.79, 95% interval 0.73 to 0.85)
+- Heart-failure hospitalization: 56% lower (relative risk 0.44, 95% interval 0.37 to 0.51)
+  - At today's doses: 33% lower (relative risk 0.67, 95% interval 0.61 to 0.73)
+- Health status (KCCQ-equivalent): gain of 2.8 points
+- Side-effect burden: +13.4 points (more measured harm)
+  - Largest contributors to the change: Captopril, everyday symptoms (combined) (+4.1); Captopril, fainting (+2.4).
+
+For this patient in atrial fibrillation the beta-blocker figures are the atrial fibrillation ones: death is a subgroup of a pooled analysis of all beta-blockers studied, and hospitalization is an extrapolation from cardiovascular hospitalization. Neither shows a benefit that can be told from no effect. This is not a reason to stop a beta-blocker used for rate control.
+
+Borrowed evidence: Captopril borrowed from Valsartan (Val-HeFT); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- This option leaves the patient without a loop diuretic although congestion is recorded.
+
+**Treatment considerations for option 2**
+
+- Captopril: Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($29 of $500 a month)
+- Dosing burden: More doses a day than now (6, now 2), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Furosemide 20mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Furosemide 20 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 59 out of 100. Monthly cost: $67.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 2 doses a day from 1 drug).
+
+**Why this option is shown:** Includes the addition of a loop diuretic (Furosemide): the patient is congested (1.5 kg above dry weight; the tool's loop criterion is more than 1 kg), and no other option raises or starts an oral loop.
+
+**Why this is option 3**
+
+- This option is shown under a display rule, not because it ranks next: Includes the addition of a loop diuretic (Furosemide): the patient is congested (1.5 kg above dry weight; the tool's loop criterion is more than 1 kg), and no other option raises or starts an oral loop.
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.71).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.45) and a larger expected gain in health status (+3.4 against +2.3 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Includes Furosemide 20 mg once daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 29% lower (relative risk 0.71, 95% interval 0.51 to 0.99)
+  - At today's doses: 16% lower (relative risk 0.84, 95% interval 0.62 to 1.14; the interval includes no effect)
+- Heart-failure hospitalization: 55% lower (relative risk 0.45, 95% interval 0.25 to 0.79)
+  - At today's doses: 34% lower (relative risk 0.66, 95% interval 0.38 to 1.13; the interval includes no effect)
+- Health status (KCCQ-equivalent): gain of 2.3 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +16.2 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+For this patient in atrial fibrillation the beta-blocker figures are the atrial fibrillation ones: death is a subgroup of a pooled analysis of all beta-blockers studied, and hospitalization is an extrapolation from cardiovascular hospitalization. Neither shows a benefit that can be told from no effect. This is not a reason to stop a beta-blocker used for rate control.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Furosemide: Assess measured weight, congestion, BP, sodium, potassium and renal response after the change. Dose conversion is a starting convention, not proof of equivalent diuresis or safety.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($67 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 2), 2 more drugs
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): started in option 1 (Sacubitril/Valsartan (Entresto))
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. A plan that starts it (Dapagliflozin) is not among the options shown: the congestion display rule used its place; could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Eplerenone 25mg once daily; Add Sacubitril/Valsartan) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 21: 66-year-old man, reduced ejection fraction (32%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 66-year-old man with an ejection fraction of 32% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 74 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 66 mL/min/1.73 m². He takes Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 66 years, male; self-identified race: White |
+| Ejection fraction | 32%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 126/78 mmHg; 74 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 84 kg now; recorded dry weight 84 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1400 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.21 mg/dL; eGFR 66 mL/min/1.73 m²; earlier creatinine not entered; BUN 21.8 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | Question not answered |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 2 doses a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 21: 66-year-old man, reduced ejection fraction (32%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- Scope was not confirmed: the question about conditions the tool does not cover (amyloidosis, hypertrophic or restrictive cardiomyopathy, severe valve disease, congenital heart disease, cardiotoxic cancer treatment, heart transplant or assist device, dialysis) was not answered.
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 32%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 32% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 70 out of 100. Monthly cost: $81.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 2 doses a day from 1 drug).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.35 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +14.6 points).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.59 against 1.00) and an expected gain in health status (+3.4 against 0.0 KCCQ-equivalent points).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 41% lower (relative risk 0.59, 95% interval 0.49 to 0.71)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.71 to 0.85)
+- Heart-failure hospitalization: 65% lower (relative risk 0.35, 95% interval 0.28 to 0.44)
+  - At today's doses: 38% lower (relative risk 0.62, 95% interval 0.56 to 0.68)
+- Health status (KCCQ-equivalent): gain of 3.4 points
+- Side-effect burden: +14.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($81 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 2), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Captopril 6.25mg three times daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Captopril 6.25 mg three times daily
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $29.00/month (estimate). Dosing burden: 6 doses a day from 3 drugs (now 2 doses a day from 1 drug).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+
+**Drug differences from option 1**
+
+- Includes Captopril 6.25 mg three times daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 38% lower (relative risk 0.62, 95% interval 0.54 to 0.71)
+  - At today's doses: 21% lower (relative risk 0.79, 95% interval 0.73 to 0.85)
+- Heart-failure hospitalization: 56% lower (relative risk 0.44, 95% interval 0.37 to 0.51)
+  - At today's doses: 33% lower (relative risk 0.67, 95% interval 0.61 to 0.73)
+- Health status (KCCQ-equivalent): gain of 2.8 points
+- Side-effect burden: +13.4 points (more measured harm)
+  - Largest contributors to the change: Captopril, everyday symptoms (combined) (+4.1); Captopril, fainting (+2.4).
+
+Borrowed evidence: Captopril borrowed from Valsartan (Val-HeFT); Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 2**
+
+- Captopril: Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($29 of $500 a month)
+- Dosing burden: More doses a day than now (6, now 2), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $114.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 2 doses a day from 1 drug).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.69).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.40).
+
+**Drug differences from option 1**
+
+- Includes Dapagliflozin 10 mg once daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 31% lower (relative risk 0.69, 95% interval 0.57 to 0.83)
+  - At today's doses: 19% lower (relative risk 0.81, 95% interval 0.71 to 0.91)
+- Heart-failure hospitalization: 60% lower (relative risk 0.40, 95% interval 0.33 to 0.48)
+  - At today's doses: 42% lower (relative risk 0.58, 95% interval 0.53 to 0.64)
+- Health status (KCCQ-equivalent): gain of 4.4 points
+- Side-effect burden: +13.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($114 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 2), 2 more drugs
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): started in option 1 (Sacubitril/Valsartan (Entresto))
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin); could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Eplerenone 25mg once daily; Add Sacubitril/Valsartan) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 22: 78-year-old woman, preserved ejection fraction (60%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 78-year-old woman with an ejection fraction of 60% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 148/78 mmHg and the heart rate is 70 per minute in sinus rhythm. She is 3 kg above the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 54 mL/min/1.73 m². She takes no heart failure medication.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 78 years, female; self-identified race: White |
+| Ejection fraction | 60%; lowest earlier ejection fraction not entered; ever 40% or lower: no |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 148/78 mmHg; 70 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 77 kg now; recorded dry weight 74 kg (3 kg above dry weight) |
+| Examination findings | Edema (2+) |
+| NT-proBNP | 1800 pg/mL |
+| Potassium | 4.4 mEq/L |
+| Kidney function | creatinine 1.05 mg/dL; eGFR 54 mL/min/1.73 m²; earlier creatinine not entered; BUN 18.9 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| None | not applicable | not applicable |
+
+Daily dosing: no drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 22: 78-year-old woman, preserved ejection fraction (60%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of preserved ejection fraction (LVEF 60%, 50% or above).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Semaglutide (Wegovy) 0.25mg weekly
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Semaglutide (Wegovy) 0.25 mg once weekly
+
+The tool's ordering score for this option: 52 out of 100. Monthly cost: $399.00/month (estimate). Dosing burden: 1 dose a day from 1 drug, plus 1 drug once a week (now no drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected gain in health status (+8.3 against +2.1 KCCQ-equivalent points); option 2 is cheaper each month ($53.00 against $399.00).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.50 against 0.61); option 2 has fewer side effects (side-effect burden +15.8 against +30.3 points) and a larger expected reduction in death (relative risk 0.90 against 0.92).
+- Mineralocorticoid receptor antagonist: Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Semaglutide); adding an MRA means dropping one. It appears in option 3 (Spironolactone).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 8% lower (relative risk 0.92, 95% interval 0.73 to 1.16; the interval includes no effect)
+  - At today's doses: 5% lower (relative risk 0.95, 95% interval 0.85 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 50% lower (relative risk 0.50, 95% interval 0.35 to 0.73)
+  - At today's doses: 35% lower (relative risk 0.65, 95% interval 0.55 to 0.77)
+- Health status (KCCQ-equivalent): gain of 8.3 points
+- Side-effect burden: +30.3 points (more measured harm)
+  - Largest contributors to the change: Semaglutide (Wegovy), everyday symptoms (combined) (+16.7); Dapagliflozin, genital fungal infection (+5.4).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (2)**
+
+- This option leaves the patient without a loop diuretic although congestion is recorded.
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+
+**Prescribing notes for option 1**
+
+- Semaglutide titration is one labeled step at a time (0.25, 0.5, 1.0, 1.7, then 2.4 mg weekly), at least 4 weeks per step; escalation can be delayed 4 weeks for tolerability. 1.7 mg is a labeled maintenance dose, 2.4 mg is the dose studied in STEP-HFpEF (injection only; the oral tablets have no heart-failure data).
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Semaglutide (Wegovy): Assess tolerance, weight and symptoms over time. Trial-average weight loss is not applied to current weight; fluid loss, adiposity change and weight regain are not quantified.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($399 of $500 a month)
+- Dosing burden: More doses a day than now (1, now 0), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Furosemide 20mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Furosemide 20 mg once daily
+
+The tool's ordering score for this option: 49 out of 100. Monthly cost: $53.00/month (estimate). Dosing burden: 2 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 2 is cheaper each month ($53.00 against $399.00); option 1 has a larger expected gain in health status (+8.3 against +2.1 KCCQ-equivalent points).
+
+More on why:
+
+- Also against option 1: option 2 has fewer side effects (side-effect burden +15.8 against +30.3 points) and a larger expected reduction in death (relative risk 0.90 against 0.92); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.50 against 0.61).
+
+**Drug differences from option 1**
+
+- Includes Furosemide 20 mg once daily; option 1 does not.
+- Does not include Semaglutide (Wegovy), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 10% lower (relative risk 0.90, 95% interval 0.66 to 1.22; the interval includes no effect)
+- Heart-failure hospitalization: 39% lower (relative risk 0.61, 95% interval 0.35 to 1.06; the interval includes no effect)
+- Health status (KCCQ-equivalent): gain of 2.1 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +15.8 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+5.4); Furosemide, low potassium (+3.1).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+
+**Treatment considerations for option 2**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Furosemide: Assess measured weight, congestion, BP, sodium, potassium and renal response after the change. Dose conversion is a starting convention, not proof of equivalent diuresis or safety.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($53 of $500 a month)
+- Dosing burden: More doses a day than now (2, now 0), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Spironolactone 25mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 49 out of 100. Monthly cost: $54.00/month (estimate). Dosing burden: 2 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 3 is cheaper each month ($54.00 against $399.00); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.50 against 0.63).
+
+More on why:
+
+- Also against option 1: option 3 has fewer side effects (side-effect burden +14.7 against +30.3 points) and a larger expected reduction in death (relative risk 0.90 against 0.92); option 1 has a larger expected gain in health status (+8.3 against +3.2 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Includes Spironolactone 25 mg once daily; option 1 does not.
+- Does not include Semaglutide (Wegovy), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 10% lower (relative risk 0.90, 95% interval 0.76 to 1.07; the interval includes no effect)
+  - At today's doses: 9% lower (relative risk 0.91, 95% interval 0.77 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 37% lower (relative risk 0.63, 95% interval 0.52 to 0.77)
+  - At today's doses: 36% lower (relative risk 0.64, 95% interval 0.52 to 0.77)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +14.7 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+5.4); Spironolactone, high potassium (above 5.5) (+2.6).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (2)**
+
+- This option leaves the patient without a loop diuretic although congestion is recorded.
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+
+**Treatment considerations for option 3**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Spironolactone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($54 of $500 a month)
+- Dosing burden: More doses a day than now (2, now 0), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Indicated therapy currently missing
+
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1. Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Semaglutide); adding an MRA means dropping one. It appears in option 3 (Spironolactone); could be started: Spironolactone, Eplerenone, Finerenone (Kerendia)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Semaglutide) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 23: 62-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 62-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 128/80 mmHg and the heart rate is 76 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 70 mL/min/1.73 m². He takes Lisinopril 10 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 62 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 128/80 mmHg; 76 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 84 kg now; recorded dry weight 84 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1500 pg/mL |
+| Potassium | 4.4 mEq/L |
+| Kidney function | creatinine 1.17 mg/dL; eGFR 70 mL/min/1.73 m²; earlier creatinine not entered; BUN 21.1 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Coronary Artery Disease |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 1 dose a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 23: 62-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Eplerenone 25 mg once daily
+- Lisinopril 10 mg once daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $25.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in death (relative risk 0.53 against 0.62).
+- Compared with making no medication change: option 1 has an expected reduction in death (relative risk 0.53 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +22.2 points).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.43 against 0.49).
+- Also against no change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.43 against 1.00) and an expected gain in health status (+2.3 against 0.0 KCCQ-equivalent points).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Carvedilol and Eplerenone); adding an SGLT2 inhibitor means dropping one. It appears in option 2 (Dapagliflozin).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 47% lower (relative risk 0.53, 95% interval 0.45 to 0.63)
+  - At today's doses: 25% lower (relative risk 0.75, 95% interval 0.69 to 0.81)
+- Heart-failure hospitalization: 57% lower (relative risk 0.43, 95% interval 0.35 to 0.55)
+  - At today's doses: 33% lower (relative risk 0.67, 95% interval 0.60 to 0.74)
+- Health status (KCCQ-equivalent): gain of 2.3 points
+- Side-effect burden: +22.2 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Eplerenone, high potassium (above 5.5) (+2.2).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 1**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($25 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 10 mg once daily
+
+The tool's ordering score for this option: 66 out of 100. Monthly cost: $58.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.53 against 0.62).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.43 against 0.49).
+
+**Drug differences from option 1**
+
+- Includes Dapagliflozin 10 mg once daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 38% lower (relative risk 0.62, 95% interval 0.53 to 0.73)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.69 to 0.88)
+- Heart-failure hospitalization: 51% lower (relative risk 0.49, 95% interval 0.40 to 0.60)
+  - At today's doses: 37% lower (relative risk 0.63, 95% interval 0.57 to 0.69)
+- Health status (KCCQ-equivalent): gain of 3.3 points
+- Side-effect burden: +21.2 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Dapagliflozin, genital fungal infection (+2.4).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 2**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($58 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Carvedilol 3.125mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $64.00/month (estimate). Dosing burden: 4 doses a day from 2 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.53 against 0.63).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.43 against 0.48).
+
+**Drug differences from option 1**
+
+- Includes Sacubitril/Valsartan (Entresto) 24/26 mg twice daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 37% lower (relative risk 0.63, 95% interval 0.52 to 0.76)
+  - At today's doses: 7% lower (relative risk 0.93, 95% interval 0.85 to 1.01; the interval includes no effect)
+- Heart-failure hospitalization: 52% lower (relative risk 0.48, 95% interval 0.37 to 0.63)
+  - At today's doses: 9% lower (relative risk 0.91, 95% interval 0.81 to 1.02; the interval includes no effect)
+- Health status (KCCQ-equivalent): gain of 2.3 points
+- Side-effect burden: +16.1 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Lisinopril, everyday symptoms (combined) (−5.4).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Prescribing notes for option 3**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 3**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($64 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), one more drug
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): started in option 1 (Carvedilol)
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Carvedilol and Eplerenone); adding an SGLT2 inhibitor means dropping one. It appears in option 2 (Dapagliflozin); could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Carvedilol 3.125mg twice daily; Add Eplerenone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 24: 64-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 64-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/76 mmHg and the heart rate is 76 per minute in sinus rhythm. He is 3 kg above the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Furosemide 40 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 64 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 126/76 mmHg; 76 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 93 kg now; recorded dry weight 90 kg (3 kg above dry weight) |
+| Examination findings | Edema (2+), JVP Elevated |
+| NT-proBNP | 2400 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.28 mg/dL; eGFR 62 mL/min/1.73 m²; earlier creatinine not entered; BUN 23 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+| Furosemide | 40 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 4 doses a day from 3 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 24: 64-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (1)
+
+- **NYHA class and findings disagree**: The entered class is NYHA II, but the weight is 3.0 kg above the dry weight (the tool's criterion for acute decompensation is more than 2 kg) and the examination shows congestion (Edema (2+), JVP Elevated). Confirm the NYHA class. No option is changed by this prompt: the tool reads the class as entered.
+
+### Other care prompts (1)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Eplerenone 25 mg once daily
+- Furosemide 40 mg once daily
+- Lisinopril 10 mg once daily
+
+The tool's ordering score for this option: 72 out of 100. Monthly cost: $78.00/month (estimate). Dosing burden: 6 doses a day from 5 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected gain in health status (+3.2 against +2.2 KCCQ-equivalent points).
+- Compared with making no medication change: option 1 has an expected reduction in death (relative risk 0.68 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +11.2 points).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.47 against 1.00) and an expected gain in health status (+3.2 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.58 to 0.79)
+  - At today's doses: 25% lower (relative risk 0.75, 95% interval 0.66 to 0.86)
+- Heart-failure hospitalization: 53% lower (relative risk 0.47, 95% interval 0.40 to 0.54)
+  - At today's doses: 44% lower (relative risk 0.56, 95% interval 0.50 to 0.62)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +11.2 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($78 of $500 a month)
+- Dosing burden: More doses a day than now (6, now 4), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Furosemide 40 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 72 out of 100. Monthly cost: $84.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 1 has a larger expected gain in health status (+3.2 against +2.2 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Includes Sacubitril/Valsartan (Entresto) 24/26 mg twice daily; option 1 does not.
+- Does not include Dapagliflozin, which is included in option 1.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.56 to 0.83)
+  - At today's doses: 10% lower (relative risk 0.90, 95% interval 0.81 to 0.99)
+- Heart-failure hospitalization: 54% lower (relative risk 0.46, 95% interval 0.37 to 0.58)
+  - At today's doses: 19% lower (relative risk 0.81, 95% interval 0.72 to 0.92)
+- Health status (KCCQ-equivalent): gain of 2.2 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +6.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 2**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($84 of $500 a month)
+- Dosing burden: More doses a day than now (6, now 4), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Titrate Furosemide from 40mg once daily to 80mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Furosemide 80 mg once daily
+- Lisinopril 10 mg once daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $28.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this option is shown:** Includes a diuretic increase: the patient is congested (3.0 kg above dry weight; the tool's loop criterion is more than 1 kg), and no other option raises or starts an oral loop.
+
+**Why this is option 3**
+
+- This option is shown under a display rule, not because it ranks next: Includes a diuretic increase: the patient is congested (3.0 kg above dry weight; the tool's loop criterion is more than 1 kg), and no other option raises or starts an oral loop.
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.65).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.68 against 0.76) and a larger expected gain in health status (+3.2 against +1.1 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Furosemide: 80 mg once daily here; 40 mg once daily in option 1.
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 24% lower (relative risk 0.76, 95% interval 0.68 to 0.85)
+  - At today's doses: 15% lower (relative risk 0.85, 95% interval 0.80 to 0.91)
+- Heart-failure hospitalization: 35% lower (relative risk 0.65, 95% interval 0.57 to 0.74)
+  - At today's doses: 23% lower (relative risk 0.77, 95% interval 0.71 to 0.83)
+- Health status (KCCQ-equivalent): gain of 1.1 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +6.1 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.2); Eplerenone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The effect of the loop diuretic dose on death and hospitalization is not modelled: the figures above do not include it.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 3**
+
+- Furosemide: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured weight, congestion, BP, sodium, potassium and renal response after the change. Dose conversion is a starting convention, not proof of equivalent diuresis or safety.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($28 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 4), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Other eligible therapy to consider
+
+- Furoscix (SC Furosemide): a short course beside the oral loop diuretic for congestion that persists; the label says it is not for chronic use. Not in an option shown: the plan that starts it costs $5828 a month, over the stated budget of $500.
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Eplerenone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 25: 62-year-old woman, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 62-year-old woman with an ejection fraction of 30% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 114/70 mmHg and the heart rate is 72 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.6 mEq/L and eGFR is 58 mL/min/1.73 m². She takes Sacubitril/Valsartan 49/51 mg twice daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 62 years, female; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 114/70 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 74 kg now; recorded dry weight 74 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 2100 pg/mL |
+| Potassium | 4.6 mEq/L |
+| Kidney function | creatinine 1.08 mg/dL; eGFR 58 mL/min/1.73 m²; earlier creatinine not entered; BUN 19.4 mg/dL |
+| Iron studies and hemoglobin | ferritin 60 ng/mL; transferrin saturation 14%; hemoglobin 11.8 g/dL |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Sacubitril/Valsartan (Entresto) | 49/51 mg twice daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+| Dapagliflozin | 10 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 6 doses a day from 4 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 25: 62-year-old woman, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy; Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class III. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Titrate Sacubitril/Valsartan (Entresto) 49/51mg twice daily to 97/103mg twice daily
+- Add Ferric Carboxymaltose 1000mg once (iron deficiency)
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 97/103 mg twice daily (target dose)
+- Spironolactone 25 mg once daily
+- Ferric Carboxymaltose 1000 mg once (target dose)
+
+The tool's ordering score for this option: 75 out of 100. Monthly cost: $398.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs, plus a single dose (now 6 doses a day from 4 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.66 against 0.76).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 15% lower (relative risk 0.85, 95% interval 0.73 to 1.00; the interval includes no effect)
+- Heart-failure hospitalization: 34% lower (relative risk 0.66, 95% interval 0.56 to 0.76)
+- Health status (KCCQ-equivalent): gain of 4.6 points
+- Side-effect burden: +10.2 points (more measured harm)
+  - Largest contributors to the change: Ferric Carboxymaltose, everyday symptoms (combined) (+5.9); Ferric Carboxymaltose, low phosphate (+3.7).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Sacubitril/Valsartan (Entresto).
+
+Side effects at the higher dose were not measured separately; the burden shown for Sacubitril/Valsartan (Entresto) is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Prescribing notes for option 1**
+
+- Ferric carboxymaltose label dosing for 74 kg (70 kg or more), Hb 11.8 g/dL: day 1 1000 mg; week 6 500 mg. Then 500 mg at weeks 12, 24 and 36 only if ferritin is below 100 ng/mL, or 100-300 ng/mL with TSAT below 20% (no data beyond 36 weeks).
+- Prescribing note (2026 ESC heart failure guideline): a transferrin saturation (TSAT) below 20% identifies the patients most likely to benefit from IV iron; the tool's criteria (ferritin below 100, or 100-300 with TSAT below 20%) are unchanged.
+- Boxed warning (Injectafer label, 08/2026): symptomatic, severe and prolonged hypophosphatemia, including osteomalacia and fractures, has occurred, also in patients with a normal baseline phosphate. Correct pre-existing hypophosphatemia first; check serum phosphate before any repeat course within 3 months and in patients at risk (malabsorption, inflammatory bowel disease, vitamin D deficiency, hyperparathyroidism).
+
+**Treatment considerations for option 1**
+
+- Sacubitril/Valsartan (Entresto): Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Ferric Carboxymaltose: Course treatment: confirm prior infusions, current iron studies and hemoglobin. A completed infusion is not continuous exposure, and removing a list entry does not reverse iron repletion.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($398 of $500 a month)
+- Dosing burden: Same doses a day as now (6), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily
+- Add Ferric Carboxymaltose 1000mg once (iron deficiency)
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 49/51 mg twice daily
+- Spironolactone 25 mg once daily
+- Ferric Carboxymaltose 1000 mg once (target dose)
+
+The tool's ordering score for this option: 74 out of 100. Monthly cost: $398.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs, plus a single dose (now 6 doses a day from 4 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.66 against 0.76).
+
+**Drug differences from option 1**
+
+- Carvedilol: 25 mg twice daily here; 12.5 mg twice daily in option 1.
+- Sacubitril/Valsartan (Entresto): 49/51 mg twice daily here; 97/103 mg twice daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 13% lower (relative risk 0.87, 95% interval 0.74 to 1.01; the interval includes no effect)
+- Heart-failure hospitalization: 24% lower (relative risk 0.76, 95% interval 0.66 to 0.88)
+- Health status (KCCQ-equivalent): gain of 4.0 points
+- Side-effect burden: +10.2 points (more measured harm)
+  - Largest contributors to the change: Ferric Carboxymaltose, everyday symptoms (combined) (+5.9); Ferric Carboxymaltose, low phosphate (+3.7).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Prescribing notes for option 2**
+
+- Ferric carboxymaltose label dosing for 74 kg (70 kg or more), Hb 11.8 g/dL: day 1 1000 mg; week 6 500 mg. Then 500 mg at weeks 12, 24 and 36 only if ferritin is below 100 ng/mL, or 100-300 ng/mL with TSAT below 20% (no data beyond 36 weeks).
+- Prescribing note (2026 ESC heart failure guideline): a transferrin saturation (TSAT) below 20% identifies the patients most likely to benefit from IV iron; the tool's criteria (ferritin below 100, or 100-300 with TSAT below 20%) are unchanged.
+- Boxed warning (Injectafer label, 08/2026): symptomatic, severe and prolonged hypophosphatemia, including osteomalacia and fractures, has occurred, also in patients with a normal baseline phosphate. Correct pre-existing hypophosphatemia first; check serum phosphate before any repeat course within 3 months and in patients at risk (malabsorption, inflammatory bowel disease, vitamin D deficiency, hyperparathyroidism).
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Ferric Carboxymaltose: Course treatment: confirm prior infusions, current iron studies and hemoglobin. A completed infusion is not continuous exposure, and removing a list entry does not reverse iron repletion.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($398 of $500 a month)
+- Dosing burden: Same doses a day as now (6), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Titrate Spironolactone from 25mg once daily to 50mg once daily
+- Add Ferric Carboxymaltose 1000mg once (iron deficiency)
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 49/51 mg twice daily
+- Spironolactone 50 mg once daily (target dose)
+- Ferric Carboxymaltose 1000 mg once (target dose)
+
+The tool's ordering score for this option: 73 out of 100. Monthly cost: $398.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs, plus a single dose (now 6 doses a day from 4 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.85 against 0.94).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.66 against 0.82).
+
+**Drug differences from option 1**
+
+- Sacubitril/Valsartan (Entresto): 49/51 mg twice daily here; 97/103 mg twice daily in option 1.
+- Spironolactone: 50 mg once daily here; 25 mg once daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 6% lower (relative risk 0.94, 95% interval 0.81 to 1.09; the interval includes no effect)
+- Heart-failure hospitalization: 18% lower (relative risk 0.82, 95% interval 0.72 to 0.94)
+- Health status (KCCQ-equivalent): gain of 3.7 points
+- Side-effect burden: +10.2 points (more measured harm)
+  - Largest contributors to the change: Ferric Carboxymaltose, everyday symptoms (combined) (+5.9); Ferric Carboxymaltose, low phosphate (+3.7).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Spironolactone.
+
+Side effects at the higher dose were not measured separately; the burden shown for Spironolactone is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Prescribing notes for option 3**
+
+- Ferric carboxymaltose label dosing for 74 kg (70 kg or more), Hb 11.8 g/dL: day 1 1000 mg; week 6 500 mg. Then 500 mg at weeks 12, 24 and 36 only if ferritin is below 100 ng/mL, or 100-300 ng/mL with TSAT below 20% (no data beyond 36 weeks).
+- Prescribing note (2026 ESC heart failure guideline): a transferrin saturation (TSAT) below 20% identifies the patients most likely to benefit from IV iron; the tool's criteria (ferritin below 100, or 100-300 with TSAT below 20%) are unchanged.
+- Boxed warning (Injectafer label, 08/2026): symptomatic, severe and prolonged hypophosphatemia, including osteomalacia and fractures, has occurred, also in patients with a normal baseline phosphate. Correct pre-existing hypophosphatemia first; check serum phosphate before any repeat course within 3 months and in patients at risk (malabsorption, inflammatory bowel disease, vitamin D deficiency, hyperparathyroidism).
+
+**Treatment considerations for option 3**
+
+- Spironolactone: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Ferric Carboxymaltose: Course treatment: confirm prior infusions, current iron studies and hemoglobin. A completed infusion is not continuous exposure, and removing a list entry does not reverse iron repletion.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($398 of $500 a month)
+- Dosing burden: Same doses a day as now (6), one more drug
+- Evidence: Strong guideline concordance
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+- **Serum phosphate (ferric carboxymaltose boxed warning)** (Before any repeat course within 3 months, and when symptoms of bone pain or weakness occur): Hypophosphatemia can be severe and prolonged and cause osteomalacia and fractures, even with a normal baseline. Check phosphate before repeat dosing, especially with malabsorption, IBD, vitamin D deficiency or hyperparathyroidism (Injectafer label).
+- **Ferritin and transferrin saturation** (Before each 500 mg maintenance dose (weeks 12, 24, 36)): Maintenance 500 mg is given only if ferritin is below 100 ng/mL, or 100-300 ng/mL with TSAT below 20% (Injectafer label). No data beyond 36 weeks.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Titrate Sacubitril/Valsartan; Add Ferric Carboxymaltose 1000mg once) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 26: 65-year-old man, reduced ejection fraction (27%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 65-year-old man with an ejection fraction of 27% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 124/76 mmHg and the heart rate is 68 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 5.1 mEq/L and eGFR is 55 mL/min/1.73 m². He takes Lisinopril 20 mg once daily, Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 65 years, male; self-identified race: White |
+| Ejection fraction | 27%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 124/76 mmHg; 68 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 85 kg now; recorded dry weight 85 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1500 pg/mL |
+| Potassium | 5.1 mEq/L |
+| Kidney function | creatinine 1.41 mg/dL; eGFR 55 mL/min/1.73 m²; earlier creatinine not entered; BUN 25.4 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 20 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 26: 65-year-old man, reduced ejection fraction (27%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 27%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 27% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $114.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.58 against 0.66); option 2 has a larger expected reduction in death (relative risk 0.81 against 0.85).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.58 against 1.00).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.85 against 1.00) and an expected gain in health status (+2.7 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 15% lower (relative risk 0.85, 95% interval 0.69 to 1.03; the interval includes no effect)
+  - At today's doses: no measurable difference (relative risk 1.00, 95% interval 0.86 to 1.15; the interval includes no effect)
+- Heart-failure hospitalization: 42% lower (relative risk 0.58, 95% interval 0.47 to 0.72)
+  - At today's doses: 14% lower (relative risk 0.86, 95% interval 0.75 to 0.98)
+- Health status (KCCQ-equivalent): gain of 2.7 points
+- Side-effect burden: +5.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 1**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($114 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 20 mg once daily (target dose)
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $58.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 2 has a larger expected reduction in death (relative risk 0.81 against 0.85); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.58 against 0.66).
+
+**Drug differences from option 1**
+
+- Carvedilol: 25 mg twice daily here; 12.5 mg twice daily in option 1.
+- Includes Lisinopril 20 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 19% lower (relative risk 0.81, 95% interval 0.72 to 0.91)
+- Heart-failure hospitalization: 34% lower (relative risk 0.66, 95% interval 0.60 to 0.72)
+- Health status (KCCQ-equivalent): gain of 2.4 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($58 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 20 mg once daily (target dose)
+
+The tool's ordering score for this option: 66 out of 100. Monthly cost: $58.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.58 against 0.72).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.85 against 0.89).
+
+**Drug differences from option 1**
+
+- Includes Lisinopril 20 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 11% lower (relative risk 0.89, 95% interval 0.79 to 0.99)
+- Heart-failure hospitalization: 28% lower (relative risk 0.72, 95% interval 0.67 to 0.78)
+- Health status (KCCQ-equivalent): gain of 2.1 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($58 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): not started: potassium 5.1 is 5.0 or higher: recheck and start the MRA once potassium is below 5.0: not started in option 1; Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF); Spironolactone, Eplerenone withheld (New MRA start at potassium 5.0 or higher is staged): Potassium 5.1 mEq/L is at or above the 5.0 start limit (2022 AHA/ACC/HFSA 7.3.3: potassium 5.0 or above is a contraindication to MRA initiation; 2026 ESC section 6.1: caution at 5.0 or above; the Aldactone and Kerendia labels allow exactly 5.0, the guideline boundary is the stricter and is used). Repeat potassium and start the MRA once it is below 5.0; Potassium binders: whether they improve outcomes is uncertain in the 2022 US guideline (primary text); the 2026 ESC guideline makes no recommendation for them (insufficient evidence of clinical benefit). The tool does not start an MRA together with a binder
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+- **Early potassium check** (48-72 hours): A rule set by this tool for CKD and/or borderline potassium at baseline (no source gives this window).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+- **Repeat potassium; start Eplerenone, Spironolactone once below 5.0** (Before any MRA start): A new start of Eplerenone, Spironolactone is withheld while potassium is 5.0 or higher (2022 US guideline 7.3.3: potassium 5.0 or above is a contraindication to MRA initiation; 2026 ESC guideline: caution at 5.0 or above; the labels allow exactly 5.0, the guideline boundary is the stricter). Recheck potassium and start it once it is below 5.0. Whether potassium binders improve outcomes is uncertain in the 2022 US guideline; the 2026 ESC guideline makes no recommendation for them.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan; Add Dapagliflozin 10mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 27: 58-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 58-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 116/72 mmHg and the heart rate is 78 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 70 mL/min/1.73 m². He takes Sacubitril/Valsartan 97/103 mg twice daily, Metoprolol Succinate 200 mg once daily, Spironolactone 25 mg once daily, Dapagliflozin 10 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 58 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 116/72 mmHg; 78 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 80 kg now; recorded dry weight 80 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1200 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.2 mg/dL; eGFR 70 mL/min/1.73 m²; earlier creatinine not entered; BUN 21.6 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Sacubitril/Valsartan (Entresto) | 97/103 mg twice daily | taking as recorded; consistent use confirmed |
+| Metoprolol Succinate | 200 mg once daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+| Dapagliflozin | 10 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 5 doses a day from 4 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 27: 58-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy; Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- No medication change is proposed in this option. Review remaining treatment gaps, safety warnings and monitoring before deciding to continue.
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Metoprolol Succinate 200 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 97/103 mg twice daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 75 out of 100. Monthly cost: $124.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 5 doses a day from 4 drugs).
+
+**Why this is first**
+
+- No option scores 1 point or more above leaving the regimen unchanged, which is closer than the tool can separate; the alternatives below are shown for discussion.
+- Option 1 and option 2 are too close to separate.
+
+More on why:
+
+- Starting IV iron is withheld because information is missing: hemoglobin for dose selection, prior iron-course dates and first-versus-repeat course assessment, phosphate safety assessment (testing when indicated).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- No medication change is proposed, so there is no change in expected effect.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Recorded regimen: No net medication change is proposed. Reassess the recorded condition; unchanged medication does not establish clinical stability or complete treatment.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($124 of $500 a month)
+- Dosing burden: Same doses a day as now (5)
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Titrate Spironolactone from 25mg once daily to 50mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Metoprolol Succinate 200 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 97/103 mg twice daily (target dose)
+- Spironolactone 50 mg once daily (target dose)
+
+The tool's ordering score for this option: 75 out of 100. Monthly cost: $124.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 5 doses a day from 4 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate.
+
+**Drug differences from option 1**
+
+- Spironolactone: 50 mg once daily here; 25 mg once daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 1% lower (relative risk 0.99, estimated from the dose relationship; no interval)
+- Heart-failure hospitalization: 2% lower (relative risk 0.98, estimated from the dose relationship; no interval)
+- Health status (KCCQ-equivalent): about the same
+- Side-effect burden: not changed in the model, because side effects at the higher dose were not measured separately
+
+Borrowed evidence: Metoprolol Succinate borrowed from Bisoprolol (CIBIS-II).
+
+Side effects at the higher dose were not measured separately; the burden shown for Spironolactone is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Spironolactone: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($124 of $500 a month)
+- Dosing burden: Same doses a day as now (5)
+- Evidence: Strong guideline concordance
+
+### Other eligible therapy to consider
+
+- Ivabradine: SHIFT: sinus rhythm, LVEF ≤ 35, HR ≥ 70 on maximally tolerated beta-blocker (or beta-blocker contraindicated); AHA/ACC 2022 Class 2a, ESC 2021 IIa. Not in an option shown: it scores below making no change.
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (No medication change) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 28: 84-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 84-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 104/62 mmHg and the heart rate is 66 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 52 mL/min/1.73 m². He takes Lisinopril 2.5 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 84 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 104/62 mmHg; 66 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 72 kg now; recorded dry weight 72 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 2100 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.34 mg/dL; eGFR 52 mL/min/1.73 m²; earlier creatinine not entered; BUN 24.1 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 2.5 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 1 dose a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 28: 84-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Eplerenone 25 mg once daily
+- Lisinopril 2.5 mg once daily
+
+The tool's ordering score for this option: 66 out of 100. Monthly cost: $25.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected reduction in death (relative risk 0.53 against 0.58).
+- Compared with making no medication change: option 1 has an expected reduction in death (relative risk 0.53 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +22.2 points).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.43 against 1.00) and an expected gain in health status (+2.3 against 0.0 KCCQ-equivalent points).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Carvedilol and Eplerenone); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 47% lower (relative risk 0.53, 95% interval 0.45 to 0.63)
+  - At today's doses: 25% lower (relative risk 0.75, 95% interval 0.69 to 0.81)
+- Heart-failure hospitalization: 57% lower (relative risk 0.43, 95% interval 0.35 to 0.55)
+  - At today's doses: 33% lower (relative risk 0.67, 95% interval 0.60 to 0.74)
+- Health status (KCCQ-equivalent): gain of 2.3 points
+- Side-effect burden: +22.2 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Eplerenone, high potassium (above 5.5) (+2.2).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+
+**Prescribing notes for option 1**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($25 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Carvedilol 3.125mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $64.00/month (estimate). Dosing burden: 4 doses a day from 2 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.53 against 0.58).
+
+**Drug differences from option 1**
+
+- Includes Sacubitril/Valsartan (Entresto) 24/26 mg twice daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 42% lower (relative risk 0.58, 95% interval 0.49 to 0.70)
+  - At today's doses: 14% lower (relative risk 0.86, 95% interval 0.80 to 0.93)
+- Heart-failure hospitalization: 58% lower (relative risk 0.42, 95% interval 0.33 to 0.55)
+  - At today's doses: 20% lower (relative risk 0.80, 95% interval 0.72 to 0.88)
+- Health status (KCCQ-equivalent): gain of 2.8 points
+- Side-effect burden: +16.1 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Lisinopril, everyday symptoms (combined) (−6.5).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (2)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Prescribing notes for option 2**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 2**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($64 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), one more drug
+- Evidence: Limited concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 2.5 mg once daily
+
+The tool's ordering score for this option: 63 out of 100. Monthly cost: $58.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.53 against 0.62).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.43 against 0.49).
+
+**Drug differences from option 1**
+
+- Includes Dapagliflozin 10 mg once daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 38% lower (relative risk 0.62, 95% interval 0.53 to 0.73)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.69 to 0.88)
+- Heart-failure hospitalization: 51% lower (relative risk 0.49, 95% interval 0.40 to 0.60)
+  - At today's doses: 37% lower (relative risk 0.63, 95% interval 0.57 to 0.69)
+- Health status (KCCQ-equivalent): gain of 3.3 points
+- Side-effect burden: +21.2 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Dapagliflozin, genital fungal infection (+2.4).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+
+**Prescribing notes for option 3**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 3**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($58 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), 2 more drugs
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): started in option 1 (Carvedilol)
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Carvedilol and Eplerenone); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin); could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Carvedilol 3.125mg twice daily; Add Eplerenone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 29: 71-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 71-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 71 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 126/78 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 88 kg now; recorded dry weight 88 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1900 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.24 mg/dL; eGFR 62 mL/min/1.73 m²; earlier creatinine not entered; BUN 22.3 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Coronary Artery Disease |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Medicare Part D; monthly medication budget $300; cost worry 9 of 10; tolerance for many pills and doses 2 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Keep cost low |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 4 doses a day from 3 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 29: 71-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+**What this setting changed (generated).** This patient is also shown with the Balanced setting elsewhere in the packet. With "Keep cost low" the weights are changed as follows: Starts from the base weights; cost counts three times as much. The budget limit and every safety rule still apply separately. The top options here are within one point of each other (the tie sentence below), a difference the tool cannot separate, so which of them comes first rests on it.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 10 mg once daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 77 out of 100. Monthly cost: $54.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher.
+- Compared with making no medication change: option 1 has an expected reduction in death (relative risk 0.81 against 1.00); no change is cheaper each month.
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.66 against 1.00) and an expected gain in health status (+2.4 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 19% lower (relative risk 0.81, 95% interval 0.72 to 0.91)
+- Heart-failure hospitalization: 34% lower (relative risk 0.66, 95% interval 0.60 to 0.72)
+- Health status (KCCQ-equivalent): gain of 2.4 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($54 of $300 a month)
+- Dosing burden: More doses a day than now (5, now 4), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Lisinopril from 10mg once daily to 20mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 20 mg once daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 77 out of 100. Monthly cost: $54.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher.
+
+**Drug differences from option 1**
+
+- Carvedilol: 12.5 mg twice daily here; 25 mg twice daily in option 1.
+- Lisinopril: 20 mg once daily here; 10 mg once daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 17% lower (relative risk 0.83, 95% interval 0.74 to 0.93)
+- Heart-failure hospitalization: 36% lower (relative risk 0.64, 95% interval 0.59 to 0.70)
+- Health status (KCCQ-equivalent): gain of 2.6 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril.
+
+Side effects at the higher dose were not measured separately; the burden shown for Lisinopril is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Lisinopril: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($54 of $300 a month)
+- Dosing burden: More doses a day than now (5, now 4), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 76 out of 100. Monthly cost: $111.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is option 3**
+
+- Option 3 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 3 has a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.66); option 1 is cheaper each month ($54.00 against $111.00).
+
+More on why:
+
+- Also against option 1: option 1 has a lighter dosing burden (fewer doses a day).
+
+**Drug differences from option 1**
+
+- Carvedilol: 12.5 mg twice daily here; 25 mg twice daily in option 1.
+- Includes Sacubitril/Valsartan (Entresto) 24/26 mg twice daily; option 1 does not.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 20% lower (relative risk 0.80, 95% interval 0.66 to 0.96)
+  - At today's doses: 7% lower (relative risk 0.93, 95% interval 0.82 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 48% lower (relative risk 0.52, 95% interval 0.42 to 0.64)
+  - At today's doses: 24% lower (relative risk 0.76, 95% interval 0.68 to 0.86)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +5.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 3**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($111 of $300 a month)
+- Dosing burden: More doses a day than now (6, now 4), one more drug
+- Evidence: Strong guideline concordance
+
+### Indicated therapy currently missing
+
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 30: 74-year-old man, preserved ejection fraction (55%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 74-year-old man with an ejection fraction of 55% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 142/80 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.6 mEq/L and eGFR is 42 mL/min/1.73 m². He takes no heart failure medication.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 74 years, male; self-identified race: White |
+| Ejection fraction | 55%; lowest earlier ejection fraction not entered; ever 40% or lower: no |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 142/80 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 94 kg now; recorded dry weight 94 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 900 pg/mL |
+| Potassium | 4.6 mEq/L |
+| Kidney function | creatinine 1.68 mg/dL; eGFR 42 mL/min/1.73 m²; earlier creatinine not entered; BUN 30.2 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Diabetes Mellitus Type 2 |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| None | not applicable | not applicable |
+
+Daily dosing: no drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 30: 74-year-old man, preserved ejection fraction (55%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of preserved ejection fraction (LVEF 55%, 50% or above).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Semaglutide (Wegovy) 0.25mg weekly
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Semaglutide (Wegovy) 0.25 mg once weekly
+
+The tool's ordering score for this option: 52 out of 100. Monthly cost: $399.00/month (estimate). Dosing burden: 1 dose a day from 1 drug, plus 1 drug once a week (now no drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.50 against 0.63); option 2 is cheaper each month ($67.00 against $399.00).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected gain in health status (+8.3 against +3.2 KCCQ-equivalent points); option 2 has fewer side effects (side-effect burden +11.5 against +27.3 points) and a larger expected reduction in death (relative risk 0.90 against 0.92).
+- Mineralocorticoid receptor antagonist: Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Semaglutide); adding an MRA means dropping one. It appears in option 2 (Eplerenone).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 8% lower (relative risk 0.92, 95% interval 0.73 to 1.16; the interval includes no effect)
+  - At today's doses: 5% lower (relative risk 0.95, 95% interval 0.85 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 50% lower (relative risk 0.50, 95% interval 0.35 to 0.73)
+  - At today's doses: 35% lower (relative risk 0.65, 95% interval 0.55 to 0.77)
+- Health status (KCCQ-equivalent): gain of 8.3 points
+- Side-effect burden: +27.3 points (more measured harm)
+  - Largest contributors to the change: Semaglutide (Wegovy), everyday symptoms (combined) (+16.7); Semaglutide (Wegovy), serious kidney event (+4.2).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 1**
+
+- Semaglutide titration is one labeled step at a time (0.25, 0.5, 1.0, 1.7, then 2.4 mg weekly), at least 4 weeks per step; escalation can be delayed 4 weeks for tolerability. 1.7 mg is a labeled maintenance dose, 2.4 mg is the dose studied in STEP-HFpEF (injection only; the oral tablets have no heart-failure data).
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Semaglutide (Wegovy): Assess tolerance, weight and symptoms over time. Trial-average weight loss is not applied to current weight; fluid loss, adiposity change and weight regain are not quantified.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($399 of $500 a month)
+- Dosing burden: More doses a day than now (1, now 0), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 50 out of 100. Monthly cost: $67.00/month (estimate). Dosing burden: 2 doses a day from 2 drugs (now no drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 2 is cheaper each month ($67.00 against $399.00); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.50 against 0.63).
+
+More on why:
+
+- Also against option 1: option 2 has fewer side effects (side-effect burden +11.5 against +27.3 points) and a larger expected reduction in death (relative risk 0.90 against 0.92); option 1 has a larger expected gain in health status (+8.3 against +3.2 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Includes Eplerenone 25 mg once daily; option 1 does not.
+- Does not include Semaglutide (Wegovy), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 10% lower (relative risk 0.90, 95% interval 0.76 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 37% lower (relative risk 0.63, 95% interval 0.52 to 0.77)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +11.5 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.5); Dapagliflozin, genital fungal infection (+2.4).
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 2**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($67 of $500 a month)
+- Dosing burden: More doses a day than now (2, now 0), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Semaglutide (Wegovy) 0.25mg weekly
+
+**Resulting regimen**
+
+- Semaglutide (Wegovy) 0.25 mg once weekly
+
+The tool's ordering score for this option: 47 out of 100. Monthly cost: $349.00/month (estimate). Dosing burden: 1 drug once a week (now no drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.50 against 0.67).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected gain in health status (+8.3 against +6.2 KCCQ-equivalent points) and a larger expected reduction in death (relative risk 0.92 against 0.95).
+
+**Drug differences from option 1**
+
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 5% lower (relative risk 0.95, 95% interval 0.77 to 1.17; the interval includes no effect)
+  - At today's doses: 2% lower (relative risk 0.98, 95% interval 0.91 to 1.06; the interval includes no effect)
+- Heart-failure hospitalization: 33% lower (relative risk 0.67, 95% interval 0.47 to 0.96)
+  - At today's doses: 13% lower (relative risk 0.87, 95% interval 0.76 to 0.99)
+- Health status (KCCQ-equivalent): gain of 6.2 points
+- Side-effect burden: +22.2 points (more measured harm)
+  - Largest contributors to the change: Semaglutide (Wegovy), everyday symptoms (combined) (+16.7); Semaglutide (Wegovy), serious kidney event (+4.2).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 3**
+
+- Semaglutide titration is one labeled step at a time (0.25, 0.5, 1.0, 1.7, then 2.4 mg weekly), at least 4 weeks per step; escalation can be delayed 4 weeks for tolerability. 1.7 mg is a labeled maintenance dose, 2.4 mg is the dose studied in STEP-HFpEF (injection only; the oral tablets have no heart-failure data).
+
+**Treatment considerations for option 3**
+
+- Semaglutide (Wegovy): Assess tolerance, weight and symptoms over time. Trial-average weight loss is not applied to current weight; fluid loss, adiposity change and weight regain are not quantified.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($349 of $500 a month)
+- Dosing burden: Same doses a day as now (0), one more drug
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1. Option 1 already uses the limit of 2 new drug classes (Dapagliflozin and Semaglutide); adding an MRA means dropping one. It appears in option 2 (Eplerenone); could be started: Spironolactone, Eplerenone, Finerenone (Kerendia)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+- **Urinalysis + volume status assessment** (1-2 weeks after SGLT2i initiation): CKD patients: monitor for volume depletion from osmotic diuresis. Adjust concurrent loop diuretic dose if needed.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Semaglutide) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 31: 66-year-old woman, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 66-year-old woman with an ejection fraction of 30% and NYHA class IV symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 112/70 mmHg and the heart rate is 82 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.4 mEq/L and eGFR is 60 mL/min/1.73 m². She takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 66 years, female; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | IV; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 112/70 mmHg; 82 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 68 kg now; recorded dry weight 68 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 3800 pg/mL |
+| Potassium | 4.4 mEq/L |
+| Kidney function | creatinine 1.03 mg/dL; eGFR 60 mL/min/1.73 m²; earlier creatinine not entered; BUN 18.5 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 31: 66-year-old woman, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Symptoms at rest without recorded congestion**: The patient is in NYHA class IV (symptoms at rest), but no weight more than 1 kg above the dry weight, no congestion finding and no sign of poor perfusion is recorded. Consider an advanced heart failure evaluation and review the symptoms (other causes, a stale dry weight, an unrecorded finding). The tool still treats NYHA class IV as decompensation for the beta-blocker and ivabradine rules.
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class IV. An ICD is not recommended in NYHA IV refractory to drugs unless the patient is a candidate for CRT, LVAD or transplant (2026 ESC Recommendation Table 6). CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Spironolactone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 10 mg once daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 70 out of 100. Monthly cost: $62.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected gain in health status (+3.2 against +2.2 KCCQ-equivalent points); option 2 has fewer side effects (side-effect burden +6.5 against +14.7 points).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.47 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +14.7 points).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.68 against 1.00) and an expected gain in health status (+3.2 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.58 to 0.79)
+- Heart-failure hospitalization: 53% lower (relative risk 0.47, 95% interval 0.40 to 0.54)
+  - At today's doses: 52% lower (relative risk 0.48, 95% interval 0.41 to 0.55)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +14.7 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+5.4); Spironolactone, high potassium (above 5.5) (+2.6).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Spironolactone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($62 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Spironolactone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 70 out of 100. Monthly cost: $68.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 2 has fewer side effects (side-effect burden +6.5 against +14.7 points); option 1 has a larger expected gain in health status (+3.2 against +2.2 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Includes Sacubitril/Valsartan (Entresto) 24/26 mg twice daily; option 1 does not.
+- Does not include Dapagliflozin, which is included in option 1.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.56 to 0.83)
+  - At today's doses: 19% lower (relative risk 0.81, 95% interval 0.71 to 0.93)
+- Heart-failure hospitalization: 54% lower (relative risk 0.46, 95% interval 0.37 to 0.58)
+  - At today's doses: 31% lower (relative risk 0.69, 95% interval 0.59 to 0.81)
+- Health status (KCCQ-equivalent): gain of 2.2 points
+- Side-effect burden: +6.5 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 2**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Spironolactone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($68 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Spironolactone 25mg once daily
+- Titrate Lisinopril from 10mg once daily to 20mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Lisinopril 20 mg once daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $12.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 3 has fewer side effects (side-effect burden +6.6 against +14.7 points); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.57).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected gain in health status (+3.2 against +1.6 KCCQ-equivalent points) and a larger expected reduction in death (relative risk 0.68 against 0.72).
+
+**Drug differences from option 1**
+
+- Lisinopril: 20 mg once daily here; 10 mg once daily in option 1.
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 28% lower (relative risk 0.72, 95% interval 0.64 to 0.80)
+- Heart-failure hospitalization: 43% lower (relative risk 0.57, 95% interval 0.50 to 0.66)
+  - At today's doses: 42% lower (relative risk 0.58, 95% interval 0.51 to 0.66)
+- Health status (KCCQ-equivalent): gain of 1.6 points
+- Side-effect burden: +6.6 points (more measured harm)
+  - Largest contributors to the change: Spironolactone, high potassium (above 5.5) (+2.6); Spironolactone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril.
+
+Side effects at the higher dose were not measured separately; the burden shown for Lisinopril is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 3**
+
+- Lisinopril: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Spironolactone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($12 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Spironolactone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Spironolactone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 32: 74-year-old man, reduced ejection fraction (35%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 74-year-old man with an ejection fraction of 35% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/70 mmHg and the heart rate is 54 per minute in second-degree AV block. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 60 mL/min/1.73 m². He takes Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 74 years, male; self-identified race: White |
+| Ejection fraction | 35%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 118/70 mmHg; 54 per minute; rhythm: second-degree AV block; oxygen saturation 97% |
+| Weight | 82 kg now; recorded dry weight 82 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1900 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.25 mg/dL; eGFR 60 mL/min/1.73 m²; earlier creatinine not entered; BUN 22.5 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 2 doses a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 32: 74-year-old man, reduced ejection fraction (35%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 35%, 40% or below).
+
+### Safety alerts (1)
+
+- **Second-degree AV block**: The recorded rhythm is second-degree AV block and no pacemaker is recorded. Review the ECG promptly and arrange a rhythm and pacing evaluation. Drugs that slow conduction (beta-blockers, ivabradine, digoxin) stay excluded. Review now every drug that slows the heart or conduction through the AV node (heart failure drugs: Carvedilol; also any not recorded here).
+
+### Other care prompts (1)
+
+- **Device therapy screening**: LVEF 35% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT recommendations assume sinus rhythm; the recorded rhythm is 2nd Degree AV Block, so specialist review is needed. QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Remove Carvedilol (Second-degree AV block)
+
+**Resulting regimen**
+
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 65 out of 100. Monthly cost: $77.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now 2 doses a day from 1 drug).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.59).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.77 against 0.81).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 23% lower (relative risk 0.77, 95% interval 0.63 to 0.95)
+  - At today's doses: 2% higher (relative risk 1.02, 95% interval 0.90 to 1.15; the interval includes no effect)
+- Heart-failure hospitalization: 53% lower (relative risk 0.47, 95% interval 0.37 to 0.62)
+  - At today's doses: 17% lower (relative risk 0.83, 95% interval 0.70 to 0.99)
+- Health status (KCCQ-equivalent): gain of 2.5 points
+- Side-effect burden: −1.5 points (less measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (−12.3); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- BETA-BLOCKER DISCONTINUATION: Avoid abrupt withdrawal when possible; confirm the reason and an individualized taper or switch plan, with heart-rate and symptom monitoring. The model does not predict the withdrawal response.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($77 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 2), one more drug
+- Evidence: Limited concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Captopril 6.25mg three times daily
+- Add Eplerenone 25mg once daily
+- Remove Carvedilol (Second-degree AV block)
+
+**Resulting regimen**
+
+- Captopril 6.25 mg three times daily
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 62 out of 100. Monthly cost: $25.00/month (estimate). Dosing burden: 4 doses a day from 2 drugs (now 2 doses a day from 1 drug).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.59).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.77 against 0.81).
+
+**Drug differences from option 1**
+
+- Includes Captopril 6.25 mg three times daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 19% lower (relative risk 0.81, 95% interval 0.69 to 0.95)
+  - At today's doses: 3% higher (relative risk 1.03, 95% interval 0.92 to 1.16; the interval includes no effect)
+- Heart-failure hospitalization: 41% lower (relative risk 0.59, 95% interval 0.48 to 0.73)
+  - At today's doses: 10% lower (relative risk 0.90, 95% interval 0.76 to 1.06; the interval includes no effect)
+- Health status (KCCQ-equivalent): gain of 1.9 points
+- Side-effect burden: −2.7 points (less measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (−12.3); Captopril, everyday symptoms (combined) (+4.1).
+
+Borrowed evidence: Captopril borrowed from Valsartan (Val-HeFT); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- BETA-BLOCKER DISCONTINUATION: Avoid abrupt withdrawal when possible; confirm the reason and an individualized taper or switch plan, with heart-rate and symptom monitoring. The model does not predict the withdrawal response.
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Captopril: Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($25 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 2), one more drug
+- Evidence: Limited concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Remove Carvedilol (Second-degree AV block)
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 62 out of 100. Monthly cost: $110.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now 2 doses a day from 1 drug).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.77 against 0.90).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.53).
+
+**Drug differences from option 1**
+
+- Includes Dapagliflozin 10 mg once daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 10% lower (relative risk 0.90, 95% interval 0.74 to 1.10; the interval includes no effect)
+  - At today's doses: 6% higher (relative risk 1.06, 95% interval 0.91 to 1.23; the interval includes no effect)
+- Heart-failure hospitalization: 47% lower (relative risk 0.53, 95% interval 0.42 to 0.68)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.66 to 0.93)
+- Health status (KCCQ-equivalent): gain of 3.5 points
+- Side-effect burden: −2.5 points (less measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (−12.3); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- BETA-BLOCKER DISCONTINUATION: Avoid abrupt withdrawal when possible; confirm the reason and an individualized taper or switch plan, with heart-rate and symptom monitoring. The model does not predict the withdrawal response.
+
+**Treatment considerations for option 3**
+
+- Carvedilol: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($110 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 2), one more drug
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): started in option 1 (Sacubitril/Valsartan (Entresto))
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin); could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **ECG and rhythm and pacing evaluation** (Promptly): Second-degree AV block with no pacemaker recorded. Review the ECG, arrange a rhythm and pacing evaluation, and review every drug that slows the heart or the AV node (see the heart block alert).
+- **ECG for a slow heart rate** (At this visit): Record an ECG: Carvedilol is reduced or withheld because of the heart rate (resting rate 54 bpm). Look for heart block or sinus node disease, and review every drug that slows the heart or the AV node.
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Eplerenone 25mg once daily; Add Sacubitril/Valsartan; Remove Carvedilol) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 33: 72-year-old man, reduced ejection fraction (28%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 72-year-old man with an ejection fraction of 28% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/70 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 6.1 mEq/L and eGFR is 40 mL/min/1.73 m². He takes Sacubitril/Valsartan 49/51 mg twice daily, Spironolactone 25 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 72 years, male; self-identified race: White |
+| Ejection fraction | 28%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 118/70 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 78 kg now; recorded dry weight 78 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 2300 pg/mL |
+| Potassium | 6.1 mEq/L |
+| Kidney function | creatinine 1.77 mg/dL; eGFR 40 mL/min/1.73 m²; earlier creatinine not entered; BUN 31.9 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Sacubitril/Valsartan (Entresto) | 49/51 mg twice daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 33: 72-year-old man, reduced ejection fraction (28%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 28%, 40% or below).
+
+### Safety alerts (3)
+
+- **Hyperkalemic emergency**: Serum K+ 6.1 mEq/L (≥ 6.0). Obtain an ECG now and repeat the potassium urgently, then treat urgently: IV calcium if ECG changes, insulin/glucose, K+ binder or dialysis: before oral GDMT optimization. No RAAS inhibitor or MRA is started or increased, and those already in use are withheld until potassium is controlled (2026 ESC section 6.1). No option below starts or raises any drug: they contain only the reductions and withholds that lower potassium. A secondary source (Heart Fail Rev 2021) classes potassium above 6.0 as severe hyperkalemia; the tool's 6.0 alert and its alerts-only stop at 6.5 are a rule set by this tool (the severity classification could not be verified from a primary source).
+- **Potassium stop on sacubitril/valsartan (Entresto)**: Potassium 6.1 mEq/L is 6.0 or above: withhold; restart at a low dose once potassium is below 5.5 (2026 ESC section 6.1: severe hyperkalaemia (above 5.5 or 6) leads to temporary down-titration or discontinuation of the MRA and/or ACEi/ARNI/ARB; the 5.5 reduce / 6.0 stop split and MRA-first order are a rule set by this tool). Stop potassium supplements, potassium-sparing diuretics, NSAIDs and high-potassium salt substitutes first, then repeat potassium urgently and obtain an ECG (see the potassium emergency alert). Therapy held for less than 14 days can usually restart at the previous dose (2026 ESC).
+- **Potassium stop on spironolactone**: Potassium 6.1 mEq/L is 6.0 or above: withhold; restart at a low dose once potassium is below 5.5 (Eplerenone/finerenone label rule applied to spironolactone by analogy (the Aldactone label gives no numeric rule)). Repeat potassium urgently and obtain an ECG (see the potassium emergency alert), and look for other causes first (2026 ESC Supplementary Table S8: above 5.5 halve the dose; above 6.0 interrupt and seek specialist advice). ESC says therapy held for less than 14 days can usually restart at the previous dose; the US labels restart a withheld MRA at a low dose (not the previous dose) once potassium is below 5.5; this tool uses that label rule. A dose that was only reduced is not increased again until potassium is below 5.0.
+
+### Other care prompts (1)
+
+- **Device therapy screening**: LVEF 28% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Remove Sacubitril/Valsartan (Entresto) (potassium 6.1 mEq/L is 6.0 or above: withhold; restart at a low dose once potassium is below 5.5)
+- Remove Spironolactone (potassium 6.1 mEq/L is 6.0 or above: withhold; restart at a low dose once potassium is below 5.5)
+
+**Resulting regimen**
+
+- No heart failure medicine
+
+The tool's ordering score for this option: 0 out of 100. Monthly cost: $0.00/month (estimate). Dosing burden: no drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Only one option is shown: the tool built no other plan that passed its safety checks for this patient today.
+
+More on why:
+
+- Evidence-based beta-blocker: Not started: no drug is started at a potassium of 6.0 or above.
+- SGLT2 inhibitor: Not started: no drug is started at a potassium of 6.0 or above.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 51% higher (relative risk 1.51, 95% interval 1.31 to 1.74)
+- Heart-failure hospitalization: 118% higher (relative risk 2.18, 95% interval 1.85 to 2.57)
+- Health status (KCCQ-equivalent): loss of 2.4 points
+- Side-effect burden: −19.8 points (less measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (−4.8); Spironolactone, breast enlargement or pain (men) (−4.6).
+
+The higher figures are the trial effect of not taking Sacubitril/Valsartan (Entresto) and Spironolactone at all. Here it is a temporary hold or reduction for the safety reason stated in the change, not a permanent withdrawal. Reassess at the next review, and restore the drug when the stated reason has been rechecked and has resolved.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Urgent measured hyperkalemia: Potassium remains above 6.0 in the recorded state. A reduction or hold may address an offending medication, but this option does not establish correction or replace urgent ECG, repeat potassium and clinical assessment.
+- Sacubitril/Valsartan (Entresto): Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Spironolactone: Reduction or discontinuation: the magnitude and timing of loss of benefit, rebound or recovery are not estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($0 of $500 a month)
+- Dosing burden: Fewer doses a day than now (0, now 3)
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): not started in option 1. Not started: no drug is started at a potassium of 6.0 or above; could be started: Carvedilol, Metoprolol Succinate, Bisoprolol
+- SGLT2 inhibitor: not started in option 1. Not started: no drug is started at a potassium of 6.0 or above; could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **Repeat potassium urgently and obtain an ECG** (Now (same day)): Potassium is 6.0 mEq/L or higher. Confirm the value, record an ECG, and treat urgently (see the potassium emergency alert). Check kidney function and review potassium-raising drugs and supplements.
+- **BMP (potassium, creatinine, eGFR) after a change to a RAAS inhibitor or MRA** (With the urgent repeat now, then within 1 week): Potassium and kidney function recheck at the interval the potassium alert states (1-2 weeks), earlier if symptoms or ECG changes.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Remove Sacubitril/Valsartan; Remove Spironolactone) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 34: 76-year-old man, reduced ejection fraction (30%), atrial fibrillation
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 76-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/72 mmHg and the heart rate is 74 per minute in atrial fibrillation. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 34 mL/min/1.73 m². He takes Carvedilol 25 mg twice daily, Digoxin 125 mcg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 76 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 118/72 mmHg; 74 per minute; rhythm: atrial fibrillation; oxygen saturation 97% |
+| Weight | 76 kg now; recorded dry weight 76 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 2000 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.98 mg/dL; eGFR 34 mL/min/1.73 m²; earlier creatinine not entered; BUN 35.6 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Atrial Fibrillation |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Carvedilol | 25 mg twice daily | taking as recorded; consistent use confirmed |
+| Digoxin | 125 mcg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 34: 76-year-old man, reduced ejection fraction (30%), atrial fibrillation
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (1)
+
+- **Atrial fibrillation**: Oral anticoagulation is Class I, chosen by the CHA2DS2-VA score; a DOAC is preferred over warfarin except with a mechanical valve or moderate-severe mitral stenosis (2026 ESC Recommendation Table 15). The tool does not compute the score and has no anticoagulant field: confirm one is prescribed. Rate control: a beta-blocker is first line in HFrEF with AF once the patient is stable (Class I C); digoxin is already taken (Class IIa C when the rate stays high despite a beta-blocker or when it is not tolerated): review its dose and level.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT recommendations assume sinus rhythm; the recorded rhythm is AFib, so specialist review is needed. QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Digoxin 125 mcg once daily
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 59 out of 100. Monthly cost: $93.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+- Compared with making no medication change: option 1 has an expected reduction in death (relative risk 0.59 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +15.9 points).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+- Also against no change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.35 against 1.00) and an expected gain in health status (+3.4 against 0.0 KCCQ-equivalent points).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 41% lower (relative risk 0.59, 95% interval 0.49 to 0.71)
+  - At today's doses: 30% lower (relative risk 0.70, 95% interval 0.61 to 0.79)
+- Heart-failure hospitalization: 65% lower (relative risk 0.35, 95% interval 0.28 to 0.44)
+  - At today's doses: 48% lower (relative risk 0.52, 95% interval 0.45 to 0.60)
+- Health status (KCCQ-equivalent): gain of 3.4 points
+  - Not measured, so not counted: Digoxin.
+- Side-effect burden: +15.9 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+6.1); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+For this patient in atrial fibrillation the beta-blocker figures are the atrial fibrillation ones: death is a subgroup of a pooled analysis of all beta-blockers studied, and hospitalization is an extrapolation from cardiovascular hospitalization. Neither shows a benefit that can be told from no effect. This is not a reason to stop a beta-blocker used for rate control.
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (2)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+- Digoxin Monitoring: Check serum digoxin level in 5-7 days (HF target about 0.5-0.8 ng/mL in the DIG analyses, up to 0.9-1.1 acceptable, avoid 1.2 or above; the label calls below 0.5 diminished efficacy and above 2.0 toxicity without benefit). Monitor for toxicity (nausea, visual changes, arrhythmia). Renal impairment increases toxicity risk: recheck level after any eGFR change.
+
+**Prescribing notes for option 1**
+
+- Digoxin is cleared by the kidney and its label doses it by lean body weight and creatinine clearance, not by age or an eGFR band. This tool sets a ceiling of 62.5 mcg a day only below an eGFR of 30 and does not otherwise adjust the dose for kidney function or age: confirm the dose against the creatinine clearance and a serum level (target below 1.2 ng/mL).
+
+**Treatment considerations for option 1**
+
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($93 of $500 a month)
+- Dosing burden: More doses a day than now (6, now 3), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Captopril 6.25mg three times daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Captopril 6.25 mg three times daily
+- Carvedilol 25 mg twice daily (target dose)
+- Digoxin 125 mcg once daily
+- Eplerenone 25 mg once daily
+
+The tool's ordering score for this option: 57 out of 100. Monthly cost: $41.00/month (estimate). Dosing burden: 7 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+
+**Drug differences from option 1**
+
+- Includes Captopril 6.25 mg three times daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 38% lower (relative risk 0.62, 95% interval 0.54 to 0.71)
+  - At today's doses: 29% lower (relative risk 0.71, 95% interval 0.63 to 0.79)
+- Heart-failure hospitalization: 56% lower (relative risk 0.44, 95% interval 0.37 to 0.51)
+  - At today's doses: 44% lower (relative risk 0.56, 95% interval 0.49 to 0.64)
+- Health status (KCCQ-equivalent): gain of 2.8 points
+  - Not measured, so not counted: Digoxin.
+- Side-effect burden: +14.3 points (more measured harm)
+  - Largest contributors to the change: Captopril, everyday symptoms (combined) (+4.8); Captopril, fainting (+2.4).
+
+For this patient in atrial fibrillation the beta-blocker figures are the atrial fibrillation ones: death is a subgroup of a pooled analysis of all beta-blockers studied, and hospitalization is an extrapolation from cardiovascular hospitalization. Neither shows a benefit that can be told from no effect. This is not a reason to stop a beta-blocker used for rate control.
+
+Borrowed evidence: Captopril borrowed from Valsartan (Val-HeFT); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (2)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+- Digoxin Monitoring: Check serum digoxin level in 5-7 days (HF target about 0.5-0.8 ng/mL in the DIG analyses, up to 0.9-1.1 acceptable, avoid 1.2 or above; the label calls below 0.5 diminished efficacy and above 2.0 toxicity without benefit). Monitor for toxicity (nausea, visual changes, arrhythmia). Renal impairment increases toxicity risk: recheck level after any eGFR change.
+
+**Prescribing notes for option 2**
+
+- Digoxin is cleared by the kidney and its label doses it by lean body weight and creatinine clearance, not by age or an eGFR band. This tool sets a ceiling of 62.5 mcg a day only below an eGFR of 30 and does not otherwise adjust the dose for kidney function or age: confirm the dose against the creatinine clearance and a serum level (target below 1.2 ng/mL).
+
+**Treatment considerations for option 2**
+
+- Captopril: Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($41 of $500 a month)
+- Dosing burden: More doses a day than now (7, now 3), 2 more drugs
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Dapagliflozin 10 mg once daily (target dose)
+- Digoxin 125 mcg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 56 out of 100. Monthly cost: $126.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.69).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.40).
+
+**Drug differences from option 1**
+
+- Includes Dapagliflozin 10 mg once daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 31% lower (relative risk 0.69, 95% interval 0.57 to 0.83)
+  - At today's doses: 19% lower (relative risk 0.81, 95% interval 0.71 to 0.91)
+- Heart-failure hospitalization: 60% lower (relative risk 0.40, 95% interval 0.33 to 0.48)
+  - At today's doses: 42% lower (relative risk 0.58, 95% interval 0.53 to 0.64)
+- Health status (KCCQ-equivalent): gain of 4.4 points
+  - Not measured, so not counted: Digoxin.
+- Side-effect burden: +14.9 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+6.1); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+For this patient in atrial fibrillation the beta-blocker figures are the atrial fibrillation ones: death is a subgroup of a pooled analysis of all beta-blockers studied, and hospitalization is an extrapolation from cardiovascular hospitalization. Neither shows a benefit that can be told from no effect. This is not a reason to stop a beta-blocker used for rate control.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (2)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+- Digoxin Monitoring: Check serum digoxin level in 5-7 days (HF target about 0.5-0.8 ng/mL in the DIG analyses, up to 0.9-1.1 acceptable, avoid 1.2 or above; the label calls below 0.5 diminished efficacy and above 2.0 toxicity without benefit). Monitor for toxicity (nausea, visual changes, arrhythmia). Renal impairment increases toxicity risk: recheck level after any eGFR change.
+
+**Prescribing notes for option 3**
+
+- Digoxin is cleared by the kidney and its label doses it by lean body weight and creatinine clearance, not by age or an eGFR band. This tool sets a ceiling of 62.5 mcg a day only below an eGFR of 30 and does not otherwise adjust the dose for kidney function or age: confirm the dose against the creatinine clearance and a serum level (target below 1.2 ng/mL).
+
+**Treatment considerations for option 3**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($126 of $500 a month)
+- Dosing burden: More doses a day than now (6, now 3), 2 more drugs
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): started in option 1 (Sacubitril/Valsartan (Entresto))
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin); could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+- **Early potassium check** (48-72 hours): A rule set by this tool for CKD and/or borderline potassium at baseline (no source gives this window).
+- **Serum digoxin concentration** (After any dose change, after any renal change or interacting drug, and when toxicity is suspected (no interval is stated in the sections read)): 2026 ESC heart failure guideline: target serum concentration below 1.2 ng/mL (the guideline gives the target; the plasma level guides dosing). Check potassium, magnesium and kidney function with it.
+- **Renal dosing review** (At initiation and after any eGFR change): Renal dose caution at eGFR 34: Eplerenone: confirm dosing against current renal function and monitor.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Eplerenone 25mg once daily; Add Sacubitril/Valsartan) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 35: 55-year-old man, mildly reduced ejection fraction (48%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 55-year-old man with an ejection fraction of 48% and NYHA class I symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 118/74 mmHg and the heart rate is 64 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 74 mL/min/1.73 m². He takes Sacubitril/Valsartan 49/51 mg twice daily, Bisoprolol 5 mg once daily, Spironolactone 25 mg once daily, Empagliflozin 10 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 55 years, male; self-identified race: White |
+| Ejection fraction | 48%; lowest earlier ejection fraction 25%; ever 40% or lower: yes |
+| NYHA class | I; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 118/74 mmHg; 64 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 80 kg now; recorded dry weight 80 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 300 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.16 mg/dL; eGFR 74 mL/min/1.73 m²; earlier creatinine not entered; BUN 20.9 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Sacubitril/Valsartan (Entresto) | 49/51 mg twice daily | taking as recorded; consistent use confirmed |
+| Bisoprolol | 5 mg once daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+| Empagliflozin | 10 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 5 doses a day from 4 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 35: 55-year-old man, mildly reduced ejection fraction (48%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction: the LVEF is now 48%, but an earlier LVEF of 40% or below is recorded.
+
+### Safety alerts (0)
+
+- None raised.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Titrate Sacubitril/Valsartan (Entresto) 49/51mg twice daily to 97/103mg twice daily
+
+**Resulting regimen**
+
+- Bisoprolol 5 mg once daily
+- Empagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 97/103 mg twice daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 73 out of 100. Monthly cost: $290.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 5 doses a day from 4 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.78 against 0.90).
+- Compared with making no medication change: option 1 has an expected reduction in death (relative risk 0.90 against 1.00).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.78 against 1.00).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 10% lower (relative risk 0.90, estimated from the dose relationship; no interval)
+- Heart-failure hospitalization: 22% lower (relative risk 0.78, estimated from the dose relationship; no interval)
+- Health status (KCCQ-equivalent): gain of 0.9 points
+- Side-effect burden: not changed in the model, because side effects at the higher dose were not measured separately
+
+Side effects at the higher dose were not measured separately; the burden shown for Sacubitril/Valsartan (Entresto) is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Prescribing notes for option 1**
+
+- The US bisoprolol label is for hypertension only and lists overt cardiac failure as a contraindication, so heart-failure use is off-label (guideline-supported: CIBIS-II, target 10 mg daily). US single-agent tablets are 5 mg and 10 mg; 2.5 mg is half of a scored 5 mg tablet, the CIBIS-II 1.25 mg starting dose requires confirmation of a suitable product or pharmacy preparation. Do not assume a 5 mg tablet can be quartered accurately.
+
+**Treatment considerations for option 1**
+
+- Sacubitril/Valsartan (Entresto): Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($290 of $500 a month)
+- Dosing burden: Same doses a day as now (5)
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Titrate Bisoprolol from 5mg once daily to 10mg once daily
+
+**Resulting regimen**
+
+- Bisoprolol 10 mg once daily (target dose)
+- Empagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 49/51 mg twice daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 72 out of 100. Monthly cost: $290.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 5 doses a day from 4 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.78 against 0.90).
+
+**Drug differences from option 1**
+
+- Bisoprolol: 10 mg once daily here; 5 mg once daily in option 1.
+- Sacubitril/Valsartan (Entresto): 49/51 mg twice daily here; 97/103 mg twice daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 9% lower (relative risk 0.91, estimated from the dose relationship; no interval)
+- Heart-failure hospitalization: 10% lower (relative risk 0.90, estimated from the dose relationship; no interval)
+- Health status (KCCQ-equivalent): gain of 0.3 points
+- Side-effect burden: not changed in the model, because side effects at the higher dose were not measured separately
+
+Side effects at the higher dose were not measured separately; the burden shown for Bisoprolol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Prescribing notes for option 2**
+
+- The US bisoprolol label is for hypertension only and lists overt cardiac failure as a contraindication, so heart-failure use is off-label (guideline-supported: CIBIS-II, target 10 mg daily). US single-agent tablets are 5 mg and 10 mg; 2.5 mg is half of a scored 5 mg tablet, the CIBIS-II 1.25 mg starting dose requires confirmation of a suitable product or pharmacy preparation. Do not assume a 5 mg tablet can be quartered accurately.
+
+**Treatment considerations for option 2**
+
+- Bisoprolol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($290 of $500 a month)
+- Dosing burden: Same doses a day as now (5)
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Titrate Spironolactone from 25mg once daily to 50mg once daily
+
+**Resulting regimen**
+
+- Bisoprolol 5 mg once daily
+- Empagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 49/51 mg twice daily
+- Spironolactone 50 mg once daily (target dose)
+
+The tool's ordering score for this option: 70 out of 100. Monthly cost: $290.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 5 doses a day from 4 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.90 against 0.99).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.78 against 0.98).
+
+**Drug differences from option 1**
+
+- Sacubitril/Valsartan (Entresto): 49/51 mg twice daily here; 97/103 mg twice daily in option 1.
+- Spironolactone: 50 mg once daily here; 25 mg once daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 1% lower (relative risk 0.99, estimated from the dose relationship; no interval)
+- Heart-failure hospitalization: 2% lower (relative risk 0.98, estimated from the dose relationship; no interval)
+- Health status (KCCQ-equivalent): about the same
+- Side-effect burden: not changed in the model, because side effects at the higher dose were not measured separately
+
+Side effects at the higher dose were not measured separately; the burden shown for Spironolactone is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Prescribing notes for option 3**
+
+- The US bisoprolol label is for hypertension only and lists overt cardiac failure as a contraindication, so heart-failure use is off-label (guideline-supported: CIBIS-II, target 10 mg daily). US single-agent tablets are 5 mg and 10 mg; 2.5 mg is half of a scored 5 mg tablet, the CIBIS-II 1.25 mg starting dose requires confirmation of a suitable product or pharmacy preparation. Do not assume a 5 mg tablet can be quartered accurately.
+
+**Treatment considerations for option 3**
+
+- Spironolactone: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($290 of $500 a month)
+- Dosing burden: Same doses a day as now (5)
+- Evidence: Strong guideline concordance
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Titrate Sacubitril/Valsartan) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 36: 64-year-old man, reduced ejection fraction (20%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 64-year-old man with an ejection fraction of 20% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 86/54 mmHg and the heart rate is 84 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 50 mL/min/1.73 m². He takes Lisinopril 5 mg once daily, Carvedilol 6.25 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 64 years, male; self-identified race: White |
+| Ejection fraction | 20%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 86/54 mmHg; 84 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 74 kg now; recorded dry weight 74 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 3500 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.53 mg/dL; eGFR 50 mL/min/1.73 m²; earlier creatinine not entered; BUN 27.5 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 5 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 6.25 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 36: 64-year-old man, reduced ejection fraction (20%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Safety alerts (1)
+
+- **Hemodynamic instability**: Systolic blood pressure is 86 mmHg, below 90. No medication option is proposed at this pressure. Assess for symptoms and signs of poor perfusion (dizziness, fainting, confusion, cool extremities, low urine output). If any are present this is an emergency: arrange urgent evaluation. If none are present, review the blood-pressure-lowering drugs the patient takes (heart failure drugs: Carvedilol, Lisinopril; also any blood-pressure medicine not recorded here) and recheck the pressure.
+
+### Other care prompts (1)
+
+- **Device therapy screening**: LVEF 20% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not advised without a pacing indication (2026 ESC guideline Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- No medication option is proposed.
+- Can be reviewed: This tool proposes no medication option today. The alerts say why, and may ask you to withhold, reduce or review a drug. These checks are not a complete assessment of the patient.
+- Waiting for information: Measured KCCQ: No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### What the tool shows instead of options
+
+This tool proposes no medication option today because of this safety or data state: Hemodynamic instability. Resolve it and run the review again. The alerts may ask you to withhold, reduce or review a drug.
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): not started: no medication is started or raised on this screen
+- SGLT2 inhibitor: not started: no medication is started or raised on this screen
+
+### Data not entered
+
+- KCCQ not measured: no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan
+
+- **Recheck blood pressure and assess perfusion** (Now (same day)): Systolic pressure is 86 mmHg, below 90. Ask about dizziness, fainting, confusion and low urine output, examine for cool extremities, and review the blood-pressure-lowering drugs (see the low blood pressure alert).
+
+## Your ratings for this case
+
+**Question 1.** The tool proposed no medication option and showed the alerts above (they may ask for a drug to be withheld, reduced or reviewed). Having no option, and the alerts shown, are:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reason given for proposing no option is:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 37: 78-year-old woman, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 78-year-old woman with an ejection fraction of 30% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 128/70 mmHg and the heart rate is 72 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 5 mEq/L and eGFR is 18 mL/min/1.73 m². She takes Lisinopril 5 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 78 years, female; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 128/70 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 62 kg now; recorded dry weight 62 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 4200 pg/mL |
+| Potassium | 5 mEq/L |
+| Kidney function | creatinine 2.58 mg/dL; eGFR 18 mL/min/1.73 m²; earlier creatinine not entered; BUN 46.4 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 5 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 1 dose a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 37: 78-year-old woman, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (2)
+
+- **Low kidney function on a RAAS inhibitor**: The eGFR is below 20 on a RAAS inhibitor. If this is a new fall (or creatinine has more than doubled), the 2026 ESC guideline advises stopping it and seeking specialist advice; if kidney function is stable at this level, continue with close monitoring. The tool has no baseline value and cannot tell these apart.
+- **Advanced heart failure alert**: Early consultation with an advanced heart failure centre is Class I for patients with or at risk of advanced HF (2026 ESC Recommendation Table 11; "I NEED HELP" markers, any one is enough). Markers present: NYHA III with NT-proBNP 4200 pg/mL (high; persistence on treatment is not visible to the tool). The tool cannot see hospitalizations in the past year (two or more, or one needing inotropes, is a "rule of three" trigger; the form records only whether a recent worsening event occurred), inotrope use, end-organ dysfunction, defibrillator shocks or right-ventricular function: check them. Consider IV inotropic support, mechanical circulatory support (LVAD), transplant evaluation and a palliative care discussion; device assessment is in the device alert when LVEF is 35 or below.
+
+### Other care prompts (1)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Carvedilol 3.125mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 3.125 mg twice daily
+- Lisinopril 5 mg once daily
+
+The tool's ordering score for this option: 58 out of 100. Monthly cost: $8.00/month (estimate). Dosing burden: 3 doses a day from 2 drugs (now 1 dose a day from 1 drug).
+
+**Why this is first**
+
+- Compared with option 2 (no medication change): option 1 has an expected reduction in death (relative risk 0.70 against 1.00); option 2 (no medication change) has fewer side effects (side-effect burden 0.0 against +16.1 points).
+
+More on why:
+
+- Also against option 2: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.67 against 1.00) and an expected gain in health status (+1.2 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 30% lower (relative risk 0.70, 95% interval 0.62 to 0.78)
+  - At today's doses: 12% lower (relative risk 0.88, 95% interval 0.84 to 0.91)
+- Heart-failure hospitalization: 33% lower (relative risk 0.67, 95% interval 0.56 to 0.81)
+  - At today's doses: 13% lower (relative risk 0.87, 95% interval 0.81 to 0.93)
+- Health status (KCCQ-equivalent): gain of 1.2 points
+- Side-effect burden: +16.1 points (more measured harm)
+  - Largest contributors to the change: Carvedilol, everyday symptoms (combined) (+12.3); Carvedilol, new diabetes (+2.0).
+
+Kidney function is below the trial range: the eGFR is 18, and the SGLT2 inhibitor trials behind these figures enrolled patients with an eGFR of 20 or above at the lowest. The trials enrolled few or no patients with kidney function this low.
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+
+**Prescribing notes for option 1**
+
+- Beta-blocker (Carvedilol) (2026 ESC Supplementary Table S6): asthma is a relative contraindication to a beta-blocker (a cardioselective agent only under specialist supervision); COPD is not a contraindication. Without close monitoring, double the dose no faster than every 2 weeks.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($8 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 1), one more drug
+- Evidence: Limited concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- No medication change is proposed in this option. Review remaining treatment gaps, safety warnings and monitoring before deciding to continue.
+
+**Resulting regimen**
+
+- Lisinopril 5 mg once daily
+
+The tool's ordering score for this option: 44 out of 100. Monthly cost: $4.00/month (estimate). Dosing burden: 1 dose a day from 1 drug (now 1 dose a day from 1 drug).
+
+**Why this is option 2**
+
+- Compared with option 1: option 2 has fewer side effects (side-effect burden 0.0 against +16.1 points); option 1 has an expected reduction in death (relative risk 0.70 against 1.00).
+
+More on why:
+
+- Also against option 1: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.67 against 1.00) and an expected gain in health status (+1.2 against 0.0 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Does not include Carvedilol, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- No medication change is proposed, so there is no change in expected effect.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 2**
+
+- Recorded regimen: No net medication change is proposed. Reassess the recorded condition; unchanged medication does not establish clinical stability or complete treatment.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($4 of $500 a month)
+- Dosing burden: Same doses a day as now (1)
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): started in option 1 (Carvedilol)
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1; Spironolactone withheld (Clinical contraindication): eGFR below 30; eGFR 30 or below (new start; 2022 AHA/ACC/HFSA: contraindication to MRA initiation); Eplerenone withheld (Clinical contraindication): eGFR 30 or below (label: CrCl 30 mL/min or less); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF); eGFR below 25
+- SGLT2 inhibitor: not started in option 1; Dapagliflozin withheld (Clinical contraindication): eGFR below 25: initiation not recommended (Farxiga label); continuation is allowed; Empagliflozin withheld (Clinical contraindication): eGFR below 20: initiation not studied (EMPEROR and EMPA-KIDNEY enrolled eGFR 20 or higher); continuation is allowed
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+- **BMP (potassium, creatinine, eGFR) while potassium is 5.0 or higher on a RAAS inhibitor or MRA** (1-2 weeks): Potassium is 5.0 or higher and the patient takes a RAAS inhibitor or MRA. Recheck potassium and kidney function.
+- **Renal dosing review** (After any eGFR change): Renal dose caution at eGFR 18: Lisinopril: confirm dosing against current renal function and monitor.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Carvedilol 3.125mg twice daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 38: 69-year-old woman, reduced ejection fraction (32%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 69-year-old woman with an ejection fraction of 32% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 132/76 mmHg and the heart rate is 68 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.7 mEq/L and eGFR is 38 mL/min/1.73 m². She takes Losartan 50 mg once daily, Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 69 years, female; self-identified race: White |
+| Ejection fraction | 32%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 132/76 mmHg; 68 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 79 kg now; recorded dry weight 79 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 2200 pg/mL |
+| Potassium | 4.7 mEq/L |
+| Kidney function | creatinine 1.47 mg/dL; eGFR 38 mL/min/1.73 m²; earlier creatinine not entered; BUN 26.5 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Diabetes Mellitus Type 2 |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Losartan | 50 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 38: 69-year-old woman, reduced ejection fraction (32%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 32%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 32% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Switch Losartan to Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 70 out of 100. Monthly cost: $81.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in death (relative risk 0.63 against 0.68).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.41 against 1.00).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.41 against 0.47) and fewer side effects (side-effect burden +6.7 against +14.5 points).
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.63 against 1.00) and an expected gain in health status (+2.4 against 0.0 KCCQ-equivalent points).
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Sacubitril/Valsartan and Eplerenone); adding an SGLT2 inhibitor means dropping one. It appears in option 2 (Dapagliflozin).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 37% lower (relative risk 0.63, 95% interval 0.52 to 0.76)
+  - At today's doses: 26% lower (relative risk 0.74, 95% interval 0.65 to 0.85)
+- Heart-failure hospitalization: 59% lower (relative risk 0.41, 95% interval 0.32 to 0.51)
+  - At today's doses: 40% lower (relative risk 0.60, 95% interval 0.51 to 0.70)
+- Health status (KCCQ-equivalent): gain of 2.4 points
+- Side-effect burden: +6.7 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Losartan, everyday symptoms (combined) (−3.2).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Sacubitril/Valsartan (Entresto): Switch Losartan to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($81 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Eplerenone 25 mg once daily
+- Losartan 50 mg once daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $76.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.63 against 0.68).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.41 against 0.47) and fewer side effects (side-effect burden +6.7 against +14.5 points).
+
+**Drug differences from option 1**
+
+- Includes Dapagliflozin 10 mg once daily; option 1 does not.
+- Includes Losartan 50 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.58 to 0.79)
+- Heart-failure hospitalization: 53% lower (relative risk 0.47, 95% interval 0.40 to 0.54)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +14.5 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+5.4); Eplerenone, high potassium (above 5.5) (+2.5).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Losartan borrowed from Candesartan (CHARM).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Prescribing notes for option 2**
+
+- Losartan has no FDA-labeled heart-failure indication (label: hypertension, stroke-risk reduction with LVH, diabetic nephropathy); its use in HFrEF is guideline-supported (2026 ESC target 150 mg daily, as tested in HEAAL; the 2022 AHA/ACC/HFSA Table 14 gives 50-150 mg). 150 mg is taken as two tablets (100 mg + 50 mg).
+- Sources differ on the target dose of losartan. Label: none for heart failure (no labeled indication); the 2022 AHA/ACC/HFSA guideline gives a range of 50-150 mg daily. Guideline: 150 mg daily (2026 ESC Table 11; the HEAAL dose). This tool follows the guideline (HEAAL showed fewer deaths or heart failure admissions with 150 mg than with 50 mg).
+
+**Treatment considerations for option 2**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($76 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily (target dose)
+- Eplerenone 25 mg once daily
+- Losartan 50 mg once daily
+
+The tool's ordering score for this option: 66 out of 100. Monthly cost: $26.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.41 against 0.59).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.63 against 0.70) and a larger expected gain in health status (+2.4 against +1.4 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Carvedilol: 25 mg twice daily here; 12.5 mg twice daily in option 1.
+- Includes Losartan 50 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 30% lower (relative risk 0.70, 95% interval 0.62 to 0.78)
+- Heart-failure hospitalization: 41% lower (relative risk 0.59, 95% interval 0.51 to 0.67)
+- Health status (KCCQ-equivalent): gain of 1.4 points
+- Side-effect burden: +6.4 points (more measured harm)
+  - Largest contributors to the change: Eplerenone, high potassium (above 5.5) (+2.5); Eplerenone, severe high potassium (6.0 or above) (+1.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Losartan borrowed from Candesartan (CHARM).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Prescribing notes for option 3**
+
+- Losartan has no FDA-labeled heart-failure indication (label: hypertension, stroke-risk reduction with LVH, diabetic nephropathy); its use in HFrEF is guideline-supported (2026 ESC target 150 mg daily, as tested in HEAAL; the 2022 AHA/ACC/HFSA Table 14 gives 50-150 mg). 150 mg is taken as two tablets (100 mg + 50 mg).
+- Sources differ on the target dose of losartan. Label: none for heart failure (no labeled indication); the 2022 AHA/ACC/HFSA guideline gives a range of 50-150 mg daily. Guideline: 150 mg daily (2026 ESC Table 11; the HEAAL dose). This tool follows the guideline (HEAAL showed fewer deaths or heart failure admissions with 150 mg than with 50 mg).
+
+**Treatment considerations for option 3**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($26 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 3), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Sacubitril/Valsartan and Eplerenone); adding an SGLT2 inhibitor means dropping one. It appears in option 2 (Dapagliflozin); could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+- **Early potassium check** (48-72 hours): A rule set by this tool for CKD and/or borderline potassium at baseline (no source gives this window).
+- **Renal dosing review** (At initiation and after any eGFR change): Renal dose caution at eGFR 38: Eplerenone: confirm dosing against current renal function and monitor.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Switch Losartan to Sacubitril/Valsartan; Add Eplerenone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 39: 69-year-old man, reduced ejection fraction (25%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 69-year-old man with an ejection fraction of 25% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 130/78 mmHg and the heart rate is 84 per minute in sinus rhythm. He is 5 kg above the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 58 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 69 years, male; self-identified race: White |
+| Ejection fraction | 25%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 130/78 mmHg; 84 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 101 kg now; recorded dry weight 96 kg (5 kg above dry weight) |
+| Examination findings | Crackles, Edema (3+), JVP Elevated |
+| NT-proBNP | 3600 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.32 mg/dL; eGFR 58 mL/min/1.73 m²; earlier creatinine not entered; BUN 23.8 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 39: 69-year-old man, reduced ejection fraction (25%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 25%, 40% or below).
+
+### Safety alerts (1)
+
+- **NYHA class and findings disagree**: The entered class is NYHA II, but the weight is 5.0 kg above the dry weight (the tool's criterion for acute decompensation is more than 2 kg) and the examination shows congestion (Crackles, Edema (3+), JVP Elevated). Confirm the NYHA class. No option is changed by this prompt: the tool reads the class as entered.
+
+### Other care prompts (1)
+
+- **Device therapy screening**: LVEF 25% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Eplerenone 25 mg once daily
+- Lisinopril 10 mg once daily
+
+The tool's ordering score for this option: 71 out of 100. Monthly cost: $75.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected gain in health status (+3.2 against +2.2 KCCQ-equivalent points).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.47 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +11.2 points).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.68 against 1.00) and an expected gain in health status (+3.2 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.58 to 0.79)
+  - At today's doses: 25% lower (relative risk 0.75, 95% interval 0.66 to 0.86)
+- Heart-failure hospitalization: 53% lower (relative risk 0.47, 95% interval 0.40 to 0.54)
+  - At today's doses: 44% lower (relative risk 0.56, 95% interval 0.50 to 0.62)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +11.2 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- This option leaves the patient without a loop diuretic although congestion is recorded.
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($75 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 70 out of 100. Monthly cost: $81.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 3 doses a day from 2 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 1 has a larger expected gain in health status (+3.2 against +2.2 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Includes Sacubitril/Valsartan (Entresto) 24/26 mg twice daily; option 1 does not.
+- Does not include Dapagliflozin, which is included in option 1.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 32% lower (relative risk 0.68, 95% interval 0.56 to 0.83)
+  - At today's doses: 10% lower (relative risk 0.90, 95% interval 0.81 to 0.99)
+- Heart-failure hospitalization: 54% lower (relative risk 0.46, 95% interval 0.37 to 0.58)
+  - At today's doses: 19% lower (relative risk 0.81, 95% interval 0.72 to 0.92)
+- Health status (KCCQ-equivalent): gain of 2.2 points
+- Side-effect burden: +6.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (2)**
+
+- This option leaves the patient without a loop diuretic although congestion is recorded.
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 2**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($81 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Add Furosemide 20mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Eplerenone 25 mg once daily
+- Furosemide 20 mg once daily
+- Lisinopril 10 mg once daily
+
+The tool's ordering score for this option: 68 out of 100. Monthly cost: $28.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 3 doses a day from 2 drugs).
+
+**Why this option is shown:** Includes the addition of a loop diuretic (Furosemide): the patient is congested (5.0 kg above dry weight; the tool's loop criterion is more than 1 kg), and no other option raises or starts an oral loop.
+
+**Why this is option 3**
+
+- This option is shown under a display rule, not because it ranks next: Includes the addition of a loop diuretic (Furosemide): the patient is congested (5.0 kg above dry weight; the tool's loop criterion is more than 1 kg), and no other option raises or starts an oral loop.
+- Compared with option 1: option 1 has a larger expected gain in health status (+3.2 against +1.1 KCCQ-equivalent points).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.47 against 0.53) and a larger expected reduction in death (relative risk 0.68 against 0.70).
+
+**Drug differences from option 1**
+
+- Includes Furosemide 20 mg once daily; option 1 does not.
+- Does not include Dapagliflozin, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 30% lower (relative risk 0.70, 95% interval 0.51 to 0.96)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.58 to 1.06; the interval includes no effect)
+- Heart-failure hospitalization: 47% lower (relative risk 0.53, 95% interval 0.30 to 0.92)
+  - At today's doses: 37% lower (relative risk 0.63, 95% interval 0.37 to 1.09; the interval includes no effect)
+- Health status (KCCQ-equivalent): gain of 1.1 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +13.8 points (more measured harm)
+  - Largest contributors to the change: Furosemide, low potassium (+3.1); Furosemide, low sodium (+2.2).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Eplerenone borrowed from Spironolactone (TOPCAT); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 3**
+
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Furosemide: Assess measured weight, congestion, BP, sodium, potassium and renal response after the change. Dose conversion is a starting convention, not proof of equivalent diuresis or safety.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($28 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 3), 2 more drugs
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Eplerenone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 40: 76-year-old woman, preserved ejection fraction (55%), atrial fibrillation
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 76-year-old woman with an ejection fraction of 55% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 130/74 mmHg and the heart rate is 76 per minute in atrial fibrillation. She is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 58 mL/min/1.73 m². She takes Metoprolol Succinate 50 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 76 years, female; self-identified race: White |
+| Ejection fraction | 55%; lowest earlier ejection fraction not entered; ever 40% or lower: no |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 130/74 mmHg; 76 per minute; rhythm: atrial fibrillation; oxygen saturation 97% |
+| Weight | 72 kg now; recorded dry weight 72 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1100 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1 mg/dL; eGFR 58 mL/min/1.73 m²; earlier creatinine not entered; BUN 18 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Atrial Fibrillation |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Metoprolol Succinate | 50 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 1 dose a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 40: 76-year-old woman, preserved ejection fraction (55%), atrial fibrillation
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of preserved ejection fraction (LVEF 55%, 50% or above).
+
+### Safety alerts (1)
+
+- **Atrial fibrillation**: Oral anticoagulation is Class I, chosen by the CHA2DS2-VA score; a DOAC is preferred over warfarin except with a mechanical valve or moderate-severe mitral stenosis (2026 ESC Recommendation Table 15). The tool does not compute the score and has no anticoagulant field: confirm one is prescribed. 
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Spironolactone 25mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Metoprolol Succinate 50 mg once daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 50 out of 100. Monthly cost: $64.00/month (estimate). Dosing burden: 3 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in death (relative risk 0.90 against 0.97).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.63 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +14.7 points).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.63 against 0.71).
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.90 against 1.00) and an expected gain in health status (+3.2 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 10% lower (relative risk 0.90, 95% interval 0.76 to 1.07; the interval includes no effect)
+  - At today's doses: 9% lower (relative risk 0.91, 95% interval 0.77 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 37% lower (relative risk 0.63, 95% interval 0.52 to 0.77)
+  - At today's doses: 36% lower (relative risk 0.64, 95% interval 0.52 to 0.77)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +14.7 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+5.4); Spironolactone, high potassium (above 5.5) (+2.6).
+
+Borrowed evidence: Metoprolol Succinate borrowed from Carvedilol (the Cochrane review of beta-blockers above LVEF 40).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+
+**Treatment considerations for option 1**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Spironolactone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($64 of $500 a month)
+- Dosing burden: More doses a day than now (3, now 1), 2 more drugs
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Metoprolol Succinate from 50mg once daily to 100mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Metoprolol Succinate 100 mg once daily
+
+The tool's ordering score for this option: 46 out of 100. Monthly cost: $60.00/month (estimate). Dosing burden: 2 doses a day from 2 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.90 against 0.97).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.63 against 0.71).
+
+**Drug differences from option 1**
+
+- Metoprolol Succinate: 100 mg once daily here; 50 mg once daily in option 1.
+- Does not include Spironolactone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 3% lower (relative risk 0.97, 95% interval 0.89 to 1.06; the interval includes no effect)
+- Heart-failure hospitalization: 29% lower (relative risk 0.71, 95% interval 0.62 to 0.82)
+- Health status (KCCQ-equivalent): gain of 2.4 points
+- Side-effect burden: +8.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+5.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Metoprolol Succinate borrowed from Carvedilol (the Cochrane review of beta-blockers above LVEF 40).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Metoprolol Succinate.
+
+Side effects at the higher dose were not measured separately; the burden shown for Metoprolol Succinate is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (2)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+
+**Treatment considerations for option 2**
+
+- Metoprolol Succinate: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($60 of $500 a month)
+- Dosing burden: More doses a day than now (2, now 1), one more drug
+- Evidence: Partial concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Metoprolol Succinate 50 mg once daily
+
+The tool's ordering score for this option: 45 out of 100. Monthly cost: $60.00/month (estimate). Dosing burden: 2 doses a day from 2 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.63 against 0.75).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.90 against 0.97) and a larger expected gain in health status (+3.2 against +2.1 KCCQ-equivalent points).
+
+**Drug differences from option 1**
+
+- Does not include Spironolactone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 3% lower (relative risk 0.97, 95% interval 0.89 to 1.06; the interval includes no effect)
+- Heart-failure hospitalization: 25% lower (relative risk 0.75, 95% interval 0.67 to 0.83)
+- Health status (KCCQ-equivalent): gain of 2.1 points
+- Side-effect burden: +8.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+5.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Metoprolol Succinate borrowed from Carvedilol (the Cochrane review of beta-blockers above LVEF 40).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Older adult: individualize starting dose and review interval; assess orthostatic BP, frailty, tolerance and medication use before escalation.
+
+**Treatment considerations for option 3**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($60 of $500 a month)
+- Dosing burden: More doses a day than now (2, now 1), one more drug
+- Evidence: Partial concordance
+
+### Indicated therapy currently missing
+
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Spironolactone)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Add Spironolactone 25mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 41: 79-year-old man, reduced ejection fraction (35%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 79-year-old man with an ejection fraction of 35% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 100/64 mmHg and the heart rate is 70 per minute in sinus rhythm. He is 1.5 kg above the recorded dry weight. Potassium is 5.7 mEq/L and eGFR is 45 mL/min/1.73 m². He takes Carvedilol 6.25 mg twice daily, Furosemide 40 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 79 years, male; self-identified race: White |
+| Ejection fraction | 35%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 100/64 mmHg; 70 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 71.5 kg now; recorded dry weight 70 kg (1.5 kg above dry weight) |
+| Examination findings | Edema (1+) |
+| NT-proBNP | 5600 pg/mL |
+| Potassium | 5.7 mEq/L |
+| Kidney function | creatinine 1.55 mg/dL; eGFR 45 mL/min/1.73 m²; earlier creatinine not entered; BUN 27.9 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | Cardiac amyloidosis |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Carvedilol | 6.25 mg twice daily | taking as recorded; consistent use confirmed |
+| Furosemide | 40 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 3 doses a day from 2 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 41: 79-year-old man, reduced ejection fraction (35%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Safety alerts (3)
+
+- **Outside the tool's scope**: Cardiac amyloidosis is recorded. The trials behind this tool did not study it, and the tool has no way to take it into account, so the tool's estimates would not be reliable for this patient and no medication option is shown. Alerts about the current regimen still apply and are shown. Prompts that propose therapy or assess whether a therapy is indicated (indicated therapy that is missing, eligibility for other drugs, device screening, cardiac rehabilitation, advanced-therapy evaluation) are not shown, because this condition is outside the tool's scope.
+- **Elevated potassium**: Potassium is 5.7 mEq/L and the patient takes no renin-angiotensin drug or MRA. Confirm the value (a hemolyzed sample reads high) and look for the cause: potassium supplements or salt substitutes, potassium-sparing diuretics, NSAIDs, kidney function and acidosis. Recheck potassium.
+- **Very high risk**: NT-proBNP 5600 pg/mL (above 5000) with worsening symptoms or congestion. The 2026 ESC guideline says this indicates very high risk and admission is generally advised; assess for admission before outpatient optimization.
+
+### What the tool shows instead of options
+
+This tool proposes no medication option today: a condition recorded for this patient is outside what the trials behind the tool studied (see the first alert). Alerts about the current regimen still apply, and may ask you to withhold, reduce or review a drug.
+
+### Monitoring plan
+
+- **Repeat potassium and look for the cause** (Promptly): Potassium is 5.7 mEq/L and the patient takes no renin-angiotensin drug or MRA. Confirm the value (a hemolyzed sample reads high) and look for the cause: potassium supplements or salt substitutes, potassium-sparing diuretics, NSAIDs, kidney function and acidosis.
+
+## Your ratings for this case
+
+**Question 1.** The tool proposed no medication option and showed the alerts above (they may ask for a drug to be withheld, reduced or reviewed). Having no option, and the alerts shown, are:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reason given for proposing no option is:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 42: 40-year-old woman, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 40-year-old woman with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 116/72 mmHg and the heart rate is 82 per minute in sinus rhythm. She is at the recorded dry weight. Potassium is 4.2 mEq/L and eGFR is 91 mL/min/1.73 m². She takes Carvedilol 6.25 mg twice daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 40 years, female; self-identified race: White |
+| Pregnancy | Not recorded |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 116/72 mmHg; 82 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 74 kg now; recorded dry weight 74 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1100 pg/mL |
+| Potassium | 4.2 mEq/L |
+| Kidney function | creatinine 0.83 mg/dL; eGFR 91 mL/min/1.73 m²; earlier creatinine not entered; BUN 14.9 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Carvedilol | 6.25 mg twice daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 2 doses a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 42: 40-year-old woman, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (1)
+
+- **Pregnancy status not recorded**: Pregnancy status is not recorded for this woman of childbearing age, and she takes Carvedilol, which is restricted in pregnancy. Record whether she is pregnant; starts of pregnancy-restricted drugs stay withheld until then. This tool does not assess breastfeeding; check each drug against lactation advice.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Pregnancy status: Pregnancy-restricted therapy and nonselective beta-blocker changes are withheld; confirm status or not applicable. This tool does not assess breastfeeding; check each drug against lactation advice.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- No medication change is proposed in this option. Review remaining treatment gaps, safety warnings and monitoring before deciding to continue.
+
+**Resulting regimen**
+
+- Carvedilol 6.25 mg twice daily
+
+The tool's ordering score for this option: 46 out of 100. Monthly cost: $4.00/month (estimate). Dosing burden: 2 doses a day from 1 drug (now 2 doses a day from 1 drug).
+
+**Why this is first**
+
+- Only one option is shown: the tool built no other plan that passed its safety checks for this patient today.
+- Safety alerts are in force (Pregnancy status not recorded); read them before any change.
+- Starting RAAS inhibitors, mineralocorticoid receptor antagonists, SGLT2 inhibitors, GLP-1 receptor agonists, GLP-1/GIP receptor agonists, ivabradine and vericiguat is withheld because information is missing: pregnancy status (or not applicable).
+
+More on why:
+
+- Starting IV iron is withheld because information is missing: hemoglobin for dose selection, prior iron-course dates and first-versus-repeat course assessment, phosphate safety assessment (testing when indicated).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- No medication change is proposed, so there is no change in expected effect.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Treatment considerations for option 1**
+
+- Recorded regimen: No net medication change is proposed. Reassess the recorded condition; unchanged medication does not establish clinical stability or complete treatment.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($4 of $500 a month)
+- Dosing burden: Same doses a day as now (2)
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): not started in option 1; Sacubitril/Valsartan (Entresto), Lisinopril, Enalapril, Ramipril, Captopril, Valsartan, Candesartan, Losartan withheld (Decision-specific information required): Information required before starting: pregnancy status (or not applicable)
+- Mineralocorticoid receptor antagonist (MRA): not started in option 1; Spironolactone, Eplerenone, Finerenone (Kerendia) withheld (Decision-specific information required): Information required before starting: pregnancy status (or not applicable)
+- SGLT2 inhibitor: not started in option 1; Dapagliflozin, Empagliflozin withheld (Decision-specific information required): Information required before starting: pregnancy status (or not applicable)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (No medication change) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 43: 69-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 69-year-old man with an ejection fraction of 30% and NYHA class III symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 122/74 mmHg and the heart rate is 80 per minute in sinus rhythm. He is 3 kg above the recorded dry weight. Potassium is 3.3 mEq/L and eGFR is 56 mL/min/1.73 m². He takes Furosemide 80 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 69 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | III; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 122/74 mmHg; 80 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 91 kg now; recorded dry weight 88 kg (3 kg above dry weight) |
+| Examination findings | Edema (2+), JVP Elevated |
+| NT-proBNP | 3100 pg/mL |
+| Potassium | 3.3 mEq/L |
+| Kidney function | creatinine 1.36 mg/dL; eGFR 56 mL/min/1.73 m²; earlier creatinine not entered; BUN 24.5 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | none recorded |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Uninsured, cash prices; monthly medication budget $500; cost worry 5 of 10; tolerance for many pills and doses 5 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Furosemide | 80 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 1 dose a day from 1 drug.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 43: 69-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (3)
+
+- **Acute decompensation**: This patient may need same-day evaluation, intravenous diuresis or admission (the tool reads NYHA class IV, or NYHA class III with more than 2 kg above dry weight and at least two congestion findings, as acute decompensation). The options below apply only if the patient is judged well enough to stay an outpatient. When the patient is congested and an oral loop diuretic start or increase is eligible, every option includes one.
+- **Low potassium**: New or intensified potassium-lowering diuretics are withheld until potassium is corrected and rechecked. A potassium-raising drug is not assumed to cancel this risk.
+- **Beta-blocker start deferred**: NYHA class III with more than 2 kg above dry weight and at least two congestion findings is treated as acute decompensation, so no beta-blocker is started in any option (2022 AHA/ACC/HFSA: do not start during decompensation; 2026 ESC Supplementary Table S6: seek specialist advice in NYHA IV or a recent exacerbation, achieve euvolemia first). Start at a low dose once the patient is stable and decongested.
+
+### Other care prompts (1)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class III. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: RAAS inhibitor (ARNI preferred for HFrEF), evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol), mineralocorticoid receptor antagonist (MRA), SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is not recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Eplerenone 25mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Eplerenone 25 mg once daily
+- Furosemide 80 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 59 out of 100. Monthly cost: $80.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is first**
+
+- Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.35 against 1.00); no change has fewer side effects (side-effect burden 0.0 against +14.6 points).
+
+More on why:
+
+- Also against option 2: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.59 against 1.00) and an expected gain in health status (+3.4 against 0.0 KCCQ-equivalent points).
+- Evidence-based beta-blocker: Not started: no beta-blocker is started during acute decompensation.
+- SGLT2 inhibitor: Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 41% lower (relative risk 0.59, 95% interval 0.49 to 0.71)
+  - At today's doses: 22% lower (relative risk 0.78, 95% interval 0.71 to 0.85)
+- Heart-failure hospitalization: 65% lower (relative risk 0.35, 95% interval 0.28 to 0.44)
+  - At today's doses: 38% lower (relative risk 0.62, 95% interval 0.56 to 0.68)
+- Health status (KCCQ-equivalent): gain of 3.4 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +14.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+Borrowed evidence: Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Risk of Hypokalemia (K+ < 3.5)
+
+**Prescribing notes for option 1**
+
+- No oral loop diuretic start or increase is available today: potassium is below 3.5: correct it first.
+
+**Treatment considerations for option 1**
+
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($80 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), 2 more drugs
+- Evidence: Limited concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Captopril 6.25mg three times daily
+- Add Eplerenone 25mg once daily
+
+**Resulting regimen**
+
+- Captopril 6.25 mg three times daily
+- Eplerenone 25 mg once daily
+- Furosemide 80 mg once daily
+
+The tool's ordering score for this option: 57 out of 100. Monthly cost: $28.00/month (estimate). Dosing burden: 5 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 2**
+
+- Compared with option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.44).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.62).
+
+**Drug differences from option 1**
+
+- Includes Captopril 6.25 mg three times daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 38% lower (relative risk 0.62, 95% interval 0.54 to 0.71)
+  - At today's doses: 21% lower (relative risk 0.79, 95% interval 0.73 to 0.85)
+- Heart-failure hospitalization: 56% lower (relative risk 0.44, 95% interval 0.37 to 0.51)
+  - At today's doses: 33% lower (relative risk 0.67, 95% interval 0.61 to 0.73)
+- Health status (KCCQ-equivalent): gain of 2.8 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +13.4 points (more measured harm)
+  - Largest contributors to the change: Captopril, everyday symptoms (combined) (+4.1); Captopril, fainting (+2.4).
+
+Borrowed evidence: Captopril borrowed from Valsartan (Val-HeFT); Eplerenone borrowed from Spironolactone (TOPCAT).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Risk of Hypokalemia (K+ < 3.5)
+
+**Prescribing notes for option 2**
+
+- No oral loop diuretic start or increase is available today: potassium is below 3.5: correct it first.
+
+**Treatment considerations for option 2**
+
+- Captopril: Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Eplerenone: Assess measured potassium and renal function before and after a change. Steroidal and nonsteroidal MRAs are not assumed to be interchangeable by milligram or KCCQ effect.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($28 of $500 a month)
+- Dosing burden: More doses a day than now (5, now 1), 2 more drugs
+- Evidence: Limited concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Add Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+
+**Resulting regimen**
+
+- Dapagliflozin 10 mg once daily (target dose)
+- Furosemide 80 mg once daily
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+
+The tool's ordering score for this option: 56 out of 100. Monthly cost: $113.00/month (estimate). Dosing burden: 4 doses a day from 3 drugs (now 1 dose a day from 1 drug).
+
+**Why this is option 3**
+
+- Compared with option 1: option 1 has a larger expected reduction in death (relative risk 0.59 against 0.69).
+
+More on why:
+
+- Also against option 1: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.35 against 0.40).
+
+**Drug differences from option 1**
+
+- Includes Dapagliflozin 10 mg once daily; option 1 does not.
+- Does not include Eplerenone, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 31% lower (relative risk 0.69, 95% interval 0.57 to 0.83)
+  - At today's doses: 19% lower (relative risk 0.81, 95% interval 0.71 to 0.91)
+- Heart-failure hospitalization: 60% lower (relative risk 0.40, 95% interval 0.33 to 0.48)
+  - At today's doses: 42% lower (relative risk 0.58, 95% interval 0.53 to 0.64)
+- Health status (KCCQ-equivalent): gain of 4.4 points
+  - Not measured, so not counted: Furosemide.
+- Side-effect burden: +13.6 points (more measured harm)
+  - Largest contributors to the change: Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8); Sacubitril/Valsartan (Entresto), fainting (+3.1).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Risk of Hypokalemia (K+ < 3.5)
+
+**Prescribing notes for option 3**
+
+- No oral loop diuretic start or increase is available today: potassium is below 3.5: correct it first.
+
+**Treatment considerations for option 3**
+
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+- Sacubitril/Valsartan (Entresto): Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($113 of $500 a month)
+- Dosing burden: More doses a day than now (4, now 1), 2 more drugs
+- Evidence: Limited concordance
+
+### Indicated therapy currently missing
+
+- RAAS inhibitor (ARNI preferred for HFrEF): started in option 1 (Sacubitril/Valsartan (Entresto))
+- Evidence-based beta-blocker (carvedilol / metoprolol succinate / bisoprolol): not started in option 1. Not started: no beta-blocker is started during acute decompensation; could be started: Carvedilol, Metoprolol Succinate, Bisoprolol
+- Mineralocorticoid receptor antagonist (MRA): started in option 1 (Eplerenone); Finerenone (Kerendia) withheld (Clinical contraindication): LVEF below 40 (FINEARTS-HF enrolled LVEF 40 or higher only; no evidence for HFrEF)
+- SGLT2 inhibitor: not started in option 1. Option 1 already uses the limit of 2 new drug classes (Eplerenone and Sacubitril/Valsartan); adding an SGLT2 inhibitor means dropping one. It appears in option 3 (Dapagliflozin); could be started: Dapagliflozin, Empagliflozin
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **Correct potassium and recheck it** (Before any diuretic start or increase): Potassium is 3.3 mEq/L, below 3.5. Correct it, look for the cause (diuretic losses, low intake, vomiting or diarrhea, low magnesium) and recheck potassium; the tool withholds a new or higher diuretic dose until potassium is corrected and rechecked.
+- **BMP (potassium, creatinine, eGFR) after MRA start or increase** (Within 1 week, again at about 4 weeks, 1-2 weeks after the final titration, then every 4-6 months): Labels: potassium within 1 week of starting or titrating (spironolactone, eplerenone) and at 4 weeks to 1 month (finerenone, eplerenone). 2026 ESC Supplementary Tables S7/S8: halve the dose if potassium rises above 5.5 or eGFR falls by more than 30%; interrupt at potassium above 6.0 and seek specialist advice; withhold if eGFR falls below 20. After that, recheck every 4-6 months (ESC; the 2022 US guideline says about every 6 months, the shorter interval is used).
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Eplerenone 25mg once daily; Add Sacubitril/Valsartan) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 44: 71-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 71-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 71 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 126/78 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 88 kg now; recorded dry weight 88 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1900 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.24 mg/dL; eGFR 62 mL/min/1.73 m²; earlier creatinine not entered; BUN 22.3 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Coronary Artery Disease |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Medicare Part D; monthly medication budget $300; cost worry 9 of 10; tolerance for many pills and doses 2 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Keep the regimen simple |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 4 doses a day from 3 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 44: 71-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+**What this setting changed (generated).** This patient is also shown with the Balanced setting elsewhere in the packet. With "Keep the regimen simple" the weights are changed as follows: Starts from the base weights; dosing burden counts three times as much. The budget limit and every safety rule still apply separately. The top options here are within one point of each other (the tie sentence below), a difference the tool cannot separate, so which of them comes first rests on it.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 10 mg once daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 76 out of 100. Monthly cost: $54.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher.
+- Compared with making no medication change: option 1 has an expected reduction in death (relative risk 0.81 against 1.00).
+
+More on why:
+
+- Also against no change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.66 against 1.00) and an expected gain in health status (+2.4 against 0.0 KCCQ-equivalent points).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 19% lower (relative risk 0.81, 95% interval 0.72 to 0.91)
+- Heart-failure hospitalization: 34% lower (relative risk 0.66, 95% interval 0.60 to 0.72)
+- Health status (KCCQ-equivalent): gain of 2.4 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 1**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($54 of $300 a month)
+- Dosing burden: More doses a day than now (5, now 4), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Lisinopril from 10mg once daily to 20mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 20 mg once daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 76 out of 100. Monthly cost: $54.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher.
+
+**Drug differences from option 1**
+
+- Carvedilol: 12.5 mg twice daily here; 25 mg twice daily in option 1.
+- Lisinopril: 20 mg once daily here; 10 mg once daily in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 17% lower (relative risk 0.83, 95% interval 0.74 to 0.93)
+- Heart-failure hospitalization: 36% lower (relative risk 0.64, 95% interval 0.59 to 0.70)
+- Health status (KCCQ-equivalent): gain of 2.6 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril.
+
+Side effects at the higher dose were not measured separately; the burden shown for Lisinopril is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Lisinopril: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($54 of $300 a month)
+- Dosing burden: More doses a day than now (5, now 4), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 76 out of 100. Monthly cost: $111.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is option 3**
+
+- Option 3 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 3 has a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.66); option 1 has a lighter dosing burden (fewer doses a day).
+
+**Drug differences from option 1**
+
+- Carvedilol: 12.5 mg twice daily here; 25 mg twice daily in option 1.
+- Includes Sacubitril/Valsartan (Entresto) 24/26 mg twice daily; option 1 does not.
+- Does not include Lisinopril, which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 20% lower (relative risk 0.80, 95% interval 0.66 to 0.96)
+  - At today's doses: 7% lower (relative risk 0.93, 95% interval 0.82 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 48% lower (relative risk 0.52, 95% interval 0.42 to 0.64)
+  - At today's doses: 24% lower (relative risk 0.76, 95% interval 0.68 to 0.86)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +5.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 3**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($111 of $300 a month)
+- Dosing burden: More doses a day than now (6, now 4), one more drug
+- Evidence: Strong guideline concordance
+
+### Indicated therapy currently missing
+
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+- **Heart rate and blood pressure after a beta-blocker start or increase** (About 1 week; sooner if indicated): Check resting heart rate, blood pressure, dizziness and signs of fluid retention before each dose increase; the dose is not raised while the resting rate is low and is lowered if the rate falls below the drug's limit.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Add Dapagliflozin 10mg once daily; Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+<div class="page-break"></div>
+
+# Case 45: 71-year-old man, reduced ejection fraction (30%)
+
+## Part 1. The patient
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+A 71-year-old man with an ejection fraction of 30% and NYHA class II symptoms is seen as an outpatient for a heart failure medication review. Blood pressure is 126/78 mmHg and the heart rate is 72 per minute in sinus rhythm. He is at the recorded dry weight. Potassium is 4.5 mEq/L and eGFR is 62 mL/min/1.73 m². He takes Lisinopril 10 mg once daily, Carvedilol 12.5 mg twice daily, Spironolactone 25 mg once daily.
+
+### What the clinician entered
+
+| Item | Entered |
+|---|---|
+| Age and sex | 71 years, male; self-identified race: White |
+| Ejection fraction | 30%; lowest earlier ejection fraction not entered; ever 40% or lower: yes |
+| NYHA class | II; heart failure worsening in the last 6 months: no |
+| Blood pressure and heart rate | 126/78 mmHg; 72 per minute; rhythm: sinus rhythm; oxygen saturation 97% |
+| Weight | 88 kg now; recorded dry weight 88 kg (at dry weight) |
+| Examination findings | none recorded |
+| NT-proBNP | 1900 pg/mL |
+| Potassium | 4.5 mEq/L |
+| Kidney function | creatinine 1.24 mg/dL; eGFR 62 mL/min/1.73 m²; earlier creatinine not entered; BUN 22.3 mg/dL |
+| Iron studies and hemoglobin | ferritin not entered; transferrin saturation not entered; hemoglobin not entered |
+| Other conditions | Coronary Artery Disease |
+| Conditions the tool does not cover (question asked of the clinician) | None of these |
+| Allergies | none recorded |
+| Documented drug intolerances | none recorded |
+| Other current medicines | none recorded |
+| Payer and budget | Medicare Part D; monthly medication budget $300; cost worry 9 of 10; tolerance for many pills and doses 2 of 10 |
+| Most new drug classes at one visit | 2 |
+| What matters most to this patient | Balanced |
+
+### Current heart failure medicines
+
+| Medicine | Dose and frequency | How it is being taken |
+|---|---|---|
+| Lisinopril | 10 mg once daily | taking as recorded; consistent use confirmed |
+| Carvedilol | 12.5 mg twice daily | taking as recorded; consistent use confirmed |
+| Spironolactone | 25 mg once daily | taking as recorded; consistent use confirmed |
+
+Daily dosing: 4 doses a day from 3 drugs.
+
+### Before turning the page
+
+**What would you change at this visit?** Write up to three changes (a drug to start, stop or adjust, a test, an action), or write that you would change nothing. Please answer before you read the next page.
+
+| # | Answer |
+|---|---|
+| 1. |   |
+| 2. |   |
+| 3. |   |
+
+<div class="page-break"></div>
+
+# Case 45: 71-year-old man, reduced ejection fraction (30%)
+
+## Part 2. What the tool shows
+
+Rule set 2026-11-25.1, dated 25 November 2026. The patient is constructed for this review and is not a real person.
+
+### Scope and evidence
+
+- The trial evidence used for every option is that of reduced ejection fraction (LVEF 30%, 40% or below).
+
+### Safety alerts (0)
+
+- None raised.
+
+### Other care prompts (2)
+
+- **Device therapy screening**: LVEF 30% (35 or below) with NYHA Class II. ICD for primary prevention (NYHA II to III, expected survival over 1 year) is considered only after at least 3 months of optimal foundational therapy (not yet complete here: SGLT2 inhibitor); Class I (B1) if the cardiomyopathy is ischaemic (not within 40 days of a myocardial infarction), Class IIa (B1) if non-ischaemic. Coronary artery disease is recorded; aetiology and infarction date are not captured: check them. CRT (sinus rhythm, symptomatic on optimal therapy): LBBB with QRS 150 ms or more Class I; LBBB 130-149 ms IIa; non-LBBB 150 ms or more IIa; non-LBBB 130-149 ms IIb; QRS below 130 ms not recommended without a pacing indication (2026 ESC Recommendation Table 7). QRS duration and LBBB morphology are not captured by this tool: check the ECG. Refer to electrophysiology if not already assessed.
+- **Cardiac rehabilitation**: HFrEF with NYHA Class II. Exercise-based cardiac rehab is Class I (ACC/AHA 2022) for stable HF patients: improves functional capacity, quality of life, and reduces HF hospitalization. Refer if not already enrolled.
+
+### Assessment scope
+
+- Medication options with the prerequisites recorded.
+- Can be reviewed: Evaluate medication changes whose clinical prerequisites are recorded. Each option still requires review of contraindications, monitoring and actual patient tolerance.
+- Waiting for information: Measured KCCQ: Not required for other eligible decisions. No KCCQ value or response is invented; functional treatment response remains unquantified.
+
+### Option 1: first option to review
+
+**Changes proposed**
+
+- Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan (Entresto) 24/26mg twice daily
+- Add Dapagliflozin 10mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Sacubitril/Valsartan (Entresto) 24/26 mg twice daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 72 out of 100. Monthly cost: $111.00/month (estimate). Dosing burden: 6 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is first**
+
+- Option 1 and option 2 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 2: option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.66); option 2 has a lighter dosing burden (fewer doses a day).
+- Compared with making no medication change: option 1 has an expected reduction in heart-failure hospitalization (relative risk 0.52 against 1.00); no change is cheaper each month.
+
+More on why:
+
+- Also against option 2: option 2 is cheaper each month ($54.00 against $111.00).
+- Also against no change: option 1 has an expected reduction in death (relative risk 0.80 against 1.00) and an expected gain in health status (+3.2 against 0.0 KCCQ-equivalent points); no change has a lighter dosing burden (fewer doses a day).
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 20% lower (relative risk 0.80, 95% interval 0.66 to 0.96)
+  - At today's doses: 7% lower (relative risk 0.93, 95% interval 0.82 to 1.07; the interval includes no effect)
+- Heart-failure hospitalization: 48% lower (relative risk 0.52, 95% interval 0.42 to 0.64)
+  - At today's doses: 24% lower (relative risk 0.76, 95% interval 0.68 to 0.86)
+- Health status (KCCQ-equivalent): gain of 3.2 points
+- Side-effect burden: +5.0 points (more measured harm)
+  - Largest contributors to the change: Lisinopril, everyday symptoms (combined) (−5.4); Sacubitril/Valsartan (Entresto), everyday symptoms (combined) (+4.8).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II).
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 1 (1)**
+
+- MANDATORY: 36-hour washout required between last ACEi dose and first ARNI dose (life-threatening angioedema risk).
+
+**Treatment considerations for option 1**
+
+- Sacubitril/Valsartan (Entresto): Switch Lisinopril to Sacubitril/Valsartan (Entresto). Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence. No untreated state or exact replacement response is inferred.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 1**
+
+- Cost: Within budget ($111 of $300 a month)
+- Dosing burden: More doses a day than now (6, now 4), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 2: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Carvedilol from 12.5mg twice daily to 25mg twice daily
+
+**Resulting regimen**
+
+- Carvedilol 25 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 10 mg once daily
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 72 out of 100. Monthly cost: $54.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is option 2**
+
+- Option 2 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 2 has a lighter dosing burden (fewer doses a day); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.66).
+
+More on why:
+
+- Also against option 1: option 2 is cheaper each month ($54.00 against $111.00).
+
+**Drug differences from option 1**
+
+- Carvedilol: 25 mg twice daily here; 12.5 mg twice daily in option 1.
+- Includes Lisinopril 10 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 19% lower (relative risk 0.81, 95% interval 0.72 to 0.91)
+- Heart-failure hospitalization: 34% lower (relative risk 0.66, 95% interval 0.60 to 0.72)
+- Health status (KCCQ-equivalent): gain of 2.4 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Carvedilol.
+
+Side effects at the higher dose were not measured separately; the burden shown for Carvedilol is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 2 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 2**
+
+- Carvedilol: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess compensation, measured heart rate, BP and tolerance before each dose step. Confirm a taper or substitution plan when withdrawing; recovery of EF is not a reason inferred by this model to stop therapy.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 2**
+
+- Cost: Within budget ($54 of $300 a month)
+- Dosing burden: More doses a day than now (5, now 4), one more drug
+- Evidence: Strong guideline concordance
+
+### Option 3: alternative option
+
+**Changes proposed**
+
+- Add Dapagliflozin 10mg once daily
+- Titrate Lisinopril from 10mg once daily to 20mg once daily
+
+**Resulting regimen**
+
+- Carvedilol 12.5 mg twice daily
+- Dapagliflozin 10 mg once daily (target dose)
+- Lisinopril 20 mg once daily (target dose)
+- Spironolactone 25 mg once daily
+
+The tool's ordering score for this option: 71 out of 100. Monthly cost: $54.00/month (estimate). Dosing burden: 5 doses a day from 4 drugs (now 4 doses a day from 3 drugs).
+
+**Why this is option 3**
+
+- Option 3 and option 1 are too close to separate; option 1 is listed first because its score is slightly higher. Compared with option 1: option 3 has a lighter dosing burden (fewer doses a day); option 1 has a larger expected reduction in heart-failure hospitalization (relative risk 0.52 against 0.64).
+
+More on why:
+
+- Also against option 1: option 3 is cheaper each month ($54.00 against $111.00); option 1 has a larger expected reduction in death (relative risk 0.80 against 0.83).
+
+**Drug differences from option 1**
+
+- Includes Lisinopril 20 mg once daily; option 1 does not.
+- Does not include Sacubitril/Valsartan (Entresto), which is included in option 1.
+
+**Expected effect versus the current regimen (trial averages, not a prediction for this patient)**
+
+- Death from any cause: 17% lower (relative risk 0.83, 95% interval 0.74 to 0.93)
+- Heart-failure hospitalization: 36% lower (relative risk 0.64, 95% interval 0.59 to 0.70)
+- Health status (KCCQ-equivalent): gain of 2.6 points
+- Side-effect burden: +5.1 points (more measured harm)
+  - Largest contributors to the change: Dapagliflozin, genital fungal infection (+2.4); Dapagliflozin, everyday symptoms (combined) (+2.3).
+
+Borrowed evidence: Carvedilol borrowed from Bisoprolol (CIBIS-II); Lisinopril borrowed from Captopril, Ramipril, Enalapril and Trandolapril (the five-trial overview of ACE inhibitors).
+
+The interval does not include the uncertainty of the dose relationship for the dose step of Lisinopril.
+
+Side effects at the higher dose were not measured separately; the burden shown for Lisinopril is that of the current dose.
+
+Population averages from randomized trials, not a prediction for this patient. The patient's own response at follow-up replaces these estimates.
+
+**Safety warnings for option 3 (1)**
+
+- Before dose escalation: confirm time at the current dose, actual use, tolerance and drug-specific minimum intervals. Reassess BP, heart rate and relevant laboratory results; this proposal does not authorize an immediate or automatic dose step.
+
+**Treatment considerations for option 3**
+
+- Lisinopril: Dose increase: additional benefit and adverse effects are not numerically estimated. Assess measured BP, renal function and potassium. Check transition-specific washout and contraindications; target-dose fractions are not validated physiological equivalence.
+- Dapagliflozin: Assess volume status, renal function and acute-illness context. Benefits from separate trials are not used as a head-to-head physiological comparison.
+
+**Trade-off labels for option 3**
+
+- Cost: Within budget ($54 of $300 a month)
+- Dosing burden: More doses a day than now (5, now 4), one more drug
+- Evidence: Strong guideline concordance
+
+### Indicated therapy currently missing
+
+- SGLT2 inhibitor: started in option 1 (Dapagliflozin)
+
+### Data not entered
+
+- KCCQ not measured: eligible medication decisions can still be reviewed. Functional scoring uses recorded NYHA/activity only; no KCCQ value or response is assumed.
+- No LVEDD or LAVI entered: chamber remodeling is not assessed. Structural inference is limited to LVEF alone.
+- No iron studies (ferritin / TSAT) entered: iron-deficiency therapy (IV iron) cannot be evaluated. Check iron studies in symptomatic HF.
+- No activity / step data or KCCQ entered: functional scoring is based on recorded NYHA only.
+
+### Monitoring plan for option 1
+
+- **BMP (urea/creatinine, eGFR, potassium) after ACEi/ARB/ARNI start or increase** (1-2 weeks after starting, 1-2 weeks after the final titration, then every 4-6 months): European consensus guidance (secondary source). Potassium above 5.5: reduce one dose step; 6.0 or above: stop (2026 ESC section 6.1; the MRA is reduced first when both are on board). A creatinine rise under 50% above baseline is acceptable while eGFR stays above 15 (2026 ESC; the former 30% figure was a rule set by this tool). A small early eGFR dip after starting a RAAS inhibitor, MRA or SGLT2 inhibitor is expected and is not a reason to stop. 2026 ESC Supplementary Tables S4/S5: an eGFR fall under 30% is acceptable; a larger persisting change halves the dose and is rechecked in 1-2 weeks; stop the ACEi/ARB and seek specialist advice if creatinine rises more than 100% or eGFR falls below 20. The tool has no baseline creatinine or eGFR, so it cannot apply these change-based rules: at eGFR below 20 on a RAAS inhibitor it raises an alert and leaves the stop decision to the clinician.
+- **BMP (creatinine, eGFR)** (2-4 weeks after SGLT2i initiation): An early hemodynamic eGFR change may occur after starting an SGLT2 inhibitor. Reassess measured renal function, volume and symptoms; do not automatically classify an individual decline as expected or reversible. Investigate substantial, progressive or symptomatic deterioration.
+
+### Follow-up review prompts
+
+- About 1 week; sooner if indicated: Clinical review + relevant chemistry + BP/HR. Review actual medication use, tolerance, volume and measured results. Apply drug-specific action thresholds. These are review prompts, not standing orders or an automatic dose schedule; urgent abnormalities need immediate clinical assessment.
+- About 2 weeks: BP/HR, congestion and laboratory review as indicated. Assess readiness for the next decision. Confirm each medication-specific minimum time at dose, relevant repeat tests and tolerability before any increase; a follow-up visit alone does not authorize escalation.
+- About 4 weeks: Reassess remaining treatment gaps and tolerance. Review the current measured state and appropriate drug-specific laboratory intervals. Continue, adjust or defer changes according to findings and the prescribing plan.
+- About 6 weeks: Review progress, residual gaps and referral needs. Assess which indicated treatments are established and tolerated. Do not assume target doses or full treatment response have been reached; consider repeat biomarkers or other measurements when clinically indicated.
+
+## Your ratings for this case
+
+**Question 1.** The tool's first option (Stop Lisinopril, wait 36 hours, then start Sacubitril/Valsartan; Add Dapagliflozin 10mg once daily) is:
+
+- ☐ a. What I would do, or equally good
+- ☐ b. Acceptable, but not my first choice
+- ☐ c. Not acceptable
+- ☐ d. Unsafe
+
+**Question 2.** If you chose b, c or d: what would you do first, and why?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 3.** Is anything on this page wrong or unsafe (an alert, a dose, a monitoring item, a missing alert)?
+
+- ☐ No
+- ☐ Yes: what?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 4.** The reasons given for the first option are:
+
+- ☐ True and sufficient
+- ☐ True but incomplete
+- ☐ Unclear
+- ☐ Contains something false (say what below)
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 5.** Is anything a careful clinician would need missing from the inputs or from the output?
+
+| # | Answer |
+|---|---|
+| 1. |   |
+
+**Question 6 (optional).** Any other comment.
+
+| # | Answer |
+|---|---|
+| 1. |   |
